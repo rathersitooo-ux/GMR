@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-LOAD-CARD-CHAIN-R1-20260914T0129-SOL-KE9",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_LOAD_CARD_CHAIN_PRESENTATION_CORE_R1",
+  "acquireKey": "BATTLE-LOAD-CARD-CHAIN-R1-20260914T0129-SOL-KE9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_LOAD_IDENTITY_GAP_AND_NONOVERLAP_PURE_CORE_20260914T0129JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_JANKEN_ORDER_PURE_PRESENTATION_CORE_PATTERN_PLUS_LOAD_RUNTIME_READONLY_DIAGNOSIS",
+  "proceedToken": "PROCEED|BATTLE-LOAD-CARD-CHAIN-R1-20260914T0129-SOL-KE9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|load-card-identity-chain|pure-core|active-lease",
+  "authorizationBaseSha": "76df30a37f686f5bb69839a5f2be4994ac40f992",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_LOAD_CARD_CHAIN_PRESENTATION_CORE_R1",
+  "leaseAcquireKey": "BATTLE-LOAD-CARD-CHAIN-R1-20260914T0129-SOL-KE9",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 01:29 JST",
+  "leaseUntilJst": "2026-09-14 02:29 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1363:L1363",
+  "leaseExactMutableResources": "browser/battle-load-card-chain-presentation-core.mjs; tests/battle-load-card-chain-presentation-core.test.mjs; own transient PRE_ACTION only. battle-screen runtime/HTML/gameplay/rules/save/network remain read-only.",
+  "solutionSignature": "BATTLE_LOAD_TO_PLAYED_SAME_CARD_IDENTITY_PRESENTATION_CONTRACT_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_RUNTIME_HAS_PLAYED_CARD_ID_BUT_LOAD_ONLY_JANKEN_PLUS_EXISTING_PURE_PRESENTATION_PATTERN",
+  "solutionSearchEvidence": [
+    "Current battle-screen runtime already preserves cardId for played Battle cards but the large LOAD surface exposes only loadJanken.",
+    "The adopted HUD spec requires the Load Card to remain the real physical card while janken is secondary information.",
+    "BATTLE-CARD-ART-R1 currently owns battle-screen-runtime-mount.mjs, so this slice must not mutate that live consumer.",
+    "Existing battle-janken-order-chain-presentation-core demonstrates the accepted pure fail-closed presentation-core pattern without creating gameplay authority.",
+    "No identity may be inferred from label, artwork, index, or janken hand; missing authoritative cardId stays unresolved."
+  ],
+  "scope": [
+    "browser/battle-load-card-chain-presentation-core.mjs",
+    "tests/battle-load-card-chain-presentation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-load-card-chain-presentation-core.mjs",
+    "tests/battle-load-card-chain-presentation-core.test.mjs"
+  ]
+}

@@ -583,6 +583,22 @@ test('Battle Advice chat reuses the existing root as a compact peripheral overla
   assert.doesNotMatch(source, /createPartnerAdviceStore|new PartnerAdviceStore/);
 });
 
+test('Battle Partner controls converge into one visible surface without replacing their existing authority nodes', () => {
+  const source = readFileSync(new URL('../browser/partner-advice-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /export function unifyBattlePartnerPresentation/);
+  assert.match(source, /getElementById\('partnerAdviceBtn'\)/);
+  assert.match(source, /getElementById\('partnerDelegateBtn'\)/);
+  assert.match(source, /getElementById\('partnerRule'\)/);
+  assert.match(source, /getElementById\('partnerDecisionStatus'\)/);
+  assert.match(source, /button\.classList\.remove\('railBtn'\)/);
+  assert.match(source, /actions\.append\(button\)/);
+  assert.match(source, /legacyHost\.hidden = true/);
+  assert.match(source, /legacyHost\.dataset\.partnerAdviceSourceOnly = 'true'/);
+  assert.match(source, /root\.dataset\.partnerAdviceUnifiedSurface = 'true'/);
+  assert.doesNotMatch(source, /class="partnerAdviceQuickReply">まかせた！<\/button>/);
+  assert.doesNotMatch(source, /state\.selectedPartnerId\s*=|state\.settings\.advicePartnerId\s*=/);
+});
+
 test('idle readable content appears only in battle idle time and yields to higher-priority presentation', () => {
   const base = {
     partnerId: 'partner.saasuna',
@@ -674,8 +690,8 @@ test('quick3 UI keeps delegation separate and does not create a permanent fourth
   assert.match(source, /\['idea', 'アイディア ON'\]/);
   assert.match(source, /\['casual', '雑談'\]/);
   assert.match(source, /\['situation', '戦況報告'\]/);
-  assert.match(source, /partnerAdviceQuickReply/);
-  assert.match(source, /まかせた！/);
+  assert.match(source, /getElementById\('partnerDelegateBtn'\)/);
+  assert.doesNotMatch(source, /class=\"partnerAdviceQuickReply\">まかせた！/);
   assert.doesNotMatch(source, /data\.quickRoute\s*=\s*['\"]three/);
   assert.doesNotMatch(source, /\['three-options',\s*'3つ出して'\]/);
 });

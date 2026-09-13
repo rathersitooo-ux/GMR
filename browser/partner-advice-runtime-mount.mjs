@@ -1158,6 +1158,72 @@ function ensureBattleChatStyle(doc) {
   doc.head?.append(style);
 }
 
+const UNIFIED_PARTNER_STYLE_ID = 'gameroad-partner-advice-unified-surface-r1';
+
+function ensureUnifiedPartnerSurfaceStyle(doc) {
+  if (doc.getElementById(UNIFIED_PARTNER_STYLE_ID)) return;
+  const style = doc.createElement('style');
+  style.id = UNIFIED_PARTNER_STYLE_ID;
+  style.textContent = `#${CHAT_ROOT_ID} .partnerAdviceDecisionControls{grid-column:1/-1;display:grid;gap:4px;padding:5px;border:1px solid rgba(190,225,214,.2);border-radius:9px;background:rgba(4,26,22,.62)}#${CHAT_ROOT_ID} .partnerAdvicePrimaryActions{display:grid;grid-template-columns:1fr 1fr;gap:4px}#${CHAT_ROOT_ID} .partnerAdvicePrimaryAction{min-height:34px;padding:5px 7px;border:1px solid rgba(173,235,214,.38);border-radius:9px;background:rgba(10,45,38,.78);color:#e4fff6;font-size:9px;font-weight:950}#${CHAT_ROOT_ID} #partnerDelegateBtn.forced{border-color:rgba(255,123,102,.72);background:rgba(82,37,30,.9)}#${CHAT_ROOT_ID} .partnerRuleLabel{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px;align-items:center;font-size:8px;color:#cfe4dd}#${CHAT_ROOT_ID} .partnerRuleLabel select{min-width:0;height:32px;border:1px solid rgba(205,239,228,.22);border-radius:7px;background:rgba(8,35,29,.72);color:#effbf7;font-size:9px}#${CHAT_ROOT_ID} .partnerDecisionStatus{margin:0;font-size:8px;line-height:1.3;color:#d9eee7;white-space:pre-wrap}#${CHAT_ROOT_ID} .partnerAdviceDecisionControls>.sub{font-size:7px;line-height:1.3;color:#91aaa2}@media(max-height:430px) and (orientation:landscape){#${CHAT_ROOT_ID} .partnerAdviceDecisionControls{gap:3px;padding:3px}#${CHAT_ROOT_ID} .partnerAdvicePrimaryAction{min-height:26px;padding:3px 5px;font-size:8px}#${CHAT_ROOT_ID} .partnerRuleLabel select{height:27px;font-size:8px}#${CHAT_ROOT_ID} .partnerDecisionStatus,#${CHAT_ROOT_ID} .partnerAdviceDecisionControls>.sub{font-size:7px}}`;
+  doc.head?.append(style);
+}
+
+export function unifyBattlePartnerPresentation({ doc, root, legacyHost } = {}) {
+  if (!doc || !root || !legacyHost || root === legacyHost) {
+    return Object.freeze({ ok: false, reason: 'SURFACE_REQUIRED', legacyRetired: false });
+  }
+  const adviceButton = doc.getElementById('partnerAdviceBtn');
+  const delegateButton = doc.getElementById('partnerDelegateBtn');
+  const rule = doc.getElementById('partnerRule');
+  const ruleLabel = rule?.closest?.('.partnerRuleLabel') || null;
+  const status = doc.getElementById('partnerDecisionStatus');
+  if (!adviceButton || !delegateButton || !ruleLabel || !status) {
+    return Object.freeze({ ok: false, reason: 'LEGACY_AUTHORITY_CONTROLS_REQUIRED', legacyRetired: false });
+  }
+
+  let controls = root.querySelector('[data-role="partner-decision-controls"]');
+  if (!controls) {
+    controls = doc.createElement('section');
+    controls.className = 'partnerAdviceDecisionControls';
+    controls.dataset.role = 'partner-decision-controls';
+    controls.setAttribute('aria-label', 'パートナー操作');
+    const actions = doc.createElement('div');
+    actions.className = 'partnerAdvicePrimaryActions';
+    actions.dataset.role = 'partner-primary-actions';
+    controls.append(actions);
+    const insertBefore = root.querySelector('.partnerAdviceQuickRoutes') || root.querySelector('[data-role="tutorial-experience-conversation"]') || root.querySelector('.partnerAdviceTutorialReplay');
+    root.insertBefore(controls, insertBefore || null);
+  }
+  const actions = controls.querySelector('[data-role="partner-primary-actions"]');
+  if (!actions) return Object.freeze({ ok: false, reason: 'PRIMARY_ACTION_SURFACE_REQUIRED', legacyRetired: false });
+
+  for (const button of [adviceButton, delgateButton]) {
+    button.classList.remove('railBtn');
+    button.classList.add('partnerAdvicePrimaryAction');
+    actions.append(button);
+  }
+  controls.append(ruleLabel, status);
+  const note = legacyHost.querySelector('.sub');
+  if (note) controls.append(note);
+
+  root.querySelector('.partnerAdviceQuickReply')?.remove();
+  legacyHost.hidden = true;
+  legacyHost.setAttribute('aria-hidden', 'true');
+  legacyHost.dataset.partnerAdviceSourceOnly = 'true';
+  root.dataset.partnerAdviceUnifiedSurface = 'true';
+  return Object.freeze({
+    ok: true,
+    reason: null,
+    legacyRetired: true,
+    adviceButtonId: adviceButton.id,
+    delegateButtonId: delegateButton.id,
+    ruleId: rule.id,
+    statusId: status.id,
+    presentationOnly: true,
+    gameplayAuthorityMutated: false,
+  });
+}
+
 export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.window, tutorialExperienceEligibility = () => false } = {}) {
   if (typeof tutorialExperienceEligibility !== 'function') throw new TypeError('tutorialExperienceEligibility must be a function');
   const win = windowRef;
@@ -1167,12 +1233,13 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
   if (!host) return null;
   ensureBattleChatStyle(doc);
   ensureBattleQuick3Style(doc);
+  ensureUnifiedPartnerSurfaceStyle(doc);
   let root = doc.getElementById(CHAT_ROOT_ID);
   if (!root) {
     root = doc.createElement('section');
     root.id = CHAT_ROOT_ID;
     root.setAttribute('aria-label', 'パートナーとの対戦チャット');
-    root.innerHTML = '<div class="partnerAdviceRoleControl"><span>アドバイスパートナー</span><strong data-role="advice-partner-name">パートナー</strong><button type="button" class="partnerAdvicePartnerSwitch" aria-label="アドバイスパートナーを変更">↻</button></div><div class="partnerAdviceLaneProgress" aria-label="3列の現在進行値"><div class="partnerAdviceLane" data-lane="L"><span>左列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="C"><span>中央列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="R"><span>右列</span><b>—</b></div></div><div class="partnerAdviceSpeech partner characterReaction" data-role="character-reaction" aria-live="polite"></div><div class="partnerAdviceSpeech partner" aria-live="polite"></div><div class="partnerAdviceSpeech player" aria-live="polite"></div><section class="partnerAdviceTutorialConversation" data-role="tutorial-experience-conversation" aria-live="polite" hidden><div class="partnerAdviceTutorialQuestion" data-role="tutorial-experience-question"></div><div class="partnerAdviceTutorialChoices" data-role="tutorial-experience-choices"></div><button type="button" class="partnerAdviceTutorialSkip" data-role="tutorial-experience-skip" hidden>このまま進む</button></section><button type="button" class="partnerAdviceTutorialReplay" aria-pressed="false">操作を再確認</button><button type="button" class="partnerAdviceQuickReply">まかせた！</button>';
+    root.innerHTML = '<div class="partnerAdviceRoleControl"><span>アドバイスパートナー</span><strong data-role="advice-partner-name">パートナー</strong><button type="button" class="partnerAdvicePartnerSwitch" aria-label="アドバイスパートナーを変更">↻</button></div><div class="partnerAdviceLaneProgress" aria-label="3列の現在進行値"><div class="partnerAdviceLane" data-lane="L"><span>左列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="C"><span>中央列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="R"><span>右列</span><b>—</b></div></div><div class="partnerAdviceSpeech partner characterReaction" data-role="character-reaction" aria-live="polite"></div><div class="partnerAdviceSpeech partner" aria-live="polite"></div><div class="partnerAdviceSpeech player" aria-live="polite"></div><section class="partnerAdviceTutorialConversation" data-role="tutorial-experience-conversation" aria-live="polite" hidden><div class="partnerAdviceTutorialQuestion" data-role="tutorial-experience-question"></div><div class="partnerAdviceTutorialChoices" data-role="tutorial-experience-choices"></div><button type="button" class="partnerAdviceTutorialSkip" data-role="tutorial-experience-skip" hidden>このまま進む</button></section><button type="button" class="partnerAdviceTutorialReplay" aria-pressed="false">操作を再確認</button>';
     const statusNode = host.querySelector('.partnerDecisionStatus');
     host.insertBefore(root, statusNode || host.firstChild);
   }
@@ -1206,6 +1273,8 @@ if (battleSurface) {
   if (root.parentNode !== battleSurface) battleSurface.appendChild(root);
   root.dataset.battleAdviceOverlay = 'true';
   root.dataset.presentationOnly = 'true';
+  const unifiedSurface = unifyBattlePartnerPresentation({ doc, root, legacyHost: host });
+  root.dataset.partnerAdviceUnified = unifiedSurface.ok ? 'true' : 'false';
 } else {
   delete root.dataset.battleAdviceOverlay;
 }

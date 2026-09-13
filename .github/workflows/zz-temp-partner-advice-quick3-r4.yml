@@ -72,18 +72,18 @@ jobs:
           replacements.append((old_switch, new_switch, 'switch'))
 
           old_delegate = "source = replace_once(source, delegate_receipt_old, delegate_receipt_new, 'quick3-delegate-clear')"
-          new_delegate = '''delegate_start_token = "  const button = root.querySelector('.partnerAdviceQuickReply');"
-          delegate_end_token = "  const tutorialButton = root.querySelector('.partnerAdviceTutorialReplay');"
-          delegate_start = source.find(delegate_start_token)
-          delegate_end = source.find(delegate_end_token, delegate_start)
-          if delegate_start < 0 or delegate_end < 0 or source.find(delegate_start_token, delegate_start + 1) >= 0:
-              raise RuntimeError('quick3-delegate-clear: unique delegation region not found')
-          delegate_segment = source[delegate_start:delegate_end]
-          delegate_needle = "      lastReceipt = receipt;\\n"
-          if delegate_segment.count(delegate_needle) != 1:
-              raise RuntimeError('quick3-delegate-clear: receipt anchor not unique in delegation region')
-          delegate_segment = delegate_segment.replace(delegate_needle, "      quickRoutes.clear();\\n" + delegate_needle, 1)
-          source = source[:delegate_start] + delegate_segment + source[delegate_end:]'''
+          new_delegate = '''commit_token = "      const receipt = quickReply.commit(replyId);\\n"
+          commit_pos = source.find(commit_token)
+          if commit_pos < 0 or source.find(commit_token, commit_pos + 1) >= 0:
+              raise RuntimeError('quick3-delegate-clear: unique commit anchor not found')
+          receipt_needle = "      lastReceipt = receipt;\\n"
+          receipt_pos = source.find(receipt_needle, commit_pos)
+          if receipt_pos < 0:
+              raise RuntimeError('quick3-delegate-clear: receipt assignment not found after commit')
+          next_commit = source.find(commit_token, commit_pos + 1)
+          if next_commit >= 0 and receipt_pos > next_commit:
+              raise RuntimeError('quick3-delegate-clear: receipt assignment escaped commit handler')
+          source = source[:receipt_pos] + "      quickRoutes.clear();\\n" + source[receipt_pos:]'''
           replacements.append((old_delegate, new_delegate, 'delegate'))
 
           for old, new, label in replacements:

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CURRENT-ACTION-VISUAL-R3-20260914T0236-SOL-SA11",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CURRENT_ACTION_WAIT_OWNER_REASON_AUTOMATED_VISUAL_R3",
+  "acquireKey": "BATTLE-CURRENT-ACTION-VISUAL-R3-20260914T0236-SOL-SA11",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_2B2C9AE_AND_ACTIVE_LEASE_ROW1390_20260914T0236JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "BFIE_EXACT_PUBLIC_TRACE_PLUS_EXISTING_LEGAL_DECK_AND_VISIBLE_SETUP_HELPERS",
+  "proceedToken": "PROCEED|BATTLE-CURRENT-ACTION-VISUAL-R3-20260914T0236-SOL-SA11|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|targeted-public-battle-visual-evidence|667x375|no-product-mutation",
+  "authorizationBaseSha": "2b2c9aefa9ace0c9c78f56ed293e755b7808806d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CURRENT_ACTION_WAIT_OWNER_REASON_AUTOMATED_VISUAL_R3",
+  "leaseAcquireKey": "BATTLE-CURRENT-ACTION-VISUAL-R3-20260914T0236-SOL-SA11",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 02:36 JST",
+  "leaseUntilJst": "2026-09-14 03:36 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1390:L1390",
+  "leaseExactMutableResources": ".github/workflows/zz-temp-battle-current-action-visual-r3.yml; data/preaction-authorizations/BATTLE-CURRENT-ACTION-VISUAL-R3-20260914T0236-SOL-SA11.json",
+  "scope": [
+    ".github/workflows/zz-temp-battle-current-action-visual-r3.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/zz-temp-battle-current-action-visual-r3.yml"
+  ],
+  "solutionSignature": "targeted_public_battle_current_action_visual_probe_667x375",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "EXISTING_BROWSER_FULL_INTERACTION_PUBLIC_ORIGIN_BINDING",
+    "EXISTING_INSTALL_LEGAL_BATTLE_DECK_HELPER",
+    "EXISTING_VISIBLE_HOME_SETUP_TWO_PLAYER_BATTLE_PATH",
+    "EXISTING_ACTIONS_UPLOAD_ARTIFACT_EVIDENCE_PATTERN"
+  ],
+  "reuseDecisionEvidenceId": "ADAPT_EXISTING_BFIE_PATH_TO_SKIP_UNRELATED_HOME_CARDS_BLOCKER_ONLY",
+  "notes": "Evidence-only branch. Product/runtime/test/build/gameplay/rules/state/save/economy/network files are read-only. Target is exact public build currently served at the stable Pages origin; the run records observed build SHA and fails closed on missing current-action surface. Human physical Android acceptance is separate."
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CAMERA-WU63-RAIL-REPAIR-R2-20260914T0342-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CAMERA_WU63_667_RAIL_REACHABILITY_REPAIR_R2",
+  "acquireKey": "BATTLE-CAMERA-WU63-RAIL-REPAIR-R2-20260914T0342-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "EXACT-MAIN-1BC6B87-WU63-R1-PRODUCT0-ADOPTION",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "ACTIONS-34772672407-CANDIDATE-G-667X375-OFFSCREEN-EMPTY",
+  "proceedToken": "PROCEED|BATTLE-CAMERA-WU63-RAIL-REPAIR-R2-20260914T0342-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|reservation-plus10-short-landscape-inset|CURRENT_ACTIVE_LEASES!A1399:L1399",
+  "authorizationBaseSha": "1bc6b87b4ccbf56886f86f2808b47533ea75b99c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CAMERA_WU63_667_RAIL_REACHABILITY_REPAIR_R2",
+  "leaseAcquireKey": "BATTLE-CAMERA-WU63-RAIL-REPAIR-R2-20260914T0342-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 03:42 JST",
+  "leaseUntilJst": "2026-09-14 04:42 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1399:L1399",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main 1bc6b87b4ccbf56886f86f2808b47533ea75b99c; mutable browser/GAMEROAD.html; tests/browser-static-check.mjs only if needed for static canary; transient .github/workflows/zz-temp-battle-wu63-667-rail-r2.yml; own transient data/preaction-authorizations/BATTLE-CAMERA-WU63-RAIL-REPAIR-R2-20260914T0342-SOL.json; own branch/PR/check/merge/readback. Prior R1 lease expired 03:17 and branch is product0 versus merge-base; donor evidence-only workflow/artifact READ_ONLY. READ_ONLY gameplay/rules/target/legality/card identity/save/economy/network; camera semantic core/input; all other active WorkUnit files.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    ".github/workflows/zz-temp-battle-wu63-667-rail-r2.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    ".github/workflows/zz-temp-battle-wu63-667-rail-r2.yml"
+  ],
+  "solutionSignature": "Adapt the existing short-landscape #battleAdvanceReservation presentation in place by the already-rehearsed minimal +10px vertical inset so visible auxiliary rows remain fully inside 667x375; preserve Battle rail geometry, camera FOLLOW_CONTROLLED semantics, ordinary hand geometry, gameplay and input authority.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "WU63-R1-RUN34772672407-CANDIDATE-G-DIRECT-ACTUAL",
+  "solutionSearchEvidence": [
+    "R1 direct 667x375 actual evidence on its fresh-main checkout showed exactly one residual offscreen element: .arRow y=-10 while battleRail stayed inside the viewport.",
+    "The same run injected only #battleAdvanceReservation translateY(10px), after which offscreen=[] and camera mode remained FOLLOW_CONTROLLED.",
+    "R1 branch is product0 relative to its merge base except transient workflow/PRE_ACTION, so R2 must replay the evidence-backed presentation delta from fresh current main rather than merge stale branch history."
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-PHYSICAL-CARD-LINEAGE-R2-20260914T0134-SOL-I2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_FOCUS_PHYSICAL_CARD_LINEAGE_R2",
+  "acquireKey": "BATTLE-JANKEN-PHYSICAL-CARD-LINEAGE-R2-20260914T0134-SOL-I2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_E2B8D01D_CURRENT_RELATION_GATE_R3_ACTIVE_LEASE_A1369_AND_EXACT_CARD_CATALOG_SCHEMA_20260914T0134JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_FOCUS_RUNTIME_TEST_SUITE_PLUS_EXACT_CARDID_CATALOG_JOIN_AND_EXISTING_CARDS_FACE_GRAMMAR",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-PHYSICAL-CARD-LINEAGE-R2-20260914T0134-SOL-I2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|physical-card-lineage|focus-surface-test|active-lease",
+  "authorizationBaseSha": "e2b8d01d1ce8c99993b53515e685cf1fa653b468",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_FOCUS_PHYSICAL_CARD_LINEAGE_R2",
+  "leaseAcquireKey": "BATTLE-JANKEN-PHYSICAL-CARD-LINEAGE-R2-20260914T0134-SOL-I2",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 01:34 JST",
+  "leaseUntilJst": "2026-09-14 02:34 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1369:L1369",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main; mutable browser/battle-janken-focus-runtime-surface.mjs; tests/battle-janken-focus-runtime-surface.test.mjs; own transient data/preaction-authorizations/BATTLE-JANKEN-PHYSICAL-CARD-LINEAGE-R2-20260914T0134-SOL-I2.json; own branch/PR/check/merge/readback only. READ_ONLY browser/GAMEROAD.html; browser/battle-janken-slidepad-runtime-mount.mjs; battle-screen runtime; gameplay/rules/target/legality/route/Shield/Hand3 assignment/card identity authority/save/economy/network/build.",
+  "solutionSignature": "BATTLE_JANKEN_EXISTING_FOCUS_PHYSICAL_CARD_LINEAGE_PRESENTATION_ADAPT_V2",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_RPS_PHYSICAL_CARD_LINEAGE_GATE_REUSES_EXISTING_PACKAGE_CARDID_GLOBAL_CARD_DATA_AND_CARDS_FACE_GRAMMAR",
+  "solutionSearchEvidence": [
+    "Fresh CURRENT relation gate requires R/S/P to remain secondary roles on the same physical card identity from reserved slot through JANKEN_FOCUS and LOAD_FOCUS; abstract cardId plus gesture icon is not a valid positive baseline.",
+    "Existing JANKEN_FOCUS package already carries the authoritative physical cardId; target, legality, route, Shield mapping and commit semantics remain untouched.",
+    "Existing SlidePad and GAMEROAD browser already use globalThis.__CARD_DATA__ as the exact card catalog keyed by id, so the Focus surface can reuse that same catalog without adding a second card authority or changing SlidePad.",
+    "Current catalog exposes id, display_name, suit, rank, power and authority but no formal art URL; therefore the UI preserves exact identity fields and explicitly reports art unavailable rather than inventing art.",
+    "Existing Cards screen face grammar presents native suit, printed rank and display_name; R/P/S is retained only as a secondary role badge. Opening7 to first RPS3 selection remains unresolved and is not synthesized by this presentation WorkUnit."
+  ],
+  "scope": [
+    "browser/battle-janken-focus-runtime-surface.mjs",
+    "tests/battle-janken-focus-runtime-surface.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-focus-runtime-surface.mjs",
+    "tests/battle-janken-focus-runtime-surface.test.mjs"
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-REPLAY-FORMAL-WINNER-R15-20260913T1912-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_SINGLE_HTML_PLAYER_PATH_INTEGRATION_R1",
+  "acquireKey": "BATTLE-REPLAY-FORMAL-WINNER-R15-20260913T1912-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1609_LEASE_SCOPE_INVALID_AFTER_A_L_FIX_PRODUCT_UNMERGED",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "RUN34750595017_FOCUSED_REPLAY_STATIC_PUBLIC_BUILD_SUCCESS",
+  "proceedToken": "PROCEED|BATTLE-REPLAY-FORMAL-WINNER-R15-20260913T1912-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|replay-formal-winner-public-package|active-lease",
+  "authorizationBaseSha": "42d76ff5145207964329a67f0048cf9849220dba",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_SINGLE_HTML_PLAYER_PATH_INTEGRATION_R1",
+  "leaseAcquireKey": "BATTLE-REPLAY-FORMAL-WINNER-R15-20260913T1912-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-13 19:12 JST",
+  "leaseUntilJst": "2026-09-13 20:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1331:L1331",
+  "leaseExactMutableResources": "browser/battle-replay-live-adapter.mjs; tests/battle-replay-live-adapter.test.mjs; deploy/cloudflare/tests/build.test.mjs replay-adapter currentBlob pin only; data/preaction-authorizations/BATTLE-REPLAY-FORMAL-WINNER-R15-20260913T1912-SOL.json; branch sol/battle-replay-formal-winner-r15-20260913; PR/check/main merge/readback. browser/GAMEROAD.html and gameplay/rules/save/network READ_ONLY.",
+  "solutionSignature": "BATTLE_REPLAY_FORMAL_WINNER_PUBLIC_PACKAGE_CLOSURE_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1609_EXACT_TESTED_THREE_FILE_DONOR",
+  "solutionSearchEvidence": [
+    "PR1609 and PR1608 preserve the exact tested three-file product delta.",
+    "Temporary writer run 34750595017 passed focused replay test, browser static check, public package build test, and bounded diff.",
+    "PR1608 exposed the A:L snapshot-ref requirement; PR1609 exposed the leaseScope requirement before any product test ran.",
+    "R15 fixes only authorization provenance and reuses the same tested product blobs without redesign."
+  ],
+  "scope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

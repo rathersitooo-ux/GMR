@@ -620,7 +620,7 @@ test('Free4P replay competition ranking skips after a loser tie and is independe
   });
 });
 
-test('Free4P formal ranking fails closed on rank, winner, duplicate-id, range, and mode mismatches', () => {
+test('Free4P formal ranking trusts formal winner ids and fails closed on rank, duplicate-id, range, and mode mismatches', () => {
   const base = [
     { id: 'P1', rank: 1, maxColumn: 7 },
     { id: 'P2', rank: 2, maxColumn: 6 },
@@ -634,10 +634,16 @@ test('Free4P formal ranking fails closed on rank, winner, duplicate-id, range, a
     formalRanking: base.map(row => row.id === 'P3' ? { ...row, rank: 4 } : row)
   }), /MATCH_END_FORMAL_RANK_MISMATCH/);
 
-  assert.throws(() => appendAcceptedMatchEnd(initial(), {
+  const roadCompleteNonWinner = appendAcceptedMatchEnd(initial(), {
     winnerIds: ['P1'], round: 1, mode: '4p',
-    formalRanking: base.map(row => row.id === 'P2' ? { ...row, maxColumn: 7, rank: 1 } : row)
-  }), /MATCH_END_FORMAL_WINNER_MISMATCH/);
+    formalRanking: base.map(row => row.id === 'P2' ? { ...row, maxColumn: 7 } : row)
+  });
+  const roadCompleteNonWinnerEnd = readLiveReplay(roadCompleteNonWinner).events.at(-1).publicData;
+  assert.deepEqual(roadCompleteNonWinnerEnd.winnerIds, ['P1']);
+  assert.equal(
+    roadCompleteNonWinnerEnd.formalRanking.find(row => row.id === 'P2').maxColumn,
+    7
+  );
 
   assert.throws(() => appendAcceptedMatchEnd(initial(), {
     winnerIds: ['P1'], round: 1, mode: '4p',

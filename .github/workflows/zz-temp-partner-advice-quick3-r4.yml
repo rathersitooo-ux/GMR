@@ -35,6 +35,8 @@ jobs:
           end = workflow.index("\n          PY\n", start)
           script = textwrap.dedent(workflow[start:end])
 
+          replacements = []
+
           old_projection = "source = replace_once(source, projection_old, projection_new, 'quick3-projection')"
           new_projection = '''projection_start_token = "    const projection = projectPartnerAdviceChatPresentation({"
           projection_end_token = "    const tutorialStatus = tutorialReplay.refresh();"
@@ -43,9 +45,7 @@ jobs:
           if projection_start < 0 or projection_end < 0 or source.find(projection_start_token, projection_start + 1) >= 0:
               raise RuntimeError('quick3-projection: unique structural interval not found')
           source = source[:projection_start] + projection_new + source[projection_end:]'''
-          if script.count(old_projection) != 1:
-              raise RuntimeError(f'R2 projection patch statement count={script.count(old_projection)}')
-          script = script.replace(old_projection, new_projection, 1)
+          replacements.append((old_projection, new_projection, 'projection'))
 
           old_events = "source = replace_once(source, tutorial_choices_anchor, events + tutorial_choices_anchor, 'quick3-events')"
           new_events = '''first_tutorial_choices = source.find(tutorial_choices_anchor)
@@ -54,9 +54,42 @@ jobs:
           if first_tutorial_choices < 0 or second_tutorial_choices < 0 or third_tutorial_choices >= 0:
               raise RuntimeError('quick3-events: expected exactly two tutorialChoices anchors')
           source = source[:second_tutorial_choices] + events + source[second_tutorial_choices:]'''
-          if script.count(old_events) != 1:
-              raise RuntimeError(f'R2 event patch statement count={script.count(old_events)}')
-          script = script.replace(old_events, new_events, 1)
+          replacements.append((old_events, new_events, 'events'))
+
+          old_switch = "source = replace_once(source, role_switch_old, role_switch_new, 'quick3-partner-switch-clear')"
+          new_switch = '''switch_start_token = "    switchButton.addEventListener('click', () => {"
+          switch_end_token = "    });"
+          switch_start = source.find(switch_start_token)
+          switch_end = source.find(switch_end_token, switch_start)
+          if switch_start < 0 or switch_end < 0 or source.find(switch_start_token, switch_start + 1) >= 0:
+              raise RuntimeError('quick3-partner-switch-clear: unique switch handler not found')
+          switch_segment = source[switch_start:switch_end]
+          switch_needle = "      lastCharacterReaction = null;\\n"
+          if switch_segment.count(switch_needle) != 1:
+              raise RuntimeError('quick3-partner-switch-clear: reaction-clear anchor not unique in switch handler')
+          switch_segment = switch_segment.replace(switch_needle, switch_needle + "      quickRoutes.clear();\\n", 1)
+          source = source[:switch_start] + switch_segment + source[switch_end:]'''
+          replacements.append((old_switch, new_switch, 'switch'))
+
+          old_delegate = "source = replace_once(source, delegate_receipt_old, delegate_receipt_new, 'quick3-delegate-clear')"
+          new_delegate = '''delegate_start_token = "  const button = root.querySelector('.partnerAdviceQuickReply');"
+          delegate_end_token = "  const tutorialButton = root.querySelector('.partnerAdviceTutorialReplay');"
+          delegate_start = source.find(delegate_start_token)
+          delegate_end = source.find(delegate_end_token, delegate_start)
+          if delegate_start < 0 or delegate_end < 0 or source.find(delegate_start_token, delegate_start + 1) >= 0:
+              raise RuntimeError('quick3-delegate-clear: unique delegation region not found')
+          delegate_segment = source[delegate_start:delegate_end]
+          delegate_needle = "      lastReceipt = receipt;\\n"
+          if delegate_segment.count(delegate_needle) != 1:
+              raise RuntimeError('quick3-delegate-clear: receipt anchor not unique in delegation region')
+          delegate_segment = delegate_segment.replace(delegate_needle, "      quickRoutes.clear();\\n" + delegate_needle, 1)
+          source = source[:delegate_start] + delegate_segment + source[delegate_end:]'''
+          replacements.append((old_delegate, new_delegate, 'delegate'))
+
+          for old, new, label in replacements:
+              if script.count(old) != 1:
+                  raise RuntimeError(f'R2 {label} patch statement count={script.count(old)}')
+              script = script.replace(old, new, 1)
 
           exec(compile(script, '<quick3-r4-product-patch>', 'exec'), {})
           PY

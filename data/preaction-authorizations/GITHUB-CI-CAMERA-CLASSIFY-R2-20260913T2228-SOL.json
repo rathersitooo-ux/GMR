@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GITHUB-CI-CAMERA-CLASSIFY-R2-20260913T2228-SOL",
+  "taskId": "GITHUB-CI-BROWSER-NODE-001",
+  "workUnitKey": "BROWSER_REQUIRED_GATE_CAMERA_TEST_CLASSIFICATION_R1",
+  "acquireKey": "GITHUB-CI-CAMERA-CLASSIFY-R2-20260913T2228-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1611_REQUIRED_GATE_UNCLASSIFIED_BATTLE_CAMERA_TEST_PLUS_MIXED_HISTORY_RECOVERY",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CLEAN_HISTORY_ONE_EXISTING_BROWSER_CLASSIFICATION_PATH_ONLY",
+  "proceedToken": "PROCEED|GITHUB-CI-CAMERA-CLASSIFY-R2-20260913T2228-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|required-gate|camera-test-browser-classification-clean-history",
+  "authorizationBaseSha": "65c96195ca8eaf090fdb29e7253ab55499a18d9e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-CI-BROWSER-NODE-001",
+  "leaseWorkUnitKey": "BROWSER_REQUIRED_GATE_CAMERA_TEST_CLASSIFICATION_R1",
+  "leaseAcquireKey": "GITHUB-CI-CAMERA-CLASSIFY-R2-20260913T2228-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-13 22:28 JST",
+  "leaseUntilJst": "2026-09-13 23:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1339:N1339",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh successor branch from exact current main 65c96195ca8eaf090fdb29e7253ab55499a18d9e; mutable .github/workflows/gameroad-required-gate.yml; own transient data/preaction-authorizations/GITHUB-CI-CAMERA-CLASSIFY-R2-20260913T2228-SOL.json; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; tests/battle-camera-live-integration.test.mjs; camera core/input/runtime; product/gameplay/rules/save/network; fail-closed fallback.",
+  "solutionSignature": "required-gate-camera-test-classify-r2|clean-history|reuse-existing-browser-lane|one-path-only|fail-closed-preserved",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R1_INTENT_VALID_BUT_PR1611_HISTORY_INVALID_CURRENT_MAIN_CLASSIFIER_STILL_MISSING_EXACT_PATH",
+  "solutionSearchEvidence": [
+    "PR#1611 current head 676b8daa58510c68311b14635e576ce7a6c315e0 still contains the camera product diff and a later CI-classification task in one history.",
+    "Required Gate run 34753994831 fails PRE_ACTION scope and unclassified executable/CI path checks.",
+    "Current main 65c96195ca8eaf090fdb29e7253ab55499a18d9e still classifies browser/** and tests/browser-* but not tests/battle-camera-live-integration.test.mjs.",
+    "The prior R1 intended repair was exactly one browser-classification path; no new lane, job, test, product runtime, or gameplay change is needed.",
+    "Fail-closed fallback and all other path classes remain unchanged."
+  ],
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ]
+}

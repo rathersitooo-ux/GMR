@@ -9,39 +9,35 @@ permissions:
   contents: read
 
 jobs:
-  inspect-source:
+  inspect-cascade:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Extract exact advance-reservation and rail contexts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Inspect live CSS cascade for short-landscape rail
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p visual-evidence/wu63-r1
-          python3 - <<'PY'
-          from pathlib import Path
-          src=Path('browser/GAMEROAD.html').read_text()
-          test=Path('tests/browser-static-check.mjs').read_text()
-          needles=['battleAdvanceReservation','advanceReservation','arRow','gameroad-battle-visual-first-r4','.battleRail{top:144px','.battleRail{top:','battleRail{top:']
-          chunks=[]
-          for label,text in [('HTML',src),('STATIC',test)]:
-              for needle in needles:
-                  start=0;n=0
-                  while True:
-                      i=text.find(needle,start)
-                      if i<0: break
-                      n+=1
-                      lo=max(0,i-2600);hi=min(len(text),i+5200)
-                      chunks.append(f'===== {label} {needle} occurrence {n} @ {i} =====\n'+text[lo:hi])
-                      start=i+len(needle)
-                      if n>=30: break
-          out='\n\n'.join(chunks)
-          Path('visual-evidence/wu63-r1/advance-source-context.txt').write_text(out)
-          print('contexts',len(chunks))
-          PY
+          mkdir -p .wu63-r1 visual-evidence/wu63-r1 test-results/wu63-r1
+          cat > .wu63-r1/playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({testDir:'.',testMatch:'cascade.spec.mjs',outputDir:'../test-results/wu63-r1',timeout:90000,expect:{timeout:7000},workers:1,retries:0,use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,viewport:{width:667,height:375},hasTouch:true},webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1',cwd:new URL('../',import.meta.url).pathname,url:'http://127.0.0.1:4173/browser/GAMEROAD.html',reuseExistingServer:false,timeout:120000}});
+          EOF
+          cat > .wu63-r1/cascade.spec.mjs <<'EOF'
+          import { test, expect } from '@playwright/test'; import fs from 'node:fs'; import path from 'node:path';
+          async function deck(page){return page.evaluate(()=>{const t=window.__GAMEROAD_TEST__;const pub=new Set(t.deckPublic().filter(c=>c.slot==='main').map(c=>c.id));const ids=window.__CARD_DATA__.filter(c=>pub.has(c.id)&&/^(SP|HT|DI|CL)$/.test(c.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c=>c.id);const royal=['SP_J','SP_Q','SP_K'];const non=ids.filter(id=>!t.isRoyalCard(id));t.deckSetDraft([...non.slice(0,37),...royal],[]);const v=t.deckValidate(t.state.deckDraft,{forBattle:true});return v.ok?t.deckCommit():false})}
+          test('cascade',async({page})=>{const rr=await page.goto('/browser/GAMEROAD.html',{waitUntil:'commit'});expect(rr?.ok()).toBeTruthy();await expect(page.locator('section[data-screen="home"]')).toBeVisible({timeout:15000});expect(await deck(page)).toBeTruthy();await page.locator('[data-home-target="setup"]:visible,[data-go="setup"]:visible').first().click();const setup=page.locator('section[data-screen="setup"]');await expect(setup).toBeVisible();await setup.locator('[data-content="road_shield"]').click();await setup.locator('[data-mode="2p"]').click();await setup.locator('#startMatch').click();await expect(page.locator('section[data-screen="battle"]')).toBeVisible();const data=await page.evaluate(()=>{const rail=document.querySelector('section.battle.active .battleRail');const reservation=document.querySelector('#battleAdvanceReservation');const matches=[];const visit=(rules,media='all',styleId='')=>{for(const rule of rules){if(rule.type===CSSRule.MEDIA_RULE){visit(rule.cssRules,rule.conditionText,styleId);continue}if(!rule.selectorText)continue;let ok=false;try{ok=rail.matches(rule.selectorText)}catch{}if(ok)matches.push({styleId,media,mediaMatches:media==='all'||matchMedia(media).matches,selector:rule.selectorText,css:rule.style.cssText,top:rule.style.getPropertyValue('top'),topPriority:rule.style.getPropertyPriority('top'),bottom:rule.style.getPropertyValue('bottom'),bottomPriority:rule.style.getPropertyPriority('bottom'),transform:rule.style.getPropertyValue('transform'),transformPriority:rule.style.getPropertyPriority('transform')})}};for(const sh of document.styleSheets){let rules;try{rules=sh.cssRules}catch{continue}visit(rules,'all',sh.ownerNode?.id||sh.href||'inline')}const cs=getComputedStyle(rail),r=rail.getBoundingClientRect(),p=rail.offsetParent,pc=getComputedStyle(p),pr=p.getBoundingClientRect();return{matches,rail:{style:rail.getAttribute('style'),computed:{top:cs.top,bottom:cs.bottom,transform:cs.transform,display:cs.display,position:cs.position},rect:{x:r.x,y:r.y,w:r.width,h:r.height},offsetTop:rail.offsetTop,offsetParent:{id:p.id,cls:p.className,rect:{x:pr.x,y:pr.y,w:pr.width,h:pr.height},position:pc.position}},reservation:reservation?{outerHTML:reservation.outerHTML.slice(0,2000),computed:{display:getComputedStyle(reservation).display,position:getComputedStyle(reservation).position},rect:(()=>{const q=reservation.getBoundingClientRect();return{x:q.x,y:q.y,w:q.width,h:q.height}})()}:null};});console.log(JSON.stringify(data,null,2));fs.writeFileSync(path.resolve('visual-evidence/wu63-r1/cascade.json'),JSON.stringify(data,null,2));});
+          EOF
+          npx playwright test --config=.wu63-r1/playwright.config.mjs --workers=1
       - uses: actions/upload-artifact@v4
         with:
-          name: battle-wu63-r1-advance-source-${{ github.run_id }}
-          path: visual-evidence/wu63-r1/advance-source-context.txt
+          name: battle-wu63-r1-cascade-${{ github.run_id }}
+          path: visual-evidence/wu63-r1/cascade.json
           retention-days: 14

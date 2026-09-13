@@ -147,6 +147,20 @@ test('JANKEN_FOCUS exposes exactly one target-rail switch for each authoritative
   assert.equal(runtime.snapshot().presentation.surface, 'LOAD_FOCUS');
 });
 
+test('JANKEN_FOCUS uses centered flower-bloom presentation with a reduced-motion static fallback', () => {
+  const { documentRef, runtime } = mount();
+  assert.match(runtime.host.innerHTML, /grJankenFocusPanel grJankenFocusBloomPanel/);
+  assert.match(runtime.host.innerHTML, /data-janken-focus-visual="flower-bloom"/);
+  const style = documentRef.head.children.find((child) => child.attributes.has('data-gr-janken-focus-surface-style'));
+  assert.ok(style);
+  assert.match(style.textContent, /\.grJankenFocusBloomPanel\{top:50%;bottom:auto/);
+  assert.match(style.textContent, /@keyframes grJankenFocusPetalBloom/);
+  assert.match(style.textContent, /nth-child\(1\).*animation-delay:0ms/);
+  assert.match(style.textContent, /nth-child\(2\).*animation-delay:35ms/);
+  assert.match(style.textContent, /nth-child\(3\).*animation-delay:70ms/);
+  assert.match(style.textContent, /prefers-reduced-motion:reduce/);
+});
+
 test('focus delegates to the existing live stack and enters enlarged LOAD_FOCUS only after its visible preview is ready', async () => {
   const liveInputStack = createLiveStack();
   const { runtime } = mount({ liveInputStack });

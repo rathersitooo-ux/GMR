@@ -724,8 +724,19 @@ function formatPartnerBattleEventLogRow(event, environment = {}) {
           : [])
         : [])
       : [];
-    const cards = publicCards.length ? `・公開カード ${publicCards.join(' / ')}` : '';
-    return `第${data.round}ラウンド・対象${data.lane}列${cards}${totals}・勝者${Number(data.winnerCount) || 0}人`;
+    const cards = publicCards.length ? `公開カード ${publicCards.join(' / ')}` : '';
+    const shield = data.shieldUsed === true ? 'Shield使用' : '';
+    const laneChanges = Array.isArray(data.laneGains)
+      ? data.laneGains.flatMap(row => nonEmptyString(row?.lane) &&
+          Number.isSafeInteger(row?.before) &&
+          Number.isSafeInteger(row?.after) &&
+          Number.isSafeInteger(row?.added)
+            ? [`${row.lane}列 ${row.before}→${row.after}${row.added > 0 ? `（+${row.added}）` : ''}`]
+            : [])
+      : [];
+    const progress = laneChanges.length ? `進行 ${laneChanges.join(' / ')}` : '';
+    const causal = [cards, `対象 ${data.lane}列`, shield, progress].filter(Boolean).join(' → ');
+    return `第${data.round}ラウンド・${causal}${totals}・勝者${Number(data.winnerCount) || 0}人`;
   }
   if (event.kind === 'match_ended') {
     const data = event.data;

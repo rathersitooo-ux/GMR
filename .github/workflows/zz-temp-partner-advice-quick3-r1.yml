@@ -1,0 +1,575 @@
+name: TEMP Partner Advice Quick3 R1
+
+on:
+  push:
+    branches:
+      - sol/partner-advice-quick3-r1-20260913
+    paths:
+      - .github/workflows/zz-temp-partner-advice-quick3-r1.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/partner-advice-quick3-r1-20260913
+          fetch-depth: 0
+      - name: Patch bounded Partner Advice quick3 surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          runtime = Path('browser/partner-advice-runtime-mount.mjs')
+          tests = Path('tests/partner-advice-runtime-mount.test.mjs')
+          build = Path('deploy/cloudflare/tests/build.test.mjs')
+
+          source = runtime.read_text()
+          anchor = "export const PARTNER_ADVICE_DELEGATE_REPLY_TEXT = DELEGATE_REPLY_TEXT;\n"
+          assert source.count(anchor) == 1
+          block = r'''
+
+          const QUICK_ROUTE_SCHEMA = 'gameroad.partner-advice-quick3-route.v1';
+          const QUICK_ROUTE_IDS = Object.freeze(['idea', 'casual', 'situation']);
+          const QUICK_ROUTE_DEFAULTS = Object.freeze({
+            idea: Object.freeze(['best_move']),
+            casual: Object.freeze(['casual']),
+            situation: Object.freeze(['situation_summary']),
+          });
+          const QUICK_ROUTE_ALLOWED_PARTS = Object.freeze({
+            idea: Object.freeze(['best_move', 'forecast_public', 'win_path']),
+            casual: Object.freeze(['casual']),
+            situation: Object.freeze(['situation_summary', 'calculate_public']),
+          });
+          const QUICK_ROUTE_PLAYER_TEXT = Object.freeze({
+            idea: null,
+            casual: '雑談',
+            situation: '戦況報告',
+          });
+
+          function quickRouteText(value) {
+            if (typeof value !== 'string') return null;
+            const text = value.trim();
+            return text ? text.slice(0, 240) : null;
+          }
+
+          function quickRouteLanes(value) {
+            if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+            const out = {};
+            for (const lane of ['L', 'C', 'R']) {
+              const count = Number(value[lane]);
+              if (!Number.isInteger(count) || count < 0) return null;
+              out[lane] = count;
+            }
+            return Object.freeze(out);
+          }
+
+          function quickRouteFingerprint(routeId, snapshot) {
+            const partnerId = exactPresentationToken(snapshot?.partnerId);
+            const matchId = exactPresentationToken(snapshot?.matchId);
+            if (!partnerId || !matchId) return null;
+            if (routeId === 'casual') return `casual|${matchId}|${partnerId}`;
+            const lanes = quickRouteLanes(snapshot?.lanes);
+            if (!lanes) return null;
+            const round = Number.isInteger(snapshot?.round) && snapshot.round >= 0 ? snapshot.round : 'x';
+            const laneToken = `${lanes.L},${lanes.C},${lanes.R}`;
+            if (routeId === 'situation') return `situation|${matchId}|${partnerId}|${round}|${laneToken}`;
+            const adviceText = quickRouteText(snapshot?.adviceText);
+            if (routeId === 'idea' && adviceText) return `idea|${matchId}|${partnerId}|${round}|${laneToken}|${adviceText}`;
+            return null;
+          }
+
+          function resolveDefaultQuickRoutePart({ routeId, partId, snapshot, fingerprint } = {}) {
+            if (routeId === 'idea' && partId === 'best_move') return quickRouteText(snapshot?.adviceText);
+            if (routeId === 'casual' && partId === 'casual') {
+              const partnerId = exactPresentationToken(snapshot?.partnerId);
+              if (!partnerId) return null;
+              let utterance;
+              try {
+                utterance = selectApprovedPartnerIdleUtterance({
+                  partnerId,
+                  seed: `${fingerprint}:user-casual`,
+                });
+              } catch {
+                return null;
+              }
+              return utterance?.sourceState === 'approved_current' && utterance?.partnerId === partnerId
+                ? quickRouteText(utterance.text)
+                : null;
+            }
+            const lanes = quickRouteLanes(snapshot?.lanes);
+            if (routeId === 'situation' && partId === 'situation_summary' && lanes) {
+              const prefix = Number.isInteger(snapshot?.round) && snapshot.round >= 0 ? `第${snapshot.round}ラウンド。` : '';
+              return `${prefix}左列${lanes.L}、中央列${lanes.C}、右列${lanes.R}です。`;
+            }
+            if (routeId === 'situation' && partId === 'calculate_public' && lanes) {
+              const rows = [['左列', lanes.L], ['中央列', lanes.C], ['右列', lanes.R]];
+              const total = lanes.L + lanes.C + lanes.R;
+              const max = Math.max(lanes.L, lanes.C, lanes.R);
+              const leaders = rows.filter(([, value]) => value === max).map(([name]) => name).join('・');
+              return `3列の公開値合計は${total}。最も進んでいるのは${leaders}で${max}です。`;
+            }
+            return null;
+          }
+
+          export function createPartnerAdviceQuickRouteControl({
+            resolvePart = resolveDefaultQuickRoutePart,
+            onChange,
+          } = {}) {
+            if (typeof resolvePart !== 'function') throw new TypeError('resolvePart must be a function');
+            if (onChange !== undefined && typeof onChange !== 'function') throw new TypeError('onChange must be a function when provided');
+            let ideaEnabled = true;
+            let registrations = Object.fromEntries(QUICK_ROUTE_IDS.map((id) => [id, [...QUICK_ROUTE_DEFAULTS[id]]]));
+            let active = null;
+            let lastReason = null;
+            const changed = () => { if (typeof onChange === 'function') onChange(); };
+            const routeId = (value) => QUICK_ROUTE_IDS.includes(value) ? value : null;
+            const copyRegistrations = () => Object.freeze(Object.fromEntries(
+              QUICK_ROUTE_IDS.map((id) => [id, Object.freeze([...registrations[id]])]),
+            ));
+            const build = (requestedRouteId, snapshot) => {
+              const id = routeId(requestedRouteId);
+              if (!id) return Object.freeze({ ok: false, reason: 'UNKNOWN_ROUTE' });
+              if (id === 'idea' && !ideaEnabled) return Object.freeze({ ok: false, reason: 'IDEA_DISABLED' });
+              const fingerprint = quickRouteFingerprint(id, snapshot);
+              if (!fingerprint) return Object.freeze({ ok: false, reason: 'CURRENT_PUBLIC_STATE_REQUIRED' });
+              const messages = [];
+              for (const partId of registrations[id]) {
+                let resolved;
+                try {
+                  resolved = resolvePart({ routeId: id, partId, snapshot, fingerprint });
+                } catch {
+                  return Object.freeze({ ok: false, reason: 'ROUTE_PART_FAILED', partId });
+                }
+                const text = quickRouteText(typeof resolved === 'string' ? resolved : resolved?.text);
+                if (!text) return Object.freeze({ ok: false, reason: 'ROUTE_PART_UNAVAILABLE', partId });
+                messages.push(Object.freeze({ partId, text }));
+              }
+              if (!messages.length) return Object.freeze({ ok: false, reason: 'ROUTE_EMPTY' });
+              return Object.freeze({ ok: true, routeId: id, fingerprint, messages: Object.freeze(messages) });
+            };
+            const status = () => Object.freeze({
+              schema: QUICK_ROUTE_SCHEMA,
+              ideaEnabled,
+              registrations: copyRegistrations(),
+              active: Boolean(active),
+              routeId: active?.routeId ?? null,
+              partId: active?.messages?.[active.index]?.partId ?? null,
+              text: active?.messages?.[active.index]?.text ?? null,
+              playerText: active ? QUICK_ROUTE_PLAYER_TEXT[active.routeId] : null,
+              index: active?.index ?? null,
+              total: active?.messages?.length ?? 0,
+              hasNext: Boolean(active && active.index + 1 < active.messages.length),
+              reason: lastReason,
+              presentationOnly: true,
+              saveMutated: false,
+              gameplayAuthorityMutated: false,
+              autoExecute: false,
+            });
+            return Object.freeze({
+              register(requestedRouteId, partIds) {
+                const id = routeId(requestedRouteId);
+                if (!id || !Array.isArray(partIds) || partIds.length === 0) return false;
+                const normalized = partIds.map(exactPresentationToken);
+                if (normalized.some((partId) => !partId || !QUICK_ROUTE_ALLOWED_PARTS[id].includes(partId))) return false;
+                if (new Set(normalized).size !== normalized.length) return false;
+                registrations = { ...registrations, [id]: [...normalized] };
+                if (active?.routeId === id) active = null;
+                lastReason = null;
+                changed();
+                return true;
+              },
+              resetRegistrations() {
+                registrations = Object.fromEntries(QUICK_ROUTE_IDS.map((id) => [id, [...QUICK_ROUTE_DEFAULTS[id]]]));
+                active = null;
+                lastReason = null;
+                changed();
+              },
+              setIdeaEnabled(enabled) {
+                if (typeof enabled !== 'boolean') return false;
+                if (ideaEnabled === enabled) return true;
+                ideaEnabled = enabled;
+                if (!enabled && active?.routeId === 'idea') active = null;
+                lastReason = null;
+                changed();
+                return true;
+              },
+              toggleIdea() {
+                ideaEnabled = !ideaEnabled;
+                if (!ideaEnabled && active?.routeId === 'idea') active = null;
+                lastReason = null;
+                changed();
+                return ideaEnabled;
+              },
+              canStart(requestedRouteId, snapshot) {
+                return build(requestedRouteId, snapshot).ok === true;
+              },
+              start(requestedRouteId, snapshot) {
+                const built = build(requestedRouteId, snapshot);
+                if (!built.ok) {
+                  lastReason = built.reason;
+                  return false;
+                }
+                active = Object.freeze({ ...built, index: 0 });
+                lastReason = null;
+                changed();
+                return true;
+              },
+              next(snapshot) {
+                if (!active) return false;
+                const currentFingerprint = quickRouteFingerprint(active.routeId, snapshot);
+                if (!currentFingerprint || currentFingerprint !== active.fingerprint) {
+                  active = null;
+                  lastReason = 'STALE_PUBLIC_STATE';
+                  changed();
+                  return false;
+                }
+                if (active.index + 1 >= active.messages.length) return false;
+                active = Object.freeze({ ...active, index: active.index + 1 });
+                lastReason = null;
+                changed();
+                return true;
+              },
+              refresh(snapshot) {
+                if (!active) return status();
+                const currentFingerprint = quickRouteFingerprint(active.routeId, snapshot);
+                if (!currentFingerprint || currentFingerprint !== active.fingerprint) {
+                  active = null;
+                  lastReason = 'STALE_PUBLIC_STATE';
+                  changed();
+                }
+                return status();
+              },
+              clear() {
+                if (!active && lastReason === null) return false;
+                active = null;
+                lastReason = null;
+                changed();
+                return true;
+              },
+              status,
+            });
+          }
+
+          export const PARTNER_ADVICE_QUICK_ROUTE_IDS = QUICK_ROUTE_IDS;
+          export const PARTNER_ADVICE_QUICK_ROUTE_DEFAULTS = QUICK_ROUTE_DEFAULTS;
+          '''
+          source = source.replace(anchor, anchor + block, 1)
+
+          anchor = "function currentBattleTutorialReplaySnapshot(win) {\n"
+          assert source.count(anchor) == 1
+          helper = r'''function currentBattleQuickRouteSnapshot(current) {
+            if (!current) return null;
+            return Object.freeze({
+              partnerId: current.partnerId || null,
+              matchId: current.matchId || null,
+              round: current.round ?? null,
+              lanes: current.lanes || null,
+              adviceText: current.partnerText || null,
+            });
+          }
+
+          '''
+          source = source.replace(anchor, helper + anchor, 1)
+
+          anchor = "function ensureBattleChatStyle(doc) {\n"
+          assert source.count(anchor) == 1
+          style = r'''const QUICK3_STYLE_ID = 'gameroad-partner-advice-quick3-r1-style';
+
+          function ensureBattleQuick3Style(doc) {
+            if (doc.getElementById(QUICK3_STYLE_ID)) return;
+            const style = doc.createElement('style');
+            style.id = QUICK3_STYLE_ID;
+            style.textContent = `#${CHAT_ROOT_ID} .partnerAdviceQuickRoutes{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}#${CHAT_ROOT_ID} .partnerAdviceQuickRoute{min-height:34px;padding:6px 7px;border:1px solid rgba(173,235,214,.34);border-radius:9px;background:rgba(10,45,38,.78);color:#e4fff6;font-size:9px;font-weight:950;line-height:1.15}#${CHAT_ROOT_ID} .partnerAdviceQuickRoute[aria-pressed=\"false\"]{border-color:rgba(180,190,188,.25);background:rgba(30,38,36,.72);color:#b7c2bf}#${CHAT_ROOT_ID} .partnerAdviceQuickRouteContinue{grid-column:1/-1;justify-self:start;min-height:28px;padding:4px 8px;border:1px solid rgba(255,211,126,.46);border-radius:9px;background:rgba(69,49,19,.68);color:#fff1c9;font-size:9px;font-weight:950}#${CHAT_ROOT_ID} .partnerAdviceQuickRouteContinue[hidden],#${CHAT_ROOT_ID} .partnerAdviceQuickRoutes[hidden]{display:none!important}@media(max-height:430px) and (orientation:landscape){#${CHAT_ROOT_ID} .partnerAdviceQuickRoutes{gap:3px}#${CHAT_ROOT_ID} .partnerAdviceQuickRoute{min-height:25px;padding:3px 4px;font-size:8px}#${CHAT_ROOT_ID} .partnerAdviceQuickRouteContinue{min-height:24px;padding:3px 6px;font-size:8px}}`;
+            doc.head?.append(style);
+          }
+
+          '''
+          source = source.replace(anchor, style + anchor, 1)
+
+          anchor = "  ensureBattleChatStyle(doc);\n"
+          assert source.count(anchor) == 1
+          source = source.replace(anchor, anchor + "  ensureBattleQuick3Style(doc);\n", 1)
+
+          anchor = "\n  const battleSurface = doc.querySelector('section[data-screen=\"battle\"]');\n"
+          assert source.count(anchor) == 1
+          controls = r'''
+          let quickRoutesNode = root.querySelector('.partnerAdviceQuickRoutes');
+          if (!quickRoutesNode) {
+            quickRoutesNode = doc.createElement('div');
+            quickRoutesNode.className = 'partnerAdviceQuickRoutes';
+            quickRoutesNode.setAttribute('aria-label', 'パートナー会話の3つの入口');
+            for (const [routeId, label] of [['idea', 'アイディア ON'], ['casual', '雑談'], ['situation', '戦況報告']]) {
+              const routeButton = doc.createElement('button');
+              routeButton.type = 'button';
+              routeButton.className = 'partnerAdviceQuickRoute';
+              routeButton.dataset.quickRoute = routeId;
+              routeButton.textContent = label;
+              quickRoutesNode.append(routeButton);
+            }
+            const continueButton = doc.createElement('button');
+            continueButton.type = 'button';
+            continueButton.className = 'partnerAdviceQuickRouteContinue';
+            continueButton.dataset.quickRouteContinue = 'true';
+            continueButton.textContent = '続きを聞く';
+            continueButton.hidden = true;
+            quickRoutesNode.append(continueButton);
+            const tutorialConversation = root.querySelector('[data-role="tutorial-experience-conversation"]');
+            root.insertBefore(quickRoutesNode, tutorialConversation || root.querySelector('.partnerAdviceTutorialReplay'));
+          }
+          '''
+          source = source.replace(anchor, controls + anchor, 1)
+
+          anchor = "  const characterReaction = createPartnerBattleCharacterReactionControl();\n"
+          assert source.count(anchor) == 1
+          source = source.replace(anchor, "  const quickRoutes = createPartnerAdviceQuickRouteControl();\n  win.__GAMEROAD_PARTNER_ADVICE_QUICK3__ = quickRoutes;\n" + anchor, 1)
+
+          old = """    const projection = projectPartnerAdviceChatPresentation({\n      laneProgress: current?.lanes,\n      partnerText: lastReceipt?.partnerUtterance || current?.partnerText || null,\n      playerText: lastReceipt?.playerText || null,\n    });\n"""
+          assert source.count(old) == 1
+          new = """    const quickSnapshot = currentBattleQuickRouteSnapshot(current);\n    quickRoutes.refresh(quickSnapshot);\n    let quickRouteStatus = quickRoutes.status();\n    if (!lastReceipt && quickRouteStatus.ideaEnabled && current?.partnerText && !quickRouteStatus.active) {\n      quickRoutes.start('idea', quickSnapshot);\n      quickRouteStatus = quickRoutes.status();\n    }\n    const projection = projectPartnerAdviceChatPresentation({\n      laneProgress: current?.lanes,\n      partnerText: lastReceipt?.partnerUtterance || (quickRouteStatus.ideaEnabled ? current?.partnerText || null : null),\n      playerText: lastReceipt?.playerText || null,\n    });\n"""
+          source = source.replace(old, new, 1)
+
+          old = "    const adviceSpeechActive = Boolean(projection.partnerText || projection.playerText);\n"
+          assert source.count(old) == 1
+          source = source.replace(old, "    const adviceSpeechActive = Boolean(projection.partnerText || projection.playerText || quickRouteStatus.active);\n", 1)
+
+          old = "      adviceActive: adviceSpeechActive,\n"
+          assert source.count(old) == 1
+
+          old = "    root.hidden = !projection.active && !tutorialStatus.available && !tutorialExperienceStatus.active && !reactionActive && !roleControlActive && !idleReadable.active;\n"
+          assert source.count(old) == 1
+          source = source.replace(old, "    const quickRoutesAvailable = win.__GAMEROAD_TEST__?.state?.screen === 'battle' && Boolean(current?.partnerId);\n    root.hidden = !projection.active && !tutorialStatus.available && !tutorialExperienceStatus.active && !reactionActive && !roleControlActive && !idleReadable.active && !quickRoutesAvailable;\n", 1)
+
+          old = """    const partner = root.querySelector('.partnerAdviceSpeech.partner:not(.characterReaction)');\n    if (partner) {\n      const partnerSpeechText = projection.partnerText || idleReadable.text || '';\n      const partnerSpeechActive = Boolean(projection.partnerText) || idleReadable.active;\n      partner.textContent = partnerSpeechText;\n      partner.classList.toggle('on', partnerSpeechActive);\n    }\n    const player = root.querySelector('.partnerAdviceSpeech.player');\n    if (player) {\n      player.textContent = projection.active ? projection.playerText || '' : '';\n      player.classList.toggle('on', projection.active && Boolean(projection.playerText));\n    }\n"""
+          assert source.count(old) == 1
+          new = """    const partner = root.querySelector('.partnerAdviceSpeech.partner:not(.characterReaction)');\n    if (partner) {\n      const partnerSpeechText = quickRouteStatus.active ? quickRouteStatus.text || '' : projection.partnerText || idleReadable.text || '';\n      const partnerSpeechActive = quickRouteStatus.active || Boolean(projection.partnerText) || idleReadable.active;\n      partner.textContent = partnerSpeechText;\n      partner.classList.toggle('on', partnerSpeechActive);\n    }\n    const player = root.querySelector('.partnerAdviceSpeech.player');\n    if (player) {\n      const playerSpeechText = quickRouteStatus.active ? quickRouteStatus.playerText || '' : projection.active ? projection.playerText || '' : '';\n      player.textContent = playerSpeechText;\n      player.classList.toggle('on', Boolean(playerSpeechText));\n    }\n"""
+          source = source.replace(old, new, 1)
+
+          anchor = "    const button = root.querySelector('.partnerAdviceQuickReply');\n"
+          assert source.count(anchor) == 2
+          render_insert = r'''    const quickRoutesElement = root.querySelector('.partnerAdviceQuickRoutes');
+            if (quickRoutesElement) quickRoutesElement.hidden = !quickRoutesAvailable;
+            const ideaButton = root.querySelector('[data-quick-route="idea"]');
+            if (ideaButton) {
+              ideaButton.textContent = quickRouteStatus.ideaEnabled ? 'アイディア ON' : 'アイディア OFF';
+              ideaButton.setAttribute('aria-pressed', quickRouteStatus.ideaEnabled ? 'true' : 'false');
+              ideaButton.disabled = !quickRoutesAvailable;
+            }
+            const casualButton = root.querySelector('[data-quick-route="casual"]');
+            if (casualButton) casualButton.disabled = !quickRoutesAvailable || !quickRoutes.canStart('casual', quickSnapshot);
+            const situationButton = root.querySelector('[data-quick-route="situation"]');
+            if (situationButton) situationButton.disabled = !quickRoutesAvailable || !quickRoutes.canStart('situation', quickSnapshot);
+            const routeContinue = root.querySelector('[data-quick-route-continue="true"]');
+            if (routeContinue) {
+              routeContinue.hidden = !(quickRouteStatus.active && quickRouteStatus.hasNext);
+              routeContinue.disabled = !quickRouteStatus.active || !quickRouteStatus.hasNext;
+            }
+          '''
+          source = source.replace(anchor, render_insert + anchor, 1)
+
+          anchor = "  const tutorialChoices = root.querySelector('[data-role=\"tutorial-experience-choices\"]');\n"
+          assert source.count(anchor) == 1
+          events = r'''  const quickRoutesElement = root.querySelector('.partnerAdviceQuickRoutes');
+            if (quickRoutesElement && quickRoutesElement.dataset.quickRoutesBound !== 'true') {
+              quickRoutesElement.dataset.quickRoutesBound = 'true';
+              quickRoutesElement.addEventListener('click', (event) => {
+                const continueButton = event.target?.closest?.('[data-quick-route-continue="true"]');
+                const current = currentBattleChatSnapshot(win);
+                const snapshot = currentBattleQuickRouteSnapshot(current);
+                if (continueButton) {
+                  if (quickRoutes.next(snapshot)) render();
+                  return;
+                }
+                const routeButton = event.target?.closest?.('[data-quick-route]');
+                const requestedRoute = routeButton?.dataset?.quickRoute;
+                if (requestedRoute === 'idea') {
+                  quickRoutes.toggleIdea();
+                  render();
+                  return;
+                }
+                if ((requestedRoute === 'casual' || requestedRoute === 'situation') && quickRoutes.start(requestedRoute, snapshot)) {
+                  lastReceipt = null;
+                  render();
+                }
+              });
+            }
+
+          '''
+          source = source.replace(anchor, events + anchor, 1)
+
+          old = """      lastReceipt = null;\n      lastCharacterReaction = null;\n      render();\n"""
+          assert source.count(old) == 1
+          source = source.replace(old, """      lastReceipt = null;\n      lastCharacterReaction = null;\n      quickRoutes.clear();\n      render();\n""", 1)
+
+          old = """      lastReceipt = receipt;\n      render();\n"""
+          assert source.count(old) == 1
+          source = source.replace(old, """      quickRoutes.clear();\n      lastReceipt = receipt;\n      render();\n""", 1)
+
+          old = """      if (status.active) tutorialReplay.close();\n      else tutorialReplay.open();\n      render();\n"""
+          assert source.count(old) == 1
+          source = source.replace(old, """      if (status.active) tutorialReplay.close();\n      else {\n        quickRoutes.clear();\n        tutorialReplay.open();\n      }\n      render();\n""", 1)
+
+          old = "  return Object.freeze({ root, render, tutorialReplay, tutorialExperience, characterReaction });\n"
+          assert source.count(old) == 1
+          source = source.replace(old, "  return Object.freeze({ root, render, tutorialReplay, tutorialExperience, characterReaction, quickRoutes });\n", 1)
+          runtime.write_text(source)
+
+          test_source = tests.read_text()
+          anchor = "  createPartnerAdviceRuntimeControl,\n"
+          assert test_source.count(anchor) == 1
+          test_source = test_source.replace(anchor, anchor + "  createPartnerAdviceQuickRouteControl,\n", 1)
+          test_block = r'''
+
+          test('Partner Advice quick3 keeps three fixed route families and Idea defaults ON', () => {
+            const control = createPartnerAdviceQuickRouteControl({
+              resolvePart: ({ partId }) => ({
+                best_move: '最善手です。',
+                casual: '雑談です。',
+                situation_summary: '戦況です。',
+                calculate_public: '計算です。',
+              })[partId] ?? null,
+            });
+            const status = control.status();
+            assert.equal(status.ideaEnabled, true);
+            assert.deepEqual(status.registrations, {
+              idea: ['best_move'],
+              casual: ['casual'],
+              situation: ['situation_summary'],
+            });
+            assert.equal(control.register('situation', ['situation_summary', 'calculate_public']), true);
+            assert.equal(control.register('idea', ['best_move', 'calculate_public']), false);
+            assert.equal(control.register('casual', ['casual', 'casual']), false);
+          });
+
+          test('registered route parts are spoken in order and stale public state cancels the remaining route', () => {
+            const control = createPartnerAdviceQuickRouteControl({
+              resolvePart: ({ partId }) => ({ situation_summary: 'いまの戦況。', calculate_public: '公開値の計算。' })[partId] ?? null,
+            });
+            assert.equal(control.register('situation', ['situation_summary', 'calculate_public']), true);
+            const current = { partnerId: 'partner.saasuna', matchId: 'match-1', round: 4, lanes: { L: 1, C: 2, R: 3 }, adviceText: '助言' };
+            assert.equal(control.start('situation', current), true);
+            assert.equal(control.status().text, 'いまの戦況。');
+            assert.equal(control.status().hasNext, true);
+            assert.equal(control.next(current), true);
+            assert.equal(control.status().text, '公開値の計算。');
+            assert.equal(control.status().hasNext, false);
+
+            assert.equal(control.start('situation', current), true);
+            control.refresh({ ...current, round: 5 });
+            assert.equal(control.status().active, false);
+            assert.equal(control.status().reason, 'STALE_PUBLIC_STATE');
+          });
+
+          test('Idea OFF suppresses only the Idea route and leaves Casual and Situation startable', () => {
+            const control = createPartnerAdviceQuickRouteControl({ resolvePart: ({ partId }) => `${partId}。` });
+            const current = { partnerId: 'partner.saasuna', matchId: 'match-2', round: 1, lanes: { L: 0, C: 1, R: 2 }, adviceText: '最善手' };
+            assert.equal(control.canStart('idea', current), true);
+            assert.equal(control.setIdeaEnabled(false), true);
+            assert.equal(control.status().ideaEnabled, false);
+            assert.equal(control.canStart('idea', current), false);
+            assert.equal(control.canStart('casual', current), true);
+            assert.equal(control.canStart('situation', current), true);
+            assert.equal(control.status().saveMutated, false);
+            assert.equal(control.status().gameplayAuthorityMutated, false);
+            assert.equal(control.status().autoExecute, false);
+          });
+
+          test('quick3 UI keeps まかせた separate and never makes 3つ出して a permanent fourth route button', () => {
+            const source = readFileSync(new URL('../browser/partner-advice-runtime-mount.mjs', import.meta.url), 'utf8');
+            assert.match(source, /\['idea', 'casual', 'situation'\]/);
+            assert.match(source, /\['idea', 'アイディア ON'\]/);
+            assert.match(source, /\['casual', '雑談'\]/);
+            assert.match(source, /\['situation', '戦況報告'\]/);
+            assert.match(source, /partnerAdviceQuickReply/);
+            assert.match(source, /まかせた！/);
+            assert.doesNotMatch(source, /data\.quickRoute\s*=\s*['\"]three/);
+            assert.doesNotMatch(source, /\['three-options',\s*'3つ出して'\]/);
+          });
+          '''
+          test_source = test_source.rstrip() + test_block + "\n"
+          tests.write_text(test_source)
+
+          new_blob = subprocess.check_output(['git', 'hash-object', str(runtime)], text=True).strip()
+          build_source = build.read_text()
+          old_pin = "currentBlob: '363cefd1f4ac20fe352060cb834a34bb949d59fe'"
+          assert build_source.count(old_pin) == 1
+          build_source = build_source.replace(old_pin, f"currentBlob: '{new_blob}'", 1)
+          build.write_text(build_source)
+          print(f'NEW_RUNTIME_BLOB={new_blob}')
+          PY
+      - name: Run focused tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check browser/partner-advice-runtime-mount.mjs
+          node --test tests/partner-advice-runtime-mount.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Build clean PRE_ACTION plus product commits and force-update branch
+        shell: bash
+        env:
+          BASE_SHA: 65c96195ca8eaf090fdb29e7253ab55499a18d9e
+          BRANCH: sol/partner-advice-quick3-r1-20260913
+          RECORD_ID: PARTNER-ADVICE-QUICK3-R1-20260913T2229-SOL-A7K3
+        run: |
+          set -euo pipefail
+          git config user.name gameroad-bot
+          git config user.email gameroad-bot@users.noreply.github.com
+          MANIFEST="data/preaction-authorizations/${RECORD_ID}.json"
+          mkdir -p "$(dirname "$MANIFEST")"
+          cat > "$MANIFEST" <<'JSON'
+          {
+            "schemaVersion": "gameroad-preaction-v3",
+            "recordId": "PARTNER-ADVICE-QUICK3-R1-20260913T2229-SOL-A7K3",
+            "taskId": "ADVICE_PARTNER-01",
+            "workUnitKey": "PARTNER_ADVICE_QUICK3_COMPOSITE_ROUTES_R1",
+            "acquireKey": "PARTNER-ADVICE-QUICK3-R1-20260913T2229-SOL-A7K3",
+            "riskClass": "MATERIAL_STANDARD",
+            "predictionStatus": "PASS",
+            "predictionEvidenceId": "CURRENT-Y87-QUICK3-20260913",
+            "rehearsalStatus": "N_A_ALT_ORACLE",
+            "rehearsalEvidenceId": "FOCUSED-PARTNER-ADVICE-TESTS-IN-WRITER",
+            "proceedToken": "PROCEED|PARTNER-ADVICE-QUICK3-R1-20260913T2229-SOL-A7K3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|USER_DELEGATED_MAKASETA_20260913",
+            "authorizationBaseSha": "65c96195ca8eaf090fdb29e7253ab55499a18d9e",
+            "stateModelVersion": "STATE_MODEL_V1",
+            "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+            "leaseState": "ACTIVE",
+            "leaseTaskId": "ADVICE_PARTNER-01",
+            "leaseWorkUnitKey": "PARTNER_ADVICE_QUICK3_COMPOSITE_ROUTES_R1",
+            "leaseAcquireKey": "PARTNER-ADVICE-QUICK3-R1-20260913T2229-SOL-A7K3",
+            "leaseSnapshotReadbackAtJst": "2026-09-13 22:29 JST",
+            "leaseUntilJst": "2026-09-13 23:29 JST",
+            "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1338:L1338",
+            "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/partner-advice-quick3-r1-20260913 from main 65c96195ca8eaf090fdb29e7253ab55499a18d9e; browser/partner-advice-runtime-mount.mjs; tests/partner-advice-runtime-mount.test.mjs; deploy/cloudflare/tests/build.test.mjs provenance pin only. READ_ONLY gameplay/rules/save/economy/network/GAMEROAD.html.",
+            "scope": [
+              "browser/partner-advice-runtime-mount.mjs",
+              "tests/partner-advice-runtime-mount.test.mjs",
+              "deploy/cloudflare/tests/build.test.mjs"
+            ],
+            "leaseScope": [
+              "browser/partner-advice-runtime-mount.mjs",
+              "tests/partner-advice-runtime-mount.test.mjs",
+              "deploy/cloudflare/tests/build.test.mjs"
+            ]
+          }
+          JSON
+          MANIFEST_BLOB="$(git hash-object -w "$MANIFEST")"
+          git read-tree "${BASE_SHA}^{tree}"
+          git update-index --add --cacheinfo 100644,"${MANIFEST_BLOB}","${MANIFEST}"
+          TREE1="$(git write-tree)"
+          COMMIT1="$(printf '%s\n' 'PRE_ACTION Partner Advice quick3 composite routes R1' | git commit-tree "$TREE1" -p "$BASE_SHA")"
+
+          git read-tree "$TREE1"
+          git update-index --remove "$MANIFEST"
+          git add browser/partner-advice-runtime-mount.mjs tests/partner-advice-runtime-mount.test.mjs deploy/cloudflare/tests/build.test.mjs
+          TREE2="$(git write-tree)"
+          COMMIT2="$(printf '%s\n' 'Partner Advice: 3入口と順番付き複合会話ルート R1' | git commit-tree "$TREE2" -p "$COMMIT1")"
+          git push --force origin "$COMMIT2:refs/heads/$BRANCH"
+          echo "PREACTION_COMMIT=$COMMIT1"
+          echo "PRODUCT_COMMIT=$COMMIT2"

@@ -134,6 +134,7 @@ if (!/#cameraReturnBtn\[hidden\]\{display:none!important\}/.test(html)) errors.p
 if ((html.match(/cameraState\.mode==='MANUAL_INSPECT';returnControl\.hidden=!manual/g) ?? []).length < 2) errors.push('camera return visibility is not bound to MANUAL_INSPECT at both camera projection points');
 if (!/__GAMEROAD_BATTLE_CAMERA_FIELD_ADAPTER__/.test(html) || !/mountBattleCameraLiveRuntime/.test(html)) errors.push('camera live adapter/runtime mount is missing');
 if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stateWrite:false\}/.test(html)) errors.push('camera field adapter lost gameplay-write firewall');
+  if (!/#battleMap\[data-camera-mode=["']MANUAL_INSPECT["']\] \.battleRail\{opacity:0;pointer-events:none!important;visibility:hidden\}/.test(html)) errors.push('battle rail does not yield visual and input ownership during manual camera inspect');
   errors.push(...collectHomeVisualShellErrors(html));
   const correctedBattleResourceContracts = [
     [/const hand=deck\.splice\(0,7\);/, 'fresh Battle ordinary hand is not initialized to seven'],

@@ -4408,8 +4408,10 @@ queueMicrotask(syncVisuals);
 <style id="gameroad-battle-camera-live-style">
 #battleMap[data-camera-live="1"]{touch-action:none}
 #cameraReturnBtn[hidden]{display:none!important}
-#cameraReturnBtn.cameraReturnControl{position:absolute;right:max(14px,env(safe-area-inset-right));bottom:max(108px,calc(env(safe-area-inset-bottom) + 108px));z-index:34;min-width:52px;min-height:44px;padding:0 14px;border:1px solid rgba(210,238,244,.62);border-radius:999px;background:rgba(17,49,58,.88);color:#fff;font:700 13px/1 system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.26);touch-action:manipulation}
-#cameraReturnBtn.cameraReturnControl[data-camera-mode="MANUAL_INSPECT"]{box-shadow:0 0 0 2px rgba(176,231,255,.58),0 6px 18px rgba(0,0,0,.28);background:rgba(17,66,82,.92)}
+#cameraReturnBtn[hidden]{pointer-events:none!important}
+#cameraReturnBtn.cameraReturnControl{position:absolute;right:max(10px,env(safe-area-inset-right));top:50%;transform:translateY(-50%);z-index:34;display:flex;align-items:center;justify-content:center;min-width:56px;min-height:44px;padding:0 12px;border:1px solid rgba(255,255,255,.58);border-radius:22px;background:rgba(27,31,36,.94);color:#f5f7f8;font:800 13px/1 system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.28);touch-action:manipulation;pointer-events:auto}
+#cameraReturnBtn.cameraReturnControl[data-camera-mode="MANUAL_INSPECT"]{box-shadow:0 0 0 2px rgba(255,255,255,.24),0 6px 18px rgba(0,0,0,.28)}
+#battleMap[data-camera-mode="MANUAL_INSPECT"] .battleRail{opacity:0;pointer-events:none!important;visibility:hidden}
 </style>
 <script type="module" id="gameroad-battle-camera-live">
 import { mountBattleCameraLiveRuntime } from './battle-camera-live-runtime.mjs';

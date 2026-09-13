@@ -28,13 +28,14 @@ jobs:
           from pathlib import Path
           p=Path('.github/workflows/gameroad-required-gate.yml')
           s=p.read_text(encoding='utf-8')
-          old="              tests/browser-runtime-smoke.spec.mjs|\\\\\n              playwright.config.mjs|\\\\\n"
-          new="              tests/browser-runtime-smoke.spec.mjs|\\\\\n              tests/battle-camera-live-integration.test.mjs|\\\\\n              playwright.config.mjs|\\\\\n"
-          if s.count(old)!=1:
-              raise SystemExit(f'expected one browser classification anchor, got {s.count(old)}')
+          anchor='              tests/browser-runtime-smoke.spec.mjs|'
+          insertion='              tests/battle-camera-live-integration.test.mjs|\\\n'
+          if s.count(anchor)!=1:
+              raise SystemExit(f'expected one browser runtime-smoke classification anchor, got {s.count(anchor)}')
           if 'tests/battle-camera-live-integration.test.mjs' in s:
               raise SystemExit('camera integration test already classified unexpectedly')
-          s=s.replace(old,new,1)
+          line_end=s.index('\n',s.index(anchor))+1
+          s=s[:line_end]+insertion+s[line_end:]
           if s.count('tests/battle-camera-live-integration.test.mjs')!=1:
               raise SystemExit('camera test classification count mismatch')
           if 'Fail closed on unclassified executable or CI paths' not in s:

@@ -1,0 +1,47 @@
+name: TEMP Battle Single HTML Spine R10
+
+on:
+  push:
+    branches:
+      - sol/battle-single-html-spine-r10-20260913
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect exact current anchors
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          targets = {
+            'browser/GAMEROAD.html': ['function renderTarget', 'confirmTarget', 'targetBox', 'battleCompound'],
+            'browser/battle-current-player-ui-runtime.mjs': ['targetConfirm', '#targetBox'],
+            'browser/battle-janken-slidepad-runtime-mount.mjs': ['BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS', '#targetBox'],
+            'browser/battle-replay-live-adapter.mjs': ['function publicFree4pFormalRanking', 'maxColumn', 'winnerIds'],
+            'tests/battle-replay-live-adapter.test.mjs': ['Free4P', 'winnerIds'],
+          }
+          for file, needles in targets.items():
+              text = Path(file).read_text()
+              print(f'=== {file} ===')
+              for needle in needles:
+                  print(f'--- {needle} ---')
+                  start = 0
+                  hits = 0
+                  while True:
+                      idx = text.find(needle, start)
+                      if idx < 0: break
+                      hits += 1
+                      lo = max(0, idx - 700)
+                      hi = min(len(text), idx + len(needle) + 1400)
+                      print(text[lo:hi].replace('\r',''))
+                      start = idx + len(needle)
+                      if hits >= 6: break
+                  print(f'HITS={hits}')
+          PY

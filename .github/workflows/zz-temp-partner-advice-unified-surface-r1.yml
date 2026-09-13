@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   patch-and-test:
-    if: ${{ !contains(github.event.head_commit.message, '[partner-unified-done]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,126 +24,34 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re, subprocess
-
+          import base64, re, subprocess
           runtime_path = Path('browser/partner-advice-runtime-mount.mjs')
           test_path = Path('tests/partner-advice-runtime-mount.test.mjs')
           build_path = Path('deploy/cloudflare/tests/build.test.mjs')
           source = runtime_path.read_text()
           tests = test_path.read_text()
-
+          helper = base64.b64decode('Y29uc3QgVU5JRklFRF9QQVJUTkVSX1NUWUxFX0lEID0gJ2dhbWVyb2FkLXBhcnRuZXItYWR2aWNlLXVuaWZpZWQtc3VyZmFjZS1yMSc7CgpmdW5jdGlvbiBlbnN1cmVVbmlmaWVkUGFydG5lclN1cmZhY2VTdHlsZShkb2MpIHsKICBpZiAoZG9jLmdldEVsZW1lbnRCeUlkKFVOSUZJRURfUEFSVE5FUl9TVFlMRV9JRCkpIHJldHVybjsKICBjb25zdCBzdHlsZSA9IGRvYy5jcmVhdGVFbGVtZW50KCdzdHlsZScpOwogIHN0eWxlLmlkID0gVU5JRklFRF9QQVJUTkVSX1NUWUxFX0lEOwogIHN0eWxlLnRleHRDb250ZW50ID0gYCMke0NIQVRfUk9PVF9JRH0gLnBhcnRuZXJBZHZpY2VEZWNpc2lvbkNvbnRyb2xze2dyaWQtY29sdW1uOjEvLTE7ZGlzcGxheTpncmlkO2dhcDo0cHg7cGFkZGluZzo1cHg7Ym9yZGVyOjFweCBzb2xpZCByZ2JhKDE5MCwyMjUsMjE0LC4yKTtib3JkZXItcmFkaXVzOjlweDtiYWNrZ3JvdW5kOnJnYmEoNCwyNiwyMiwuNjIpfSMke0NIQVRfUk9PVF9JRH0gLnBhcnRuZXJBZHZpY2VQcmltYXJ5QWN0aW9uc3tkaXNwbGF5OmdyaWQ7Z3JpZC10ZW1wbGF0ZS1jb2x1bW5zOjFmciAxZnI7Z2FwOjRweH0jJHtDSEFUX1JPT1RfSUR9IC5wYXJ0bmVyQWR2aWNlUHJpbWFyeUFjdGlvbnttaW4taGVpZ2h0OjM0cHg7cGFkZGluZzo1cHggN3B4O2JvcmRlcjoxcHggc29saWQgcmdiYSgxNzMsMjM1LDIxNCwuMzgpO2JvcmRlci1yYWRpdXM6OXB4O2JhY2tncm91bmQ6cmdiYSgxMCw0NSwzOCwuNzgpO2NvbG9yOiNlNGZmZjY7Zm9udC1zaXplOjlweDtmb250LXdlaWdodDo5NTB9IyR7Q0hBVF9ST09UX0lEfSAjcGFydG5lckRlbGVnYXRlQnRuLmZvcmNlZHtib3JkZXItY29sb3I6cmdiYSgyNTUsMTIzLDEwMiwuNzIpO2JhY2tncm91bmQ6cmdiYSg4MiwzNywzMCwuOSl9IyR7Q0hBVF9ST09UX0lEfSAucGFydG5lclJ1bGVMYWJlbHtkaXNwbGF5OmdyaWQ7Z3JpZC10ZW1wbGF0ZS1jb2x1bW5zOmF1dG8gbWlubWF4KDAsMWZyKTtnYXA6NXB4O2FsaWduLWl0ZW1zOmNlbnRlcjtmb250LXNpemU6OHB4O2NvbG9yOiNjZmU0ZGR9IyR7Q0hBVF9ST09UX0lEfSAucGFydG5lclJ1bGVMYWJlbCBzZWxlY3R7bWluLXdpZHRoOjA7aGVpZ2h0OjMycHg7Ym9yZGVyOjFweCBzb2xpZCByZ2JhKDIwNSwyMzksMjI4LC4yMik7Ym9yZGVyLXJhZGl1czo3cHg7YmFja2dyb3VuZDpyZ2JhKDgsMzUsMjksLjcyKTtjb2xvcjojZWZmYmY3O2ZvbnQtc2l6ZTo5cHh9IyR7Q0hBVF9ST09UX0lEfSAucGFydG5lckRlY2lzaW9uU3RhdHVze21hcmdpbjowO2ZvbnQtc2l6ZTo4cHg7bGluZS1oZWlnaHQ6MS4zO2NvbG9yOiNkOWVlZTc7d2hpdGUtc3BhY2U6cHJlLXdyYXB9IyR7Q0hBVF9ST09UX0lEfSAucGFydG5lckFkdmljZURlY2lzaW9uQ29udHJvbHM+LnN1Yntmb250LXNpemU6N3B4O2xpbmUtaGVpZ2h0OjEuMztjb2xvcjojOTFhYWEyfUBtZWRpYShtYXgtaGVpZ2h0OjQzMHB4KSBhbmQgKG9yaWVudGF0aW9uOmxhbmRzY2FwZSl7IyR7Q0hBVF9ST09UX0lEfSAucGFydG5lckFkdmljZURlY2lzaW9uQ29udHJvbHN7Z2FwOjNweDtwYWRkaW5nOjNweH0jJHtDSEFUX1JPT1RfSUR9IC5wYXJ0bmVyQWR2aWNlUHJpbWFyeUFjdGlvbnttaW4taGVpZ2h0OjI2cHg7cGFkZGluZzozcHggNXB4O2ZvbnQtc2l6ZTo4cHh9IyR7Q0hBVF9ST09UX0lEfSAucGFydG5lclJ1bGVMYWJlbCBzZWxlY3R7aGVpZ2h0OjI3cHg7Zm9udC1zaXplOjhweH0jJHtDSEFUX1JPT1RfSUR9IC5wYXJ0bmVyRGVjaXNpb25TdGF0dXMsIyR7Q0hBVF9ST09UX0lEfSAucGFydG5lckFkdmljZURlY2lzaW9uQ29udHJvbHM+LnN1Yntmb250LXNpemU6N3B4fX1gOwogIGRvYy5oZWFkPy5hcHBlbmQoc3R5bGUpOwp9CgpleHBvcnQgZnVuY3Rpb24gdW5pZnlCYXR0bGVQYXJ0bmVyUHJlc2VudGF0aW9uKHsgZG9jLCByb290LCBsZWdhY3lIb3N0IH0gPSB7fSkgewogIGlmICghZG9jIHx8ICFyb290IHx8ICFsZWdhY3lIb3N0IHx8IHJvb3QgPT09IGxlZ2FjeUhvc3QpIHsKICAgIHJldHVybiBPYmplY3QuZnJlZXplKHsgb2s6IGZhbHNlLCByZWFzb246ICdTVVJGQUNFX1JFUVVJUkVEJywgbGVnYWN5UmV0aXJlZDogZmFsc2UgfSk7CiAgfQogIGNvbnN0IGFkdmljZUJ1dHRvbiA9IGRvYy5nZXRFbGVtZW50QnlJZCgncGFydG5lckFkdmljZUJ0bicpOwogIGNvbnN0IGRlbGVnYXRlQnV0dG9uID0gZG9jLmdldEVsZW1lbnRCeUlkKCdwYXJ0bmVyRGVsZWdhdGVCdG4nKTsKICBjb25zdCBydWxlID0gZG9jLmdldEVsZW1lbnRCeUlkKCdwYXJ0bmVyUnVsZScpOwogIGNvbnN0IHJ1bGVMYWJlbCA9IHJ1bGU/LmNsb3Nlc3Q/LignLnBhcnRuZXJSdWxlTGFiZWwnKSB8fCBudWxsOwogIGNvbnN0IHN0YXR1cyA9IGRvYy5nZXRFbGVtZW50QnlJZCgncGFydG5lckRlY2lzaW9uU3RhdHVzJyk7CiAgaWYgKCFhZHZpY2VCdXR0b24gfHwgIWRlbGVnYXRlQnV0dG9uIHx8ICFydWxlTGFiZWwgfHwgIXN0YXR1cykgewogICAgcmV0dXJuIE9iamVjdC5mcmVlemUoeyBvazogZmFsc2UsIHJlYXNvbjogJ0xFR0FDWV9BVVRIT1JJVFlfQ09OVFJPTFNfUkVRVUlSRUQnLCBsZWdhY3lSZXRpcmVkOiBmYWxzZSB9KTsKICB9CgogIGxldCBjb250cm9scyA9IHJvb3QucXVlcnlTZWxlY3RvcignW2RhdGEtcm9sZT0icGFydG5lci1kZWNpc2lvbi1jb250cm9scyJdJyk7CiAgaWYgKCFjb250cm9scykgewogICAgY29udHJvbHMgPSBkb2MuY3JlYXRlRWxlbWVudCgnc2VjdGlvbicpOwogICAgY29udHJvbHMuY2xhc3NOYW1lID0gJ3BhcnRuZXJBZHZpY2VEZWNpc2lvbkNvbnRyb2xzJzsKICAgIGNvbnRyb2xzLmRhdGFzZXQucm9sZSA9ICdwYXJ0bmVyLWRlY2lzaW9uLWNvbnRyb2xzJzsKICAgIGNvbnRyb2xzLnNldEF0dHJpYnV0ZSgnYXJpYS1sYWJlbCcsICfjg5Hjg7zjg4jjg4rjg7zmk43kvZwnKTsKICAgIGNvbnN0IGFjdGlvbnMgPSBkb2MuY3JlYXRlRWxlbWVudCgnZGl2Jyk7CiAgICBhY3Rpb25zLmNsYXNzTmFtZSA9ICdwYXJ0bmVyQWR2aWNlUHJpbWFyeUFjdGlvbnMnOwogICAgYWN0aW9ucy5kYXRhc2V0LnJvbGUgPSAncGFydG5lci1wcmltYXJ5LWFjdGlvbnMnOwogICAgY29udHJvbHMuYXBwZW5kKGFjdGlvbnMpOwogICAgY29uc3QgaW5zZXJ0QmVmb3JlID0gcm9vdC5xdWVyeVNlbGVjdG9yKCcucGFydG5lckFkdmljZVF1aWNrUm91dGVzJykgfHwgcm9vdC5xdWVyeVNlbGVjdG9yKCdbZGF0YS1yb2xlPSJ0dXRvcmlhbC1leHBlcmllbmNlLWNvbnZlcnNhdGlvbiJdJykgfHwgcm9vdC5xdWVyeVNlbGVjdG9yKCcucGFydG5lckFkdmljZVR1dG9yaWFsUmVwbGF5Jyk7CiAgICByb290Lmluc2VydEJlZm9yZShjb250cm9scywgaW5zZXJ0QmVmb3JlIHx8IG51bGwpOwogIH0KICBjb25zdCBhY3Rpb25zID0gY29udHJvbHMucXVlcnlTZWxlY3RvcignW2RhdGEtcm9sZT0icGFydG5lci1wcmltYXJ5LWFjdGlvbnMiXScpOwogIGlmICghYWN0aW9ucykgcmV0dXJuIE9iamVjdC5mcmVlemUoeyBvazogZmFsc2UsIHJlYXNvbjogJ1BSSU1BUllfQUNUSU9OX1NVUkZBQ0VfUkVRVUlSRUQnLCBsZWdhY3lSZXRpcmVkOiBmYWxzZSB9KTsKCiAgZm9yIChjb25zdCBidXR0b24gb2YgW2FkdmljZUJ1dHRvbiwgZGVsZ2F0ZUJ1dHRvbl0pIHsKICAgIGJ1dHRvbi5jbGFzc0xpc3QucmVtb3ZlKCdyYWlsQnRuJyk7CiAgICBidXR0b24uY2xhc3NMaXN0LmFkZCgncGFydG5lckFkdmljZVByaW1hcnlBY3Rpb24nKTsKICAgIGFjdGlvbnMuYXBwZW5kKGJ1dHRvbik7CiAgfQogIGNvbnRyb2xzLmFwcGVuZChydWxlTGFiZWwsIHN0YXR1cyk7CiAgY29uc3Qgbm90ZSA9IGxlZ2FjeUhvc3QucXVlcnlTZWxlY3RvcignLnN1YicpOwogIGlmIChub3RlKSBjb250cm9scy5hcHBlbmQobm90ZSk7CgogIHJvb3QucXVlcnlTZWxlY3RvcignLnBhcnRuZXJBZHZpY2VRdWlja1JlcGx5Jyk/LnJlbW92ZSgpOwogIGxlZ2FjeUhvc3QuaGlkZGVuID0gdHJ1ZTsKICBsZWdhY3lIb3N0LnNldEF0dHJpYnV0ZSgnYXJpYS1oaWRkZW4nLCAndHJ1ZScpOwogIGxlZ2FjeUhvc3QuZGF0YXNldC5wYXJ0bmVyQWR2aWNlU291cmNlT25seSA9ICd0cnVlJzsKICByb290LmRhdGFzZXQucGFydG5lckFkdmljZVVuaWZpZWRTdXJmYWNlID0gJ3RydWUnOwogIHJldHVybiBPYmplY3QuZnJlZXplKHsKICAgIG9rOiB0cnVlLAogICAgcmVhc29uOiBudWxsLAogICAgbGVnYWN5UmV0aXJlZDogdHJ1ZSwKICAgIGFkdmljZUJ1dHRvbklkOiBhZHZpY2VCdXR0b24uaWQsCiAgICBkZWxlZ2F0ZUJ1dHRvbklkOiBkZWxlZ2F0ZUJ1dHRvbi5pZCwKICAgIHJ1bGVJZDogcnVsZS5pZCwKICAgIHN0YXR1c0lkOiBzdGF0dXMuaWQsCiAgICBwcmVzZW50YXRpb25Pbmx5OiB0cnVlLAogICAgZ2FtZXBsYXlBdXRob3JpdHlNdXRhdGVkOiBmYWxzZSwKICB9KTsKfQoK').decode()
+          new_test = base64.b64decode('dGVzdCgnQmF0dGxlIFBhcnRuZXIgY29udHJvbHMgY29udmVyZ2UgaW50byBvbmUgdmlzaWJsZSBzdXJmYWNlIHdpdGhvdXQgcmVwbGFjaW5nIHRoZWlyIGV4aXN0aW5nIGF1dGhvcml0eSBub2RlcycsICgpID0+IHsKICBjb25zdCBzb3VyY2UgPSByZWFkRmlsZVN5bmMobmV3IFVSTCgnLi4vYnJvd3Nlci9wYXJ0bmVyLWFkdmljZS1ydW50aW1lLW1vdW50Lm1qcycsIGltcG9ydC5tZXRhLnVybCksICd1dGY4Jyk7CiAgYXNzZXJ0Lm1hdGNoKHNvdXJjZSwgL2V4cG9ydCBmdW5jdGlvbiB1bmlmeUJhdHRsZVBhcnRuZXJQcmVzZW50YXRpb24vKTsKICBhc3NlcnQubWF0Y2goc291cmNlLCAvZ2V0RWxlbWVudEJ5SWRcKCdwYXJ0bmVyQWR2aWNlQnRuJ1wpLyk7CiAgYXNzZXJ0Lm1hdGNoKHNvdXJjZSwgL2dldEVsZW1lbnRCeUlkXCgncGFydG5lckRlbGVnYXRlQnRuJ1wpLyk7CiAgYXNzZXJ0Lm1hdGNoKHNvdXJjZSwgL2dldEVsZW1lbnRCeUlkXCgncGFydG5lclJ1bGUnXCkvKTsKICBhc3NlcnQubWF0Y2goc291cmNlLCAvZ2V0RWxlbWVudEJ5SWRcKCdwYXJ0bmVyRGVjaXNpb25TdGF0dXMnXCkvKTsKICBhc3NlcnQubWF0Y2goc291cmNlLCAvYnV0dG9uXC5jbGFzc0xpc3RcLnJlbW92ZVwoJ3JhaWxCdG4nXCkvKTsKICBhc3NlcnQubWF0Y2goc291cmNlLCAvYWN0aW9uc1wuYXBwZW5kXChidXR0b25cKS8pOwogIGFzc2VydC5tYXRjaChzb3VyY2UsIC9sZWdhY3lIb3N0XC5oaWRkZW4gPSB0cnVlLyk7CiAgYXNzZXJ0Lm1hdGNoKHNvdXJjZSwgL2xlZ2FjeUhvc3RcLmRhdGFzZXRcLnBhcnRuZXJBZHZpY2VTb3VyY2VPbmx5ID0gJ3RydWUnLyk7CiAgYXNzZXJ0Lm1hdGNoKHNvdXJjZSwgL3Jvb3RcLmRhdGFzZXRcLnBhcnRuZXJBZHZpY2VVbmlmaWVkU3VyZmFjZSA9ICd0cnVlJy8pOwogIGFzc2VydC5kb2VzTm90TWF0Y2goc291cmNlLCAvY2xhc3M9InBhcnRuZXJBZHZpY2VRdWlja1JlcGx5Ij7jgb7jgYvjgZvjgZ/vvIE8XC9idXR0b24+Lyk7CiAgYXNzZXJ0LmRvZXNOb3RNYXRjaChzb3VyY2UsIC9zdGF0ZVwuc2VsZWN0ZWRQYXJ0bmVySWRccyo9fHN0YXRlXC5zZXR0aW5nc1wuYWR2aWNlUGFydG5lcklkXHMqPS8pOwp9KTsKCg==').decode()
           marker = "export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.window, tutorialExperienceEligibility = () => false } = {}) {"
           assert source.count(marker) == 1
-          helper = r'''const UNIFIED_PARTNER_STYLE_ID = 'gameroad-partner-advice-unified-surface-r1';
-
-function ensureUnifiedPartnerSurfaceStyle(doc) {
-  if (doc.getElementById(UNIFIED_PARTNER_STYLE_ID)) return;
-  const style = doc.createElement('style');
-  style.id = UNIFIED_PARTNER_STYLE_ID;
-  style.textContent = `#${CHAT_ROOT_ID} .partnerAdviceDecisionControls{grid-column:1/-1;display:grid;gap:4px;padding:5px;border:1px solid rgba(190,225,214,.2);border-radius:9px;background:rgba(4,26,22,.62)}#${CHAT_ROOT_ID} .partnerAdvicePrimaryActions{display:grid;grid-template-columns:1fr 1fr;gap:4px}#${CHAT_ROOT_ID} .partnerAdvicePrimaryAction{min-height:34px;padding:5px 7px;border:1px solid rgba(173,235,214,.38);border-radius:9px;background:rgba(10,45,38,.78);color:#e4fff6;font-size:9px;font-weight:950}#${CHAT_ROOT_ID} #partnerDelegateBtn.forced{border-color:rgba(255,123,102,.72);background:rgba(82,37,30,.9)}#${CHAT_ROOT_ID} .partnerRuleLabel{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px;align-items:center;font-size:8px;color:#cfe4dd}#${CHAT_ROOT_ID} .partnerRuleLabel select{min-width:0;height:32px;border:1px solid rgba(205,239,228,.22);border-radius:7px;background:rgba(8,35,29,.72);color:#effbf7;font-size:9px}#${CHAT_ROOT_ID} .partnerDecisionStatus{margin:0;font-size:8px;line-height:1.3;color:#d9eee7;white-space:pre-wrap}#${CHAT_ROOT_ID} .partnerAdviceDecisionControls>.sub{font-size:7px;line-height:1.3;color:#91aaa2}@media(max-height:430px) and (orientation:landscape){#${CHAT_ROOT_ID} .partnerAdviceDecisionControls{gap:3px;padding:3px}#${CHAT_ROOT_ID} .partnerAdvicePrimaryAction{min-height:26px;padding:3px 5px;font-size:8px}#${CHAT_ROOT_ID} .partnerRuleLabel select{height:27px;font-size:8px}#${CHAT_ROOT_ID} .partnerDecisionStatus,#${CHAT_ROOT_ID} .partnerAdviceDecisionControls>.sub{font-size:7px}}`;
-  doc.head?.append(style);
-}
-
-export function unifyBattlePartnerPresentation({ doc, root, legacyHost } = {}) {
-  if (!doc || !root || !legacyHost || root === legacyHost) {
-    return Object.freeze({ ok: false, reason: 'SURFACE_REQUIRED', legacyRetired: false });
-  }
-  const adviceButton = doc.getElementById('partnerAdviceBtn');
-  const delegateButton = doc.getElementById('partnerDelegateBtn');
-  const rule = doc.getElementById('partnerRule');
-  const ruleLabel = rule?.closest?.('.partnerRuleLabel') || null;
-  const status = doc.getElementById('partnerDecisionStatus');
-  if (!adviceButton || !delegateButton || !ruleLabel || !status) {
-    return Object.freeze({ ok: false, reason: 'LEGACY_AUTHORITY_CONTROLS_REQUIRED', legacyRetired: false });
-  }
-
-  let controls = root.querySelector('[data-role="partner-decision-controls"]');
-  if (!controls) {
-    controls = doc.createElement('section');
-    controls.className = 'partnerAdviceDecisionControls';
-    controls.dataset.role = 'partner-decision-controls';
-    controls.setAttribute('aria-label', 'パートナー操作');
-    const actions = doc.createElement('div');
-    actions.className = 'partnerAdvicePrimaryActions';
-    actions.dataset.role = 'partner-primary-actions';
-    controls.append(actions);
-    const insertBefore = root.querySelector('.partnerAdviceQuickRoutes') || root.querySelector('[data-role="tutorial-experience-conversation"]') || root.querySelector('.partnerAdviceTutorialReplay');
-    root.insertBefore(controls, insertBefore || null);
-  }
-  const actions = controls.querySelector('[data-role="partner-primary-actions"]');
-  if (!actions) return Object.freeze({ ok: false, reason: 'PRIMARY_ACTION_SURFACE_REQUIRED', legacyRetired: false });
-
-  for (const button of [adviceButton, delegateButton]) {
-    button.classList.remove('railBtn');
-    button.classList.add('partnerAdvicePrimaryAction');
-    actions.append(button);
-  }
-  controls.append(ruleLabel, status);
-  const note = legacyHost.querySelector('.sub');
-  if (note) controls.append(note);
-
-  root.querySelector('.partnerAdviceQuickReply')?.remove();
-  legacyHost.hidden = true;
-  legacyHost.setAttribute('aria-hidden', 'true');
-  legacyHost.dataset.partnerAdviceSourceOnly = 'true';
-  root.dataset.partnerAdviceUnifiedSurface = 'true';
-  return Object.freeze({
-    ok: true,
-    reason: null,
-    legacyRetired: true,
-    adviceButtonId: adviceButton.id,
-    delegateButtonId: delegateButton.id,
-    ruleId: rule.id,
-    statusId: status.id,
-    presentationOnly: true,
-    gameplayAuthorityMutated: false,
-  });
-}
-
-'''
           source = source.replace(marker, helper + marker, 1)
-
           style_anchor = "  ensureBattleChatStyle(doc);\n  ensureBattleQuick3Style(doc);"
           assert source.count(style_anchor) == 1
           source = source.replace(style_anchor, style_anchor + "\n  ensureUnifiedPartnerSurfaceStyle(doc);", 1)
-
           quick_markup = '<button type="button" class="partnerAdviceTutorialReplay" aria-pressed="false">操作を再確認</button><button type="button" class="partnerAdviceQuickReply">まかせた！</button>'
           assert source.count(quick_markup) == 1
           source = source.replace(quick_markup, '<button type="button" class="partnerAdviceTutorialReplay" aria-pressed="false">操作を再確認</button>', 1)
-
           battle_anchor = "  root.dataset.presentationOnly = 'true';\n} else {"
           assert source.count(battle_anchor) == 1
-          battle_replacement = "  root.dataset.presentationOnly = 'true';\n  const unifiedSurface = unifyBattlePartnerPresentation({ doc, root, legacyHost: host });\n  root.dataset.partnerAdviceUnified = unifiedSurface.ok ? 'true' : 'false';\n} else {"
-          source = source.replace(battle_anchor, battle_replacement, 1)
+          source = source.replace(battle_anchor, "  root.dataset.presentationOnly = 'true';\n  const unifiedSurface = unifyBattlePartnerPresentation({ doc, root, legacyHost: host });\n  root.dataset.partnerAdviceUnified = unifiedSurface.ok ? 'true' : 'false';\n} else {", 1)
           runtime_path.write_text(source)
-
           test_anchor = "test('idle readable content appears only in battle idle time and yields to higher-priority presentation', () => {"
           assert tests.count(test_anchor) == 1
-          new_test = r'''test('Battle Partner controls converge into one visible surface without replacing their existing authority nodes', () => {
-  const source = readFileSync(new URL('../browser/partner-advice-runtime-mount.mjs', import.meta.url), 'utf8');
-  assert.match(source, /export function unifyBattlePartnerPresentation/);
-  assert.match(source, /getElementById\('partnerAdviceBtn'\)/);
-  assert.match(source, /getElementById\('partnerDelegateBtn'\)/);
-  assert.match(source, /getElementById\('partnerRule'\)/);
-  assert.match(source, /getElementById\('partnerDecisionStatus'\)/);
-  assert.match(source, /button\.classList\.remove\('railBtn'\)/);
-  assert.match(source, /actions\.append\(button\)/);
-  assert.match(source, /legacyHost\.hidden = true/);
-  assert.match(source, /legacyHost\.dataset\.partnerAdviceSourceOnly = 'true'/);
-  assert.match(source, /root\.dataset\.partnerAdviceUnifiedSurface = 'true'/);
-  assert.doesNotMatch(source, /class="partnerAdviceQuickReply">まかせた！<\/button>/);
-  assert.doesNotMatch(source, /state\.selectedPartnerId\s*=|state\.settings\.advicePartnerId\s*=/);
-});
-
-'''
           tests = tests.replace(test_anchor, new_test + test_anchor, 1)
-
           old_quick_assert = "  assert.match(source, /partnerAdviceQuickReply/);\n  assert.match(source, /まかせた！/);"
           assert tests.count(old_quick_assert) == 1
-          new_quick_assert = "  assert.match(source, /getElementById\\('partnerDelegateBtn'\\)/);\n  assert.doesNotMatch(source, /class=\\\"partnerAdviceQuickReply\\\">まかせた！/);"
-          tests = tests.replace(old_quick_assert, new_quick_assert, 1)
+          tests = tests.replace(old_quick_assert, "  assert.match(source, /getElementById\\('partnerDelegateBtn'\\)/);\n  assert.doesNotMatch(source, /class=\\\"partnerAdviceQuickReply\\\">まかせた！/);", 1)
           test_path.write_text(tests)
-
           blob = subprocess.check_output(['git', 'hash-object', str(runtime_path)], text=True).strip()
           build = build_path.read_text()
           pattern = r"(file: 'partner-advice-runtime-mount\.mjs'.*?currentBlob: ')[0-9a-f]{40}(' \},)"

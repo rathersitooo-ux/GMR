@@ -357,7 +357,8 @@ test('eligible Tutorial experience is a natural Saasuna conversation and adapts 
   assert.equal(help.adapted, true);
   assert.match(help.message, /遊戯王/);
   assert.match(help.message, /展開の軸/);
-  assert.match(help.message, /先にロード/);
+  assert.match(help.message, /順番は固定じゃない/);
+  assert.match(help.message, /ロードを先に触っても移動から始めてもよく/);
   assert.equal(help.canonicalMessage, '正式GAMEROAD操作');
   assert.equal(control.status().saveMutated, false);
   assert.equal(control.status().gameplayAuthorityMutated, false);

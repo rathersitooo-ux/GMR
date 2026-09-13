@@ -495,7 +495,10 @@ export function createBattleContextualTutorialReplayControl({
         focusRole: current?.focusRole,
         experienceProfile: getExperienceProfile(),
       });
-      return adapted?.active && exactPresentationToken(adapted.message) ? adapted.message : current?.message ?? null;
+      const adaptedMessage = typeof adapted?.message === 'string' && adapted.message.trim() === adapted.message && adapted.message.length > 0
+        ? adapted.message
+        : null;
+      return adapted?.active && adaptedMessage ? adaptedMessage : current?.message ?? null;
     } catch {
       return current?.message ?? null;
     }

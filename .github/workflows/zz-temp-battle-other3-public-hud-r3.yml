@@ -17,6 +17,10 @@ jobs:
         with:
           ref: sol/battle-other3-public-hud-r3-20260914
           fetch-depth: 0
+      - name: Configure replay identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Replay validated product commit
         run: git cherry-pick -x 030843cea92d74f35ec044e9adae066164a3ec74
       - name: Product commit scope guard

@@ -300,6 +300,14 @@ async function readCandidateFor(jankenHand, cardId) {
       commitInFlight = true;
       try {
         const staged = stagedCompoundAttack;
+        await syncRoundStart();
+        if (stagedCompoundAttack !== staged) {
+          return Object.freeze({
+            ok: false,
+            committed: false,
+            reason: 'TURN_CHANGED_RESTAGE_REQUIRED',
+          });
+        }
         const fresh = await readCandidateFor(staged.package.jankenHand, staged.package.cardId);
         const prepared = prepareBattleJankenCompoundAttackCommit(staged, fresh);
         const accepted = await sendExistingBattleAction(prepared.payload);

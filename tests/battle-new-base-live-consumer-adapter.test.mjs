@@ -223,6 +223,36 @@ test('rejects a compound candidate that silently swaps the selected janken card'
   );
 });
 
+test('turn rollover after staging invalidates the old RPS3 package before transport', async () => {
+  let authority = roundAuthority();
+  const sent = [];
+  const entropyValues = [4, 0];
+  let entropyReads = 0;
+  const adapter = createBattleNewBaseLiveConsumerAdapter({
+    readRoundAuthority: async () => authority,
+    readAuthoritativeHand3Uint32: () => entropyValues[entropyReads++],
+    readCompoundAttackCandidate: async () => compoundCandidate(),
+    sendExistingBattleAction: async (payload) => {
+      sent.push(payload);
+      return true;
+    },
+  });
+
+  await adapter.stageCompoundAttack('ROCK');
+  authority = roundAuthority({ turnId: 'turn-7-b' });
+  const result = await adapter.commitCompoundAttack();
+
+  assert.deepEqual(result, {
+    ok: false,
+    committed: false,
+    reason: 'TURN_CHANGED_RESTAGE_REQUIRED',
+  });
+  assert.equal(sent.length, 0);
+  assert.equal(entropyReads, 2);
+  assert.equal(adapter.status().turnId, 'turn-7-b');
+  assert.equal(adapter.status().stagedCompoundAttack, null);
+});
+
 test('fresh authority mismatch blocks the whole commit before existing transport is called', async () => {
   let reads = 0;
   const sent = [];

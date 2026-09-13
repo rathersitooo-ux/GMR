@@ -7,7 +7,7 @@ permissions:
   contents: write
 jobs:
   patch:
-    if: ${{ !contains(github.event.head_commit.message, '[lineage-writer]') }}
+    if: ${{ !contains(github.event.head_commit.message, '[lineage-css-fix]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,307 +17,38 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply exact presentation patch
+      - name: Keep RPS role badge secondary
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-
           runtime_path = Path('browser/battle-janken-focus-runtime-surface.mjs')
           test_path = Path('tests/battle-janken-focus-runtime-surface.test.mjs')
           s = runtime_path.read_text()
           t = test_path.read_text()
 
-          def replace_once(text, old, new, label):
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f'{label}: expected exactly 1 anchor, got {count}')
-              return text.replace(old, new, 1)
+          replacements = [
+            ('.grJankenRoleBadge{display:block;font-size:18px;font-weight:900;margin-bottom:6px}\n', ''),
+            ('.grJankenFocusBloomPanel .grJankenRoleBadge{text-align:center;font-size:20px;letter-spacing:.06em}\n', ''),
+            ('.grJankenRoleBadge{font-size:16px}', '.grJankenRoleBadge{font-size:10px}'),
+            ('.grJankenFocusBloomPanel .grJankenRoleBadge{font-size:17px}', '.grJankenFocusBloomPanel .grJankenRoleBadge{font-size:10px}'),
+            ('.grJankenFocusBloomPanel .grJankenRoleBadge{font-size:15px;margin-bottom:3px}', '.grJankenFocusBloomPanel .grJankenRoleBadge{font-size:9px}'),
+            ('.grJankenFocusBloomPanel .grJankenRoleBadge{font-size:15px}', '.grJankenFocusBloomPanel .grJankenRoleBadge{font-size:9px}'),
+          ]
+          for old, new in replacements:
+            if old not in s:
+              raise SystemExit(f'missing css anchor: {old}')
+            s = s.replace(old, new, 1)
 
-          old = """const HAND_LABEL = Object.freeze({
-            ROCK: 'グー',
-            SCISSORS: 'チョキ',
-            PAPER: 'パー',
-          });
+          anchor = """  assert.match(style.textContent, /prefers-reduced-motion:reduce/);
           """
-          new = """const HAND_LABEL = Object.freeze({
-            ROCK: 'グー',
-            SCISSORS: 'チョキ',
-            PAPER: 'パー',
-          });
-
-          const HAND_ICON = Object.freeze({
-            ROCK: '✊',
-            SCISSORS: '✌',
-            PAPER: '✋',
-          });
-
-          const SUIT_PRESENTATION = Object.freeze({
-            SP: Object.freeze(['♠', 'SPADE']),
-            HT: Object.freeze(['♥', 'HEART']),
-            DI: Object.freeze(['♦', 'DIAMOND']),
-            CL: Object.freeze(['♣', 'CLUB']),
-            DCG: Object.freeze(['◆', 'CARD']),
-          });
+          addition = """  assert.match(style.textContent, /\\.grJankenRoleBadge\\{position:absolute;[^}]*font-size:10px/);
+            assert.doesNotMatch(style.textContent, /grJankenRoleBadge\\{display:block;font-size:18px/);
+            assert.doesNotMatch(style.textContent, /grJankenFocusBloomPanel \\.grJankenRoleBadge\\{text-align:center;font-size:20px/);
           """
-          s = replace_once(s, old, new, 'hand constants')
-
-          anchor = """function formatPathToken(value) {
-          """
-          helpers = """function cardCatalogValues(source) {
-            if (Array.isArray(source)) return source;
-            if (source instanceof Map) return [...source.values()];
-            if (source && typeof source === 'object') return Object.values(source);
-            return [];
-          }
-
-          function buildCardCatalogIndex(source) {
-            const index = new Map();
-            for (const card of cardCatalogValues(source)) {
-              const id = String(card?.id ?? '');
-              if (!id || index.has(id)) continue;
-              index.set(id, card);
-            }
-            return index;
-          }
-
-          function physicalCardIdentity(cardId, cardIndex) {
-            const id = String(cardId ?? '');
-            const card = cardIndex?.get?.(id);
-            if (!card || String(card.id ?? '') !== id) {
-              return Object.freeze({
-                id: id || '—',
-                displayName: 'カード情報未接続',
-                suit: 'UNKNOWN',
-                suitGlyph: '◇',
-                suitLabel: '不明',
-                rank: '?',
-                identitySource: 'PACKAGE_CARD_ID_ONLY',
-              });
-            }
-            const suit = String(card.suit ?? 'UNKNOWN');
-            const [suitGlyph, suitLabel] = SUIT_PRESENTATION[suit] ?? ['◇', suit];
-            return Object.freeze({
-              id,
-              displayName: String(card.display_name ?? id),
-              suit,
-              suitGlyph,
-              suitLabel,
-              rank: String(card.rank ?? card.power ?? '?'),
-              identitySource: 'GLOBAL_CARD_DATA_EXACT_ID',
-            });
-          }
-
-          function physicalCardMarkup(cardId, cardIndex, { jankenHand = null } = {}) {
-            const card = physicalCardIdentity(cardId, cardIndex);
-            const role = jankenHand
-              ? `<span class=\"grJankenRoleBadge\" data-janken-role=\"${escapeHtml(jankenHand)}\">${escapeHtml(HAND_ICON[jankenHand] ?? '')} ${escapeHtml(HAND_LABEL[jankenHand] ?? jankenHand)}</span>`
-              : '';
-            return `
-              <div class=\"grJankenPhysicalCard\"
-                data-physical-card-id=\"${escapeHtml(card.id)}\"
-                data-card-identity-source=\"${escapeHtml(card.identitySource)}\"
-                data-native-suit=\"${escapeHtml(card.suit)}\"
-                data-printed-rank=\"${escapeHtml(card.rank)}\">
-                <span class=\"grJankenCardWatermark\" aria-hidden=\"true\">${escapeHtml(card.suitGlyph)}</span>
-                <strong class=\"grJankenCardRank\">${escapeHtml(card.rank)}</strong>
-                <span class=\"grJankenCardName\">${escapeHtml(card.displayName)}</span>
-                <small class=\"grJankenCardIdentity\">${escapeHtml(card.suitLabel)} · ID ${escapeHtml(card.id)}</small>
-                <span class=\"grJankenCardArtMissing\">イラスト未接続</span>
-                ${role}
-              </div>`;
-          }
-
-          function formatPathToken(value) {
-          """
-          s = replace_once(s, anchor, helpers, 'catalog helpers')
-
-          old = """function choiceMarkup(choice, state, busy) {
-            const focused = state.focusedHand === choice.jankenHand;
-            return `
-              <button type=\"button\"
-                class=\"grJankenFocusChoice${focused ? ' is-focused' : ''}\"
-                data-gr-janken-focus-action=\"focus\"
-                data-janken-hand=\"${choice.jankenHand}\"
-                aria-pressed=\"${focused ? 'true' : 'false'}\"
-                ${busy ? 'disabled' : ''}>
-                <span class=\"grJankenFocusHand\">${HAND_LABEL[choice.jankenHand]}</span>
-                ${lockRows(choice.preview)}
-              </button>`;
-          }
-          """
-          new = """function choiceMarkup(choice, state, busy, cardIndex) {
-            const focused = state.focusedHand === choice.jankenHand;
-            return `
-              <button type=\"button\"
-                class=\"grJankenFocusChoice${focused ? ' is-focused' : ''}\"
-                data-gr-janken-focus-action=\"focus\"
-                data-janken-hand=\"${choice.jankenHand}\"
-                aria-pressed=\"${focused ? 'true' : 'false'}\"
-                ${busy ? 'disabled' : ''}>
-                ${physicalCardMarkup(choice.preview?.cardId, cardIndex, { jankenHand: choice.jankenHand })}
-                ${lockRows(choice.preview)}
-              </button>`;
-          }
-          """
-          s = replace_once(s, old, new, 'choice markup')
-
-          css_anchor = ".grJankenFocusChoice:disabled{cursor:default;opacity:.62}\n"
-          css_insert = css_anchor + """.grJankenPhysicalCard{position:relative;display:flex;flex-direction:column;justify-content:center;min-height:86px;border:2px solid rgba(16,19,25,.24);border-radius:14px;background:linear-gradient(155deg,#fff,#f4f4f0);padding:8px 8px 7px 46px;box-sizing:border-box;overflow:hidden}
-          .grJankenCardWatermark{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:31px;font-weight:900;line-height:1;opacity:.2}
-          .grJankenCardRank{font-size:23px;line-height:1;font-weight:950;letter-spacing:.02em}
-          .grJankenCardName{max-width:100%;margin-top:3px;font-size:12px;line-height:1.12;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-          .grJankenCardIdentity{margin-top:3px;padding-right:2px;font-size:9px;line-height:1.1;font-weight:800;opacity:.62;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-          .grJankenCardArtMissing{margin-top:3px;font-size:8px;line-height:1.1;font-weight:800;opacity:.46}
-          .grJankenRoleBadge{position:absolute;right:6px;top:6px;display:inline-flex;align-items:center;gap:3px;border:1px solid rgba(16,19,25,.28);border-radius:999px;background:rgba(255,255,255,.92);padding:3px 6px;font-size:10px;line-height:1;font-weight:900;white-space:nowrap}
-          """
-          s = replace_once(s, css_anchor, css_insert, 'physical card css')
-          s = s.replace('.grJankenFocusHand', '.grJankenRoleBadge')
-          s = s.replace('.grJankenLoadCard{display:flex;align-items:center;justify-content:center;min-height:150px;border:3px solid #101319;border-radius:18px;background:#fff;font-size:18px;font-weight:900;text-align:center;padding:10px;overflow-wrap:anywhere}', '.grJankenLoadHero>.grJankenPhysicalCard{min-height:150px;border:3px solid #101319;border-radius:18px;padding:12px 10px 10px 48px}')
-          s = s.replace('.grJankenLoadCard{min-height:118px;font-size:15px}', '.grJankenLoadHero>.grJankenPhysicalCard{min-height:118px}')
-          s = s.replace('.grJankenLoadCard{min-height:106px}', '.grJankenLoadHero>.grJankenPhysicalCard{min-height:106px}')
-          s = s.replace('.grJankenFocusBloomPanel .grJankenFocusLockRow{font-size:9px;line-height:1.12;margin-top:2px}', '.grJankenFocusBloomPanel .grJankenFocusLockRow{display:none}')
-
-          old = """function renderJanken(state, { busy, errorText }) {
-          """
-          new = """function renderJanken(state, { busy, errorText, cardIndex }) {
-          """
-          s = replace_once(s, old, new, 'render janken signature')
-          s = replace_once(s, 'ロックオン対象と3つの攻撃を見比べて選択', '同じ実カード3枚とロックオン先を見比べて選択', 'janken subtitle')
-          s = replace_once(s, '<div class=\"grJankenFocusChoices\">${state.choices.map((choice) => choiceMarkup(choice, state, busy)).join(\'\')}</div>', '<div class=\"grJankenFocusChoices\">${state.choices.map((choice) => choiceMarkup(choice, state, busy, cardIndex)).join(\'\')}</div>', 'choice call')
-
-          s = replace_once(s, 'function renderLoad(state, { busy, errorText }) {', 'function renderLoad(state, { busy, errorText, cardIndex }) {', 'render load signature')
-          s = replace_once(s, '<div class=\"grJankenLoadCard\">${escapeHtml(preview?.cardId ?? \'—\')}</div>', '${physicalCardMarkup(preview?.cardId, cardIndex, { jankenHand: state.focusedHand })}', 'load physical card')
-          s = replace_once(s, 'function renderCommitting(state) {', 'function renderCommitting(state, cardIndex) {', 'render committing signature')
-          s = replace_once(s, '<div class=\"grJankenLoadHero\"><div class=\"grJankenLoadCard\">${escapeHtml(state.focusedPreview?.cardId ?? \'—\')}</div><div class=\"grJankenLoadInfo\">${lockRows(state.focusedPreview)}</div></div>', '<div class=\"grJankenLoadHero\">${physicalCardMarkup(state.focusedPreview?.cardId, cardIndex, { jankenHand: state.focusedHand })}<div class=\"grJankenLoadInfo\">${lockRows(state.focusedPreview)}</div></div>', 'committing physical card')
-
-          s = replace_once(s, '  lowPerf = false,\n  onAccepted = null,', '  lowPerf = false,\n  cardCatalog = globalThis?.__CARD_DATA__ ?? null,\n  onAccepted = null,', 'mount card catalog param')
-          s = replace_once(s, "  const liveStatus = requiredMethod(liveInputStack, 'status', 'liveInputStack');\n\n  installStyle(documentRef);", "  const liveStatus = requiredMethod(liveInputStack, 'status', 'liveInputStack');\n  const cardIndex = buildCardCatalogIndex(cardCatalog);\n\n  installStyle(documentRef);", 'card index construction')
-          s = replace_once(s, 'host.innerHTML = renderJanken(presentation, { busy, errorText });', 'host.innerHTML = renderJanken(presentation, { busy, errorText, cardIndex });', 'render janken call')
-          s = replace_once(s, 'host.innerHTML = renderLoad(presentation, { busy, errorText });', 'host.innerHTML = renderLoad(presentation, { busy, errorText, cardIndex });', 'render load call')
-          s = replace_once(s, 'host.innerHTML = renderCommitting(presentation);', 'host.innerHTML = renderCommitting(presentation, cardIndex);', 'render committing call')
-
-          contract_anchor = """  visibleLockFields: Object.freeze(['cardId', 'opponentId', 'shieldLane', 'shieldRef', 'route']),
-          """
-          contract_new = """  visibleLockFields: Object.freeze(['cardId', 'opponentId', 'shieldLane', 'shieldRef', 'route']),
-            physicalCardLineageSource: 'EXACT_PACKAGE_CARD_ID_JOIN_GLOBAL_CARD_DATA',
-            jankenRoleIsSecondaryBadge: true,
-            inventedCardIdentityAllowed: false,
-            cardArtFallback: 'EXPLICIT_ART_UNAVAILABLE_NO_INVENTION',
-            openingSevenToRpsSelectionAuthority: false,
-          """
-          s = replace_once(s, contract_anchor, contract_new, 'surface contract')
-
-          test_import_anchor = """} from '../browser/battle-janken-focus-runtime-surface.mjs';
-          """
-          test_import_new = test_import_anchor + """
-          const AUTHORITATIVE_SELECTION_FIXTURE_NOTE = 'authoritative_selection_already_happened';
-          """
-          t = replace_once(t, test_import_anchor, test_import_new, 'fixture note')
-
-          packages_end = """function createLiveStack({ rejectCommit = false, rejectCancel = false, rejectFocus = false } = {}) {
-          """
-          catalog_helper = """function authoritativeCardCatalog(generation = 'g1') {
-            return [
-              { id: `rock-card-${generation}`, display_name: `岩札 ${generation}`, suit: 'SP', rank: '7', power: 7, authority: AUTHORITATIVE_SELECTION_FIXTURE_NOTE },
-              { id: `scissors-card-${generation}`, display_name: `刃札 ${generation}`, suit: 'HT', rank: 'Q', power: 12, authority: AUTHORITATIVE_SELECTION_FIXTURE_NOTE },
-              { id: `paper-card-${generation}`, display_name: `紙札 ${generation}`, suit: 'DI', rank: '3', power: 3, authority: AUTHORITATIVE_SELECTION_FIXTURE_NOTE },
-            ];
-          }
-
-          function createLiveStack({ rejectCommit = false, rejectCancel = false, rejectFocus = false } = {}) {
-          """
-          t = replace_once(t, packages_end, catalog_helper, 'catalog fixture')
-
-          old_mount = """function mount(options = {}) {
-            const documentRef = createFakeDocument();
-            const liveInputStack = options.liveInputStack ?? createLiveStack();
-            const runtime = mountBattleJankenFocusRuntimeSurface({
-              documentRef,
-              mountRoot: documentRef.body,
-              liveInputStack,
-              packages: options.packages ?? authoritativePackages(),
-              generationId: options.generationId ?? 'g1',
-              onAccepted: options.onAccepted,
-            });
-            return { documentRef, liveInputStack, runtime };
-          }
-          """
-          new_mount = """function mount(options = {}) {
-            const documentRef = createFakeDocument();
-            const liveInputStack = options.liveInputStack ?? createLiveStack();
-            const generationId = options.generationId ?? 'g1';
-            const runtime = mountBattleJankenFocusRuntimeSurface({
-              documentRef,
-              mountRoot: documentRef.body,
-              liveInputStack,
-              packages: options.packages ?? authoritativePackages(generationId),
-              generationId,
-              cardCatalog: options.cardCatalog ?? authoritativeCardCatalog(generationId),
-              onAccepted: options.onAccepted,
-            });
-            return { documentRef, liveInputStack, runtime };
-          }
-          """
-          t = replace_once(t, old_mount, new_mount, 'mount fixture')
-
-          first_test_anchor = """test('JANKEN_FOCUS exposes exactly one target-rail switch for each authoritative package and no free target', async () => {
-          """
-          new_tests = """test('JANKEN_FOCUS keeps the exact physical card face primary and RPS only as a secondary role badge', () => {
-            const { runtime } = mount();
-            const html = runtime.host.innerHTML;
-            assert.match(html, /data-physical-card-id=\"rock-card-g1\"/);
-            assert.match(html, /data-card-identity-source=\"GLOBAL_CARD_DATA_EXACT_ID\"/);
-            assert.match(html, /data-native-suit=\"SP\"/);
-            assert.match(html, /data-printed-rank=\"7\"/);
-            assert.match(html, /岩札 g1/);
-            assert.match(html, /♠/);
-            assert.match(html, /SPADE · ID rock-card-g1/);
-            assert.match(html, /イラスト未接続/);
-            assert.match(html, /data-janken-role=\"ROCK\">✊ グー/);
-          });
-
-          test('fixture explicitly models that authoritative opening-hand selection already happened', () => {
-            assert.equal(AUTHORITATIVE_SELECTION_FIXTURE_NOTE, 'authoritative_selection_already_happened');
-            assert.ok(authoritativeCardCatalog().every((card) => card.authority === AUTHORITATIVE_SELECTION_FIXTURE_NOTE));
-          });
-
-          test('missing catalog metadata preserves exact package cardId and never borrows another card identity', () => {
-            const { runtime } = mount({ cardCatalog: [{ id: 'foreign-card', display_name: '別カード', suit: 'CL', rank: 'K' }] });
-            const html = runtime.host.innerHTML;
-            assert.match(html, /data-physical-card-id=\"rock-card-g1\"/);
-            assert.match(html, /data-card-identity-source=\"PACKAGE_CARD_ID_ONLY\"/);
-            assert.match(html, /カード情報未接続/);
-            assert.match(html, /イラスト未接続/);
-            assert.doesNotMatch(html, /別カード/);
-          });
-
-          test('JANKEN_FOCUS exposes exactly one target-rail switch for each authoritative package and no free target', async () => {
-          """
-          t = replace_once(t, first_test_anchor, new_tests, 'new physical card tests')
-
-          load_anchor = """  assert.match(runtime.host.innerHTML, /scissors-card-g1/);
-            assert.match(runtime.host.innerHTML, /opponent-scissors-g1/);
-          """
-          load_new = """  assert.match(runtime.host.innerHTML, /scissors-card-g1/);
-            assert.match(runtime.host.innerHTML, /data-physical-card-id=\"scissors-card-g1\"/);
-            assert.match(runtime.host.innerHTML, /data-native-suit=\"HT\"/);
-            assert.match(runtime.host.innerHTML, /data-printed-rank=\"Q\"/);
-            assert.match(runtime.host.innerHTML, /刃札 g1/);
-            assert.match(runtime.host.innerHTML, /data-janken-role=\"SCISSORS\">✌ チョキ/);
-            assert.match(runtime.host.innerHTML, /opponent-scissors-g1/);
-          """
-          t = replace_once(t, load_anchor, load_new, 'load lineage assertions')
-
-          contract_test_anchor = """  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.targetRailMayCreateTarget, false);
-          """
-          contract_test_new = contract_test_anchor + """  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.physicalCardLineageSource, 'EXACT_PACKAGE_CARD_ID_JOIN_GLOBAL_CARD_DATA');
-            assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.jankenRoleIsSecondaryBadge, true);
-            assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.inventedCardIdentityAllowed, false);
-            assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.cardArtFallback, 'EXPLICIT_ART_UNAVAILABLE_NO_INVENTION');
-            assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.openingSevenToRpsSelectionAuthority, false);
-          """
-          t = replace_once(t, contract_test_anchor, contract_test_new, 'contract assertions')
+          if t.count(anchor) != 1:
+            raise SystemExit(f'test anchor count {t.count(anchor)}')
+          t = t.replace(anchor, anchor + addition, 1)
 
           runtime_path.write_text(s)
           test_path.write_text(t)
@@ -326,12 +57,12 @@ jobs:
         run: |
           node --test tests/battle-janken-focus-runtime-surface.test.mjs
           git diff --check
-      - name: Commit bounded product delta
+      - name: Commit bounded correction
         shell: bash
         run: |
           test "$(git diff --name-only | sort)" = $'browser/battle-janken-focus-runtime-surface.mjs\ntests/battle-janken-focus-runtime-surface.test.mjs'
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add browser/battle-janken-focus-runtime-surface.mjs tests/battle-janken-focus-runtime-surface.test.mjs
-          git commit -m 'Battle: keep physical card identity through janken focus [lineage-writer]'
+          git commit -m 'Battle: keep RPS badge visually secondary [lineage-css-fix]'
           git push origin HEAD:sol/battle-janken-physical-card-lineage-r3-20260914

@@ -19,7 +19,7 @@ const SELECTOR_CANDIDATES = Object.freeze({
   quickCoil: Object.freeze(['#quickCoil']),
   jankenSlidePad: Object.freeze(['[data-battle-janken-slidepad="1"]']),
   roulette: Object.freeze(['[data-battle-playable-hand-row-roulette-live="1"]']),
-  targetConfirm: Object.freeze(['#targetBox']),
+  targetConfirm: Object.freeze(['[data-battle-target-input="1"]', '#targetBox']),
   secondaryActions: Object.freeze(['.battleRail']),
   legacyPhaseStrip: Object.freeze(['#phaseBar']),
   detailsDrawer: Object.freeze(['#battleDrawer']),
@@ -46,7 +46,8 @@ const STYLE_TEXT = `
 .screen.battle[${ROOT_ATTR}="1"] [data-battle-janken-slidepad="1"]{position:absolute!important;z-index:44!important;width:var(--gr-thumb-w)!important;height:var(--gr-thumb-h)!important;right:var(--gr-ui-edge)!important;left:auto!important;bottom:var(--gr-ui-edge)!important;top:auto!important;transform:none!important;margin:0!important;box-sizing:border-box!important}
 .screen.battle[${ROOT_ATTR}="1"] [data-battle-playable-hand-row-roulette-live="1"]{position:absolute!important;z-index:43!important;left:auto!important;right:var(--gr-ui-edge)!important;bottom:calc(var(--gr-thumb-h) + var(--gr-ui-edge) + 4px)!important;max-width:min(236px,36vw)!important;transform-origin:right bottom!important}
 .screen.battle[${ROOT_ATTR}="1"][data-gr-roulette-enabled="false"] [data-battle-playable-hand-row-roulette-live="1"]{display:none!important}
-.screen.battle[${ROOT_ATTR}="1"] #targetBox{position:absolute!important;z-index:45!important;right:calc(var(--gr-thumb-w) + var(--gr-ui-edge) + var(--gr-ui-gap))!important;left:auto!important;bottom:var(--gr-ui-edge)!important;top:auto!important;width:min(34vw,280px)!important;max-height:44vh!important;overflow:auto!important}
+.screen.battle[${ROOT_ATTR}="1"] [data-battle-target-input="1"]{position:absolute!important;z-index:46!important;right:var(--gr-ui-edge)!important;left:auto!important;bottom:calc(var(--gr-thumb-h) + var(--gr-ui-edge) + 4px)!important;top:auto!important;width:var(--gr-thumb-w)!important;max-height:none!important;overflow:visible!important;box-sizing:border-box!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important;padding:5px!important}
+.screen.battle[${ROOT_ATTR}="1"]:has([data-battle-target-input="1"].on) [data-battle-playable-hand-row-roulette-live="1"]{display:none!important}
 .screen.battle[${ROOT_ATTR}="1"] .battleRail{position:absolute!important;z-index:34!important;top:var(--gr-ui-edge)!important;right:var(--gr-ui-edge)!important;left:auto!important;bottom:auto!important;width:auto!important;height:auto!important;max-width:min(28vw,340px)!important;max-height:44px!important;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:flex-end!important;gap:4px!important;padding:0!important;margin:0!important;transform:none!important;overflow-x:auto!important;overflow-y:hidden!important;white-space:nowrap!important;background:none!important;border:0!important;pointer-events:auto!important;scrollbar-width:none!important}
 .screen.battle[${ROOT_ATTR}="1"] .battleRail .railBtn{min-width:44px!important;min-height:36px!important;width:auto!important;height:36px!important;max-height:36px!important;padding:5px 8px!important;margin:0!important;transform:none!important;box-sizing:border-box!important;flex:0 0 auto!important;font-size:9px!important}
 .screen.battle[${ROOT_ATTR}="1"][data-gr-decision-active="false"] #quickCoil{display:none!important}
@@ -60,8 +61,8 @@ const STYLE_TEXT = `
 .screen.battle[${ROOT_ATTR}="1"][data-gr-reconnecting="true"] [data-battle-janken-slidepad="1"],
 .screen.battle[${ROOT_ATTR}="1"][data-gr-stale="true"] [data-battle-playable-hand-row-roulette-live="1"],
 .screen.battle[${ROOT_ATTR}="1"][data-gr-reconnecting="true"] [data-battle-playable-hand-row-roulette-live="1"],
-.screen.battle[${ROOT_ATTR}="1"][data-gr-stale="true"] #targetBox,
-.screen.battle[${ROOT_ATTR}="1"][data-gr-reconnecting="true"] #targetBox{pointer-events:none!important;opacity:.55!important}
+.screen.battle[${ROOT_ATTR}="1"][data-gr-stale="true"] [data-battle-target-input="1"],
+.screen.battle[${ROOT_ATTR}="1"][data-gr-reconnecting="true"] [data-battle-target-input="1"]{pointer-events:none!important;opacity:.55!important}
 .screen.battle[${ROOT_ATTR}="1"][data-gr-reduced-motion="true"] [${ZONE_ATTR}],
 .screen.battle[${ROOT_ATTR}="1"][data-gr-reduced-motion="true"] [${ZONE_ATTR}] *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
 .screen.battle[${ROOT_ATTR}="1"][data-gr-low-perf="true"] [${ZONE_ATTR}]{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
@@ -79,7 +80,7 @@ const STYLE_TEXT = `
   .screen.battle[${ROOT_ATTR}="1"] .planBox label,.screen.battle[${ROOT_ATTR}="1"] .endpointChip label{font-size:7px!important}
   .screen.battle[${ROOT_ATTR}="1"] [data-battle-playable-hand-row-roulette-live="1"]{max-width:min(190px,31vw)!important}
   .screen.battle[${ROOT_ATTR}="1"] .battleRail .railBtn{min-height:32px!important;height:32px!important;max-height:32px!important;padding:3px 6px!important;font-size:8px!important}
-  .screen.battle[${ROOT_ATTR}="1"] #targetBox{width:min(30vw,230px)!important}
+  .screen.battle[${ROOT_ATTR}="1"] [data-battle-target-input="1"]{width:var(--gr-thumb-w)!important}
 }
 @media(max-width:520px) and (orientation:portrait){
   .screen.battle[${ROOT_ATTR}="1"]{--gr-thumb-w:176px;--gr-thumb-h:172px;--gr-bottom-h:28vh}
@@ -90,7 +91,7 @@ const STYLE_TEXT = `
   .screen.battle[${ROOT_ATTR}="1"] [data-battle-janken-slidepad="1"]{width:var(--gr-thumb-w)!important;height:var(--gr-thumb-h)!important;right:var(--gr-ui-edge)!important;bottom:var(--gr-ui-edge)!important}
   .screen.battle[${ROOT_ATTR}="1"] [data-battle-playable-hand-row-roulette-live="1"]{right:var(--gr-ui-edge)!important;bottom:calc(var(--gr-thumb-h) + var(--gr-ui-edge) + 4px)!important;max-width:min(164px,42vw)!important}
   .screen.battle[${ROOT_ATTR}="1"] .battleRail{left:var(--gr-ui-edge)!important;right:var(--gr-ui-edge)!important;top:118px!important;width:auto!important;max-width:none!important;justify-content:flex-start!important}
-  .screen.battle[${ROOT_ATTR}="1"] #targetBox{width:96vw!important;right:2vw!important;bottom:30vh!important}
+  .screen.battle[${ROOT_ATTR}="1"] [data-battle-target-input="1"]{width:var(--gr-thumb-w)!important;right:var(--gr-ui-edge)!important;bottom:calc(var(--gr-thumb-h) + var(--gr-ui-edge) + 4px)!important}
 }
 `;
 

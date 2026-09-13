@@ -55,7 +55,7 @@ const HAND_AURA_ARM_PADDING_PX = 18;
 const HAND_AURA_RELEASE_DURATION_MS = 520;
 const SLOT_ROLL_DETENT_FEEDBACK_DURATION_MS = 110;
 const HAND_FOCUS_SNAP_MAX_PX = 28;
-export const BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS = 'section[data-screen="battle"] #targetBox.on,section[data-screen="battle"] #targetBox.vfTargetProxyOn{z-index:60!important}';
+export const BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS = 'section[data-screen="battle"] [data-battle-target-input="1"].on,section[data-screen="battle"] [data-battle-target-input="1"].vfTargetProxyOn{z-index:46!important}';
 export const BATTLE_HAND_PLAYABLE_AFFORDANCE_SCHEMA = 'gameroad.battle-hand-playable-affordance.v1';
 export const BATTLE_CARD_FOCUS_PRESENTATION_SCHEMA = 'gameroad.battle-card-focus-presentation.v1';
 export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR = 'data-battle-playable-hand-row-roulette-live';

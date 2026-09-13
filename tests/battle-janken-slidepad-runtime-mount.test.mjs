@@ -285,7 +285,7 @@ test('R75 preview fails closed for empty or disabled slots', () => {
 test('target-confirm proxy is layered above the expanded SlidePad only during target mode', () => {
   assert.equal(
     BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS,
-    'section[data-screen="battle"] #targetBox.on,section[data-screen="battle"] #targetBox.vfTargetProxyOn{z-index:60!important}',
+    'section[data-screen="battle"] [data-battle-target-input="1"].on,section[data-screen="battle"] [data-battle-target-input="1"].vfTargetProxyOn{z-index:46!important}',
   );
 });
 

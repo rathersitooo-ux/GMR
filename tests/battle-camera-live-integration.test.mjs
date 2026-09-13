@@ -17,8 +17,11 @@ test('manual camera keeps DOM and WebGL projection on the same pitch',()=>{
   assert.match(html,/gl\.uniform2f\(gl\.getUniformLocation\(fieldProgram,'uPitch'\),Math\.cos\(pitch\),Math\.sin\(pitch\)\)/);
   assert.match(html,/angle:\{min:28,max:62\}/);
 });
-test('camera has one-action return and ignores screen-space UI gestures',()=>{
-  assert.match(html,/id="cameraReturnBtn"[^>]+操作キャラへカメラを戻す/);
+test('camera return has zero FOLLOW footprint and becomes reachable only in manual inspect',()=>{
+  assert.match(html,/id="cameraReturnBtn"[^>]+hidden>自分<\/button>/);
+  assert.match(html,/#cameraReturnBtn\{display:none;pointer-events:none\}/);
+  assert.match(html,/#cameraReturnBtn\[data-camera-mode="MANUAL_INSPECT"\]\{display:flex;pointer-events:auto;/);
+  assert.match(html,/returnControl\.hidden=cameraState\.mode!=='MANUAL_INSPECT'/);
   assert.match(html,/isScreenUiTarget\(target\)/);
   assert.match(html,/target\.closest\('button,select,input,textarea,a,\[role="button"\]'\)/);
   assert.match(html,/returnControlElement:returnControl/);

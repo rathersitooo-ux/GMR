@@ -196,6 +196,17 @@ if (/デッキから置いたトランプカード|show-all-seven-real-mana-slot
     }
   }
 
+  const battleCameraLiveContracts = [
+    [/id=["']cameraReturnBtn["']/, 'Battle camera return-to-controlled control is missing'],
+    [/__GAMEROAD_BATTLE_CAMERA_FIELD_ADAPTER__/, 'Battle camera field adapter is missing'],
+    [/import\s*\{\s*mountBattleCameraLiveRuntime\s*\}\s*from\s*["']\.\/battle-camera-live-runtime\.mjs["']\s*;/, 'Battle camera live runtime is not mounted'],
+    [/__GAMEROAD_BATTLE_CAMERA_LIVE__/, 'Battle camera live API is missing'],
+    [/authority:\{gameplay:false,movement:false,target:false,legality:false,stateWrite:false\}/, 'Battle camera presentation-only authority boundary is missing'],
+  ];
+  for (const [pattern, message] of battleCameraLiveContracts) {
+    if (!pattern.test(html)) errors.push(message);
+  }
+
   return errors;
 }
 

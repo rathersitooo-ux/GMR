@@ -21,6 +21,31 @@ function authorityLabel(value) {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
+function projectPaymentReceipt(value) {
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value : null;
+  if (!source) return null;
+  const cost = nonNegativeInteger(source.cost);
+  const manaPaid = nonNegativeInteger(source.manaPaid);
+  const honeyPaid = nonNegativeInteger(source.honeyPaid);
+  const manaAfter = nonNegativeInteger(source.manaAfter);
+  const honeyAfter = nonNegativeInteger(source.honeyAfter);
+  const paymentSource = authorityLabel(source.source);
+  if (
+    cost === null || manaPaid === null || honeyPaid === null ||
+    manaAfter === null || honeyAfter === null || paymentSource === null ||
+    manaPaid + honeyPaid !== cost
+  ) return null;
+  return {
+    cost,
+    manaPaid,
+    honeyPaid,
+    manaAfter,
+    honeyAfter,
+    source: paymentSource,
+    text: `支払い ${cost}｜マナ${manaPaid}＋ハニー${honeyPaid}｜残 マナ${manaAfter}・ハニー${honeyAfter}｜${paymentSource}`
+  };
+}
+
 export function projectBattleCriticalResourceSnapshot(snapshot = {}) {
   const source = snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot) ? snapshot : {};
   const manaCurrent = nonNegativeInteger(source.manaCurrent);
@@ -30,6 +55,7 @@ export function projectBattleCriticalResourceSnapshot(snapshot = {}) {
   const chipCount = nonNegativeInteger(source.chipCount);
   const honeyDelta = signedInteger(source.honeyDelta);
   const honeyDeltaSource = authorityLabel(source.honeyDeltaSource);
+  const paymentReceipt = projectPaymentReceipt(source.paymentReceipt);
 
   return deepFreeze({
     schema: RESOURCE_HUD_SCHEMA,
@@ -56,6 +82,16 @@ export function projectBattleCriticalResourceSnapshot(snapshot = {}) {
       resolved: chipCount !== null,
       count: chipCount,
       text: chipCount === null ? UNRESOLVED : String(chipCount)
+    },
+    payment: {
+      resolved: paymentReceipt !== null,
+      cost: paymentReceipt?.cost ?? null,
+      manaPaid: paymentReceipt?.manaPaid ?? null,
+      honeyPaid: paymentReceipt?.honeyPaid ?? null,
+      manaAfter: paymentReceipt?.manaAfter ?? null,
+      honeyAfter: paymentReceipt?.honeyAfter ?? null,
+      source: paymentReceipt?.source ?? null,
+      text: paymentReceipt?.text ?? ''
     }
   });
 }
@@ -86,13 +122,15 @@ function addStyle(document) {
   const style = createNode(document, 'style');
   style.id = STYLE_ID;
   style.textContent = `
-[${RESOURCE_HUD_ATTR}="1"]{display:flex;align-items:stretch;gap:4px;min-width:0;pointer-events:none}
+[${RESOURCE_HUD_ATTR}="1"]{position:relative;display:flex;align-items:stretch;gap:4px;min-width:0;pointer-events:none}
 [${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell{display:grid;grid-template-columns:auto;align-content:center;gap:1px;min-width:42px;padding:3px 6px;border:1px solid rgba(225,244,215,.18);border-radius:8px;background:rgba(3,20,17,.64);color:inherit;text-shadow:inherit}
 [${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell small{font-size:9px;font-weight:900;line-height:1;letter-spacing:.06em;opacity:.76;white-space:nowrap}
 [${RESOURCE_HUD_ATTR}="1"] .grBattleResourceValue{font-size:15px;font-weight:1000;line-height:1.05}
 [${RESOURCE_HUD_ATTR}="1"] .grBattleResourceDelta{font-size:8px;font-weight:800;line-height:1.05;opacity:.72;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:82px}
+[${RESOURCE_HUD_ATTR}="1"] .grBattleResourcePayment{position:absolute;left:0;bottom:calc(100% + 3px);max-width:min(260px,62vw);padding:3px 6px;border:1px solid rgba(225,244,215,.18);border-radius:7px;background:rgba(3,20,17,.88);font-size:8px;font-weight:900;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+[${RESOURCE_HUD_ATTR}="1"] .grBattleResourcePayment[hidden]{display:none!important}
 [${RESOURCE_HUD_ATTR}="1"] [data-resolved="false"] .grBattleResourceValue{opacity:.54}
-@media(max-height:420px),(max-width:720px){[${RESOURCE_HUD_ATTR}="1"]{gap:2px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell{min-width:36px;padding:2px 4px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell small{font-size:8px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceValue{font-size:13px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceDelta{font-size:7px;max-width:58px}}
+@media(max-height:420px),(max-width:720px){[${RESOURCE_HUD_ATTR}="1"]{gap:2px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell{min-width:36px;padding:2px 4px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell small{font-size:8px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceValue{font-size:13px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceDelta{font-size:7px;max-width:58px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourcePayment{max-width:min(220px,64vw);padding:2px 4px;font-size:7px}}
 @media(prefers-reduced-motion:reduce){[${RESOURCE_HUD_ATTR}="1"] *{transition:none!important;animation:none!important}}
 `;
   document.head?.appendChild(style);
@@ -128,9 +166,14 @@ export function mountBattleCriticalResourceHud(global = globalThis, options = {}
   const mana = createResourceCell(document, 'マナ', 'mana');
   const honey = createResourceCell(document, 'ハニー', 'honey');
   const chip = createResourceCell(document, 'チップ', 'chip');
+  const payment = createNode(document, 'div', 'grBattleResourcePayment');
+  payment.dataset.paymentReceipt = '1';
+  payment.dataset.authority = 'caller_authoritative_payment_receipt_only';
+  payment.hidden = true;
   root.appendChild(mana.cell);
   root.appendChild(honey.cell);
   root.appendChild(chip.cell);
+  root.appendChild(payment);
   host.appendChild(root);
 
   let destroyed = false;
@@ -151,7 +194,12 @@ export function mountBattleCriticalResourceHud(global = globalThis, options = {}
     honey.delta.textContent = model.honey.deltaText;
     honey.delta.hidden = !model.honey.deltaResolved;
     setData(honey.delta, 'resolved', model.honey.deltaResolved);
-    root.setAttribute?.('aria-label', `対戦資源 マナ ${model.mana.text}、ハニー ${model.honey.text}、チップ ${model.chip.text}`);
+    payment.textContent = model.payment.text;
+    payment.hidden = !model.payment.resolved;
+    setData(payment, 'resolved', model.payment.resolved);
+    setData(root, 'paymentResolved', model.payment.resolved);
+    const paymentAria = model.payment.resolved ? `、${model.payment.text}` : '';
+    root.setAttribute?.('aria-label', `対戦資源 マナ ${model.mana.text}、ハニー ${model.honey.text}、チップ ${model.chip.text}${paymentAria}`);
     lastSnapshot = model;
     return model;
   }
@@ -175,6 +223,7 @@ export function mountBattleCriticalResourceHud(global = globalThis, options = {}
     manaCell: mana.cell,
     honeyCell: honey.cell,
     chipCell: chip.cell,
+    paymentReceipt: payment,
     sync,
     snapshot: () => lastSnapshot,
     destroy
@@ -191,8 +240,11 @@ export const BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME = deepFreeze({
   resources: Object.freeze(['manaCurrent', 'manaMax', 'honey', 'chipCount']),
   unresolvedToken: UNRESOLVED,
   honeyDeltaAuthority: 'CALLER_ONLY_OPTIONAL',
+  paymentReceiptAuthority: 'CALLER_ONLY_OPTIONAL_ATOMIC',
+  paymentReceiptFields: Object.freeze(['cost', 'manaPaid', 'honeyPaid', 'manaAfter', 'honeyAfter', 'source']),
   physicalManaIdentityProjection: false,
   chipIdentityPublicityOwnedHere: false,
+  paymentCalculationOwnedHere: false,
   resourceCalculationOwnedHere: false,
   resourceStoreOwnedHere: false,
   productionHtmlMutationOwnedHere: false

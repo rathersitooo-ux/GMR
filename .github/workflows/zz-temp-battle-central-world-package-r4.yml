@@ -1,0 +1,58 @@
+name: TEMP Battle central world package R4 bridge follow-up
+
+on:
+  push:
+    branches:
+      - sol/battle-central-world-package-r4-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  patch-bridge-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-central-world-package-r4-20260914
+          fetch-depth: 0
+      - name: Add existing authority bridge to package
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          build = Path('deploy/cloudflare/scripts/build.mjs')
+          test = Path('deploy/cloudflare/tests/build.test.mjs')
+          b = build.read_text()
+          t = test.read_text()
+          marker = 'battle_fl anora_legacy'.replace(' ','')
+          if "artifact: 'battle_flanora_legacy_board_bridge'" not in b:
+              anchor = "  { option: 'newBaseFlanoraBoardSurfaceRuntimeSource', expected: 'expectedNewBaseFlanoraBoardSurfaceRuntimeBlob', source: 'browser/new-base-flanora-board-surface-runtime.mjs', output: 'new-base-flanora-board-surface-runtime.mjs', artifact: 'new_base_flanora_board_surface_runtime', label: 'New Base Flanora board surface runtime', sourceFlag: '--new-base-flanora-board-surface-runtime-source', expectedFlag: '--expected-new-base-flanora-board-surface-runtime-blob' },\n"
+              assert b.count(anchor) == 1, f'build anchor count={b.count(anchor)}'
+              line = "  { option: 'battleFlanoraLegacyBoardBridgeSource', expected: 'expectedBattleFlanoraLegacyBoardBridgeBlob', source: 'browser/battle-flanora-legacy-board-bridge.mjs', output: 'battle-flanora-legacy-board-bridge.mjs', artifact: 'battle_flanora_legacy_board_bridge', label: 'Battle Flanora legacy-board authority bridge', sourceFlag: '--battle-flanora-legacy-board-bridge-source', expectedFlag: '--expected-battle-flanora-legacy-board-bridge-blob' },\n"
+              build.write_text(b.replace(anchor, anchor + line))
+          if "artifact: 'battle_flanora_legacy_board_bridge'" not in t:
+              anchor = "  { file: 'new-base-flanora-board-surface-runtime.mjs', source: 'browser/new-base-flanora-board-surface-runtime.mjs', sourceArg: 'newBaseFlanoraBoardSurfaceRuntimeSource', expectedArg: 'expectedNewBaseFlanoraBoardSurfaceRuntimeBlob', artifact: 'new_base_flanora_board_surface_runtime', fixture: \"import './new-base-flanora-map-layout-core.mjs';\\nimport './new-base-progression-lane-presentation-core.mjs';\\nexport function mountFlanoraBoardSurface(){ return Object.freeze({}); }\\n\", currentBlob: '68e93b906431bdadaa1562509d9b936673ab35bb' },\n"
+              assert t.count(anchor) == 1, f'test anchor count={t.count(anchor)}'
+              line = "  { file: 'battle-flanora-legacy-board-bridge.mjs', source: 'browser/battle-flanora-legacy-board-bridge.mjs', sourceArg: 'battleFlanoraLegacyBoardBridgeSource', expectedArg: 'expectedBattleFlanoraLegacyBoardBridgeBlob', artifact: 'battle_flanora_legacy_board_bridge', fixture: 'export function createFlanoraLegacyBoardBridge(){ return Object.freeze({}); }\\n', currentBlob: 'ac5278edaf75023a9c9850a2f50652e0e3bf2d8e' },\n"
+              test.write_text(t.replace(anchor, anchor + line))
+          PY
+      - name: Verify package contract
+        run: node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Guard exact scope
+        shell: bash
+        run: |
+          git diff --check
+          mapfile -t files < <(git diff --name-only | sort)
+          test "${#files[@]}" -eq 2
+          test "${files[0]}" = "deploy/cloudflare/scripts/build.mjs"
+          test "${files[1]}" = "deploy/cloudflare/tests/build.test.mjs"
+      - name: Commit bridge package patch
+        shell: bash
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'gameroad-bot'
+          git config user.email 'gameroad-bot@users.noreply.github.com'
+          git add deploy/cloudflare/scripts/build.mjs deploy/cloudflare/tests/build.test.mjs
+          git commit -m 'build: package central world authority bridge'
+          git push origin HEAD:sol/battle-central-world-package-r4-20260914

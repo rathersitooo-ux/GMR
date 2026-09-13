@@ -1,0 +1,74 @@
+name: TEMP Partner Advice Quick3 Direct Writer R4
+
+on:
+  push:
+    branches:
+      - sol/partner-advice-quick3-r1-20260913
+    paths:
+      - .github/workflows/zz-temp-partner-advice-quick3-r4.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/partner-advice-quick3-r1-20260913
+          fetch-depth: 0
+      - name: Patch clean product branch from bounded R2 program
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show origin/sol/partner-advice-quick3-r1-20260913:.github/workflows/zz-temp-partner-advice-quick3-r2.yml > /tmp/quick3-r2.yml
+          git checkout -B quick3-r4 origin/sol/partner-advice-quick3-r4-20260914
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+
+          workflow = Path('/tmp/quick3-r2.yml').read_text()
+          start_marker = "          python - <<'PY'\n"
+          start = workflow.index(start_marker) + len(start_marker)
+          end = workflow.index("\n          PY\n", start)
+          script = textwrap.dedent(workflow[start:end])
+
+          old = "source = replace_once(source, projection_old, projection_new, 'quick3-projection')"
+          new = '''projection_start_token = "    const projection = projectPartnerAdviceChatPresentation({"
+          projection_end_token = "    const tutorialStatus = tutorialReplay.refresh();"
+          projection_start = source.find(projection_start_token)
+          projection_end = source.find(projection_end_token, projection_start)
+          if projection_start < 0 or projection_end < 0 or source.find(projection_start_token, projection_start + 1) >= 0:
+              raise RuntimeError('quick3-projection: unique structural interval not found')
+          source = source[:projection_start] + projection_new + source[projection_end:]'''
+          if script.count(old) != 1:
+              raise RuntimeError(f'R2 projection patch statement count={script.count(old)}')
+          script = script.replace(old, new, 1)
+          exec(compile(script, '<quick3-r4-product-patch>', 'exec'), {})
+          PY
+      - name: Verify focused product behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check browser/partner-advice-runtime-mount.mjs
+          node --test tests/partner-advice-runtime-mount.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+          mapfile -t changed < <(git diff --name-only | sort)
+          printf '%s\n' "${changed[@]}"
+          expected=(browser/partner-advice-runtime-mount.mjs deploy/cloudflare/tests/build.test.mjs tests/partner-advice-runtime-mount.test.mjs)
+          [[ "${#changed[@]}" -eq 3 ]]
+          [[ "${changed[*]}" == "${expected[*]}" ]]
+          ! grep -R "zz-temp-partner-advice-quick3-r4" -n browser tests deploy/cloudflare/tests
+      - name: Commit only product files to clean branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "gameroad-sol"
+          git config user.email "gameroad-sol@users.noreply.github.com"
+          git add browser/partner-advice-runtime-mount.mjs tests/partner-advice-runtime-mount.test.mjs deploy/cloudflare/tests/build.test.mjs
+          git diff --cached --quiet && { echo 'No product delta'; exit 1; }
+          git commit -m "Partner: 既定クイック3入口を実装"
+          git push origin HEAD:refs/heads/sol/partner-advice-quick3-r4-20260914
+          echo "PRODUCT_COMMIT=$(git rev-parse HEAD)"

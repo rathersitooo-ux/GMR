@@ -1,0 +1,121 @@
+name: TEMP Battle Camera R9 Capture
+
+on:
+  push:
+    branches:
+      - sol/battle-camera-visual-r9-final-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium capture runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Capture real 667x375 Battle camera states
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p visual-evidence
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/gameroad-camera-r9-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          cat >/tmp/camera-r9-capture.mjs <<'NODE'
+          import { chromium } from 'playwright';
+          import fs from 'node:fs';
+
+          const browser = await chromium.launch({headless:true});
+          const page = await browser.newPage({viewport:{width:667,height:375}, deviceScaleFactor:1});
+          const pageErrors=[];
+          page.on('pageerror',e=>pageErrors.push(String(e?.message||e)));
+          const response=await page.goto('http://127.0.0.1:4173/browser/GAMEROAD.html',{waitUntil:'commit'});
+          if(!response?.ok()) throw new Error(`main HTML ${response?.status()}`);
+          await page.locator('section[data-screen="home"]').waitFor({state:'visible',timeout:15000});
+
+          const deck=await page.evaluate(()=>{
+            const t=window.__GAMEROAD_TEST__;
+            if(!t||!window.__CARD_DATA__) throw new Error('GAMEROAD_TEST_OR_CARD_DATA_UNAVAILABLE');
+            const publicMain=new Set(t.deckPublic().filter(c=>c.slot==='main').map(c=>c.id));
+            const standard=window.__CARD_DATA__.filter(c=>publicMain.has(c.id)&&/^(SP|HT|DI|CL)$/.test(c.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c=>c.id);
+            const royalIds=['SP_J','SP_Q','SP_K'];
+            const nonRoyal=standard.filter(id=>!t.isRoyalCard(id));
+            const main=[...nonRoyal.slice(0,37),...royalIds];
+            t.deckSetDraft(main,[]);
+            const draft=t.deckValidate(t.state.deckDraft,{forBattle:true});
+            const committed=draft.ok?t.deckCommit():false;
+            return {count:main.length,draft,committed,saved:t.deckValidate(t.state.savedDeck,{forBattle:true})};
+          });
+          if(deck.count!==40||!deck.committed||!deck.saved?.ok) throw new Error(`legal deck failed ${JSON.stringify(deck)}`);
+
+          const setupControl=page.locator('[data-home-target="setup"]:visible,[data-go="setup"]:visible').first();
+          await setupControl.waitFor({state:'visible'});
+          await setupControl.click();
+          const setup=page.locator('section[data-screen="setup"]');
+          await setup.waitFor({state:'visible'});
+          await setup.locator('[data-content="road_shield"]').click();
+          await setup.locator('[data-mode="2p"]').click();
+          await setup.locator('#startMatch').click();
+          const battle=page.locator('section[data-screen="battle"]');
+          await battle.waitFor({state:'visible'});
+          await page.waitForFunction(()=>window.__GAMEROAD_BATTLE_CAMERA_LIVE__?.snapshot?.().mounted===true,null,{timeout:10000});
+
+          const ret=battle.locator('#cameraReturnBtn');
+          const rail=battle.locator('.battleRail');
+          const hand=battle.locator('#hand');
+          const top=battle.locator('.battleTopStatus');
+          const slide=battle.locator('[data-battle-janken-slidepad="1"]').first();
+          if(await ret.isVisible()) throw new Error('return control visible in FOLLOW_CONTROLLED');
+          const follow=await ret.evaluate(el=>({hidden:el.hidden,display:getComputedStyle(el).display,pointer:getComputedStyle(el).pointerEvents,rects:el.getClientRects().length,aria:el.getAttribute('aria-hidden'),tab:el.tabIndex}));
+          fs.writeFileSync('visual-evidence/follow-metrics.json',JSON.stringify({follow},null,2));
+          await page.screenshot({path:'visual-evidence/01-follow-667x375.png',animations:'disabled'});
+
+          const canvas=battle.locator('#fieldCanvas');
+          const box=await canvas.boundingBox();
+          if(!box) throw new Error('fieldCanvas has no box');
+          const sx=box.x+box.width*.52, sy=box.y+box.height*.52;
+          await page.mouse.move(sx,sy);
+          await page.mouse.down();
+          await page.mouse.move(sx-100,sy+8,{steps:10});
+          await page.mouse.up();
+          await page.waitForFunction(()=>window.__GAMEROAD_BATTLE_CAMERA_LIVE__?.snapshot?.().state?.mode==='MANUAL_INSPECT',null,{timeout:7000});
+          await ret.waitFor({state:'visible'});
+
+          const rect=async loc=>{if(await loc.count()===0||!(await loc.isVisible()))return null;return await loc.boundingBox()};
+          const rr=await rect(ret), hr=await rect(hand), tr=await rect(top), sr=await rect(slide), railr=await rect(rail);
+          const railStyle=await rail.evaluate(el=>({display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,opacity:getComputedStyle(el).opacity,pointer:getComputedStyle(el).pointerEvents}));
+          const manual=await ret.evaluate(el=>({hidden:el.hidden,display:getComputedStyle(el).display,pointer:getComputedStyle(el).pointerEvents,aria:el.getAttribute('aria-hidden'),tab:el.tabIndex,mode:el.dataset.cameraMode||null}));
+          const overlap=(a,b)=>!!(a&&b&&a.x<b.x+b.width&&a.x+a.width>b.x&&a.y<b.y+b.height&&a.y+a.height>b.y);
+          const metrics={viewport:{width:667,height:375},returnRect:rr,handRect:hr,topRect:tr,slidePadRect:sr,railRect:railr,railStyle,manual,overlap:{hand:overlap(rr,hr),top:overlap(rr,tr),slidePad:overlap(rr,sr),rail:overlap(rr,railr)},pageErrors,camera:await page.evaluate(()=>window.__GAMEROAD_BATTLE_CAMERA_LIVE__?.snapshot?.()||null)};
+          fs.writeFileSync('visual-evidence/02-manual-metrics.json',JSON.stringify(metrics,null,2));
+          if(!rr||rr.width<44||rr.height<44||rr.x<0||rr.y<0||rr.x+rr.width>667||rr.y+rr.height>375) throw new Error(`return control bounds invalid ${JSON.stringify(rr)}`);
+          if(metrics.overlap.hand||metrics.overlap.top||metrics.overlap.slidePad) throw new Error(`return control overlaps primary UI ${JSON.stringify(metrics.overlap)}`);
+          await page.screenshot({path:'visual-evidence/02-manual-667x375.png',animations:'disabled'});
+
+          await ret.click();
+          await page.waitForFunction(()=>window.__GAMEROAD_BATTLE_CAMERA_LIVE__?.snapshot?.().state?.mode==='FOLLOW_CONTROLLED',null,{timeout:7000});
+          if(await ret.isVisible()) throw new Error('return control remained visible after return');
+          fs.writeFileSync('visual-evidence/03-returned-metrics.json',JSON.stringify({camera:await page.evaluate(()=>window.__GAMEROAD_BATTLE_CAMERA_LIVE__?.snapshot?.()||null),pageErrors},null,2));
+          await page.screenshot({path:'visual-evidence/03-returned-667x375.png',animations:'disabled'});
+          if(pageErrors.length) throw new Error(`page errors ${JSON.stringify(pageErrors)}`);
+          await browser.close();
+          NODE
+          node /tmp/camera-r9-capture.mjs
+      - name: Upload 667x375 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: battle-camera-r9-667-evidence
+          path: visual-evidence/
+          if-no-files-found: error
+          retention-days: 14

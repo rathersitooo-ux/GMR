@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CURRENT-ACTION-CONTEXT-R1-20260914T0110-SOL-SA11",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CURRENT_ACTION_WAIT_OWNER_REASON_PRESENTATION_R1",
+  "acquireKey": "BATTLE-CURRENT-ACTION-CONTEXT-R1-20260914T0110-SOL-SA11",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_E935EE9_RUNTIME_CUE_PLUS_ACTIVE_LEASE_ROW1351",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PURE_PRESENTATION_CORE_NONOVERLAP_RUNTIME_AND_HTML_READ_ONLY",
+  "proceedToken": "PROCEED|BATTLE-CURRENT-ACTION-CONTEXT-R1-20260914T0110-SOL-SA11|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-current-action-context-presentation|focused-node-test|active-lease",
+  "authorizationBaseSha": "e935ee9df7a595a2b1fc657152a5d08e6c0984e8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CURRENT_ACTION_WAIT_OWNER_REASON_PRESENTATION_R1",
+  "leaseAcquireKey": "BATTLE-CURRENT-ACTION-CONTEXT-R1-20260914T0110-SOL-SA11",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 01:10 JST",
+  "leaseUntilJst": "2026-09-14 02:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1351:L1351",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main e935ee9df7a595a2b1fc657152a5d08e6c0984e8; mutable browser/battle-current-action-context-presentation-core.mjs; tests/battle-current-action-context-presentation-core.test.mjs; own PRE_ACTION/branch/PR/check/readback only. READ_ONLY browser/battle-screen-runtime-mount.mjs (BATTLE-CARD-ART-R1 active through 01:40 JST); browser/GAMEROAD.html (Camera R9 active through 01:58 JST); battle-screen presentation/gameplay/rules/target/legality/save/economy/network.",
+  "solutionSignature": "BATTLE_CURRENT_ACTION_CONTEXT_CALLER_PUBLIC_FACTS_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_CUE_PHASE_ONLY_PLUS_RECOVERY_CONTROL_OWNER_FALSE_PLUS_VISUAL_RELATION_GATE",
+  "solutionSearchEvidence": [
+    "Current battle-screen runtime already presents phase-derived 今：... but the accepted screen model has no public input-owner or wait-reason fields.",
+    "Existing battle-recovery presentation explicitly keeps control-owner computation with its caller, so this WorkUnit must not turn recovery presentation into a second control authority.",
+    "The active battle-screen runtime owner and active shared HTML owner make direct live-hook mutation overlapping at acquisition time; a new pure presentation core plus focused test is non-overlapping.",
+    "The projector accepts only caller-authoritative public facts and rejects unknown viewer/input-owner identities rather than inferring legality, turn ownership, target, timeout, or hidden state.",
+    "Viewer/input-owner relation is preserved explicitly so 待ち information cannot be fabricated from labels or screen position."
+  ],
+  "scope": [
+    "browser/battle-current-action-context-presentation-core.mjs",
+    "tests/battle-current-action-context-presentation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-current-action-context-presentation-core.mjs",
+    "tests/battle-current-action-context-presentation-core.test.mjs"
+  ]
+}

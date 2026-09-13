@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CENTRAL-WORLD-DIAG-R6-20260914T0228-SOL-TA16",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CENTRAL_WORLD_LEGACY_BINDING_DIAGNOSTIC_R6",
+  "acquireKey": "BATTLE-CENTRAL-WORLD-DIAG-R6-20260914T0228-SOL-TA16",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R5-PACKAGE-CLOSED-BUT-LIVE-BINDINGS-UNRESOLVED",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXACT-CURRENT-HTML-READONLY-DIAGNOSTIC-ONLY",
+  "proceedToken": "PROCEED|BATTLE-CENTRAL-WORLD-DIAG-R6-20260914T0228-SOL-TA16|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|read-only-current-html-binding-extraction|CURRENT_ACTIVE_LEASES!A1384:L1384",
+  "authorizationBaseSha": "15635215ac89b0a098a48b134bb6580b98c3e9f2",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CENTRAL_WORLD_LEGACY_BINDING_DIAGNOSTIC_R6",
+  "leaseAcquireKey": "BATTLE-CENTRAL-WORLD-DIAG-R6-20260914T0228-SOL-TA16",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 02:28 JST",
+  "leaseUntilJst": "2026-09-14 03:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1384:L1384",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh diagnostic branch from exact current main; mutable only transient .github/workflows/zz-temp-battle-central-world-binding-diag-r6.yml and own transient data/preaction-authorizations/BATTLE-CENTRAL-WORLD-DIAG-R6-20260914T0228-SOL-TA16.json; own branch/run/readback. READ_ONLY browser/GAMEROAD.html; all product/runtime/build/test/gameplay/rules/state/save/economy/network.",
+  "scope": [
+    ".github/workflows/zz-temp-battle-central-world-binding-diag-r6.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/zz-temp-battle-central-world-binding-diag-r6.yml"
+  ],
+  "solutionSignature": "Read exact-current HTML only and emit bounded diagnostic excerpts for board position identity, road/shield indices, player relation, GOAL hooks, and render seams. Product/runtime bytes remain unchanged.",
+  "reuseDisposition": "REUSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING-LEGACY-BOARD-PLUS-FLANORA-BRIDGE-CALLER-BINDING-NEED",
+  "solutionSearchEvidence": [
+    "Existing battle-flanora-legacy-board-bridge requires explicit caller-owned authorityPositionId to surfaceRef bindings.",
+    "Current HTML is too large for connector partial retrieval but can be read exactly by a bounded CI diagnostic.",
+    "No product mutation is necessary to determine the binding map."
+  ]
+}

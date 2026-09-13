@@ -1,0 +1,34 @@
+{
+  "schema": "gameroad.preaction.v1",
+  "leaseId": "BATTLE-REDUCED-MOTION-R1-20260914T0111-SOL-RA39",
+  "parentTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnit": "BATTLE_REDUCED_MOTION_SEMANTIC_PARITY_GATE_R1",
+  "trigger": "USER_KANA_RA_20260914 / ADDRESS39_REDUCED_MOTION",
+  "base": {
+    "repository": "rathersitooo-ux/GMR",
+    "branch": "main",
+    "commit": "e935ee9df7a595a2b1fc657152a5d08e6c0984e8"
+  },
+  "branch": "sol/battle-reduced-motion-r1-20260914",
+  "mutablePaths": [
+    "tests/battle-reduced-motion-semantic-parity.test.mjs",
+    "data/preaction-authorizations/BATTLE-REDUCED-MOTION-R1-20260914T0111-SOL-RA39.json"
+  ],
+  "readOnlyPaths": [
+    "browser/GAMEROAD.html",
+    "browser/battle-card-release-flight-motion-core.mjs",
+    "browser/battle-controlled-character-motion-core.mjs",
+    "browser/battle-janken-order-motion-core.mjs",
+    "browser/ui-state-feedback-core.mjs"
+  ],
+  "intent": "Add one cross-surface regression gate proving ReducedMotion removes or shortens large motion without changing authoritative order, destination meaning, controlled-character state, or UI feedback semantics.",
+  "forbidden": [
+    "gameplay rule changes",
+    "card identity changes",
+    "target or legality changes",
+    "HTML mutation while Camera R9 owns browser/GAMEROAD.html",
+    "duplicate motion controllers"
+  ],
+  "rollback": "Do not merge if the focused test, required checks, or branch diff shows semantic drift; abandon this branch.",
+  "status": "AUTHORIZED"
+}

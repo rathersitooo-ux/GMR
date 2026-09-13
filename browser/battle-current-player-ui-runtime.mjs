@@ -65,6 +65,9 @@ const STYLE_TEXT = `
 .screen.battle[${ROOT_ATTR}="1"][data-gr-reduced-motion="true"] [${ZONE_ATTR}],
 .screen.battle[${ROOT_ATTR}="1"][data-gr-reduced-motion="true"] [${ZONE_ATTR}] *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
 .screen.battle[${ROOT_ATTR}="1"][data-gr-low-perf="true"] [${ZONE_ATTR}]{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+@media(orientation:landscape){
+  .screen.battle[${ROOT_ATTR}="1"] .battleInfo{bottom:calc(var(--gr-ui-edge) + 22px)!important}
+}
 @media(max-height:430px) and (orientation:landscape){
   .screen.battle[${ROOT_ATTR}="1"]{--gr-thumb-w:208px;--gr-thumb-h:160px;--gr-bottom-h:clamp(82px,26vh,106px)}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="current-action"]{top:46px!important;max-width:32vw!important}

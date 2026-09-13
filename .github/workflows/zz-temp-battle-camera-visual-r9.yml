@@ -38,18 +38,19 @@ jobs:
           html_path = Path('browser/GAMEROAD.html')
           s = Path('/tmp/camera-donor.html').read_text(encoding='utf-8')
 
-          old_btn = '<button class="railBtn" id="cameraReturnBtn" aria-label="操作キャラへカメラを戻す" title="操作キャラへ戻る">自分</button>'
-          assert s.count(old_btn) == 1, f'camera rail button count={s.count(old_btn)}'
-          s = s.replace(old_btn, '')
+          button_pattern = r'<button[^>]*\bid="cameraReturnBtn"[^>]*>[\s\S]*?</button>'
+          buttons = re.findall(button_pattern, s)
+          assert len(buttons) == 1, f'camera return button count={len(buttons)}'
+          s = re.sub(button_pattern, '', s, count=1)
 
-          anchor = '<button class="railBtn warn" id="leaveMatch">退出</button></div><div class="targetBox floatingTarget"'
-          replacement = '<button class="railBtn warn" id="leaveMatch">退出</button></div><button type="button" class="cameraReturnControl" id="cameraReturnBtn" aria-label="操作キャラへカメラを戻す" title="操作キャラへ戻る" hidden aria-hidden="true" tabindex="-1">自分</button><div class="targetBox floatingTarget"'
-          assert s.count(anchor) == 1, f'rail close anchor count={s.count(anchor)}'
-          s = s.replace(anchor, replacement)
+          rail_pattern = r'(<div class="battleRail">[\s\S]*?</div>)'
+          rails = re.findall(rail_pattern, s)
+          assert len(rails) == 1, f'battleRail count={len(rails)}'
+          independent = '<button type="button" class="cameraReturnControl" id="cameraReturnBtn" aria-label="操作キャラへカメラを戻す" title="操作キャラへ戻る" hidden aria-hidden="true" tabindex="-1">自分</button>'
+          s = re.sub(rail_pattern, lambda m: m.group(1) + independent, s, count=1)
 
           style_pattern = r'<style id="gameroad-battle-camera-live-style">[\s\S]*?</style>'
-          style_matches = re.findall(style_pattern, s)
-          assert len(style_matches) == 1, f'camera style blocks={len(style_matches)}'
+          assert len(re.findall(style_pattern, s)) == 1
           new_style = '''<style id="gameroad-battle-camera-live-style">
           #battleMap[data-camera-live="1"]{touch-action:none}
           #cameraReturnBtn[hidden]{display:none!important}
@@ -58,29 +59,21 @@ jobs:
           </style>'''
           s = re.sub(style_pattern, lambda _: new_style, s, count=1)
 
-          replacements = [
-            (
-              "function destroy(){runtime?.destroy?.();runtime=null;key='';delete world.dataset.cameraMode;delete returnControl.dataset.cameraMode}",
-              "function syncReturnControl(cameraState){const manual=cameraState?.mode==='MANUAL_INSPECT';returnControl.hidden=!manual;returnControl.setAttribute('aria-hidden',manual?'false':'true');returnControl.tabIndex=manual?0:-1;if(manual)returnControl.dataset.cameraMode='MANUAL_INSPECT';else delete returnControl.dataset.cameraMode}function destroy(){runtime?.destroy?.();runtime=null;key='';delete world.dataset.cameraMode;syncReturnControl(null)}",
-              'destroy',
-            ),
-            (
-              "applyView:(cameraState,meta)=>{adapter.applyView(cameraState,meta);world.dataset.cameraMode=cameraState.mode;returnControl.dataset.cameraMode=cameraState.mode}});",
-              "applyView:(cameraState,meta)=>{adapter.applyView(cameraState,meta);world.dataset.cameraMode=cameraState.mode;syncReturnControl(cameraState)}});",
-              'applyView',
-            ),
-            (
-              "const cameraState=runtime.getState();world.dataset.cameraMode=cameraState.mode;returnControl.dataset.cameraMode=cameraState.mode;return cameraState}",
-              "const cameraState=runtime.getState();world.dataset.cameraMode=cameraState.mode;syncReturnControl(cameraState);return cameraState}",
-              'state-sync',
-            ),
-          ]
-          for old, new, label in replacements:
-            assert s.count(old) == 1, f'{label} anchor count={s.count(old)}'
-            s = s.replace(old, new)
+          destroy_token = 'delete returnControl.dataset.cameraMode'
+          assert s.count(destroy_token) == 1, f'destroy token count={s.count(destroy_token)}'
+          s = s.replace(
+              destroy_token,
+              "returnControl.hidden=true;returnControl.setAttribute('aria-hidden','true');returnControl.tabIndex=-1;delete returnControl.dataset.cameraMode",
+              1,
+          )
 
-          rail = s.split('<div class="battleRail">',1)[1].split('</div>',1)[0]
-          assert 'cameraReturnBtn' not in rail, 'camera return leaked into persistent battleRail'
+          mode_token = 'returnControl.dataset.cameraMode=cameraState.mode'
+          assert s.count(mode_token) == 2, f'mode token count={s.count(mode_token)}'
+          mode_projection = "returnControl.dataset.cameraMode=cameraState.mode;const manual=cameraState.mode==='MANUAL_INSPECT';returnControl.hidden=!manual;returnControl.setAttribute('aria-hidden',manual?'false':'true');returnControl.tabIndex=manual?0:-1"
+          s = s.replace(mode_token, mode_projection)
+
+          rail = re.search(r'<div class="battleRail">([\s\S]*?)</div>', s)
+          assert rail and 'cameraReturnBtn' not in rail.group(1), 'camera return leaked into persistent battleRail'
           assert s.count('id="cameraReturnBtn"') == 1
           assert 'hidden aria-hidden="true" tabindex="-1"' in s
           html_path.write_text(s, encoding='utf-8')
@@ -97,7 +90,7 @@ jobs:
             errors.push('camera return control is not default-hidden/non-focusable outside the rail');
           }
           if (!/#cameraReturnBtn\[hidden\]\{display:none!important\}/.test(html)) errors.push('camera return hidden state does not guarantee zero footprint');
-          if (!/const manual=cameraState\?\.mode==='MANUAL_INSPECT';returnControl\.hidden=!manual;/.test(html)) errors.push('camera return visibility is not bound only to MANUAL_INSPECT');
+          if ((html.match(/cameraState\.mode==='MANUAL_INSPECT';returnControl\.hidden=!manual/g) ?? []).length < 2) errors.push('camera return visibility is not bound to MANUAL_INSPECT at both camera projection points');
           if (!/__GAMEROAD_BATTLE_CAMERA_FIELD_ADAPTER__/.test(html) || !/mountBattleCameraLiveRuntime/.test(html)) errors.push('camera live adapter/runtime mount is missing');
           if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stateWrite:false\}/.test(html)) errors.push('camera field adapter lost gameplay-write firewall');
           '''

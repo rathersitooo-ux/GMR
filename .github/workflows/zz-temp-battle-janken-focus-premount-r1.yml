@@ -1,0 +1,117 @@
+name: temp battle janken focus premount r1
+on:
+  push:
+    branches:
+      - sol/battle-janken-focus-premount-r1-20260914
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[premount-writer]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-janken-focus-premount-r1-20260914
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact first-mount seam patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          runtime_path = Path('browser/battle-janken-slidepad-runtime-mount.mjs')
+          test_path = Path('tests/battle-janken-slidepad-runtime-mount.test.mjs')
+          s = runtime_path.read_text()
+          t = test_path.read_text()
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly 1 anchor, got {count}')
+              return text.replace(old, new, 1)
+
+          old = """function autoMount() {
+            if (typeof globalThis !== 'object' || !globalThis.document) return;
+            const runtime = mountBattleJankenSlidePadRuntime(globalThis);
+            if (runtime) globalThis.__GAMEROAD_BATTLE_JANKEN_SLIDEPAD__ = runtime;
+          }
+          """
+          new = """export function readPreprovidedBattleJankenFocusIntegration(globalRef = globalThis) {
+            return normalizeBattleJankenFocusIntegration(
+              globalRef?.__GAMEROAD_BATTLE_JANKEN_FOCUS_INTEGRATION__,
+            );
+          }
+
+          function autoMount() {
+            if (typeof globalThis !== 'object' || !globalThis.document) return;
+            const focusIntegration = readPreprovidedBattleJankenFocusIntegration(globalThis);
+            const runtime = mountBattleJankenSlidePadRuntime(globalThis, { focusIntegration });
+            if (runtime) globalThis.__GAMEROAD_BATTLE_JANKEN_SLIDEPAD__ = runtime;
+          }
+          """
+          s = replace_once(s, old, new, 'autoMount')
+
+          t = replace_once(
+              t,
+              '  normalizeBattleJankenFocusIntegration,\n',
+              '  normalizeBattleJankenFocusIntegration,\n  readPreprovidedBattleJankenFocusIntegration,\n',
+              'test import',
+          )
+          extra = r'''
+
+test('autoMount premount seam consumes only a preprovided valid Focus integration and creates no fallback authority', async () => {
+  const calls = { focus: 0, cancel: 0, commit: 0 };
+  const liveInputStack = {
+    async focus() { calls.focus += 1; return { ok: true }; },
+    async cancel() { calls.cancel += 1; return { ok: true }; },
+    async commit() { calls.commit += 1; return { committed: true }; },
+    status() { return { ready: true }; },
+  };
+  const provided = {
+    mountSurface() { return { mounted: true }; },
+    async readContext() { return { generationId: 'round:provided', packages: [] }; },
+    liveInputStack,
+  };
+
+  const normalized = readPreprovidedBattleJankenFocusIntegration({
+    __GAMEROAD_BATTLE_JANKEN_FOCUS_INTEGRATION__: provided,
+  });
+  assert.equal(normalized.schema, BATTLE_JANKEN_FOCUS_LIVE_MOUNT_SCHEMA);
+  assert.strictEqual(normalized.liveInputStack, liveInputStack);
+  assert.equal(readPreprovidedBattleJankenFocusIntegration({}), null);
+  assert.equal(readPreprovidedBattleJankenFocusIntegration({
+    __GAMEROAD_BATTLE_JANKEN_FOCUS_INTEGRATION__: { mountSurface() {} },
+  }), null);
+  assert.deepEqual(calls, { focus: 0, cancel: 0, commit: 0 });
+
+  const runtimeSource = readFileSync(
+    new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
+    'utf8',
+  );
+  assert.match(runtimeSource, /const focusIntegration = readPreprovidedBattleJankenFocusIntegration\(globalThis\);/);
+  assert.match(runtimeSource, /mountBattleJankenSlidePadRuntime\(globalThis, \{ focusIntegration \}\)/);
+  assert.doesNotMatch(runtimeSource, /readPreprovidedBattleJankenFocusIntegration[\s\S]*ensureRoundStartJankenSlotAssignment\(/);
+});
+'''
+          if "autoMount premount seam consumes only a preprovided valid Focus integration" in t:
+              raise SystemExit('test already present')
+          t = t.rstrip() + extra + '\n'
+
+          runtime_path.write_text(s)
+          test_path.write_text(t)
+          PY
+          node --test tests/battle-janken-slidepad-runtime-mount.test.mjs
+          git diff --check
+          git status --short
+      - name: Commit bounded product patch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs
+          git commit -m 'Battle: accept authoritative Focus at first SlidePad mount [premount-writer]'
+          git push origin HEAD:sol/battle-janken-focus-premount-r1-20260914

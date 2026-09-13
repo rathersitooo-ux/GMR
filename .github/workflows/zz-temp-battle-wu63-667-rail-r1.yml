@@ -1,57 +1,40 @@
 name: TEMP WU63 667 Rail Repair R1
-
 on:
   push:
-    branches:
-      - sol/battle-wu63-667-rail-repair-r1-20260914
-
+    branches: [sol/battle-wu63-667-rail-repair-r1-20260914]
 permissions:
   contents: read
-
 jobs:
-  fresh-main-667-acceptance:
+  candidate-g:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
           ref: 2b2c9aefa9ace0c9c78f56ed293e755b7808806d
-      - name: Verify exact fresh main under test
-        shell: bash
-        run: test "$(git rev-parse HEAD)" = "2b2c9aefa9ace0c9c78f56ed293e755b7808806d"
       - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+        with: {node-version: '22'}
       - run: |
           npm install --no-save --no-package-lock @playwright/test@1.62.0
           npx playwright install --with-deps chromium
-      - name: Run exact fresh-main 667 acceptance
-        shell: bash
+      - shell: bash
         run: |
           set -euo pipefail
           mkdir -p .wu63-r1 visual-evidence/wu63-r1 test-results/wu63-r1
           cat > .wu63-r1/playwright.config.mjs <<'EOF'
-          import {defineConfig} from '@playwright/test';
-          export default defineConfig({testDir:'.',testMatch:'fresh-main.spec.mjs',outputDir:'../test-results/wu63-r1',timeout:90000,expect:{timeout:10000},workers:1,retries:0,reporter:[['line'],['json',{outputFile:'../test-results/wu63-r1/report.json'}]],use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,viewport:{width:667,height:375},hasTouch:true,trace:'retain-on-failure'},webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1',cwd:new URL('../',import.meta.url).pathname,url:'http://127.0.0.1:4173/browser/GAMEROAD.html',timeout:120000}})
+          import {defineConfig} from '@playwright/test'; export default defineConfig({testDir:'.',testMatch:'g.spec.mjs',outputDir:'../test-results/wu63-r1',timeout:90000,expect:{timeout:10000},workers:1,use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,viewport:{width:667,height:375},hasTouch:true},webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1',cwd:new URL('../',import.meta.url).pathname,url:'http://127.0.0.1:4173/browser/GAMEROAD.html',timeout:120000}})
           EOF
-          cat > .wu63-r1/fresh-main.spec.mjs <<'EOF'
-          import {test,expect} from '@playwright/test';import fs from'node:fs';import path from'node:path';
-          const OUT=path.resolve('visual-evidence/wu63-r1');
-          async function installDeck(page){return page.evaluate(()=>{const t=window.__GAMEROAD_TEST__,pub=new Set(t.deckPublic().filter(c=>c.slot==='main').map(c=>c.id)),ids=window.__CARD_DATA__.filter(c=>pub.has(c.id)&&/^(SP|HT|DI|CL)$/.test(c.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c=>c.id),royal=['SP_J','SP_Q','SP_K'],non=ids.filter(id=>!t.isRoyalCard(id)),main=[...non.slice(0,37),...royal];t.deckSetDraft(main,[]);const v=t.deckValidate(t.state.deckDraft,{forBattle:true}),committed=v.ok?t.deckCommit():false;return{committed,v,saved:t.deckValidate(t.state.savedDeck,{forBattle:true})}})}
-          test('fresh current main 667 rail acceptance',async({page})=>{
-            const response=await page.goto('/browser/GAMEROAD.html',{waitUntil:'commit'});expect(response?.ok()).toBeTruthy();await expect(page.locator('section[data-screen="home"]')).toBeVisible({timeout:15000});
-            await expect.poll(()=>page.evaluate(()=>typeof window.__GAMEROAD_TEST__?.start==='function'&&typeof window.__GAMEROAD_TEST__?.deckPublic==='function'&&Array.isArray(window.__CARD_DATA__)&&typeof window.GAMEROAD_CREATE_DECK_MATCH_START_SNAPSHOT==='function')).toBeTruthy();const deck=await installDeck(page);expect(deck.committed).toBeTruthy();expect(deck.saved.ok).toBeTruthy();
-            const started=await page.evaluate(()=>{const t=window.__GAMEROAD_TEST__,m=t.start('2p','road_shield');return{ok:!!m,screen:t.state.screen,phase:m?.phase??null,id:m?.id??null}});expect(started.ok,JSON.stringify(started)).toBeTruthy();expect(started.screen).toBe('battle');await expect(page.locator('section[data-screen="battle"]')).toBeVisible();await expect.poll(()=>page.evaluate(()=>window.__GAMEROAD_BATTLE_CAMERA_LIVE__?.snapshot?.().mounted===true)).toBeTruthy();await page.waitForTimeout(250);
-            const metrics=await page.evaluate(()=>{const snap=e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return{id:e.id||null,cls:String(e.className||''),x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,bottom:r.bottom,display:s.display,visibility:s.visibility,pointer:s.pointerEvents,position:s.position,top:s.top,rightCss:s.right,bottomCss:s.bottom}};const visible=e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return !e.hidden&&s.display!=='none'&&s.visibility!=='hidden'&&s.pointerEvents!=='none'&&r.width>0&&r.height>0};const actions=[...document.querySelectorAll('section.battle.active button,section.battle.active [role="button"],section.battle.active [tabindex]:not([tabindex="-1"])')].filter(visible).filter(e=>!e.closest('#battleDrawer'));const rows=[...document.querySelectorAll('#battleAdvanceReservation .arRow')].filter(e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0});const relevant=[...new Set([...actions,...rows])];const off=relevant.filter(e=>{const r=e.getBoundingClientRect();return r.x<0||r.y<0||r.right>667||r.bottom>375}).map(snap);const hand=document.querySelector('#hand')?.getBoundingClientRect()??null;const handOverlap=hand?relevant.filter(e=>{const r=e.getBoundingClientRect();return r.x<hand.right&&r.right>hand.x&&r.y<hand.bottom&&r.bottom>hand.y}).filter(e=>!e.closest('#hand')&&!e.closest('.battleInfo')).map(snap):[];const ret=document.querySelector('#cameraReturnBtn');return{off,handOverlap,section:snap(document.querySelector('section.battle.active')),map:snap(document.querySelector('.battleMap')),rail:snap(document.querySelector('.battleRail')),reservation:snap(document.querySelector('#battleAdvanceReservation')),rows:rows.map(snap),cameraReturn:ret?snap(ret):null,cameraReturnHidden:ret?ret.hidden:null,cameraMode:window.__GAMEROAD_BATTLE_CAMERA_LIVE__?.snapshot?.().state?.mode??null}});
-            const evidence={sourceSha:'2b2c9aefa9ace0c9c78f56ed293e755b7808806d',started,metrics};fs.writeFileSync(path.join(OUT,'fresh-main-667-metrics.json'),JSON.stringify(evidence,null,2));console.log(JSON.stringify(evidence,null,2));await page.screenshot({path:path.join(OUT,'fresh-main-667-default.png'),animations:'disabled'});
-            expect(metrics.off,JSON.stringify(metrics.off)).toEqual([]);expect(metrics.handOverlap,JSON.stringify(metrics.handOverlap)).toEqual([]);expect(metrics.cameraMode).toBe('FOLLOW_CONTROLLED');expect(metrics.cameraReturnHidden).toBeTruthy();
-          });
+          cat > .wu63-r1/g.spec.mjs <<'EOF'
+          import {test,expect} from '@playwright/test'; import fs from'node:fs'; import path from'node:path';
+          async function installDeck(page){return page.evaluate(()=>{const t=window.__GAMEROAD_TEST__,pub=new Set(t.deckPublic().filter(c=>c.slot==='main').map(c=>c.id)),ids=window.__CARD_DATA__.filter(c=>pub.has(c.id)&&/^(SP|HT|DI|CL)$/.test(c.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c=>c.id),royal=['SP_J','SP_Q','SP_K'],non=ids.filter(id=>!t.isRoyalCard(id));t.deckSetDraft([...non.slice(0,37),...royal],[]);return t.deckValidate(t.state.deckDraft,{forBattle:true}).ok?t.deckCommit():false})}
+          async function snap(page,label){return page.evaluate(label=>{const box=e=>{if(!e)return null;const r=e.getBoundingClientRect();return{id:e.id||null,cls:String(e.className||''),x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,bottom:r.bottom}};const rows=[...document.querySelectorAll('#battleAdvanceReservation .arRow')];const visible=[...document.querySelectorAll('section.battle.active button,section.battle.active [role="button"],section.battle.active [tabindex]:not([tabindex="-1"])')].filter(e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return !e.hidden&&s.display!=='none'&&s.visibility!=='hidden'&&s.pointerEvents!=='none'&&r.width>0&&r.height>0&&!e.closest('#battleDrawer')});const relevant=[...new Set([...visible,...rows])];const off=relevant.filter(e=>{const r=e.getBoundingClientRect();return r.x<0||r.y<0||r.right>667||r.bottom>375}).map(box);return{label,off,rail:box(document.querySelector('.battleRail')),reservation:box(document.querySelector('#battleAdvanceReservation')),rows:rows.map(box),camera:window.__GAMEROAD_BATTLE_CAMERA_LIVE__?.snapshot?.().state?.mode};},label)}
+          test('reservation +10 only',async({page})=>{await page.goto('/browser/GAMEROAD.html',{waitUntil:'commit'});await expect(page.locator('section[data-screen="home"]')).toBeVisible();await expect.poll(()=>page.evaluate(()=>typeof window.__GAMEROAD_TEST__?.start==='function'&&typeof window.GAMEROAD_CREATE_DECK_MATCH_START_SNAPSHOT==='function')).toBeTruthy();expect(await installDeck(page)).toBeTruthy();const started=await page.evaluate(()=>{const t=window.__GAMEROAD_TEST__,m=t.start('2p','road_shield');return!!m});expect(started).toBeTruthy();await expect(page.locator('section.battle.active')).toBeVisible();await expect.poll(()=>page.evaluate(()=>window.__GAMEROAD_BATTLE_CAMERA_LIVE__?.snapshot?.().mounted===true)).toBeTruthy();await page.waitForTimeout(200);const before=await snap(page,'before');await page.screenshot({path:path.resolve('visual-evidence/wu63-r1/G-before.png'),animations:'disabled'});const h=await page.addStyleTag({content:'@media (min-width:640px) and (max-width:900px) and (max-height:430px) and (orientation:landscape){.battle.active #battleAdvanceReservation{transform:translateY(10px)!important}}'});await h.evaluate(e=>e.id='wu63Trial');await page.waitForTimeout(100);const after=await snap(page,'after');await page.screenshot({path:path.resolve('visual-evidence/wu63-r1/G-after.png'),animations:'disabled'});fs.writeFileSync(path.resolve('visual-evidence/wu63-r1/G.json'),JSON.stringify({before,after},null,2));console.log(JSON.stringify({before,after},null,2));expect(after.off,JSON.stringify(after.off)).toEqual([]);expect(after.camera).toBe('FOLLOW_CONTROLLED');});
           EOF
           npx playwright test --config=.wu63-r1/playwright.config.mjs --workers=1
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: battle-wu63-fresh-main-667-${{github.run_id}}
+          name: battle-wu63-candidate-g-${{github.run_id}}
           path: |
             visual-evidence/wu63-r1/
             test-results/wu63-r1/

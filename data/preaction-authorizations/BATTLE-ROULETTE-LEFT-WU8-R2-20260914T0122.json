@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ROULETTE-LEFT-WU8-R2-20260914T0122",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_ROULETTE_LEFT_PLACEMENT_WU8_20260914",
+  "acquireKey": "BATTLE-ROULETTE-LEFT-WU8-20260914T0116-SOL-KU",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "WU8-LEFT-PLACEMENT-EXACT-DIFF-FOCUSED-13PASS",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "WU8-R1-FOCUSED-ROULETTE-13-OF-13-PASS",
+  "proceedToken": "PROCEED|BATTLE-ROULETTE-LEFT-WU8-R2-20260914T0122|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|exact-placement-only|lease-snapshot-A1352",
+  "authorizationBaseSha": "33fc9551536bc6126c7a75046dd3bc9a0cd38e7b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_ROULETTE_LEFT_PLACEMENT_WU8_20260914",
+  "leaseAcquireKey": "BATTLE-ROULETTE-LEFT-WU8-20260914T0116-SOL-KU",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 01:22 JST",
+  "leaseUntilJst": "2026-09-14 02:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1352:L1352",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-roulette-left-wu8-r2-20260914 ONLY: browser/battle-playable-hand-row-roulette-runtime.mjs; tests/battle-playable-hand-row-roulette-runtime.test.mjs; .github/workflows/zz-temp-battle-roulette-left-wu8-r2.yml; CURRENT_ACTIVE_LEASES own AcquireKey row only.",
+  "scope": [
+    "browser/battle-playable-hand-row-roulette-runtime.mjs",
+    "tests/battle-playable-hand-row-roulette-runtime.test.mjs",
+    ".github/workflows/zz-temp-battle-roulette-left-wu8-r2.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-playable-hand-row-roulette-runtime.mjs",
+    "tests/battle-playable-hand-row-roulette-runtime.test.mjs",
+    ".github/workflows/zz-temp-battle-roulette-left-wu8-r2.yml"
+  ],
+  "solutionSignature": "Apply the already-proven exact WU8 left-placement patch without changing roulette semantics or GAMEROAD.html.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "WU8-R1-SURGICAL-WRITER-SUCCESS-34768193675",
+  "solutionSearchEvidence": [
+    "GitHub Actions run 34768193675: exact same roulette placement patch completed with 13/13 focused tests and diff-check PASS",
+    "Prior branch sol/battle-roulette-left-wu8-20260914 demonstrated the bounded replacement pattern; PR 1621 was closed only for PREACTION ordering"
+  ]
+}

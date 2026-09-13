@@ -62,41 +62,41 @@ jobs:
               'test import',
           )
           extra = r'''
-
-test('autoMount premount seam consumes only a preprovided valid Focus integration and creates no fallback authority', async () => {
-  const calls = { focus: 0, cancel: 0, commit: 0 };
-  const liveInputStack = {
-    async focus() { calls.focus += 1; return { ok: true }; },
-    async cancel() { calls.cancel += 1; return { ok: true }; },
-    async commit() { calls.commit += 1; return { committed: true }; },
-    status() { return { ready: true }; },
-  };
-  const provided = {
-    mountSurface() { return { mounted: true }; },
-    async readContext() { return { generationId: 'round:provided', packages: [] }; },
-    liveInputStack,
-  };
-
-  const normalized = readPreprovidedBattleJankenFocusIntegration({
-    __GAMEROAD_BATTLE_JANKEN_FOCUS_INTEGRATION__: provided,
-  });
-  assert.equal(normalized.schema, BATTLE_JANKEN_FOCUS_LIVE_MOUNT_SCHEMA);
-  assert.strictEqual(normalized.liveInputStack, liveInputStack);
-  assert.equal(readPreprovidedBattleJankenFocusIntegration({}), null);
-  assert.equal(readPreprovidedBattleJankenFocusIntegration({
-    __GAMEROAD_BATTLE_JANKEN_FOCUS_INTEGRATION__: { mountSurface() {} },
-  }), null);
-  assert.deepEqual(calls, { focus: 0, cancel: 0, commit: 0 });
-
-  const runtimeSource = readFileSync(
-    new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
-    'utf8',
-  );
-  assert.match(runtimeSource, /const focusIntegration = readPreprovidedBattleJankenFocusIntegration\(globalThis\);/);
-  assert.match(runtimeSource, /mountBattleJankenSlidePadRuntime\(globalThis, \{ focusIntegration \}\)/);
-  assert.doesNotMatch(runtimeSource, /readPreprovidedBattleJankenFocusIntegration[\s\S]*ensureRoundStartJankenSlotAssignment\(/);
-});
-'''
+          
+          test('autoMount premount seam consumes only a preprovided valid Focus integration and creates no fallback authority', async () => {
+            const calls = { focus: 0, cancel: 0, commit: 0 };
+            const liveInputStack = {
+              async focus() { calls.focus += 1; return { ok: true }; },
+              async cancel() { calls.cancel += 1; return { ok: true }; },
+              async commit() { calls.commit += 1; return { committed: true }; },
+              status() { return { ready: true }; },
+            };
+            const provided = {
+              mountSurface() { return { mounted: true }; },
+              async readContext() { return { generationId: 'round:provided', packages: [] }; },
+              liveInputStack,
+            };
+          
+            const normalized = readPreprovidedBattleJankenFocusIntegration({
+              __GAMEROAD_BATTLE_JANKEN_FOCUS_INTEGRATION__: provided,
+            });
+            assert.equal(normalized.schema, BATTLE_JANKEN_FOCUS_LIVE_MOUNT_SCHEMA);
+            assert.strictEqual(normalized.liveInputStack, liveInputStack);
+            assert.equal(readPreprovidedBattleJankenFocusIntegration({}), null);
+            assert.equal(readPreprovidedBattleJankenFocusIntegration({
+              __GAMEROAD_BATTLE_JANKEN_FOCUS_INTEGRATION__: { mountSurface() {} },
+            }), null);
+            assert.deepEqual(calls, { focus: 0, cancel: 0, commit: 0 });
+          
+            const runtimeSource = readFileSync(
+              new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
+              'utf8',
+            );
+            assert.match(runtimeSource, /const focusIntegration = readPreprovidedBattleJankenFocusIntegration\(globalThis\);/);
+            assert.match(runtimeSource, /mountBattleJankenSlidePadRuntime\(globalThis, \{ focusIntegration \}\)/);
+            assert.doesNotMatch(runtimeSource, /readPreprovidedBattleJankenFocusIntegration[\s\S]*ensureRoundStartJankenSlotAssignment\(/);
+          });
+          '''
           if "autoMount premount seam consumes only a preprovided valid Focus integration" in t:
               raise SystemExit('test already present')
           t = t.rstrip() + extra + '\n'

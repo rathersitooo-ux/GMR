@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HAND-DETAIL-R1-20260914T0125-SOL-MA31",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_ORDINARY_HAND_DIRECT_FINGER_DETAIL_R1",
+  "acquireKey": "BATTLE-HAND-DETAIL-R1-20260914T0125-SOL-MA31",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_9F29_HAND_RUNTIME_TARGET_BLOBS_FREE_20260914T0126JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_DIRECT_POINTER_FOCUS_AND_FINGER_LIFT_CURRENT_ACTUAL_REUSED",
+  "proceedToken": "PROCEED|BATTLE-HAND-DETAIL-R1-20260914T0125-SOL-MA31|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ordinary-hand-local-detail|slidepad-runtime|active-lease",
+  "authorizationBaseSha": "9f29ce762c0f5f586209d1eebb9f39b34ccac534",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_ORDINARY_HAND_DIRECT_FINGER_DETAIL_R1",
+  "leaseAcquireKey": "BATTLE-HAND-DETAIL-R1-20260914T0125-SOL-MA31",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 01:26 JST",
+  "leaseUntilJst": "2026-09-14 02:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1358:N1358",
+  "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient .github/workflows/zz-temp-battle-hand-detail-ma31.yml; own PRE_ACTION only. browser/GAMEROAD.html, focus surface, roulette runtime, gameplay/rules/target/legality/Hand3/card identity/save/economy/network/package READ_ONLY.",
+  "solutionSignature": "ORDINARY_HAND_EXISTING_FOCUS_LOCAL_DETAIL_SCALE_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_RUNTIME_ALREADY_HAS_DIRECT_POINTER_FOCUS_AND_LIFTED_DRAG_GHOST",
+  "solutionSearchEvidence": [
+    "Current runtime already binds pointer/focus directly to #hand .handCard[data-card-id] and preserves the same cardId.",
+    "Current runtime already lifts the dragged physical-card ghost above the finger; that behavior must not be duplicated or replaced.",
+    "Current focus presentation already owns the reversible visual state needed for local hand-card inspection.",
+    "Address37 owns the shared multi-zone drawer/detail, so this WorkUnit must not create a second drawer, card store, rules renderer, or navigation surface.",
+    "The smallest remaining delta is to enlarge the exact focused ordinary-hand card face in place while preserving click/drag/aura launch and ReducedMotion semantics."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-hand-detail-ma31.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-hand-detail-ma31.yml"
+  ]
+}

@@ -1,0 +1,182 @@
+name: Temp Battle Power Energy Visual R2
+on:
+  push:
+    branches:
+      - sol/battle-power-energy-visual-r2-20260914
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[power-energy-r2-done]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: sol/battle-power-energy-visual-r2-20260914
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply bounded Power Energy patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          runtime_path = Path('browser/battle-janken-slidepad-runtime-mount.mjs')
+          test_path = Path('tests/battle-janken-slidepad-runtime-mount.test.mjs')
+          build_path = Path('deploy/cloudflare/scripts/build.mjs')
+
+          runtime = runtime_path.read_text()
+
+          anchor = "const HAND_FOCUS_SNAP_MAX_PX = 28;\n"
+          insert = anchor + "const POWER_ENERGY_ASSET_URL = './assets/visual/battle-power-energy.jpg';\nconst POWER_ENERGY_ATTR = 'data-battle-power-energy';\n"
+          assert runtime.count(anchor) == 1
+          runtime = runtime.replace(anchor, insert, 1)
+
+          slot_anchor = '[${HOST_ATTR}="1"] .grJankenSlidePadSlot{'
+          energy_css = '''[${HOST_ATTR}="1"] .grPowerEnergy{position:absolute;right:-68px;bottom:-60px;width:105px;height:105px;border-radius:50%;overflow:hidden;pointer-events:none;z-index:0;opacity:.78;filter:brightness(.84);transform:scale(.92);transform-origin:50% 50%;transition:opacity 120ms ease,filter 120ms ease,transform 120ms cubic-bezier(.2,.8,.2,1)}\n[${HOST_ATTR}="1"] .grPowerEnergy img{position:absolute;width:155%;height:155%;left:50%;top:50%;transform:translate(-50%,-50%);object-fit:cover;mix-blend-mode:screen;user-select:none;-webkit-user-drag:none;pointer-events:none}\n'''
+          assert runtime.count(slot_anchor) == 1
+          runtime = runtime.replace(slot_anchor, energy_css + slot_anchor, 1)
+
+          active_old = '[${HOST_ATTR}="1"][data-hand-aura-active="true"] .grJankenSlidePadHandle{'
+          armed_old = '[${HOST_ATTR}="1"][data-hand-aura-armed="true"] .grJankenSlidePadHandle{'
+          assert runtime.count(active_old) == 1 and runtime.count(armed_old) == 1
+          runtime = runtime.replace(active_old, '[${HOST_ATTR}="1"][data-hand-aura-active="true"] .grPowerEnergy{', 1)
+          runtime = runtime.replace(armed_old, '[${HOST_ATTR}="1"][data-hand-aura-armed="true"] .grPowerEnergy{', 1)
+
+          media_anchor = '@media(max-height:430px) and (orientation:landscape){[${HOST_ATTR}="1"]::before{right:12px;bottom:8px;width:176px;height:138px;border-width:7px}}\n'
+          media_insert = media_anchor + '@media(max-height:430px) and (orientation:landscape){[${HOST_ATTR}="1"] .grPowerEnergy{width:92px;height:92px;right:-56px;bottom:-50px}}\n@media(max-width:430px) and (orientation:portrait){[${HOST_ATTR}="1"] .grPowerEnergy{width:96px;height:96px;right:-60px;bottom:-54px}}\n'
+          assert runtime.count(media_anchor) == 1
+          runtime = runtime.replace(media_anchor, media_insert, 1)
+
+          motion_old = '@media(prefers-reduced-motion:reduce){[${HOST_ATTR}="1"] .grJankenSlidePadSlot,[${HOST_ATTR}="1"] .grJankenSlidePadHandle,[${HOST_ATTR}="1"] .grJankenLoadPreview{transition:none!important}}'
+          motion_new = '@media(prefers-reduced-motion:reduce){[${HOST_ATTR}="1"] .grJankenSlidePadSlot,[${HOST_ATTR}="1"] .grJankenSlidePadHandle,[${HOST_ATTR}="1"] .grJankenLoadPreview,[${HOST_ATTR}="1"] .grPowerEnergy{transition:none!important}}'
+          assert runtime.count(motion_old) == 1
+          runtime = runtime.replace(motion_old, motion_new, 1)
+
+          host_label_old = "host.setAttribute('aria-label', 'じゃんけん SlidePad / カード発射オーラ');"
+          host_label_new = "host.setAttribute('aria-label', 'じゃんけん SlidePad / Power Energy');"
+          assert runtime.count(host_label_old) == 1
+          runtime = runtime.replace(host_label_old, host_label_new, 1)
+
+          handle_anchor = "  const handle = documentRef.createElement('button');\n"
+          energy_dom = """  const powerEnergy = documentRef.createElement('div');\n  powerEnergy.className = 'grPowerEnergy';\n  powerEnergy.setAttribute(POWER_ENERGY_ATTR, '1');\n  powerEnergy.setAttribute('aria-hidden', 'true');\n  const powerEnergyImage = documentRef.createElement('img');\n  powerEnergyImage.src = POWER_ENERGY_ASSET_URL;\n  powerEnergyImage.alt = '';\n  powerEnergyImage.draggable = false;\n  powerEnergyImage.setAttribute('aria-hidden', 'true');\n  powerEnergy.appendChild(powerEnergyImage);\n  host.appendChild(powerEnergy);\n"""
+          assert runtime.count(handle_anchor) == 1
+          runtime = runtime.replace(handle_anchor, energy_dom + handle_anchor, 1)
+
+          handle_label_old = "handle.setAttribute('aria-label', 'じゃんけん SlidePad / カード発射オーラ');"
+          assert runtime.count(handle_label_old) == 1
+          runtime = runtime.replace(handle_label_old, "handle.setAttribute('aria-label', 'じゃんけん SlidePad');", 1)
+
+          signature_old = 'function animateHandAuraLaunch(globalRef, documentRef, battleRoot, handle, ghost) {'
+          signature_new = 'function animateHandAuraLaunch(globalRef, documentRef, battleRoot, powerEnergy, ghost) {'
+          assert runtime.count(signature_old) == 1
+          runtime = runtime.replace(signature_old, signature_new, 1)
+          center_old = '  const aura = elementCenter(handle);'
+          assert runtime.count(center_old) == 1
+          runtime = runtime.replace(center_old, '  const aura = elementCenter(powerEnergy);', 1)
+
+          rect_old = '    const auraRect = handle.getBoundingClientRect?.();'
+          assert runtime.count(rect_old) == 1
+          runtime = runtime.replace(rect_old, '    const auraRect = powerEnergy.getBoundingClientRect?.();', 1)
+
+          launch_old = '      animateHandAuraLaunch(globalRef, documentRef, root, handle, ghost);'
+          assert runtime.count(launch_old) == 1
+          runtime = runtime.replace(launch_old, '      animateHandAuraLaunch(globalRef, documentRef, root, powerEnergy, ghost);', 1)
+
+          assert "const auraRect = handle.getBoundingClientRect" not in runtime
+          assert runtime.count('captureBattleCardReleaseFlightEffect') >= 2
+          assert runtime.count("from './battle-card-release-flight-runtime-effect.mjs';") == 1
+          runtime_path.write_text(runtime)
+
+          tests = test_path.read_text()
+          test_block = r'''
+
+// BATTLE_POWER_ENERGY_VISUAL_TARGET_R1_BEGIN
+test('Power Energy is distinct from SlidePad and owns ordinary-hand drag arming plus launch waypoint', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /const POWER_ENERGY_ASSET_URL = '\.\/assets\/visual\/battle-power-energy\.jpg';/);
+  assert.match(source, /powerEnergy\.className = 'grPowerEnergy';/);
+  assert.match(source, /powerEnergy\.setAttribute\(POWER_ENERGY_ATTR, '1'\);/);
+  assert.match(source, /handle\.setAttribute\('aria-label', 'じゃんけん SlidePad'\);/);
+  assert.match(source, /const auraRect = powerEnergy\.getBoundingClientRect\?\.\(\);/);
+  assert.doesNotMatch(source, /const auraRect = handle\.getBoundingClientRect/);
+  assert.match(source, /function animateHandAuraLaunch\(globalRef, documentRef, battleRoot, powerEnergy, ghost\)/);
+  assert.match(source, /animateHandAuraLaunch\(globalRef, documentRef, root, powerEnergy, ghost\);/);
+  assert.match(source, /\.grPowerEnergy\{position:absolute;right:-68px;bottom:-60px;width:105px;height:105px/);
+  assert.match(source, /max-height:430px[^\n]*\.grPowerEnergy\{width:92px;height:92px;right:-56px;bottom:-50px/);
+  assert.match(source, /max-width:430px[^\n]*\.grPowerEnergy\{width:96px;height:96px;right:-60px;bottom:-54px/);
+});
+
+test('Power Energy uses the exact recovered web derivative and does not add a second release engine', async () => {
+  const [{ readFile }, { createHash }] = await Promise.all([
+    import('node:fs/promises'),
+    import('node:crypto'),
+  ]);
+  const bytes = await readFile(new URL('../assets/visual/battle-power-energy.jpg', import.meta.url));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), '314973a531dffced941f996dda9e45ffcf41526263feae00da558c1c918988c3');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.equal((source.match(/from '\.\/battle-card-release-flight-runtime-effect\.mjs';/g) ?? []).length, 1);
+  assert.doesNotMatch(source, /createPowerEnergy(?:Controller|Engine|Store)/);
+});
+// BATTLE_POWER_ENERGY_VISUAL_TARGET_R1_END
+'''
+          assert 'BATTLE_POWER_ENERGY_VISUAL_TARGET_R1_BEGIN' not in tests
+          test_path.write_text(tests + test_block)
+
+          build = build_path.read_text()
+          build_anchor = "  { source: 'browser/battle-janken-slidepad-runtime-mount.mjs', output: 'battle-janken-slidepad-runtime-mount.mjs', artifact: 'battle_janken_slidepad_runtime_mount', label: 'Battle janken SlidePad runtime mount' },\n"
+          build_entry = build_anchor + "  { source: 'assets/visual/battle-power-energy.jpg', output: 'assets/visual/battle-power-energy.jpg', artifact: 'battle_power_energy_visual', label: 'Battle Power Energy visual' },\n"
+          assert build.count(build_anchor) == 1
+          build = build.replace(build_anchor, build_entry, 1)
+          build_path.write_text(build)
+          PY
+      - name: Verify exact asset and syntax
+        shell: bash
+        run: |
+          test "$(sha256sum assets/visual/battle-power-energy.jpg | awk '{print $1}')" = "314973a531dffced941f996dda9e45ffcf41526263feae00da558c1c918988c3"
+          node --check browser/battle-janken-slidepad-runtime-mount.mjs
+          node --check deploy/cloudflare/scripts/build.mjs
+      - name: Focused tests
+        shell: bash
+        run: |
+          node --test tests/battle-janken-slidepad-runtime-mount.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Scope fence and commit
+        shell: bash
+        run: |
+          git diff --check
+          git status --short
+          git rm .github/workflows/zz-temp-battle-power-energy-visual-r2.yml
+          git rm data/preaction-authorizations/BATTLE-POWER-ENERGY-VISUAL-R1-20260914T0224-SOL-KI7.json
+          python - <<'PY'
+          import subprocess
+          allowed = {
+            'assets/visual/battle-power-energy.jpg',
+            'browser/battle-janken-slidepad-runtime-mount.mjs',
+            'tests/battle-janken-slidepad-runtime-mount.test.mjs',
+            'deploy/cloudflare/scripts/build.mjs',
+            '.github/workflows/zz-temp-battle-power-energy-visual-r2.yml',
+            'data/preaction-authorizations/BATTLE-POWER-ENERGY-VISUAL-R1-20260914T0224-SOL-KI7.json',
+          }
+          names = set(subprocess.check_output(['git','status','--short'], text=True).splitlines())
+          paths = {line[3:] for line in names if len(line) > 3}
+          extra = paths - allowed
+          if extra:
+              raise SystemExit(f'out-of-scope paths: {sorted(extra)}')
+          required = {
+            'browser/battle-janken-slidepad-runtime-mount.mjs',
+            'tests/battle-janken-slidepad-runtime-mount.test.mjs',
+            'deploy/cloudflare/scripts/build.mjs',
+          }
+          missing = required - paths
+          if missing:
+              raise SystemExit(f'missing expected product paths: {sorted(missing)}')
+          PY
+          git config user.name "gameroad-bounded-writer"
+          git config user.email "gameroad-bounded-writer@users.noreply.github.com"
+          git add browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs deploy/cloudflare/scripts/build.mjs assets/visual/battle-power-energy.jpg
+          git commit -m "[power-energy-r2-done] Battle: restore distinct Power Energy launch target"
+          git push origin HEAD:sol/battle-power-energy-visual-r2-20260914

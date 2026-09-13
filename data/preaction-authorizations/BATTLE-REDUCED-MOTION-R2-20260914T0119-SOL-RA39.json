@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-REDUCED-MOTION-R2-20260914T0119-SOL-RA39",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_REDUCED_MOTION_FAIL_VISIBLE_CARD_RELEASE_R2",
+  "acquireKey": "BATTLE-REDUCED-MOTION-R2-20260914T0119-SOL-RA39",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "RA39_CURRENT_MAIN_REDUCED_DESTINATION_CAUSALITY_AUDIT_20260914T0119JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_CARD_RELEASE_CORE_AND_RUNTIME_TEST_FIXTURE_PLUS_READ_ONLY_REDUCED_PROJECTION_AUDIT",
+  "proceedToken": "PROCEED|BATTLE-REDUCED-MOTION-R2-20260914T0119-SOL-RA39|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|reduced-motion|destination-causality|fail-visible",
+  "authorizationBaseSha": "e935ee9df7a595a2b1fc657152a5d08e6c0984e8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_REDUCED_MOTION_FAIL_VISIBLE_CARD_RELEASE_R2",
+  "leaseAcquireKey": "BATTLE-REDUCED-MOTION-R2-20260914T0119-SOL-RA39",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 01:19 JST",
+  "leaseUntilJst": "2026-09-14 02:19 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1356:L1356",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-reduced-motion-r2-20260914 from exact current main e935ee9df7a595a2b1fc657152a5d08e6c0984e8; browser/battle-card-release-flight-runtime-effect.mjs; tests/battle-card-release-flight-runtime-effect.test.mjs; own transient data/preaction-authorizations/BATTLE-REDUCED-MOTION-R2-20260914T0119-SOL-RA39.json only. browser/GAMEROAD.html; battle-card-release-flight-motion-core; Janken order; controlled-character; UI feedback; gameplay/rules/target/legality/card identity/save/network READ_ONLY.",
+  "solutionSignature": "BATTLE_REDUCED_MOTION_EXISTING_RELEASE_RUNTIME_FAIL_VISIBLE_DESTINATION_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_RELEASE_RUNTIME_AND_TEST_FIXTURE_REUSED_NO_SECOND_CONTROLLER",
+  "solutionSearchEvidence": [
+    "battle-card-release-flight-motion-core already projects ReducedMotion as zero large translation/rotation plus DESTINATION_PULSE.",
+    "battle-card-release-flight-runtime-effect already owns the flight clone and destination cue, so repair belongs in that existing owner instead of a new controller.",
+    "battle-card-release-flight-runtime-effect.test.mjs already provides a no-WAAPI clone fixture and is the correct existing regression surface."
+  ],
+  "scope": [
+    "browser/battle-card-release-flight-runtime-effect.mjs",
+    "tests/battle-card-release-flight-runtime-effect.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-card-release-flight-runtime-effect.mjs",
+    "tests/battle-card-release-flight-runtime-effect.test.mjs"
+  ]
+}

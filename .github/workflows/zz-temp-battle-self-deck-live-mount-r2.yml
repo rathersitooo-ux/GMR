@@ -1,0 +1,114 @@
+name: TEMP Battle self deck live mount R2
+
+on:
+  push:
+    branches:
+      - sol/battle-self-deck-live-mount-r2-20260913
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'SELF_DECK_LIVE_MOUNT_TRIGGER Battle self deck R2'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-self-deck-live-mount-r2-20260913
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify authorization ancestry
+        run: |
+          test "$(git rev-parse HEAD^)" = "e490099fac842a16c0ab9287252f0fe458a6d360"
+          git show --name-only --format= HEAD^ | grep -Fx 'data/preaction-authorizations/BATTLE-SELF-DECK-LIVE-MOUNT-R2-20260913T1548-SOL.json'
+      - name: Apply bounded live mount patch
+        shell: python
+        run: |
+          from pathlib import Path
+
+          html_path = Path('browser/GAMEROAD.html')
+          text = html_path.read_text()
+
+          module_anchor = '<!-- GAMEROAD_LOBBYDECK_R4_MATCHSTART_SNAPSHOT -->'
+          if text.count(module_anchor) != 1:
+              raise SystemExit(f'module anchor count={text.count(module_anchor)}')
+          bridge = '''<script type="module" id="gameroad-battle-self-deck-live-mount-r2">
+          import { renderOwnerSelfRemainingDeckFromLiveState } from "./battle-self-deck-live-consumer.mjs";
+          const existingSelfDeckConsumer=globalThis.GAMEROAD_RENDER_OWNER_SELF_REMAINING_DECK;
+          if(existingSelfDeckConsumer&&existingSelfDeckConsumer!==renderOwnerSelfRemainingDeckFromLiveState)throw new Error("GAMEROAD_SELF_REMAINING_DECK_CONSUMER_CONFLICT");
+          if(!existingSelfDeckConsumer)Object.defineProperty(globalThis,"GAMEROAD_RENDER_OWNER_SELF_REMAINING_DECK",{value:renderOwnerSelfRemainingDeckFromLiveState,enumerable:false,configurable:false,writable:false});
+          </script>
+          '''
+          text = text.replace(module_anchor, bridge + module_anchor, 1)
+
+          setup_anchor = 'function setupBattleDetails(){'
+          if text.count(setup_anchor) != 1:
+              raise SystemExit(f'setup anchor count={text.count(setup_anchor)}')
+          helpers = '''let battleSelfDeckPresentationRevision=0;
+          function renderBattleSelfRemainingDeckOnDemand(){const m=state.match,consumer=globalThis.GAMEROAD_RENDER_OWNER_SELF_REMAINING_DECK;if(!m||typeof consumer!=="function")return null;const owners=Array.isArray(m.players)?m.players.filter(p=>p?.human===true):[];if(owners.length!==1)return null;battleSelfDeckPresentationRevision=Number.isSafeInteger(battleSelfDeckPresentationRevision)&&battleSelfDeckPresentationRevision<Number.MAX_SAFE_INTEGER?battleSelfDeckPresentationRevision+1:0;try{return consumer({state,viewer:{authenticated:true,id:owners[0].id},revision:battleSelfDeckPresentationRevision,document,hostId:"battleLog",cardLabel:id=>CARDS[id]?.display_name||id})}catch(e){console.warn("battle-self-deck-live",e);return null}}
+          function renderBattleLog(){const host=$("#battleLog"),m=state.match;if(!host||!m)return;host.textContent=m.log.join("\\n");if($("#battleDrawer")?.classList.contains("on"))renderBattleSelfRemainingDeckOnDemand()}
+          '''
+          text = text.replace(setup_anchor, helpers + setup_anchor, 1)
+
+          open_old = "btn.onclick=()=>{drawer.classList.add('on');drawer.setAttribute('aria-hidden','false')}"
+          open_new = "btn.onclick=()=>{drawer.classList.add('on');drawer.setAttribute('aria-hidden','false');renderBattleLog()}"
+          if text.count(open_old) != 1:
+              raise SystemExit(f'drawer-open anchor count={text.count(open_old)}')
+          text = text.replace(open_old, open_new, 1)
+
+          log_prefix = "$('#battleLog').textContent=m.log.join("
+          if text.count(log_prefix) != 2:
+              raise SystemExit(f'log prefix count={text.count(log_prefix)}')
+          starts = []
+          cursor = 0
+          while True:
+              found = text.find(log_prefix, cursor)
+              if found < 0:
+                  break
+              starts.append(found)
+              cursor = found + len(log_prefix)
+          for start in reversed(starts):
+              end = text.find(')', start + len(log_prefix))
+              if end < 0 or end - start > 96:
+                  raise SystemExit(f'unsafe log expression boundary start={start} end={end}')
+              expression = text[start:end + 1]
+              if 'm.log.join(' not in expression:
+                  raise SystemExit(f'unexpected log expression={expression!r}')
+              text = text[:start] + 'renderBattleLog()' + text[end + 1:]
+
+          html_path.write_text(text)
+
+          build_path = Path('deploy/cloudflare/scripts/build.mjs')
+          build = build_path.read_text()
+          package_anchor = "  { option: 'partnerBattleEventProjectionSource'"
+          if build.count(package_anchor) != 1:
+              raise SystemExit(f'package anchor count={build.count(package_anchor)}')
+          package_rows = "  { source: 'browser/battle-self-deck-owner-knowledge-adapter.mjs', output: 'battle-self-deck-owner-knowledge-adapter.mjs', artifact: 'battle_self_deck_owner_knowledge_adapter', label: 'Battle owner-safe remaining Deck knowledge adapter' },\n  { source: 'browser/battle-self-deck-live-consumer.mjs', output: 'battle-self-deck-live-consumer.mjs', artifact: 'battle_self_deck_live_consumer', label: 'Battle owner remaining Deck live consumer' },\n"
+          build = build.replace(package_anchor, package_rows + package_anchor, 1)
+          build_path.write_text(build)
+      - name: Verify bounded semantics
+        run: |
+          git diff --check
+          grep -F 'id="gameroad-battle-self-deck-live-mount-r2"' browser/GAMEROAD.html
+          grep -F 'GAMEROAD_RENDER_OWNER_SELF_REMAINING_DECK' browser/GAMEROAD.html
+          grep -F 'renderBattleSelfRemainingDeckOnDemand' browser/GAMEROAD.html
+          grep -F 'battle-self-deck-live-consumer.mjs' deploy/cloudflare/scripts/build.mjs
+          grep -F 'battle-self-deck-owner-knowledge-adapter.mjs' deploy/cloudflare/scripts/build.mjs
+          test "$(git diff --name-only | sort | tr '\n' ' ')" = "browser/GAMEROAD.html deploy/cloudflare/scripts/build.mjs "
+      - name: Focused tests and package closure
+        run: |
+          node --test tests/battle-self-deck-live-consumer.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+          node tests/browser-static-check.mjs
+      - name: Commit product delta and clean transient authorization
+        run: |
+          git config user.name gameroad-bot
+          git config user.email gameroad-bot@users.noreply.github.com
+          git rm .github/workflows/zz-temp-battle-self-deck-live-mount-r2.yml
+          git rm data/preaction-authorizations/BATTLE-SELF-DECK-LIVE-MOUNT-R2-20260913T1548-SOL.json
+          git add browser/GAMEROAD.html deploy/cloudflare/scripts/build.mjs
+          git commit -m 'Battle: 自分の残り山札を既存情報drawerへ接続 R2'
+          git push origin HEAD:sol/battle-self-deck-live-mount-r2-20260913

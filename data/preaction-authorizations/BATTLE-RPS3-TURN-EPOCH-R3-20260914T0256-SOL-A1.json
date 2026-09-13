@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RPS3-TURN-EPOCH-R3-20260914T0256-SOL-A1",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_RPS3_TURN_FIXED_ASSIGNMENT_R3",
+  "acquireKey": "BATTLE-RPS3-TURN-EPOCH-R3-20260914T0256-SOL-A1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_3D744C4B_AND_EXACT_PATH_ACTIVE_LEASE_ROW1395_20260914T0256JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R2_DONOR_FOCUSED_NODE_25_OF_25_PASS_RUN34772855424",
+  "proceedToken": "PROCEED|BATTLE-RPS3-TURN-EPOCH-R3-20260914T0256-SOL-A1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|rps3-turn-epoch-adapt|focused-node|direct-contents",
+  "authorizationBaseSha": "3d744c4b596316c4e0fe13bb1e9b7d221daac457",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_RPS3_TURN_FIXED_ASSIGNMENT_R3",
+  "leaseAcquireKey": "BATTLE-RPS3-TURN-EPOCH-R3-20260914T0256-SOL-A1",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 02:56 JST",
+  "leaseUntilJst": "2026-09-14 03:56 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1395:L1395",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-rps3-turn-epoch-r3-20260914 from exact main 3d744c4b596316c4e0fe13bb1e9b7d221daac457; mutable browser/battle-new-base-live-consumer-adapter.mjs; tests/battle-new-base-live-consumer-adapter.test.mjs; own data/preaction-authorizations/BATTLE-RPS3-TURN-EPOCH-R3-20260914T0256-SOL-A1.json; own PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; .github/workflows/*; opening-hand membership policy; gameplay/rules/target/legality/save/economy/network.",
+  "solutionSignature": "BATTLE_RPS3_EXISTING_LIVE_CONSUMER_TURN_EPOCH_ADAPT_V3",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R2_VERIFIED_DONOR_PLUS_REQUIRED_GATE_SCOPE_WITNESS_REBUILD",
+  "solutionSearchEvidence": [
+    "Current authority keeps ordinary opening hand at 7 and post-start refill target at 3; this WorkUnit does not alter those semantics.",
+    "CURRENT Hand3 policy validates exactly three caller-supplied physical cards and does not decide opening-7 to first-RPS3 membership.",
+    "R2 donor already passed focused live-consumer regression 25/25 including same-turn reuse, next-turn same-round remap opportunity, missing-turn fail-closed, and stale staged package rejection before transport.",
+    "R2 PR#1655 was closed unmerged only because its frozen lease ExactMutableResources witness used shorthand and failed Required Gate PREACTION authorization; R3 does not rewrite that evidence and instead starts from fresh main with exact repo paths.",
+    "Fresh main 3d744c4b596316c4e0fe13bb1e9b7d221daac457 has no overlap on this WorkUnit's adapter source or matching test relative to the verified donor semantics."
+  ],
+  "scope": [
+    "browser/battle-new-base-live-consumer-adapter.mjs",
+    "tests/battle-new-base-live-consumer-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-new-base-live-consumer-adapter.mjs",
+    "tests/battle-new-base-live-consumer-adapter.test.mjs"
+  ]
+}

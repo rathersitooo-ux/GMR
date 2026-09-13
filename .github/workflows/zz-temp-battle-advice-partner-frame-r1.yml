@@ -77,7 +77,6 @@ jobs:
                   raise SystemExit(f'expected exactly one CSS anchor, got {count}: {old[:96]}')
               text = text.replace(old, new, 1)
 
-          # The 360px media query shares the same old transform string as short-landscape.
           old = '#battleAdvicePartnerStage .grtc-image{transform:scale(1.05);transform-origin:36% 100%}'
           new = '#battleAdvicePartnerStage .grtc-image{transform:scale(1.12);transform-origin:36% 0%}'
           if text.count(old) != 1:
@@ -113,7 +112,12 @@ jobs:
           set -euo pipefail
           node tests/browser-static-check.mjs
           git diff --check
-          git diff -- browser/GAMEROAD.html | grep -q 'battleAdvicePartnerStage'
+          python - <<'PY'
+          import subprocess
+          diff = subprocess.check_output(['git', 'diff', '--', 'browser/GAMEROAD.html'], text=True)
+          if 'battleAdvicePartnerStage' not in diff:
+              raise SystemExit('partner framing diff marker missing')
+          PY
 
       - name: Commit product repair and cleanup transient authorization
         shell: bash

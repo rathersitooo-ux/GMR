@@ -24,6 +24,28 @@ function explicitPlayer(value) {
   return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
 }
 
+function projectPaymentReceipt(value, manaCurrent, honeyCurrent) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const cost = nonNegativeInteger(value.cost);
+  const manaPaid = nonNegativeInteger(value.manaPaid);
+  const honeyPaid = nonNegativeInteger(value.honeyPaid);
+  const manaAfter = nonNegativeInteger(value.manaAfter);
+  const honeyAfter = nonNegativeInteger(value.honeyAfter);
+  const source = optionalLabel(value.source);
+  const complete = cost !== null
+    && manaPaid !== null
+    && honeyPaid !== null
+    && manaAfter !== null
+    && honeyAfter !== null
+    && source !== null;
+  if (!complete) return null;
+  if (manaPaid + honeyPaid !== cost) return null;
+  if (honeyPaid > 0 && manaAfter !== 0) return null;
+  if (manaCurrent === null || honeyCurrent === null) return null;
+  if (manaAfter !== manaCurrent || honeyAfter !== honeyCurrent) return null;
+  return deepFreeze({ cost, manaPaid, honeyPaid, manaAfter, honeyAfter, source });
+}
+
 function requireResourceHud(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value) || typeof value.sync !== 'function') {
     throw new TypeError('BATTLE_RESOURCE_HUD_SYNC_REQUIRED');
@@ -36,12 +58,14 @@ function requireResourceHud(value) {
  * the input shape consumed by the existing Battle screen resource HUD.
  *
  * This adapter intentionally does not find/select a player, calculate Honey,
- * inspect Chip card identities, rank players, or retain resource history.
+ * inspect Chip card identities, rank players, calculate payment, or retain
+ * resource history.
  */
 export function projectBattleCriticalResourceHudInput({
   player = null,
   honeyDelta = null,
   honeyDeltaSource = null,
+  paymentReceipt = null,
 } = {}) {
   const explicit = explicitPlayer(player);
   const manaCurrent = explicit ? nonNegativeInteger(explicit.manaCurrent) : null;
@@ -53,6 +77,11 @@ export function projectBattleCriticalResourceHudInput({
     : null;
   const delta = signedInteger(honeyDelta);
   const deltaSource = optionalLabel(honeyDeltaSource);
+  const payment = projectPaymentReceipt(
+    paymentReceipt,
+    numericManaResolved ? manaCurrent : null,
+    honey,
+  );
 
   const snapshot = {
     manaCurrent: numericManaResolved ? manaCurrent : null,
@@ -68,6 +97,10 @@ export function projectBattleCriticalResourceHudInput({
     snapshot.honeyDeltaSource = deltaSource;
   }
 
+  // Payment is caller-authoritative presentation context. Forward only a complete,
+  // self-consistent receipt that matches the player's current post-payment values.
+  if (payment !== null) snapshot.paymentReceipt = payment;
+
   return deepFreeze(snapshot);
 }
 
@@ -82,12 +115,14 @@ export function syncBattleCriticalResourceHudFromPlayer({
   player = null,
   honeyDelta = null,
   honeyDeltaSource = null,
+  paymentReceipt = null,
 } = {}) {
   const hud = requireResourceHud(resourceHud);
   const snapshot = projectBattleCriticalResourceHudInput({
     player,
     honeyDelta,
     honeyDeltaSource,
+    paymentReceipt,
   });
   return hud.sync(snapshot);
 }
@@ -100,6 +135,8 @@ export const BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT = deepFreeze({
   resourceStoreAuthority: false,
   chipIdentityProjection: false,
   rankCalculationAuthority: false,
+  paymentCalculationAuthority: false,
+  paymentChoiceAuthority: false,
   gameStateWrite: false,
   genericHudRenderUsed: false,
   directSyncTarget: 'CALLER_OWNED_RESOURCE_HUD.sync',
@@ -111,6 +148,15 @@ export const BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT = deepFreeze({
     chipCount: 'EXPLICIT_CALLER_PLAYER.chip.length',
     honeyDelta: 'EXPLICIT_CALLER_OPTIONAL',
     honeyDeltaSource: 'EXPLICIT_CALLER_OPTIONAL',
+    paymentReceipt: 'EXPLICIT_CALLER_OPTIONAL_ATOMIC',
   }),
-  outputKeys: Object.freeze(['manaCurrent', 'manaMax', 'honey', 'chipCount', 'honeyDelta', 'honeyDeltaSource']),
+  outputKeys: Object.freeze([
+    'manaCurrent',
+    'manaMax',
+    'honey',
+    'chipCount',
+    'honeyDelta',
+    'honeyDeltaSource',
+    'paymentReceipt',
+  ]),
 });

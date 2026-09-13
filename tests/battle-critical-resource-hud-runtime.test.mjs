@@ -105,6 +105,43 @@ test('shows Honey delta only when both caller delta and caller source are author
   assert.equal(missingSource.honey.deltaText, '');
 });
 
+test('shows only a complete current Mana-first then Honey payment receipt', () => {
+  const result = projectBattleCriticalResourceSnapshot({
+    manaCurrent: 0,
+    manaMax: 10,
+    honey: 5,
+    chipCount: 1,
+    paymentReceipt: {
+      cost: 6,
+      manaPaid: 4,
+      honeyPaid: 2,
+      manaAfter: 0,
+      honeyAfter: 5,
+      source: '戦闘札6',
+    },
+  });
+  assert.equal(result.payment.resolved, true);
+  assert.equal(result.payment.cost, 6);
+  assert.equal(result.payment.manaPaid, 4);
+  assert.equal(result.payment.honeyPaid, 2);
+  assert.equal(result.payment.text, '戦闘札6・支払6・マナ4＋ハニー2');
+  assert.match(result.payment.ariaText, /残りマナ0、残りハニー5/);
+});
+
+test('hides partial, inconsistent, non-Mana-first, or stale payment receipts', () => {
+  const base = { manaCurrent: 0, manaMax: 10, honey: 5, chipCount: 0 };
+  for (const paymentReceipt of [
+    { cost: 6, manaPaid: 4, honeyPaid: 2, manaAfter: 0, honeyAfter: 5 },
+    { cost: 7, manaPaid: 4, honeyPaid: 2, manaAfter: 0, honeyAfter: 5, source: '戦闘札6' },
+    { cost: 6, manaPaid: 4, honeyPaid: 2, manaAfter: 1, honeyAfter: 5, source: '戦闘札6' },
+    { cost: 6, manaPaid: 4, honeyPaid: 2, manaAfter: 0, honeyAfter: 4, source: '戦闘札6' },
+  ]) {
+    const result = projectBattleCriticalResourceSnapshot({ ...base, paymentReceipt });
+    assert.equal(result.payment.resolved, false);
+    assert.equal(result.payment.text, '');
+  }
+});
+
 test('mounts a compact caller-owned HUD and updates without resource calculation', () => {
   const global = makeGlobal();
   const host = new FakeNode('div');
@@ -121,15 +158,33 @@ test('mounts a compact caller-owned HUD and updates without resource calculation
   assert.equal(runtime.chipCell.children[1].textContent, '3');
   assert.equal(runtime.honeyCell.children[2].textContent, '+2・2位');
   assert.equal(runtime.honeyCell.children[2].hidden, false);
+  assert.equal(runtime.manaCell.children[2].hidden, true);
 
-  const next = runtime.sync({ manaCurrent: 5, manaMax: 10, honey: 8, chipCount: 0 });
-  assert.equal(next.mana.text, '5/10');
-  assert.equal(next.honey.text, '8');
+  const next = runtime.sync({
+    manaCurrent: 0,
+    manaMax: 10,
+    honey: 5,
+    chipCount: 0,
+    paymentReceipt: {
+      cost: 6,
+      manaPaid: 4,
+      honeyPaid: 2,
+      manaAfter: 0,
+      honeyAfter: 5,
+      source: '戦闘札6',
+    },
+  });
+  assert.equal(next.mana.text, '0/10');
+  assert.equal(next.honey.text, '5');
   assert.equal(next.chip.text, '0');
   assert.equal(runtime.honeyCell.children[2].hidden, true);
+  assert.equal(runtime.manaCell.children[2].textContent, '戦闘札6・支払6・マナ4＋ハニー2');
+  assert.equal(runtime.manaCell.children[2].hidden, false);
   assert.equal(runtime.root.dataset.manaResolved, 'true');
   assert.equal(runtime.root.dataset.honeyResolved, 'true');
   assert.equal(runtime.root.dataset.chipResolved, 'true');
+  assert.equal(runtime.root.dataset.paymentResolved, 'true');
+  assert.match(runtime.root.getAttribute('aria-label'), /支払い 戦闘札6、支払6、マナ4、ハニー2/);
   assert.equal(runtime.gameStateWrite, false);
 });
 
@@ -148,6 +203,9 @@ test('does not expose physical Mana or Chip card identities or create a resource
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.resourceAuthority, 'CALLER_ONLY');
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.resourceCalculationOwnedHere, false);
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.resourceStoreOwnedHere, false);
+  assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.paymentReceiptAuthority, 'CALLER_ONLY_ATOMIC');
+  assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.paymentCalculationOwnedHere, false);
+  assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.paymentChoiceOwnedHere, false);
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.physicalManaIdentityProjection, false);
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.chipIdentityPublicityOwnedHere, false);
 });

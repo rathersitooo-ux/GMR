@@ -21,6 +21,28 @@ function authorityLabel(value) {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
+function projectPaymentReceipt(value, manaCurrent, honeyCurrent) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const cost = nonNegativeInteger(value.cost);
+  const manaPaid = nonNegativeInteger(value.manaPaid);
+  const honeyPaid = nonNegativeInteger(value.honeyPaid);
+  const manaAfter = nonNegativeInteger(value.manaAfter);
+  const honeyAfter = nonNegativeInteger(value.honeyAfter);
+  const source = authorityLabel(value.source);
+  const complete = cost !== null
+    && manaPaid !== null
+    && honeyPaid !== null
+    && manaAfter !== null
+    && honeyAfter !== null
+    && source !== null;
+  if (!complete) return null;
+  if (manaPaid + honeyPaid !== cost) return null;
+  if (honeyPaid > 0 && manaAfter !== 0) return null;
+  if (manaCurrent === null || honeyCurrent === null) return null;
+  if (manaAfter !== manaCurrent || honeyAfter !== honeyCurrent) return null;
+  return Object.freeze({ cost, manaPaid, honeyPaid, manaAfter, honeyAfter, source });
+}
+
 export function projectBattleCriticalResourceSnapshot(snapshot = {}) {
   const source = snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot) ? snapshot : {};
   const manaCurrent = nonNegativeInteger(source.manaCurrent);
@@ -30,6 +52,11 @@ export function projectBattleCriticalResourceSnapshot(snapshot = {}) {
   const chipCount = nonNegativeInteger(source.chipCount);
   const honeyDelta = signedInteger(source.honeyDelta);
   const honeyDeltaSource = authorityLabel(source.honeyDeltaSource);
+  const paymentReceipt = projectPaymentReceipt(
+    source.paymentReceipt,
+    manaResolved ? manaCurrent : null,
+    honeyValue,
+  );
 
   return deepFreeze({
     schema: RESOURCE_HUD_SCHEMA,
@@ -56,6 +83,21 @@ export function projectBattleCriticalResourceSnapshot(snapshot = {}) {
       resolved: chipCount !== null,
       count: chipCount,
       text: chipCount === null ? UNRESOLVED : String(chipCount)
+    },
+    payment: {
+      resolved: paymentReceipt !== null,
+      cost: paymentReceipt?.cost ?? null,
+      manaPaid: paymentReceipt?.manaPaid ?? null,
+      honeyPaid: paymentReceipt?.honeyPaid ?? null,
+      manaAfter: paymentReceipt?.manaAfter ?? null,
+      honeyAfter: paymentReceipt?.honeyAfter ?? null,
+      source: paymentReceipt?.source ?? null,
+      text: paymentReceipt
+        ? `${paymentReceipt.source}・支払${paymentReceipt.cost}・マナ${paymentReceipt.manaPaid}＋ハニー${paymentReceipt.honeyPaid}`
+        : '',
+      ariaText: paymentReceipt
+        ? `${paymentReceipt.source}、支払${paymentReceipt.cost}、マナ${paymentReceipt.manaPaid}、ハニー${paymentReceipt.honeyPaid}、残りマナ${paymentReceipt.manaAfter}、残りハニー${paymentReceipt.honeyAfter}`
+        : ''
     }
   });
 }
@@ -148,10 +190,15 @@ export function mountBattleCriticalResourceHud(global = globalThis, options = {}
     setData(root, 'manaResolved', model.mana.resolved);
     setData(root, 'honeyResolved', model.honey.resolved);
     setData(root, 'chipResolved', model.chip.resolved);
+    setData(root, 'paymentResolved', model.payment.resolved);
+    mana.delta.textContent = model.payment.text;
+    mana.delta.hidden = !model.payment.resolved;
+    setData(mana.delta, 'resolved', model.payment.resolved);
     honey.delta.textContent = model.honey.deltaText;
     honey.delta.hidden = !model.honey.deltaResolved;
     setData(honey.delta, 'resolved', model.honey.deltaResolved);
-    root.setAttribute?.('aria-label', `対戦資源 マナ ${model.mana.text}、ハニー ${model.honey.text}、チップ ${model.chip.text}`);
+    const paymentAria = model.payment.resolved ? `、支払い ${model.payment.ariaText}` : '';
+    root.setAttribute?.('aria-label', `対戦資源 マナ ${model.mana.text}、ハニー ${model.honey.text}、チップ ${model.chip.text}${paymentAria}`);
     lastSnapshot = model;
     return model;
   }
@@ -191,6 +238,9 @@ export const BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME = deepFreeze({
   resources: Object.freeze(['manaCurrent', 'manaMax', 'honey', 'chipCount']),
   unresolvedToken: UNRESOLVED,
   honeyDeltaAuthority: 'CALLER_ONLY_OPTIONAL',
+  paymentReceiptAuthority: 'CALLER_ONLY_ATOMIC',
+  paymentCalculationOwnedHere: false,
+  paymentChoiceOwnedHere: false,
   physicalManaIdentityProjection: false,
   chipIdentityPublicityOwnedHere: false,
   resourceCalculationOwnedHere: false,

@@ -70,6 +70,51 @@ test('optional Honey delta is forwarded only as a complete caller pair', () => {
   );
 });
 
+test('forwards only a complete current Mana-first then Honey payment receipt', () => {
+  const player = { manaCurrent: 0, manaMax: 10, honey: 5, chip: ['CARD-A'] };
+  const paymentReceipt = {
+    cost: 6,
+    manaPaid: 4,
+    honeyPaid: 2,
+    manaAfter: 0,
+    honeyAfter: 5,
+    source: '  戦闘札6  ',
+    hiddenCardId: 'DO-NOT-PROJECT',
+  };
+  const snapshot = projectBattleCriticalResourceHudInput({ player, paymentReceipt });
+  assert.deepEqual(snapshot, {
+    manaCurrent: 0,
+    manaMax: 10,
+    honey: 5,
+    chipCount: 1,
+    paymentReceipt: {
+      cost: 6,
+      manaPaid: 4,
+      honeyPaid: 2,
+      manaAfter: 0,
+      honeyAfter: 5,
+      source: '戦闘札6',
+    },
+  });
+  assert.equal(JSON.stringify(snapshot).includes('DO-NOT-PROJECT'), false);
+  assert.equal(Object.isFrozen(snapshot.paymentReceipt), true);
+});
+
+test('drops partial, inconsistent, non-Mana-first, or stale payment receipts', () => {
+  const player = { manaCurrent: 0, manaMax: 10, honey: 5, chip: [] };
+  for (const paymentReceipt of [
+    { cost: 6, manaPaid: 4, honeyPaid: 2, manaAfter: 0, honeyAfter: 5 },
+    { cost: 7, manaPaid: 4, honeyPaid: 2, manaAfter: 0, honeyAfter: 5, source: '戦闘札6' },
+    { cost: 6, manaPaid: 4, honeyPaid: 2, manaAfter: 1, honeyAfter: 5, source: '戦闘札6' },
+    { cost: 6, manaPaid: 4, honeyPaid: 2, manaAfter: 0, honeyAfter: 4, source: '戦闘札6' },
+  ]) {
+    assert.deepEqual(
+      projectBattleCriticalResourceHudInput({ player, paymentReceipt }),
+      { manaCurrent: 0, manaMax: 10, honey: 5, chipCount: 0 },
+    );
+  }
+});
+
 test('dedicated sync helper calls only caller resourceHud.sync exactly once', () => {
   const calls = [];
   const result = Object.freeze({ ok: true, source: 'resourceHud.sync' });
@@ -88,20 +133,36 @@ test('dedicated sync helper calls only caller resourceHud.sync exactly once', ()
 
   const actual = syncBattleCriticalResourceHudFromPlayer({
     resourceHud: screenRuntime.resourceHud,
-    player: { manaCurrent: 4, manaMax: 10, honey: 11, chip: ['A', 'B'] },
+    player: { manaCurrent: 0, manaMax: 10, honey: 5, chip: ['A', 'B'] },
     honeyDelta: 1,
     honeyDeltaSource: '順位1位',
+    paymentReceipt: {
+      cost: 6,
+      manaPaid: 4,
+      honeyPaid: 2,
+      manaAfter: 0,
+      honeyAfter: 5,
+      source: '戦闘札6',
+    },
   });
 
   assert.equal(actual, result);
   assert.equal(calls.length, 1);
   assert.deepEqual(calls[0], {
-    manaCurrent: 4,
+    manaCurrent: 0,
     manaMax: 10,
-    honey: 11,
+    honey: 5,
     chipCount: 2,
     honeyDelta: 1,
     honeyDeltaSource: '順位1位',
+    paymentReceipt: {
+      cost: 6,
+      manaPaid: 4,
+      honeyPaid: 2,
+      manaAfter: 0,
+      honeyAfter: 5,
+      source: '戦闘札6',
+    },
   });
   assert.equal(Object.isFrozen(calls[0]), true);
 });
@@ -124,8 +185,11 @@ test('adapter contract owns no gameplay or resource authority', () => {
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT.resourceCalculationAuthority, false);
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT.resourceStoreAuthority, false);
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT.source.physicalManaCardIdentity, 'NOT_PROJECTED');
+  assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT.source.paymentReceipt, 'EXPLICIT_CALLER_OPTIONAL_ATOMIC');
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT.chipIdentityProjection, false);
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT.rankCalculationAuthority, false);
+  assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT.paymentCalculationAuthority, false);
+  assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT.paymentChoiceAuthority, false);
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT.gameStateWrite, false);
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT.genericHudRenderUsed, false);
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT.directSyncTarget, 'CALLER_OWNED_RESOURCE_HUD.sync');

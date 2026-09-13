@@ -1,0 +1,35 @@
+name: temp-battle-other3-public-hud-r6
+
+on:
+  push:
+    branches:
+      - sol/battle-other3-public-hud-r6-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  replay-and-check:
+    if: ${{ !contains(github.event.head_commit.message, '[other3-patched]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-other3-public-hud-r6-20260914
+          fetch-depth: 0
+      - name: Configure identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Replay validated product patch
+        run: git cherry-pick -x 030843cea92d74f35ec044e9adae066164a3ec74
+      - name: Product scope guard
+        run: |
+          test "$(git diff --name-only HEAD^ HEAD | sort | tr '\n' ' ')" = "browser/GAMEROAD.html tests/browser-static-check.mjs "
+          git diff --check HEAD^
+      - name: Static browser contract
+        run: node tests/browser-static-check.mjs
+      - name: Push validated replay
+        run: |
+          git commit --amend -m "fix: show other players in right-top public HUD [other3-patched]"
+          git push origin HEAD:sol/battle-other3-public-hud-r6-20260914

@@ -6,6 +6,8 @@ import {
   mountBattleJankenFocusRuntimeSurface,
 } from '../browser/battle-janken-focus-runtime-surface.mjs';
 
+const AUTHORITATIVE_SELECTION_FIXTURE_NOTE = 'authoritative_selection_already_happened';
+
 class FakeElement {
   constructor(tagName = 'div') {
     this.tagName = tagName.toUpperCase();
@@ -57,6 +59,14 @@ function authoritativePackages(generation = 'g1') {
   ];
 }
 
+function authoritativeCardCatalog(generation = 'g1') {
+  return [
+    { id: `rock-card-${generation}`, display_name: `岩札 ${generation}`, suit: 'SP', rank: '7', power: 7, authority: AUTHORITATIVE_SELECTION_FIXTURE_NOTE },
+    { id: `scissors-card-${generation}`, display_name: `刃札 ${generation}`, suit: 'HT', rank: 'Q', power: 12, authority: AUTHORITATIVE_SELECTION_FIXTURE_NOTE },
+    { id: `paper-card-${generation}`, display_name: `紙札 ${generation}`, suit: 'DI', rank: '3', power: 3, authority: AUTHORITATIVE_SELECTION_FIXTURE_NOTE },
+  ];
+}
+
 function createLiveStack({ rejectCommit = false, rejectCancel = false, rejectFocus = false } = {}) {
   const calls = { focus: [], cancel: 0, commit: 0 };
   let readyHand = null;
@@ -99,12 +109,14 @@ function createLiveStack({ rejectCommit = false, rejectCancel = false, rejectFoc
 function mount(options = {}) {
   const documentRef = createFakeDocument();
   const liveInputStack = options.liveInputStack ?? createLiveStack();
+  const generationId = options.generationId ?? 'g1';
   const runtime = mountBattleJankenFocusRuntimeSurface({
     documentRef,
     mountRoot: documentRef.body,
     liveInputStack,
-    packages: options.packages ?? authoritativePackages(),
-    generationId: options.generationId ?? 'g1',
+    packages: options.packages ?? authoritativePackages(generationId),
+    generationId,
+    cardCatalog: options.cardCatalog ?? authoritativeCardCatalog(generationId),
     onAccepted: options.onAccepted,
   });
   return { documentRef, liveInputStack, runtime };
@@ -123,6 +135,35 @@ test('JANKEN_FOCUS renders all three exact authoritative choices including targe
   assert.match(html, /road-rock-g1/);
   assert.match(html, /g1:r0/);
   assert.equal(runtime.snapshot().gameplayAuthority, false);
+});
+
+test('JANKEN_FOCUS keeps the exact physical card face primary and RPS only as a secondary role badge', () => {
+  const { runtime } = mount();
+  const html = runtime.host.innerHTML;
+  assert.match(html, /data-physical-card-id="rock-card-g1"/);
+  assert.match(html, /data-card-identity-source="GLOBAL_CARD_DATA_EXACT_ID"/);
+  assert.match(html, /data-native-suit="SP"/);
+  assert.match(html, /data-printed-rank="7"/);
+  assert.match(html, /岩札 g1/);
+  assert.match(html, /♠/);
+  assert.match(html, /SPADE · ID rock-card-g1/);
+  assert.match(html, /イラスト未接続/);
+  assert.match(html, /data-janken-role="ROCK">✊ グー/);
+});
+
+test('fixture explicitly models that authoritative opening-hand selection already happened', () => {
+  assert.equal(AUTHORITATIVE_SELECTION_FIXTURE_NOTE, 'authoritative_selection_already_happened');
+  assert.ok(authoritativeCardCatalog().every((card) => card.authority === AUTHORITATIVE_SELECTION_FIXTURE_NOTE));
+});
+
+test('missing catalog metadata preserves exact package cardId and never borrows another card identity', () => {
+  const { runtime } = mount({ cardCatalog: [{ id: 'foreign-card', display_name: '別カード', suit: 'CL', rank: 'K' }] });
+  const html = runtime.host.innerHTML;
+  assert.match(html, /data-physical-card-id="rock-card-g1"/);
+  assert.match(html, /data-card-identity-source="PACKAGE_CARD_ID_ONLY"/);
+  assert.match(html, /カード情報未接続/);
+  assert.match(html, /イラスト未接続/);
+  assert.doesNotMatch(html, /別カード/);
 });
 
 test('JANKEN_FOCUS exposes exactly one target-rail switch for each authoritative package and no free target', async () => {
@@ -173,6 +214,11 @@ test('focus delegates to the existing live stack and enters enlarged LOAD_FOCUS 
   assert.match(runtime.host.innerHTML, /ロード確認/);
   assert.match(runtime.host.innerHTML, /ロックオン固定/);
   assert.match(runtime.host.innerHTML, /scissors-card-g1/);
+  assert.match(runtime.host.innerHTML, /data-physical-card-id="scissors-card-g1"/);
+  assert.match(runtime.host.innerHTML, /data-native-suit="HT"/);
+  assert.match(runtime.host.innerHTML, /data-printed-rank="Q"/);
+  assert.match(runtime.host.innerHTML, /刃札 g1/);
+  assert.match(runtime.host.innerHTML, /data-janken-role="SCISSORS">✌ チョキ/);
   assert.match(runtime.host.innerHTML, /opponent-scissors-g1/);
   assert.match(runtime.host.innerHTML, /CENTER \/ shield-scissors-g1/);
 });
@@ -259,6 +305,11 @@ test('surface contract stays presentation-only and exposes no rule or transport 
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.authoritativeTargetRail, true);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.targetRailSource, 'EXISTING_THREE_COMPOUND_PACKAGES_ONLY');
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.targetRailMayCreateTarget, false);
+  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.physicalCardLineageSource, 'EXACT_PACKAGE_CARD_ID_JOIN_GLOBAL_CARD_DATA');
+  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.jankenRoleIsSecondaryBadge, true);
+  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.inventedCardIdentityAllowed, false);
+  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.cardArtFallback, 'EXPLICIT_ART_UNAVAILABLE_NO_INVENTION');
+  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.openingSevenToRpsSelectionAuthority, false);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.selectionCommitsImmediately, false);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.commitTransportDelegatedToExistingLiveStack, true);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.computesTarget, false);

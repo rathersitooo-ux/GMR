@@ -1,0 +1,185 @@
+name: TEMP Battle Left Figure Public Audit R2
+
+on:
+  push:
+    branches:
+      - sol/battle-left-figure-public-audit-r2-20260913
+    paths:
+      - '.github/workflows/zz-temp-battle-left-figure-public-audit-r2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GAMEROAD_PUBLIC_BASE_URL: https://gameroad-browser-r5.pages.dev
+      EXPECTED_BUILD_ID: 65c96195ca8eaf090fdb29e7253ab55499a18d9e
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v4
+
+      - name: Bind exact public build
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p audit-evidence
+          curl --fail --silent --show-error --location \
+            --header 'Accept-Encoding: identity' \
+            --retry 4 --retry-delay 2 --retry-connrefused --max-time 30 \
+            --output audit-evidence/gameroad-version.json \
+            "${GAMEROAD_PUBLIC_BASE_URL}/gameroad-version.json"
+          OBSERVED="$(node -e "const fs=require('node:fs');const m=JSON.parse(fs.readFileSync('audit-evidence/gameroad-version.json','utf8'));process.stdout.write(String(m.build_id||''))")"
+          echo "expected=${EXPECTED_BUILD_ID}" | tee audit-evidence/build-binding.txt
+          echo "observed=${OBSERVED}" | tee -a audit-evidence/build-binding.txt
+          test "$OBSERVED" = "$EXPECTED_BUILD_ID"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Audit normal Battle figure identity and occupancy
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/audit-left-figure.mjs <<'EOF'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { chromium } from '@playwright/test';
+
+          const BASE = process.env.GAMEROAD_PUBLIC_BASE_URL;
+          const OUT = 'audit-evidence';
+          fs.mkdirSync(OUT, { recursive: true });
+          const browser = await chromium.launch({ headless: true });
+          const viewports = [
+            { name: 'desktop-1280x720', width: 1280, height: 720 },
+            { name: 'short-667x375', width: 667, height: 375 },
+            { name: 'portrait-390x844', width: 390, height: 844 },
+          ];
+          const results = [];
+
+          for (const vp of viewports) {
+            const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
+            const page = await context.newPage();
+            const errors = [];
+            page.on('pageerror', e => errors.push(`pageerror:${e.message}`));
+            page.on('console', m => { if (m.type() === 'error') errors.push(`console:${m.text()}`); });
+            const response = await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded', timeout: 45_000 });
+            if (!response?.ok()) throw new Error(`${vp.name}: public root failed ${response?.status()}`);
+            await page.waitForFunction(() => Boolean(window.__GAMEROAD_TEST__?.deckPublic && window.__GAMEROAD_TEST__?.start), null, { timeout: 30_000 });
+
+            const startReceipt = await page.evaluate(() => {
+              const t = window.__GAMEROAD_TEST__;
+              const publicMain = new Set(t.deckPublic().filter(card => card.slot === 'main').map(card => card.id));
+              const standard = window.__CARD_DATA__
+                .filter(card => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)))
+                .map(card => card.id);
+              const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
+              const nonRoyal = standard.filter(id => !t.isRoyalCard(id));
+              const main = [...nonRoyal.slice(0, 37), ...royalIds];
+              const setValidation = t.deckSetDraft(main, []);
+              const draftValidation = t.deckValidate(t.state.deckDraft, { forBattle: true });
+              const committed = draftValidation.ok ? t.deckCommit() : false;
+              const savedValidation = t.deckValidate(t.state.savedDeck, { forBattle: true });
+              if (!committed || !savedValidation.ok) {
+                throw new Error(`deck-precondition:${JSON.stringify({ setValidation, draftValidation, committed, savedValidation })}`);
+              }
+              const match = t.start('4p', 'road_shield');
+              return { screen: t.state.screen, mode: match?.mode ?? null, players: match?.players?.length ?? 0 };
+            });
+
+            await page.waitForFunction(() => {
+              const battle = document.querySelector('section[data-screen="battle"]');
+              const s = battle ? getComputedStyle(battle) : null;
+              return Boolean(battle && s && s.display !== 'none' && s.visibility !== 'hidden' && battle.getClientRects().length);
+            }, null, { timeout: 20_000 });
+            await page.waitForTimeout(1800);
+
+            const evidence = await page.evaluate(() => {
+              const vw = innerWidth, vh = innerHeight, viewportArea = vw * vh;
+              const rectOf = el => {
+                const r = el?.getBoundingClientRect?.();
+                if (!r) return null;
+                return { x:r.x, y:r.y, left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width, height:r.height, areaRatio: viewportArea ? (r.width*r.height)/viewportArea : 0 };
+              };
+              const inspect = selector => {
+                const el = document.querySelector(selector);
+                if (!el) return { selector, exists:false };
+                const cs = getComputedStyle(el), rect = rectOf(el);
+                const imgs = [...el.querySelectorAll('img')].map(img => ({ src: img.currentSrc || img.src || '', alt: img.alt || '', rect: rectOf(img) }));
+                return {
+                  selector, exists:true, hiddenAttr:el.hidden === true, ariaHidden:el.getAttribute('aria-hidden'),
+                  className: typeof el.className === 'string' ? el.className : '',
+                  display:cs.display, visibility:cs.visibility, opacity:cs.opacity, pointerEvents:cs.pointerEvents,
+                  backgroundImage:cs.backgroundImage, rect, clientRectCount:el.getClientRects().length,
+                  visible:Boolean(rect && rect.width>0 && rect.height>0 && cs.display!=='none' && cs.visibility!=='hidden' && Number(cs.opacity)!==0), imgs,
+                };
+              };
+              const battle = document.querySelector('section[data-screen="battle"]');
+              const visibleImages = battle ? [...battle.querySelectorAll('img')].map(img => {
+                const cs=getComputedStyle(img), r=rectOf(img);
+                return { src:img.currentSrc||img.src||'', alt:img.alt||'', className:img.className||'', rect:r, display:cs.display, visibility:cs.visibility, opacity:cs.opacity,
+                  visible:Boolean(r&&r.width>0&&r.height>0&&cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0) };
+              }).filter(x=>x.visible).sort((a,b)=>(b.rect?.areaRatio||0)-(a.rect?.areaRatio||0)) : [];
+              const largeVisibleImages = visibleImages.filter(x => (x.rect?.areaRatio||0) >= 0.08 || ((x.rect?.width||0) >= vw*0.33 && (x.rect?.height||0) >= vh*0.45));
+              const largeBackgrounds = battle ? [...battle.querySelectorAll('*')].map(el => {
+                const cs=getComputedStyle(el), r=rectOf(el);
+                return { tag:el.tagName, id:el.id||'', className:typeof el.className==='string'?el.className:'', backgroundImage:cs.backgroundImage, rect:r,
+                  visible:Boolean(r&&r.width>0&&r.height>0&&cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0) };
+              }).filter(x => x.visible && x.backgroundImage && x.backgroundImage !== 'none' && (x.rect?.areaRatio||0) >= 0.08) : [];
+              return {
+                screen: window.__GAMEROAD_TEST__?.state?.screen ?? null,
+                matchMode: window.__GAMEROAD_TEST__?.state?.match?.mode ?? null,
+                viewport:{width:vw,height:vh},
+                nodes:{
+                  controlledCharacter:inspect('#battleRuntime'),
+                  battlePhaseSurface:inspect('#battlePhaseSurface'),
+                  battlePhaseNaki:inspect('#battlePhaseNaki'),
+                  advicePartner:inspect('#partnerAdviceChatPresentation'),
+                },
+                visibleImages:visibleImages.slice(0,20), largeVisibleImages, largeBackgrounds,
+              };
+            });
+
+            const controlled = evidence.nodes.controlledCharacter;
+            const phase = evidence.nodes.battlePhaseSurface;
+            evidence.acceptance = {
+              normalBattleVisible: evidence.screen === 'battle',
+              fourPlayerMatch: startReceipt.mode === '4p' && startReceipt.players === 4,
+              controlledCharacterVisible: controlled.visible === true,
+              controlledCharacterNotGiant: controlled.visible === true && (controlled.rect?.areaRatio ?? 1) < 0.08,
+              dedicatedBattlePhaseHidden: phase.exists === true && phase.hiddenAttr === true && phase.visible === false,
+              giantVisibleImageCount: evidence.largeVisibleImages.length,
+            };
+            evidence.startReceipt = startReceipt;
+            evidence.errors = errors;
+            results.push({ name:vp.name, ...evidence });
+            await page.screenshot({ path:path.join(OUT, `${vp.name}-normal-battle.png`), fullPage:true, animations:'disabled' });
+            await context.close();
+          }
+
+          await browser.close();
+          fs.writeFileSync(path.join(OUT, 'left-figure-audit.json'), JSON.stringify({ expectedBuildId:process.env.EXPECTED_BUILD_ID, results }, null, 2));
+          console.log(JSON.stringify(results.map(r=>({name:r.name,start:r.startReceipt,acceptance:r.acceptance,nodes:r.nodes,largeVisibleImages:r.largeVisibleImages})), null, 2));
+          if (results.some(r => !r.acceptance.normalBattleVisible || !r.acceptance.fourPlayerMatch || !r.acceptance.controlledCharacterVisible || !r.acceptance.dedicatedBattlePhaseHidden)) process.exit(2);
+          EOF
+          node /tmp/audit-left-figure.mjs | tee audit-evidence/console-summary.txt
+
+      - name: Upload audit evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: battle-left-figure-public-audit-r2-${{ github.run_id }}
+          path: audit-evidence/
+          if-no-files-found: error
+          retention-days: 14

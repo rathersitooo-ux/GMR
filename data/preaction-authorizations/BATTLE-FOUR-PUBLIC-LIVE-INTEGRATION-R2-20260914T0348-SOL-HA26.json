@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-FOUR-PUBLIC-LIVE-INTEGRATION-R2-20260914T0348-SOL-HA26",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FOUR_PUBLIC_RUNTIME_INTEGRATION_PACKAGE_R2",
+  "acquireKey": "BATTLE-FOUR-PUBLIC-LIVE-INTEGRATION-R2-20260914T0348-SOL-HA26",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "WU26_R1_MERGED_BRIDGE_PLUS_EXISTING_BATTLE_SCREEN_RUNTIME_RENDER_20260914T0348",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "MAIN_3CB641_EXISTING_RUNTIME_RENDER_AND_PACKAGE_SPECS_READBACK",
+  "proceedToken": "PROCEED|BATTLE-FOUR-PUBLIC-LIVE-INTEGRATION-R2-20260914T0348-SOL-HA26|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|compose-merged-bridge|caller-owned-runtime",
+  "authorizationBaseSha": "3cb6411077da23d008ed433753aa6c690db6dd83",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_FOUR_PUBLIC_RUNTIME_INTEGRATION_PACKAGE_R2",
+  "leaseAcquireKey": "BATTLE-FOUR-PUBLIC-LIVE-INTEGRATION-R2-20260914T0348-SOL-HA26",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 03:48 JST",
+  "leaseUntilJst": "2026-09-14 04:48 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1400:L1400",
+  "leaseExactMutableResources": "NEW browser/battle-four-public-live-integration.mjs; NEW tests/battle-four-public-live-integration.test.mjs; deploy/cloudflare/scripts/build.mjs; own transient data/preaction-authorizations/BATTLE-FOUR-PUBLIC-LIVE-INTEGRATION-R2-20260914T0348-SOL-HA26.json; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html under BATTLE-CAMERA-WU63-RAIL-REPAIR-R2 through 04:42 JST; browser/battle-four-public-live-bridge.mjs; browser/battle-screen-presentation-core.mjs; browser/battle-screen-runtime-mount.mjs; gameplay/rules/target/order/winner/Shield/hidden state/save/economy/network.",
+  "solutionSignature": "FOUR_PUBLIC_BRIDGE_TO_CALLER_BATTLE_SCREEN_RUNTIME_RENDER_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R1_BRIDGE_AND_EXISTING_RUNTIME_RENDER_ALREADY_DEFINE_REQUIRED_BOUNDARIES",
+  "solutionSearchEvidence": [
+    "Merged WU26 R1 projectBattleFourPublicRevealLive already validates caller-authoritative committed+public four-card input, preserves exact cardId, and reuses the existing Battle conveyor/four-public projector.",
+    "Existing mountBattleScreenExternalSurface returns a caller-owned runtime exposing render(model, hudSnapshot) and audits every model before writing the four participant lanes.",
+    "R2 therefore needs only a thin integration that calls R1 once and runtime.render exactly once; it must not auto-mount another runtime or duplicate rendering/projector logic.",
+    "Public build already packages battle-screen presentation/runtime dependencies but not the new WU26 bridge/integration, so package closure is an exact build-manifest addition.",
+    "browser/GAMEROAD.html remains READ_ONLY while a current WU63 owner holds it; actual live producer hookup is explicitly deferred rather than colliding."
+  ],
+  "scope": [
+    "browser/battle-four-public-live-integration.mjs",
+    "tests/battle-four-public-live-integration.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-four-public-live-integration.mjs",
+    "tests/battle-four-public-live-integration.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ]
+}

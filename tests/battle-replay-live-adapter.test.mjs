@@ -524,7 +524,7 @@ test('Battle recent public history stays compact, expands inline, deduplicates, 
   assert.deepEqual(host.children.map(row => row.hidden), [true, false, false]);
   assert.equal(host.dataset.partnerBattleEventLogRecentRows, '2');
   assert.equal(toggle.getAttribute('aria-expanded'), 'false');
-  assert.match(host.children[0].textContent, /対象C列/);
+  assert.match(host.children[0].textContent, /対象 C列 → Shield使用 → 進行 C列 2→4（\+2）/);
   assert.match(host.children[0].textContent, /公開カード C1\(6\) \/ C2\(4\)/);
   toggle.click();
   assert.deepEqual(host.children.map(row => row.hidden), [false, false, false]);

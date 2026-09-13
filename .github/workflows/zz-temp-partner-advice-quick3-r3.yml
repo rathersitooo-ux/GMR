@@ -1,0 +1,74 @@
+name: TEMP Partner Advice Quick3 Structural Writer R3
+
+on:
+  push:
+    branches:
+      - sol/partner-advice-quick3-r1-20260913
+    paths:
+      - .github/workflows/zz-temp-partner-advice-quick3-r3.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/partner-advice-quick3-r1-20260913
+          fetch-depth: 0
+      - name: Run bounded R2 patch with structural projection replacement
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          workflow = Path('.github/workflows/zz-temp-partner-advice-quick3-r2.yml').read_text()
+          start_marker = "          python - <<'PY'\n"
+          start = workflow.index(start_marker) + len(start_marker)
+          end = workflow.index("\n          PY\n", start)
+          script = workflow[start:end]
+          old = "source = replace_once(source, projection_old, projection_new, 'quick3-projection')"
+          new = """projection_start_token = \"    const projection = projectPartnerAdviceChatPresentation({\"
+          projection_end_token = \"    const tutorialStatus = tutorialReplay.refresh();\"
+          projection_start = source.find(projection_start_token)
+          projection_end = source.find(projection_end_token, projection_start)
+          if projection_start < 0 or projection_end < 0 or source.find(projection_start_token, projection_start + 1) >= 0:
+              raise RuntimeError('quick3-projection: unique structural interval not found')
+          source = source[:projection_start] + projection_new + source[projection_end:]"""
+          if script.count(old) != 1:
+              raise RuntimeError(f'R2 projection patch statement count={script.count(old)}')
+          script = script.replace(old, new, 1)
+          exec(compile(script, '<quick3-r3-patch>', 'exec'), {})
+          PY
+      - name: Run focused product and package tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check browser/partner-advice-runtime-mount.mjs
+          node --test tests/partner-advice-runtime-mount.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Construct the same clean PRE_ACTION and product commits
+        shell: bash
+        env:
+          BASE_SHA: 65c96195ca8eaf090fdb29e7253ab55499a18d9e
+          STAGE_BRANCH: tmp/partner-advice-quick3-clean-r1-20260913
+          RECORD_ID: PARTNER-ADVICE-QUICK3-R1-20260913T2229-SOL-A7K3
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          workflow = Path('.github/workflows/zz-temp-partner-advice-quick3-r2.yml').read_text()
+          marker = '      - name: Construct clean PRE_ACTION and product commits\n'
+          tail = workflow.split(marker, 1)[1]
+          run_marker = '        run: |\n'
+          block = tail.split(run_marker, 1)[1]
+          lines = block.splitlines()
+          out = []
+          for line in lines:
+              out.append(line[10:] if line.startswith('          ') else line)
+          Path('/tmp/quick3-construct.sh').write_text('\n'.join(out) + '\n')
+          PY
+          bash /tmp/quick3-construct.sh

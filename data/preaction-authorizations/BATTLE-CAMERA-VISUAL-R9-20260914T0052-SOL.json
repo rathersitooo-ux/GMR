@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CAMERA-VISUAL-R9-20260914T0052-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CAMERA_GAMEROAD_HTML_VISUAL_REPAIR_R9",
+  "acquireKey": "BATTLE-CAMERA-VISUAL-R9-20260914T0052-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1611_CAMERA_CORE_VALID_BUT_PERSISTENT_BATTLERAIL_RETURN_CONFLICTS_WU62_VISUAL_GATE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1611_HTML_DONOR_SAME_BLOB_CURRENT_MAIN_PLUS_INSPECT_ONLY_RETURN_RECOMPOSITION",
+  "proceedToken": "PROCEED|BATTLE-CAMERA-VISUAL-R9-20260914T0052-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-camera|wu62-visual-repair",
+  "authorizationBaseSha": "e935ee9df7a595a2b1fc657152a5d08e6c0984e8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CAMERA_GAMEROAD_HTML_VISUAL_REPAIR_R9",
+  "leaseAcquireKey": "BATTLE-CAMERA-VISUAL-R9-20260914T0052-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 00:52 JST",
+  "leaseUntilJst": "2026-09-14 01:52 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1350:N1350",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main e935ee9df7a595a2b1fc657152a5d08e6c0984e8; mutable browser/GAMEROAD.html; tests/browser-static-check.mjs; transient .github/workflows/zz-temp-battle-camera-visual-r9.yml; own transient data/preaction-authorizations/BATTLE-CAMERA-VISUAL-R9-20260914T0052-SOL.json; own branch/PR/check/readback. READ_ONLY browser/battle-camera-control-core.mjs; browser/battle-camera-input-router.mjs; browser/battle-camera-live-runtime.mjs; battle-current-player-ui runtime; gameplay/rules/movement/target/Shield/GOAL/Mana/Honey/Hand3/save/network; all Partner files.",
+  "solutionSignature": "battle-camera-visual-r9|reuse-existing-camera-core-runtime|no-persistent-rail-return|manual-inspect-only-return|follow-footprint-zero|static-seam-regression",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1611_SAME_HTML_BASE_BLOB_5f06efc5_CAMERA_LOGIC_DONOR_VISUAL_PLACEMENT_REJECTED",
+  "solutionSearchEvidence": [
+    "Current main and PR#1611 base have identical browser/GAMEROAD.html blob 5f06efc5b69b198ac56cb3a502f94f97d8a61880.",
+    "PR#1611 camera core/input/live-runtime integration logic is reusable, but its permanent fourth cameraReturnBtn inside .battleRail conflicts with the current no-tall-persistent-right-rail rule.",
+    "Current camera authority still requires manual pan/zoom/angle plus one-action return to the Controlled Character and gameplay/state write 0.",
+    "Repair keeps the camera semantics but moves the return affordance outside .battleRail, hidden/non-interactive in FOLLOW_CONTROLLED and visible only in MANUAL_INSPECT.",
+    "No JANKEN/RPS meaning is attached to the camera return control.",
+    "Dedicated camera test classification is avoided; HTML seam canaries are added to already-classified tests/browser-static-check.mjs while existing camera core/runtime focused tests remain READ_ONLY."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    ".github/workflows/zz-temp-battle-camera-visual-r9.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    ".github/workflows/zz-temp-battle-camera-visual-r9.yml"
+  ]
+}

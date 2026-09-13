@@ -27,20 +27,24 @@ jobs:
           from pathlib import Path
           hp=Path('browser/GAMEROAD.html')
           s=hp.read_text(encoding='utf-8')
-          old='#cameraReturnBtn{display:none;pointer-events:none}\n#cameraReturnBtn[data-camera-mode="MANUAL_INSPECT"]{display:flex;pointer-events:auto;'
-          new='#cameraReturnBtn{display:none;pointer-events:none}\n#cameraReturnBtn[hidden]{display:none!important;pointer-events:none!important}\n#cameraReturnBtn[data-camera-mode="MANUAL_INSPECT"]{display:flex;pointer-events:auto;'
-          if s.count(old)!=1:
-              raise SystemExit(f'camera CSS anchor count={s.count(old)}')
-          s=s.replace(old,new,1)
-          hp.write_text(s,encoding='utf-8')
+          hidden_rule='#cameraReturnBtn[hidden]{display:none!important;pointer-events:none!important}'
+          if hidden_rule not in s:
+              old='#cameraReturnBtn{display:none;pointer-events:none}\n#cameraReturnBtn[data-camera-mode="MANUAL_INSPECT"]{display:flex;pointer-events:auto;'
+              new='#cameraReturnBtn{display:none;pointer-events:none}\n'+hidden_rule+'\n#cameraReturnBtn[data-camera-mode="MANUAL_INSPECT"]{display:flex;pointer-events:auto;'
+              if s.count(old)!=1:
+                  raise SystemExit(f'camera CSS anchor count={s.count(old)}')
+              s=s.replace(old,new,1)
+              hp.write_text(s,encoding='utf-8')
+
           tp=Path('tests/battle-camera-live-integration.test.mjs')
           t=tp.read_text(encoding='utf-8')
-          old_test="    assert.match(html,/#cameraReturnBtn\\{display:none;pointer-events:none\\}/);"
-          new_test=old_test+"\n    assert.match(html,/#cameraReturnBtn\\[hidden\\]\\{display:none!important;pointer-events:none!important\\}/);"
-          if t.count(old_test)!=1:
-              raise SystemExit(f'camera regression anchor count={t.count(old_test)}')
-          t=t.replace(old_test,new_test,1)
-          tp.write_text(t,encoding='utf-8')
+          hidden_assert="  assert.match(html,/#cameraReturnBtn\\[hidden\\]\\{display:none!important;pointer-events:none!important\\}/);"
+          if hidden_assert not in t:
+              old_test="  assert.match(html,/#cameraReturnBtn\\{display:none;pointer-events:none\\}/);"
+              if t.count(old_test)!=1:
+                  raise SystemExit(f'camera regression anchor count={t.count(old_test)}')
+              t=t.replace(old_test,old_test+'\n'+hidden_assert,1)
+              tp.write_text(t,encoding='utf-8')
           PY
           node --test tests/battle-camera-live-integration.test.mjs
           node tests/browser-static-check.mjs
@@ -157,7 +161,7 @@ jobs:
             test-results/
           if-no-files-found: warn
           retention-days: 14
-      - name: Commit verified repair and remove transient workflows
+      - name: Commit verified repair and remove transient workflow
         if: ${{ success() }}
         shell: bash
         run: |
@@ -165,6 +169,6 @@ jobs:
           git config user.name gameroad-bot
           git config user.email gameroad-bot@users.noreply.github.com
           git add browser/GAMEROAD.html tests/battle-camera-live-integration.test.mjs
-          git rm -f .github/workflows/zz-temp-camera-667-visual-r1.yml .github/workflows/zz-temp-camera-667-visual-r2.yml
+          git rm -f .github/workflows/zz-temp-camera-667-visual-r2.yml
           git commit -m 'Battle: FOLLOW時のcamera return footprintを実画面で0化'
           git push origin HEAD:sol/battle-camera-html-r8-20260913

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-FOCUS-PREMOUNT-R1-20260914T0238-SOL-U3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_FOCUS_PREMOUNT_INJECTION_R1",
+  "acquireKey": "BATTLE-JANKEN-FOCUS-PREMOUNT-R1-20260914T0238-SOL-U3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_2B2C9AEF_PLUS_BOARD_PEEK_REGRESSION_PLUS_AUTO_MOUNT_GAP_PLUS_ACTIVE_LEASE_A1393_20260914T0238JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_NORMALIZE_FOCUS_INTEGRATION_PLUS_EXISTING_FOCUS_INJECTED_MOUNT_TESTS_PLUS_EXACT_AUTOMOUNT_ANCHOR",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-FOCUS-PREMOUNT-R1-20260914T0238-SOL-U3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|focus-premount-seam|existing-authority-only|active-lease",
+  "authorizationBaseSha": "2b2c9aefa9ace0c9c78f56ed293e755b7808806d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_FOCUS_PREMOUNT_INJECTION_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-FOCUS-PREMOUNT-R1-20260914T0238-SOL-U3",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 02:38 JST",
+  "leaseUntilJst": "2026-09-14 03:38 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1393:L1393",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main 2b2c9aefa9ace0c9c78f56ed293e755b7808806d; mutable browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient .github/workflows/zz-temp-battle-janken-focus-premount-r1.yml; own transient data/preaction-authorizations/BATTLE-JANKEN-FOCUS-PREMOUNT-R1-20260914T0238-SOL-U3.json; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; battle-janken-focus-runtime-surface.mjs; battle-janken-focus-live-integration.mjs; opening7/RPS3 selection authority; gameplay/rules/target/legality/route/Shield/Hand3 assignment/card identity/save/economy/network/build.",
+  "solutionSignature": "BATTLE_JANKEN_FOCUS_EXISTING_AUTHORITY_PREMOUNT_INJECTION_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_SLIDEPAD_FOCUS_INTEGRATION_CONTRACT_AND_NORMALIZER_REUSED_NO_SECOND_CONTROLLER",
+  "solutionSearchEvidence": [
+    "Current Focus runtime already preserves the exact focused package through BOARD_PEEK and returns to LOAD_FOCUS without a second focus/restage call.",
+    "Current SlidePad accepts focusIntegration at mount time and already disables the legacy direct card commit path when a valid dedicated Focus integration is present.",
+    "Current autoMount calls mountBattleJankenSlidePadRuntime(globalThis) without focusIntegration, while the existing-runtime guard prevents a later injection from replacing that first mount.",
+    "Current formal authority keeps match-start ordinary hand at seven and explicitly leaves opening7 -> first RPS3 selection unresolved. This WorkUnit does not select, derive, infer or assign those three cards.",
+    "The patch only consumes an already-provided integration through the existing normalizeBattleJankenFocusIntegration contract. Invalid or absent input keeps the current legacy mount unchanged."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-focus-premount-r1.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-focus-premount-r1.yml"
+  ]
+}

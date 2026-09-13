@@ -6,6 +6,7 @@ import {
   createBattleTutorialExperienceConversationControl,
   createPartnerAdviceReplayBridge,
   createPartnerAdviceRuntimeControl,
+  createPartnerAdviceQuickRouteControl,
   createPartnerBattleCharacterReactionControl,
   createTutorialPartnerGuideControl,
   isPartnerAdviceQuickReplyAvailable,
@@ -356,7 +357,8 @@ test('eligible Tutorial experience is a natural Saasuna conversation and adapts 
   assert.equal(help.adapted, true);
   assert.match(help.message, /遊戯王/);
   assert.match(help.message, /展開の軸/);
-  assert.match(help.message, /先にロード/);
+  assert.match(help.message, /順番は固定じゃない/);
+  assert.match(help.message, /ロードを先に触っても移動から始めてもよく/);
   assert.equal(help.canonicalMessage, '正式GAMEROAD操作');
   assert.equal(control.status().saveMutated, false);
   assert.equal(control.status().gameplayAuthorityMutated, false);
@@ -607,3 +609,74 @@ test('idle readable content appears only in battle idle time and yields to highe
   assert.equal(projectPartnerIdleReadableContent({ ...base, battleActive: false }).active, false);
   assert.equal(projectPartnerIdleReadableContent({ ...base, partnerId: 'partner.naki' }).active, false);
 });
+
+test('Partner Advice quick3 exposes exactly three fixed route families with Idea enabled by default', () => {
+  const control = createPartnerAdviceQuickRouteControl({
+    resolvePart: ({ partId }) => ({ best_move: '最善手です。', casual: '雑談です。', situation_summary: '戦況です。', calculate_public: '計算です。' })[partId] ?? null,
+  });
+  assert.equal(control.status().ideaEnabled, true);
+  assert.deepEqual(control.status().registrations, {
+    idea: ['best_move'],
+    casual: ['casual'],
+    situation: ['situation_summary'],
+  });
+  assert.equal(control.register('situation', ['situation_summary', 'calculate_public']), true);
+  assert.equal(control.register('idea', ['best_move', 'calculate_public']), false);
+  assert.equal(control.register('casual', ['casual', 'casual']), false);
+});
+
+test('Partner Advice composite route speaks registered parts in order and drops stale public-state continuation', () => {
+  const control = createPartnerAdviceQuickRouteControl({
+    resolvePart: ({ partId }) => ({ situation_summary: 'いまの戦況。', calculate_public: '公開値の計算。' })[partId] ?? null,
+  });
+  assert.equal(control.register('situation', ['situation_summary', 'calculate_public']), true);
+  const current = { partnerId: 'partner.saasuna', matchId: 'match-1', round: 4, lanes: { L: 1, C: 2, R: 3 }, logRows: ['公開ログA'], adviceText: '助言' };
+  assert.equal(control.start('situation', current), true);
+  assert.equal(control.status().text, 'いまの戦況。');
+  assert.equal(control.status().hasNext, true);
+  assert.equal(control.next(current), true);
+  assert.equal(control.status().text, '公開値の計算。');
+  assert.equal(control.start('situation', current), true);
+  control.refresh({ ...current, logRows: ['公開ログA', '公開ログB'] });
+  assert.equal(control.status().active, false);
+  assert.equal(control.status().reason, 'STALE_PUBLIC_STATE');
+});
+
+test('default Situation route summarizes existing viewer-safe log rows and public lane values only', () => {
+  const control = createPartnerAdviceQuickRouteControl();
+  const current = { partnerId: 'partner.saasuna', matchId: 'match-2', round: 5, lanes: { L: 2, C: 4, R: 1 }, logRows: ['1手前の公開ログ', '直近の公開ログ'], adviceText: '助言' };
+  assert.equal(control.start('situation', current), true);
+  assert.match(control.status().text, /左列2、中央列4、右列1/);
+  assert.match(control.status().text, /1手前の公開ログ/);
+  assert.match(control.status().text, /直近の公開ログ/);
+  assert.equal(control.register('situation', ['situation_summary', 'calculate_public']), true);
+  assert.equal(control.start('situation', current), true);
+  assert.equal(control.next(current), true);
+  assert.match(control.status().text, /公開値合計は7/);
+});
+
+test('Idea OFF suppresses only Idea while Casual and Situation remain independent and no gameplay authority is owned', () => {
+  const control = createPartnerAdviceQuickRouteControl({ resolvePart: ({ partId }) => `${partId}。` });
+  const current = { partnerId: 'partner.saasuna', matchId: 'match-3', round: 1, lanes: { L: 0, C: 1, R: 2 }, logRows: [], adviceText: '最善手' };
+  assert.equal(control.canStart('idea', current), true);
+  assert.equal(control.setIdeaEnabled(false), true);
+  assert.equal(control.canStart('idea', current), false);
+  assert.equal(control.canStart('casual', current), true);
+  assert.equal(control.canStart('situation', current), true);
+  assert.equal(control.status().saveMutated, false);
+  assert.equal(control.status().gameplayAuthorityMutated, false);
+  assert.equal(control.status().autoExecute, false);
+});
+
+test('quick3 UI keeps delegation separate and does not create a permanent fourth 3-options route', () => {
+  const source = readFileSync(new URL('../browser/partner-advice-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /QUICK_ROUTE_IDS = Object\.freeze\(\['idea', 'casual', 'situation'\]\)/);
+  assert.match(source, /\['idea', 'アイディア ON'\]/);
+  assert.match(source, /\['casual', '雑談'\]/);
+  assert.match(source, /\['situation', '戦況報告'\]/);
+  assert.match(source, /partnerAdviceQuickReply/);
+  assert.match(source, /まかせた！/);
+  assert.doesNotMatch(source, /data\.quickRoute\s*=\s*['\"]three/);
+  assert.doesNotMatch(source, /\['three-options',\s*'3つ出して'\]/);
+});
+

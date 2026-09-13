@@ -495,7 +495,10 @@ export function createBattleContextualTutorialReplayControl({
         focusRole: current?.focusRole,
         experienceProfile: getExperienceProfile(),
       });
-      return adapted?.active && exactPresentationToken(adapted.message) ? adapted.message : current?.message ?? null;
+      const adaptedMessage = typeof adapted?.message === 'string' && adapted.message.trim() === adapted.message && adapted.message.length > 0
+        ? adapted.message
+        : null;
+      return adapted?.active && adaptedMessage ? adaptedMessage : current?.message ?? null;
     } catch {
       return current?.message ?? null;
     }
@@ -654,6 +657,225 @@ export function isPartnerAdviceQuickReplyAvailable({ partnerId, matchId } = {}) 
 }
 
 export const PARTNER_ADVICE_DELEGATE_REPLY_TEXT = DELEGATE_REPLY_TEXT;
+
+
+const QUICK_ROUTE_SCHEMA = 'gameroad.partner-advice-quick3-route.v1';
+const QUICK_ROUTE_IDS = Object.freeze(['idea', 'casual', 'situation']);
+const QUICK_ROUTE_DEFAULTS = Object.freeze({
+  idea: Object.freeze(['best_move']),
+  casual: Object.freeze(['casual']),
+  situation: Object.freeze(['situation_summary']),
+});
+const QUICK_ROUTE_ALLOWED_PARTS = Object.freeze({
+  idea: Object.freeze(['best_move', 'forecast_public', 'win_path']),
+  casual: Object.freeze(['casual']),
+  situation: Object.freeze(['situation_summary', 'calculate_public']),
+});
+const QUICK_ROUTE_PLAYER_TEXT = Object.freeze({ idea: null, casual: '雑談', situation: '戦況報告' });
+
+function quickRouteText(value) {
+  if (typeof value !== 'string') return null;
+  const text = value.trim();
+  return text ? text.slice(0, 240) : null;
+}
+
+function quickRouteLanes(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const out = {};
+  for (const lane of ['L', 'C', 'R']) {
+    const count = Number(value[lane]);
+    if (!Number.isInteger(count) || count < 0) return null;
+    out[lane] = count;
+  }
+  return Object.freeze(out);
+}
+
+function quickRouteLogRows(value) {
+  if (!Array.isArray(value)) return Object.freeze([]);
+  return Object.freeze(value.map(quickRouteText).filter(Boolean).slice(-3));
+}
+
+function quickRouteFingerprint(routeId, snapshot) {
+  const partnerId = exactPresentationToken(snapshot?.partnerId);
+  const matchId = exactPresentationToken(snapshot?.matchId);
+  if (!partnerId || !matchId) return null;
+  if (routeId === 'casual') return `casual|${matchId}|${partnerId}`;
+  const lanes = quickRouteLanes(snapshot?.lanes);
+  if (!lanes) return null;
+  const round = Number.isInteger(snapshot?.round) && snapshot.round >= 0 ? snapshot.round : 'x';
+  const laneToken = `${lanes.L},${lanes.C},${lanes.R}`;
+  if (routeId === 'situation') {
+    const logToken = quickRouteLogRows(snapshot?.logRows).join('>');
+    return `situation|${matchId}|${partnerId}|${round}|${laneToken}|${logToken}`;
+  }
+  const adviceText = quickRouteText(snapshot?.adviceText);
+  if (routeId === 'idea' && adviceText) return `idea|${matchId}|${partnerId}|${round}|${laneToken}|${adviceText}`;
+  return null;
+}
+
+function resolveDefaultQuickRoutePart({ routeId, partId, snapshot, fingerprint } = {}) {
+  if (routeId === 'idea' && partId === 'best_move') return quickRouteText(snapshot?.adviceText);
+  if (routeId === 'casual' && partId === 'casual') {
+    const partnerId = exactPresentationToken(snapshot?.partnerId);
+    if (!partnerId) return null;
+    let utterance;
+    try {
+      utterance = selectApprovedPartnerIdleUtterance({ partnerId, seed: `${fingerprint}:user-casual` });
+    } catch {
+      return null;
+    }
+    return utterance?.sourceState === 'approved_current' && utterance?.partnerId === partnerId
+      ? quickRouteText(utterance.text)
+      : null;
+  }
+  const lanes = quickRouteLanes(snapshot?.lanes);
+  if (routeId === 'situation' && partId === 'situation_summary' && lanes) {
+    const prefix = Number.isInteger(snapshot?.round) && snapshot.round >= 0 ? `第${snapshot.round}ラウンド。` : '';
+    const current = `${prefix}左列${lanes.L}、中央列${lanes.C}、右列${lanes.R}です。`;
+    const recent = quickRouteLogRows(snapshot?.logRows).slice(-2);
+    return recent.length ? `${current} 直近の公開ログは、${recent.join('／')}。` : current;
+  }
+  if (routeId === 'situation' && partId === 'calculate_public' && lanes) {
+    const rows = [['左列', lanes.L], ['中央列', lanes.C], ['右列', lanes.R]];
+    const total = lanes.L + lanes.C + lanes.R;
+    const max = Math.max(lanes.L, lanes.C, lanes.R);
+    const leaders = rows.filter(([, value]) => value === max).map(([name]) => name).join('・');
+    return `3列の公開値合計は${total}。最も進んでいるのは${leaders}で${max}です。`;
+  }
+  return null;
+}
+
+export function createPartnerAdviceQuickRouteControl({ resolvePart = resolveDefaultQuickRoutePart, onChange } = {}) {
+  if (typeof resolvePart !== 'function') throw new TypeError('resolvePart must be a function');
+  if (onChange !== undefined && typeof onChange !== 'function') throw new TypeError('onChange must be a function when provided');
+  let ideaEnabled = true;
+  let registrations = Object.fromEntries(QUICK_ROUTE_IDS.map((id) => [id, [...QUICK_ROUTE_DEFAULTS[id]]]));
+  let active = null;
+  let lastReason = null;
+  const changed = () => { if (typeof onChange === 'function') onChange(); };
+  const routeId = (value) => QUICK_ROUTE_IDS.includes(value) ? value : null;
+  const copyRegistrations = () => Object.freeze(Object.fromEntries(
+    QUICK_ROUTE_IDS.map((id) => [id, Object.freeze([...registrations[id]])]),
+  ));
+  const build = (requestedRouteId, snapshot) => {
+    const id = routeId(requestedRouteId);
+    if (!id) return Object.freeze({ ok: false, reason: 'UNKNOWN_ROUTE' });
+    if (id === 'idea' && !ideaEnabled) return Object.freeze({ ok: false, reason: 'IDEA_DISABLED' });
+    const fingerprint = quickRouteFingerprint(id, snapshot);
+    if (!fingerprint) return Object.freeze({ ok: false, reason: 'CURRENT_PUBLIC_STATE_REQUIRED' });
+    const messages = [];
+    for (const partId of registrations[id]) {
+      let resolved;
+      try { resolved = resolvePart({ routeId: id, partId, snapshot, fingerprint }); }
+      catch { return Object.freeze({ ok: false, reason: 'ROUTE_PART_FAILED', partId }); }
+      const text = quickRouteText(typeof resolved === 'string' ? resolved : resolved?.text);
+      if (!text) return Object.freeze({ ok: false, reason: 'ROUTE_PART_UNAVAILABLE', partId });
+      messages.push(Object.freeze({ partId, text }));
+    }
+    if (!messages.length) return Object.freeze({ ok: false, reason: 'ROUTE_EMPTY' });
+    return Object.freeze({ ok: true, routeId: id, fingerprint, messages: Object.freeze(messages) });
+  };
+  const status = () => Object.freeze({
+    schema: QUICK_ROUTE_SCHEMA,
+    ideaEnabled,
+    registrations: copyRegistrations(),
+    active: Boolean(active),
+    routeId: active?.routeId ?? null,
+    partId: active?.messages?.[active.index]?.partId ?? null,
+    text: active?.messages?.[active.index]?.text ?? null,
+    playerText: active ? QUICK_ROUTE_PLAYER_TEXT[active.routeId] : null,
+    index: active?.index ?? null,
+    total: active?.messages?.length ?? 0,
+    hasNext: Boolean(active && active.index + 1 < active.messages.length),
+    reason: lastReason,
+    presentationOnly: true,
+    saveMutated: false,
+    gameplayAuthorityMutated: false,
+    autoExecute: false,
+  });
+  return Object.freeze({
+    register(requestedRouteId, partIds) {
+      const id = routeId(requestedRouteId);
+      if (!id || !Array.isArray(partIds) || partIds.length === 0) return false;
+      const normalized = partIds.map(exactPresentationToken);
+      if (normalized.some((partId) => !partId || !QUICK_ROUTE_ALLOWED_PARTS[id].includes(partId))) return false;
+      if (new Set(normalized).size !== normalized.length) return false;
+      registrations = { ...registrations, [id]: [...normalized] };
+      if (active?.routeId === id) active = null;
+      lastReason = null;
+      changed();
+      return true;
+    },
+    resetRegistrations() {
+      registrations = Object.fromEntries(QUICK_ROUTE_IDS.map((id) => [id, [...QUICK_ROUTE_DEFAULTS[id]]]));
+      active = null;
+      lastReason = null;
+      changed();
+      return true;
+    },
+    setIdeaEnabled(enabled) {
+      if (typeof enabled !== 'boolean') return false;
+      if (ideaEnabled === enabled) return true;
+      ideaEnabled = enabled;
+      if (!enabled && active?.routeId === 'idea') active = null;
+      lastReason = null;
+      changed();
+      return true;
+    },
+    toggleIdea() {
+      ideaEnabled = !ideaEnabled;
+      if (!ideaEnabled && active?.routeId === 'idea') active = null;
+      lastReason = null;
+      changed();
+      return ideaEnabled;
+    },
+    canStart(requestedRouteId, snapshot) { return build(requestedRouteId, snapshot).ok === true; },
+    start(requestedRouteId, snapshot) {
+      const built = build(requestedRouteId, snapshot);
+      if (!built.ok) { lastReason = built.reason; return false; }
+      active = Object.freeze({ ...built, index: 0 });
+      lastReason = null;
+      changed();
+      return true;
+    },
+    next(snapshot) {
+      if (!active) return false;
+      const fingerprint = quickRouteFingerprint(active.routeId, snapshot);
+      if (!fingerprint || fingerprint !== active.fingerprint) {
+        active = null;
+        lastReason = 'STALE_PUBLIC_STATE';
+        changed();
+        return false;
+      }
+      if (active.index + 1 >= active.messages.length) return false;
+      active = Object.freeze({ ...active, index: active.index + 1 });
+      lastReason = null;
+      changed();
+      return true;
+    },
+    refresh(snapshot) {
+      if (!active) return status();
+      const fingerprint = quickRouteFingerprint(active.routeId, snapshot);
+      if (!fingerprint || fingerprint !== active.fingerprint) {
+        active = null;
+        lastReason = 'STALE_PUBLIC_STATE';
+        changed();
+      }
+      return status();
+    },
+    clear() {
+      if (!active && lastReason === null) return false;
+      active = null;
+      lastReason = null;
+      changed();
+      return true;
+    },
+    status,
+  });
+}
+
+export const PARTNER_ADVICE_QUICK_ROUTE_IDS = QUICK_ROUTE_IDS;
+export const PARTNER_ADVICE_QUICK_ROUTE_DEFAULTS = QUICK_ROUTE_DEFAULTS;
 
 function resolveApprovedPartnerBattleCharacterUtterance({ partnerId, triggerId, seed, fields } = {}) {
   return selectApprovedPartnerBattleUtterance({ partnerId, triggerId, seed, fields });
@@ -872,6 +1094,22 @@ function currentBattleChatSnapshot(win) {
   }
 }
 
+function currentBattleQuickRouteSnapshot(win, current) {
+  if (!current) return null;
+  const logRows = [...(win?.document?.querySelectorAll?.('[data-partner-battle-event-log-row]') || [])]
+    .map((node) => quickRouteText(node?.textContent))
+    .filter(Boolean)
+    .slice(-3);
+  return Object.freeze({
+    partnerId: current.partnerId || null,
+    matchId: current.matchId || null,
+    round: current.round ?? null,
+    lanes: current.lanes || null,
+    adviceText: current.partnerText || null,
+    logRows: Object.freeze(logRows),
+  });
+}
+
 function currentBattleTutorialReplaySnapshot(win) {
   try {
     const state = win.__GAMEROAD_TEST__?.state || null;
@@ -902,6 +1140,16 @@ function setBattleContextualTutorialFocus(doc, role) {
   return true;
 }
 
+const QUICK3_STYLE_ID = 'gameroad-partner-advice-quick3-r1-style';
+
+function ensureBattleQuick3Style(doc) {
+  if (doc.getElementById(QUICK3_STYLE_ID)) return;
+  const style = doc.createElement('style');
+  style.id = QUICK3_STYLE_ID;
+  style.textContent = `#${CHAT_ROOT_ID} .partnerAdviceQuickRoutes{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}#${CHAT_ROOT_ID} .partnerAdviceQuickRoute{min-height:34px;padding:6px 7px;border:1px solid rgba(173,235,214,.34);border-radius:9px;background:rgba(10,45,38,.78);color:#e4fff6;font-size:9px;font-weight:950;line-height:1.15}#${CHAT_ROOT_ID} .partnerAdviceQuickRoute[aria-pressed="false"]{border-color:rgba(180,190,188,.25);background:rgba(30,38,36,.72);color:#b7c2bf}#${CHAT_ROOT_ID} .partnerAdviceQuickRouteContinue{grid-column:1/-1;justify-self:start;min-height:28px;padding:4px 8px;border:1px solid rgba(255,211,126,.46);border-radius:9px;background:rgba(69,49,19,.68);color:#fff1c9;font-size:9px;font-weight:950}#${CHAT_ROOT_ID} .partnerAdviceQuickRouteContinue[hidden],#${CHAT_ROOT_ID} .partnerAdviceQuickRoutes[hidden]{display:none!important}@media(max-height:430px) and (orientation:landscape){#${CHAT_ROOT_ID} .partnerAdviceQuickRoutes{gap:3px}#${CHAT_ROOT_ID} .partnerAdviceQuickRoute{min-height:25px;padding:3px 4px;font-size:8px}#${CHAT_ROOT_ID} .partnerAdviceQuickRouteContinue{min-height:24px;padding:3px 6px;font-size:8px}}`;
+  doc.head?.append(style);
+}
+
 function ensureBattleChatStyle(doc) {
   if (doc.getElementById(CHAT_STYLE_ID)) return;
   const style = doc.createElement('style');
@@ -918,6 +1166,7 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
   const host = doc.getElementById('partnerDecisionBox');
   if (!host) return null;
   ensureBattleChatStyle(doc);
+  ensureBattleQuick3Style(doc);
   let root = doc.getElementById(CHAT_ROOT_ID);
   if (!root) {
     root = doc.createElement('section');
@@ -927,6 +1176,30 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
     const statusNode = host.querySelector('.partnerDecisionStatus');
     host.insertBefore(root, statusNode || host.firstChild);
   }
+
+let quickRoutesNode = root.querySelector('.partnerAdviceQuickRoutes');
+if (!quickRoutesNode) {
+  quickRoutesNode = doc.createElement('div');
+  quickRoutesNode.className = 'partnerAdviceQuickRoutes';
+  quickRoutesNode.setAttribute('aria-label', 'パートナー会話の3つの入口');
+  for (const [routeId, label] of [['idea', 'アイディア ON'], ['casual', '雑談'], ['situation', '戦況報告']]) {
+    const routeButton = doc.createElement('button');
+    routeButton.type = 'button';
+    routeButton.className = 'partnerAdviceQuickRoute';
+    routeButton.dataset.quickRoute = routeId;
+    routeButton.textContent = label;
+    quickRoutesNode.append(routeButton);
+  }
+  const continueButton = doc.createElement('button');
+  continueButton.type = 'button';
+  continueButton.className = 'partnerAdviceQuickRouteContinue';
+  continueButton.dataset.quickRouteContinue = 'true';
+  continueButton.textContent = '続きを聞く';
+  continueButton.hidden = true;
+  quickRoutesNode.append(continueButton);
+  const tutorialConversation = root.querySelector('[data-role="tutorial-experience-conversation"]');
+  root.insertBefore(quickRoutesNode, tutorialConversation || root.querySelector('.partnerAdviceTutorialReplay'));
+}
 
   const battleSurface = doc.querySelector('section[data-screen="battle"]');
 if (battleSurface) {
@@ -945,6 +1218,8 @@ if (battleSurface) {
     getDialogueVersion: () => dialogueDescriptor()?.dialogueVersion || null,
     getSourceId: () => dialogueDescriptor()?.sourceId || null,
   });
+  const quickRoutes = createPartnerAdviceQuickRouteControl();
+  win.__GAMEROAD_PARTNER_ADVICE_QUICK3__ = quickRoutes;
   const characterReaction = createPartnerBattleCharacterReactionControl();
   characterReaction.prime(readBattleR75SelfHudDom(doc)?.resolution);
   const tutorialExperience = createBattleTutorialExperienceConversationControl({
@@ -966,16 +1241,23 @@ if (battleSurface) {
     const nextReaction = characterReaction.consume({ partnerId: current?.partnerId, resolution: confirmedSelf?.resolution });
     if (nextReaction) lastCharacterReaction = nextReaction;
     if (!confirmedSelf?.resolution) lastCharacterReaction = null;
+    const quickSnapshot = currentBattleQuickRouteSnapshot(win, current);
+    quickRoutes.refresh(quickSnapshot);
+    let quickRouteStatus = quickRoutes.status();
+    if (!lastReceipt && quickRouteStatus.ideaEnabled && current?.partnerText && !quickRouteStatus.active) {
+      quickRoutes.start('idea', quickSnapshot);
+      quickRouteStatus = quickRoutes.status();
+    }
     const projection = projectPartnerAdviceChatPresentation({
       laneProgress: current?.lanes,
-      partnerText: lastReceipt?.partnerUtterance || current?.partnerText || null,
+      partnerText: lastReceipt?.partnerUtterance || (quickRouteStatus.ideaEnabled ? current?.partnerText || null : null),
       playerText: lastReceipt?.playerText || null,
     });
     const tutorialStatus = tutorialReplay.refresh();
     const tutorialExperienceStatus = tutorialExperience.status();
     const tutorialConversation = tutorialExperienceStatus.conversation;
     const reactionActive = Boolean(lastCharacterReaction?.partnerText);
-    const adviceSpeechActive = Boolean(projection.partnerText || projection.playerText);
+    const adviceSpeechActive = Boolean(projection.partnerText || projection.playerText || quickRouteStatus.active);
     const idleReadable = projectPartnerIdleReadableContent({
       partnerId: current?.partnerId,
       seed: `${current?.matchId || 'battle'}:${current?.round ?? 'x'}:${current?.partnerId || 'partner'}:idle`,
@@ -984,7 +1266,8 @@ if (battleSurface) {
       tutorialActive: tutorialStatus.active || tutorialExperienceStatus.active,
       reactionActive,
     });
-    root.hidden = !projection.active && !tutorialStatus.available && !tutorialExperienceStatus.active && !reactionActive && !roleControlActive && !idleReadable.active;
+    const quickRoutesAvailable = win.__GAMEROAD_TEST__?.state?.screen === 'battle' && Boolean(current?.partnerId);
+    root.hidden = !projection.active && !tutorialStatus.available && !tutorialExperienceStatus.active && !reactionActive && !roleControlActive && !idleReadable.active && !quickRoutesAvailable;
     const roleControl = root.querySelector('.partnerAdviceRoleControl');
     if (roleControl) roleControl.hidden = !roleControlActive;
     const roleName = root.querySelector('[data-role="advice-partner-name"]');
@@ -1006,15 +1289,16 @@ if (battleSurface) {
     }
     const partner = root.querySelector('.partnerAdviceSpeech.partner:not(.characterReaction)');
     if (partner) {
-      const partnerSpeechText = projection.partnerText || idleReadable.text || '';
-      const partnerSpeechActive = Boolean(projection.partnerText) || idleReadable.active;
+      const partnerSpeechText = quickRouteStatus.active ? quickRouteStatus.text || '' : projection.partnerText || idleReadable.text || '';
+      const partnerSpeechActive = quickRouteStatus.active || Boolean(projection.partnerText) || idleReadable.active;
       partner.textContent = partnerSpeechText;
       partner.classList.toggle('on', partnerSpeechActive);
     }
     const player = root.querySelector('.partnerAdviceSpeech.player');
     if (player) {
-      player.textContent = projection.active ? projection.playerText || '' : '';
-      player.classList.toggle('on', projection.active && Boolean(projection.playerText));
+      const playerSpeechText = quickRouteStatus.active ? quickRouteStatus.playerText || '' : projection.active ? projection.playerText || '' : '';
+      player.textContent = playerSpeechText;
+      player.classList.toggle('on', Boolean(playerSpeechText));
     }
     const tutorialConversationNode = root.querySelector('[data-role="tutorial-experience-conversation"]');
     if (tutorialConversationNode) tutorialConversationNode.hidden = !tutorialExperienceStatus.active;
@@ -1039,6 +1323,23 @@ if (battleSurface) {
     }
     const tutorialSkip = root.querySelector('[data-role="tutorial-experience-skip"]');
     if (tutorialSkip) tutorialSkip.hidden = !(tutorialExperienceStatus.active && tutorialConversation.stage === 'common-ground-optional' && tutorialConversation.optional === true);
+    const quickRoutesElement = root.querySelector('.partnerAdviceQuickRoutes');
+  if (quickRoutesElement) quickRoutesElement.hidden = !quickRoutesAvailable;
+  const ideaButton = root.querySelector('[data-quick-route="idea"]');
+  if (ideaButton) {
+    ideaButton.textContent = quickRouteStatus.ideaEnabled ? 'アイディア ON' : 'アイディア OFF';
+    ideaButton.setAttribute('aria-pressed', quickRouteStatus.ideaEnabled ? 'true' : 'false');
+    ideaButton.disabled = !quickRoutesAvailable;
+  }
+  const casualButton = root.querySelector('[data-quick-route="casual"]');
+  if (casualButton) casualButton.disabled = !quickRoutesAvailable || !quickRoutes.canStart('casual', quickSnapshot);
+  const situationButton = root.querySelector('[data-quick-route="situation"]');
+  if (situationButton) situationButton.disabled = !quickRoutesAvailable || !quickRoutes.canStart('situation', quickSnapshot);
+  const routeContinue = root.querySelector('[data-quick-route-continue="true"]');
+  if (routeContinue) {
+    routeContinue.hidden = !(quickRouteStatus.active && quickRouteStatus.hasNext);
+    routeContinue.disabled = !quickRouteStatus.active || !quickRouteStatus.hasNext;
+  }
     const button = root.querySelector('.partnerAdviceQuickReply');
     const quickReplyAvailable = projection.active && isPartnerAdviceQuickReplyAvailable(current);
     if (button) {
@@ -1054,6 +1355,31 @@ if (battleSurface) {
     }
     return Object.freeze({ projection, tutorial: tutorialStatus, idleReadable, characterReaction: lastCharacterReaction, advicePartnerId: current?.partnerId || null, roster });
   };
+
+  const quickRoutesElement = root.querySelector('.partnerAdviceQuickRoutes');
+  if (quickRoutesElement && quickRoutesElement.dataset.quickRoutesBound !== 'true') {
+    quickRoutesElement.dataset.quickRoutesBound = 'true';
+    quickRoutesElement.addEventListener('click', (event) => {
+      const current = currentBattleChatSnapshot(win);
+      const snapshot = currentBattleQuickRouteSnapshot(win, current);
+      const continueButton = event.target?.closest?.('[data-quick-route-continue="true"]');
+      if (continueButton) {
+        if (quickRoutes.next(snapshot)) render();
+        return;
+      }
+      const routeButton = event.target?.closest?.('[data-quick-route]');
+      const requestedRoute = routeButton?.dataset?.quickRoute;
+      if (requestedRoute === 'idea') {
+        quickRoutes.toggleIdea();
+        render();
+        return;
+      }
+      if ((requestedRoute === 'casual' || requestedRoute === 'situation') && quickRoutes.start(requestedRoute, snapshot)) {
+        lastReceipt = null;
+        render();
+      }
+    });
+  }
 
   const tutorialChoices = root.querySelector('[data-role="tutorial-experience-choices"]');
   if (tutorialChoices && tutorialChoices.dataset.tutorialExperienceBound !== 'true') {
@@ -1087,6 +1413,7 @@ if (battleSurface) {
       if (!next || next === before) return;
       lastReceipt = null;
       lastCharacterReaction = null;
+      quickRoutes.clear();
       render();
     });
   }
@@ -1104,6 +1431,7 @@ if (battleSurface) {
         quickReply.cancel(replyId);
         return;
       }
+      quickRoutes.clear();
       lastReceipt = receipt;
       render();
     });
@@ -1130,7 +1458,7 @@ if (battleSurface) {
     doc.getElementById('partnerAdviceBtn')?.addEventListener('click', () => queueMicrotask(render));
   }
   render();
-  return Object.freeze({ root, render, tutorialReplay, tutorialExperience, characterReaction });
+  return Object.freeze({ root, render, tutorialReplay, tutorialExperience, characterReaction, quickRoutes });
 }
 
 function schedulePartnerAdviceChatMount(win) {

@@ -35,17 +35,29 @@ jobs:
           end = workflow.index("\n          PY\n", start)
           script = textwrap.dedent(workflow[start:end])
 
-          old = "source = replace_once(source, projection_old, projection_new, 'quick3-projection')"
-          new = '''projection_start_token = "    const projection = projectPartnerAdviceChatPresentation({"
+          old_projection = "source = replace_once(source, projection_old, projection_new, 'quick3-projection')"
+          new_projection = '''projection_start_token = "    const projection = projectPartnerAdviceChatPresentation({"
           projection_end_token = "    const tutorialStatus = tutorialReplay.refresh();"
           projection_start = source.find(projection_start_token)
           projection_end = source.find(projection_end_token, projection_start)
           if projection_start < 0 or projection_end < 0 or source.find(projection_start_token, projection_start + 1) >= 0:
               raise RuntimeError('quick3-projection: unique structural interval not found')
           source = source[:projection_start] + projection_new + source[projection_end:]'''
-          if script.count(old) != 1:
-              raise RuntimeError(f'R2 projection patch statement count={script.count(old)}')
-          script = script.replace(old, new, 1)
+          if script.count(old_projection) != 1:
+              raise RuntimeError(f'R2 projection patch statement count={script.count(old_projection)}')
+          script = script.replace(old_projection, new_projection, 1)
+
+          old_events = "source = replace_once(source, tutorial_choices_anchor, events + tutorial_choices_anchor, 'quick3-events')"
+          new_events = '''first_tutorial_choices = source.find(tutorial_choices_anchor)
+          second_tutorial_choices = source.find(tutorial_choices_anchor, first_tutorial_choices + len(tutorial_choices_anchor)) if first_tutorial_choices >= 0 else -1
+          third_tutorial_choices = source.find(tutorial_choices_anchor, second_tutorial_choices + len(tutorial_choices_anchor)) if second_tutorial_choices >= 0 else -1
+          if first_tutorial_choices < 0 or second_tutorial_choices < 0 or third_tutorial_choices >= 0:
+              raise RuntimeError('quick3-events: expected exactly two tutorialChoices anchors')
+          source = source[:second_tutorial_choices] + events + source[second_tutorial_choices:]'''
+          if script.count(old_events) != 1:
+              raise RuntimeError(f'R2 event patch statement count={script.count(old_events)}')
+          script = script.replace(old_events, new_events, 1)
+
           exec(compile(script, '<quick3-r4-product-patch>', 'exec'), {})
           PY
       - name: Verify focused product behavior

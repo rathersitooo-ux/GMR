@@ -11,8 +11,8 @@ import {
 
 export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_SCHEMA = 'gameroad.battle-playable-hand-row-roulette.v1';
 export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_PLACEMENT = Object.freeze({
-  side: 'RIGHT',
-  anchor: 'BOTTOM_RIGHT_THUMB_CLUSTER',
+  side: 'LEFT',
+  anchor: 'BOTTOM_LEFT_ROULETTE_RAIL',
   orientation: 'VERTICAL_STACKED_ROWS',
   boardOcclusion: 'FORBIDDEN',
   ordinaryHandRemainsVisible: true,
@@ -385,12 +385,12 @@ export function projectBattlePlayableHandRowRouletteRenderState(model) {
 export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_CSS = `
 section[data-screen="battle"] [data-battle-playable-hand-row-roulette-live="1"][data-battle-playable-hand-row-roulette="1"]{
   position:absolute;
-  left:auto;
-  right:268px;
+  left:12px;
+  right:auto;
   bottom:max(12px,env(safe-area-inset-bottom));
   z-index:41;
   max-width:min(236px,36vw);
-  transform-origin:right bottom;
+  transform-origin:left bottom;
 }
 [data-battle-playable-hand-row-roulette]{
   --gr-row-h:40px;
@@ -471,7 +471,7 @@ section[data-screen="battle"] [data-battle-playable-hand-row-roulette-live="1"][
   box-shadow:none!important;filter:none!important;
 }
 @media (orientation:landscape) and (max-height:430px){
-  section[data-screen="battle"] [data-battle-playable-hand-row-roulette-live="1"][data-battle-playable-hand-row-roulette="1"]{right:202px;bottom:9px;left:auto;transform:scale(.72);transform-origin:right bottom}
+  section[data-screen="battle"] [data-battle-playable-hand-row-roulette-live="1"][data-battle-playable-hand-row-roulette="1"]{left:9px;right:auto;bottom:9px;transform:scale(.72);transform-origin:left bottom}
   [data-battle-playable-hand-row-roulette]{--gr-row-h:34px;--gr-row-gap:3px;width:clamp(148px,23vw,206px)}
   [data-battle-playable-hand-row-roulette] .grBattleHandRouletteRail{padding:3px 7px 3px 4px;border-radius:14px}
   [data-battle-playable-hand-row-roulette] .grBattleHandRouletteRow{grid-template-columns:25px minmax(0,1fr) auto;gap:5px;padding:3px 10px 3px 6px}
@@ -480,7 +480,7 @@ section[data-screen="battle"] [data-battle-playable-hand-row-roulette-live="1"][
   [data-battle-playable-hand-row-roulette] .grBattleHandRouletteMeta{font-size:9px}
 }
 @media (orientation:portrait) and (max-width:540px){
-  section[data-screen="battle"] [data-battle-playable-hand-row-roulette-live="1"][data-battle-playable-hand-row-roulette="1"]{right:12px;bottom:392px;left:auto;max-width:46vw;transform:scale(.86);transform-origin:right bottom}
+  section[data-screen="battle"] [data-battle-playable-hand-row-roulette-live="1"][data-battle-playable-hand-row-roulette="1"]{left:12px;right:auto;bottom:392px;max-width:46vw;transform:scale(.86);transform-origin:left bottom}
 }
 @media (prefers-reduced-motion:reduce){
   [data-battle-playable-hand-row-roulette] .grBattleHandRouletteRow{transition:none}

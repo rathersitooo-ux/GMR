@@ -24,19 +24,20 @@ const presentations = {
   f: { label: 'Fカード', suit: '♦', number: 6 },
 };
 
-test('row roulette shares the bottom-right thumb cluster with SlidePad and never replaces ordinary hand', () => {
+test('row roulette uses its own bottom-left rail and never replaces ordinary hand', () => {
   assert.deepEqual(BATTLE_PLAYABLE_HAND_ROW_ROULETTE_PLACEMENT, {
-    side: 'RIGHT',
-    anchor: 'BOTTOM_RIGHT_THUMB_CLUSTER',
+    side: 'LEFT',
+    anchor: 'BOTTOM_LEFT_ROULETTE_RAIL',
     orientation: 'VERTICAL_STACKED_ROWS',
     boardOcclusion: 'FORBIDDEN',
     ordinaryHandRemainsVisible: true,
   });
   assert.match(BATTLE_PLAYABLE_HAND_ROW_ROULETTE_CSS, /data-battle-playable-hand-row-roulette-live/);
-  assert.match(BATTLE_PLAYABLE_HAND_ROW_ROULETTE_CSS, /right:268px/);
-  assert.match(BATTLE_PLAYABLE_HAND_ROW_ROULETTE_CSS, /right:202px;bottom:9px/);
+  assert.match(BATTLE_PLAYABLE_HAND_ROW_ROULETTE_CSS, /left:12px/);
+  assert.match(BATTLE_PLAYABLE_HAND_ROW_ROULETTE_CSS, /left:9px;right:auto;bottom:9px/);
   assert.match(BATTLE_PLAYABLE_HAND_ROW_ROULETTE_CSS, /bottom:392px/);
-  assert.match(BATTLE_PLAYABLE_HAND_ROW_ROULETTE_CSS, /left:auto/);
+  assert.match(BATTLE_PLAYABLE_HAND_ROW_ROULETTE_CSS, /right:auto/);
+  assert.match(BATTLE_PLAYABLE_HAND_ROW_ROULETTE_CSS, /transform-origin:left bottom/);
   assert.match(BATTLE_PLAYABLE_HAND_ROW_ROULETTE_CSS, /flex-direction:column/);
   assert.match(BATTLE_PLAYABLE_HAND_ROW_ROULETTE_CSS, /grBattleHandRouletteRow/);
 });

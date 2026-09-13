@@ -1,0 +1,73 @@
+name: TEMP Battle Recent Causal Detail R4
+
+on:
+  push:
+    branches:
+      - sol/battle-recent-causal-detail-r4-20260914
+    paths:
+      - .github/workflows/zz-temp-battle-recent-causal-detail-r4.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-clean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-recent-causal-detail-r4-20260914
+          fetch-depth: 0
+      - name: Transplant tested causal detail and update exact regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin sol/battle-recent-causal-detail-r3-20260914
+          git show origin/sol/battle-recent-causal-detail-r3-20260914:browser/battle-replay-live-adapter.mjs > browser/battle-replay-live-adapter.mjs
+          git show origin/sol/battle-recent-causal-detail-r3-20260914:tests/partner-battle-event-log-projection.test.mjs > tests/partner-battle-event-log-projection.test.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replay_test = Path('tests/battle-replay-live-adapter.test.mjs')
+          text = replay_test.read_text()
+          old = "assert.match(host.children[0].textContent, /対象C列/);"
+          new = "assert.match(host.children[0].textContent, /対象 C列 → Shield使用 → 進行 C列 2→4（\\+2）/);"
+          if text.count(old) != 1:
+              raise RuntimeError(f'replay stale assertion count={text.count(old)}')
+          replay_test.write_text(text.replace(old, new, 1))
+
+          build_test = Path('deploy/cloudflare/tests/build.test.mjs')
+          build = build_test.read_text()
+          old_pin = "currentBlob: 'ffa34c835ba4d271020eb59f47ff1be6eb29843f'"
+          new_pin = "currentBlob: '4047d561436345de7d0382129d35b9de00a805de'"
+          if build.count(old_pin) != 1:
+              raise RuntimeError(f'replay package pin count={build.count(old_pin)}')
+          build_test.write_text(build.replace(old_pin, new_pin, 1))
+          PY
+          test "$(git hash-object browser/battle-replay-live-adapter.mjs)" = "4047d561436345de7d0382129d35b9de00a805de"
+          test "$(git hash-object tests/partner-battle-event-log-projection.test.mjs)" = "c6540d1fe1a03068990d4a33c41a6e9d779c6750"
+      - name: Run focused full-replay and package regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check browser/battle-replay-live-adapter.mjs
+          node --test tests/partner-battle-event-log-projection.test.mjs
+          node --test tests/battle-replay-live-adapter.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Commit bounded product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add browser/battle-replay-live-adapter.mjs tests/partner-battle-event-log-projection.test.mjs tests/battle-replay-live-adapter.test.mjs deploy/cloudflare/tests/build.test.mjs
+          git diff --cached --check
+          git commit -m "Battle: 直近公開履歴を因果順に表示"
+      - name: Remove transient authorization transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/zz-temp-battle-recent-causal-detail-r4.yml data/preaction-authorizations/BATTLE-RECENT-CAUSAL-DETAIL-R4-20260914T0154-SOL-Y36.json
+          git commit -m "chore: cleanup causal detail R4 transport"
+          git push origin HEAD:sol/battle-recent-causal-detail-r4-20260914

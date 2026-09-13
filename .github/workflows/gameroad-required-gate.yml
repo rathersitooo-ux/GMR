@@ -132,6 +132,7 @@ jobs:
               tests/quick-deck-overlay-presentation.test.mjs|\
               browser/battle-plan-hud-presentation-core.mjs|\
               tests/battle-plan-hud-presentation-core.test.mjs|\
+              tests/battle-camera-live-integration.test.mjs|\
               browser/post-match-autoqueue-core.mjs|\
               tests/post-match-autoqueue-core.test.mjs|\
               browser/screen-navigation-core.mjs|\

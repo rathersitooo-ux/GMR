@@ -1,0 +1,45 @@
+name: TEMP Battle Four Public Live Integration R3
+
+on:
+  push:
+    branches:
+      - sol/battle-four-public-live-integration-r3-20260914
+    paths:
+      - .github/workflows/zz-temp-battle-four-public-live-integration-r3.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-four-public-live-integration-r3-20260914
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify authorized base ancestry
+        run: |
+          git merge-base --is-ancestor 3cb6411077da23d008ed433753aa6c690db6dd83 HEAD
+      - name: Apply exact package patch
+        run: python3 tools/temp-battle-four-public-live-integration-r3.py
+      - name: Verify bounded build diff
+        run: |
+          git diff --check
+          test "$(git diff --name-only)" = "deploy/cloudflare/scripts/build.mjs"
+          grep -F "browser/battle-four-public-live-bridge.mjs" deploy/cloudflare/scripts/build.mjs
+          grep -F "browser/battle-four-public-live-integration.mjs" deploy/cloudflare/scripts/build.mjs
+      - name: Run WU26 focused tests
+        run: node --test tests/battle-four-public-live-bridge.test.mjs tests/battle-four-public-live-integration.test.mjs
+      - name: Run public package build tests
+        run: node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Commit exact package change
+        run: |
+          git config user.name "gameroad-bounded-writer"
+          git config user.email "actions@users.noreply.github.com"
+          git add deploy/cloudflare/scripts/build.mjs
+          git commit -m "build(battle): package four-public live integration"
+          git push origin HEAD:sol/battle-four-public-live-integration-r3-20260914

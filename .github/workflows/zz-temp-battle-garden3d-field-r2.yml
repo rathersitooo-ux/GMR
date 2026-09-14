@@ -1,0 +1,23 @@
+name: Temp Garden3D Field R2
+on:
+  push:
+    branches:
+      - sol/battle-garden3d-field-r2-20260915
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply accepted FIELD-10 donor in worktree
+        run: |
+          set -euo pipefail
+          git fetch origin sol/battle-symmetric-gate-field-r1-20260915
+          git diff 061c899df9df59d3b798034f097dbe9951946c6d origin/sol/battle-symmetric-gate-field-r1-20260915 -- browser/GAMEROAD.html tests/browser-static-check.mjs > /tmp/field10.patch
+          git apply /tmp/field10.patch
+      - name: Inspect exact integration anchors
+        run: python tools/temp-battle-garden3d-field-r2.py

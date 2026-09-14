@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 import { createPartnerAdviceBustupMotionController } from '../browser/partner-advice-bustup-motion-core.mjs';
 import {
@@ -38,6 +40,18 @@ test('登録済み9キーポーズを9つのmotion stateへ一意に接続する
   assert.equal(new Set(assets).size, 9);
   assert.ok(assets.every((asset) => asset.startsWith('../assets/visual/partner/saasuna/')));
   assert.equal(saasunaAdviceMotionStateForTrigger('battle_card_submit'), 'SURPRISED');
+});
+
+test('9つのruntime assetが実体として存在しWebPである', () => {
+  const states = SAASUNA_ADVICE_BUSTUP_MOTION_PROFILE.states;
+  const profileModuleUrl = new URL('../browser/partner-saasuna-advice-bustup-motion-profile.mjs', import.meta.url);
+  for (const [stateId, state] of Object.entries(states)) {
+    const runtimeFile = fileURLToPath(new URL(state.assetPath, profileModuleUrl));
+    const payload = readFileSync(runtimeFile);
+    assert.ok(payload.length > 1024, `${stateId}: runtime asset is unexpectedly small`);
+    assert.equal(payload.subarray(0, 4).toString('ascii'), 'RIFF', `${stateId}: RIFF header missing`);
+    assert.equal(payload.subarray(8, 12).toString('ascii'), 'WEBP', `${stateId}: WEBP header missing`);
+  }
 });
 
 test('GUIDE中の躁reactionは1件保留し、意味塊終了後に躁へ切り替えて鬱へ戻る', () => {

@@ -197,6 +197,12 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.roulette[0], '[data-battle-playa
   assert.match(document.head.children[0].textContent, /data-battle-playable-hand-row-roulette-live/);
   assert.match(document.head.children[0].textContent, /backdrop-filter:none/);
   const styleText = document.head.children[0].textContent;
+  const roulettePlacementRules = [...styleText.matchAll(/\[data-battle-playable-hand-row-roulette-live="1"\]\{([^}]*)\}/g)]
+    .map((match) => match[1]);
+  assert.ok(roulettePlacementRules.length >= 3);
+  for (const rule of roulettePlacementRules) {
+    assert.doesNotMatch(rule, /(?:^|;)(?:left|right|top|bottom|transform-origin):/);
+  }
   assert.match(styleText, /\.planBox\{[^}]*transform:none!important/);
   assert.match(styleText, /\.battleRail\{[^}]*max-width:min\(28vw,340px\)!important[^}]*transform:none!important/);
   assert.match(styleText, /data-battle-janken-slidepad=\"1\"\]\{[^}]*width:var\(--gr-thumb-w\)!important[^}]*height:var\(--gr-thumb-h\)!important/);

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-GARDEN3D-FIELD-R2-20260915T0452-SOL-FIELD",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_GARDEN3D_FIELD_SWITCH_R2",
+  "acquireKey": "BATTLE-GARDEN3D-FIELD-R2-20260915T0452-SOL-FIELD",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_EXPLICIT_GARDEN3D_PLUS_EXISTING_FIELD_SWITCH_AND_TEN_ACTUAL_PHOTOS_20260915T0452JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_WEBGL_FIELD_RENDERER_CAMERA_RUNTIME_PLUS_PR1688_TOPOLOGY_READBACK",
+  "proceedToken": "PROCEED|BATTLE-GARDEN3D-FIELD-R2-20260915T0452-SOL-FIELD|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|garden3d|reuse-existing-graph-camera|gate-edge-only|active-lease",
+  "authorizationBaseSha": "061c899df9df59d3b798034f097dbe9951946c6d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_GARDEN3D_FIELD_SWITCH_R2",
+  "leaseAcquireKey": "BATTLE-GARDEN3D-FIELD-R2-20260915T0452-SOL-FIELD",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 04:52 JST",
+  "leaseUntilJst": "2026-09-15 05:52 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1486:L1486",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-garden3d-field-r2-20260915 from exact current main 061c899df9df59d3b798034f097dbe9951946c6d; mutable browser/GAMEROAD.html; tests/browser-static-check.mjs; transient tools/temp-battle-garden3d-field-r2.py; transient .github/workflows/zz-temp-battle-garden3d-field-r2.yml; own transient data/preaction-authorizations/BATTLE-GARDEN3D-FIELD-R2-20260915T0452-SOL-FIELD.json; own branch/PR/check/merge/readback. READ_ONLY PR#1688 donor; browser/battle-camera-live-runtime.mjs; browser/battle-current-player-ui-runtime.mjs; all gameplay/rules/movement/target/legality/card/resources/save/economy/network/build outside exact HTML/static-check integration.",
+  "solutionSignature": "BATTLE_SWITCHABLE_GARDEN3D_SHARED_TOPOLOGY_FIELD_R2",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_WEBGL_FIELD_CAMERA_PLUS_PR1688_SYMMETRIC_GRAPH_AND_USER_ACTUAL_PHOTO_SET",
+  "solutionSearchEvidence": [
+    "Current browser/GAMEROAD.html already owns the Battle WebGL fieldCanvas renderer and current battle-camera-live-runtime owns presentation-only pan/zoom/angle/return without gameplay writes; Garden3D adapts these instead of adding Three.js or a second camera/game engine.",
+    "PR#1688 already implements the accepted additive FIELD-10 symmetric shared-field topology, Shield ports, 4x3x7 progression and Gate-as-boundary-only semantics. This successor reuses that topology and adds FIELD-11 as a 3D projection/presentation variant while retaining FIELD-10.",
+    "The same existing movement graph remains the only legality authority. Garden3D maps legal nodes and edges onto rocks, leaves, branches and elevated platforms with varying world Y/depth; visual freedom does not create continuous off-graph legal movement.",
+    "All ten user-supplied garden photographs are actual primary visual material and are embedded as lightweight shipped WebP scene materials. The previously generated concept image is optional presentation reference only and is not treated as a factual source. No new image generation is used.",
+    "Gate remains an edge/boundary with zero node/cell/stop identity; center-top shared-field point remains without direct Shield port; symmetry, no colored start markers, existing Shield/GOAL/lane semantics and screen-space HUD/SlidePad/Advice are preserved."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    "tools/temp-battle-garden3d-field-r2.py",
+    ".github/workflows/zz-temp-battle-garden3d-field-r2.yml"
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SUPPORT-ENTRY-R1-20260914T1535-SOL-SE14",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_GRAVEYARD_INFORMATION_SURFACE_R1",
+  "acquireKey": "BATTLE-SUPPORT-ENTRY-R1-20260914T1535-SOL-SE14",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_44120519_EXISTING_BATTLELOG_HISTORY_DECK_PLUS_GRAVEYARD_DONOR_PR1652",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "IDEMPOTENT_EXISTING_SURFACE_REGISTRATION_NO_SECOND_DRAWER",
+  "proceedToken": "PROCEED|BATTLE-SUPPORT-ENTRY-R1-20260914T1535-SOL-SE14|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-support-entry-r1|presentation-only|bounded-workflow",
+  "authorizationBaseSha": "44120519c4225420b7e2e3001f63f8cb332e58a8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_GRAVEYARD_INFORMATION_SURFACE_R1",
+  "leaseAcquireKey": "BATTLE-SUPPORT-ENTRY-R1-20260914T1535-SOL-SE14",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 15:35 JST",
+  "leaseUntilJst": "2026-09-14 16:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1452:L1452",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-support-entry-r1-20260914 from exact main 44120519c4225420b7e2e3001f63f8cb332e58a8; mutable browser/battle-replay-live-adapter.mjs; NEW tests/battle-support-entry.test.mjs; transient .github/workflows/zz-temp-battle-support-entry-r1.yml; own transient data/preaction-authorizations/BATTLE-SUPPORT-ENTRY-R1-20260914T1535-SOL-SE14.json; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; browser/battle-card-zone-information-core.mjs; browser/battle-self-deck-inspect-core.mjs; browser/battle-replay-core.mjs; gameplay/rules/state/save/economy/network/build.",
+  "solutionSignature": "BATTLE_EXISTING_SUPPORT_SURFACE_REGISTRY_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_BATTLELOG_HISTORY_AND_SELF_DECK_REUSE_NO_SECOND_STORE",
+  "solutionSearchEvidence": [
+    "Current battle-replay-live-adapter already renders viewer-authorized recent public history under #battleLog.",
+    "Current battle-replay-live-adapter already renders the owner-safe remaining-deck presentation under the same #battleLog host.",
+    "Graveyard projection core from PR #1652 is merged but a live graveyard producer/use-site is not yet established, so this slice must not fabricate a graveyard item.",
+    "X14 is the support-entry seam; X34 remains the later graveyard live contents/use-site slice. The minimal change is an idempotent presentation-only registry that exposes only targets that actually exist."
+  ],
+  "scope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-support-entry.test.mjs",
+    ".github/workflows/zz-temp-battle-support-entry-r1.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-support-entry.test.mjs",
+    ".github/workflows/zz-temp-battle-support-entry-r1.yml"
+  ]
+}

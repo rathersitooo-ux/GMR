@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BFI-OTHER3-EXPECTATION-R4-20260914T1801-SOL-RO43",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_INTEGRATED_ALL_STATE_REGRESSION_OTHER3_EXPECTATION_R4",
+  "acquireKey": "BATTLE-BFI-OTHER3-EXPECTATION-R4-20260914T1801-SOL-RO43",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_280E248D_PLUS_CURRENT_VIEWER_RELATIVE_OTHER3_AUTHORITY_PLUS_PUBLIC_BFI_RECEIVED3",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R3_BOUNDED_WRITER_PROVED_EXACT_THREE_ASSERTIONS_PLUS_CURRENT_VALIDATOR_AL_WITNESS_SHAPE",
+  "proceedToken": "PROCEED|BATTLE-BFI-OTHER3-EXPECTATION-R4-20260914T1801-SOL-RO43|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|bfi-other3-expectation-current-authority-r4",
+  "authorizationBaseSha": "280e248def71a08679e3a262db0164b09ca43986",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_INTEGRATED_ALL_STATE_REGRESSION_OTHER3_EXPECTATION_R4",
+  "leaseAcquireKey": "BATTLE-BFI-OTHER3-EXPECTATION-R4-20260914T1801-SOL-RO43",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 18:01 JST",
+  "leaseUntilJst": "2026-09-14 19:01 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1441:L1441",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main 280e248def71a08679e3a262db0164b09ca43986; mutable tests/browser-full-interaction.spec.mjs; transient .github/workflows/zz-temp-battle-bfi-other3-r4.yml; own transient data/preaction-authorizations/BATTLE-BFI-OTHER3-EXPECTATION-R4-20260914T1801-SOL-RO43.json; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html and all product/runtime/gameplay/rules/state/save/economy/network/build.",
+  "solutionSignature": "BFI_VIEWER_RELATIVE_OTHER_THREE_PEER_CHIPS_EXPECTATION_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_BFI_ONLY_STALE_EXPECTATION_NO_PRODUCT_CHANGE_NO_SECOND_SUITE",
+  "solutionSearchEvidence": [
+    "Current BFI already covers the relevant setup and four-player Battle use-sites; no second suite is needed.",
+    "Current product authority intentionally renders the viewer separately and only the other three participants as publicPlayerChip peers.",
+    "The prior exact public R19 failure observed three peer chips while the stale test expected four.",
+    "R3 bounded writer established exactly three stale assertions and exact +3/-3 test-only delta; R3 failed only the A:N PRE_ACTION witness shape before product tests.",
+    "Current validator directly requires CURRENT_ACTIVE_LEASES!A<row>:L<row>; R4 uses the exact fresh A1441:L1441 readback."
+  ],
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/zz-temp-battle-bfi-other3-r4.yml"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/zz-temp-battle-bfi-other3-r4.yml"
+  ]
+}

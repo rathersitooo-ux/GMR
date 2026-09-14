@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CURRENT-ACTION-PORTRAIT-LAYOUT-R8-20260914T1536-SOL-SA11",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CURRENT_ACTION_PORTRAIT_LAYOUT_OWNER_R8",
+  "acquireKey": "BATTLE-CURRENT-ACTION-PORTRAIT-LAYOUT-R8-20260914T1536-SOL-SA11",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R8_GATE_34814342336_PRODUCT_TESTS_PASS_CLASSIFIER_ONLY_FAIL",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R8_FOCUSED_RUN_34814246772_PLUS_GATE_CLASSIFIER_DIAGNOSIS",
+  "proceedToken": "PROCEED|BATTLE-CURRENT-ACTION-PORTRAIT-LAYOUT-R8-20260914T1536-SOL-SA11|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|MOVE_REGRESSION_TO_CLASSIFIED_EXISTING_TEST",
+  "authorizationBaseSha": "44120519c4225420b7e2e3001f63f8cb332e58a8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CURRENT_ACTION_PORTRAIT_LAYOUT_OWNER_R8",
+  "leaseAcquireKey": "BATTLE-CURRENT-ACTION-PORTRAIT-LAYOUT-R8-20260914T1536-SOL-SA11",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 15:40 JST",
+  "leaseUntilJst": "2026-09-14 16:36 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1454:L1454",
+  "leaseExactMutableResources": "browser/battle-current-player-ui-runtime.mjs; tests/battle-current-player-ui-runtime.test.mjs; delete tests/battle-current-action-portrait-layout-owner.test.mjs; transient .github/workflows/zz-temp-battle-current-action-portrait-layout-r8.yml; own transient data/preaction-authorizations/BATTLE-CURRENT-ACTION-PORTRAIT-LAYOUT-R8-20260914T1536-SOL-SA11.json; own branch/PR/check/merge/readback",
+  "scope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs",
+    "tests/battle-current-action-portrait-layout-owner.test.mjs",
+    ".github/workflows/zz-temp-battle-current-action-portrait-layout-r8.yml",
+    "data/preaction-authorizations/BATTLE-CURRENT-ACTION-PORTRAIT-LAYOUT-R8-20260914T1536-SOL-SA11.json"
+  ],
+  "leaseScope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs",
+    "tests/battle-current-action-portrait-layout-owner.test.mjs",
+    ".github/workflows/zz-temp-battle-current-action-portrait-layout-r8.yml",
+    "data/preaction-authorizations/BATTLE-CURRENT-ACTION-PORTRAIT-LAYOUT-R8-20260914T1536-SOL-SA11.json"
+  ],
+  "solutionSignature": "current-action-portrait-layout-owner-important-offset-classified-regression",
+  "reuseDisposition": "REUSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "GATE_CLASSIFIER_ONLY_FAILURE_NO_PRODUCT_FAILURE",
+  "solutionSearchEvidence": [
+    "Focused run 34814246772 already passed the one-line owner patch, dedicated regression, and existing runtime regression.",
+    "PR #1673 Required Gate run 34814342336 passed PRE_ACTION, conventional Node tests, and provenance; only the final unclassified executable/CI path classifier rejected the new standalone test filename.",
+    "Fresh main edb393c0e82b50b52d6d11d8cffb9eb908b023df differs from the authorization base only by unrelated Power Energy PR #1671 and does not touch the X11 layout owner/test paths.",
+    "The correction only moves the same assertion into already-classified tests/battle-current-player-ui-runtime.test.mjs and deletes the unclassified standalone test. Runtime product delta stays one portrait owner rule."
+  ]
+}

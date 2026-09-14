@@ -765,3 +765,31 @@ test('ordinary hand focus enlarges the exact physical card face in place for loc
   assert.match(source, /function handCardFromEvent\(event\)[\s\S]*#hand \.handCard\[data-card-id\]/, 'focus remains bound to the exact cardId-bearing hand element');
   assert.match(source, /projectBattleHandDragGhostPosition\(/, 'existing finger-occlusion drag projection remains in the same runtime');
 });
+
+
+// BATTLE_POWER_ENERGY_VISUAL_TARGET_R1_BEGIN
+test('Power Energy is distinct from SlidePad and owns ordinary-hand drag arming plus launch waypoint', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /const POWER_ENERGY_ASSET_URL = '\.\/assets\/visual\/battle-power-energy\.jpg';/);
+  assert.match(source, /powerEnergy\.className = 'grPowerEnergy';/);
+  assert.match(source, /powerEnergy\.setAttribute\(POWER_ENERGY_ATTR, '1'\);/);
+  assert.match(source, /handle\.setAttribute\('aria-label', 'じゃんけん SlidePad'\);/);
+  assert.match(source, /const auraRect = powerEnergy\.getBoundingClientRect\?\.\(\);/);
+  assert.doesNotMatch(source, /const auraRect = handle\.getBoundingClientRect/);
+  assert.match(source, /function animateHandAuraLaunch\(globalRef, documentRef, battleRoot, powerEnergy, ghost\)/);
+  assert.match(source, /animateHandAuraLaunch\(globalRef, documentRef, root, powerEnergy, ghost\);/);
+  assert.match(source, /\.grPowerEnergy\{position:absolute;right:-68px;bottom:-60px;width:105px;height:105px/);
+  assert.match(source, /max-height:430px[^\n]*\.grPowerEnergy\{width:92px;height:92px;right:-56px;bottom:-50px/);
+  assert.match(source, /max-width:430px[^\n]*\.grPowerEnergy\{width:96px;height:96px;right:-60px;bottom:-54px/);
+});
+
+test('Power Energy uses the exact recovered web derivative and does not add a second release engine', async () => {
+  const [{ readFile }, { createHash }] = await Promise.all([import('node:fs/promises'), import('node:crypto')]);
+  const bytes = await readFile(new URL('../assets/visual/battle-power-energy.jpg', import.meta.url));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), '314973a531dffced941f996dda9e45ffcf41526263feae00da558c1c918988c3');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.equal((source.match(/from '\.\/battle-card-release-flight-runtime-effect\.mjs';/g) ?? []).length, 1);
+  assert.doesNotMatch(source, /createPowerEnergy(?:Controller|Engine|Store)/);
+});
+// BATTLE_POWER_ENERGY_VISUAL_TARGET_R1_END

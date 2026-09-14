@@ -55,6 +55,8 @@ const HAND_AURA_ARM_PADDING_PX = 18;
 const HAND_AURA_RELEASE_DURATION_MS = 520;
 const SLOT_ROLL_DETENT_FEEDBACK_DURATION_MS = 110;
 const HAND_FOCUS_SNAP_MAX_PX = 28;
+const POWER_ENERGY_ASSET_URL = './assets/visual/battle-power-energy.jpg';
+const POWER_ENERGY_ATTR = 'data-battle-power-energy';
 export const BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS = 'section[data-screen="battle"] #targetBox.on,section[data-screen="battle"] #targetBox.vfTargetProxyOn{z-index:60!important}';
 export const BATTLE_HAND_PLAYABLE_AFFORDANCE_SCHEMA = 'gameroad.battle-hand-playable-affordance.v1';
 export const BATTLE_CARD_FOCUS_PRESENTATION_SCHEMA = 'gameroad.battle-card-focus-presentation.v1';
@@ -377,6 +379,8 @@ function addStyle(documentRef) {
 [${HOST_ATTR}="1"]{position:absolute;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:42;width:248px;height:196px;pointer-events:none;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;isolation:isolate}
 [${HOST_ATTR}="1"]::before{content:"";position:absolute;right:13px;bottom:10px;width:198px;height:160px;border:9px solid rgba(218,218,218,.20);border-left-color:rgba(218,218,218,.05);border-bottom-color:rgba(218,218,218,.08);border-radius:58% 52% 54% 50%;transform:rotate(-8deg);box-shadow:0 0 22px rgba(208,208,208,.12),inset 0 0 18px rgba(238,238,238,.06);pointer-events:none;z-index:0}
 [${HOST_ATTR}="1"] .grJankenSlidePadHandle{position:absolute;right:0;bottom:0;width:68px;height:68px;border-radius:50%;border:2px solid rgba(255,255,255,.82);background:radial-gradient(circle at 34% 26%,rgba(247,247,247,.98) 0 9%,rgba(191,191,191,.88) 10% 27%,rgba(84,84,84,.92) 50%,rgba(27,27,27,.98) 78%,rgba(11,11,11,1) 100%);box-shadow:0 10px 28px rgba(6,6,6,.54),0 0 20px rgba(182,182,182,.2),inset 0 0 0 4px rgba(239,239,239,.12);color:#fafafa;font-weight:900;font-size:10px;letter-spacing:.08em;pointer-events:auto;touch-action:none;transition:transform 80ms cubic-bezier(.2,.8,.2,1),filter 100ms ease,box-shadow 100ms ease;will-change:transform,filter,box-shadow}
+[${HOST_ATTR}="1"] .grPowerEnergy{position:absolute;right:-68px;bottom:-60px;width:105px;height:105px;border-radius:50%;overflow:hidden;pointer-events:none;z-index:0;opacity:.78;filter:brightness(.84);transform:scale(.92);transform-origin:50% 50%;transition:opacity 120ms ease,filter 120ms ease,transform 120ms cubic-bezier(.2,.8,.2,1)}
+[${HOST_ATTR}="1"] .grPowerEnergy img{position:absolute;width:155%;height:155%;left:50%;top:50%;transform:translate(-50%,-50%);object-fit:cover;mix-blend-mode:screen;user-select:none;-webkit-user-drag:none;pointer-events:none}
 [${HOST_ATTR}="1"] .grJankenSlidePadSlot{position:absolute;right:4px;bottom:4px;width:86px;height:86px;border-radius:42% 58% 56% 44%/48% 42% 58% 52%;border:2px solid rgba(228,228,228,.72);background:linear-gradient(160deg,rgba(242,242,242,.94) 0%,rgba(150,150,150,.9) 42%,rgba(65,65,65,.94) 72%,rgba(32,32,32,.98) 100%);box-shadow:0 11px 28px rgba(6,6,6,.46),inset 0 1px 0 rgba(255,255,255,.24);color:#fbfbfb;padding:6px;display:grid;grid-template-rows:1fr auto auto;align-items:center;text-align:center;opacity:0;transform-origin:calc(100% - 31px) calc(100% - 31px);transform:translate(0,0) rotate(18deg) scale(.58);transition:transform 190ms cubic-bezier(.2,.8,.2,1),opacity 150ms ease,filter 90ms ease,box-shadow 90ms ease;pointer-events:none;touch-action:none;z-index:1}
 [${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot{opacity:1;pointer-events:auto}
 [${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-150px,-2px) rotate(-15deg)}
@@ -418,15 +422,17 @@ ${BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_PLACEMENT_CSS}
 @media(max-width:430px) and (orientation:portrait){[${HOST_ATTR}="1"] .grJankenOrderPresenter{top:-42px;width:220px}}
 @media(prefers-reduced-motion:reduce){[${HOST_ATTR}="1"] .grJankenOrderItem{animation:none!important;transition:none!important}}
 ${BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS}
-[${HOST_ATTR}="1"][data-hand-aura-active="true"] .grJankenSlidePadHandle{filter:brightness(1.3);box-shadow:0 8px 22px rgba(0,0,0,.38),0 0 0 5px rgba(226,226,226,.18),0 0 28px rgba(220,220,220,.45),inset 0 0 0 4px rgba(255,255,255,.15)}
-[${HOST_ATTR}="1"][data-hand-aura-armed="true"] .grJankenSlidePadHandle{filter:brightness(1.75);box-shadow:0 8px 22px rgba(0,0,0,.34),0 0 0 8px rgba(245,245,245,.25),0 0 44px rgba(222,222,222,.9),inset 0 0 20px rgba(255,255,255,.42)}
+[${HOST_ATTR}="1"][data-hand-aura-active="true"] .grPowerEnergy{filter:brightness(1.3);box-shadow:0 8px 22px rgba(0,0,0,.38),0 0 0 5px rgba(226,226,226,.18),0 0 28px rgba(220,220,220,.45),inset 0 0 0 4px rgba(255,255,255,.15)}
+[${HOST_ATTR}="1"][data-hand-aura-armed="true"] .grPowerEnergy{filter:brightness(1.75);box-shadow:0 8px 22px rgba(0,0,0,.34),0 0 0 8px rgba(245,245,245,.25),0 0 44px rgba(222,222,222,.9),inset 0 0 20px rgba(255,255,255,.42)}
 .grHandAuraDragGhost{position:fixed!important;right:auto!important;bottom:auto!important;margin:0!important;z-index:220!important;pointer-events:none!important;transition:none!important;transform:none!important;transform-origin:50% 50%!important;will-change:left,top,transform,opacity,filter;box-sizing:border-box}
 .grHandAuraDragGhost[data-aura-charged="true"]{filter:brightness(1.35) drop-shadow(0 0 7px rgba(247,247,247,.98)) drop-shadow(0 0 18px rgba(216,216,216,.9))!important;box-shadow:0 0 0 3px rgba(249,249,249,.62),0 0 26px rgba(212,212,212,.8)!important}
 @media(max-width:540px) and (orientation:portrait){[${HOST_ATTR}="1"]{bottom:185px}[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:76px;height:76px;padding:5px;border-radius:42% 58% 56% 44%/48% 42% 58% 52%}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-118px,2px) rotate(-13deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-70px,-60px) rotate(-3deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-4px,-92px) rotate(8deg)}[${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:26px}[${HOST_ATTR}="1"] .grJankenSlidePadCard{font-size:9px;line-height:1.1}[${HOST_ATTR}="1"] .grJankenSlidePadHand{font-size:8px}[${HOST_ATTR}="1"] .grJankenLoadPreview{width:98px;height:132px}}
 @media(orientation:landscape){section[data-screen="battle"] #hand.grPlayableHandActionBase::before{bottom:0}section[data-screen="battle"] #hand .grPlayableHandTriangle{top:-14px;bottom:auto}}
 @media(max-height:430px) and (orientation:landscape){section[data-screen="battle"] #hand.grPlayableHandActionBase{overflow:visible!important}[${HOST_ATTR}="1"]{width:208px;height:160px;right:7px;bottom:7px}[${HOST_ATTR}="1"] .grJankenSlidePadHandle{width:58px;height:58px}[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:74px;height:74px;padding:4px}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-132px,2px) rotate(-13deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-78px,-62px) rotate(-3deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-2px,-78px) rotate(8deg)}[${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:26px}[${HOST_ATTR}="1"] .grJankenSlidePadCard{font-size:8px;line-height:1.05}[${HOST_ATTR}="1"] .grJankenSlidePadHand{font-size:8px}[${HOST_ATTR}="1"] .grJankenLoadPreview{width:82px;height:108px;left:2px;top:2px}}
 @media(max-height:430px) and (orientation:landscape){[${HOST_ATTR}="1"]::before{right:12px;bottom:8px;width:176px;height:138px;border-width:7px}}
-@media(prefers-reduced-motion:reduce){[${HOST_ATTR}="1"] .grJankenSlidePadSlot,[${HOST_ATTR}="1"] .grJankenSlidePadHandle,[${HOST_ATTR}="1"] .grJankenLoadPreview{transition:none!important}}
+@media(max-height:430px) and (orientation:landscape){[${HOST_ATTR}="1"] .grPowerEnergy{width:92px;height:92px;right:-56px;bottom:-50px}}
+@media(max-width:430px) and (orientation:portrait){[${HOST_ATTR}="1"] .grPowerEnergy{width:96px;height:96px;right:-60px;bottom:-54px}}
+@media(prefers-reduced-motion:reduce){[${HOST_ATTR}="1"] .grJankenSlidePadSlot,[${HOST_ATTR}="1"] .grJankenSlidePadHandle,[${HOST_ATTR}="1"] .grJankenLoadPreview,[${HOST_ATTR}="1"] .grPowerEnergy{transition:none!important}}
 /* BATTLE_PORTRAIT_390X844_R7B: right-thumb family; optional row follows same dock */
 @media(max-width:430px) and (orientation:portrait){
 [${HOST_ATTR}="1"]{right:max(12px,env(safe-area-inset-right))!important;bottom:max(12px,env(safe-area-inset-bottom))!important}
@@ -652,13 +658,13 @@ function playReleasedJankenCardFlight(host, flight) {
   return playBattleCardReleaseFlightEffect({ host, flight });
 }
 
-function animateHandAuraLaunch(globalRef, documentRef, battleRoot, handle, ghost) {
+function animateHandAuraLaunch(globalRef, documentRef, battleRoot, powerEnergy, ghost) {
   if (!ghost) return false;
   const ghostRect = ghost.getBoundingClientRect?.();
   const start = ghostRect
     ? { x: Number(ghostRect.left) + Number(ghostRect.width) / 2, y: Number(ghostRect.top) + Number(ghostRect.height) / 2 }
     : null;
-  const aura = elementCenter(handle);
+  const aura = elementCenter(powerEnergy);
   const target = launchTargetCenter(battleRoot);
   if (globalRef?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
     || !start || !aura || !target || typeof ghost.animate !== 'function') {
@@ -886,7 +892,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   host.dataset.expanded = 'false';
   host.dataset.handAuraActive = 'false';
   host.dataset.handAuraArmed = 'false';
-  host.setAttribute('aria-label', 'じゃんけん SlidePad / カード発射オーラ');
+  host.setAttribute('aria-label', 'じゃんけん SlidePad / Power Energy');
   const slotNodes = new Map();
   for (const hand of SLOT_ORDER) {
     const view = SLOT_VIEW[hand];
@@ -916,12 +922,23 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   orderPresenterHost.setAttribute('aria-hidden', 'true');
   orderPresenterHost.hidden = true;
   host.appendChild(orderPresenterHost);
+  const powerEnergy = documentRef.createElement('div');
+  powerEnergy.className = 'grPowerEnergy';
+  powerEnergy.setAttribute(POWER_ENERGY_ATTR, '1');
+  powerEnergy.setAttribute('aria-hidden', 'true');
+  const powerEnergyImage = documentRef.createElement('img');
+  powerEnergyImage.src = POWER_ENERGY_ASSET_URL;
+  powerEnergyImage.alt = '';
+  powerEnergyImage.draggable = false;
+  powerEnergyImage.setAttribute('aria-hidden', 'true');
+  powerEnergy.appendChild(powerEnergyImage);
+  host.appendChild(powerEnergy);
   const handle = documentRef.createElement('button');
   handle.type = 'button';
   handle.className = 'grJankenSlidePadHandle';
   handle.textContent = 'SlidePad';
   handle.setAttribute('aria-expanded', 'false');
-  handle.setAttribute('aria-label', 'じゃんけん SlidePad / カード発射オーラ');
+  handle.setAttribute('aria-label', 'じゃんけん SlidePad');
   host.appendChild(handle);
   root.appendChild(host);
 
@@ -1326,7 +1343,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       viewportHeight: globalRef?.innerHeight,
     });
     if (!ghostPosition) return false;
-    const auraRect = handle.getBoundingClientRect?.();
+    const auraRect = powerEnergy.getBoundingClientRect?.();
     const legalCandidate = currentPlayableHandAffordance(root)?.candidateCardIds?.includes?.(state.cardId) === true;
     const armed = legalCandidate && isBattleHandAuraLaunchArmed({
       pointer: { x, y },
@@ -1384,7 +1401,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       const ghost = state.ghost;
       cleanupHandDrag(state, { keepGhost: true });
       setFocusedCardId(null);
-      animateHandAuraLaunch(globalRef, documentRef, root, handle, ghost);
+      animateHandAuraLaunch(globalRef, documentRef, root, powerEnergy, ghost);
       return;
     }
     cleanupHandDrag(state);

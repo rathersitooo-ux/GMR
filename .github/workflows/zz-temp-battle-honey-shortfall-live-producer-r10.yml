@@ -1,0 +1,52 @@
+name: TEMP X12 Honey Shortfall R10
+
+on:
+  push:
+    branches:
+      - sol/battle-honey-shortfall-live-producer-r10-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: sol/battle-honey-shortfall-live-producer-r10-20260914
+      - name: Exact source fence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "2798cd9a3bd517e1c973ff9c189e2f908f725f75"
+          test "$(git hash-object browser/GAMEROAD.html)" = "643ed5f94e9507098488e8b738a8e34e86d89aa2"
+          test "$(git hash-object tests/browser-static-check.mjs)" = "30d8e9642ed048a23eb44a2256bca66df486d1cd"
+      - name: Apply and verify bounded patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/temp-battle-honey-shortfall-live-producer-r10.py
+          python3 - <<'PY'
+          import subprocess
+          allowed={'browser/GAMEROAD.html','tests/browser-static-check.mjs'}
+          rows=subprocess.check_output(['git','status','--porcelain'],text=True).splitlines()
+          paths={row[3:] for row in rows}
+          extra=paths-allowed
+          if extra: raise SystemExit(f'out-of-scope worktree paths: {sorted(extra)}')
+          PY
+      - name: Commit product and clean transients
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-bounded-writer'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm tools/temp-battle-honey-shortfall-live-producer-r10.py
+          git rm .github/workflows/zz-temp-battle-honey-shortfall-live-producer-r10.yml
+          git rm data/preaction-authorizations/BATTLE-HONEY-SHORTFALL-LIVE-PRODUCER-R10-20260914T2105-SOL-SHI12.json
+          git add browser/GAMEROAD.html tests/browser-static-check.mjs
+          git diff --cached --check
+          git commit -m 'Battle: 能力支払いの不足分をハニーで補う'
+          git push origin HEAD:sol/battle-honey-shortfall-live-producer-r10-20260914

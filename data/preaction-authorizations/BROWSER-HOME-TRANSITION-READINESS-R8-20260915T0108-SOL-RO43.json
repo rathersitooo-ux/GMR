@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BROWSER-HOME-TRANSITION-READINESS-R8-20260915T0108-SOL-RO43",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_INTEGRATED_ALL_STATE_REGRESSION_HOME_TRANSITION_READINESS_R8",
+  "acquireKey": "BROWSER-HOME-TRANSITION-READINESS-R8-20260915T0108-SOL-RO43",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R7_EXACT_PUBLIC_CANONICAL_HOME_CLICK_BEFORE_TRANSITION_RUNTIME_READY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R6_TRACE_PHONE_PAGEERROR_DESKTOP_NO_TRANSITION_PLUS_CURRENT_SOURCE_ORDER",
+  "proceedToken": "PROCEED|BROWSER-HOME-TRANSITION-READINESS-R8-20260915T0108-SOL-RO43|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-runtime-readiness-handshake-only",
+  "authorizationBaseSha": "061c899df9df59d3b798034f097dbe9951946c6d",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    "tools/temp-home-transition-readiness-r8.py",
+    ".github/workflows/zz-temp-home-transition-readiness-r8.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_INTEGRATED_ALL_STATE_REGRESSION_HOME_TRANSITION_READINESS_R8",
+  "leaseAcquireKey": "BROWSER-HOME-TRANSITION-READINESS-R8-20260915T0108-SOL-RO43",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 01:08 JST",
+  "leaseUntilJst": "2026-09-15 02:08 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1481:L1481",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; tests/browser-static-check.mjs; tools/temp-home-transition-readiness-r8.py; .github/workflows/zz-temp-home-transition-readiness-r8.yml; data/preaction-authorizations/BROWSER-HOME-TRANSITION-READINESS-R8-20260915T0108-SOL-RO43.json",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    "tools/temp-home-transition-readiness-r8.py",
+    ".github/workflows/zz-temp-home-transition-readiness-r8.yml"
+  ]
+}

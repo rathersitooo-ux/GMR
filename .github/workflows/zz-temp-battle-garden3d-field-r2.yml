@@ -29,22 +29,12 @@ jobs:
           p=Path('tools/temp-battle-garden3d-field-r2.py')
           s=p.read_text(encoding='utf-8')
           fixes=[
-            (
-              "html = replace_once(html, '</style>', css + '</style>', 'garden css')",
-              "style_close=html.find('</style>')\nif style_close<0: raise SystemExit('garden css: missing style close')\nhtml=html[:style_close]+css+html[style_close:]"
-            ),
-            (
-              "html = replace_once(html, \"if(m.honey?.byNode)\", \"if(garden3DFieldActive())pushGarden3DSceneGeometry(items,all,viewer);\\n if(m.honey?.byNode)\", 'garden geometry mount')",
-              "render3d_start=html.find('function renderField3D(){')\nrender3d_end=html.find('\\nfunction ',render3d_start+1)\nhoney_anchor=html.find(\"if(m.honey?.byNode)\",render3d_start,render3d_end)\nif render3d_start<0 or render3d_end<0 or honey_anchor<0: raise SystemExit('garden geometry mount: live renderer anchor missing')\nhtml=html[:honey_anchor]+\"if(garden3DFieldActive())pushGarden3DSceneGeometry(items,all,viewer);\\n \"+html[honey_anchor:]"
-            ),
-            (
-              "const_end = html.find('const SYMMETRIC_FIELD_NODE_IDS=', const_start)",
-              "const_end = html.find('const state={', const_start)"
-            )
+            ("html = replace_once(html, '</style>', css + '</style>', 'garden css')","style_close=html.find('</style>')\nif style_close<0: raise SystemExit('garden css: missing style close')\nhtml=html[:style_close]+css+html[style_close:]"),
+            ("html = replace_once(html, \"if(m.honey?.byNode)\", \"if(garden3DFieldActive())pushGarden3DSceneGeometry(items,all,viewer);\\n if(m.honey?.byNode)\", 'garden geometry mount')","render3d_start=html.find('function renderField3D(){')\nrender3d_end=html.find('\\nfunction ',render3d_start+1)\nhoney_anchor=html.find(\"if(m.honey?.byNode)\",render3d_start,render3d_end)\nif render3d_start<0 or render3d_end<0 or honey_anchor<0: raise SystemExit('garden geometry mount: live renderer anchor missing')\nhtml=html[:honey_anchor]+\"if(garden3DFieldActive())pushGarden3DSceneGeometry(items,all,viewer);\\n \"+html[honey_anchor:]"),
+            ("const_end = html.find('const SYMMETRIC_FIELD_NODE_IDS=', const_start)","const_end = html.find('const state={', const_start)")
           ]
           for old,new in fixes:
-              if old not in s:
-                  raise SystemExit(f'expected transient anchor missing: {old[:70]}')
+              if old not in s: raise SystemExit(f'expected transient anchor missing: {old[:70]}')
               s=s.replace(old,new,1)
           p.write_text(s,encoding='utf-8')
           PY
@@ -65,7 +55,7 @@ jobs:
         run: |
           set -euo pipefail
           git rm data/preaction-authorizations/BATTLE-GARDEN3D-FIELD-R2-20260915T0452-SOL-FIELD.json
-          git rm tools/temp-battle-garden3d-field-r2.py
+          git rm -f tools/temp-battle-garden3d-field-r2.py
           git rm .github/workflows/zz-temp-battle-garden3d-field-r2.yml
           git commit -m "chore: close Garden3D pre-action lane"
           git push origin HEAD:sol/battle-garden3d-field-r2-20260915

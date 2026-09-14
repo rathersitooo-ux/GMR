@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-POWER-ENERGY-VISUAL-R4-20260914T1526-SOL-KI7",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_POWER_ENERGY_VISUAL_TARGET_R4",
+  "acquireKey": "BATTLE-POWER-ENERGY-VISUAL-R4-20260914T1526-SOL-KI7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_R3_DONOR_PLUS_MAIN_44120519_SLIDEPAD_PR1666_REBASE_20260914T1526JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R3_EXACT_PRODUCT_DONOR_NO_PR_PLUS_CURRENT_MAIN_TARGET_FILE_READBACK",
+  "proceedToken": "PROCEED|BATTLE-POWER-ENERGY-VISUAL-R4-20260914T1526-SOL-KI7|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|power-energy-visual-target|slidepad-build|active-lease",
+  "authorizationBaseSha": "44120519c4225420b7e2e3001f63f8cb332e58a8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_POWER_ENERGY_VISUAL_TARGET_R4",
+  "leaseAcquireKey": "BATTLE-POWER-ENERGY-VISUAL-R4-20260914T1526-SOL-KI7",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 15:26 JST",
+  "leaseUntilJst": "2026-09-14 16:26 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1448:L1448",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main 44120519c4225420b7e2e3001f63f8cb332e58a8; mutable browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; assets/visual/battle-power-energy.jpg; deploy/cloudflare/scripts/build.mjs; own transient data/preaction-authorizations/BATTLE-POWER-ENERGY-VISUAL-R4-20260914T1526-SOL-KI7.json; own branch/PR/check/merge/readback. R3 branch/readback is READ_ONLY donor. READ_ONLY browser/GAMEROAD.html; focus runtime; gameplay/rules/target/legality/Hand3/card identity/save/economy/network.",
+  "solutionSignature": "BATTLE_POWER_ENERGY_DISTINCT_VISUAL_TARGET_REUSE_EXISTING_FLIGHT_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R3_EXACT_USER_DERIVED_ASSET_AND_TARGET_PATCH_PLUS_CURRENT_MAIN_SLIDEPAD_READBACK",
+  "solutionSearchEvidence": [
+    "R3 preserved the exact recovered 192x128 user-derived Power Energy web asset with SHA256 314973a531dffced941f996dda9e45ffcf41526263feae00da558c1c918988c3 and a distinct far-lower-right visual target.",
+    "R3 never opened a PR and its lease expired, so its branch is donor-only and cannot be merged wholesale.",
+    "Current main 44120519 contains later SlidePad PR#1666 and ReducedMotion PR#1669; the R4 patch must preserve those current-main semantics.",
+    "Current SlidePad runtime already owns legal-candidate gating, raw-pointer arming, lifted same-card drag ghost and the canonical release-flight effect.",
+    "Repair only target/presentation identity: SlidePad remains the inner thumb control; Power Energy is a separate target and waypoint; no second controller or release engine."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    "assets/visual/battle-power-energy.jpg",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    "assets/visual/battle-power-energy.jpg",
+    "deploy/cloudflare/scripts/build.mjs"
+  ]
+}

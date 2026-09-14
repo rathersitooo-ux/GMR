@@ -68,6 +68,15 @@ function styleFlightClone(clone, sourceRect) {
   return true;
 }
 
+function scheduleStaticCueCleanup(cue) {
+  if (typeof globalThis?.setTimeout !== 'function') return;
+  const timer = globalThis.setTimeout(
+    () => removeNode(cue),
+    BATTLE_CARD_RELEASE_DESTINATION_PULSE_DURATION_MS,
+  );
+  timer?.unref?.();
+}
+
 function createDestinationPulse({ documentRef, host, target }) {
   if (!documentRef?.createElement || !host?.appendChild || !finitePoint(target)) return null;
   const cue = documentRef.createElement('span');
@@ -107,6 +116,11 @@ function createDestinationPulse({ documentRef, host, target }) {
       removeNode(cue);
       return null;
     }
+  } else {
+    cue.style.opacity = '0.72';
+    cue.style.transform = 'translate(-50%,-50%) scale(1)';
+    if (cue.dataset) cue.dataset.jankenFlightDestinationFallback = 'static';
+    scheduleStaticCueCleanup(cue);
   }
   return cue;
 }
@@ -156,7 +170,21 @@ export function playBattleCardReleaseFlightEffect({
 
   const keyframes = toBattleCardReleaseFlightKeyframes(projection);
   const clone = flight.clone;
-  if (!keyframes.length || typeof clone.animate !== 'function' || !styleFlightClone(clone, flight.sourceRect)) {
+  if (!keyframes.length) {
+    removeNode(clone);
+    return false;
+  }
+
+  if (typeof clone.animate !== 'function') {
+    removeNode(clone);
+    if (projection.mode !== BATTLE_CARD_RELEASE_FLIGHT_MODE.REDUCED
+      || projection.destinationCue?.kind !== 'DESTINATION_PULSE') {
+      return false;
+    }
+    return createDestinationPulse({ documentRef, host, target: projection.destinationCue }) !== null;
+  }
+
+  if (!styleFlightClone(clone, flight.sourceRect)) {
     removeNode(clone);
     return false;
   }

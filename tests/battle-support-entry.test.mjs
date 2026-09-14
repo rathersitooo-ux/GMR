@@ -1,0 +1,44 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createPartnerBattleEventLogPresentationBridge, registerLiveBattleSupportSurface, renderLiveBattleRemainingDeckPresentation } from '../browser/battle-replay-live-adapter.mjs';
+
+function fakeBattleLogDocument({ shell = true } = {}) {
+  function node(tag = 'div') {
+    const attrs = new Map(), listeners = new Map();
+    return {
+      tagName: tag.toUpperCase(), dataset: {}, style: {}, children: [], textContent: '', hidden: false, scrollCalls: 0, focusCalls: 0, onclick: null,
+      setAttribute(k, v) { attrs.set(k, String(v)); }, getAttribute(k) { return attrs.has(k) ? attrs.get(k) : null; },
+      addEventListener(k, fn) { listeners.set(k, fn); }, appendChild(c) { this.children.push(c); return c; }, replaceChildren(...c) { this.children = c; },
+      querySelector(q) { if (!q.startsWith('[') || !q.endsWith(']')) return null; const k = q.slice(1, -1); return this.children.find(c => c.getAttribute?.(k) !== null) || null; },
+      click() { this.onclick?.({ currentTarget: this }); listeners.get('click')?.({ currentTarget: this }); },
+      scrollIntoView() { this.scrollCalls++; }, focus() { this.focusCalls++; }
+    };
+  }
+  const root = shell ? node('section') : null;
+  return { document: { createElement: node, getElementById: id => id === 'battleLog' ? root : null }, shell: root };
+}
+const items = shell => shell?.querySelector?.('[data-battle-support-entry]')?.children.map(c => c.getAttribute('data-battle-support-item')) || [];
+
+test('support entry is idempotent and never invents a missing target', () => {
+  const missing = fakeBattleLogDocument({ shell: false });
+  assert.equal(registerLiveBattleSupportSurface({ key: 'graveyard', label: '墓地', target: null, document: missing.document }), false);
+  const { document, shell } = fakeBattleLogDocument();
+  const target = document.createElement('section'); shell.appendChild(target);
+  assert.equal(registerLiveBattleSupportSurface({ key: 'deck', label: '山札', target, document }), true);
+  assert.equal(registerLiveBattleSupportSurface({ key: 'deck', label: '山札', target, document }), true);
+  assert.deepEqual(items(shell), ['deck']);
+  shell.querySelector('[data-battle-support-entry]').children[0].click();
+  assert.equal(target.scrollCalls, 1); assert.equal(target.focusCalls, 1);
+});
+
+test('actual history and owner-safe deck share the same support entry; graveyard remains absent', () => {
+  const { document, shell } = fakeBattleLogDocument();
+  const bridge = createPartnerBattleEventLogPresentationBridge({ document });
+  assert.equal(bridge.begin('M1'), true); assert.equal(bridge.begin('M1'), true);
+  assert.equal(renderLiveBattleRemainingDeckPresentation({ ok: true, status: 'ready', total: 4, unknownCount: 4, revision: 1, knownCardCounts: [] }, { document }), true);
+  assert.ok(shell.querySelector('[data-partner-battle-event-log]'));
+  assert.ok(shell.querySelector('[data-battle-remaining-deck]'));
+  assert.deepEqual(items(shell), ['history', 'deck']);
+  assert.equal(items(shell).includes('graveyard'), false);
+  assert.equal(shell.children.filter(c => c.getAttribute?.('data-battle-support-entry') !== null).length, 1);
+});

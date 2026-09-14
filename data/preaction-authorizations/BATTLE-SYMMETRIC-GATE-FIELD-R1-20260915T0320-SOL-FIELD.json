@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SYMMETRIC-GATE-FIELD-R1-20260915T0320-SOL-FIELD",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_SYMMETRIC_GATE_FIELD_NEW_FIELD_R1",
+  "acquireKey": "BATTLE-SYMMETRIC-GATE-FIELD-R1-20260915T0320-SOL-FIELD",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_ACCEPTED_TOPOLOGY_PLUS_CURRENT_LIVE_FIELD_GRAPH_20260915T0320JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_HTML_CENTER_SHIELD_ROAD_GRAPH_AND_SETUP_SELECTION_READBACK",
+  "proceedToken": "PROCEED|BATTLE-SYMMETRIC-GATE-FIELD-R1-20260915T0320-SOL-FIELD|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|new-field|gate-edge-not-cell|active-lease",
+  "authorizationBaseSha": "061c899df9df59d3b798034f097dbe9951946c6d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_SYMMETRIC_GATE_FIELD_NEW_FIELD_R1",
+  "leaseAcquireKey": "BATTLE-SYMMETRIC-GATE-FIELD-R1-20260915T0320-SOL-FIELD",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 03:20 JST",
+  "leaseUntilJst": "2026-09-15 04:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1483:L1483",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; tests/browser-static-check.mjs; transient tools/temp-battle-symmetric-gate-field-r1.py; transient .github/workflows/zz-temp-battle-symmetric-gate-field-r1.yml; own transient data/preaction-authorizations/BATTLE-SYMMETRIC-GATE-FIELD-R1-20260915T0320-SOL-FIELD.json; own branch/PR/check/merge/readback. READ_ONLY browser/battle-current-player-ui-runtime.mjs; tests/battle-current-player-ui-runtime.test.mjs; all gameplay outside field topology, card/rules/resources/save/economy/network/build.",
+  "solutionSignature": "BATTLE_SELECTABLE_SYMMETRIC_GATE_FIELD_R1",
+  "reuseDisposition": "ADAPT_EXISTING_LIVE_FIELD_GRAPH",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_SETUP_STATE_PLUS_EXISTING_CENTER_SHIELD_ROAD_NEIGHBOR_AUTHORITY",
+  "solutionSearchEvidence": [
+    "The current live Browser already owns movement through centerIds/activeNodes/centerPort/neighbors/nodeWorld and preserves Shield/road identities; this WorkUnit adapts that same authority rather than introducing a second movement engine.",
+    "The accepted field is additive: existing field remains selectable and the new symmetric field gets its own setupField identity.",
+    "Gate is explicitly not a cell. The new field contains no GATE node id, no Gate stop, and no Gate traversal step. Shared-field ports connect directly to existing Shield identities through neighbor edges; the visual Gate is only a boundary line.",
+    "The shared common field is left-right symmetric, colored per-player start markers are absent, and the central-top shared-field point has no direct Shield/Gate edge while remaining part of the common movement graph.",
+    "Existing 4 players x 3 Shield-linked lanes x 7 progression identities and existing result/card/resource semantics are preserved."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    "tools/temp-battle-symmetric-gate-field-r1.py",
+    ".github/workflows/zz-temp-battle-symmetric-gate-field-r1.yml"
+  ]
+}

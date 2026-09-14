@@ -3,12 +3,39 @@ on:
   push:
     branches:
       - sol/battle-central-world-live-r8-20260914
+    paths:
+      - tools/temp-battle-central-world-live-r8.py
+      - .github/workflows/zz-temp-battle-central-world-live-r8.yml
 jobs:
-  probe:
+  product:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Probe exact current HTML seam
+        with:
+          fetch-depth: 0
+      - name: Apply exact bounded HTML and static-gate patch
         run: python tools/temp-battle-central-world-live-r8.py
+      - name: Browser static gate
+        run: node tests/browser-static-check.mjs
+      - name: Existing central-world component regression
+        run: node --test tests/battle-new-base-board-live-presentation-composer.test.mjs tests/new-base-flanora-board-surface-runtime.test.mjs
+      - name: Diff fence
+        run: |
+          git diff --check
+          python - <<'PY'
+          import subprocess
+          allowed={'browser/GAMEROAD.html','tests/browser-static-check.mjs'}
+          changed=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())
+          print('CHANGED', sorted(changed))
+          if changed != allowed:
+              raise SystemExit(f'unexpected durable diff: {sorted(changed)}')
+          PY
+      - name: Commit bounded product patch
+        run: |
+          git config user.name 'rathersitooo-ux'
+          git config user.email 'rathersitooo@gmail.com'
+          git add browser/GAMEROAD.html tests/browser-static-check.mjs
+          git commit -m 'Battle: Flanora中央worldを既存renderBoardへlive接続 [r8-product]'
+          git push origin HEAD:sol/battle-central-world-live-r8-20260914

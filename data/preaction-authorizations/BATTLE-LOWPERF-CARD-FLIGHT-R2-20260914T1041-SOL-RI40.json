@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-LOWPERF-CARD-FLIGHT-R2-20260914T1041-SOL-RI40",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_LOWPERF_CARD_RELEASE_SEMANTIC_PARITY_R2",
+  "acquireKey": "BATTLE-LOWPERF-CARD-FLIGHT-R2-20260914T1041-SOL-RI40",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "RI40-R1-EXACT-TWO-FILE-DONOR-AND-CURRENT-VALIDATOR-READBACK",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING-CARD-FLIGHT-CORE-FOCUSED-TEST-CONTRACT",
+  "proceedToken": "PROCEED|BATTLE-LOWPERF-CARD-FLIGHT-R2-20260914T1041-SOL-RI40|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|e4c95a07-two-file-lowperf-adapt",
+  "authorizationBaseSha": "e4c95a07da6e01d3bd8522eec9c81c8b9b013048",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_LOWPERF_CARD_RELEASE_SEMANTIC_PARITY_R2",
+  "leaseAcquireKey": "BATTLE-LOWPERF-CARD-FLIGHT-R2-20260914T1041-SOL-RI40",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 10:41 JST",
+  "leaseUntilJst": "2026-09-14 11:41 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1420:L1420",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-lowperf-card-flight-r2-20260914: browser/battle-card-release-flight-motion-core.mjs; tests/battle-card-release-flight-motion-core.test.mjs; own PRE_ACTION/branch/PR/check/merge/readback only. R1 donor READ_ONLY; all other product/runtime/gameplay resources READ_ONLY.",
+  "scope": [
+    "browser/battle-card-release-flight-motion-core.mjs",
+    "tests/battle-card-release-flight-motion-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-card-release-flight-motion-core.mjs",
+    "tests/battle-card-release-flight-motion-core.test.mjs"
+  ],
+  "solutionSignature": "Adapt the existing release-flight projection so LowPerf keeps the same source-to-authoritative-destination causal meaning while replacing full seven-sample curved/spinning motion with a short three-frame straight no-spin/no-filter projection; ReducedMotion and normal Full remain unchanged.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R1-DONOR-PLUS-CURRENT-MAIN-E4C95A07",
+  "solutionSearchEvidence": [
+    "Existing battle-card-release-flight-motion-core already owns source/target geometry, role, ReducedMotion and LowPerf flags; no second motion controller is introduced.",
+    "R1 exact two-file donor isolates the LowPerf presentation delta; PR#1662 was closed unmerged solely for PREACTION token shape before product tests.",
+    "Normal FULL and ReducedMotion semantics remain unchanged; LowPerf retains exact source and authoritative target with no gameplay authority."
+  ]
+}

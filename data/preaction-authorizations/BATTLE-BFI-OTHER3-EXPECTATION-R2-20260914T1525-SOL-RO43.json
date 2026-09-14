@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BFI-OTHER3-EXPECTATION-R2-20260914T1525-SOL-RO43",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_INTEGRATED_ALL_STATE_REGRESSION_OTHER3_EXPECTATION_R2",
+  "acquireKey": "BATTLE-BFI-OTHER3-EXPECTATION-R2-20260914T1525-SOL-RO43",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_44120519_PLUS_R19_PUBLIC_RED_OTHER3_AUTHORITY_20260914",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXACT_ANCHORED_SINGLE_ASSERTION_REPLACE_AND_DIFF_CHECK",
+  "proceedToken": "PROCEED|BATTLE-BFI-OTHER3-EXPECTATION-R2-20260914T1525-SOL-RO43|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|r19-other3-expectation-r2|test-only|bounded-workflow",
+  "authorizationBaseSha": "44120519c4225420b7e2e3001f63f8cb332e58a8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_INTEGRATED_ALL_STATE_REGRESSION_OTHER3_EXPECTATION_R2",
+  "leaseAcquireKey": "BATTLE-BFI-OTHER3-EXPECTATION-R2-20260914T1525-SOL-RO43",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 15:25 JST",
+  "leaseUntilJst": "2026-09-14 16:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1444:N1444",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-bfi-other3-expectation-r2-20260914 from exact main 44120519c4225420b7e2e3001f63f8cb332e58a8; mutable tests/browser-full-interaction.spec.mjs; transient .github/workflows/zz-temp-battle-bfi-other3-expectation-r2.yml; own transient data/preaction-authorizations/BATTLE-BFI-OTHER3-EXPECTATION-R2-20260914T1525-SOL-RO43.json; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html and all product/runtime/gameplay/rules/state/save/economy/network/build.",
+  "solutionSignature": "BATTLE_R19_VIEWER_RELATIVE_OTHER3_EXPECTATION_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_BFI_R19_RED_PLUS_CURRENT_OTHER3_HUD_AUTHORITY_R2",
+  "solutionSearchEvidence": [
+    "Exact public Browser Full Interaction run 34812465921 failed at the existing R19 player-strip count on 390x844 and 667x375.",
+    "Current merged Battle HUD intentionally removes the viewer/self duplicate and exposes only the other three public players.",
+    "R1 confirmed the direct file transport is unsafe because the connector truncates the whole large test file; R2 changes only transport, not semantics.",
+    "Transient workflow is bounded to one exact anchored assertion replacement and will fail closed unless old count is exactly one and final diff is exactly the test file."
+  ],
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/zz-temp-battle-bfi-other3-expectation-r2.yml"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/zz-temp-battle-bfi-other3-expectation-r2.yml"
+  ]
+}

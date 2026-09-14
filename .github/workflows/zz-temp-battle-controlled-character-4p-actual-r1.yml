@@ -1,0 +1,155 @@
+name: TEMP X23 Controlled Character 4P Actual R1
+on:
+  push:
+    branches: [sol/battle-controlled-character-4p-actual-r1-20260914]
+permissions:
+  contents: read
+jobs:
+  actual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify product remains exact authorized main
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=280e248def71a08679e3a262db0164b09ca43986
+          git diff --exit-code "$BASE" --             browser/GAMEROAD.html             browser/battle-controlled-character-4p-motion-director.mjs             browser/battle-board-naki-4p-visual-binding.mjs             tests/battle-controlled-character-html-handoff.test.mjs             tests/battle-board-naki-4p-visual-binding.test.mjs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run merged focused regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/battle-controlled-character-html-handoff.test.mjs tests/battle-board-naki-4p-visual-binding.test.mjs
+      - name: Install Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Prove actual 4P live projection
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .x23-r1 visual-evidence/x23-r1 test-results/x23-r1
+          cat > playwright.x23-r1.config.mjs <<'EOF'
+          import {defineConfig} from '@playwright/test';
+          export default defineConfig({
+            testDir:'.x23-r1', testMatch:'**/*.spec.mjs', timeout:90000,
+            expect:{timeout:15000}, workers:1, retries:0, reporter:[['line']],
+            projects:[
+              {name:'667x375',use:{viewport:{width:667,height:375},hasTouch:true}},
+              {name:'1280x720',use:{viewport:{width:1280,height:720},hasTouch:true}},
+              {name:'390x844',use:{viewport:{width:390,height:844},hasTouch:true}}
+            ],
+            use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true}
+          });
+          EOF
+          cat > .x23-r1/x23.spec.mjs <<'EOF'
+          import {test,expect} from '@playwright/test';
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const OUT=path.resolve('visual-evidence/x23-r1');
+
+          async function installDeck(page){return page.evaluate(()=>{
+            const t=window.__GAMEROAD_TEST__;
+            const pub=new Set(t.deckPublic().filter(c=>c.slot==='main').map(c=>c.id));
+            const ids=window.__CARD_DATA__.filter(c=>pub.has(c.id)&&/^(SP|HT|DI|CL)$/.test(c.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c=>c.id);
+            const royal=['SP_J','SP_Q','SP_K'];
+            const non=ids.filter(id=>!t.isRoyalCard(id));
+            t.deckSetDraft([...non.slice(0,37),...royal],[]);
+            const v=t.deckValidate(t.state.deckDraft,{forBattle:true});
+            return v.ok?t.deckCommit():false;
+          });}
+
+          test('X23 actual four participant controlled-character binding',async({page},testInfo)=>{
+            const name=testInfo.project.name;
+            const evidence={schema:'gameroad.x23.actual.r1',project:name,base:'280e248def71a08679e3a262db0164b09ca43986'};
+            const save=()=>fs.writeFileSync(path.join(OUT,name+'.json'),JSON.stringify(evidence,null,2));
+            const r=await page.goto('/browser/GAMEROAD.html',{waitUntil:'domcontentloaded'});
+            expect(r?.ok()).toBeTruthy();
+            await expect.poll(()=>page.evaluate(()=>typeof window.__GAMEROAD_TEST__?.start==='function'&&Array.isArray(window.__CARD_DATA__))).toBeTruthy();
+            expect(await installDeck(page)).toBeTruthy();
+            evidence.started=await page.evaluate(()=>!!window.__GAMEROAD_TEST__.start('4p','road_shield'));
+            expect(evidence.started).toBeTruthy();
+            await expect(page.locator('section.battle.active')).toBeVisible();
+            await expect.poll(()=>page.evaluate(()=>window.__GAMEROAD_CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING__?.snapshot?.().active===true)).toBeTruthy();
+
+            evidence.runtime=await page.evaluate(()=>{
+              const t=window.__GAMEROAD_TEST__,m=t.state.match;
+              const source=window.__GAMEROAD_CONTROLLED_CHARACTER_4P_SOURCE__?.();
+              const projection=window.__GAMEROAD_CONTROLLED_CHARACTER_4P_PROJECTION__?.();
+              const binding=window.__GAMEROAD_CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING__?.snapshot?.();
+              const visible=el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity)!==0&&r.width>0&&r.height>0;};
+              const markers=[...document.querySelectorAll('#boardPlayers .boardPlayerToken[data-player]')].map(el=>({participantId:el.dataset.player,visible:visible(el)}));
+              const controlled=[...document.querySelectorAll('#boardPlayers [data-board-controlled-character]')].map(el=>({
+                participantId:el.dataset.participantId,characterId:el.dataset.characterId,positionKey:el.dataset.positionKey,
+                motionPhase:el.dataset.motionPhase,motionSerial:el.dataset.motionSerial,visible:visible(el),
+                parentParticipantId:el.parentElement?.dataset?.player||null
+              }));
+              const legacy=document.querySelector('#battleRuntime');
+              return {
+                mode:m?.mode, playerCount:m?.players?.length,
+                matchRows:(m?.players||[]).map(p=>({participantId:p.id,characterId:String(p.character||''),positionKey:p.position})),
+                source,projection,binding,markers,controlled,
+                legacyP1Visible:!!legacy&&visible(legacy),
+                advicePartnerId:t.state.selectedPartnerId,
+                playerCharacterId:t.state.playerCharacterId
+              };
+            });
+            const rt=evidence.runtime;
+            expect(rt.mode).toBe('4p');
+            expect(rt.playerCount).toBe(4);
+            expect(rt.source?.participants).toHaveLength(4);
+            expect(rt.projection).toHaveLength(4);
+            expect(rt.markers).toHaveLength(4);
+            expect(rt.controlled).toHaveLength(4);
+            expect(rt.binding?.active).toBe(true);
+            expect(new Set(rt.source.participants.map(x=>x.participantId)).size).toBe(4);
+            for(const row of rt.matchRows){
+              const s=rt.source.participants.find(x=>x.participantId===row.participantId);
+              expect(s?.characterId).toBe(row.characterId);
+              expect(s?.positionKey).toBe(row.positionKey);
+            }
+            const p1=rt.controlled.find(x=>x.participantId==='P1');
+            expect(p1).toBeTruthy();
+            expect(p1.visible).toBe(false);
+            expect(rt.legacyP1Visible).toBe(true);
+            expect(rt.controlled.filter(x=>x.participantId!=='P1'&&x.visible)).toHaveLength(3);
+            for(const row of rt.controlled) expect(row.parentParticipantId).toBe(row.participantId);
+
+            evidence.motionProbe=await page.evaluate(()=>{
+              const before=window.__GAMEROAD_CONTROLLED_CHARACTER_4P_PROJECTION__?.()?.find(x=>x.participantId==='P3');
+              const gameBefore=window.__GAMEROAD_TEST__.state.match.players.find(p=>p.id==='P3').position;
+              const result=window.__GAMEROAD_CONTROLLED_CHARACTER_4P_EVENT__?.('P3',{type:'MOVE_ACCEPTED',toPositionKey:gameBefore,facing:'right'});
+              const after=window.__GAMEROAD_CONTROLLED_CHARACTER_4P_PROJECTION__?.()?.find(x=>x.participantId==='P3');
+              const gameAfter=window.__GAMEROAD_TEST__.state.match.players.find(p=>p.id==='P3').position;
+              return {before,result,after,gameBefore,gameAfter};
+            });
+            expect(evidence.motionProbe.result?.accepted).toBe(true);
+            expect(evidence.motionProbe.gameAfter).toBe(evidence.motionProbe.gameBefore);
+            expect(Number(evidence.motionProbe.after?.motion?.motionSerial)).toBeGreaterThanOrEqual(Number(evidence.motionProbe.before?.motion?.motionSerial||0));
+            save();
+            await page.screenshot({path:path.join(OUT,name+'.png'),fullPage:true,animations:'disabled'});
+          });
+          EOF
+
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory "$GITHUB_WORKSPACE" > test-results/x23-r1/server.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/browser/GAMEROAD.html >/dev/null && break; sleep 1; done
+          npx playwright test --config=playwright.x23-r1.config.mjs --workers=1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: x23-controlled-character-4p-actual-${{ github.run_id }}
+          path: |
+            visual-evidence/x23-r1/
+            test-results/x23-r1/
+          if-no-files-found: warn
+          retention-days: 14

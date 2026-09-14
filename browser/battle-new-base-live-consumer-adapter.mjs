@@ -64,10 +64,17 @@ function requireCandidateIdentity(candidate, expected) {
 }
 
 function requireCurrentHandCardIds(hand) {
-  return hand.map((card, index) => {
+  if (hand.length !== 3) {
+    throw new RangeError('roundAuthority.hand must contain exactly 3 physical cards');
+  }
+  const ids = hand.map((card, index) => {
     const authoritativeCard = requiredObject(card, `roundAuthority.hand[${index}]`);
     return requiredString(authoritativeCard.id, `roundAuthority.hand[${index}].id`);
   });
+  if (new Set(ids).size !== 3) {
+    throw new RangeError('roundAuthority.hand must contain 3 distinct physical card ids');
+  }
+  return ids;
 }
 
 function precommitClearResult({
@@ -151,48 +158,50 @@ export function createBattleNewBaseLiveConsumerAdapter({
   let commitInFlight = false;
 
   async function syncRoundStart() {
-  const authority = requiredObject(await readRoundAuthority(), 'round authority');
-  const roundId = requiredString(authority.roundId, 'roundAuthority.roundId');
-  const turnId = requiredString(authority.turnId, 'roundAuthority.turnId');
-  if (!Array.isArray(authority.hand)) {
-    throw new TypeError('roundAuthority.hand must be the current hand authority array');
-  }
-
-  // Same-turn render/reconnect/retry reuses one immutable reservation.
-  if (roundSnapshot !== null && assignmentTurnId === turnId) {
-    if (roundSnapshot.roundId !== roundId) {
-      throw new RangeError('roundAuthority.turnId cannot move between rounds');
+    const authority = requiredObject(await readRoundAuthority(), 'round authority');
+    const roundId = requiredString(authority.roundId, 'roundAuthority.roundId');
+    const turnId = requiredString(authority.turnId, 'roundAuthority.turnId');
+    if (!Array.isArray(authority.hand)) {
+      throw new TypeError('roundAuthority.hand must be the current hand authority array');
     }
+
+    // Same-turn render/reconnect/retry reuses one immutable reservation.
+    if (roundSnapshot !== null && assignmentTurnId === turnId) {
+      if (roundSnapshot.roundId !== roundId) {
+        throw new RangeError('roundAuthority.turnId cannot move between rounds');
+      }
+      return roundSnapshot;
+    }
+
+    // A new turn drops only the prior uncommitted local package.
+    if (roundSnapshot !== null) stagedCompoundAttack = null;
+
+    // Membership is caller authority. Reject anything other than an already-resolved
+    // exact physical trio before touching authoritative entropy; never derive 7 -> 3 here.
+    const handCardIds = requireCurrentHandCardIds(authority.hand);
+    const entropyRequest = Object.freeze({
+      assignmentEpochId: turnId,
+      sampleKind: 'HAND3_UNIFORM_PERMUTATION_UINT32',
+    });
+    const uniformAssignment = createUniformHand3Assignment({
+      assignmentEpochId: turnId,
+      handCardIds,
+      readUint32: () => readAuthoritativeHand3Uint32(entropyRequest),
+    });
+
+    const next = ensureRoundStartJankenSlotAssignment({
+      currentSnapshot: null,
+      roundId,
+      hand: authority.hand,
+      assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
+      assignedCardIdsByJankenHand: uniformAssignment.assignedCardIdsByJankenHand,
+    });
+    roundSnapshot = next;
+    assignmentTurnId = turnId;
     return roundSnapshot;
   }
 
-  // A new turn drops only the prior uncommitted local package.
-  if (roundSnapshot !== null) stagedCompoundAttack = null;
-
-  const handCardIds = requireCurrentHandCardIds(authority.hand);
-  const entropyRequest = Object.freeze({
-    assignmentEpochId: turnId,
-    sampleKind: 'HAND3_UNIFORM_PERMUTATION_UINT32',
-  });
-  const uniformAssignment = createUniformHand3Assignment({
-    assignmentEpochId: turnId,
-    handCardIds,
-    readUint32: () => readAuthoritativeHand3Uint32(entropyRequest),
-  });
-
-  const next = ensureRoundStartJankenSlotAssignment({
-    currentSnapshot: null,
-    roundId,
-    hand: authority.hand,
-    assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
-    assignedCardIdsByJankenHand: uniformAssignment.assignedCardIdsByJankenHand,
-  });
-  roundSnapshot = next;
-  assignmentTurnId = turnId;
-  return roundSnapshot;
-}
-
-async function readCandidateFor(jankenHand, cardId) {
+  async function readCandidateFor(jankenHand, cardId) {
     const candidate = await readCompoundAttackCandidate(Object.freeze({
       roundId: roundSnapshot.roundId,
       jankenHand,

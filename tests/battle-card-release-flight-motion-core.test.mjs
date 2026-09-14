@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   BATTLE_CARD_RELEASE_FLIGHT_DEFAULT_DURATION_MS,
+  BATTLE_CARD_RELEASE_FLIGHT_LOW_PERF_MAX_DURATION_MS,
   BATTLE_CARD_RELEASE_FLIGHT_MODE,
   projectBattleCardReleaseFlightMotion,
   toBattleCardReleaseFlightKeyframes,
@@ -67,17 +68,37 @@ test('full-motion depth scale decreases monotonically toward the board', () => {
   }
 });
 
-test('low performance mode preserves geometry and depth while removing filter work', () => {
-  const normal = full('bottom');
-  const lowPerf = full('bottom', { lowPerf: true });
+test('low performance mode keeps exact source-to-destination meaning with a short straight no-spin projection', () => {
+  for (const role of ['top', 'middle', 'bottom']) {
+    const lowPerf = full(role, { lowPerf: true });
+    const end = lowPerf.frames.at(-1);
 
-  assert.equal(lowPerf.lowPerf, true);
-  assert.deepEqual(
-    lowPerf.frames.map(({ offset, x, y, rotationDeg, scale, opacity }) => ({ offset, x, y, rotationDeg, scale, opacity })),
-    normal.frames.map(({ offset, x, y, rotationDeg, scale, opacity }) => ({ offset, x, y, rotationDeg, scale, opacity })),
-  );
-  assert.equal(lowPerf.frames.every((frame) => frame.blurPx === 0 && frame.brightness === 1), true);
-  assert.equal(toBattleCardReleaseFlightKeyframes(lowPerf).every((frame) => frame.filter === 'none'), true);
+    assert.equal(lowPerf.mode, BATTLE_CARD_RELEASE_FLIGHT_MODE.FULL);
+    assert.equal(lowPerf.lowPerf, true);
+    assert.equal(lowPerf.durationMs, BATTLE_CARD_RELEASE_FLIGHT_LOW_PERF_MAX_DURATION_MS);
+    assert.equal(lowPerf.frames.length, 3);
+    assert.equal(lowPerf.spinDeg, 0);
+    assert.equal(lowPerf.bendPx, 0);
+    assert.deepEqual(lowPerf.frames.map((frame) => frame.offset), [0, 0.5, 1]);
+    assert.equal(lowPerf.frames.every((frame) => frame.rotationDeg === 0 && frame.blurPx === 0 && frame.brightness === 1), true);
+    assert.equal(lowPerf.frames[0].x, 0);
+    assert.equal(lowPerf.frames[0].y, 0);
+    assert.equal(end.x, target.x - start.x);
+    assert.equal(end.y, target.y - start.y);
+    assert.ok(Math.abs(end.scale - 0.34) < 1e-9);
+    assert.ok(Math.abs(end.opacity - 0.58) < 1e-9);
+    assert.equal(toBattleCardReleaseFlightKeyframes(lowPerf).every((frame) => frame.filter === 'none'), true);
+    assert.deepEqual(lowPerf.destinationCue, {
+      kind: 'NONE',
+      x: target.x,
+      y: target.y,
+    });
+  }
+});
+
+test('custom shorter duration stays authoritative in low performance mode', () => {
+  const lowPerf = full('top', { lowPerf: true, durationMs: 120 });
+  assert.equal(lowPerf.durationMs, 120);
 });
 
 test('reduced motion removes large translation/rotation and exposes a destination cue instead of erasing meaning', () => {
@@ -94,6 +115,18 @@ test('reduced motion removes large translation/rotation and exposes a destinatio
     y: target.y,
   });
   assert.equal(toBattleCardReleaseFlightKeyframes(reduced).every((frame) => frame.filter === 'none'), true);
+});
+
+test('reduced motion remains the stronger accessibility override when low performance is also enabled', () => {
+  const reducedLowPerf = full('bottom', { reducedMotion: true, lowPerf: true });
+  assert.equal(reducedLowPerf.mode, BATTLE_CARD_RELEASE_FLIGHT_MODE.REDUCED);
+  assert.equal(reducedLowPerf.lowPerf, true);
+  assert.equal(reducedLowPerf.frames.every((frame) => frame.x === 0 && frame.y === 0 && frame.rotationDeg === 0), true);
+  assert.deepEqual(reducedLowPerf.destinationCue, {
+    kind: 'DESTINATION_PULSE',
+    x: target.x,
+    y: target.y,
+  });
 });
 
 test('full motion does not fabricate a second destination effect', () => {

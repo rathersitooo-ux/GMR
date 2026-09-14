@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BFI-PHASE-RACE-R6-20260914T2128-SOL-RO43",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_INTEGRATED_ALL_STATE_REGRESSION_PHASE_RACE_R6",
+  "acquireKey": "BATTLE-BFI-PHASE-RACE-R6-20260914T2128-SOL-RO43",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R5_PATCH_FENCES_PASS_PLUS_CURRENT_MAIN_EDD12B9A_BFI_TEST_UNCHANGED",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "RUN34840960407_667_PASS_DESKTOP_PHONE_TRACE_TOCTOU_PLUS_R5_BOUNDED_PATCH_PASS",
+  "proceedToken": "PROCEED|BATTLE-BFI-PHASE-RACE-R6-20260914T2128-SOL-RO43|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|bfi-phase-race|test-only|active-lease",
+  "authorizationBaseSha": "edd12b9a9ac59801cc667685eb6801b4cfd3213e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_INTEGRATED_ALL_STATE_REGRESSION_PHASE_RACE_R6",
+  "leaseAcquireKey": "BATTLE-BFI-PHASE-RACE-R6-20260914T2128-SOL-RO43",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 21:28 JST",
+  "leaseUntilJst": "2026-09-14 22:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1477:L1477",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-bfi-phase-race-r6-20260914 from exact current main edd12b9a9ac59801cc667685eb6801b4cfd3213e; mutable tests/browser-full-interaction.spec.mjs; transient tools/temp-battle-bfi-phase-race-r6.py; transient .github/workflows/zz-temp-battle-bfi-phase-race-r6.yml; own transient data/preaction-authorizations/BATTLE-BFI-PHASE-RACE-R6-20260914T2128-SOL-RO43.json only. browser/GAMEROAD.html and all product/runtime/gameplay/rules/state/save/economy/network/build READ_ONLY.",
+  "solutionSignature": "BATTLE_BFI_VOLATILE_VISIBLE_LOCATOR_ATOMIC_PROBE_V1",
+  "reuseDisposition": "REUSE_VERIFY",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R5_IDENTICAL_PATCH_VALIDATED_BEFORE_PUBLIC_BUILD_DRIFT",
+  "solutionSearchEvidence": [
+    "R5 PRE_ACTION, product-read-only fence, syntax check, exact two-site patch, transient cleanup and final test-only diff all passed before public build drift stopped exact-public execution.",
+    "Current main edd12b9a is exactly one commit after R5 base and that commit changes only browser/battle-current-player-ui-runtime.mjs plus tests/battle-current-player-ui-runtime.test.mjs; browser-full-interaction.spec.mjs is unchanged.",
+    "Exact-current public run 34840960407 proves 667x375 completes R19 and desktop/phone traces isolate a count(:visible)->isEnabled(:visible) TOCTOU at roadSelect while the product advances into target selection.",
+    "R6 reuses the validated test-only atomic stable-node visible+enabled probe and keeps browser/GAMEROAD.html plus gameplay/runtime bytes read-only.",
+    "Public evidence binds to the observed gameroad-version build. If public advances to a descendant during the run, the harness may continue only when the observed commit is a descendant of authorizationBaseSha and browser-full-interaction.spec.mjs is unchanged between them; otherwise it fails closed."
+  ],
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/zz-temp-battle-bfi-phase-race-r6.yml",
+    "tools/temp-battle-bfi-phase-race-r6.py"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/zz-temp-battle-bfi-phase-race-r6.yml",
+    "tools/temp-battle-bfi-phase-race-r6.py"
+  ]
+}

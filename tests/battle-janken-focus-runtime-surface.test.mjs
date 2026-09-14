@@ -325,3 +325,114 @@ test('surface contract stays presentation-only and exposes no rule or transport 
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.mutatesJankenRuntime, false);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.mutatesPublicPackage, false);
 });
+
+function pointerActionTarget(action) {
+  const node = {
+    dataset: { grJankenFocusAction: action },
+    closest(selector) {
+      return selector === '[data-gr-janken-focus-action]' ? node : null;
+    },
+  };
+  return node;
+}
+
+function dispatch(runtime, type, event) {
+  const listener = runtime.host.listeners.get(type);
+  assert.equal(typeof listener, 'function', `listener ${type} must exist`);
+  listener(event);
+}
+
+test('pointer commit requires the same primary-left control with short travel', async () => {
+  const { liveInputStack, runtime } = mount();
+  await runtime.focus('ROCK');
+  const commitButton = pointerActionTarget('commit');
+  dispatch(runtime, 'pointerdown', { target: commitButton, pointerId: 1, isPrimary: true, button: 0, clientX: 100, clientY: 100 });
+  dispatch(runtime, 'pointermove', { target: commitButton, pointerId: 1, clientX: 105, clientY: 104 });
+  dispatch(runtime, 'pointerup', { target: commitButton, pointerId: 1, clientX: 106, clientY: 104 });
+  dispatch(runtime, 'click', { target: commitButton, detail: 1 });
+  await Promise.resolve();
+  assert.equal(liveInputStack.calls.commit, 1);
+});
+
+test('pointer travel beyond 12px disarms commit even if it returns before release', async () => {
+  const { liveInputStack, runtime } = mount();
+  await runtime.focus('ROCK');
+  const commitButton = pointerActionTarget('commit');
+  dispatch(runtime, 'pointerdown', { target: commitButton, pointerId: 2, isPrimary: true, button: 0, clientX: 0, clientY: 0 });
+  dispatch(runtime, 'pointermove', { target: commitButton, pointerId: 2, clientX: 20, clientY: 0 });
+  dispatch(runtime, 'pointerup', { target: commitButton, pointerId: 2, clientX: 0, clientY: 0 });
+  dispatch(runtime, 'click', { target: commitButton, detail: 1 });
+  await Promise.resolve();
+  assert.equal(liveInputStack.calls.commit, 0);
+});
+
+test('pointercancel disarms pointer-derived commit', async () => {
+  const { liveInputStack, runtime } = mount();
+  await runtime.focus('ROCK');
+  const commitButton = pointerActionTarget('commit');
+  dispatch(runtime, 'pointerdown', { target: commitButton, pointerId: 3, isPrimary: true, button: 0, clientX: 40, clientY: 40 });
+  dispatch(runtime, 'pointercancel', { target: commitButton, pointerId: 3, clientX: 40, clientY: 40 });
+  dispatch(runtime, 'click', { target: commitButton, detail: 1 });
+  await Promise.resolve();
+  assert.equal(liveInputStack.calls.commit, 0);
+});
+
+test('release on another control cannot authorize a later commit click', async () => {
+  const { liveInputStack, runtime } = mount();
+  await runtime.focus('ROCK');
+  const commitButton = pointerActionTarget('commit');
+  const cancelButton = pointerActionTarget('cancel');
+  dispatch(runtime, 'pointerdown', { target: commitButton, pointerId: 4, isPrimary: true, button: 0, clientX: 20, clientY: 20 });
+  dispatch(runtime, 'pointerup', { target: cancelButton, pointerId: 4, clientX: 22, clientY: 20 });
+  dispatch(runtime, 'click', { target: commitButton, detail: 1 });
+  await Promise.resolve();
+  assert.equal(liveInputStack.calls.commit, 0);
+});
+
+test('non-primary or non-left pointer cannot arm commit', async () => {
+  const { liveInputStack, runtime } = mount();
+  await runtime.focus('ROCK');
+  const commitButton = pointerActionTarget('commit');
+  dispatch(runtime, 'pointerdown', { target: commitButton, pointerId: 5, isPrimary: false, button: 0, clientX: 30, clientY: 30 });
+  dispatch(runtime, 'pointerup', { target: commitButton, pointerId: 5, clientX: 30, clientY: 30 });
+  dispatch(runtime, 'click', { target: commitButton, detail: 1 });
+  await Promise.resolve();
+  assert.equal(liveInputStack.calls.commit, 0);
+  dispatch(runtime, 'pointerdown', { target: commitButton, pointerId: 6, isPrimary: true, button: 2, clientX: 30, clientY: 30 });
+  dispatch(runtime, 'pointerup', { target: commitButton, pointerId: 6, clientX: 30, clientY: 30 });
+  dispatch(runtime, 'click', { target: commitButton, detail: 1 });
+  await Promise.resolve();
+  assert.equal(liveInputStack.calls.commit, 0);
+});
+
+test('keyboard-style detail zero click keeps the accessible commit path', async () => {
+  const { liveInputStack, runtime } = mount();
+  await runtime.focus('ROCK');
+  const commitButton = pointerActionTarget('commit');
+  dispatch(runtime, 'click', { target: commitButton, detail: 0 });
+  await Promise.resolve();
+  assert.equal(liveInputStack.calls.commit, 1);
+});
+
+test('authoritative sync clears a prior pointer arm before a new LOAD_FOCUS', async () => {
+  const { liveInputStack, runtime } = mount();
+  await runtime.focus('ROCK');
+  const commitButton = pointerActionTarget('commit');
+  dispatch(runtime, 'pointerdown', { target: commitButton, pointerId: 7, isPrimary: true, button: 0, clientX: 50, clientY: 50 });
+  dispatch(runtime, 'pointerup', { target: commitButton, pointerId: 7, clientX: 52, clientY: 50 });
+  runtime.sync();
+  await runtime.focus('ROCK');
+  dispatch(runtime, 'click', { target: commitButton, detail: 1 });
+  await Promise.resolve();
+  assert.equal(liveInputStack.calls.commit, 0);
+});
+
+test('destroy removes pointer and click listeners', () => {
+  const { runtime } = mount();
+  assert.equal(runtime.destroy(), true);
+  assert.equal(runtime.host.listeners.has('pointerdown'), false);
+  assert.equal(runtime.host.listeners.has('pointermove'), false);
+  assert.equal(runtime.host.listeners.has('pointerup'), false);
+  assert.equal(runtime.host.listeners.has('pointercancel'), false);
+  assert.equal(runtime.host.listeners.has('click'), false);
+});

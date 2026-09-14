@@ -31,6 +31,8 @@ const SUIT_PRESENTATION = Object.freeze({
   DCG: Object.freeze(['◆', 'CARD']),
 });
 
+const POINTER_COMMIT_MAX_TRAVEL_PX = 12;
+
 function requiredMethod(owner, name, ownerName) {
   if (typeof owner?.[name] !== 'function') {
     throw new TypeError(`${ownerName}.${name} must be a function`);
@@ -344,6 +346,8 @@ export function mountBattleJankenFocusRuntimeSurface({
   let destroyed = false;
   let errorText = null;
   let interactionVersion = 0;
+  let pointerCommitGesture = null;
+  let pointerCommitClickArm = null;
 
   function snapshot() {
     return Object.freeze({
@@ -539,6 +543,8 @@ export function mountBattleJankenFocusRuntimeSurface({
   } = {}) {
     if (destroyed) return snapshot();
     ++interactionVersion;
+    pointerCommitGesture = null;
+    pointerCommitClickArm = null;
     sourcePackages = nextPackages;
     sourceGenerationId = nextGenerationId;
     busy = false;
@@ -554,17 +560,93 @@ export function mountBattleJankenFocusRuntimeSurface({
     return snapshot();
   }
 
+  function actionNodeFromEvent(event) {
+    return event?.target?.closest?.('[data-gr-janken-focus-action]') ?? null;
+  }
+
+  function pointerPoint(event) {
+    const x = Number(event?.clientX);
+    const y = Number(event?.clientY);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    return { x, y };
+  }
+
+  function pointerTravelExceeded(event, gesture) {
+    const point = pointerPoint(event);
+    if (!point || !gesture) return true;
+    const dx = point.x - gesture.startX;
+    const dy = point.y - gesture.startY;
+    return ((dx * dx) + (dy * dy)) > (POINTER_COMMIT_MAX_TRAVEL_PX * POINTER_COMMIT_MAX_TRAVEL_PX);
+  }
+
+  function handlePointerDown(event) {
+    pointerCommitGesture = null;
+    pointerCommitClickArm = null;
+    const actionNode = actionNodeFromEvent(event);
+    if (actionNode?.dataset?.grJankenFocusAction !== 'commit') return;
+    if (event?.isPrimary === false) return;
+    if (Number.isFinite(event?.button) && event.button !== 0) return;
+    const point = pointerPoint(event);
+    if (event?.pointerId == null || !point) return;
+    pointerCommitGesture = {
+      pointerId: event.pointerId,
+      actionNode,
+      startX: point.x,
+      startY: point.y,
+      disarmed: false,
+    };
+  }
+
+  function handlePointerMove(event) {
+    const gesture = pointerCommitGesture;
+    if (!gesture || event?.pointerId !== gesture.pointerId || gesture.disarmed) return;
+    if (pointerTravelExceeded(event, gesture)) gesture.disarmed = true;
+  }
+
+  function handlePointerCancel(event) {
+    const gesture = pointerCommitGesture;
+    if (!gesture || event?.pointerId !== gesture.pointerId) return;
+    pointerCommitGesture = null;
+    pointerCommitClickArm = null;
+  }
+
+  function handlePointerUp(event) {
+    const gesture = pointerCommitGesture;
+    pointerCommitGesture = null;
+    pointerCommitClickArm = null;
+    if (!gesture || event?.pointerId !== gesture.pointerId || gesture.disarmed) return;
+    const actionNode = actionNodeFromEvent(event);
+    if (actionNode !== gesture.actionNode || actionNode?.dataset?.grJankenFocusAction !== 'commit') return;
+    if (pointerTravelExceeded(event, gesture)) return;
+    pointerCommitClickArm = actionNode;
+  }
+
   function handleClick(event) {
-    const actionNode = event?.target?.closest?.('[data-gr-janken-focus-action]');
+    const actionNode = actionNodeFromEvent(event);
     const action = actionNode?.dataset?.grJankenFocusAction;
-    if (!action) return;
+    if (!action) {
+      pointerCommitClickArm = null;
+      return;
+    }
+    if (action === 'commit') {
+      const detail = Number(event?.detail);
+      const pointerDerived = Number.isFinite(detail) && detail > 0;
+      const authorized = !pointerDerived || pointerCommitClickArm === actionNode;
+      pointerCommitClickArm = null;
+      if (authorized) void commit();
+      return;
+    }
+    pointerCommitClickArm = null;
     if (action === 'focus') void focus(actionNode.dataset.jankenHand);
     else if (action === 'peek') boardPeek();
     else if (action === 'return') returnFromBoardPeek();
     else if (action === 'cancel') void cancel();
-    else if (action === 'commit') void commit();
   }
 
+  host.addEventListener?.('pointerdown', handlePointerDown);
+  host.addEventListener?.('pointermove', handlePointerMove);
+  host.addEventListener?.('pointerup', handlePointerUp);
+  host.addEventListener?.('pointercancel', handlePointerCancel);
   host.addEventListener?.('click', handleClick);
   render();
 
@@ -584,6 +666,12 @@ export function mountBattleJankenFocusRuntimeSurface({
       ++interactionVersion;
       destroyed = true;
       busy = false;
+      pointerCommitGesture = null;
+      pointerCommitClickArm = null;
+      host.removeEventListener?.('pointerdown', handlePointerDown);
+      host.removeEventListener?.('pointermove', handlePointerMove);
+      host.removeEventListener?.('pointerup', handlePointerUp);
+      host.removeEventListener?.('pointercancel', handlePointerCancel);
       host.removeEventListener?.('click', handleClick);
       host.remove?.();
       return true;

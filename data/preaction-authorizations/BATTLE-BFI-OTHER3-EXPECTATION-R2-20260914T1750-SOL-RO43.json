@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BFI-OTHER3-EXPECTATION-R2-20260914T1750-SOL-RO43",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_INTEGRATED_ALL_STATE_REGRESSION_OTHER3_EXPECTATION_R2",
+  "acquireKey": "BATTLE-BFI-OTHER3-EXPECTATION-R2-20260914T1750-SOL-RO43",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_280E248D_PLUS_CURRENT_VIEWER_RELATIVE_OTHER3_AUTHORITY_PLUS_PUBLIC_BFI_RECEIVED3",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_R19_FAILURE_CAPTURED_STALE_4_COUNT_AND_CURRENT_SOURCE_HAS_EXACT_THREE_ASSERTIONS",
+  "proceedToken": "PROCEED|BATTLE-BFI-OTHER3-EXPECTATION-R2-20260914T1750-SOL-RO43|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|bfi-other3-expectation-current-authority",
+  "authorizationBaseSha": "280e248def71a08679e3a262db0164b09ca43986",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_INTEGRATED_ALL_STATE_REGRESSION_OTHER3_EXPECTATION_R2",
+  "leaseAcquireKey": "BATTLE-BFI-OTHER3-EXPECTATION-R2-20260914T1750-SOL-RO43",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 17:50 JST",
+  "leaseUntilJst": "2026-09-14 18:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1439:N1439",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main 280e248def71a08679e3a262db0164b09ca43986; mutable tests/browser-full-interaction.spec.mjs; own transient data/preaction-authorizations/BATTLE-BFI-OTHER3-EXPECTATION-R2-20260914T1750-SOL-RO43.json; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html and all product/runtime/gameplay/rules/state/save/economy/network/build.",
+  "solutionSignature": "BFI_VIEWER_RELATIVE_OTHER_THREE_PEER_CHIPS_EXPECTATION_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_BFI_ONLY_STALE_EXPECTATION_NO_PRODUCT_CHANGE_NO_SECOND_SUITE",
+  "solutionSearchEvidence": [
+    "Current BFI already covers the relevant 2v2, R13 4-player Honey, and R19 4-player Honey use-sites.",
+    "Current product authority intentionally renders the viewer separately and only the other three participants as publicPlayerChip peers.",
+    "The prior exact public R19 failure observed three peer chips on phone and short-landscape while the test expected four.",
+    "Current main still contains exactly three stale publicPlayerStrip count assertions requiring four peers.",
+    "No product/runtime/rule/state change and no second test suite are needed."
+  ],
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

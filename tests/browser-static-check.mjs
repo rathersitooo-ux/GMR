@@ -84,6 +84,17 @@ function collectStaticErrors(html) {
   for (const [pattern, message] of screenNavigationContracts) {
     if (!pattern.test(html)) errors.push(message);
   }
+  const homeTransitionReadinessContracts = [
+    [/HOME_TRANSITION_CONTROL_SELECTOR='\.homePadChoice\[data-home-target\],\.screen\.home button\[data-go\]'/, 'Home transition controls do not share the readiness gate'],
+    [/function screenTransitionRuntimeReady\(\)\{const runtime=globalThis\.GAMEROAD_SCREEN_TRANSITION;return !!runtime&&typeof runtime\.navigate===["']function["']&&typeof runtime\.back===["']function["']\}/, 'Home transition readiness does not reuse the existing transition runtime'],
+    [/function syncHomeTransitionReadiness\(\)\{[^}]*button\.disabled=!ready;button\.dataset\.transitionReady=ready\?["']1["']:["']0["']/, 'Home route controls are not disabled until transition runtime readiness'],
+    [/function homeMotionNavigate\(target\)\{[^}]*if\(!screenTransitionRuntimeReady\(\)\)return false;/, 'Home motion route does not fail closed before transition runtime readiness'],
+    [/syncHomeTransitionReadiness\(\);homeMotionOnRender\(\)/, 'Home controls are not readiness-synced when Home motion wires'],
+    [/GAMEROAD_SYNC_HOME_TRANSITION_READINESS\?\.\(\);\s*let orientationProjection=/, 'transition runtime installation does not release Home controls'],
+  ];
+  for (const [pattern, message] of homeTransitionReadinessContracts) {
+    if (!pattern.test(html)) errors.push(message);
+  }
   if (/if\s*\(\s*!target\s*\|\|\s*target\s*===\s*state\.screen\s*\)\s*return\s*;/.test(html)) {
     errors.push('legacy inline screen navigation decision responsibility is present');
   }

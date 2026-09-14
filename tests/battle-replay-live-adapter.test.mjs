@@ -212,6 +212,20 @@ test('remaining Deck renderer reuses existing Battle log host and writes text on
   ]);
 });
 
+test('actual History and owner-safe Deck share one support entry while Graveyard stays absent', () => {
+  const { document, shell } = fakeBattleLogDocument();
+  const bridge = createPartnerBattleEventLogPresentationBridge({ document });
+  assert.equal(bridge.begin('M-SUPPORT'), true);
+  assert.equal(renderLiveBattleRemainingDeckPresentation({
+    ok: true, status: 'ready', total: 4, unknownCount: 4, revision: 1, knownCardCounts: []
+  }, { document }), true);
+  const support = shell.querySelector('[data-battle-support-entry]');
+  assert.ok(support);
+  assert.deepEqual(support.children.map(child => child.getAttribute('data-battle-support-item')), ['history', 'deck']);
+  assert.equal(support.children.some(child => child.getAttribute('data-battle-support-item') === 'graveyard'), false);
+  assert.equal(shell.children.filter(child => child.getAttribute?.('data-battle-support-entry') !== null).length, 1);
+});
+
 test('production session still requires all exact version authorities; capture never invents them', () => {
   for (const missing of ['rules', 'content', 'state']) {
     const bad = { ...versions };

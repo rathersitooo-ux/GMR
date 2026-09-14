@@ -1,0 +1,151 @@
+name: temp battle support entry r4
+on:
+  push:
+    branches:
+      - sol/battle-support-entry-r4-20260914
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply bounded X14 patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          adapter = Path('browser/battle-replay-live-adapter.mjs')
+          text = adapter.read_text()
+          anchor = "const PARTNER_BATTLE_LOG_DEFAULT_RECENT_ROWS = 2;\n"
+          assert text.count(anchor) == 1
+          text = text.replace(anchor, anchor + "const BATTLE_SUPPORT_ENTRY_ATTR = 'data-battle-support-entry';\nconst BATTLE_SUPPORT_ITEM_ATTR = 'data-battle-support-item';\n", 1)
+
+          marker = "function ensurePartnerBattleEventLogHost(environment = {}) {"
+          assert text.count(marker) == 1
+          helper = r'''function ensureLiveBattleSupportEntryRoot(documentRef, shell) {
+            if (!shell || typeof documentRef?.createElement !== 'function') return null;
+            let root = typeof shell.querySelector === 'function' ? shell.querySelector(`[${BATTLE_SUPPORT_ENTRY_ATTR}]`) : null;
+            if (!root) {
+              root = documentRef.createElement('nav');
+              if (!root || typeof root.setAttribute !== 'function' || typeof shell.appendChild !== 'function') return null;
+              root.setAttribute(BATTLE_SUPPORT_ENTRY_ATTR, '');
+              root.setAttribute('aria-label', '対戦サポート');
+              shell.appendChild(root);
+            }
+            return root;
+          }
+
+          export function registerLiveBattleSupportSurface({ key, label, target, document = browserGlobal('document'), hostId = 'battleLog' } = {}) {
+            if (!nonEmptyString(key) || !nonEmptyString(label) || !target) return false;
+            const shell = document?.getElementById?.(hostId);
+            if (!shell || typeof document?.createElement !== 'function') return false;
+            const root = ensureLiveBattleSupportEntryRoot(document, shell);
+            if (!root || typeof root.appendChild !== 'function') return false;
+            const children = root.children ? Array.from(root.children) : [];
+            let control = children.find(child => child?.getAttribute?.(BATTLE_SUPPORT_ITEM_ATTR) === key) || null;
+            if (!control) {
+              control = document.createElement('button');
+              if (!control || typeof control.setAttribute !== 'function') return false;
+              control.setAttribute('type', 'button');
+              control.setAttribute(BATTLE_SUPPORT_ITEM_ATTR, key);
+              root.appendChild(control);
+            }
+            control.textContent = label;
+            control.onclick = () => {
+              target.scrollIntoView?.({ block: 'nearest' });
+              target.focus?.({ preventScroll: true });
+            };
+            return true;
+          }
+
+          '''
+          text = text.replace(marker, helper + marker, 1)
+
+          history_anchor = "    shell.appendChild(host);\n  }\n  return host;\n}"
+          assert text.count(history_anchor) == 1
+          text = text.replace(history_anchor, "    shell.appendChild(host);\n  }\n  registerLiveBattleSupportSurface({ key: 'history', label: '履歴', target: host, document: documentRef });\n  return host;\n}", 1)
+
+          deck_anchor = "  root.replaceChildren?.(title, known, unknown);\n  return true;"
+          assert text.count(deck_anchor) == 1
+          text = text.replace(deck_anchor, "  root.replaceChildren?.(title, known, unknown);\n  registerLiveBattleSupportSurface({ key: 'deck', label: '山札', target: root, document, hostId });\n  return true;", 1)
+          adapter.write_text(text)
+
+          test = Path('tests/battle-replay-live-adapter.test.mjs')
+          t = test.read_text()
+          import_anchor = "  readLiveReplay,\n  projectLiveBattleRemainingDeckPresentation,"
+          assert t.count(import_anchor) == 1
+          t = t.replace(import_anchor, "  readLiveReplay,\n  registerLiveBattleSupportSurface,\n  projectLiveBattleRemainingDeckPresentation,", 1)
+          insert_before = "test('production session still requires all exact version authorities; capture never invents them', () => {"
+          assert t.count(insert_before) == 1
+          regression = r'''test('Battle support entry reuses actual History and owner-safe Deck without fabricating Graveyard', () => {
+            const { document, shell } = fakeBattleLogDocument();
+            const bridge = createPartnerBattleEventLogPresentationBridge({ document });
+            assert.equal(bridge.begin('M-SUPPORT'), true);
+            assert.equal(renderLiveBattleRemainingDeckPresentation({
+              ok: true,
+              status: 'ready',
+              total: 4,
+              knownCount: 0,
+              unknownCount: 4,
+              revision: 1,
+              knownCardCounts: [],
+              orderHidden: true,
+              presentationOnly: true
+            }, { document }), true);
+            assert.equal(renderLiveBattleRemainingDeckPresentation({
+              ok: true,
+              status: 'ready',
+              total: 4,
+              knownCount: 0,
+              unknownCount: 4,
+              revision: 1,
+              knownCardCounts: [],
+              orderHidden: true,
+              presentationOnly: true
+            }, { document }), true);
+            const entry = shell.querySelector('[data-battle-support-entry]');
+            assert.ok(entry);
+            assert.deepEqual(entry.children.map(child => child.getAttribute('data-battle-support-item')), ['history', 'deck']);
+            assert.equal(entry.children.some(child => child.getAttribute('data-battle-support-item') === 'graveyard'), false);
+            assert.equal(registerLiveBattleSupportSurface({ key: 'graveyard', label: '墓地', target: null, document }), false);
+            assert.equal(shell.children.filter(child => child.getAttribute?.('data-battle-support-entry') !== null).length, 1);
+          });
+
+          '''
+          t = t.replace(insert_before, regression + insert_before, 1)
+          test.write_text(t)
+          PY
+
+          NEW_BLOB="$(git hash-object browser/battle-replay-live-adapter.mjs)"
+          python3 - "$NEW_BLOB" <<'PY'
+          from pathlib import Path
+          import sys
+          new_blob = sys.argv[1]
+          p = Path('deploy/cloudflare/tests/build.test.mjs')
+          s = p.read_text()
+          old = "{ file: 'battle-replay-live-adapter.mjs', source: 'browser/battle-replay-live-adapter.mjs', sourceArg: 'replayAdapterSource', expectedArg: 'expectedReplayAdapterBlob', artifact: 'battle_replay_live_adapter', fixture: \"import './battle-replay-core.mjs';\\nimport './card-presentation-core.mjs';\\nimport './battle-self-deck-inspect-core.mjs';\\nimport './battle-conveyor-presentation-core.mjs';\\nimport './partner-battle-event-log-projection.mjs';\\n\", currentBlob: '4047d561436345de7d0382129d35b9de00a805de' }"
+          assert s.count(old) == 1
+          s = s.replace("currentBlob: '4047d561436345de7d0382129d35b9de00a805de' }", f"currentBlob: '{new_blob}' }}", 1)
+          p.write_text(s)
+          PY
+
+          node --test tests/battle-replay-live-adapter.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+          git diff --check
+          git diff -- browser/battle-replay-live-adapter.mjs tests/battle-replay-live-adapter.test.mjs deploy/cloudflare/tests/build.test.mjs
+
+          rm -f data/preaction-authorizations/BATTLE-SUPPORT-ENTRY-R4-20260914T1811-SOL-SE14.json
+          rm -f .github/workflows/zz-temp-battle-support-entry-r4.yml
+          git config user.name 'gameroad-bounded-writer'
+          git config user.email 'actions@users.noreply.github.com'
+          git add browser/battle-replay-live-adapter.mjs tests/battle-replay-live-adapter.test.mjs deploy/cloudflare/tests/build.test.mjs data/preaction-authorizations/BATTLE-SUPPORT-ENTRY-R4-20260914T1811-SOL-SE14.json .github/workflows/zz-temp-battle-support-entry-r4.yml
+          git commit -m 'Battle: 既存サポート面を一つの入口へ統合 R4'
+          git push origin HEAD:sol/battle-support-entry-r4-20260914

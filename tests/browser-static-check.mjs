@@ -173,6 +173,27 @@ if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stat
     errors.push('public HUD QA probe does not expose viewer-relative peer ids');
   }
   errors.push(...collectHomeVisualShellErrors(html));
+  const centralWorldLiveContracts = [
+    [/id=["']battleCentralWorldLiveHost["'][^>]*class=["']battleCentralWorldLiveHost["'][^>]*aria-label=["']フラノラ盤面の進行表示["']/, 'central Flanora live presentation host is missing'],
+    [/BATTLE_CENTRAL_WORLD_LIVE_MOUNT_R8/, 'central Flanora live mount marker is missing'],
+    [/import\(["']\.\/battle-new-base-board-live-presentation-composer\.mjs["']\)/, 'existing central board presentation composer is not live-mounted'],
+    [/function battleCentralWorldStraightSnapshotR8\(m\)[\s\S]*?for\(const id of BATTLE_CENTRAL_WORLD_LAYOUT_R8\.participantIds\)[\s\S]*?for\(const lane of \['L','C','R'\]\)/, 'central world live mount does not preserve exact P1..P4 x L/C/R authoritative lane order'],
+    [/syncBattleCentralWorldPresentation\(m\);renderBoardPlayers\(\);renderRouteLine\(\)/, 'legacy renderBoard cadence does not sync the existing central world presentation'],
+    [/authority:Object\.freeze\(\{gameplay:false,movement:false,target:false,legality:false,result:false,stateWrite:false\}\)/, 'central world live mount lost its gameplay authority firewall'],
+    [/\.battleCentralWorldLiveHost\{position:absolute;inset:3% 3% 18%;pointer-events:none;/, 'central world presentation host can take Battle input ownership'],
+  ];
+  for (const [pattern, message] of centralWorldLiveContracts) {
+    if (!pattern.test(html)) errors.push(message);
+  }
+  if ((html.match(/id=["']battleCentralWorldLiveHost["']/g) ?? []).length !== 1) {
+    errors.push('central Flanora live presentation host is duplicated');
+  }
+  if ((html.match(/mountBattleNewBaseBoardLivePresentation\s*\(/g) ?? []).length !== 1) {
+    errors.push('central world live composer has more than one mount call');
+  }
+  if (/createFlanoraMapLayout\s*\(/.test(html) || /createNewBaseGoalPathLayout\s*\(/.test(html)) {
+    errors.push('HTML reimplements central board/GOAL projection instead of consuming the existing composer');
+  }
   const correctedBattleResourceContracts = [
     [/const hand=deck\.splice\(0,7\);/, 'fresh Battle ordinary hand is not initialized to seven'],
     [/function refill\(p\)\{while\(p\.hand\.length<3&&p\.deck\.length\)p\.hand\.push\(p\.deck\.shift\(\)\)\}/, 'post-use refill target is no longer three'],

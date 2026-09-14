@@ -21,6 +21,19 @@ jobs:
           git diff 061c899df9df59d3b798034f097dbe9951946c6d origin/sol/battle-symmetric-gate-field-r1-20260915 -- browser/GAMEROAD.html tests/browser-static-check.mjs > /tmp/field10.patch
           git apply --check /tmp/field10.patch
           git apply /tmp/field10.patch
+      - name: Fix bounded Garden3D style insertion in transient mutator
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('tools/temp-battle-garden3d-field-r2.py')
+          s=p.read_text(encoding='utf-8')
+          old="html = replace_once(html, '</style>', css + '</style>', 'garden css')"
+          new="style_close=html.find('</style>')\nif style_close<0: raise SystemExit('garden css: missing style close')\nhtml=html[:style_close]+css+html[style_close:]"
+          if old not in s:
+              raise SystemExit('expected transient style anchor missing')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          PY
       - name: Add Garden3D field without a second gameplay engine
         run: |
           set -euo pipefail

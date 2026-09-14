@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CURRENT-ACTION-VISUAL-R4-20260914T1024-SOL-SA11",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CURRENT_ACTION_WAIT_OWNER_REASON_AUTOMATED_VISUAL_R4",
+  "acquireKey": "BATTLE-CURRENT-ACTION-VISUAL-R4-20260914T1024-SOL-SA11",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_D3993FA1_PLUS_R2_PUBLIC_PACKAGE_PRESENT_PLUS_R3_HARNESS_ROOT_CAUSE_20260914T1024JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R3_RUN2_PUBLIC_BYTES_PRESENT_PLUS_RUN3_NODE_LOCATION_SELF_FAILURE_PLUS_DOMCONTENTLOADED_WIRING_WAIT_REPAIR",
+  "proceedToken": "PROCEED|BATTLE-CURRENT-ACTION-VISUAL-R4-20260914T1024-SOL-SA11|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-action-visual-acceptance|evidence-only|active-lease",
+  "authorizationBaseSha": "d3993fa124b9cf1d9f44f2dac1e784c5deea2f44",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CURRENT_ACTION_WAIT_OWNER_REASON_AUTOMATED_VISUAL_R4",
+  "leaseAcquireKey": "BATTLE-CURRENT-ACTION-VISUAL-R4-20260914T1024-SOL-SA11",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 10:24 JST",
+  "leaseUntilJst": "2026-09-14 11:24 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1405:L1405",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh evidence branch sol/battle-current-action-visual-r4-20260914 from exact current main d3993fa124b9cf1d9f44f2dac1e784c5deea2f44; mutable ONLY transient .github/workflows/zz-temp-battle-current-action-visual-r4.yml; own transient data/preaction-authorizations/BATTLE-CURRENT-ACTION-VISUAL-R4-20260914T1024-SOL-SA11.json; own branch/Actions run/artifact/readback. READ_ONLY browser/GAMEROAD.html; browser/battle-current-player-ui-live-adapter.mjs; browser/battle-current-action-context-presentation-core.mjs; deploy/cloudflare/scripts/build.mjs; all product/runtime/test/gameplay/rules/state/save/economy/network files.",
+  "solutionSignature": "BATTLE_CURRENT_ACTION_TARGETED_PUBLIC_VISUAL_ACCEPTANCE_R4",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R3_TARGETED_PROBE_REUSED_WITH_ONLY_HARNESS_RACE_AND_NODE_SCOPE_BUG_REMOVED",
+  "solutionSearchEvidence": [
+    "R2 code/public package is already merged and current main still contains the current-action live adapter; no product repair is justified before actual visual evidence.",
+    "R3 run 34772440723 verified the public adapter bytes before failing to reach Setup after clicking Home from a page loaded only to commit; the failure did not exercise the current-action surface.",
+    "R3 run 34772669871 changed navigation timing to DOMContentLoaded but the diagnostic script itself failed on Node-scope location, so it also produced no product verdict.",
+    "R4 keeps all product/runtime/build/gameplay files read-only, pins the public build before and after the probe, and waits for the existing Home motion-wired marker before visible navigation.",
+    "If a visible prerequisite blocks Battle entry, R4 records that exact blocker and exits without mutating product or fabricating a #11 acceptance result."
+  ],
+  "scope": [
+    ".github/workflows/zz-temp-battle-current-action-visual-r4.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/zz-temp-battle-current-action-visual-r4.yml"
+  ]
+}

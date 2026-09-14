@@ -1,7 +1,10 @@
 import { auditBattleScreenModel } from './battle-screen-presentation-core.mjs';
 import { mountBattleCriticalResourceHud } from './battle-critical-resource-hud-runtime.mjs';
 import { mountBattleCurrentPlayerUi } from './battle-current-player-ui-runtime.mjs';
-import { buildBattleLoadCardChainPresentation } from './battle-load-card-chain-presentation-core.mjs';
+import {
+  buildBattleLoadCardChainPresentation,
+  verifyBattleLoadCommitTransition
+} from './battle-load-card-chain-presentation-core.mjs';
 
 const RUNTIME_SCHEMA = 'gameroad.battle-screen-runtime-mount.v1';
 const STYLE_ID = 'gameroad-battle-screen-runtime-r1-style';
@@ -447,17 +450,71 @@ function writePublicLaneCard(document, cardNode, card) {
   return cardNode;
 }
 
+const FOCUS_RUNTIME_SELECTOR = '[data-gr-janken-focus-runtime]';
+const FOCUS_PHYSICAL_CARD_SELECTOR = '[data-physical-card-id]';
+const FOCUS_JANKEN_ROLE_SELECTOR = '[data-janken-role]';
+const FOCUS_ACCEPTED_IDENTITY_SOURCES = Object.freeze(['GLOBAL_CARD_DATA_EXACT_ID', 'PACKAGE_CARD_ID_ONLY']);
+
+function hudSourceOf(snapshot) {
+  return snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot) ? snapshot : {};
+}
+
+function normalizePlayedCards(value) {
+  if (!Array.isArray(value)) return [];
+  const cards = [];
+  for (const raw of value) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+    const cardId = typeof raw.cardId === 'string' ? raw.cardId.trim() : '';
+    if (!cardId) continue;
+    const label = typeof raw.label === 'string' && raw.label.trim() ? raw.label.trim() : cardId;
+    cards.push({ ...raw, cardId, label });
+  }
+  return cards;
+}
+
+function samePlayedCardSequence(left, right) {
+  if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
+  return left.every((card, index) => card?.cardId === right[index]?.cardId);
+}
+
+function copyPlayedCards(cards) {
+  return normalizePlayedCards(cards).map(card => ({ ...card }));
+}
+
+function readFocusCommittingCandidate(host) {
+  if (!host || host.hidden || String(host.dataset?.surface ?? '') !== 'COMMITTING') return null;
+  const physicalCard = host.querySelector?.(FOCUS_PHYSICAL_CARD_SELECTOR) ?? null;
+  const cardId = typeof physicalCard?.dataset?.physicalCardId === 'string'
+    ? physicalCard.dataset.physicalCardId.trim()
+    : '';
+  const identitySource = typeof physicalCard?.dataset?.cardIdentitySource === 'string'
+    ? physicalCard.dataset.cardIdentitySource.trim()
+    : '';
+  if (!cardId || !FOCUS_ACCEPTED_IDENTITY_SOURCES.includes(identitySource)) return null;
+
+  const roleNode = physicalCard.querySelector?.(FOCUS_JANKEN_ROLE_SELECTOR)
+    ?? host.querySelector?.(FOCUS_JANKEN_ROLE_SELECTOR)
+    ?? null;
+  const role = typeof roleNode?.dataset?.jankenRole === 'string'
+    ? roleNode.dataset.jankenRole.trim().toUpperCase()
+    : '';
+  const jankenHand = role === 'ROCK' ? 'rock' : role === 'SCISSORS' ? 'scissors' : role === 'PAPER' ? 'paper' : null;
+  const nativeSuit = typeof physicalCard.dataset?.nativeSuit === 'string' && physicalCard.dataset.nativeSuit.trim()
+    ? physicalCard.dataset.nativeSuit.trim()
+    : null;
+  const printedNumber = typeof physicalCard.dataset?.printedRank === 'string' && physicalCard.dataset.printedRank.trim()
+    ? physicalCard.dataset.printedRank.trim()
+    : null;
+
+  return Object.freeze({ cardId, identitySource, jankenHand, nativeSuit, printedNumber });
+}
+
 function normalizeHudSnapshot(snapshot = {}) {
   const source = snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot) ? snapshot : {};
   const score = authoritativeText(source.score, 'X');
   const hate = authoritativeText(source.hate, 'XXX');
   const turn = authoritativeText(source.turn, 'XX');
-  const playedCards = Array.isArray(source.playedCards)
-    ? source.playedCards.filter(card => card && typeof card === 'object').map((card, index) => ({
-        cardId: typeof card.cardId === 'string' && card.cardId ? card.cardId : `played-${index + 1}`,
-        label: typeof card.label === 'string' && card.label ? card.label : (typeof card.cardId === 'string' ? card.cardId : '?')
-      }))
-    : [];
+  const playedCards = normalizePlayedCards(source.playedCards);
   const lineage = buildBattleLoadCardChainPresentation({
     loadCard: source.loadCard ?? null,
     loadJanken: source.loadJanken ?? null,
@@ -659,7 +716,13 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   }
 
   const hud = createHud(document, shell);
-  let lastHudSnapshot = writeHud(document, hud, options.hud);
+  let lastCallerHudSource = hudSourceOf(options.hud);
+  let lastHudSnapshot = writeHud(document, hud, lastCallerHudSource);
+  let focusCommitCandidate = null;
+  let pendingLoadCard = null;
+  let pendingLoadJanken = null;
+  let pendingPlayedBaseline = [];
+  let loadLineageStatus = 'idle';
   const resourceHud = mountBattleCriticalResourceHud(global, { host: hud.right, snapshot: options.hud ?? {} });
 
   let planSlot = null;
@@ -716,12 +779,137 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   }
 
   let destroyed = false;
+  let focusObserver = null;
+
+  function setLoadLineageStatus(status, cardId = null) {
+    loadLineageStatus = status;
+    setData(hud.root, 'loadLineageStatus', status);
+    setData(hud.root, 'loadLineageCardId', cardId);
+    return status;
+  }
+
+  function clearPendingLoad() {
+    pendingLoadCard = null;
+    pendingLoadJanken = null;
+    pendingPlayedBaseline = [];
+  }
+
+  function composeHudSource(snapshot) {
+    const source = hudSourceOf(snapshot);
+    if (!pendingLoadCard) return source;
+
+    const callerLoadCardId = typeof source.loadCard?.cardId === 'string' ? source.loadCard.cardId.trim() : '';
+    if (callerLoadCardId) {
+      clearPendingLoad();
+      setLoadLineageStatus('caller-load-authority', callerLoadCardId);
+      return source;
+    }
+
+    const callerPlayed = normalizePlayedCards(source.playedCards);
+    if (samePlayedCardSequence(callerPlayed, pendingPlayedBaseline)) {
+      return { ...source, loadCard: pendingLoadCard, loadJanken: pendingLoadJanken };
+    }
+
+    const pendingCardId = pendingLoadCard.cardId;
+    try {
+      verifyBattleLoadCommitTransition({
+        before: {
+          loadCard: pendingLoadCard,
+          loadJanken: pendingLoadJanken,
+          playedCards: pendingPlayedBaseline
+        },
+        after: { loadCard: null, loadJanken: null, playedCards: callerPlayed }
+      });
+      clearPendingLoad();
+      setLoadLineageStatus('moved-to-played-chain', pendingCardId);
+    } catch {
+      clearPendingLoad();
+      setLoadLineageStatus('continuity-unresolved', pendingCardId);
+    }
+    return source;
+  }
+
   function renderHud(snapshot = {}) {
     if (destroyed) throw new Error('BATTLE_SCREEN_RUNTIME_DESTROYED');
-    lastHudSnapshot = writeHud(document, hud, snapshot);
-    resourceHud.sync(snapshot);
+    lastCallerHudSource = hudSourceOf(snapshot);
+    const effectiveSnapshot = composeHudSource(lastCallerHudSource);
+    lastHudSnapshot = writeHud(document, hud, effectiveSnapshot);
+    resourceHud.sync(lastCallerHudSource);
     return lastHudSnapshot;
   }
+
+  function syncLoadCardFocusDom() {
+    if (destroyed) return null;
+    const host = document.querySelector?.(FOCUS_RUNTIME_SELECTOR) ?? null;
+    if (!host) {
+      focusCommitCandidate = null;
+      if (!pendingLoadCard && loadLineageStatus === 'committing') setLoadLineageStatus('idle');
+      return null;
+    }
+
+    const surface = String(host.dataset?.surface ?? '');
+    if (!host.hidden && surface === 'COMMITTING') {
+      const candidate = readFocusCommittingCandidate(host);
+      if (!candidate) {
+        focusCommitCandidate = null;
+        if (!pendingLoadCard) setLoadLineageStatus('identity-unresolved');
+        return null;
+      }
+      if (!focusCommitCandidate || focusCommitCandidate.cardId !== candidate.cardId) {
+        focusCommitCandidate = Object.freeze({
+          ...candidate,
+          playedCards: Object.freeze(copyPlayedCards(lastHudSnapshot.playedCards))
+        });
+      }
+      setLoadLineageStatus('committing', candidate.cardId);
+      return focusCommitCandidate;
+    }
+
+    if (host.hidden && surface === 'COMMITTING' && focusCommitCandidate) {
+      const accepted = focusCommitCandidate;
+      focusCommitCandidate = null;
+      pendingLoadCard = Object.freeze({
+        cardId: accepted.cardId,
+        label: accepted.cardId,
+        ...(accepted.nativeSuit ? { nativeSuit: accepted.nativeSuit } : {}),
+        ...(accepted.printedNumber ? { printedNumber: accepted.printedNumber } : {})
+      });
+      pendingLoadJanken = accepted.jankenHand;
+      pendingPlayedBaseline = copyPlayedCards(accepted.playedCards);
+      setLoadLineageStatus('accepted-load', accepted.cardId);
+      const effectiveSnapshot = composeHudSource(lastCallerHudSource);
+      lastHudSnapshot = writeHud(document, hud, effectiveSnapshot);
+      return Object.freeze({ status: loadLineageStatus, cardId: accepted.cardId });
+    }
+
+    if (surface !== 'COMMITTING') {
+      focusCommitCandidate = null;
+      if (!pendingLoadCard && (loadLineageStatus === 'committing' || loadLineageStatus === 'identity-unresolved')) {
+        setLoadLineageStatus('idle');
+      }
+    }
+    return null;
+  }
+
+  setLoadLineageStatus('idle');
+  const FocusObserver = global?.MutationObserver;
+  const observationRoot = document.getElementById?.('battleScreen') ?? currentPlayerUiRoot ?? root ?? document.body ?? null;
+  if (typeof FocusObserver === 'function' && observationRoot) {
+    try {
+      focusObserver = new FocusObserver(() => {
+        try { syncLoadCardFocusDom(); } catch {}
+      });
+      focusObserver.observe(observationRoot, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        attributeFilter: ['data-surface', 'hidden']
+      });
+    } catch {
+      focusObserver = null;
+    }
+  }
+  syncLoadCardFocusDom();
 
   function render(model, hudSnapshot = null) {
     if (destroyed) throw new Error('BATTLE_SCREEN_RUNTIME_DESTROYED');
@@ -808,6 +996,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   function destroy() {
     if (destroyed) return false;
     destroyed = true;
+    try { focusObserver?.disconnect?.(); } catch {}
     currentPlayerUi?.destroy?.();
     if (fieldLandmark?.parentNode && typeof fieldLandmark.parentNode.removeChild === 'function') fieldLandmark.parentNode.removeChild(fieldLandmark);
     if (currentActionCue?.parentNode && typeof currentActionCue.parentNode.removeChild === 'function') currentActionCue.parentNode.removeChild(currentActionCue);
@@ -842,6 +1031,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     publicCardSurfaces: lanes.map(view => view.publicCard),
     shieldRails: lanes.map(view => view.shieldRail),
     renderHud,
+    syncLoadCardFocusDom,
     render,
     syncCurrentPlayerUi,
     destroy
@@ -861,6 +1051,8 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   currentPlayerUiComposition: 'LIVE_MOUNT_PRESENTATION_ONLY_NO_GAMEPLAY_AUTHORITY',
   hudUnresolvedTokens: Object.freeze({ score: 'X', hate: 'XXX', turn: 'XX', loadJanken: '?' }),
   loadCardIdentityAuthority: 'CALLER_CARD_ID_ONLY__JANKEN_SECONDARY__NO_ID_INFERENCE',
+  loadCardLiveProjectionSource: 'EXISTING_FOCUS_DOM_EXACT_PHYSICAL_CARD_ID_ACCEPTED_ONLY',
+  loadCardFocusDomMutation: false,
   existingAnchorPolicy: 'EXPLICIT_PHASE_GETS_RUNTIME_OVERLAY__ANCESTOR_NEVER_DECORATED',
   externalPhaseShellOwner: 'CALLER',
   planSurfaceOwner: 'CALLER',

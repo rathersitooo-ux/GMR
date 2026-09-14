@@ -1,0 +1,54 @@
+name: TEMP Battle BFI Other3 Expectation R2
+
+on:
+  push:
+    branches:
+      - sol/battle-bfi-other3-expectation-r2-20260914
+    paths:
+      - .github/workflows/zz-temp-battle-bfi-other3-expectation-r2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-check-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-bfi-other3-expectation-r2-20260914
+          fetch-depth: 0
+      - name: Apply exact current-authority expectation repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tests/browser-full-interaction.spec.mjs')
+          text = path.read_text(encoding='utf-8')
+          old = "  await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(4);"
+          new = "  await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(3);"
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'expected exactly one stale R19 count(4) anchor, got {count}')
+          if text.count(new) != 0:
+              raise SystemExit('current count(3) expectation already exists before patch')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          patched = path.read_text(encoding='utf-8')
+          if patched.count(old) != 0 or patched.count(new) != 1:
+              raise SystemExit('post-patch exact expectation check failed')
+          PY
+      - name: Verify bounded diff and commit test only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed=$(git diff --name-only)
+          test "$changed" = "tests/browser-full-interaction.spec.mjs"
+          git diff -- tests/browser-full-interaction.spec.mjs | grep -F "-  await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(4);"
+          git diff -- tests/browser-full-interaction.spec.mjs | grep -F "+  await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(3);"
+          git config user.name 'gameroad-bounded-writer'
+          git config user.email 'gameroad-bounded-writer@users.noreply.github.com'
+          git add tests/browser-full-interaction.spec.mjs
+          git commit -m 'Battle回帰: 公開相手表示を他3人期待へ追従'
+          git push origin HEAD:sol/battle-bfi-other3-expectation-r2-20260914

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CURRENT-ACTION-VISUAL-R10-20260914T1548-SOL-SA11",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CURRENT_ACTION_PUBLIC_3VIEW_REACCEPTANCE_R10",
+  "acquireKey": "BATTLE-CURRENT-ACTION-VISUAL-R10-20260914T1548-SOL-SA11",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R7_EXACT_PUBLIC_FAILURE_PLUS_R9_MERGE_7D7B58F",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R7_RUNNER_REUSE_PLUS_R9_FOCUSED_AND_REQUIRED_GATE_PASS",
+  "proceedToken": "PROCEED|BATTLE-CURRENT-ACTION-VISUAL-R10-20260914T1548-SOL-SA11|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|R7_RUNNER_REUSE_R9_PUBLIC_REACCEPT",
+  "authorizationBaseSha": "7d7b58f31cc2c96778db8463faeddbc632393866",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CURRENT_ACTION_PUBLIC_3VIEW_REACCEPTANCE_R10",
+  "leaseAcquireKey": "BATTLE-CURRENT-ACTION-VISUAL-R10-20260914T1548-SOL-SA11",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 15:48 JST",
+  "leaseUntilJst": "2026-09-14 16:48 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1459:L1459",
+  "leaseExactMutableResources": ".github/workflows/zz-temp-battle-current-action-visual-r10.yml; data/preaction-authorizations/BATTLE-CURRENT-ACTION-VISUAL-R10-20260914T1548-SOL-SA11.json",
+  "scope": [
+    ".github/workflows/zz-temp-battle-current-action-visual-r10.yml",
+    "data/preaction-authorizations/BATTLE-CURRENT-ACTION-VISUAL-R10-20260914T1548-SOL-SA11.json"
+  ],
+  "leaseScope": [
+    ".github/workflows/zz-temp-battle-current-action-visual-r10.yml",
+    "data/preaction-authorizations/BATTLE-CURRENT-ACTION-VISUAL-R10-20260914T1548-SOL-SA11.json"
+  ],
+  "solutionSignature": "current-action-public-three-viewport-reacceptance-post-r9",
+  "reuseDisposition": "REUSE_AS_IS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R7_EXISTING_EXACT_PUBLIC_THREE_VIEWPORT_RUNNER",
+  "solutionSearchEvidence": [
+    "R7 already exercises the exact Home to Setup to 2P to Battle route at 667x375, 1280x720, and 390x844 and binds public build_id before and after.",
+    "R10 reuses the R7 runner unchanged for interaction and overlap acceptance, changing only the bound merged SHA and adding a shipped layout-runtime source assertion for the R9 owner-layer repair.",
+    "R10 is evidence-only; all browser product code and build inputs are read-only and this branch will not be merged."
+  ]
+}

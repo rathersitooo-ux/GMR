@@ -21,6 +21,7 @@ const SELECTOR_CANDIDATES = Object.freeze({
   roulette: Object.freeze(['[data-battle-playable-hand-row-roulette-live="1"]']),
   targetConfirm: Object.freeze(['#targetBox']),
   secondaryActions: Object.freeze(['.battleRail']),
+  supportEntry: Object.freeze(['#detailsBtn']),
   legacyPhaseStrip: Object.freeze(['#phaseBar']),
   detailsDrawer: Object.freeze(['#battleDrawer']),
   partner: Object.freeze(['#partnerAdviceChatPresentation'])
@@ -37,6 +38,7 @@ const STYLE_TEXT = `
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="current-action"]{position:absolute!important;z-index:32!important;top:calc(var(--gr-ui-edge) + clamp(42px,9vh,72px))!important;left:var(--gr-ui-edge)!important;right:auto!important;bottom:auto!important;max-width:min(38vw,310px)!important;transform:none!important;margin:0!important;pointer-events:none!important}
 .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud{position:absolute!important;z-index:31!important;top:var(--gr-ui-edge)!important;left:50%!important;right:auto!important;bottom:auto!important;transform:translateX(-50%)!important;width:min(48vw,500px)!important;max-height:54px!important;overflow:hidden!important;padding:3px 6px!important;pointer-events:none!important}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{position:absolute!important;z-index:32!important;left:var(--gr-ui-edge)!important;right:auto!important;top:auto!important;bottom:var(--gr-ui-edge)!important;width:auto!important;max-width:min(22vw,170px)!important;pointer-events:none!important}
+.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="support-entry"]{position:absolute!important;z-index:33!important;left:var(--gr-ui-edge)!important;right:auto!important;top:auto!important;bottom:calc(var(--gr-ui-edge) + 46px)!important;min-width:44px!important;min-height:36px!important;width:auto!important;height:36px!important;max-height:36px!important;padding:5px 8px!important;margin:0!important;transform:none!important;box-sizing:border-box!important;font-size:9px!important;pointer-events:auto!important}
 .screen.battle[${ROOT_ATTR}="1"] .battleInfo{position:absolute!important;z-index:25!important;left:clamp(104px,16vw,190px)!important;right:calc(var(--gr-thumb-w) + var(--gr-ui-edge) + var(--gr-ui-gap))!important;top:auto!important;bottom:var(--gr-ui-edge)!important;height:var(--gr-bottom-h)!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(138px,28%)!important;align-items:end!important;gap:var(--gr-ui-gap)!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important;pointer-events:none!important}
 .screen.battle[${ROOT_ATTR}="1"] #hand{position:relative!important;inset:auto!important;min-width:0!important;max-width:none!important;height:100%!important;display:flex!important;align-items:flex-end!important;justify-content:center!important;gap:clamp(2px,.45vw,6px)!important;padding:0!important;overflow:visible!important;pointer-events:auto!important}
 .screen.battle[${ROOT_ATTR}="1"] .planBox{position:relative!important;inset:auto!important;width:100%!important;min-width:0!important;max-width:190px!important;justify-self:end!important;align-self:end!important;padding:5px!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important;transform:none!important;margin:0!important;box-sizing:border-box!important;pointer-events:auto!important}
@@ -50,7 +52,7 @@ const STYLE_TEXT = `
 .screen.battle[${ROOT_ATTR}="1"] .battleRail{position:absolute!important;z-index:34!important;top:var(--gr-ui-edge)!important;right:var(--gr-ui-edge)!important;left:auto!important;bottom:auto!important;width:auto!important;height:auto!important;max-width:min(28vw,340px)!important;max-height:44px!important;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:flex-end!important;gap:4px!important;padding:0!important;margin:0!important;transform:none!important;overflow-x:auto!important;overflow-y:hidden!important;white-space:nowrap!important;background:none!important;border:0!important;pointer-events:auto!important;scrollbar-width:none!important}
 .screen.battle[${ROOT_ATTR}="1"] .battleRail .railBtn{min-width:44px!important;min-height:36px!important;width:auto!important;height:36px!important;max-height:36px!important;padding:5px 8px!important;margin:0!important;transform:none!important;box-sizing:border-box!important;flex:0 0 auto!important;font-size:9px!important}
 .screen.battle[${ROOT_ATTR}="1"][data-gr-decision-active="false"] #quickCoil{display:none!important}
-.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner"]{position:absolute!important;z-index:30!important;left:var(--gr-ui-edge)!important;right:auto!important;bottom:calc(var(--gr-ui-edge) + 48px)!important;width:min(23vw,170px)!important;max-height:30vh!important;overflow:hidden!important}
+.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner"]{position:absolute!important;z-index:30!important;left:var(--gr-ui-edge)!important;right:auto!important;bottom:calc(var(--gr-ui-edge) + 92px)!important;width:min(23vw,170px)!important;max-height:30vh!important;overflow:hidden!important}
 .screen.battle[${ROOT_ATTR}="1"] #battleDrawer{z-index:60!important}
 .screen.battle[${ROOT_ATTR}="1"][data-gr-stale="true"] #hand,
 .screen.battle[${ROOT_ATTR}="1"][data-gr-reconnecting="true"] #hand,
@@ -73,6 +75,7 @@ const STYLE_TEXT = `
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="current-action"]{top:46px!important;max-width:32vw!important}
   .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud{width:min(44vw,400px)!important;max-height:44px!important;padding:2px 4px!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{max-width:104px!important;font-size:8px!important}
+  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="support-entry"]{min-height:32px!important;height:32px!important;max-height:32px!important;padding:3px 6px!important;font-size:8px!important}
   .screen.battle[${ROOT_ATTR}="1"] .battleInfo{left:104px!important;grid-template-columns:minmax(0,1fr) minmax(126px,27%)!important}
   .screen.battle[${ROOT_ATTR}="1"] .planBox{max-width:172px!important;padding:3px!important}
   .screen.battle[${ROOT_ATTR}="1"] .battleRail{top:144px!important;bottom:auto!important;max-width:168px!important}
@@ -86,6 +89,8 @@ const STYLE_TEXT = `
   .screen.battle[${ROOT_ATTR}="1"]{--gr-thumb-w:176px;--gr-thumb-h:172px;--gr-bottom-h:28vh}
   .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud{top:48px!important;width:76vw!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{max-width:30vw!important;bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap))!important}
+  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="support-entry"]{bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap) + 46px)!important}
+  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner"]{bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap) + 92px)!important}
   .screen.battle[${ROOT_ATTR}="1"] .battleInfo{left:1.5%!important;right:calc(var(--gr-thumb-w) + var(--gr-ui-edge) + var(--gr-ui-gap))!important;height:28vh!important;grid-template-columns:1fr!important;grid-template-rows:minmax(0,1fr) auto!important}
   .screen.battle[${ROOT_ATTR}="1"] .planBox{max-width:none!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}
   .screen.battle[${ROOT_ATTR}="1"] [data-battle-janken-slidepad="1"]{width:var(--gr-thumb-w)!important;height:var(--gr-thumb-h)!important;right:var(--gr-ui-edge)!important;bottom:var(--gr-ui-edge)!important}
@@ -198,7 +203,7 @@ export function mountBattleCurrentPlayerUi(global = globalThis, options = {}) {
     ['resources', 'resources'], ['battleScreenHud', 'top-hud'], ['public4p', 'four-player-public'],
     ['hand', 'ordinary-hand'], ['thumbActions', 'thumb-actions'], ['quickDecision', 'quick-decision'],
     ['jankenSlidePad', 'janken-slidepad'], ['roulette', 'conditional-roulette'],
-    ['targetConfirm', 'target-confirm'], ['secondaryActions', 'secondary-actions'],
+    ['targetConfirm', 'target-confirm'], ['secondaryActions', 'secondary-actions'], ['supportEntry', 'support-entry'],
     ['legacyPhaseStrip', 'legacy-phase-strip'], ['detailsDrawer', 'details-on-demand'], ['partner', 'partner']
   ];
   for (const [key, zone] of zones) if (surfaces[key]) writeAttr(attrs, surfaces[key], ZONE_ATTR, zone);
@@ -208,6 +213,7 @@ export function mountBattleCurrentPlayerUi(global = globalThis, options = {}) {
   const overlayParent = surfaces.battleMap ?? root;
   relocate(relocations, surfaces.resources, overlayParent);
   relocate(relocations, surfaces.partner, overlayParent);
+  relocate(relocations, surfaces.supportEntry, overlayParent);
 
   let destroyed = false;
   function sync(snapshot = {}) {
@@ -225,7 +231,7 @@ export function mountBattleCurrentPlayerUi(global = globalThis, options = {}) {
   }
 
   function inspect() {
-    const keys = ['battleMap', 'board', 'controlledCharacter', 'currentAction', 'resources', 'battleScreenHud', 'public4p', 'hand', 'thumbActions', 'jankenSlidePad', 'roulette', 'targetConfirm', 'secondaryActions', 'partner'];
+    const keys = ['battleMap', 'board', 'controlledCharacter', 'currentAction', 'resources', 'battleScreenHud', 'public4p', 'hand', 'thumbActions', 'jankenSlidePad', 'roulette', 'targetConfirm', 'secondaryActions', 'supportEntry', 'partner'];
     const geometry = Object.fromEntries(keys.map((key) => [key, rectOf(surfaces[key])]));
     const collisions = Object.freeze({
       handVsJanken: overlaps(geometry.hand, geometry.jankenSlidePad),
@@ -233,7 +239,10 @@ export function mountBattleCurrentPlayerUi(global = globalThis, options = {}) {
       rouletteVsJanken: overlaps(geometry.roulette, geometry.jankenSlidePad),
       targetVsJanken: overlaps(geometry.targetConfirm, geometry.jankenSlidePad),
       resourcesVsHand: overlaps(geometry.resources, geometry.hand),
-      partnerVsHand: overlaps(geometry.partner, geometry.hand)
+      partnerVsHand: overlaps(geometry.partner, geometry.hand),
+      supportEntryVsHand: overlaps(geometry.supportEntry, geometry.hand),
+      supportEntryVsResources: overlaps(geometry.supportEntry, geometry.resources),
+      supportEntryVsPartner: overlaps(geometry.supportEntry, geometry.partner)
     });
     return Object.freeze({
       schema: SCHEMA,
@@ -248,6 +257,7 @@ export function mountBattleCurrentPlayerUi(global = globalThis, options = {}) {
         currentAction: Boolean(surfaces.currentAction),
         resources: Boolean(surfaces.resources),
         partner: Boolean(surfaces.partner),
+        supportEntry: Boolean(surfaces.supportEntry),
         jankenSlidePad: Boolean(surfaces.jankenSlidePad),
         roulette: Boolean(surfaces.roulette)
       }),
@@ -280,14 +290,15 @@ export const BATTLE_CURRENT_PLAYER_UI_RUNTIME = Object.freeze({
   gameStateWrite: false,
   primaryViewport: '667x375',
   viewports: Object.freeze(['667x375', '1280x720', '390x844']),
-  hierarchy: Object.freeze(['world-board-controlled-character', 'current-action', 'ordinary-hand-active-input', 'top-hud-public-state', 'resources-partner', 'right-thumb-family', 'details-on-demand']),
+  hierarchy: Object.freeze(['world-board-controlled-character', 'current-action', 'ordinary-hand-active-input', 'top-hud-public-state', 'resources-partner-support-entry', 'right-thumb-family', 'details-on-demand']),
   liveConsumerPolicy: 'CURRENT_SELECTORS_WITH_LEGACY_FALLBACK_ONLY',
   thumbFamilyPolicy: 'RESERVE_EXISTING_JANKEN_SLIDEPAD_AND_CONDITIONAL_ROULETTE',
   quickPolicy: 'LOCAL_TO_EXPLICIT_SELF_DECISION_ONLY',
   roulettePolicy: 'CONDITIONAL_CALLER_AUTHORITY_ONLY',
   privacyPolicy: 'NO_OPPONENT_PRIVATE_COUNT_OR_EXACT_HATE_PROJECTION',
   legacyPhaseStripPolicy: 'HIDDEN_BY_CURRENT_COMPOSITION',
-  secondaryActionPolicy: 'COMPACT_HORIZONTAL_NOT_TALL_RIGHT_RAIL',
+  secondaryActionPolicy: 'COMPACT_RANGE_EXIT_RAIL_SUPPORT_ENTRY_LOWER_LEFT',
+  supportEntryPolicy: 'EXISTING_DETAILS_HISTORY_DECK_ENTRY_LOWER_LEFT',
   lowPerfPolicy: 'REMOVE_COMPOSITOR_BACKDROP_FILTER_ONLY',
   unresolvedGameplayPolicy: 'DO_NOT_INFER',
   productionHtmlMutationOwnedHere: false

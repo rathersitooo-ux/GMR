@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CURRENT-ACTION-VISUAL-R7-20260914T1325-SOL-SA11",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CURRENT_ACTION_PUBLIC_3VIEW_REACCEPTANCE_R7",
+  "acquireKey": "BATTLE-CURRENT-ACTION-VISUAL-R7-20260914T1325-SOL-SA11",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R4_RUN_34796200431_SUCCESS_PLUS_R6_MERGE_3939252",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R4_3VIEW_RUNNER_BF41D664_AND_PUBLIC_R6_DEPLOY_READBACK",
+  "proceedToken": "PROCEED|BATTLE-CURRENT-ACTION-VISUAL-R7-20260914T1325-SOL-SA11|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|R4_RUNNER_REUSE_R6_PUBLIC_REACCEPT",
+  "authorizationBaseSha": "3939252b72ed0f8d82e64e68561b27ff838d0092",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CURRENT_ACTION_PUBLIC_3VIEW_REACCEPTANCE_R7",
+  "leaseAcquireKey": "BATTLE-CURRENT-ACTION-VISUAL-R7-20260914T1325-SOL-SA11",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 13:25 JST",
+  "leaseUntilJst": "2026-09-14 14:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1424:L1424",
+  "leaseExactMutableResources": ".github/workflows/zz-temp-battle-current-action-visual-r7.yml; data/preaction-authorizations/BATTLE-CURRENT-ACTION-VISUAL-R7-20260914T1325-SOL-SA11.json",
+  "scope": [
+    ".github/workflows/zz-temp-battle-current-action-visual-r7.yml",
+    "data/preaction-authorizations/BATTLE-CURRENT-ACTION-VISUAL-R7-20260914T1325-SOL-SA11.json"
+  ],
+  "leaseScope": [
+    ".github/workflows/zz-temp-battle-current-action-visual-r7.yml",
+    "data/preaction-authorizations/BATTLE-CURRENT-ACTION-VISUAL-R7-20260914T1325-SOL-SA11.json"
+  ],
+  "solutionSignature": "current-action-public-three-viewport-reacceptance",
+  "reuseDisposition": "REUSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R4_SUCCESSFUL_THREE_VIEWPORT_RUNNER",
+  "solutionSearchEvidence": [
+    "R4 run 34796200431 already proved the same public-Battle route at 667x375, 1280x720, and 390x844.",
+    "R7 reuses that runner and only strengthens acceptance by making publicPlayerStrip overlap an automatic failure.",
+    "R7 is evidence-only and does not mutate product code."
+  ]
+}

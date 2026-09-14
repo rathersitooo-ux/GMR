@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-ADVICE-REPLYPAIR-R1-20260914T1526-SOL-SU13D",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_ADVICE_REPLY_PAIR_RUNTIME_CONSUMER_R1",
+  "acquireKey": "PARTNER-ADVICE-REPLYPAIR-R1-20260914T1526-SOL-SU13D",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_44120519_REPLY_PAIR_CORE_PRESENT_RUNTIME_CONSUMER_ABSENT_LEASE_ROW1450",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_CORE_TESTS_REQUIRE_EXACT_TWO_APPROVED_SOURCE_AND_REJECT_DELEGATION_TEXT",
+  "proceedToken": "PROCEED|PARTNER-ADVICE-REPLYPAIR-R1-20260914T1526-SOL-SU13D|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-advice-replypair-live-consumer-r1|focused-runtime-test|active-lease",
+  "authorizationBaseSha": "44120519c4225420b7e2e3001f63f8cb332e58a8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_ADVICE_REPLY_PAIR_RUNTIME_CONSUMER_R1",
+  "leaseAcquireKey": "PARTNER-ADVICE-REPLYPAIR-R1-20260914T1526-SOL-SU13D",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 15:26 JST",
+  "leaseUntilJst": "2026-09-14 16:26 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1450:L1450",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact fresh main 44120519c4225420b7e2e3001f63f8cb332e58a8; mutable browser/partner-advice-runtime-mount.mjs; tests/partner-advice-runtime-mount.test.mjs; deploy/cloudflare/tests/build.test.mjs partner-advice runtime provenance pin only if blob changes; own transient .github/workflows/zz-temp-partner-advice-replypair-r1.yml; own transient data/preaction-authorizations/PARTNER-ADVICE-REPLYPAIR-R1-20260914T1526-SOL-SU13D.json; own branch/PR/check/merge/readback. READ_ONLY browser/partner-advice-player-control-core.mjs; browser/GAMEROAD.html; approved Partner dialogue/persona/art sources; gameplay/rules/legality/target/save/economy/network; delegation/HATE authority.",
+  "solutionSignature": "PARTNER_ADVICE_SOURCE_GATED_EXACT_TWO_REPLY_LIVE_CONSUMER_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PLAYER_CONTROL_CORE_ALREADY_MAIN_RUNTIME_MOUNT_IS_EXISTING_VISIBLE_SURFACE",
+  "solutionSearchEvidence": [
+    "Current main already contains projectPartnerAdviceReplyPair in browser/partner-advice-player-control-core.mjs with exact-two approved-current source validation and delegation-label exclusion.",
+    "Current live partner-advice-runtime-mount.mjs does not import or consume that projection, so the remaining executable gap is consumer integration rather than new dialogue authority.",
+    "PR#1633 already unified the real Partner controls into #partnerAdviceChatPresentation; no second Partner panel or legacy partnerDecisionBox UI may be created.",
+    "PR#1654 already normalizes the real delegation control labels to まかせた！/まかせろ！; the conversation reply pair remains a separate atom and must not reuse those labels.",
+    "The consumer must fail closed when the source is absent, malformed, stale, unapproved, or not exactly two options; no reply wording/persona is invented by this slice.",
+    "Selection is a one-shot presentation handoff only; 2v2 ping, autoexecute, gameplay/rules/save/delegation/HATE authority remain untouched."
+  ],
+  "buildResidualReason": "partner-advice-runtime-mount.mjs is a public packaged artifact, so its package provenance pin is updated only if the runtime blob changes.",
+  "scope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-partner-advice-replypair-r1.yml"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-partner-advice-replypair-r1.yml"
+  ]
+}

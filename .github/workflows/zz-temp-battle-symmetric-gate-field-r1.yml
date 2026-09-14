@@ -4,9 +4,13 @@ on:
   push:
     branches:
       - sol/battle-symmetric-gate-field-r1-20260915
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
+  pull-requests: read
 
 jobs:
   patch-and-verify:
@@ -16,6 +20,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.head_ref || github.ref_name }}
       - name: Verify exact current base and PRE_ACTION
         shell: bash
         run: |

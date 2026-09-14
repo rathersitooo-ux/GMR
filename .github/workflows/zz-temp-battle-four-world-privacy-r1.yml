@@ -1,0 +1,110 @@
+name: TEMP NI22 Four World Privacy R1
+on:
+  push:
+    branches: [sol/battle-four-world-privacy-evidence-r1-20260914]
+permissions:
+  contents: read
+jobs:
+  exact-current-main-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify audited product bytes remain exact main
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=d3993fa124b9cf1d9f44f2dac1e784c5deea2f44
+          git cat-file -e "$BASE^{commit}"
+          git diff --exit-code "$BASE" -- \
+            browser/GAMEROAD.html \
+            browser/battle-controlled-character-4p-motion-director.mjs \
+            browser/battle-board-naki-4p-visual-binding.mjs \
+            browser/battle-four-public-live-bridge.mjs \
+            browser/battle-four-public-live-integration.mjs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Focused privacy and handoff regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test \
+            tests/battle-controlled-character-html-handoff.test.mjs \
+            tests/battle-board-naki-4p-visual-binding.test.mjs \
+            tests/battle-four-public-live-integration.test.mjs
+      - name: Install Chromium acceptance dependency
+        shell: bash
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Run actual Battle world/privacy acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ni22 visual-evidence/ni22 test-results/ni22
+          cat > .ni22/playwright.config.mjs <<'EOF'
+          import {defineConfig} from '@playwright/test';
+          export default defineConfig({
+            testDir:'.ni22', testMatch:'ni22.spec.mjs', timeout:90000,
+            expect:{timeout:15000}, workers:1, retries:0, reporter:[['line'],['json',{outputFile:'test-results/ni22/report.json'}]],
+            projects:[
+              {name:'short-landscape',use:{viewport:{width:667,height:375},hasTouch:true}},
+              {name:'landscape',use:{viewport:{width:1280,height:720},hasTouch:true}},
+              {name:'portrait-audit',use:{viewport:{width:390,height:844},hasTouch:true}}
+            ],
+            use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,trace:'retain-on-failure'},
+            webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1',url:'http://127.0.0.1:4173/browser/GAMEROAD.html',timeout:120000}
+          });
+          EOF
+          cat > .ni22/ni22.spec.mjs <<'EOF'
+          import {test,expect} from '@playwright/test';
+          import fs from 'node:fs'; import path from 'node:path';
+          const OUT=path.resolve('visual-evidence/ni22');
+          async function installDeck(page){return page.evaluate(()=>{const t=window.__GAMEROAD_TEST__,pub=new Set(t.deckPublic().filter(c=>c.slot==='main').map(c=>c.id)),ids=window.__CARD_DATA__.filter(c=>pub.has(c.id)&&/^(SP|HT|DI|CL)$/.test(c.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c=>c.id),royal=['SP_J','SP_Q','SP_K'],non=ids.filter(id=>!t.isRoyalCard(id));t.deckSetDraft([...non.slice(0,37),...royal],[]);const v=t.deckValidate(t.state.deckDraft,{forBattle:true});return v.ok?t.deckCommit():false})}
+          test('four world positions stay authoritative and private state stays out of world projection',async({page},testInfo)=>{
+            const r=await page.goto('/browser/GAMEROAD.html',{waitUntil:'commit'});expect(r?.ok()).toBeTruthy();
+            await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+            await expect.poll(()=>page.evaluate(()=>typeof window.__GAMEROAD_TEST__?.start==='function'&&typeof window.__GAMEROAD_TEST__?.deckPublic==='function'&&Array.isArray(window.__CARD_DATA__)&&typeof window.GAMEROAD_CREATE_DECK_MATCH_START_SNAPSHOT==='function')).toBeTruthy();
+            expect(await installDeck(page)).toBeTruthy();
+            const started=await page.evaluate(()=>!!window.__GAMEROAD_TEST__.start('2p','road_shield'));expect(started).toBeTruthy();
+            await expect(page.locator('section.battle.active')).toBeVisible();
+            await expect.poll(()=>page.evaluate(()=>window.__GAMEROAD_CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING__?.snapshot?.().active===true)).toBeTruthy();
+            const evidence=await page.evaluate(()=>{
+              const t=window.__GAMEROAD_TEST__,m=t.state.match;
+              const source=window.__GAMEROAD_CONTROLLED_CHARACTER_4P_SOURCE__?.();
+              const projection=window.__GAMEROAD_CONTROLLED_CHARACTER_4P_PROJECTION__?.();
+              const binding=window.__GAMEROAD_CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING__?.snapshot?.();
+              const markers=[...document.querySelectorAll('#boardPlayers .boardPlayerToken[data-player]')].map(e=>({participantId:e.dataset.player,left:e.style.left,top:e.style.top,ox:e.style.getPropertyValue('--ox'),oy:e.style.getPropertyValue('--oy')}));
+              const surfaces=[...document.querySelectorAll('#boardPlayers [data-board-controlled-character]')].map(e=>({participantId:e.dataset.participantId,characterId:e.dataset.characterId,positionKey:e.dataset.positionKey,datasetKeys:Object.keys(e.dataset).sort(),hidden:e.hidden,display:getComputedStyle(e).display}));
+              const forbiddenKey=/hand|deck|shield|secret|private|hole|loadCard|plan|lanes/i;
+              const sourceRows=source?.participants||[];
+              const projectionRows=projection||[];
+              const sourceForbidden=sourceRows.flatMap((row,i)=>Object.keys(row).filter(k=>forbiddenKey.test(k)).map(k=>`${i}:${k}`));
+              const projectionForbidden=projectionRows.flatMap((row,i)=>Object.keys(row).filter(k=>forbiddenKey.test(k)).map(k=>`${i}:${k}`));
+              const surfaceForbidden=surfaces.flatMap((row,i)=>row.datasetKeys.filter(k=>forbiddenKey.test(k)).map(k=>`${i}:${k}`));
+              const matchPositions=(m?.players||[]).map(p=>({participantId:p.id,positionKey:p.position,characterId:String(p.character||'')}));
+              return {screen:t.state.screen,source,projection,binding,markers,surfaces,sourceForbidden,projectionForbidden,surfaceForbidden,matchPositions};
+            });
+            expect(evidence.screen).toBe('battle');
+            expect(evidence.matchPositions).toHaveLength(4);expect(evidence.source?.participants).toHaveLength(4);expect(evidence.projection).toHaveLength(4);
+            expect(evidence.binding?.visibleCount).toBe(4);expect(evidence.markers).toHaveLength(4);expect(new Set(evidence.markers.map(x=>x.participantId)).size).toBe(4);
+            expect(new Set(evidence.source.participants.map(x=>x.participantId)).size).toBe(4);expect(new Set(evidence.source.participants.map(x=>x.characterId)).size).toBe(4);
+            for(const row of evidence.matchPositions){const s=evidence.source.participants.find(x=>x.participantId===row.participantId);expect(s?.positionKey).toBe(row.positionKey);expect(s?.characterId).toBe(row.characterId)}
+            expect(evidence.sourceForbidden).toEqual([]);expect(evidence.projectionForbidden).toEqual([]);expect(evidence.surfaceForbidden).toEqual([]);
+            for(const row of evidence.source.participants) expect(Object.keys(row).sort()).toEqual(['characterId','participantId','positionKey']);
+            const name=testInfo.project.name;fs.writeFileSync(path.join(OUT,`${name}.json`),JSON.stringify(evidence,null,2));await page.screenshot({path:path.join(OUT,`${name}.png`),fullPage:true,animations:'disabled'});
+          });
+          EOF
+          npx playwright test --config=.ni22/playwright.config.mjs --workers=1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ni22-four-world-privacy-${{ github.run_id }}
+          path: |
+            visual-evidence/ni22/
+            test-results/ni22/
+          if-no-files-found: warn
+          retention-days: 14

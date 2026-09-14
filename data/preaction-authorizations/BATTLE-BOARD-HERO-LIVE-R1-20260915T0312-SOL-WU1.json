@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-HERO-LIVE-R1-20260915T0312-SOL-WU1",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_BOARD_HERO_R6_ACTUAL_INTEGRATION_R1",
+  "acquireKey": "BATTLE-BOARD-HERO-LIVE-R1-20260915T0312-SOL-WU1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_FREE_BOARD_COMPOSITOR_OWNER_20260915T0312JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R6_BOUNDED_COMPOSITION_PLUS_CURRENT_RUNTIME_AND_FOCUSED_TEST_READBACK",
+  "proceedToken": "PROCEED|BATTLE-BOARD-HERO-LIVE-R1-20260915T0312-SOL-WU1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|board-protagonist-runtime|presentation-only|active-lease",
+  "authorizationBaseSha": "061c899df9df59d3b798034f097dbe9951946c6d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_BOARD_HERO_R6_ACTUAL_INTEGRATION_R1",
+  "leaseAcquireKey": "BATTLE-BOARD-HERO-LIVE-R1-20260915T0312-SOL-WU1",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 03:12 JST",
+  "leaseUntilJst": "2026-09-15 04:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1482:L1482",
+  "leaseExactMutableResources": "browser/battle-current-player-ui-runtime.mjs; tests/battle-current-player-ui-runtime.test.mjs; own transient data/preaction-authorizations/BATTLE-BOARD-HERO-LIVE-R1-20260915T0312-SOL-WU1.json; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; gameplay/rules/movement/target/Shield/GOAL/card identity/resources/save/economy/network/build.",
+  "solutionSignature": "BATTLE_EXISTING_WORLD_BOARD_PROTAGONIST_R6_PRESENTATION_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_R6_COMPOSITOR_PLUS_EXISTING_BATTLEMAP_BOARD_PLAYERS_CONTROLLED_CHARACTER",
+  "solutionSearchEvidence": [
+    "Current main 061c899df9df59d3b798034f097dbe9951946c6d already owns the R6 screen-space composition in battle-current-player-ui-runtime.mjs.",
+    "The same runtime locates #battleMap, #board, #boardPlayers and #battleRuntime, so the board can be made visually primary without introducing a second board or topology engine.",
+    "R6 667x375 candidate is bounded positive composition evidence only: board acreage and forward field flow may be adopted while shipping art and gameplay semantics remain unchanged.",
+    "GAMEROAD.html, movement, target legality, Shield, progression and GOAL authority remain READ_ONLY in this WorkUnit.",
+    "Acceptance is presentation-only: existing world entities remain the same DOM/runtime identities, 667x375 is primary, 390x844 is recomposed rather than uniformly scaled, and current hand/thumb/HUD/support consumers remain screen-space."
+  ],
+  "scope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs"
+  ]
+}

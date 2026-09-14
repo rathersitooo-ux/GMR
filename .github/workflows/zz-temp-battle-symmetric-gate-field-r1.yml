@@ -29,7 +29,7 @@ jobs:
           test "$(git rev-parse origin/main)" = "061c899df9df59d3b798034f097dbe9951946c6d"
           test "$(git merge-base HEAD origin/main)" = "061c899df9df59d3b798034f097dbe9951946c6d"
           test -f data/preaction-authorizations/BATTLE-SYMMETRIC-GATE-FIELD-R1-20260915T0320-SOL-FIELD.json
-          grep -Fq 'BOUNDARY_EDGE_ONLY' data/preaction-authorizations/BATTLE-SYMMETRIC-GATE-FIELD-R1-20260915T0320-SOL-FIELD.json
+          grep -Fq 'gate-edge-not-cell' data/preaction-authorizations/BATTLE-SYMMETRIC-GATE-FIELD-R1-20260915T0320-SOL-FIELD.json
       - name: Apply exact-anchor field patch
         run: python3 tools/temp-battle-symmetric-gate-field-r1.py
       - name: Static and syntax acceptance

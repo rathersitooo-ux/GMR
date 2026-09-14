@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-FOCUS-POINTER-COMMIT-SAFETY-R5-20260914T1027-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_FOCUS_POINTER_COMMIT_SAFETY_R5",
+  "acquireKey": "BATTLE-JANKEN-FOCUS-POINTER-COMMIT-SAFETY-R5-20260914T1027-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_D3993FA1_PLUS_FOCUS_CLICK_DIRECT_COMMIT_PLUS_UNIQUE_R5_LEASE_20260914T1027JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_RUNTIME_CLICK_HANDLER_PLUS_EXISTING_FOCUS_TEST_HARNESS",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-FOCUS-POINTER-COMMIT-SAFETY-R5-20260914T1027-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|pointer-commit-safety|existing-authority-only|active-lease",
+  "authorizationBaseSha": "d3993fa124b9cf1d9f44f2dac1e784c5deea2f44",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_FOCUS_POINTER_COMMIT_SAFETY_R5",
+  "leaseAcquireKey": "BATTLE-JANKEN-FOCUS-POINTER-COMMIT-SAFETY-R5-20260914T1027-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 10:27 JST",
+  "leaseUntilJst": "2026-09-14 11:27 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1416:N1416",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-janken-focus-pointer-safety-r5-20260914 from exact current main d3993fa124b9cf1d9f44f2dac1e784c5deea2f44; mutable browser/battle-janken-focus-runtime-surface.mjs; tests/battle-janken-focus-runtime-surface.test.mjs; own PRE_ACTION/branch/PR/check/readback only. READ_ONLY browser/GAMEROAD.html; browser/battle-janken-slidepad-runtime-mount.mjs; gameplay/rules/target/legality/route/Shield/Hand3/card identity/save/economy/network/build.",
+  "solutionSignature": "BATTLE_JANKEN_FOCUS_POINTER_COMMIT_SAFETY_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_FOCUS_RUNTIME_AND_TEST_HARNESS_LOCAL_ADAPT_NO_SECOND_CONTROLLER",
+  "solutionSearchEvidence": [
+    "Current focus runtime already owns final commit presentation and delegates direct runtime.commit(); a second controller would duplicate authority.",
+    "Exact current click handler still invokes commit() directly for the commit action, so the defect is local to input gesture authorization rather than gameplay semantics.",
+    "No existing pointer travel threshold convention was found in the relevant current runtime surface, so a small local threshold can remain a reversible implementation detail.",
+    "Keyboard/programmatic detail=0 click compatibility and direct runtime.commit() are preserved; only pointer-derived click authorization changes.",
+    "Gameplay, target, legality, route, Shield, Hand3, card identity, save, economy, network, build, GAMEROAD.html and SlidePad are outside mutable scope."
+  ],
+  "scope": [
+    "browser/battle-janken-focus-runtime-surface.mjs",
+    "tests/battle-janken-focus-runtime-surface.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-focus-runtime-surface.mjs",
+    "tests/battle-janken-focus-runtime-surface.test.mjs"
+  ]
+}

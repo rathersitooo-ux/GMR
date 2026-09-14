@@ -46,6 +46,12 @@ class FakeElement {
     if (selector === '[data-role="fanart-local-skin-overlay"]') {
       return walk(this, node => node !== this && node.dataset?.role === 'fanart-local-skin-overlay');
     }
+    if (selector === '[data-physical-card-id]') {
+      return walk(this, node => node !== this && typeof node.dataset?.physicalCardId === 'string');
+    }
+    if (selector === '[data-janken-role]') {
+      return walk(this, node => node !== this && typeof node.dataset?.jankenRole === 'string');
+    }
     return null;
   }
   get firstChild() {
@@ -76,6 +82,9 @@ class FakeDocument {
   querySelector(selector) {
     if (selector === '[data-gr-battle-screen-root]') {
       return walk(this.body, node => node.attributes?.has('data-gr-battle-screen-root'));
+    }
+    if (selector === '[data-gr-janken-focus-runtime]') {
+      return walk(this.body, node => node.attributes?.has('data-gr-janken-focus-runtime'));
     }
     return null;
   }
@@ -138,6 +147,7 @@ assert.equal(runtime.hud.hateValue.dataset.resolved, 'false');
 assert.equal(runtime.hud.turnValue.dataset.resolved, 'false');
 assert.equal(runtime.hud.loadValue.dataset.resolved, 'false');
 assert.equal(runtime.hud.chain.children.length, 0);
+assert.equal(runtime.hud.root.dataset.loadLineageStatus, 'idle');
 assert.ok(runtime.resourceHud);
 assert.equal(runtime.resourceHud.resourceAuthority, 'CALLER_ONLY');
 assert.equal(runtime.resourceHud.gameStateWrite, false);
@@ -211,6 +221,108 @@ assert.equal(runtimeStyle.textContent.includes('10000'), false);
 assert.equal(runtimeStyle.textContent.includes('1000 / 100 / 10 / 1'), false);
 assert.equal(runtimeStyle.textContent.includes('data-role="loser"'), false);
 assert.equal(runtimeStyle.textContent.includes('♥'), false);
+
+// X9: LOAD must preserve the exact physical card identity and move to the
+// already-played chain only after that same cardId is appended once.
+const hudPlayedCardIds = () => runtime.hud.chain.children
+  .map(node => node.dataset?.cardId)
+  .filter(Boolean);
+
+runtime.renderHud({
+  playedCards: [
+    { label: 'identity-missing-must-drop' },
+    { cardId: 'C1', label: 'CARD-1' }
+  ]
+});
+assert.deepEqual(hudPlayedCardIds(), ['C1']);
+assert.equal(runtime.hud.root.dataset.playedCardCount, '1');
+assert.equal(runtime.hud.chain.children.some(node => node.dataset?.cardId === 'played-1'), false);
+
+const played123 = [
+  { cardId: 'C1', label: 'CARD-1' },
+  { cardId: 'C2', label: 'CARD-2' },
+  { cardId: 'C3', label: 'CARD-3' }
+];
+runtime.renderHud({ playedCards: played123 });
+
+const focusHost = document.createElement('div');
+focusHost.setAttribute('data-gr-janken-focus-runtime', '');
+focusHost.dataset.surface = 'COMMITTING';
+const focusCardC4 = document.createElement('div');
+focusCardC4.dataset.physicalCardId = 'C4';
+focusCardC4.dataset.cardIdentitySource = 'PACKAGE_CARD_ID_ONLY';
+focusCardC4.dataset.nativeSuit = 'SP';
+focusCardC4.dataset.printedRank = '7';
+const focusRoleC4 = document.createElement('span');
+focusRoleC4.dataset.jankenRole = 'ROCK';
+focusCardC4.appendChild(focusRoleC4);
+focusHost.appendChild(focusCardC4);
+root.appendChild(focusHost);
+
+runtime.syncLoadCardFocusDom();
+assert.equal(runtime.hud.root.dataset.loadLineageStatus, 'committing');
+assert.notEqual(runtime.hud.loadCard.dataset.cardId, 'C4');
+
+focusHost.hidden = true;
+focusHost.replaceChildren();
+runtime.syncLoadCardFocusDom();
+assert.equal(runtime.hud.root.dataset.loadLineageStatus, 'accepted-load');
+assert.equal(runtime.hud.loadCard.dataset.cardId, 'C4');
+assert.equal(runtime.hud.loadCard.dataset.nativeSuit, 'SP');
+assert.equal(runtime.hud.loadCard.dataset.displayNumber, '7');
+assert.equal(runtime.hud.loadValue.textContent, 'グー');
+
+runtime.renderHud({ playedCards: played123 });
+assert.equal(runtime.hud.loadCard.dataset.cardId, 'C4');
+assert.deepEqual(hudPlayedCardIds(), ['C1', 'C2', 'C3']);
+
+const played1234 = [...played123, { cardId: 'C4', label: 'CARD-4' }];
+runtime.renderHud({ playedCards: played1234 });
+assert.equal(runtime.hud.loadCard.hidden, true);
+assert.deepEqual(hudPlayedCardIds(), ['C1', 'C2', 'C3', 'C4']);
+assert.equal(runtime.hud.root.dataset.loadLineageStatus, 'moved-to-played-chain');
+assert.equal(runtime.hud.root.dataset.loadLineageCardId, 'C4');
+
+focusHost.hidden = false;
+focusHost.dataset.surface = 'COMMITTING';
+const focusCardC5 = document.createElement('div');
+focusCardC5.dataset.physicalCardId = 'C5';
+focusCardC5.dataset.cardIdentitySource = 'GLOBAL_CARD_DATA_EXACT_ID';
+const focusRoleC5 = document.createElement('span');
+focusRoleC5.dataset.jankenRole = 'PAPER';
+focusCardC5.appendChild(focusRoleC5);
+focusHost.appendChild(focusCardC5);
+runtime.syncLoadCardFocusDom();
+focusHost.hidden = true;
+focusHost.replaceChildren();
+runtime.syncLoadCardFocusDom();
+assert.equal(runtime.hud.loadCard.dataset.cardId, 'C5');
+
+const playedWrong = [...played1234, { cardId: 'C6', label: 'CARD-6' }];
+runtime.renderHud({ playedCards: playedWrong });
+assert.equal(runtime.hud.loadCard.hidden, true);
+assert.deepEqual(hudPlayedCardIds(), ['C1', 'C2', 'C3', 'C4', 'C6']);
+assert.equal(hudPlayedCardIds().includes('C5'), false);
+assert.equal(runtime.hud.root.dataset.loadLineageStatus, 'continuity-unresolved');
+assert.equal(runtime.hud.root.dataset.loadLineageCardId, 'C5');
+
+focusHost.hidden = false;
+focusHost.dataset.surface = 'COMMITTING';
+const focusCardC7 = document.createElement('div');
+focusCardC7.dataset.physicalCardId = 'C7';
+focusCardC7.dataset.cardIdentitySource = 'PACKAGE_CARD_ID_ONLY';
+focusHost.appendChild(focusCardC7);
+runtime.syncLoadCardFocusDom();
+assert.equal(runtime.hud.root.dataset.loadLineageStatus, 'committing');
+focusHost.dataset.surface = 'LOAD_FOCUS';
+focusHost.replaceChildren();
+runtime.syncLoadCardFocusDom();
+assert.equal(runtime.hud.root.dataset.loadLineageStatus, 'idle');
+assert.notEqual(runtime.hud.loadCard.dataset.cardId, 'C7');
+
+assert.equal(BATTLE_SCREEN_RUNTIME.loadCardLiveProjectionSource, 'EXISTING_FOCUS_DOM_EXACT_PHYSICAL_CARD_ID_ACCEPTED_ONLY');
+assert.equal(BATTLE_SCREEN_RUNTIME.loadCardFocusDomMutation, false);
+
 
 const idle = createBattleScreenModel({ participants });
 runtime.render(idle);

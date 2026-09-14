@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BFI-OTHER3-EXPECTATION-R3-20260914T1653-SOL-RO43",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_INTEGRATED_ALL_STATE_REGRESSION_OTHER3_EXPECTATION_R3",
+  "acquireKey": "BATTLE-BFI-OTHER3-EXPECTATION-R3-20260914T1653-SOL-RO43",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_280E248_PLUS_PUBLIC_RUN_34815431027_PLUS_R2_EXACT_THREE_STALE_ASSERTION_DIAGNOSIS_PLUS_R3_LEASE_20260914T1653JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R2_READ_ONLY_DIAGNOSIS_PROVED_EXACT_THREE_PUBLICPLAYERSTRIP_COUNT4_ANCHORS_AND_BOARDPLAYERTOKEN_REMAINS_FOUR",
+  "proceedToken": "PROCEED|BATTLE-BFI-OTHER3-EXPECTATION-R3-20260914T1653-SOL-RO43|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|test-harness-other3|existing-authority-only|active-lease",
+  "authorizationBaseSha": "280e248def71a08679e3a262db0164b09ca43986",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_INTEGRATED_ALL_STATE_REGRESSION_OTHER3_EXPECTATION_R3",
+  "leaseAcquireKey": "BATTLE-BFI-OTHER3-EXPECTATION-R3-20260914T1653-SOL-RO43",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 16:53 JST",
+  "leaseUntilJst": "2026-09-14 17:53 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1461:N1461",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main 280e248def71a08679e3a262db0164b09ca43986; mutable tests/browser-full-interaction.spec.mjs; transient .github/workflows/zz-temp-battle-bfi-other3-expectation-r3.yml; own transient data/preaction-authorizations/BATTLE-BFI-OTHER3-EXPECTATION-R3-20260914T1653-SOL-RO43.json; own branch/run/artifact/readback and PR only if durable test repair is justified. READ_ONLY browser/GAMEROAD.html and all product/runtime/gameplay/rules/state/save/economy/network/build.",
+  "solutionSignature": "BATTLE_BFI_PUBLIC_PEER_OTHER3_EXPECTATION_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_BFI_R19_REUSED_WITH_ONLY_VIEWER_EXCLUDED_PUBLIC_PEER_EXPECTATION_REPAIR",
+  "solutionSearchEvidence": [
+    "Exact-current public build 280e248 reaches Battle on desktop 1280x720 and phone 390x844; current BFI stops at publicPlayerStrip count(4) while the player-visible strip contains exactly the other three peers.",
+    "R2 diagnostics proved exactly three stale publicPlayerStrip count(4) assertions in the existing full-interaction spec, at the 2v2 entry, R13 Honey entry and R19 Honey entry paths.",
+    "The world boardPlayerToken expectation remains four participants and is not part of this repair; viewer self is preserved in world/controlled-character identity and excluded only from the peer strip.",
+    "No product runtime, gameplay, rule, target, legality, card identity, save, economy, network, build or GAMEROAD.html mutation is required.",
+    "After the bounded test-only repair, current product evidence must remain bound to public build_id 280e248def71a08679e3a262db0164b09ca43986; failures after this assertion become evidence rather than grounds to invent semantics."
+  ],
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/zz-temp-battle-bfi-other3-expectation-r3.yml"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/zz-temp-battle-bfi-other3-expectation-r3.yml"
+  ]
+}

@@ -109,9 +109,10 @@ function fixture() {
   const roulette = new FakeElement('div', rect(470, 158, 190, 44));
   const targetConfirm = new FakeElement('div', rect(230, 178, 210, 96));
   const secondaryActions = new FakeElement('div', rect(505, 8, 154, 36));
+  const supportEntry = new FakeElement('button', rect(8, 285, 44, 36));
   const legacyPhaseStrip = new FakeElement('div', rect(0, 48, 667, 20));
   const detailsDrawer = new FakeElement('aside', rect(80, 40, 507, 294));
-  const partner = new FakeElement('aside', rect(8, 222, 96, 98));
+  const partner = new FakeElement('aside', rect(8, 177, 96, 98));
 
   root.appendChild(battleMap);
   battleMap.appendChild(board);
@@ -130,6 +131,7 @@ function fixture() {
   battleMap.appendChild(roulette);
   battleMap.appendChild(targetConfirm);
   battleMap.appendChild(secondaryActions);
+  secondaryActions.appendChild(supportEntry);
   battleMap.appendChild(legacyPhaseStrip);
   battleMap.appendChild(detailsDrawer);
   root.appendChild(partner);
@@ -138,7 +140,7 @@ function fixture() {
   const nodes = {
     battleMap, board, boardPlayers, controlledCharacter, currentAction, resources, battleScreenHud,
     public4p, hand, battleInfo, thumbActions, quickDecision, quickCoil, jankenSlidePad,
-    roulette, targetConfirm, secondaryActions, legacyPhaseStrip, detailsDrawer, partner
+    roulette, targetConfirm, secondaryActions, supportEntry, legacyPhaseStrip, detailsDrawer, partner
   };
   for (const [key, selectors] of Object.entries(BATTLE_CURRENT_PLAYER_UI_SELECTORS)) {
     const node = nodes[key];
@@ -159,11 +161,14 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.resources[0], '[data-battle-crit
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.partner[0], '#partnerAdviceChatPresentation');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.jankenSlidePad[0], '[data-battle-janken-slidepad="1"]');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.roulette[0], '[data-battle-playable-hand-row-roulette-live="1"]');
+assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.supportEntry[0], '#detailsBtn');
+assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.supportEntryPolicy, 'EXISTING_DETAILS_HISTORY_DECK_ENTRY_LOWER_LEFT');
 
 {
   const { document, root, nodes } = fixture();
   const originalResourceParent = nodes.resources.parentNode;
   const originalPartnerParent = nodes.partner.parentNode;
+  const originalSupportEntryParent = nodes.supportEntry.parentNode;
   const runtime = mountBattleCurrentPlayerUi({ document }, {
     initialState: {
       decisionActive: false,
@@ -186,15 +191,19 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.roulette[0], '[data-battle-playa
   assert.equal(nodes.currentAction.getAttribute('data-gr-current-ui-zone'), 'current-action');
   assert.equal(nodes.resources.getAttribute('data-gr-current-ui-zone'), 'resources');
   assert.equal(nodes.partner.getAttribute('data-gr-current-ui-zone'), 'partner');
+  assert.equal(nodes.supportEntry.getAttribute('data-gr-current-ui-zone'), 'support-entry');
   assert.equal(nodes.jankenSlidePad.getAttribute('data-gr-current-ui-zone'), 'janken-slidepad');
   assert.equal(nodes.roulette.getAttribute('data-gr-current-ui-zone'), 'conditional-roulette');
   assert.equal(nodes.legacyPhaseStrip.getAttribute('data-gr-current-ui-disposition'), 'legacy-hidden');
   assert.equal(nodes.detailsDrawer.getAttribute('data-gr-current-ui-disposition'), 'on-demand');
   assert.equal(nodes.resources.parentNode, nodes.battleMap);
   assert.equal(nodes.partner.parentNode, nodes.battleMap);
+  assert.equal(nodes.supportEntry.parentNode, nodes.battleMap);
+  assert.equal(nodes.secondaryActions.children.includes(nodes.supportEntry), false);
   assert.equal(document.head.children.length, 1);
   assert.match(document.head.children[0].textContent, /data-battle-janken-slidepad/);
   assert.match(document.head.children[0].textContent, /data-battle-playable-hand-row-roulette-live/);
+  assert.match(document.head.children[0].textContent, /data-gr-current-ui-zone="support-entry"/);
   assert.match(document.head.children[0].textContent, /backdrop-filter:none/);
   const styleText = document.head.children[0].textContent;
   const roulettePlacementRules = [...styleText.matchAll(/\[data-battle-playable-hand-row-roulette-live="1"\]\{([^}]*)\}/g)]
@@ -203,10 +212,14 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.roulette[0], '[data-battle-playa
   for (const rule of roulettePlacementRules) {
     assert.doesNotMatch(rule, /(?:^|;)(?:left|right|top|bottom|transform-origin):/);
   }
+  assert.match(styleText, /\[data-gr-current-ui-zone="support-entry"\]\{[^}]*left:var\(--gr-ui-edge\)!important[^}]*bottom:calc\(var\(--gr-ui-edge\) \+ 46px\)!important/);
+  assert.match(styleText, /\[data-gr-current-ui-zone="partner"\]\{[^}]*bottom:calc\(var\(--gr-ui-edge\) \+ 92px\)!important/);
   assert.match(styleText, /\.planBox\{[^}]*transform:none!important/);
   assert.match(styleText, /\.battleRail\{[^}]*max-width:min\(28vw,340px\)!important[^}]*transform:none!important/);
   assert.match(styleText, /data-battle-janken-slidepad=\"1\"\]\{[^}]*width:var\(--gr-thumb-w\)!important[^}]*height:var\(--gr-thumb-h\)!important/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\.battleInfo\{[^}]*right:calc\(var\(--gr-thumb-w\) \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\)\)!important/);
+  assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="support-entry"\]\{[^}]*bottom:calc\(28vh \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\) \+ 46px\)!important/);
+  assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="partner"\]\{[^}]*bottom:calc\(28vh \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\) \+ 92px\)!important/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\.battleRail\{[^}]*top:118px!important[^}]*max-width:none!important/);
   assert.equal(styleText.includes('.battleRail{top:144px!important;bottom:auto!important;max-width:168px!important}'), true);
 
@@ -216,6 +229,7 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.roulette[0], '[data-battle-playa
     currentAction: true,
     resources: true,
     partner: true,
+    supportEntry: true,
     jankenSlidePad: true,
     roulette: true
   });
@@ -225,6 +239,9 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.roulette[0], '[data-battle-playa
   assert.equal(snapshot.collisions.targetVsJanken, false);
   assert.equal(snapshot.collisions.resourcesVsHand, false);
   assert.equal(snapshot.collisions.partnerVsHand, false);
+  assert.equal(snapshot.collisions.supportEntryVsHand, false);
+  assert.equal(snapshot.collisions.supportEntryVsResources, false);
+  assert.equal(snapshot.collisions.supportEntryVsPartner, false);
   assert.equal(root.dataset.grRouletteEnabled, 'true');
   assert.equal(root.dataset.grReducedMotion, 'true');
   assert.equal(root.dataset.grLowPerf, 'true');
@@ -240,6 +257,7 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.roulette[0], '[data-battle-playa
   assert.equal(root.hasAttribute('data-gr-current-player-ui'), false);
   assert.equal(nodes.resources.parentNode, originalResourceParent);
   assert.equal(nodes.partner.parentNode, originalPartnerParent);
+  assert.equal(nodes.supportEntry.parentNode, originalSupportEntryParent);
   assert.equal(document.head.children.length, 0);
 }
 

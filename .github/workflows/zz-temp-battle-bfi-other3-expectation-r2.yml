@@ -18,7 +18,7 @@ jobs:
         with:
           ref: sol/battle-bfi-other3-expectation-r2-20260914
           fetch-depth: 0
-      - name: Print exact stale anchors with context only
+      - name: Print three peer-strip expectations with context only
         shell: bash
         run: |
           set -euo pipefail
@@ -29,11 +29,11 @@ jobs:
           needle = "await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(4);"
           hits = [i for i, line in enumerate(lines) if needle in line]
           print('HITS', [i + 1 for i in hits])
-          if len(hits) != 2:
-              raise SystemExit(f'expected 2 anchors after R2 fail-close, got {len(hits)}')
+          if len(hits) != 3:
+              raise SystemExit(f'expected 3 semantic anchors, got {len(hits)}')
           for i in hits:
-              lo = max(0, i - 12)
-              hi = min(len(lines), i + 13)
+              lo = max(0, i - 10)
+              hi = min(len(lines), i + 11)
               print(f'--- CONTEXT {i+1} lines {lo+1}-{hi} ---')
               for n in range(lo, hi):
                   print(f'{n+1}: {lines[n]}')

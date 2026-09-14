@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BFI-PHASE-RACE-R5-20260914T2122-SOL-RO43",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_INTEGRATED_ALL_STATE_REGRESSION_PHASE_RACE_R5",
+  "acquireKey": "BATTLE-BFI-PHASE-RACE-R5-20260914T2122-SOL-RO43",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_PUBLIC_R19_RUN34840960407_EXACT_BUILD_2798CD9A_TRACE_TOCTOU",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "DESKTOP_TRACE_COUNT_VISIBLE_THEN_PHASE_SWITCH_THEN_ISENABLED_WAIT_PLUS_667_FULL_PASS",
+  "proceedToken": "PROCEED|BATTLE-BFI-PHASE-RACE-R5-20260914T2122-SOL-RO43|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|bfi-phase-race|test-only|active-lease",
+  "authorizationBaseSha": "2798cd9a3bd517e1c973ff9c189e2f908f725f75",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_INTEGRATED_ALL_STATE_REGRESSION_PHASE_RACE_R5",
+  "leaseAcquireKey": "BATTLE-BFI-PHASE-RACE-R5-20260914T2122-SOL-RO43",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 21:22 JST",
+  "leaseUntilJst": "2026-09-14 22:22 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1476:L1476",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-bfi-phase-race-r5-20260914 from exact current main 2798cd9a3bd517e1c973ff9c189e2f908f725f75; mutable tests/browser-full-interaction.spec.mjs; transient tools/temp-battle-bfi-phase-race-r5.py; transient .github/workflows/zz-temp-battle-bfi-phase-race-r5.yml; own transient data/preaction-authorizations/BATTLE-BFI-PHASE-RACE-R5-20260914T2122-SOL-RO43.json only. browser/GAMEROAD.html and all product/runtime/gameplay/rules/state/save/economy/network/build READ_ONLY.",
+  "solutionSignature": "BATTLE_BFI_VOLATILE_VISIBLE_LOCATOR_ATOMIC_PROBE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_BFI_EXISTING_R19_PLUS_EXISTING_DOM_VISIBILITY_PATTERN",
+  "solutionSearchEvidence": [
+    "Exact-current public Browser Full Interaction run 34840960407 is build-bound to deployed main 2798cd9a3bd517e1c973ff9c189e2f908f725f75.",
+    "The short-landscape 667x375 project completes the full visible four-player Honey Hunt route, so the product route itself is viable on the same build.",
+    "Desktop trace proves #roadSelect:visible count() returns 1 immediately before the UI transitions into target selection; the following isEnabled() then auto-waits on a locator that no longer matches :visible until the 240s test timeout.",
+    "Failure screenshots for desktop and phone show live round-2 target selection with the visible 攻撃先を決定 control, so this slice repairs the test harness race rather than product progression.",
+    "Existing submitVisiblePlan already uses stable #roadSelect internally; the repair will use an atomic stable-node visible+enabled probe and will not alter Battle product/runtime/gameplay semantics."
+  ],
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/zz-temp-battle-bfi-phase-race-r5.yml",
+    "tools/temp-battle-bfi-phase-race-r5.py"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/zz-temp-battle-bfi-phase-race-r5.yml",
+    "tools/temp-battle-bfi-phase-race-r5.py"
+  ]
+}

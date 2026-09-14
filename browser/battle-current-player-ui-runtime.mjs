@@ -82,6 +82,7 @@ const STYLE_TEXT = `
   .screen.battle[${ROOT_ATTR}="1"] #targetBox{width:min(30vw,230px)!important}
 }
 @media(max-width:520px) and (orientation:portrait){
+  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="current-action"]{transform:translateY(6px)!important}
   .screen.battle[${ROOT_ATTR}="1"]{--gr-thumb-w:176px;--gr-thumb-h:172px;--gr-bottom-h:28vh}
   .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud{top:48px!important;width:76vw!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{max-width:30vw!important;bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap))!important}

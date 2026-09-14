@@ -1,0 +1,197 @@
+name: TEMP Battle BFI Phase Race R6
+
+on:
+  push:
+    branches:
+      - sol/battle-bfi-phase-race-r6-20260914
+    paths:
+      - .github/workflows/zz-temp-battle-bfi-phase-race-r6.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-public-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      BASE_SHA: edd12b9a9ac59801cc667685eb6801b4cfd3213e
+      GAMEROAD_PUBLIC_BASE_URL: https://gameroad-browser-r5.pages.dev
+      PREACTION: data/preaction-authorizations/BATTLE-BFI-PHASE-RACE-R6-20260914T2128-SOL-RO43.json
+      HELPER: tools/temp-battle-bfi-phase-race-r6.py
+      WORKFLOW: .github/workflows/zz-temp-battle-bfi-phase-race-r6.yml
+      TEST: tests/browser-full-interaction.spec.mjs
+    steps:
+      - name: Checkout authorized R6 branch
+        uses: actions/checkout@v4
+        with:
+          ref: sol/battle-bfi-phase-race-r6-20260914
+          fetch-depth: 0
+
+      - name: Verify PRE_ACTION first commit and product-read-only fence
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git merge-base "$BASE_SHA" HEAD)" = "$BASE_SHA"
+          FIRST="$(git rev-list --reverse "$BASE_SHA..HEAD" | head -n1)"
+          test -n "$FIRST"
+          git cat-file -e "$FIRST:$PREACTION"
+          test "$(git log --format=%H -- "$PREACTION" | tail -n1)" = "$FIRST"
+          git diff --exit-code "$BASE_SHA" -- browser/GAMEROAD.html
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('data/preaction-authorizations/BATTLE-BFI-PHASE-RACE-R6-20260914T2128-SOL-RO43.json').read_text(encoding='utf-8'))
+          assert data['schemaVersion'] == 'gameroad-preaction-v3'
+          assert data['authorizationBaseSha'] == 'edd12b9a9ac59801cc667685eb6801b4cfd3213e'
+          assert data['leaseSnapshotReadbackRef'] == 'CURRENT_ACTIVE_LEASES!A1477:L1477'
+          assert data['leaseAcquireKey'] == 'BATTLE-BFI-PHASE-RACE-R6-20260914T2128-SOL-RO43'
+          PY
+
+      - name: Apply bounded test-only phase-race repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 "$HELPER"
+          node --check "$TEST"
+          git diff --check
+          test "$(git diff --name-only)" = "$TEST"
+          test "$(grep -cF "async function isCurrentlyVisibleAndEnabled(locator)" "$TEST")" -eq 1
+          test "$(grep -cF "if (await isCurrentlyVisibleAndEnabled(roadSelect)) {" "$TEST")" -eq 2
+          test "$(grep -cF "battle.locator('#roadSelect:visible')" "$TEST" || true)" -eq 0
+          git diff --exit-code "$BASE_SHA" -- browser/GAMEROAD.html
+
+      - name: Commit only durable test repair and remove transients
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-bounded-writer'
+          git config user.email 'gameroad-bounded-writer@users.noreply.github.com'
+          git add "$TEST"
+          git rm "$HELPER" "$WORKFLOW" "$PREACTION"
+          git commit -m 'test: make BFI phase probe atomic'
+          test "$(git diff --name-only "$BASE_SHA..HEAD")" = "$TEST"
+          git diff --check "$BASE_SHA..HEAD"
+          git diff --exit-code "$BASE_SHA" -- browser/GAMEROAD.html
+          git push origin HEAD:sol/battle-bfi-phase-race-r6-20260914
+
+      - name: Bind public origin to observed compatible build
+        id: public_manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public-origin-metadata
+          MANIFEST='public-origin-metadata/gameroad-version.json'
+          curl --fail --silent --show-error --location \
+            --header 'Accept-Encoding: identity' \
+            --retry 4 --retry-delay 2 --retry-connrefused \
+            --max-time 30 \
+            --output "$MANIFEST" \
+            "${GAMEROAD_PUBLIC_BASE_URL}/gameroad-version.json"
+          OBSERVED_BUILD_ID="$(MANIFEST="$MANIFEST" node -e "const fs=require('node:fs');const m=JSON.parse(fs.readFileSync(process.env.MANIFEST,'utf8'));if(!m.build_id)process.exit(2);process.stdout.write(String(m.build_id));")"
+          git fetch origin main
+          git cat-file -e "${OBSERVED_BUILD_ID}^{commit}"
+          git merge-base --is-ancestor "$BASE_SHA" "$OBSERVED_BUILD_ID"
+          git diff --quiet "$BASE_SHA" "$OBSERVED_BUILD_ID" -- "$TEST" playwright.full-interaction.config.mjs
+          echo "observed_build_id=${OBSERVED_BUILD_ID}" >> "$GITHUB_OUTPUT"
+          printf 'harness_sha=%s\nauthorization_base_sha=%s\nobserved_product_build_id=%s\npublic_origin=%s\nproduct_mutation=0\ncompatibility_fence=observed_descendant_and_bfi_test_config_unchanged\n' \
+            "$(git rev-parse HEAD)" "$BASE_SHA" "$OBSERVED_BUILD_ID" "$GAMEROAD_PUBLIC_BASE_URL" \
+            > public-origin-metadata/binding.txt
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+
+      - name: Prepare exact-public R19 runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .r6-public
+          SOURCE="$TEST"
+          TARGET='.r6-public/browser-full-interaction.spec.mjs'
+          test "$(grep -oF "'/browser/GAMEROAD.html'" "$SOURCE" | wc -l | tr -d ' ')" -ge 1
+          sed "s#'/browser/GAMEROAD.html'#'/'#g" "$SOURCE" > "$TARGET"
+          ! grep -Fq "'/browser/GAMEROAD.html'" "$TARGET"
+          cat > .r6-public/playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          import baseConfig from '../playwright.full-interaction.config.mjs';
+
+          const publicProjects = (baseConfig.projects ?? [])
+            .filter((project) => !project.grep)
+            .map((project) => ({ name: project.name, use: project.use }));
+
+          export default defineConfig({
+            testDir: '.',
+            testMatch: 'browser-full-interaction.spec.mjs',
+            grep: /R19 reaches Result from visible four-player Honey Hunt and returns Home/,
+            timeout: 240_000,
+            expect: { timeout: 7_000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            outputDir: '../test-results/a-r6-public-origin',
+            reporter: [
+              ['line'],
+              ['json', { outputFile: '../test-results/a-r6-public-origin/public-origin-report.json' }],
+            ],
+            use: {
+              ...baseConfig.use,
+              baseURL: process.env.GAMEROAD_PUBLIC_BASE_URL,
+              trace: 'retain-on-failure',
+              screenshot: 'on',
+              video: 'off',
+            },
+            projects: publicProjects,
+          });
+          EOF
+
+      - name: Run R19 on observed public build across existing viewports
+        id: r19
+        shell: bash
+        run: |
+          set +e
+          npx playwright test --config=.r6-public/playwright.config.mjs --workers=1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Record public evidence result
+        if: always()
+        shell: bash
+        env:
+          OBSERVED_BUILD_ID: ${{ steps.public_manifest.outputs.observed_build_id }}
+          R19_EXIT_CODE: ${{ steps.r19.outputs.exit_code }}
+        run: |
+          set -euo pipefail
+          mkdir -p public-origin-metadata
+          printf 'run_id=%s\nharness_sha=%s\nauthorization_base_sha=%s\nobserved_product_build_id=%s\npublic_origin=%s\nr19_exit_code=%s\nproduct_mutation=0\n' \
+            "$GITHUB_RUN_ID" "$(git rev-parse HEAD)" "$BASE_SHA" "${OBSERVED_BUILD_ID:-}" "$GAMEROAD_PUBLIC_BASE_URL" "${R19_EXIT_CODE:-unset}" \
+            > public-origin-metadata/run-binding.txt
+          test "$(git diff --name-only "$BASE_SHA..HEAD")" = "$TEST"
+          git diff --exit-code "$BASE_SHA" -- browser/GAMEROAD.html
+
+      - name: Upload R6 public interaction evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: battle-a-current-actual-r6-${{ github.run_id }}
+          path: |
+            test-results/a-r6-public-origin/
+            public-origin-metadata/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Fail if R19 public route failed
+        if: always()
+        shell: bash
+        env:
+          R19_EXIT_CODE: ${{ steps.r19.outputs.exit_code }}
+        run: |
+          set -euo pipefail
+          test "${R19_EXIT_CODE:-1}" -eq 0

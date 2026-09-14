@@ -1,0 +1,14 @@
+name: temp battle central world live R8
+on:
+  push:
+    branches:
+      - sol/battle-central-world-live-r8-20260914
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe exact current HTML seam
+        run: python tools/temp-battle-central-world-live-r8.py

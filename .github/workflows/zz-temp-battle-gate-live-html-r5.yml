@@ -14,47 +14,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: sol/battle-gate-live-html-r5-20260914
-      - name: Diagnose exact HTML seams
+      - name: Inspect exact neighborhoods
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
-          p=Path('browser/GAMEROAD.html')
-          s=p.read_text()
-          print('HTML_BYTES', len(s.encode()))
-          needles=[
-            'mountBattleNewBaseBoardLivePresentation',
-            'battle-new-base-board-live-presentation-composer.mjs',
-            'function renderBoard',
-            'renderBoard =',
-            'state.match.players',
-            'lanes.L',
-            'id="board',
-            "id='board",
-            'battleBoard',
-            'boardWrap',
-            'battleField',
-          ]
-          lines=s.splitlines()
-          for needle in needles:
-            hits=[i+1 for i,l in enumerate(lines) if needle in l]
-            print('HITS', repr(needle), hits[:40], 'COUNT', len(hits))
-          def show(pattern, radius=10, flags=0):
-            m=re.search(pattern,s,flags)
-            print('PATTERN',pattern,'FOUND',bool(m))
-            if not m:return
-            line=s.count('\n',0,m.start())+1
-            a=max(1,line-radius); b=min(len(lines),line+radius)
-            print(f'--- {pattern} L{a}-L{b} ---')
-            for n in range(a,b+1): print(f'{n:05d}: {lines[n-1]}')
-          show(r'function\s+renderBoard\s*\(',20)
-          show(r'const\s+renderBoard\s*=|let\s+renderBoard\s*=|var\s+renderBoard\s*=',20)
-          show(r'id=["\'][^"\']*board[^"\']*["\']',12,re.I)
-          show(r'<script[^>]*type=["\']module["\'][^>]*>',8,re.I)
-          imports=[(i+1,l) for i,l in enumerate(lines) if re.match(r'\s*import\s',l)]
-          print('IMPORT_COUNT',len(imports))
-          for n,l in imports[:80]: print(f'IMPORT {n:05d}: {l}')
+          lines=Path('browser/GAMEROAD.html').read_text().splitlines()
+          for a,b,label in [(1138,1166,'BOARD_MARKUP'),(1290,1335,'EARLY_MODULES'),(1768,1787,'RENDER_BOARD'),(4310,4360,'BATTLE_MODULES_A'),(4415,4465,'BATTLE_MODULES_B')]:
+            print(f'=== {label} L{a}-L{b} ===')
+            for n in range(a,b+1):
+              if 1<=n<=len(lines): print(f'{n:05d}: {lines[n-1]}')
           PY
       - name: Static baseline
         run: node tests/browser-static-check.mjs

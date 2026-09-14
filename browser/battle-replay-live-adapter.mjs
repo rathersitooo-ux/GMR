@@ -803,7 +803,6 @@ function ensurePartnerBattleEventLogHost(environment = {}) {
     if (host.style) host.style.whiteSpace = 'pre-line';
     shell.appendChild(host);
   }
-  registerLiveBattleSupportSurface({ key: 'history', label: '履歴', target: host, document: documentRef });
   return host;
 }
 
@@ -1230,6 +1229,10 @@ export function renderLiveBattleRemainingDeckPresentation(presentation, {
   const unknown = document.createElement('span');
   unknown.textContent = `不明: ${presentation.unknownCount}枚`;
   root.replaceChildren?.(title, known, unknown);
+  const historyTarget = host.querySelector?.('[data-partner-battle-event-log]') || null;
+  if (historyTarget) {
+    registerLiveBattleSupportSurface({ key: 'history', label: '履歴', target: historyTarget, document, hostId });
+  }
   registerLiveBattleSupportSurface({ key: 'deck', label: '山札', target: root, document, hostId });
   return true;
 }

@@ -36,6 +36,10 @@ jobs:
             (
               "html = replace_once(html, \"if(m.honey?.byNode)\", \"if(garden3DFieldActive())pushGarden3DSceneGeometry(items,all,viewer);\\n if(m.honey?.byNode)\", 'garden geometry mount')",
               "render3d_start=html.find('function renderField3D(){')\nrender3d_end=html.find('\\nfunction ',render3d_start+1)\nhoney_anchor=html.find(\"if(m.honey?.byNode)\",render3d_start,render3d_end)\nif render3d_start<0 or render3d_end<0 or honey_anchor<0: raise SystemExit('garden geometry mount: live renderer anchor missing')\nhtml=html[:honey_anchor]+\"if(garden3DFieldActive())pushGarden3DSceneGeometry(items,all,viewer);\\n \"+html[honey_anchor:]"
+            ),
+            (
+              "const_end = html.find('const SYMMETRIC_FIELD_NODE_IDS=', const_start)",
+              "const_end = html.find('const state={', const_start)"
             )
           ]
           for old,new in fixes:

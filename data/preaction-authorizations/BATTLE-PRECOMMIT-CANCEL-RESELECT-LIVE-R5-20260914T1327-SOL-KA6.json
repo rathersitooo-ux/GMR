@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PRECOMMIT-CANCEL-RESELECT-LIVE-R5-20260914T1327-SOL-KA6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PRECOMMIT_CLEAR_CANCEL_CHANGE_RESELECT_R5",
+  "acquireKey": "BATTLE-PRECOMMIT-CANCEL-RESELECT-LIVE-R5-20260914T1327-SOL-KA6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R5-PREDICT-LATE-FOCUS-ATTACH-ONE-RUNTIME",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "ACTIONS-RUN-34806008248-FOCUSED-REGRESSION-PASS",
+  "proceedToken": "PROCEED|BATTLE-PRECOMMIT-CANCEL-RESELECT-LIVE-R5-20260914T1327-SOL-KA6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction-pass|rehearsal-pass|lease-readback",
+  "authorizationBaseSha": "3939252b72ed0f8d82e64e68561b27ff838d0092",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PRECOMMIT_CLEAR_CANCEL_CHANGE_RESELECT_R5",
+  "leaseAcquireKey": "BATTLE-PRECOMMIT-CANCEL-RESELECT-LIVE-R5-20260914T1327-SOL-KA6",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 13:30 JST",
+  "leaseUntilJst": "2026-09-14 14:27 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1425:L1425",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR existing branch sol/address6-precommit-cancel-reselect-r4 ref-history reconstruction + PR#1666; mutable browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; own preaction manifest data/preaction-authorizations/BATTLE-PRECOMMIT-CANCEL-RESELECT-LIVE-R5-20260914T1327-SOL-KA6.json; own PR/check/merge/readback and CURRENT evidence only. READ_ONLY browser/GAMEROAD.html; browser/battle-janken-focus-live-integration.mjs; browser/battle-janken-focus-authority-context.mjs; browser/battle-new-base-live-consumer-adapter.mjs; browser/battle-compound-preview-live-consumer-bridge.mjs; gameplay/rules/target/legality/route/Shield/Hand3 assignment/card identity/save/economy/network/build.",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

@@ -204,6 +204,7 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.roulette[0], '[data-battle-playa
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\.battleRail\{[^}]*top:118px!important[^}]*max-width:none!important/);
   assert.equal(styleText.includes('.battleRail{top:144px!important;bottom:auto!important;max-width:168px!important}'), true);
 
+  assert.match(styleText, /@media\(max-width:520px\) and \(orientation:portrait\)\{[\s\S]*?\[data-gr-current-ui-zone="current-action"\]\{transform:translateY\(6px\)!important\}/);
   const snapshot = runtime.inspect();
   assert.deepEqual(snapshot.resolvedLiveConsumers, {
     currentAction: true,

@@ -6,6 +6,7 @@ export const BATTLE_CARD_RELEASE_FLIGHT_MODE = Object.freeze({
 });
 
 export const BATTLE_CARD_RELEASE_FLIGHT_DEFAULT_DURATION_MS = 560;
+export const BATTLE_CARD_RELEASE_FLIGHT_LOW_PERF_MAX_DURATION_MS = 240;
 export const BATTLE_CARD_RELEASE_FLIGHT_SAMPLE_OFFSETS = Object.freeze([0, 0.12, 0.28, 0.46, 0.64, 0.82, 1]);
 
 const ROLE = Object.freeze({
@@ -83,7 +84,7 @@ function fullGeometry(start, target, role) {
   };
 }
 
-function projectFullFrames(geometry, offsets, lowPerf) {
+function projectFullFrames(geometry, offsets) {
   return offsets.map((offset) => {
     const point = cubicPoint(geometry, offset);
     const depth = smoothDepth(offset);
@@ -94,8 +95,26 @@ function projectFullFrames(geometry, offsets, lowPerf) {
       rotationDeg: geometry.spinDeg * offset,
       scale: 1 - (0.66 * depth),
       opacity: 1 - (0.42 * depth),
-      blurPx: lowPerf ? 0 : 0.7 * depth,
-      brightness: lowPerf ? 1 : 1 - (0.12 * depth),
+      blurPx: 0.7 * depth,
+      brightness: 1 - (0.12 * depth),
+    });
+  });
+}
+
+function projectLowPerfFrames(start, target) {
+  const dx = target.x - start.x;
+  const dy = target.y - start.y;
+  return [0, 0.5, 1].map((offset) => {
+    const depth = smoothDepth(offset);
+    return Object.freeze({
+      offset,
+      x: dx * offset,
+      y: dy * offset,
+      rotationDeg: 0,
+      scale: 1 - (0.66 * depth),
+      opacity: 1 - (0.42 * depth),
+      blurPx: 0,
+      brightness: 1,
     });
   });
 }
@@ -146,18 +165,38 @@ export function projectBattleCardReleaseFlightMotion({
     });
   }
 
+  if (isLowPerf) {
+    return deepFreeze({
+      schema: BATTLE_CARD_RELEASE_FLIGHT_MOTION_SCHEMA,
+      mode: BATTLE_CARD_RELEASE_FLIGHT_MODE.FULL,
+      role: normalizedRole,
+      durationMs: Math.min(normalizedDurationMs, BATTLE_CARD_RELEASE_FLIGHT_LOW_PERF_MAX_DURATION_MS),
+      lowPerf: true,
+      start: source,
+      target: destination,
+      spinDeg: 0,
+      bendPx: 0,
+      frames: projectLowPerfFrames(source, destination),
+      destinationCue: {
+        kind: 'NONE',
+        x: destination.x,
+        y: destination.y,
+      },
+    });
+  }
+
   const geometry = fullGeometry(source, destination, normalizedRole);
   return deepFreeze({
     schema: BATTLE_CARD_RELEASE_FLIGHT_MOTION_SCHEMA,
     mode: BATTLE_CARD_RELEASE_FLIGHT_MODE.FULL,
     role: normalizedRole,
     durationMs: normalizedDurationMs,
-    lowPerf: isLowPerf,
+    lowPerf: false,
     start: source,
     target: destination,
     spinDeg: geometry.spinDeg,
     bendPx: geometry.bendPx,
-    frames: projectFullFrames(geometry, canonicalOffsets(sampleOffsets), isLowPerf),
+    frames: projectFullFrames(geometry, canonicalOffsets(sampleOffsets)),
     destinationCue: {
       kind: 'NONE',
       x: destination.x,

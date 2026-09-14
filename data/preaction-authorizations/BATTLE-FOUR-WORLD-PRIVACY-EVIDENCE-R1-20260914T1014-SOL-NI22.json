@@ -1,0 +1,29 @@
+{
+  "schema": "gameroad.preaction-authorization.v1",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FOUR_WORLD_POSITION_PUBLIC_PRIVATE_BOUNDARY_EVIDENCE_R1",
+  "acquireKey": "BATTLE-FOUR-WORLD-PRIVACY-EVIDENCE-R1-20260914T1014-SOL-NI22",
+  "baseSha": "d3993fa124b9cf1d9f44f2dac1e784c5deea2f44",
+  "owner": "ChatGPT / GPT-5.6 Sol / current user に22 / evidence-only current-main acceptance",
+  "leaseRef": "CURRENT_ACTIVE_LEASES!A1404:N1404",
+  "leaseUntilJst": "2026-09-14 11:14 JST",
+  "mutableResources": [
+    ".github/workflows/zz-temp-battle-four-world-privacy-r1.yml",
+    "data/preaction-authorizations/BATTLE-FOUR-WORLD-PRIVACY-EVIDENCE-R1-20260914T1014-SOL-NI22.json"
+  ],
+  "readOnlyResources": [
+    "browser/GAMEROAD.html",
+    "browser/battle-controlled-character-4p-motion-director.mjs",
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "browser/battle-four-public-live-bridge.mjs",
+    "browser/battle-four-public-live-integration.mjs"
+  ],
+  "intent": "Verify current-main four-participant world placement and public/private projection boundary without product mutation.",
+  "acceptance": [
+    "actual Battle has exactly four authoritative participant world markers",
+    "controlled-character world projection preserves four unique participant and character identities",
+    "world projection does not expose hidden hand/deck/Shield/private state",
+    "non-public four-card reveal fails closed before render",
+    "no gameplay/rule/HTML/product mutation"
+  ]
+}

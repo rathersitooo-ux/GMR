@@ -25,28 +25,46 @@ jobs:
           DONOR_BASE=d3993fa124b9cf1d9f44f2dac1e784c5deea2f44
           DONOR_HEAD=393cad9c9a2a69e0e559b47699072315605c60f8
           EXPECTED_ASSET_SHA=314973a531dffced941f996dda9e45ffcf41526263feae00da558c1c918988c3
+          TEST_PATH=tests/battle-janken-slidepad-runtime-mount.test.mjs
+          BEGIN_MARK='// BATTLE_POWER_ENERGY_VISUAL_TARGET_R1_BEGIN'
+          END_MARK='// BATTLE_POWER_ENERGY_VISUAL_TARGET_R1_END'
           git fetch origin sol/battle-power-energy-visual-r3-20260914
           git cat-file -e "$DONOR_BASE^{commit}"
           git cat-file -e "$DONOR_HEAD^{commit}"
           mapfile -t donor_files < <(git diff --name-only "$DONOR_BASE" "$DONOR_HEAD" -- \
             browser/battle-janken-slidepad-runtime-mount.mjs \
-            tests/battle-janken-slidepad-runtime-mount.test.mjs \
+            "$TEST_PATH" \
             assets/visual/battle-power-energy.jpg \
             deploy/cloudflare/scripts/build.mjs | sort)
           expected=(
             assets/visual/battle-power-energy.jpg
             browser/battle-janken-slidepad-runtime-mount.mjs
             deploy/cloudflare/scripts/build.mjs
-            tests/battle-janken-slidepad-runtime-mount.test.mjs
+            "$TEST_PATH"
           )
           printf '%s\n' "${donor_files[@]}" > /tmp/donor-files.txt
           printf '%s\n' "${expected[@]}" > /tmp/expected-files.txt
           diff -u /tmp/expected-files.txt /tmp/donor-files.txt
-          git diff --binary "$DONOR_BASE" "$DONOR_HEAD" -- "${expected[@]}" > /tmp/power-energy-r3.patch
-          test -s /tmp/power-energy-r3.patch
-          git apply --3way --index /tmp/power-energy-r3.patch
+
+          product_threeway=(
+            assets/visual/battle-power-energy.jpg
+            browser/battle-janken-slidepad-runtime-mount.mjs
+            deploy/cloudflare/scripts/build.mjs
+          )
+          git diff --binary "$DONOR_BASE" "$DONOR_HEAD" -- "${product_threeway[@]}" > /tmp/power-energy-r3-product.patch
+          test -s /tmp/power-energy-r3-product.patch
+          git apply --3way --index /tmp/power-energy-r3-product.patch
+
+          ! grep -Fq "$BEGIN_MARK" "$TEST_PATH"
+          git show "$DONOR_HEAD:$TEST_PATH" | sed -n "/^${BEGIN_MARK//\//\\/}$/,/^${END_MARK//\//\\/}$/p" > /tmp/power-energy-tests.txt
+          grep -Fxq "$BEGIN_MARK" /tmp/power-energy-tests.txt
+          grep -Fxq "$END_MARK" /tmp/power-energy-tests.txt
+          printf '\n\n' >> "$TEST_PATH"
+          cat /tmp/power-energy-tests.txt >> "$TEST_PATH"
+          git add "$TEST_PATH"
+
           test "$(sha256sum assets/visual/battle-power-energy.jpg | awk '{print $1}')" = "$EXPECTED_ASSET_SHA"
-          node --test tests/battle-janken-slidepad-runtime-mount.test.mjs
+          node --test "$TEST_PATH"
           node --test deploy/cloudflare/tests/build.test.mjs
           git diff --cached --check
           mapfile -t staged < <(git diff --cached --name-only | sort)

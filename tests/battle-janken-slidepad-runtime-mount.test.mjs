@@ -492,7 +492,8 @@ test('configured dedicated focus blocks legacy direct hand-card commit and deleg
   const { readFile } = await import('node:fs/promises');
   const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
   assert.match(source, /focusIntegration = null/);
-  assert.match(source, /const dedicatedFocus = normalizeBattleJankenFocusIntegration\(focusIntegration\);/);
+  assert.match(source, /const initialDedicatedFocus = normalizeBattleJankenFocusIntegration\(focusIntegration\);/);
+  assert.match(source, /let dedicatedFocus = initialDedicatedFocus;/);
   assert.equal((source.match(/if \(dedicatedFocus\) \{\s*void openDedicatedFocusSurface\(\);\s*return;\s*\}/g) ?? []).length, 2,
     'both gesture release and direct slot click must enter the same dedicated focus surface');
   assert.match(source, /const callerAssignment = model\.assignment\?\.assignmentMode[\s\S]*CURRENT_HAND3_POLICY[\s\S]*\? model\.assignment[\s\S]*: null[\s\S]*context = await dedicatedFocus\.readContext\(Object\.freeze\(\{[\s\S]*roundId: model\.roundId,[\s\S]*assignment: callerAssignment/);
@@ -764,4 +765,97 @@ test('ordinary hand focus enlarges the exact physical card face in place for loc
   assert.equal(source.includes('grBattleHandDetailDrawer'), false, 'address31 must not duplicate address37 shared drawer/detail');
   assert.match(source, /function handCardFromEvent\(event\)[\s\S]*#hand \.handCard\[data-card-id\]/, 'focus remains bound to the exact cardId-bearing hand element');
   assert.match(source, /projectBattleHandDragGhostPosition\(/, 'existing finger-occlusion drag projection remains in the same runtime');
+});
+
+
+test('address6 late Focus attachment preserves one runtime seam and cancel A then reselect B commits only B', async () => {
+  const runtimeSource = readFileSync(
+    new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
+    'utf8',
+  );
+  assert.match(runtimeSource, /if \(existing\?\.__gameroadRuntime\) \{[\s\S]*existingRuntime\.attachFocusIntegration\?\.\(initialDedicatedFocus\);[\s\S]*return existingRuntime;/);
+  assert.match(runtimeSource, /function attachFocusIntegration\(nextIntegration\) \{[\s\S]*if \(destroyed\) return false;[\s\S]*if \(!normalized\) return false;[\s\S]*if \(dedicatedFocus\) \{[\s\S]*dedicatedFocus\.liveInputStack === normalized\.liveInputStack;[\s\S]*assignment = null;[\s\S]*schedule\(\);[\s\S]*return true;/);
+  assert.match(runtimeSource, /cardFocusSnapshot:[^\n]+\n    attachFocusIntegration,\n    dedicatedFocusConnected:/);
+  assert.equal((runtimeSource.match(/__gameroadRuntime = runtime/g) ?? []).length, 1, 'late attach must reuse the existing SlidePad runtime rather than create another controller');
+
+  const { createBattleJankenFocusLiveIntegration } = await import('../browser/battle-janken-focus-live-integration.mjs');
+  const assignment = createRoundStartJankenSlotAssignment({
+    roundId: 'battle-round:address6',
+    hand: [
+      { id: 'card-a', suit: 'CL' },
+      { id: 'card-b', suit: 'DI' },
+      { id: 'card-c', suit: 'SP' },
+    ],
+    assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
+    assignedCardIdsByJankenHand: {
+      ROCK: 'card-a',
+      SCISSORS: 'card-b',
+      PAPER: 'card-c',
+    },
+  });
+  const packages = Object.freeze({
+    ROCK: Object.freeze({ jankenHand: 'ROCK', cardId: 'card-a', path: ['P1', 'road-r', 'P2'], direction: 'RIGHT', roadId: 'road-r', battleId: 'battle-address6', opponentId: 'P2', shieldLane: 'LEFT', shieldRef: 'P2:LEFT' }),
+    SCISSORS: Object.freeze({ jankenHand: 'SCISSORS', cardId: 'card-b', path: ['P1', 'road-s', 'P3'], direction: 'CENTER', roadId: 'road-s', battleId: 'battle-address6', opponentId: 'P3', shieldLane: 'CENTER', shieldRef: 'P3:CENTER' }),
+    PAPER: Object.freeze({ jankenHand: 'PAPER', cardId: 'card-c', path: ['P1', 'road-p', 'P4'], direction: 'LEFT', roadId: 'road-p', battleId: 'battle-address6', opponentId: 'P4', shieldLane: 'RIGHT', shieldRef: 'P4:RIGHT' }),
+  });
+  let staged = null;
+  const commits = [];
+  let globalClears = 0;
+  const liveConsumer = {
+    async syncRoundStart() { return assignment; },
+    async stageCompoundAttack(jankenHand) {
+      staged = packages[jankenHand];
+      return Object.freeze({ status: 'STAGED', package: staged });
+    },
+    clearCompoundAttack() {
+      staged = null;
+      return Object.freeze({ cleared: true, authoritativeRollback: false, gameStateWrite: false });
+    },
+    async clearPrecommitSelection() {
+      globalClears += 1;
+      staged = null;
+      return Object.freeze({ ok: true, cleared: true, authoritativeRollback: false, gameStateWrite: false });
+    },
+    async commitCompoundAttack() {
+      if (!staged) return Object.freeze({ ok: false, committed: false, reason: 'STAGE_REQUIRED' });
+      const payload = staged;
+      commits.push(payload);
+      staged = null;
+      return Object.freeze({ ok: true, committed: true, payload, authoritativeRollback: false });
+    },
+    status() { return Object.freeze({ staged: staged !== null }); },
+  };
+  const previewRuntime = {
+    render(pkg) { return Object.freeze({ active: true, package: pkg }); },
+    clear() { return true; },
+  };
+  const integration = createBattleJankenFocusLiveIntegration({
+    liveConsumer,
+    previewRuntime,
+    readCompoundAttackCandidate: async ({ jankenHand }) => packages[jankenHand],
+    mountSurface: () => Object.freeze({ mounted: true }),
+  });
+
+  const context = await integration.readContext({ roundId: assignment.roundId, assignment });
+  assert.deepEqual(context.packages.map((pkg) => pkg.jankenHand), ['ROCK', 'SCISSORS', 'PAPER']);
+
+  const selectedA = await integration.liveInputStack.focus('ROCK');
+  assert.equal(selectedA.ok, true);
+  const cancelledA = await integration.liveInputStack.cancel();
+  assert.equal(cancelledA.ok, true);
+  assert.equal(globalClears, 1);
+  assert.equal(commits.length, 0);
+
+  const selectedB = await integration.liveInputStack.focus('PAPER');
+  assert.equal(selectedB.ok, true);
+  const committedB = await integration.liveInputStack.commit();
+  assert.equal(committedB.ok, true);
+  assert.equal(committedB.committed, true);
+  assert.equal(commits.length, 1);
+  assert.strictEqual(commits[0], packages.PAPER);
+  assert.equal(commits[0].jankenHand, 'PAPER');
+  assert.equal(commits[0].cardId, 'card-c');
+  assert.equal(commits[0].opponentId, 'P4');
+  assert.equal(commits[0].shieldLane, 'RIGHT');
+  assert.equal(commits[0].shieldRef, 'P4:RIGHT');
 });

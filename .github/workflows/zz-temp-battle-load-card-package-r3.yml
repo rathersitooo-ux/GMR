@@ -1,0 +1,44 @@
+name: TEMP Battle Load Card Package R3
+
+on:
+  push:
+    branches:
+      - sol/battle-load-card-package-r3-20260914
+    paths:
+      - .github/workflows/zz-temp-battle-load-card-package-r3.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-load-card-package-r3-20260914
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify authorized base ancestry
+        run: |
+          git merge-base --is-ancestor d3993fa124b9cf1d9f44f2dac1e784c5deea2f44 HEAD
+      - name: Apply exact package patch
+        run: python3 tools/temp-battle-load-card-package-r3.py
+      - name: Verify bounded build diff
+        run: |
+          git diff --check
+          test "$(git diff --name-only)" = "deploy/cloudflare/scripts/build.mjs"
+          grep -F "browser/battle-load-card-chain-presentation-core.mjs" deploy/cloudflare/scripts/build.mjs
+      - name: Run LOAD identity and runtime focused tests
+        run: node --test tests/battle-load-card-chain-presentation-core.test.mjs tests/battle-screen-runtime-mount.test.mjs
+      - name: Run public package build tests
+        run: node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Commit exact package change
+        run: |
+          git config user.name "gameroad-bounded-writer"
+          git config user.email "actions@users.noreply.github.com"
+          git add deploy/cloudflare/scripts/build.mjs
+          git commit -m "build(battle): package LOAD card chain core"
+          git push origin HEAD:sol/battle-load-card-package-r3-20260914

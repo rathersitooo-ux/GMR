@@ -1,0 +1,51 @@
+name: temp battle symmetric gate field r1
+
+on:
+  push:
+    branches:
+      - sol/battle-symmetric-gate-field-r1-20260915
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify exact current base and PRE_ACTION
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          test "$(git rev-parse origin/main)" = "061c899df9df59d3b798034f097dbe9951946c6d"
+          test "$(git merge-base HEAD origin/main)" = "061c899df9df59d3b798034f097dbe9951946c6d"
+          test -f data/preaction-authorizations/BATTLE-SYMMETRIC-GATE-FIELD-R1-20260915T0320-SOL-FIELD.json
+          grep -Fq 'BOUNDARY_EDGE_ONLY' data/preaction-authorizations/BATTLE-SYMMETRIC-GATE-FIELD-R1-20260915T0320-SOL-FIELD.json
+      - name: Apply exact-anchor field patch
+        run: python3 tools/temp-battle-symmetric-gate-field-r1.py
+      - name: Static and syntax acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/browser-static-check.mjs
+          git diff --check
+          grep -Fq "const SYMMETRIC_FIELD_GATE_BOUNDARY_Z=-3.1" browser/GAMEROAD.html
+          grep -Fq "gateRole:'BOUNDARY_EDGE_ONLY'" browser/GAMEROAD.html
+          grep -Fq "topCenterHasDirectShieldPort:Object.values(SYMMETRIC_FIELD_PORTS).includes('F:U:4')" browser/GAMEROAD.html
+          ! grep -Eq 'SYMMETRIC_FIELD_(GATE_NODE|GATE_CELL|GATE_STOP)' browser/GAMEROAD.html
+      - name: Commit durable product diff only
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f tools/temp-battle-symmetric-gate-field-r1.py
+          rm -f .github/workflows/zz-temp-battle-symmetric-gate-field-r1.yml
+          rm -f data/preaction-authorizations/BATTLE-SYMMETRIC-GATE-FIELD-R1-20260915T0320-SOL-FIELD.json
+          git add -A
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git commit -m "Battle: add selectable symmetric Gate field"
+          git push origin HEAD:sol/battle-symmetric-gate-field-r1-20260915

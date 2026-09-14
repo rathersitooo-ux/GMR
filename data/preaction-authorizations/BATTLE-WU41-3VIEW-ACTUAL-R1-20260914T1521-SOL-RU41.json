@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-WU41-3VIEW-ACTUAL-R1-20260914T1521-SOL-RU41",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_WU41_CURRENT_3VIEW_TOUCH_ACTUAL_R1",
+  "acquireKey": "BATTLE-WU41-3VIEW-ACTUAL-R1-20260914T1521-SOL-RU41",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_44120519_PLUS_STANDARD_PLAYWRIGHT_3VIEW_TOUCH_CONFIG_PLUS_ACTIVE_LEASE_A1445_20260914T1521JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_PLAYWRIGHT_FULL_INTERACTION_CONFIG_HAS_1280X720_390X844_667X375_AND_PHONE_TOUCH",
+  "proceedToken": "PROCEED|BATTLE-WU41-3VIEW-ACTUAL-R1-20260914T1521-SOL-RU41|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|evidence-only-3view-touch|product-write-zero",
+  "authorizationBaseSha": "44120519c4225420b7e2e3001f63f8cb332e58a8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_WU41_CURRENT_3VIEW_TOUCH_ACTUAL_R1",
+  "leaseAcquireKey": "BATTLE-WU41-3VIEW-ACTUAL-R1-20260914T1521-SOL-RU41",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 15:21 JST",
+  "leaseUntilJst": "2026-09-14 16:21 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1445:L1445",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main 44120519c4225420b7e2e3001f63f8cb332e58a8; mutable own evidence-only branch; own transient .github/workflows/zz-temp-battle-wu41-current-3view-r1.yml; own transient data/preaction-authorizations/BATTLE-WU41-3VIEW-ACTUAL-R1-20260914T1521-SOL-RU41.json; own PR/check/artifact/readback only. READ_ONLY all browser product/runtime files including browser/GAMEROAD.html; gameplay/rules/target/legality/card identity/save/economy/network/build.",
+  "solutionSignature": "BATTLE_WU41_CURRENT_EXACT_MAIN_THREE_VIEW_PLUS_TOUCH_EVIDENCE_V1",
+  "reuseDisposition": "REUSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE_STANDARD_BFI_PLAYWRIGHT_PROJECTS_NO_NEW_PLAYER_SEMANTICS",
+  "solutionSearchEvidence": [
+    "The current standard Playwright full-interaction configuration already defines desktop-1280x720, phone-390x844, short-landscape-667x375, and a mobile/touch 390x844 project.",
+    "Address41 is inspection, so the smallest safe action is to execute that existing runner against exact main rather than modify product or invent new viewport semantics.",
+    "The parent currently has a separate formal compound-precommit authority bootstrap boundary, therefore this evidence run cannot be treated as final Battle completion even if presentation checks pass.",
+    "Any failure is recorded as same-parent evidence; no gameplay, target, legality, card identity, HTML, save, economy, or network behavior is altered."
+  ],
+  "scope": [
+    ".github/workflows/zz-temp-battle-wu41-current-3view-r1.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/zz-temp-battle-wu41-current-3view-r1.yml"
+  ]
+}

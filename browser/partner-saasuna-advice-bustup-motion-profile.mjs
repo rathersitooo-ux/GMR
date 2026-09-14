@@ -106,7 +106,7 @@ export const SAASUNA_ADVICE_BUSTUP_MOTION_PROFILE = Object.freeze({
   assetSource: Object.freeze({
     setId: 'GAMEROAD_SAASUNA_NAV_EXPRESSION_TRANSPARENT_SET_R1_20260915',
     driveManifestId: '1rg5jBqT6OUJsdZ-PRr9wgEXbz2Ye8N_E',
-    derivedRuntimeSize: '512x512',
+    derivedRuntimeSize: '384x384',
     derivedRuntimeFormat: 'webp',
     imageGenerationUsed: false,
   }),

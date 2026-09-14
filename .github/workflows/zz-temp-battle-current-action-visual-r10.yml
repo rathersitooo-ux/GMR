@@ -1,0 +1,231 @@
+name: TEMP Battle current-action visual R10
+
+on:
+  push:
+    branches:
+      - sol/battle-current-action-visual-r10-20260914
+    paths:
+      - .github/workflows/zz-temp-battle-current-action-visual-r10.yml
+
+permissions:
+  contents: read
+
+jobs:
+  public-current-action-3view:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GAMEROAD_PUBLIC_BASE_URL: https://gameroad-browser-r5.pages.dev
+      AUTHORIZATION_BASE_SHA: 7d7b58f31cc2c96778db8463faeddbc632393866
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Prove evidence-only branch delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p visual-evidence
+          git diff --name-only "${AUTHORIZATION_BASE_SHA}...HEAD" | sort > visual-evidence/branch-diff.txt
+          cat visual-evidence/branch-diff.txt
+          node <<'NODE'
+          const fs=require('node:fs');
+          const rows=fs.readFileSync('visual-evidence/branch-diff.txt','utf8').split(/\r?\n/).filter(Boolean);
+          const allowed=new Set([
+            '.github/workflows/zz-temp-battle-current-action-visual-r10.yml',
+            'data/preaction-authorizations/BATTLE-CURRENT-ACTION-VISUAL-R10-20260914T1548-SOL-SA11.json',
+          ]);
+          const bad=rows.filter(x=>!allowed.has(x));
+          if(bad.length) throw new Error(`product diff detected: ${bad.join(', ')}`);
+          if(!rows.includes('data/preaction-authorizations/BATTLE-CURRENT-ACTION-VISUAL-R10-20260914T1548-SOL-SA11.json')) throw new Error('missing PRE_ACTION');
+          NODE
+
+      - name: Bind exact public build and verify shipped current-action sources
+        id: bind
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --header 'Accept-Encoding: identity' --retry 4 --retry-delay 2 --max-time 30 \
+            -o visual-evidence/gameroad-version-before.json "${GAMEROAD_PUBLIC_BASE_URL}/gameroad-version.json"
+          BUILD="$(node -e "const fs=require('node:fs');const m=JSON.parse(fs.readFileSync('visual-evidence/gameroad-version-before.json','utf8'));if(!m.build_id)process.exit(2);process.stdout.write(String(m.build_id));")"
+          if [[ "$BUILD" != "$AUTHORIZATION_BASE_SHA" ]]; then
+            echo "::error::Public build is not the R9 merged SHA: observed=$BUILD expected=$AUTHORIZATION_BASE_SHA"
+            exit 1
+          fi
+          echo "observed_build_id=${BUILD}" >> "$GITHUB_OUTPUT"
+          printf 'public_origin=%s\nobserved_build_id=%s\nauthorization_base=%s\n' "$GAMEROAD_PUBLIC_BASE_URL" "$BUILD" "$AUTHORIZATION_BASE_SHA" > visual-evidence/binding.txt
+          curl --fail --silent --show-error --location --header 'Accept-Encoding: identity' --retry 4 --retry-delay 2 --max-time 30 \
+            -o visual-evidence/battle-current-player-ui-live-adapter.mjs "${GAMEROAD_PUBLIC_BASE_URL}/battle-current-player-ui-live-adapter.mjs"
+          curl --fail --silent --show-error --location --header 'Accept-Encoding: identity' --retry 4 --retry-delay 2 --max-time 30 \
+            -o visual-evidence/battle-current-player-ui-runtime.mjs "${GAMEROAD_PUBLIC_BASE_URL}/battle-current-player-ui-runtime.mjs"
+          grep -Fq 'projectBattleCurrentActionContext' visual-evidence/battle-current-player-ui-live-adapter.mjs
+          grep -Fq 'data-battle-current-action' visual-evidence/battle-current-player-ui-live-adapter.mjs
+          grep -Fq 'grBattleCurrentActionLive' visual-evidence/battle-current-player-ui-live-adapter.mjs
+          grep -Fq 'transform:translateY(6px)' visual-evidence/battle-current-player-ui-live-adapter.mjs
+          grep -Fq '[${ZONE_ATTR}="current-action"]{transform:translateY(6px)!important}' visual-evidence/battle-current-player-ui-runtime.mjs
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+
+      - name: Run visible public three-viewport acceptance
+        env:
+          OBSERVED_BUILD_ID: ${{ steps.bind.outputs.observed_build_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > visual-evidence/probe-3view.mjs <<'EOF'
+          import fs from 'node:fs';
+          import { chromium } from '@playwright/test';
+
+          const base=process.env.GAMEROAD_PUBLIC_BASE_URL;
+          const boundBuild=process.env.OBSERVED_BUILD_ID;
+          const cases=[
+            {label:'667x375',width:667,height:375},
+            {label:'1280x720',width:1280,height:720},
+            {label:'390x844',width:390,height:844},
+          ];
+          const output='visual-evidence/current-action-3view.json';
+          const results=[];
+          const browser=await chromium.launch({headless:true});
+
+          const currentBuild=async()=>{
+            const r=await fetch(`${base}/gameroad-version.json`,{headers:{'Accept-Encoding':'identity'}});
+            if(!r.ok) throw new Error(`version HTTP ${r.status}`);
+            return String((await r.json()).build_id||'');
+          };
+          const overlap=(a,b)=>{
+            if(!a||!b)return null;
+            const l=Math.max(a.x,b.x),t=Math.max(a.y,b.y),r=Math.min(a.x+a.width,b.x+b.width),bt=Math.min(a.y+a.height,b.y+b.height);
+            const w=Math.max(0,r-l),h=Math.max(0,bt-t),area=w*h;
+            return {area,width:w,height:h,intersects:area>0};
+          };
+          const rectIfVisible=async(locator)=>{
+            if(await locator.count()===0)return null;
+            const n=locator.first();
+            if(!(await n.isVisible().catch(()=>false)))return null;
+            return n.boundingBox();
+          };
+
+          try{
+            const before=await currentBuild();
+            if(before!==boundBuild) throw new Error(`build drift before: ${boundBuild} -> ${before}`);
+
+            for(const c of cases){
+              const context=await browser.newContext({viewport:{width:c.width,height:c.height},deviceScaleFactor:1,reducedMotion:'no-preference'});
+              const page=await context.newPage();
+              const consoleErrors=[]; const pageErrors=[];
+              page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text())});
+              page.on('pageerror',e=>pageErrors.push(String(e)));
+              let row={label:c.label,viewport:{width:c.width,height:c.height}};
+              try{
+                const response=await page.goto(`${base}/`,{waitUntil:'domcontentloaded',timeout:30000});
+                if(!response?.ok())throw new Error(`root HTTP ${response?.status?.()}`);
+                const home=page.locator('section[data-screen="home"]');
+                await home.waitFor({state:'visible',timeout:15000});
+                const center=page.locator('#homePadCenter[data-motion-wired="1"]');
+                await center.waitFor({state:'visible',timeout:15000});
+                const readyState=await page.evaluate(()=>document.readyState);
+                const homeStateBefore=await home.getAttribute('data-home-state');
+                if(homeStateBefore==='HOME_COLLAPSED'){
+                  await center.click();
+                  await page.waitForFunction(()=>document.querySelector('section[data-screen="home"]')?.getAttribute('data-home-state')==='HOME_EXPANDED',null,{timeout:5000});
+                }
+                const setupControl=page.locator('.homePadChoice[data-home-target="setup"]:visible').first();
+                await setupControl.waitFor({state:'visible',timeout:7000});
+                await page.waitForFunction(()=>{
+                  const n=document.querySelector('.homePadChoice[data-home-target="setup"]');
+                  if(!n)return false; const s=getComputedStyle(n),r=n.getBoundingClientRect();
+                  return s.display!=='none'&&s.visibility!=='hidden'&&s.pointerEvents!=='none'&&r.width>0&&r.height>0;
+                },null,{timeout:7000});
+                await setupControl.click();
+
+                const setup=page.locator('section[data-screen="setup"]');
+                await setup.waitFor({state:'visible',timeout:7000});
+                await setup.locator('[data-content="road_shield"]').click();
+                await setup.locator('[data-mode="2p"]').click();
+                const start=setup.locator('#startMatch');
+                await start.waitFor({state:'visible',timeout:7000});
+                const startState=await start.evaluate(n=>({disabled:n.disabled,text:(n.textContent||'').trim()}));
+                if(startState.disabled)throw new Error(`startMatch disabled ${JSON.stringify(startState)}`);
+                await start.click();
+
+                const battle=page.locator('section[data-screen="battle"]');
+                await battle.waitFor({state:'visible',timeout:10000});
+                const phaseTitle=battle.locator('#phaseTitle');
+                await phaseTitle.waitFor({state:'visible',timeout:7000});
+                await page.waitForFunction(()=>Boolean(document.querySelector('#phaseTitle')?.textContent?.trim()),null,{timeout:7000});
+                await page.waitForFunction(()=>{
+                  const ns=[...document.querySelectorAll('section[data-screen="battle"] [data-battle-current-action="1"]')];
+                  return ns.length===1&&!ns[0].hidden&&ns[0].getBoundingClientRect().width>0;
+                },null,{timeout:10000});
+
+                const surfaces=battle.locator('[data-battle-current-action="1"]');
+                if(await surfaces.count()!==1)throw new Error(`surface count ${await surfaces.count()}`);
+                const surface=surfaces.first();
+                const text=(await surface.textContent()||'').trim();
+                const phaseText=(await phaseTitle.textContent()||'').trim();
+                const ownerRelation=await surface.getAttribute('data-owner-relation');
+                const actionSource=await surface.getAttribute('data-current-action-source');
+                const surfaceRect=await surface.boundingBox();
+                if(!surfaceRect)throw new Error('surface has no rect');
+                const contained=surfaceRect.x>=0&&surfaceRect.y>=0&&surfaceRect.x+surfaceRect.width<=c.width&&surfaceRect.y+surfaceRect.height<=c.height;
+                if(!contained)throw new Error(`surface escapes viewport ${JSON.stringify(surfaceRect)}`);
+                if(!text.includes('今：')||!text.includes(phaseText))throw new Error(`phase mismatch text=${text} phase=${phaseText}`);
+                if(ownerRelation==='SELF'&&(text.includes('待ち：')||text.includes('理由：')))throw new Error(`SELF fabricated wait/reason ${text}`);
+
+                const selectors={boardPlayers:'#boardPlayers',hand:'#hand',jankenSlidePad:'[data-battle-janken-slidepad="1"]',readyPlan:'#readyPlan',publicPlayerStrip:'#publicPlayerStrip',battleTopStatus:'#battleTopStatus'};
+                const rects={}; for(const [k,s] of Object.entries(selectors))rects[k]=await rectIfVisible(battle.locator(s));
+                const overlaps=Object.fromEntries(Object.entries(rects).map(([k,r])=>[k,overlap(surfaceRect,r)]));
+                for(const k of ['hand','jankenSlidePad','readyPlan','publicPlayerStrip'])if(overlaps[k]?.intersects)throw new Error(`surface overlaps ${k} ${JSON.stringify(overlaps[k])}`);
+                if(consoleErrors.length||pageErrors.length)throw new Error(`runtime errors console=${JSON.stringify(consoleErrors)} page=${JSON.stringify(pageErrors)}`);
+
+                await page.screenshot({path:`visual-evidence/current-action-${c.label}.png`,fullPage:false});
+                row={...row,pass:true,readyState,homeStateBefore,startState,phaseText,text,ownerRelation,actionSource,surfaceRect,contained,rects,overlaps,consoleErrors,pageErrors};
+              }catch(error){
+                try{await page.screenshot({path:`visual-evidence/current-action-${c.label}-FAIL.png`,fullPage:false})}catch{}
+                row={...row,pass:false,message:String(error?.stack||error),url:page.url(),consoleErrors,pageErrors};
+                results.push(row); fs.writeFileSync(output,JSON.stringify({boundBuild,results},null,2));
+                await context.close();
+                throw error;
+              }
+              results.push(row); fs.writeFileSync(output,JSON.stringify({boundBuild,results},null,2));
+              await context.close();
+            }
+
+            const after=await currentBuild();
+            if(after!==boundBuild)throw new Error(`build drift after: ${boundBuild} -> ${after}`);
+            fs.writeFileSync(output,JSON.stringify({pass:true,boundBuild,afterBuild:after,results},null,2));
+          }finally{await browser.close()}
+          EOF
+          node visual-evidence/probe-3view.mjs
+
+      - name: Verify public build remained bound
+        if: always()
+        env:
+          OBSERVED_BUILD_ID: ${{ steps.bind.outputs.observed_build_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --header 'Accept-Encoding: identity' --retry 4 --retry-delay 2 --max-time 30 \
+            -o visual-evidence/gameroad-version-after.json "${GAMEROAD_PUBLIC_BASE_URL}/gameroad-version.json"
+          AFTER="$(node -e "const fs=require('node:fs');const m=JSON.parse(fs.readFileSync('visual-evidence/gameroad-version-after.json','utf8'));process.stdout.write(String(m.build_id||''));")"
+          printf 'after_build_id=%s\n' "$AFTER" >> visual-evidence/binding.txt
+          if [[ -n "${OBSERVED_BUILD_ID:-}" && "$AFTER" != "$OBSERVED_BUILD_ID" ]]; then
+            echo "::error::Public build moved: before=${OBSERVED_BUILD_ID} after=${AFTER}"
+            exit 1
+          fi
+
+      - name: Upload targeted visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: battle-current-action-visual-r10-${{ github.run_id }}
+          path: visual-evidence/
+          if-no-files-found: error
+          retention-days: 14

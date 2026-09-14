@@ -7,17 +7,38 @@ on:
 permissions:
   contents: write
 jobs:
-  inspect:
+  materialize:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Apply accepted FIELD-10 donor in worktree
+          ref: sol/battle-garden3d-field-r2-20260915
+      - name: Apply accepted FIELD-10 donor
         run: |
           set -euo pipefail
           git fetch origin sol/battle-symmetric-gate-field-r1-20260915
           git diff 061c899df9df59d3b798034f097dbe9951946c6d origin/sol/battle-symmetric-gate-field-r1-20260915 -- browser/GAMEROAD.html tests/browser-static-check.mjs > /tmp/field10.patch
+          git apply --check /tmp/field10.patch
           git apply /tmp/field10.patch
-      - name: Inspect exact integration anchors
-        run: python tools/temp-battle-garden3d-field-r2.py
+      - name: Add Garden3D field without a second gameplay engine
+        run: |
+          set -euo pipefail
+          python tools/temp-battle-garden3d-field-r2.py
+          git diff --check
+          node tests/browser-static-check.mjs
+      - name: Commit verified product mutation
+        run: |
+          set -euo pipefail
+          git config user.name gameroad-sol
+          git config user.email gameroad-sol@users.noreply.github.com
+          git add browser/GAMEROAD.html tests/browser-static-check.mjs
+          git commit -m "Battle: add switchable Garden3D field R2"
+      - name: Remove temporary authorization and runner files
+        run: |
+          set -euo pipefail
+          git rm data/preaction-authorizations/BATTLE-GARDEN3D-FIELD-R2-20260915T0452-SOL-FIELD.json
+          git rm tools/temp-battle-garden3d-field-r2.py
+          git rm .github/workflows/zz-temp-battle-garden3d-field-r2.yml
+          git commit -m "chore: close Garden3D pre-action lane"
+          git push origin HEAD:sol/battle-garden3d-field-r2-20260915

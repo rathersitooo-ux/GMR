@@ -1,0 +1,71 @@
+name: TEMP Battle current-action portrait layout R9
+
+on:
+  push:
+    branches:
+      - sol/battle-current-action-portrait-layout-r9-20260914
+    paths:
+      - .github/workflows/zz-temp-battle-current-action-portrait-layout-r9.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: sol/battle-current-action-portrait-layout-r9-20260914
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch layout owner and classified regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git merge-base HEAD 88e31c137d9145eae2203b35d52c727cd4c4cd76)" = "88e31c137d9145eae2203b35d52c727cd4c4cd76"
+          python3 <<'PY'
+          from pathlib import Path
+
+          runtime = Path('browser/battle-current-player-ui-runtime.mjs')
+          text = runtime.read_text()
+          media = '@media(max-width:520px) and (orientation:portrait){\n'
+          rule = '  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="current-action"]{transform:translateY(6px)!important}\n'
+          generic = '[${ZONE_ATTR}="current-action"]{position:absolute!important;z-index:32!important;top:calc(var(--gr-ui-edge) + clamp(42px,9vh,72px))!important;left:var(--gr-ui-edge)!important;right:auto!important;bottom:auto!important;max-width:min(38vw,310px)!important;transform:none!important;'
+          if text.count(media) != 1:
+              raise SystemExit(f'portrait media count={text.count(media)}')
+          if rule in text:
+              raise SystemExit('owner repair already present on fresh base')
+          if generic not in text:
+              raise SystemExit('generic current-action owner anchor missing')
+          runtime.write_text(text.replace(media, media + rule, 1))
+
+          test = Path('tests/battle-current-player-ui-runtime.test.mjs')
+          source = test.read_text()
+          anchor = '  const snapshot = runtime.inspect();\n'
+          assertion = '  assert.match(styleText, /@media\\(max-width:520px\\) and \\(orientation:portrait\\)\\{[\\s\\S]*?\\[data-gr-current-ui-zone="current-action"\\]\\{transform:translateY\\(6px\\)!important\\}/);\n'
+          if source.count(anchor) != 1:
+              raise SystemExit(f'runtime test snapshot anchor count={source.count(anchor)}')
+          if assertion in source:
+              raise SystemExit('portrait owner assertion already present on fresh base')
+          test.write_text(source.replace(anchor, assertion + anchor, 1))
+          PY
+          git diff --check
+          git diff -- browser/battle-current-player-ui-runtime.mjs tests/battle-current-player-ui-runtime.test.mjs
+      - name: Run classified runtime regression
+        run: |
+          set -euo pipefail
+          node --test tests/battle-current-player-ui-runtime.test.mjs
+      - name: Commit exact durable product paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add browser/battle-current-player-ui-runtime.mjs tests/battle-current-player-ui-runtime.test.mjs
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = "browser/battle-current-player-ui-runtime.mjs tests/battle-current-player-ui-runtime.test.mjs "
+          git config user.name 'rathersitooo-ux'
+          git config user.email 'rathersitooo@gmail.com'
+          git commit -m 'Battle: keep portrait current-action spacing in layout owner'
+          git push origin HEAD:sol/battle-current-action-portrait-layout-r9-20260914

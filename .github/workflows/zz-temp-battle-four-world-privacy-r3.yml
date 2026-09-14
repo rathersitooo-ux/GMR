@@ -1,0 +1,210 @@
+name: TEMP NI22 Four World Privacy R3
+on:
+  push:
+    branches: [sol/battle-four-world-privacy-evidence-r3-20260914]
+permissions:
+  contents: read
+jobs:
+  exact-current-main-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify audited product bytes remain exact current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=280e248def71a08679e3a262db0164b09ca43986
+          git cat-file -e "$BASE^{commit}"
+          git diff --exit-code "$BASE" -- \
+            browser/GAMEROAD.html \
+            browser/battle-controlled-character-4p-motion-director.mjs \
+            browser/battle-board-naki-4p-visual-binding.mjs \
+            browser/battle-four-public-live-bridge.mjs \
+            browser/battle-four-public-live-integration.mjs \
+            browser/battle-screen-runtime-mount.mjs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Focused privacy and handoff regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test \
+            tests/battle-controlled-character-html-handoff.test.mjs \
+            tests/battle-board-naki-4p-visual-binding.test.mjs \
+            tests/battle-four-public-live-integration.test.mjs
+      - name: Install Chromium acceptance dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Run current Battle world/privacy acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ni22-r3 visual-evidence/ni22-r3 test-results/ni22-r3
+          printf '%s\n' '{"schema":"ni22-r3-bootstrap-v1","base":"280e248def71a08679e3a262db0164b09ca43986"}' > visual-evidence/ni22-r3/bootstrap.json
+          cat > playwright.ni22-r3.config.mjs <<'EOF'
+          import {defineConfig} from '@playwright/test';
+          export default defineConfig({
+            testDir:'.ni22-r3',
+            testMatch:'**/*.spec.mjs',
+            timeout:90000,
+            expect:{timeout:15000},
+            workers:1,
+            retries:0,
+            reporter:[['line'],['json',{outputFile:'test-results/ni22-r3/report.json'}]],
+            projects:[
+              {name:'short-landscape',use:{viewport:{width:667,height:375},hasTouch:true}},
+              {name:'landscape',use:{viewport:{width:1280,height:720},hasTouch:true}},
+              {name:'portrait-audit',use:{viewport:{width:390,height:844},hasTouch:true}}
+            ],
+            use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,trace:'retain-on-failure'}
+          });
+          EOF
+          cat > .ni22-r3/ni22-r3.spec.mjs <<'EOF'
+          import {test,expect} from '@playwright/test';
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const OUT=path.resolve('visual-evidence/ni22-r3');
+
+          async function installDeck(page){return page.evaluate(()=>{
+            const t=window.__GAMEROAD_TEST__;
+            const pub=new Set(t.deckPublic().filter(c=>c.slot==='main').map(c=>c.id));
+            const ids=window.__CARD_DATA__.filter(c=>pub.has(c.id)&&/^(SP|HT|DI|CL)$/.test(c.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c=>c.id);
+            const royal=['SP_J','SP_Q','SP_K'];
+            const non=ids.filter(id=>!t.isRoyalCard(id));
+            t.deckSetDraft([...non.slice(0,37),...royal],[]);
+            const v=t.deckValidate(t.state.deckDraft,{forBattle:true});
+            return v.ok?t.deckCommit():false;
+          });}
+
+          test('X22 current four-world and viewer-safe boundary evidence',async({page},testInfo)=>{
+            const name=testInfo.project.name;
+            const jsonPath=path.join(OUT,`${name}.json`);
+            const pngPath=path.join(OUT,`${name}.png`);
+            const evidence={schema:'gameroad.x22.actual.r3',project:name,base:'280e248def71a08679e3a262db0164b09ca43986',phase:'init',errors:[]};
+            const persist=()=>fs.writeFileSync(jsonPath,JSON.stringify(evidence,null,2));
+            persist();
+            try{
+              evidence.phase='goto';persist();
+              const r=await page.goto('/browser/GAMEROAD.html',{waitUntil:'domcontentloaded'});
+              evidence.httpOk=!!r?.ok();persist();
+              expect(r?.ok()).toBeTruthy();
+
+              evidence.phase='home-visible';persist();
+              await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+
+              evidence.phase='hooks-ready';persist();
+              await expect.poll(()=>page.evaluate(()=>(
+                typeof window.__GAMEROAD_TEST__?.start==='function' &&
+                typeof window.__GAMEROAD_TEST__?.deckPublic==='function' &&
+                Array.isArray(window.__CARD_DATA__) &&
+                typeof window.GAMEROAD_CREATE_DECK_MATCH_START_SNAPSHOT==='function'
+              ))).toBeTruthy();
+
+              evidence.phase='deck-install';persist();
+              expect(await installDeck(page)).toBeTruthy();
+
+              evidence.phase='match-start';persist();
+              evidence.started=await page.evaluate(()=>!!window.__GAMEROAD_TEST__.start('2p','road_shield'));
+              persist();
+              expect(evidence.started).toBeTruthy();
+
+              evidence.phase='battle-visible';persist();
+              await expect(page.locator('section.battle.active')).toBeVisible();
+
+              evidence.phase='binding-active';persist();
+              await expect.poll(()=>page.evaluate(()=>(window.__GAMEROAD_CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING__?.snapshot?.().active===true))).toBeTruthy();
+
+              evidence.phase='collect';persist();
+              evidence.runtime=await page.evaluate(()=>{
+                const t=window.__GAMEROAD_TEST__,m=t.state.match;
+                const source=window.__GAMEROAD_CONTROLLED_CHARACTER_4P_SOURCE__?.();
+                const projection=window.__GAMEROAD_CONTROLLED_CHARACTER_4P_PROJECTION__?.();
+                const binding=window.__GAMEROAD_CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING__?.snapshot?.();
+                const visible=el=>{const cs=getComputedStyle(el),r=el.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0&&r.width>0&&r.height>0;};
+                const summarize=el=>{const cs=getComputedStyle(el),r=el.getBoundingClientRect(),p=el.parentElement;return {tag:el.tagName,id:el.id||'',className:typeof el.className==='string'?el.className:'',dataset:{...el.dataset},text:(el.innerText||el.textContent||'').replace(/\s+/g,' ').trim().slice(0,400),display:cs.display,visibility:cs.visibility,opacity:cs.opacity,visible:visible(el),rect:{x:r.x,y:r.y,width:r.width,height:r.height},inBoardPlayers:!!el.closest('#boardPlayers'),parent:p?{tag:p.tagName,id:p.id||'',className:typeof p.className==='string'?p.className:'',dataset:{...p.dataset},text:(p.innerText||p.textContent||'').replace(/\s+/g,' ').trim().slice(0,260)}:null};};
+                const markers=[...document.querySelectorAll('#boardPlayers .boardPlayerToken[data-player]')].map(summarize);
+                const controlled=[...document.querySelectorAll('#boardPlayers [data-board-controlled-character]')].map(summarize);
+                const all=[...document.querySelectorAll('body *')];
+                const statusText=/(?:^|\s)(?:1P|2P|3P|4P)(?:\s|$)|READY|手札|山札|シールド|Shield|Hand|Deck/i;
+                const seen=new Set(),census=[];
+                const candidates=[...document.querySelectorAll('[data-player],[data-participant-id],[data-player-id],[data-role]'),...all.filter(el=>visible(el)&&statusText.test((el.innerText||el.textContent||'').replace(/\s+/g,' ').trim()))];
+                for(const el of candidates){if(seen.has(el)||!visible(el))continue;seen.add(el);census.push(summarize(el));if(census.length>=400)break;}
+                const forbiddenKey=/hand|deck|shield|secret|private|hole|loadCard|plan|lanes/i;
+                const sourceRows=source?.participants||[],projectionRows=projection||[];
+                return {
+                  screen:t.state.screen,source,projection,binding,markers,controlled,census,
+                  matchPositions:(m?.players||[]).map(p=>({participantId:p.id,positionKey:p.position,characterId:String(p.character||'')})),
+                  sourceForbidden:sourceRows.flatMap((row,i)=>Object.keys(row).filter(k=>forbiddenKey.test(k)).map(k=>`${i}:${k}`)),
+                  projectionForbidden:projectionRows.flatMap((row,i)=>Object.keys(row).filter(k=>forbiddenKey.test(k)).map(k=>`${i}:${k}`)),
+                  controlledForbidden:controlled.flatMap((row,i)=>Object.keys(row.dataset||{}).filter(k=>forbiddenKey.test(k)).map(k=>`${i}:${k}`)),
+                  sameFormPlayerStatusCandidates:census.filter(row=>/(?:1P|2P|3P|4P|READY)/i.test(row.text)),
+                  visibleCountCandidates:census.filter(row=>/(?:手札|山札|シールド|Shield|Hand|Deck)/i.test(row.text)),
+                  bodyText:(document.body?.innerText||'').slice(0,40000)
+                };
+              });
+              evidence.phase='collected';persist();
+
+              const rt=evidence.runtime;
+              expect(rt.screen).toBe('battle');
+              expect(rt.matchPositions).toHaveLength(4);
+              expect(rt.source?.participants).toHaveLength(4);
+              expect(rt.projection).toHaveLength(4);
+              expect(rt.markers).toHaveLength(4);
+              expect(new Set(rt.markers.map(x=>x.dataset.player)).size).toBe(4);
+              expect(new Set(rt.source.participants.map(x=>x.participantId)).size).toBe(4);
+              expect(new Set(rt.source.participants.map(x=>x.characterId)).size).toBe(4);
+              for(const row of rt.matchPositions){const s=rt.source.participants.find(x=>x.participantId===row.participantId);expect(s?.positionKey).toBe(row.positionKey);expect(s?.characterId).toBe(row.characterId);}
+              expect(rt.sourceForbidden).toEqual([]);
+              expect(rt.projectionForbidden).toEqual([]);
+              expect(rt.controlledForbidden).toEqual([]);
+              for(const row of rt.source.participants)expect(Object.keys(row).sort()).toEqual(['characterId','participantId','positionKey']);
+              const p1=rt.controlled.find(x=>x.dataset.participantId==='P1');
+              expect(p1).toBeTruthy();
+              expect(p1.visible).toBe(false);
+              expect(rt.controlled.filter(x=>x.dataset.participantId!=='P1'&&x.visible)).toHaveLength(3);
+              evidence.phase='asserted-core';persist();
+            }catch(err){
+              evidence.errors.push({name:err?.name||'Error',message:String(err?.message||err),stack:String(err?.stack||'')});persist();throw err;
+            }finally{
+              try{evidence.url=page.url();}catch{}
+              try{evidence.title=await page.title();}catch{}
+              try{evidence.finalBodyText=(await page.locator('body').innerText()).slice(0,40000);}catch{}
+              persist();
+              try{await page.screenshot({path:pngPath,fullPage:true,animations:'disabled'});}catch{}
+            }
+          });
+          EOF
+
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory "$GITHUB_WORKSPACE" > test-results/ni22-r3/server.log 2>&1 &
+          SERVER_PID=$!
+          cleanup(){ kill "$SERVER_PID" 2>/dev/null || true; }
+          trap cleanup EXIT
+          READY=0
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/browser/GAMEROAD.html >/dev/null; then READY=1; break; fi
+            sleep 1
+          done
+          echo "server_ready=$READY" | tee test-results/ni22-r3/server-ready.txt
+          test "$READY" = 1
+
+          set +e
+          npx playwright test --config=playwright.ni22-r3.config.mjs --workers=1 2>&1 | tee test-results/ni22-r3/playwright.log
+          RC=${PIPESTATUS[0]}
+          set -e
+          exit "$RC"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ni22-r3-four-world-privacy-${{ github.run_id }}
+          path: |
+            visual-evidence/ni22-r3/
+            test-results/ni22-r3/
+          if-no-files-found: error
+          retention-days: 14

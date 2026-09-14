@@ -58,8 +58,8 @@ jobs:
           git diff --check
           changed="$(git diff --name-only)"
           test "$changed" = "$TEST"
-          minus_count="$(git diff -- "$TEST" | grep -cF "toHaveCount(4);" || true)"
-          plus_count="$(git diff -- "$TEST" | grep -cF "toHaveCount(3);" || true)"
+          minus_count="$(git diff -- "$TEST" | grep '^-' | grep -cF "#publicPlayerStrip .publicPlayerChip')).toHaveCount(4);" || true)"
+          plus_count="$(git diff -- "$TEST" | grep '^+' | grep -cF "#publicPlayerStrip .publicPlayerChip')).toHaveCount(3);" || true)"
           test "$minus_count" -eq 3
           test "$plus_count" -eq 3
 
@@ -171,7 +171,6 @@ jobs:
           printf 'run_id=%s\nharness_source_sha=%s\nproduct_build_id=%s\nobserved_build_id=%s\npublic_origin=%s\nr19_exit_code=%s\nproduct_mutation=0\n' \
             "$GITHUB_RUN_ID" "$(git rev-parse HEAD)" "$EXPECTED_PRODUCT_BUILD_ID" "${OBSERVED_BUILD_ID:-}" "$GAMEROAD_PUBLIC_BASE_URL" "${R19_EXIT_CODE:-unset}" \
             > public-origin-metadata/run-binding.txt
-          git diff --exit-code
 
       - name: Upload exact-current interaction evidence
         if: ${{ always() }}

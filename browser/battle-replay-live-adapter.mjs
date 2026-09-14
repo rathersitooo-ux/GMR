@@ -41,6 +41,8 @@ const PARTNER_BATTLE_LOG_HOST_ATTR = 'data-partner-battle-event-log';
 const PARTNER_BATTLE_LOG_ROW_ATTR = 'data-partner-battle-event-log-row';
 const PARTNER_BATTLE_LOG_TOGGLE_ATTR = 'data-partner-battle-event-log-toggle';
 const PARTNER_BATTLE_LOG_DEFAULT_RECENT_ROWS = 2;
+const BATTLE_SUPPORT_ENTRY_ATTR = 'data-battle-support-entry';
+const BATTLE_SUPPORT_ITEM_ATTR = 'data-battle-support-item';
 
 function cloneJson(value) {
   const text = JSON.stringify(value);
@@ -746,6 +748,42 @@ function formatPartnerBattleEventLogRow(event, environment = {}) {
   return Number.isSafeInteger(event.sequence) ? `対戦イベント ${event.sequence}` : null;
 }
 
+function ensureLiveBattleSupportEntryRoot(documentRef, shell) {
+  if (!shell || typeof documentRef?.createElement !== 'function') return null;
+  let root = typeof shell.querySelector === 'function' ? shell.querySelector(`[${BATTLE_SUPPORT_ENTRY_ATTR}]`) : null;
+  if (!root) {
+    root = documentRef.createElement('nav');
+    if (!root || typeof root.setAttribute !== 'function' || typeof shell.appendChild !== 'function') return null;
+    root.setAttribute(BATTLE_SUPPORT_ENTRY_ATTR, '');
+    root.setAttribute('aria-label', '対戦サポート');
+    shell.appendChild(root);
+  }
+  return root;
+}
+
+export function registerLiveBattleSupportSurface({ key, label, target, document = browserGlobal('document'), hostId = 'battleLog' } = {}) {
+  if (!nonEmptyString(key) || !nonEmptyString(label) || !target) return false;
+  const shell = document?.getElementById?.(hostId);
+  if (!shell || typeof document?.createElement !== 'function') return false;
+  const root = ensureLiveBattleSupportEntryRoot(document, shell);
+  if (!root || typeof root.appendChild !== 'function') return false;
+  const children = root.children ? Array.from(root.children) : [];
+  let control = children.find(child => child?.getAttribute?.(BATTLE_SUPPORT_ITEM_ATTR) === key) || null;
+  if (!control) {
+    control = document.createElement('button');
+    if (!control || typeof control.setAttribute !== 'function') return false;
+    control.setAttribute('type', 'button');
+    control.setAttribute(BATTLE_SUPPORT_ITEM_ATTR, key);
+    root.appendChild(control);
+  }
+  control.textContent = label;
+  control.onclick = () => {
+    target.scrollIntoView?.({ block: 'nearest' });
+    target.focus?.({ preventScroll: true });
+  };
+  return true;
+}
+
 function ensurePartnerBattleEventLogHost(environment = {}) {
   const documentRef = environmentValue(environment, 'document');
   const shell = documentRef?.getElementById?.('battleLog');
@@ -1191,6 +1229,11 @@ export function renderLiveBattleRemainingDeckPresentation(presentation, {
   const unknown = document.createElement('span');
   unknown.textContent = `不明: ${presentation.unknownCount}枚`;
   root.replaceChildren?.(title, known, unknown);
+  const historyTarget = host.querySelector?.('[data-partner-battle-event-log]') || null;
+  if (historyTarget) {
+    registerLiveBattleSupportSurface({ key: 'history', label: '履歴', target: historyTarget, document, hostId });
+  }
+  registerLiveBattleSupportSurface({ key: 'deck', label: '山札', target: root, document, hostId });
   return true;
 }
 

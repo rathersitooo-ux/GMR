@@ -14,6 +14,7 @@ import {
   projectAcceptedBattleResolution,
   readBattleReplayCardPresentationPreferences,
   readLiveReplay,
+  registerLiveBattleSupportSurface,
   projectLiveBattleRemainingDeckPresentation,
   renderBattleReplayCardPresentationPlan,
   renderLiveBattleRemainingDeckPresentation
@@ -210,6 +211,40 @@ test('remaining Deck renderer reuses existing Battle log host and writes text on
     '判明: 公開A×1',
     '不明: 3枚'
   ]);
+});
+
+test('Battle support entry reuses actual History and owner-safe Deck without fabricating Graveyard', () => {
+  const { document, shell } = fakeBattleLogDocument();
+  const bridge = createPartnerBattleEventLogPresentationBridge({ document });
+  assert.equal(bridge.begin('M-SUPPORT'), true);
+  assert.equal(renderLiveBattleRemainingDeckPresentation({
+    ok: true,
+    status: 'ready',
+    total: 4,
+    knownCount: 0,
+    unknownCount: 4,
+    revision: 1,
+    knownCardCounts: [],
+    orderHidden: true,
+    presentationOnly: true
+  }, { document }), true);
+  assert.equal(renderLiveBattleRemainingDeckPresentation({
+    ok: true,
+    status: 'ready',
+    total: 4,
+    knownCount: 0,
+    unknownCount: 4,
+    revision: 1,
+    knownCardCounts: [],
+    orderHidden: true,
+    presentationOnly: true
+  }, { document }), true);
+  const entry = shell.querySelector('[data-battle-support-entry]');
+  assert.ok(entry);
+  assert.deepEqual(entry.children.map(child => child.getAttribute('data-battle-support-item')), ['history', 'deck']);
+  assert.equal(entry.children.some(child => child.getAttribute('data-battle-support-item') === 'graveyard'), false);
+  assert.equal(registerLiveBattleSupportSurface({ key: 'graveyard', label: '墓地', target: null, document }), false);
+  assert.equal(shell.children.filter(child => child.getAttribute?.('data-battle-support-entry') !== null).length, 1);
 });
 
 test('production session still requires all exact version authorities; capture never invents them', () => {

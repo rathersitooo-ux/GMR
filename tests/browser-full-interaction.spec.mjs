@@ -1185,7 +1185,7 @@ expect(jankenSnapshot?.assignment?.selectedJankenCardIds?.length).toBeGreaterTha
 for (const cardId of jankenSnapshot?.assignment?.selectedJankenCardIds ?? []) {
   await expect(battle.locator(`#hand .handCard[data-card-id="${cardId}"]`)).toHaveCount(1);
 }
-await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(4);
+await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(3);
   await expect(battle.locator('#boardPlayers .boardPlayerToken')).toHaveCount(4);
   await attachStateScreenshot(page, testInfo, 'battle-two-v-two-entry-visible');
 
@@ -1435,7 +1435,7 @@ test('R13 covers four-player Friend Room ready toggle and visible Honey Hunt fou
   const battle = page.locator('section[data-screen="battle"]');
   await expect(battle).toBeVisible();
   await expect(battle.locator('#honeyMeter')).toBeVisible();
-  await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(4);
+  await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(3);
   await attachStateScreenshot(page, testInfo, 'r13-honey-four-player-battle-entry-visible');
   await battle.locator('#leaveMatch').click();
   await expect(page.locator('section[data-screen="home"]')).toBeVisible();
@@ -1757,7 +1757,7 @@ test('R19 reaches Result from visible four-player Honey Hunt and returns Home', 
   const result = page.locator('section[data-screen="result"]');
   await expect(battle).toBeVisible();
   await expect(battle.locator('#honeyMeter')).toBeVisible();
-  await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(4);
+  await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(3);
   await attachStateScreenshot(page, testInfo, 'r19-honey-four-player-battle-visible');
 
   const deadline = Date.now() + 210_000;

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-POWER-ENERGY-VISUAL-R5-20260914T1532-SOL-KI7",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_POWER_ENERGY_VISUAL_TARGET_R5",
+  "acquireKey": "BATTLE-POWER-ENERGY-VISUAL-R5-20260914T1532-SOL-KI7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R4_PRODUCT0_PLUS_R3_EXACT_DONOR_PLUS_MAIN_44120519_20260914T1532JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "BOUNDED_BINARY_THREEWAY_PATCH_FAIL_CLOSED_PLAN_ON_EXACT_DONOR_RANGE",
+  "proceedToken": "PROCEED|BATTLE-POWER-ENERGY-VISUAL-R5-20260914T1532-SOL-KI7|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|power-energy-visual-target|bounded-writer|active-lease",
+  "authorizationBaseSha": "44120519c4225420b7e2e3001f63f8cb332e58a8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_POWER_ENERGY_VISUAL_TARGET_R5",
+  "leaseAcquireKey": "BATTLE-POWER-ENERGY-VISUAL-R5-20260914T1532-SOL-KI7",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 15:32 JST",
+  "leaseUntilJst": "2026-09-14 16:32 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1451:L1451",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main 44120519c4225420b7e2e3001f63f8cb332e58a8; mutable browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; assets/visual/battle-power-energy.jpg; deploy/cloudflare/scripts/build.mjs; transient .github/workflows/zz-temp-battle-power-energy-visual-r5.yml; own transient data/preaction-authorizations/BATTLE-POWER-ENERGY-VISUAL-R5-20260914T1532-SOL-KI7.json; own branch/PR/check/merge/readback. R3/R4 branches READ_ONLY. READ_ONLY browser/GAMEROAD.html; focus runtime; gameplay/rules/target/legality/Hand3/card identity/save/economy/network.",
+  "solutionSignature": "BATTLE_POWER_ENERGY_DISTINCT_VISUAL_TARGET_REUSE_EXISTING_FLIGHT_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R3_EXACT_DONOR_COMMIT_393CAD9_PLUS_CURRENT_MAIN_THREEWAY_PRESERVATION",
+  "solutionSearchEvidence": [
+    "R3 donor commit 393cad9c9a2a69e0e559b47699072315605c60f8 contains the exact distinct Power Energy target repair and exact recovered binary asset.",
+    "R3 was based on d3993fa124b9cf1d9f44f2dac1e784c5deea2f44 and never opened a PR; its branch remains donor-only.",
+    "Current main 44120519c4225420b7e2e3001f63f8cb332e58a8 contains later SlidePad PR#1666 and ReducedMotion PR#1669, so whole-file donor replacement is forbidden.",
+    "Use git diff --binary on only the four durable R3 paths and git apply --3way onto the fresh R5 branch. Conflicts fail closed instead of discarding current-main work.",
+    "Reuse the existing legal-candidate gating, raw-pointer arming, same-card drag ghost and canonical card release flight; no second controller/engine or gameplay authority."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    "assets/visual/battle-power-energy.jpg",
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-power-energy-visual-r5.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    "assets/visual/battle-power-energy.jpg",
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-power-energy-visual-r5.yml"
+  ]
+}

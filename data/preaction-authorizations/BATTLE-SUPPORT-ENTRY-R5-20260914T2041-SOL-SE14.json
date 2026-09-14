@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SUPPORT-ENTRY-R5-20260914T2041-SOL-SE14",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_GRAVEYARD_INFORMATION_SURFACE_R1",
+  "acquireKey": "BATTLE-SUPPORT-ENTRY-R5-20260914T2041-SOL-SE14",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_9663C1EA_ADAPTER_BLOB_4047D561_AND_PR1676_BOUNDED_DONOR_486B522F",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1676_PRODUCT_INTENT_VALIDATED_CONTROL_PLANE_ONLY_FAILURE_PLUS_EXISTING_CLASSIFIED_REPLAY_TEST",
+  "proceedToken": "PROCEED|BATTLE-SUPPORT-ENTRY-R5-20260914T2041-SOL-SE14|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|support-entry|existing-surfaces-only|active-lease",
+  "authorizationBaseSha": "9663c1eab469f43903999699921443ad81da54ef",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_GRAVEYARD_INFORMATION_SURFACE_R1",
+  "leaseAcquireKey": "BATTLE-SUPPORT-ENTRY-R5-20260914T2041-SOL-SE14",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 20:41 JST",
+  "leaseUntilJst": "2026-09-14 21:41 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1472:L1472",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-support-entry-r5-20260914 from exact current main 9663c1eab469f43903999699921443ad81da54ef; mutable browser/battle-replay-live-adapter.mjs; tests/battle-replay-live-adapter.test.mjs; deploy/cloudflare/tests/build.test.mjs replay-adapter currentBlob provenance pin only; transient tools/temp-battle-support-entry-r5.py; transient .github/workflows/zz-temp-battle-support-entry-r5.yml; own transient data/preaction-authorizations/BATTLE-SUPPORT-ENTRY-R5-20260914T2041-SOL-SE14.json; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs; browser/battle-card-zone-information-core.mjs; browser/battle-self-deck-inspect-core.mjs; browser/battle-replay-core.mjs; gameplay/rules/state/save/economy/network.",
+  "solutionSignature": "BATTLE_SUPPORT_ENTRY_EXISTING_SURFACES_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1676_DONOR_REUSED_WITH_CLASSIFIED_TEST_AND_PROVENANCE_REPAIR_ONLY",
+  "solutionSearchEvidence": [
+    "Current main 9663c1eab469f43903999699921443ad81da54ef keeps browser/battle-replay-live-adapter.mjs blob 4047d561436345de7d0382129d35b9de00a805de, so the bounded PR#1676 donor patch still applies to the same adapter base.",
+    "PR#1676 was closed unmerged because the new test filename was unclassified and the build provenance pin was stale; its support-entry behavior was not rejected.",
+    "The accepted rebuild uses the existing classified tests/battle-replay-live-adapter.test.mjs and updates only the replay adapter currentBlob pin in deploy/cloudflare/tests/build.test.mjs.",
+    "Only real existing surfaces are registered: History and the viewer-safe remaining Deck. Graveyard is intentionally absent until a real producer/use-site exists.",
+    "browser/GAMEROAD.html, deploy/cloudflare/scripts/build.mjs, gameplay, rules, state, save, economy and network remain read-only."
+  ],
+  "scope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "tools/temp-battle-support-entry-r5.py",
+    ".github/workflows/zz-temp-battle-support-entry-r5.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "tools/temp-battle-support-entry-r5.py",
+    ".github/workflows/zz-temp-battle-support-entry-r5.yml"
+  ]
+}

@@ -1,0 +1,77 @@
+name: temp-battle-roulette-compositor-left-r3
+
+on:
+  push:
+    branches:
+      - sol/battle-roulette-compositor-left-r3-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fence authorized history and source blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=2798cd9a3bd517e1c973ff9c189e2f908f725f75
+          FIRST=30234ad42cd340d1b470faf673e5019926547fc0
+          BRANCH=sol/battle-roulette-compositor-left-r3-20260914
+          test "${GITHUB_REF_NAME}" = "$BRANCH"
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-list --reverse "$BASE"..HEAD | head -n1)" = "$FIRST"
+          test "$(git rev-parse "$BASE:browser/battle-current-player-ui-runtime.mjs")" = "2ba5461ba06438b78050a7d3313c0991927bcd5e"
+          test "$(git rev-parse "$BASE:tests/battle-current-player-ui-runtime.test.mjs")" = "2167d4eb83ed34d4dea7a85cc346e64675da14c9"
+          test -f data/preaction-authorizations/BATTLE-ROULETTE-COMPOSITOR-LEFT-R3-20260914T2107-SOL-KU8.json
+          test -f tools/temp-battle-roulette-compositor-left-r3.py
+
+      - name: Apply exact X8 compositor repair
+        run: python3 tools/temp-battle-roulette-compositor-left-r3.py
+
+      - name: Run focused classified regression
+        run: node tests/battle-current-player-ui-runtime.test.mjs
+
+      - name: Check patch shape before cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          mapfile -t changed < <(git diff --name-only | sort)
+          printf '%s\n' "${changed[@]}"
+          test "${#changed[@]}" -eq 2
+          test "${changed[0]}" = "browser/battle-current-player-ui-runtime.mjs"
+          test "${changed[1]}" = "tests/battle-current-player-ui-runtime.test.mjs"
+
+      - name: Remove transient authorization and writer files
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm data/preaction-authorizations/BATTLE-ROULETTE-COMPOSITOR-LEFT-R3-20260914T2107-SOL-KU8.json
+          rm tools/temp-battle-roulette-compositor-left-r3.py
+          rm .github/workflows/zz-temp-battle-roulette-compositor-left-r3.yml
+
+      - name: Commit bounded durable product diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=2798cd9a3bd517e1c973ff9c189e2f908f725f75
+          git config user.name "gameroad-bounded-writer"
+          git config user.email "gameroad-bounded-writer@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "fix(battle): preserve canonical left roulette placement"
+          mapfile -t final_changed < <(git diff --name-only "$BASE"..HEAD | sort)
+          printf '%s\n' "${final_changed[@]}"
+          test "${#final_changed[@]}" -eq 2
+          test "${final_changed[0]}" = "browser/battle-current-player-ui-runtime.mjs"
+          test "${final_changed[1]}" = "tests/battle-current-player-ui-runtime.test.mjs"
+          test ! -e data/preaction-authorizations/BATTLE-ROULETTE-COMPOSITOR-LEFT-R3-20260914T2107-SOL-KU8.json
+          test ! -e tools/temp-battle-roulette-compositor-left-r3.py
+          test ! -e .github/workflows/zz-temp-battle-roulette-compositor-left-r3.yml
+          git push origin "HEAD:${GITHUB_REF_NAME}"

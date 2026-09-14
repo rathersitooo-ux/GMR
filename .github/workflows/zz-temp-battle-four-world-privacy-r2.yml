@@ -46,28 +46,32 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p .ni22-r2 visual-evidence/ni22-r2 test-results/ni22-r2
-          printf '%s\n' '{"schema":"ni22-r2-bootstrap-v1","base":"44120519c4225420b7e2e3001f63f8cb332e58a8"}' > visual-evidence/ni22-r2/bootstrap.json
+          printf '%s\n' '{"schema":"ni22-r2-bootstrap-v2","base":"44120519c4225420b7e2e3001f63f8cb332e58a8"}' > visual-evidence/ni22-r2/bootstrap.json
           cat > .ni22-r2/playwright.config.mjs <<'EOF'
           import {defineConfig} from '@playwright/test';
           export default defineConfig({
-            testDir:'.ni22-r2', testMatch:'ni22-r2.spec.mjs', timeout:90000,
-            expect:{timeout:15000}, workers:1, retries:0,
+            testDir:'.',
+            testMatch:'ni22-r2.spec.mjs',
+            testIgnore:'**/.ni22-r2/**',
+            timeout:90000,
+            expect:{timeout:15000},
+            workers:1,
+            retries:0,
             reporter:[['line'],['json',{outputFile:'test-results/ni22-r2/report.json'}]],
             projects:[
               {name:'short-landscape',use:{viewport:{width:667,height:375},hasTouch:true}},
               {name:'landscape',use:{viewport:{width:1280,height:720},hasTouch:true}},
               {name:'portrait-audit',use:{viewport:{width:390,height:844},hasTouch:true}}
             ],
-            use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,trace:'retain-on-failure'},
-            webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1',url:'http://127.0.0.1:4173/browser/GAMEROAD.html',timeout:120000}
+            use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,trace:'retain-on-failure'}
           });
           EOF
           cat > .ni22-r2/ni22-r2.spec.mjs <<'EOF'
           import {test,expect} from '@playwright/test';
           import fs from 'node:fs';
           import path from 'node:path';
-
           const OUT=path.resolve('visual-evidence/ni22-r2');
+
           async function installDeck(page){return page.evaluate(()=>{
             const t=window.__GAMEROAD_TEST__,
               pub=new Set(t.deckPublic().filter(c=>c.slot==='main').map(c=>c.id)),
@@ -79,17 +83,11 @@ jobs:
             return v.ok?t.deckCommit():false;
           });}
 
-          test('X22 actual four-world + viewer-safe public/private boundary evidence',async({page},testInfo)=>{
+          test('X22 actual four-world and viewer-safe boundary evidence',async({page},testInfo)=>{
             const name=testInfo.project.name;
             const jsonPath=path.join(OUT,`${name}.json`);
             const pngPath=path.join(OUT,`${name}.png`);
-            let evidence={
-              schema:'gameroad.x22.four-world-privacy.actual-evidence.r2',
-              project:name,
-              base:'44120519c4225420b7e2e3001f63f8cb332e58a8',
-              phase:'init',
-              errors:[]
-            };
+            const evidence={schema:'gameroad.x22.actual.r2c',project:name,base:'44120519c4225420b7e2e3001f63f8cb332e58a8',phase:'init',errors:[]};
             const persist=()=>fs.writeFileSync(jsonPath,JSON.stringify(evidence,null,2));
             persist();
             try{
@@ -121,9 +119,7 @@ jobs:
               await expect(page.locator('section.battle.active')).toBeVisible();
 
               evidence.phase='binding-active';persist();
-              await expect.poll(()=>page.evaluate(()=>(
-                window.__GAMEROAD_CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING__?.snapshot?.().active===true
-              ))).toBeTruthy();
+              await expect.poll(()=>page.evaluate(()=>(window.__GAMEROAD_CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING__?.snapshot?.().active===true))).toBeTruthy();
 
               evidence.phase='collect';persist();
               evidence.runtime=await page.evaluate(()=>{
@@ -131,49 +127,26 @@ jobs:
                 const source=window.__GAMEROAD_CONTROLLED_CHARACTER_4P_SOURCE__?.();
                 const projection=window.__GAMEROAD_CONTROLLED_CHARACTER_4P_PROJECTION__?.();
                 const binding=window.__GAMEROAD_CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING__?.snapshot?.();
-                const visible=el=>{
-                  const cs=getComputedStyle(el),r=el.getBoundingClientRect();
-                  return cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0&&r.width>0&&r.height>0;
-                };
-                const summarize=(el)=>{
-                  const cs=getComputedStyle(el),r=el.getBoundingClientRect();
-                  const parent=el.parentElement;
-                  return {
-                    tag:el.tagName,id:el.id||'',className:typeof el.className==='string'?el.className:'',
-                    dataset:{...el.dataset},
-                    text:(el.innerText||el.textContent||'').replace(/\s+/g,' ').trim().slice(0,300),
-                    display:cs.display,visibility:cs.visibility,opacity:cs.opacity,visible:visible(el),
-                    rect:{x:r.x,y:r.y,width:r.width,height:r.height},
-                    inBoardPlayers:!!el.closest('#boardPlayers'),
-                    parent:parent?{tag:parent.tagName,id:parent.id||'',className:typeof parent.className==='string'?parent.className:'',dataset:{...parent.dataset},text:(parent.innerText||parent.textContent||'').replace(/\s+/g,' ').trim().slice(0,220)}:null
-                  };
-                };
+                const visible=el=>{const cs=getComputedStyle(el),r=el.getBoundingClientRect();return cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)!==0&&r.width>0&&r.height>0;};
+                const summarize=el=>{const cs=getComputedStyle(el),r=el.getBoundingClientRect(),p=el.parentElement;return {tag:el.tagName,id:el.id||'',className:typeof el.className==='string'?el.className:'',dataset:{...el.dataset},text:(el.innerText||el.textContent||'').replace(/\s+/g,' ').trim().slice(0,300),display:cs.display,visibility:cs.visibility,opacity:cs.opacity,visible:visible(el),rect:{x:r.x,y:r.y,width:r.width,height:r.height},inBoardPlayers:!!el.closest('#boardPlayers'),parent:p?{tag:p.tagName,id:p.id||'',className:typeof p.className==='string'?p.className:'',dataset:{...p.dataset},text:(p.innerText||p.textContent||'').replace(/\s+/g,' ').trim().slice(0,220)}:null};};
                 const markers=[...document.querySelectorAll('#boardPlayers .boardPlayerToken[data-player]')].map(summarize);
                 const controlled=[...document.querySelectorAll('#boardPlayers [data-board-controlled-character]')].map(summarize);
                 const all=[...document.querySelectorAll('body *')];
                 const statusText=/(?:^|\s)(?:1P|2P|3P|4P)(?:\s|$)|READY|手札|山札|シールド|Shield|Hand|Deck/i;
-                const attrNodes=[...document.querySelectorAll('[data-player],[data-participant-id],[data-player-id],[data-role]')];
-                const textNodes=all.filter(el=>visible(el)&&statusText.test((el.innerText||el.textContent||'').replace(/\s+/g,' ').trim()));
-                const seen=new Set();
-                const census=[];
-                for(const el of [...attrNodes,...textNodes]){
-                  if(seen.has(el)||!visible(el))continue;
-                  seen.add(el);census.push(summarize(el));
-                  if(census.length>=300)break;
+                const seen=new Set(),census=[];
+                for(const el of [...document.querySelectorAll('[data-player],[data-participant-id],[data-player-id],[data-role]'),...all.filter(el=>visible(el)&&statusText.test((el.innerText||el.textContent||'').replace(/\s+/g,' ').trim()))]){
+                  if(seen.has(el)||!visible(el))continue;seen.add(el);census.push(summarize(el));if(census.length>=300)break;
                 }
                 const forbiddenKey=/hand|deck|shield|secret|private|hole|loadCard|plan|lanes/i;
-                const sourceRows=source?.participants||[];
-                const projectionRows=projection||[];
-                const sourceForbidden=sourceRows.flatMap((row,i)=>Object.keys(row).filter(k=>forbiddenKey.test(k)).map(k=>`${i}:${k}`));
-                const projectionForbidden=projectionRows.flatMap((row,i)=>Object.keys(row).filter(k=>forbiddenKey.test(k)).map(k=>`${i}:${k}`));
-                const controlledForbidden=controlled.flatMap((row,i)=>Object.keys(row.dataset||{}).filter(k=>forbiddenKey.test(k)).map(k=>`${i}:${k}`));
-                const matchPositions=(m?.players||[]).map(p=>({participantId:p.id,positionKey:p.position,characterId:String(p.character||'')}));
-                const countLike=census.filter(row=>/(?:1P|2P|3P|4P|READY|手札|山札|シールド|Shield|Hand|Deck)/i.test(row.text));
+                const sourceRows=source?.participants||[],projectionRows=projection||[];
                 return {
-                  screen:t.state.screen,
-                  source,projection,binding,markers,controlled,
-                  sourceForbidden,projectionForbidden,controlledForbidden,
-                  matchPositions,census,countLike,
+                  screen:t.state.screen,source,projection,binding,markers,controlled,census,
+                  matchPositions:(m?.players||[]).map(p=>({participantId:p.id,positionKey:p.position,characterId:String(p.character||'')})),
+                  sourceForbidden:sourceRows.flatMap((row,i)=>Object.keys(row).filter(k=>forbiddenKey.test(k)).map(k=>`${i}:${k}`)),
+                  projectionForbidden:projectionRows.flatMap((row,i)=>Object.keys(row).filter(k=>forbiddenKey.test(k)).map(k=>`${i}:${k}`)),
+                  controlledForbidden:controlled.flatMap((row,i)=>Object.keys(row.dataset||{}).filter(k=>forbiddenKey.test(k)).map(k=>`${i}:${k}`)),
+                  sameFormPlayerStatusCandidates:census.filter(row=>/(?:1P|2P|3P|4P|READY)/i.test(row.text)),
+                  visibleCountCandidates:census.filter(row=>/(?:手札|山札|シールド|Shield|Hand|Deck)/i.test(row.text)),
                   bodyText:(document.body?.innerText||'').slice(0,30000)
                 };
               });
@@ -188,27 +161,18 @@ jobs:
               expect(new Set(rt.markers.map(x=>x.dataset.player)).size).toBe(4);
               expect(new Set(rt.source.participants.map(x=>x.participantId)).size).toBe(4);
               expect(new Set(rt.source.participants.map(x=>x.characterId)).size).toBe(4);
-              for(const row of rt.matchPositions){
-                const s=rt.source.participants.find(x=>x.participantId===row.participantId);
-                expect(s?.positionKey).toBe(row.positionKey);
-                expect(s?.characterId).toBe(row.characterId);
-              }
+              for(const row of rt.matchPositions){const s=rt.source.participants.find(x=>x.participantId===row.participantId);expect(s?.positionKey).toBe(row.positionKey);expect(s?.characterId).toBe(row.characterId);}
               expect(rt.sourceForbidden).toEqual([]);
               expect(rt.projectionForbidden).toEqual([]);
               expect(rt.controlledForbidden).toEqual([]);
-              for(const row of rt.source.participants){
-                expect(Object.keys(row).sort()).toEqual(['characterId','participantId','positionKey']);
-              }
-
+              for(const row of rt.source.participants)expect(Object.keys(row).sort()).toEqual(['characterId','participantId','positionKey']);
               const p1=rt.controlled.find(x=>x.dataset.participantId==='P1');
               expect(p1).toBeTruthy();
               expect(p1.visible).toBe(false);
               expect(rt.controlled.filter(x=>x.dataset.participantId!=='P1'&&x.visible)).toHaveLength(3);
               evidence.phase='asserted-core';persist();
             }catch(err){
-              evidence.errors.push({name:err?.name||'Error',message:String(err?.message||err),stack:String(err?.stack||'')});
-              persist();
-              throw err;
+              evidence.errors.push({name:err?.name||'Error',message:String(err?.message||err),stack:String(err?.stack||'')});persist();throw err;
             }finally{
               try{evidence.url=page.url();}catch{}
               try{evidence.title=await page.title();}catch{}
@@ -218,7 +182,24 @@ jobs:
             }
           });
           EOF
-          npx playwright test --config=.ni22-r2/playwright.config.mjs --workers=1
+
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory "$GITHUB_WORKSPACE" > test-results/ni22-r2/server.log 2>&1 &
+          SERVER_PID=$!
+          cleanup(){ kill "$SERVER_PID" 2>/dev/null || true; }
+          trap cleanup EXIT
+          READY=0
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/browser/GAMEROAD.html >/dev/null; then READY=1; break; fi
+            sleep 1
+          done
+          echo "server_ready=$READY" | tee test-results/ni22-r2/server-ready.txt
+          test "$READY" = 1
+
+          set +e
+          npx playwright test --config=.ni22-r2/playwright.config.mjs --workers=1 2>&1 | tee test-results/ni22-r2/playwright.log
+          RC=${PIPESTATUS[0]}
+          set -e
+          exit "$RC"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

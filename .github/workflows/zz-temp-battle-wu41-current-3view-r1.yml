@@ -1,0 +1,77 @@
+name: TEMP Battle WU41 Current 3-View Touch Evidence R1
+
+on:
+  push:
+    branches:
+      - sol/battle-wu41-current-3view-r1-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  current-three-view-touch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact evidence branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Bind product bytes to current main 44120519
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=44120519c4225420b7e2e3001f63f8cb332e58a8
+          git cat-file -e "${BASE}^{commit}"
+          if ! git diff --quiet "$BASE" -- browser tests playwright.full-interaction.config.mjs; then
+            echo '::error::WU41 evidence branch changed product/test/config bytes relative to bound current main'
+            git diff --stat "$BASE" -- browser tests playwright.full-interaction.config.mjs
+            exit 1
+          fi
+          mkdir -p test-results/wu41-metadata
+          printf 'bound_main=%s\nevidence_head=%s\nproduct_diff=0\n' "$BASE" "$GITHUB_SHA" > test-results/wu41-metadata/binding.txt
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+
+      - name: Run three viewport visible navigation and first Battle decision
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx playwright test tests/browser-full-interaction.spec.mjs \
+            --config=playwright.full-interaction.config.mjs \
+            --workers=1 \
+            --project=desktop-1280x720 \
+            --project=phone-390x844 \
+            --project=short-landscape-667x375 \
+            --grep='captures success-state screenshots for current pointer navigation|starts through visible Setup and advances the first Battle decision through visible controls'
+
+      - name: Run real touch-input project
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx playwright test tests/browser-full-interaction-state-sequence.spec.mjs \
+            --config=playwright.full-interaction.config.mjs \
+            --workers=1 \
+            --project=phone-touch-390x844 \
+            --grep='@mobile-touch'
+
+      - name: Upload WU41 evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: battle-wu41-current-3view-r1-${{ github.run_id }}
+          path: |
+            playwright-report-full-interaction/
+            test-results/full-interaction/
+            test-results/wu41-metadata/
+          if-no-files-found: error
+          retention-days: 14

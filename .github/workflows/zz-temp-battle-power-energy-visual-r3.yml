@@ -1,0 +1,81 @@
+name: TEMP Battle Power Energy Visual R3
+
+on:
+  push:
+    branches:
+      - sol/battle-power-energy-visual-r3-20260914
+    paths:
+      - .github/workflows/zz-temp-battle-power-energy-visual-r3.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-power-energy-visual-r3-20260914
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify authorized base ancestry
+        run: git merge-base --is-ancestor d3993fa124b9cf1d9f44f2dac1e784c5deea2f44 HEAD
+      - name: Recover validated R2 patcher as read-only donor
+        shell: bash
+        run: |
+          git fetch origin refs/heads/sol/battle-power-energy-visual-r2-20260914:refs/remotes/origin/power-energy-r2-donor
+          git show refs/remotes/origin/power-energy-r2-donor:.github/workflows/zz-temp-battle-power-energy-visual-r2.yml > /tmp/power-energy-r2.yml
+          awk '
+            /python - <<'\''PY'\''/ { capture=1; next }
+            capture && /^          PY$/ { exit }
+            capture { sub(/^          /, ""); print }
+          ' /tmp/power-energy-r2.yml > /tmp/power-energy-r3.py
+          python3 -m py_compile /tmp/power-energy-r3.py
+      - name: Apply bounded distinct-target patch
+        run: python3 /tmp/power-energy-r3.py
+      - name: Retint existing charge flight to user-original orange and violet
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('browser/battle-janken-slidepad-runtime-mount.mjs')
+          text = p.read_text(encoding='utf-8')
+          replacements = [
+            ('brightness(1.25) drop-shadow(0 0 8px rgba(222,222,222,.8))', 'brightness(1.22) drop-shadow(0 0 8px rgba(255,126,45,.78))'),
+            ('brightness(1.75) drop-shadow(0 0 14px rgba(247,247,247,1)) drop-shadow(0 0 28px rgba(214,214,214,.95))', 'brightness(1.58) drop-shadow(0 0 14px rgba(255,118,35,.95)) drop-shadow(0 0 28px rgba(143,74,255,.88))'),
+            ('brightness(2.05) drop-shadow(0 0 18px rgba(251,251,251,1)) drop-shadow(0 0 38px rgba(212,212,212,1))', 'brightness(1.82) drop-shadow(0 0 18px rgba(255,151,58,1)) drop-shadow(0 0 38px rgba(131,66,255,.95))'),
+            ('drop-shadow(0 0 9px rgba(219,219,219,.55))', 'drop-shadow(0 0 9px rgba(255,112,32,.62)) drop-shadow(0 0 16px rgba(122,64,235,.42))'),
+          ]
+          for old, new in replacements:
+            if text.count(old) != 1:
+              raise SystemExit(f'expected one charge-color anchor, got {text.count(old)}: {old}')
+            text = text.replace(old, new, 1)
+          p.write_text(text, encoding='utf-8')
+          PY
+      - name: Verify bounded diff and exact asset
+        shell: bash
+        run: |
+          test "$(sha256sum assets/visual/battle-power-energy.jpg | awk '{print $1}')" = "314973a531dffced941f996dda9e45ffcf41526263feae00da558c1c918988c3"
+          git diff --check
+          diff_paths="$(git diff --name-only | sort)"
+          expected_paths="$(printf '%s\n' browser/battle-janken-slidepad-runtime-mount.mjs deploy/cloudflare/scripts/build.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs | sort)"
+          test "$diff_paths" = "$expected_paths"
+          grep -F "rgba(255,118,35,.95)" browser/battle-janken-slidepad-runtime-mount.mjs
+          grep -F "rgba(143,74,255,.88)" browser/battle-janken-slidepad-runtime-mount.mjs
+          test "$(grep -F -c "from './battle-card-release-flight-runtime-effect.mjs';" browser/battle-janken-slidepad-runtime-mount.mjs)" = "1"
+      - name: Run syntax and focused tests
+        run: |
+          node --check browser/battle-janken-slidepad-runtime-mount.mjs
+          node --check deploy/cloudflare/scripts/build.mjs
+          node --test tests/battle-janken-slidepad-runtime-mount.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Commit exact product change
+        run: |
+          git config user.name "gameroad-bounded-writer"
+          git config user.email "actions@users.noreply.github.com"
+          git add browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs deploy/cloudflare/scripts/build.mjs
+          git commit -m "Battle: restore distinct Power Energy launch target"
+          git push origin HEAD:sol/battle-power-energy-visual-r3-20260914

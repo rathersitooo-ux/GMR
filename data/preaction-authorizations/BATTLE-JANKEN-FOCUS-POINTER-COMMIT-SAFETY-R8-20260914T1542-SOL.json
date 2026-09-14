@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-FOCUS-POINTER-COMMIT-SAFETY-R8-20260914T1542-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_FOCUS_POINTER_COMMIT_SAFETY_R8",
+  "acquireKey": "BATTLE-JANKEN-FOCUS-POINTER-COMMIT-SAFETY-R8-20260914T1542-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_88E31C13_PLUS_EXACT_FOCUS_RUNTIME_DIRECT_CLICK_COMMIT_PLUS_R8_LEASE_20260914T1542JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R7_BOUNDED_RUNTIME_DIFF_REVIEWED_PLUS_DEDICATED_FAKE_DOM_POINTER_TEST_DESIGN_PLUS_R8_CLEAN_HISTORY",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-FOCUS-POINTER-COMMIT-SAFETY-R8-20260914T1542-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|pointer-commit-safety|existing-authority-only|active-lease",
+  "authorizationBaseSha": "88e31c137d9145eae2203b35d52c727cd4c4cd76",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_FOCUS_POINTER_COMMIT_SAFETY_R8",
+  "leaseAcquireKey": "BATTLE-JANKEN-FOCUS-POINTER-COMMIT-SAFETY-R8-20260914T1542-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 15:42 JST",
+  "leaseUntilJst": "2026-09-14 16:27 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1455:L1455",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-janken-focus-pointer-safety-r8-20260914 from exact current main 88e31c137d9145eae2203b35d52c727cd4c4cd76; mutable browser/battle-janken-focus-runtime-surface.mjs; NEW tests/battle-janken-focus-pointer-safety.test.mjs; own transient data/preaction-authorizations/BATTLE-JANKEN-FOCUS-POINTER-COMMIT-SAFETY-R8-20260914T1542-SOL.json; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-focus-runtime-surface.test.mjs; gameplay/rules/target/legality/route/Shield/Hand3/card identity/save/economy/network/build.",
+  "solutionSignature": "BATTLE_JANKEN_FOCUS_POINTER_COMMIT_SAFETY_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_FOCUS_RUNTIME_OWNS_FINAL_COMMIT_PRESENTATION_R7_DIFF_REUSED_WITHOUT_SECOND_CONTROLLER",
+  "solutionSearchEvidence": [
+    "Current focus runtime already owns LOAD_FOCUS final commit presentation and delegates commit transport to the existing live input stack.",
+    "Current main preserves exact physical card lineage from package cardId through JANKEN_FOCUS and LOAD_FOCUS; this writer does not alter that identity projection.",
+    "Current click handler still sends pointer-derived commit clicks directly into commit(); the residual is only gesture authorization around that existing controller.",
+    "R7 produced the bounded two-file implementation but was closed unmerged solely because PRE_ACTION was not first in branch history; R8 reuses the same product design with clean authorization order.",
+    "Keyboard-style detail=0 click and direct runtime.commit() remain compatible; gameplay, target, legality, route, Shield, Hand3, card identity, save and network authority remain untouched."
+  ],
+  "scope": [
+    "browser/battle-janken-focus-runtime-surface.mjs",
+    "tests/battle-janken-focus-pointer-safety.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-focus-runtime-surface.mjs",
+    "tests/battle-janken-focus-pointer-safety.test.mjs"
+  ]
+}

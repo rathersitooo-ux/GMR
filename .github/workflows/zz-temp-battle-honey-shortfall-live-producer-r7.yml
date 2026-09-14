@@ -1,0 +1,165 @@
+name: TEMP X12 Honey Shortfall R7
+
+on:
+  push:
+    branches:
+      - sol/battle-honey-shortfall-live-producer-r7-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'chore: run bounded X12 Honey shortfall patch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: sol/battle-honey-shortfall-live-producer-r7-20260914
+      - name: Exact source fence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "280e248def71a08679e3a262db0164b09ca43986"
+          test "$(git hash-object browser/GAMEROAD.html)" = "643ed5f94e9507098488e8b738a8e34e86d89aa2"
+      - name: Apply exact bounded producer patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('browser/GAMEROAD.html')
+          s=p.read_text()
+          old="""function effectiveAbilityCost(p,c){const base=Math.max(0,Number(c.ability_cost)||0),reduction=base>0?Math.min(base,Math.max(0,Number(p.nextCostReduction)||0)):0;return{base,reduction,due:base-reduction}}
+          function canAffordAbility(p,c){return p.manaCurrent>=effectiveAbilityCost(p,c).due}
+          function payAbility(p,c){const cost=effectiveAbilityCost(p,c);if(p.manaCurrent<cost.due)return null;p.manaCurrent-=cost.due;if(cost.base>0)p.nextCostReduction=0;return cost}"""
+          new="""function effectiveAbilityCost(p,c){const base=Math.max(0,Number(c.ability_cost)||0),reduction=base>0?Math.min(base,Math.max(0,Number(p.nextCostReduction)||0)):0;return{base,reduction,due:base-reduction}}
+          function abilityResourceAmount(value){return Math.max(0,Math.floor(Number(value)||0))}
+          function canAffordAbility(p,c){const cost=effectiveAbilityCost(p,c),mana=abilityResourceAmount(p.manaCurrent),honey=abilityResourceAmount(p.honey);return mana+honey>=cost.due}
+          function payAbility(p,c){const cost=effectiveAbilityCost(p,c),manaBefore=abilityResourceAmount(p.manaCurrent),honeyBefore=abilityResourceAmount(p.honey);if(manaBefore+honeyBefore<cost.due)return null;const manaPaid=Math.min(manaBefore,cost.due),honeyPaid=cost.due-manaPaid;p.manaCurrent=manaBefore-manaPaid;p.honey=honeyBefore-honeyPaid;if(cost.base>0)p.nextCostReduction=0;return{...cost,cost:cost.due,manaPaid,honeyPaid,manaAfter:p.manaCurrent,honeyAfter:p.honey,source:'能力'}}"""
+          if s.count(old)!=1:
+              raise SystemExit(f'ability payment anchor count={s.count(old)}')
+          s=s.replace(old,new,1)
+          old_log="""const paid=payAbility(p,c);if(!paid)throw Error('ability-payment-race:'+c.id);if(p.human)window.GAMEROAD_PARTNER_COMMENT?.emit?.({eventId:`${m.id}:ability:${m.round}:${entry.key}`,kind:'dialogue',speechIntent:'ability_activation',cardId:c.id,cardName:c.display_name,loggable:false,ttlMs:9000});if(paid.base)log(`${p.name}：${c.display_name}の能力用マナ${paid.due}を支払った${paid.reduction?`（次回軽減${paid.reduction}適用）`:''}。`);"""
+          new_log="""const paid=payAbility(p,c);if(!paid)throw Error('ability-payment-race:'+c.id);if(p.human)window.GAMEROAD_PARTNER_COMMENT?.emit?.({eventId:`${m.id}:ability:${m.round}:${entry.key}`,kind:'dialogue',speechIntent:'ability_activation',cardId:c.id,cardName:c.display_name,loggable:false,ttlMs:9000});if(paid.base)log(`${p.name}：${c.display_name}の能力コスト${paid.due}を支払った（マナ${paid.manaPaid}${paid.honeyPaid?`＋ハニー${paid.honeyPaid}`:''}）${paid.reduction?`（次回軽減${paid.reduction}適用）`:''}。`);"""
+          if s.count(old_log)!=1:
+              raise SystemExit(f'ability log anchor count={s.count(old_log)}')
+          s=s.replace(old_log,new_log,1)
+          p.write_text(s)
+          PY
+          cat > tests/battle-honey-shortfall-live-producer.test.mjs <<'EOF'
+          import test from 'node:test';
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          import vm from 'node:vm';
+
+          const html = readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
+          const lines = html.split('\n');
+          const functionLine = name => {
+            const rows = lines.filter(line => line.startsWith(`function ${name}(`));
+            assert.equal(rows.length, 1, `${name} must have exactly one production definition`);
+            return rows[0];
+          };
+          const source = [
+            functionLine('effectiveAbilityCost'),
+            functionLine('abilityResourceAmount'),
+            functionLine('canAffordAbility'),
+            functionLine('payAbility'),
+            'globalThis.__abilityPayment={effectiveAbilityCost,canAffordAbility,payAbility};',
+          ].join('\n');
+          const context = vm.createContext({});
+          vm.runInContext(source, context);
+          const { canAffordAbility, payAbility } = context.__abilityPayment;
+
+          test('ability payment keeps Mana-only sufficient behavior equivalent', () => {
+            const p = { manaCurrent: 5, honey: 4, nextCostReduction: 0 };
+            const c = { ability_cost: 3 };
+            assert.equal(canAffordAbility(p, c), true);
+            const r = payAbility(p, c);
+            assert.equal(r.cost, 3);
+            assert.equal(r.base, 3);
+            assert.equal(r.reduction, 0);
+            assert.equal(r.due, 3);
+            assert.equal(r.manaPaid, 3);
+            assert.equal(r.honeyPaid, 0);
+            assert.equal(r.manaAfter, 2);
+            assert.equal(r.honeyAfter, 4);
+            assert.equal(r.source, '能力');
+            assert.equal(p.manaCurrent, 2);
+            assert.equal(p.honey, 4);
+          });
+
+          test('ability payment uses exact Honey deficit only after Mana', () => {
+            const p = { manaCurrent: 1, honey: 5, nextCostReduction: 0 };
+            const c = { ability_cost: 4 };
+            assert.equal(canAffordAbility(p, c), true);
+            const r = payAbility(p, c);
+            assert.equal(r.cost, 4);
+            assert.equal(r.manaPaid, 1);
+            assert.equal(r.honeyPaid, 3);
+            assert.equal(r.manaAfter, 0);
+            assert.equal(r.honeyAfter, 2);
+            assert.equal(p.manaCurrent, 0);
+            assert.equal(p.honey, 2);
+          });
+
+          test('combined insufficiency fails closed without mutating resources or reduction', () => {
+            const p = { manaCurrent: 1, honey: 2, nextCostReduction: 0 };
+            const c = { ability_cost: 4 };
+            assert.equal(canAffordAbility(p, c), false);
+            assert.equal(payAbility(p, c), null);
+            assert.equal(p.manaCurrent, 1);
+            assert.equal(p.honey, 2);
+            assert.equal(p.nextCostReduction, 0);
+          });
+
+          test('existing ability reduction is preserved before Mana then Honey payment', () => {
+            const p = { manaCurrent: 1, honey: 1, nextCostReduction: 2 };
+            const c = { ability_cost: 4 };
+            assert.equal(canAffordAbility(p, c), true);
+            const r = payAbility(p, c);
+            assert.equal(r.base, 4);
+            assert.equal(r.reduction, 2);
+            assert.equal(r.due, 2);
+            assert.equal(r.cost, 2);
+            assert.equal(r.manaPaid, 1);
+            assert.equal(r.honeyPaid, 1);
+            assert.equal(p.manaCurrent, 0);
+            assert.equal(p.honey, 0);
+            assert.equal(p.nextCostReduction, 0);
+          });
+
+          test('production log no longer claims Honey-backed ability cost was Mana-only', () => {
+            assert.match(html, /能力コスト\$\{paid\.due\}を支払った（マナ\$\{paid\.manaPaid\}/);
+            assert.match(html, /paid\.honeyPaid\?`＋ハニー\$\{paid\.honeyPaid\}`/);
+            assert.doesNotMatch(html, /能力用マナ\$\{paid\.due\}を支払った/);
+          });
+          EOF
+      - name: Focused regression and scope fence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/battle-honey-shortfall-live-producer.test.mjs
+          git diff --check
+          python - <<'PY'
+          import subprocess
+          allowed={'browser/GAMEROAD.html','tests/battle-honey-shortfall-live-producer.test.mjs','.github/workflows/zz-temp-battle-honey-shortfall-live-producer-r7.yml','data/preaction-authorizations/BATTLE-HONEY-SHORTFALL-LIVE-PRODUCER-R7-20260914T1802-SOL-SHI12.json'}
+          changed=set(subprocess.check_output(['git','status','--porcelain'],text=True).splitlines())
+          paths={row[3:] for row in changed}
+          extra=paths-allowed
+          if extra: raise SystemExit(f'out-of-scope paths: {sorted(extra)}')
+          PY
+      - name: Commit product and clean transient authorization
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-bounded-writer'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm .github/workflows/zz-temp-battle-honey-shortfall-live-producer-r7.yml
+          git rm data/preaction-authorizations/BATTLE-HONEY-SHORTFALL-LIVE-PRODUCER-R7-20260914T1802-SOL-SHI12.json
+          git add browser/GAMEROAD.html tests/battle-honey-shortfall-live-producer.test.mjs
+          git diff --cached --check
+          git commit -m 'Battle: 能力支払いの不足分をハニーで補う'
+          git push origin HEAD:sol/battle-honey-shortfall-live-producer-r7-20260914

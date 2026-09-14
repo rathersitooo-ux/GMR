@@ -170,6 +170,13 @@ test('Study runtime source marks provisional balance and does not contain defeat
 });
 
 
+test('Study Home entry moves beside the Rogue entry only on short landscape', () => {
+  const source = fs.readFileSync(new URL('../browser/study-run-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.ok(source.includes('@media(max-height:470px) and (orientation:landscape){.studyRunEntry{left:calc(2% + 136px);bottom:3%}}'));
+  assert.ok(source.includes('@media(max-width:620px){.studyRunEntry{left:4%;bottom:24%}'));
+});
+
+
 test('Study resume checkpoint restores the same run without resetting elapsed-time advantage', () => {
   let nowMs = 1000;
   const first = createStudyRunConsumerController({

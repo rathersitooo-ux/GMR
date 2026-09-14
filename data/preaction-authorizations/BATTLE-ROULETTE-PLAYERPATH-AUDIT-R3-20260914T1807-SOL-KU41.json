@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ROULETTE-PLAYERPATH-AUDIT-R3-20260914T1807-SOL-KU41",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_SINGLE_HTML_PLAYER_PATH_INTEGRATION_R2",
+  "acquireKey": "BATTLE-ROULETTE-PLAYERPATH-AUDIT-R3-20260914T1807-SOL-KU41",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "X8_MERGED_X41_ACTUAL_ROULETTE_OFF_SINGLE_HTML_SPINE_HOLD_CURRENT_20260914T1807JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "READ_ONLY_SEAM_AUDIT_NO_PRODUCT_MUTATION",
+  "proceedToken": "PROCEED|BATTLE-ROULETTE-PLAYERPATH-AUDIT-R3-20260914T1807-SOL-KU41|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|roulette-playerpath-audit|workflow-only|active-lease",
+  "authorizationBaseSha": "9663c1eab469f43903999699921443ad81da54ef",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_SINGLE_HTML_PLAYER_PATH_INTEGRATION_R2",
+  "leaseAcquireKey": "BATTLE-ROULETTE-PLAYERPATH-AUDIT-R3-20260914T1807-SOL-KU41",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 18:07 JST",
+  "leaseUntilJst": "2026-09-14 19:07 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1466:L1466",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-roulette-playerpath-audit-r3-20260914 from exact main 9663c1eab469f43903999699921443ad81da54ef; mutable ONLY own transient .github/workflows/zz-temp-battle-roulette-playerpath-audit-r3.yml; own transient data/preaction-authorizations/BATTLE-ROULETTE-PLAYERPATH-AUDIT-R3-20260914T1807-SOL-KU41.json; own branch/run/log/readback. READ_ONLY browser/GAMEROAD.html, battle optional-rule/SlidePad/roulette modules, all gameplay/rules/state/save/economy/network/build/product files.",
+  "solutionSignature": "BATTLE_EXISTING_OPTIONAL_RULE_TO_SLIDEPAD_ROULETTE_PLAYERPATH_AUDIT_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1626_PLUS_EXISTING_OPTIONAL_RULE_CORE_PLUS_SLIDEPAD_ROULETTE_MOUNT",
+  "solutionSearchEvidence": [
+    "X8 roulette implementation is already merged and focused-regression verified; this continuation must not reimplement it.",
+    "Recovered X41 actual screenshots reached Battle in all three target viewports but roulette remained absent because the tested state did not activate the optional rule.",
+    "The existing optional-rule activation core requires a caller-resolved canonical authorityRef and explicit optionalRules.roulette.enabled=true; Basic remains OFF.",
+    "The existing SlidePad runtime supports roulette only when rouletteEnabled=true, while its production auto-mount defaults false.",
+    "This audit reads the current huge GAMEROAD.html only to prove whether an existing production authority-to-rouletteEnabled handoff exists; product bytes remain read-only while another shared-HTML owner is active."
+  ],
+  "scope": [
+    ".github/workflows/zz-temp-battle-roulette-playerpath-audit-r3.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/zz-temp-battle-roulette-playerpath-audit-r3.yml"
+  ]
+}

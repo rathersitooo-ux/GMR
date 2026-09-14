@@ -75,7 +75,7 @@ const STYLE_TEXT = `
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{max-width:104px!important;font-size:8px!important}
   .screen.battle[${ROOT_ATTR}="1"] .battleInfo{left:104px!important;grid-template-columns:minmax(0,1fr) minmax(126px,27%)!important}
   .screen.battle[${ROOT_ATTR}="1"] .planBox{max-width:172px!important;padding:3px!important}
-  .screen.battle[${ROOT_ATTR}="1"] .battleRail{max-width:168px!important}
+  .screen.battle[${ROOT_ATTR}="1"] .battleRail{top:144px!important;bottom:auto!important;max-width:168px!important}
   .screen.battle[${ROOT_ATTR}="1"] .planBox label,.screen.battle[${ROOT_ATTR}="1"] .endpointChip label{font-size:7px!important}
   .screen.battle[${ROOT_ATTR}="1"] [data-battle-playable-hand-row-roulette-live="1"]{max-width:min(190px,31vw)!important}
   .screen.battle[${ROOT_ATTR}="1"] .battleRail .railBtn{min-height:32px!important;height:32px!important;max-height:32px!important;padding:3px 6px!important;font-size:8px!important}

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ROULETTE-COMPOSITOR-LEFT-R3-20260914T2107-SOL-KU8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_ROULETTE_LEFT_PLACEMENT_WU8_20260914",
+  "acquireKey": "BATTLE-ROULETTE-COMPOSITOR-LEFT-R3-20260914T2107-SOL-KU8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_TARGET_BLOBS_AND_NO_CONFLICTING_OWNER_20260914T2116JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_EXACT_OVERRIDE_DIAGNOSIS_R2_PRODUCT0_HOLD_R3_FRESH_REENTRY",
+  "proceedToken": "PROCEED|BATTLE-ROULETTE-COMPOSITOR-LEFT-R3-20260914T2107-SOL-KU8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|roulette-compositor-left|ui-runtime-test|active-lease",
+  "authorizationBaseSha": "2798cd9a3bd517e1c973ff9c189e2f908f725f75",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_ROULETTE_LEFT_PLACEMENT_WU8_20260914",
+  "leaseAcquireKey": "BATTLE-ROULETTE-COMPOSITOR-LEFT-R3-20260914T2107-SOL-KU8",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 21:16 JST",
+  "leaseUntilJst": "2026-09-14 22:07 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1475:L1475",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-roulette-compositor-left-r3-20260914 from exact main 2798cd9a3bd517e1c973ff9c189e2f908f725f75; mutable browser/battle-current-player-ui-runtime.mjs; tests/battle-current-player-ui-runtime.test.mjs; transient tools/temp-battle-roulette-compositor-left-r3.py; transient .github/workflows/zz-temp-battle-roulette-compositor-left-r3.yml; own transient data/preaction-authorizations/BATTLE-ROULETTE-COMPOSITOR-LEFT-R3-20260914T2107-SOL-KU8.json; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; browser/battle-playable-hand-row-roulette-runtime.mjs; browser/battle-janken-slidepad-runtime-mount.mjs; optional-rule authority; gameplay/rules/card membership/state/save/economy/network/build.",
+  "solutionSignature": "BATTLE_ROULETTE_CANONICAL_LEFT_PLACEMENT_COMPOSITOR_RELINQUISH_V1",
+  "reuseDisposition": "REPAIR_EXISTING",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "X8_CANONICAL_LEFT_RUNTIME_PLUS_CURRENT_COMPOSITOR_OVERRIDE_DIAGNOSIS",
+  "solutionSearchEvidence": [
+    "Canonical roulette runtime already owns LEFT/BOTTOM_LEFT_ROULETTE_RAIL placement and ordinary-hand visibility.",
+    "Current battle-current-player-ui-runtime compositor injects !important right/bottom/transform-origin placement that overrides the canonical X8 runtime whenever roulette is visible.",
+    "The minimal repair is presentation-only: remove compositor directional placement ownership while retaining position, z-index, max-width, enable/disable visibility, stale and reconnect semantics.",
+    "Existing classified battle-current-player-ui-runtime test is the regression sink; no new test suite, wrapper, controller, rule engine, membership engine, HTML handoff, gameplay or state change is needed.",
+    "R2 ended product0 at connector capability hold; R3 main and both target blobs were freshly read and still match the authorized base immediately before this first commit."
+  ],
+  "scope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs",
+    "tools/temp-battle-roulette-compositor-left-r3.py",
+    ".github/workflows/zz-temp-battle-roulette-compositor-left-r3.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs",
+    "tools/temp-battle-roulette-compositor-left-r3.py",
+    ".github/workflows/zz-temp-battle-roulette-compositor-left-r3.yml"
+  ]
+}

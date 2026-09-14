@@ -8,47 +8,34 @@ on:
       - .github/workflows/zz-temp-battle-bfi-other3-expectation-r2.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch-check-commit:
+  diagnose-anchors:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: sol/battle-bfi-other3-expectation-r2-20260914
           fetch-depth: 0
-      - name: Apply exact current-authority expectation repair
+      - name: Print exact stale anchors with context only
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
           path = Path('tests/browser-full-interaction.spec.mjs')
-          text = path.read_text(encoding='utf-8')
-          old = "  await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(4);"
-          new = "  await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(3);"
-          count = text.count(old)
-          if count != 1:
-              raise SystemExit(f'expected exactly one stale R19 count(4) anchor, got {count}')
-          if text.count(new) != 0:
-              raise SystemExit('current count(3) expectation already exists before patch')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
-          patched = path.read_text(encoding='utf-8')
-          if patched.count(old) != 0 or patched.count(new) != 1:
-              raise SystemExit('post-patch exact expectation check failed')
+          lines = path.read_text(encoding='utf-8').splitlines()
+          needle = "await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(4);"
+          hits = [i for i, line in enumerate(lines) if needle in line]
+          print('HITS', [i + 1 for i in hits])
+          if len(hits) != 2:
+              raise SystemExit(f'expected 2 anchors after R2 fail-close, got {len(hits)}')
+          for i in hits:
+              lo = max(0, i - 12)
+              hi = min(len(lines), i + 13)
+              print(f'--- CONTEXT {i+1} lines {lo+1}-{hi} ---')
+              for n in range(lo, hi):
+                  print(f'{n+1}: {lines[n]}')
           PY
-      - name: Verify bounded diff and commit test only
-        shell: bash
-        run: |
-          set -euo pipefail
-          git diff --check
-          changed=$(git diff --name-only)
-          test "$changed" = "tests/browser-full-interaction.spec.mjs"
-          git diff -- tests/browser-full-interaction.spec.mjs | grep -F "-  await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(4);"
-          git diff -- tests/browser-full-interaction.spec.mjs | grep -F "+  await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(3);"
-          git config user.name 'gameroad-bounded-writer'
-          git config user.email 'gameroad-bounded-writer@users.noreply.github.com'
-          git add tests/browser-full-interaction.spec.mjs
-          git commit -m 'Battle回帰: 公開相手表示を他3人期待へ追従'
-          git push origin HEAD:sol/battle-bfi-other3-expectation-r2-20260914
+          git diff --exit-code

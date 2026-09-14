@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BFI-OTHER3-EXPECTATION-R1-20260914T1515-SOL-RO43",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_INTEGRATED_ALL_STATE_REGRESSION_OTHER3_EXPECTATION_R1",
+  "acquireKey": "BATTLE-BFI-OTHER3-EXPECTATION-R1-20260914T1515-SOL-RO43",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_44120519_PLUS_R19_PUBLIC_RED_OTHER3_AUTHORITY_20260914",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXACT_SINGLE_ASSERTION_4_TO_3_AT_R19_PUBLIC_PLAYER_STRIP",
+  "proceedToken": "PROCEED|BATTLE-BFI-OTHER3-EXPECTATION-R1-20260914T1515-SOL-RO43|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|r19-other3-expectation|test-only|active-lease",
+  "authorizationBaseSha": "44120519c4225420b7e2e3001f63f8cb332e58a8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_INTEGRATED_ALL_STATE_REGRESSION_OTHER3_EXPECTATION_R1",
+  "leaseAcquireKey": "BATTLE-BFI-OTHER3-EXPECTATION-R1-20260914T1515-SOL-RO43",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 15:15 JST",
+  "leaseUntilJst": "2026-09-14 16:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1443:N1443",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact main 44120519c4225420b7e2e3001f63f8cb332e58a8; mutable tests/browser-full-interaction.spec.mjs; own transient data/preaction-authorizations/BATTLE-BFI-OTHER3-EXPECTATION-R1-20260914T1515-SOL-RO43.json; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html and all product/runtime/gameplay/rules/state/save/economy/network/build.",
+  "solutionSignature": "BATTLE_R19_VIEWER_RELATIVE_OTHER3_EXPECTATION_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_BROWSER_FULL_INTERACTION_R19_RED_AND_CURRENT_OTHER3_HUD_AUTHORITY",
+  "solutionSearchEvidence": [
+    "Exact public Browser Full Interaction run 34812465921 failed at the existing R19 player-strip count on 390x844 and 667x375.",
+    "Current merged Battle HUD intentionally removes the viewer/self duplicate and exposes only the other three public players.",
+    "Changing product UI back to four chips would regress current viewer-relative privacy/presentation authority; the stale test expectation is the defect.",
+    "The desktop Cards-hidden failure is separate and is intentionally left untouched so the rerun can expose it independently."
+  ],
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

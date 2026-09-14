@@ -876,9 +876,14 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   const documentRef = globalRef?.document;
   const root = battleRoot ?? documentRef?.querySelector?.('section[data-screen="battle"]');
   if (!documentRef || !root) return null;
-  const dedicatedFocus = normalizeBattleJankenFocusIntegration(focusIntegration);
+  const initialDedicatedFocus = normalizeBattleJankenFocusIntegration(focusIntegration);
   const existing = root.querySelector?.(`[${HOST_ATTR}="1"]`);
-  if (existing?.__gameroadRuntime) return existing.__gameroadRuntime;
+  if (existing?.__gameroadRuntime) {
+    const existingRuntime = existing.__gameroadRuntime;
+    if (initialDedicatedFocus) existingRuntime.attachFocusIntegration?.(initialDedicatedFocus);
+    return existingRuntime;
+  }
+  let dedicatedFocus = initialDedicatedFocus;
   addStyle(documentRef);
 
   const host = documentRef.createElement('aside');
@@ -1612,6 +1617,23 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   }
   schedule();
 
+  function attachFocusIntegration(nextIntegration) {
+    if (destroyed) return false;
+    const normalized = normalizeBattleJankenFocusIntegration(nextIntegration);
+    if (!normalized) return false;
+    if (dedicatedFocus) {
+      return dedicatedFocus.mountSurface === normalized.mountSurface
+        && dedicatedFocus.readContext === normalized.readContext
+        && dedicatedFocus.liveInputStack === normalized.liveInputStack;
+    }
+    dedicatedFocus = normalized;
+    closeDedicatedFocusSurface();
+    assignment = null;
+    focusAssignmentSyncPending = false;
+    schedule();
+    return true;
+  }
+
   const runtime = Object.freeze({
     render,
     snapshot: () => model,
@@ -1619,6 +1641,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     rowRouletteSnapshot: () => rowRouletteController.snapshot(),
     loadPreviewSnapshot: () => projectBattleLoadCardPreview(model, armedHand),
     cardFocusSnapshot: () => syncHandCardFocusPresentation(),
+    attachFocusIntegration,
     dedicatedFocusConnected: () => dedicatedFocus !== null,
     focusSurfaceSnapshot: () => focusSurfaceRuntime?.snapshot?.() ?? null,
     openFocusSurface: () => openDedicatedFocusSurface(),

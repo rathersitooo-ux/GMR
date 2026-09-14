@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CONTROLLED-CHAR4P-ACTUAL-R1-20260914T1558-SOL-NU23",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CONTROLLED_CHARACTER_4P_ACTUAL_ACCEPTANCE_R1",
+  "acquireKey": "BATTLE-CONTROLLED-CHAR4P-ACTUAL-R1-20260914T1558-SOL-NU23",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_280E248D_PLUS_EXISTING_CHAR4P_CORE_BINDING_PLUS_X22_2P_HARNESS_FALSE_NEGATIVE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "FOCUSED_CHAR4P_HANDOFF_TESTS_PASS_ON_EXACT_CURRENT_MAIN_AND_CORRECTED_4P_ACTUAL_PLAN",
+  "proceedToken": "PROCEED|BATTLE-CONTROLLED-CHAR4P-ACTUAL-R1-20260914T1558-SOL-NU23|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|evidence-only|4p-actual|product-read-only",
+  "authorizationBaseSha": "280e248def71a08679e3a262db0164b09ca43986",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CONTROLLED_CHARACTER_4P_ACTUAL_ACCEPTANCE_R1",
+  "leaseAcquireKey": "BATTLE-CONTROLLED-CHAR4P-ACTUAL-R1-20260914T1558-SOL-NU23",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 15:58 JST",
+  "leaseUntilJst": "2026-09-14 17:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1460:N1460",
+  "solutionSignature": "BATTLE_CONTROLLED_CHARACTER_4P_ACTUAL_ACCEPTANCE_V1",
+  "reuseDisposition": "REUSE_VERIFY",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MERGED_4P_DIRECTOR_PLUS_BOARD_BINDING_PLUS_HTML_HANDOFF_STATIC_TESTS_NO_SECOND_MOTION_ENGINE",
+  "solutionSearchEvidence": [
+    "battle-controlled-character-4p-motion-director.mjs and battle-board-naki-4p-visual-binding.mjs are already merged on current main.",
+    "tests/battle-controlled-character-html-handoff.test.mjs proves live HTML source/projection hooks and accepted movement event wiring statically.",
+    "X22 R3 actual failure is invalid for X23 because its workflow starts a 2p match and then waits for a complete four-participant binding.",
+    "This slice mutates no product/runtime/gameplay files and only corrects the actual acceptance setup to a real 4p match."
+  ],
+  "scope": [
+    ".github/workflows/zz-temp-battle-controlled-character-4p-actual-r1.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/zz-temp-battle-controlled-character-4p-actual-r1.yml"
+  ]
+}

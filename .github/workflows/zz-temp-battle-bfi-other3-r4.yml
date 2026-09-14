@@ -1,0 +1,53 @@
+name: temp-bfi-other3-r4
+
+on:
+  push:
+    branches:
+      - sol/battle-bfi-other3-expectation-r4-1801-20260914
+    paths:
+      - .github/workflows/zz-temp-battle-bfi-other3-r4.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-bfi-other3-expectation-r4-1801-20260914
+          fetch-depth: 1
+      - name: Replace only stale peer-chip expectations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tests/browser-full-interaction.spec.mjs')
+          text = path.read_text(encoding='utf-8')
+          old = "await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(4);"
+          new = "await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(3);"
+          before = text.count(old)
+          if before != 3:
+              raise SystemExit(f'expected exactly 3 stale assertions, found {before}')
+          if text.count(new) != 0:
+              raise SystemExit('unexpected pre-existing current-authority assertion')
+          patched = text.replace(old, new)
+          if patched.count(old) != 0 or patched.count(new) != 3:
+              raise SystemExit('post-replacement count mismatch')
+          path.write_text(patched, encoding='utf-8')
+          PY
+          node --check tests/browser-full-interaction.spec.mjs
+          git diff --check -- tests/browser-full-interaction.spec.mjs
+          test "$(git diff --numstat -- tests/browser-full-interaction.spec.mjs | awk '{print $1+$2}')" = "6"
+      - name: Commit bounded test-only delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-bounded-writer'
+          git config user.email 'gameroad-bounded-writer@users.noreply.github.com'
+          git add tests/browser-full-interaction.spec.mjs
+          git diff --cached --check
+          git commit -m 'test: align Battle peer strip with other-three authority'
+          git push origin HEAD:sol/battle-bfi-other3-expectation-r4-1801-20260914

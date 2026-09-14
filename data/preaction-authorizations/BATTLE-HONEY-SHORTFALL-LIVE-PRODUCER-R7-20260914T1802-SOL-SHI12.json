@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HONEY-SHORTFALL-LIVE-PRODUCER-R7-20260914T1802-SOL-SHI12",
+  "taskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "workUnitKey": "BATTLE_HONEY_FORCED_SHORTFALL_ABILITY_PRODUCER_R7",
+  "acquireKey": "BATTLE-HONEY-SHORTFALL-LIVE-PRODUCER-R7-20260914T1802-SOL-SHI12",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_280E248D_EXACT_HTML_EFFECTIVE_ABILITY_COST_CAN_AFFORD_AND_PAY_ARE_MANA_ONLY_WHILE_PLAYER_HONEY_IS_AUTHORITATIVE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_MERGED_RESOURCE_HUD_ADAPTER_ATOMIC_PAYMENT_RECEIPT_CONTRACT_PLUS_EXPIRED_R5_PRODUCT0_AUTHORITY_PACKET",
+  "proceedToken": "PROCEED|BATTLE-HONEY-SHORTFALL-LIVE-PRODUCER-R7-20260914T1802-SOL-SHI12|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ability-mana-honey-shortfall|existing-authority-only|active-lease",
+  "authorizationBaseSha": "280e248def71a08679e3a262db0164b09ca43986",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "leaseWorkUnitKey": "BATTLE_HONEY_FORCED_SHORTFALL_ABILITY_PRODUCER_R7",
+  "leaseAcquireKey": "BATTLE-HONEY-SHORTFALL-LIVE-PRODUCER-R7-20260914T1802-SOL-SHI12",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 18:02 JST",
+  "leaseUntilJst": "2026-09-14 18:56 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1465:L1465",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main 280e248def71a08679e3a262db0164b09ca43986; mutable browser/GAMEROAD.html; NEW tests/battle-honey-shortfall-live-producer.test.mjs; transient .github/workflows/zz-temp-battle-honey-shortfall-live-producer-r7.yml; own transient data/preaction-authorizations/BATTLE-HONEY-SHORTFALL-LIVE-PRODUCER-R7-20260914T1802-SOL-SHI12.json; own branch/PR/check/merge/readback. READ_ONLY battle-critical-resource-hud runtime/live-adapter; normal Battle numeric total-insufficiency semantics; Road cost; Chip/HATE semantics; board Honey generation/collection; save/economy/network/build/package; all other active writers.",
+  "solutionSignature": "BATTLE_ABILITY_MANA_FIRST_HONEY_SHORTFALL_PAYMENT_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "ADAPT_EXISTING_ABILITY_PAYMENT_SEAM_AND_EXISTING_RESOURCE_HUD_RECEIPT_CONSUMER_NO_SECOND_PAYMENT_ENGINE",
+  "solutionSearchEvidence": [
+    "Current main 280e248def71a08679e3a262db0164b09ca43986 still defines effectiveAbilityCost, canAffordAbility and payAbility inline in browser/GAMEROAD.html; canAffordAbility and payAbility are Mana-only.",
+    "Current player state already contains authoritative honey alongside manaCurrent/manaMax/chip, including friend-room public projection; no second Honey store is required.",
+    "Current merged battle-critical-resource-hud-live-adapter accepts only a complete atomic receipt with cost, manaPaid, honeyPaid, manaAfter, honeyAfter and source matching current post-payment values.",
+    "CURRENT user authority fixes formal Mana payment order as Mana first then automatic exact Honey deficit; this slice applies only to ability payment and does not infer normal Battle total-insufficiency behavior.",
+    "Old R5 branch contains only PRE_ACTION and no product/test donor; R7 patches fresh current main by exact anchors and focused regression."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-honey-shortfall-live-producer.test.mjs",
+    ".github/workflows/zz-temp-battle-honey-shortfall-live-producer-r7.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-honey-shortfall-live-producer.test.mjs",
+    ".github/workflows/zz-temp-battle-honey-shortfall-live-producer-r7.yml"
+  ]
+}

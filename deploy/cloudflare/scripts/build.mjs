@@ -63,6 +63,7 @@ const ARTIFACT_SPECS = Object.freeze([
   { source: 'browser/battle-resolution-action-order-adapter.mjs', output: 'battle-resolution-action-order-adapter.mjs', artifact: 'battle_resolution_action_order_adapter', label: 'Battle resolution action-order adapter' },
   { source: 'browser/battle-resolution-board-return-presentation-core.mjs', output: 'battle-resolution-board-return-presentation-core.mjs', artifact: 'battle_resolution_board_return_presentation_core', label: 'Battle resolution board-return presentation core' },
   { source: 'browser/battle-screen-runtime-mount.mjs', output: 'battle-screen-runtime-mount.mjs', artifact: 'battle_screen_runtime_mount', label: 'Battle screen runtime mount' },
+  { source: 'browser/battle-load-card-chain-presentation-core.mjs', output: 'battle-load-card-chain-presentation-core.mjs', artifact: 'battle_load_card_chain_presentation_core', label: 'Battle LOAD card chain presentation core' },
   { source: 'browser/battle-four-public-live-bridge.mjs', output: 'battle-four-public-live-bridge.mjs', artifact: 'battle_four_public_live_bridge', label: 'Battle four-public live bridge' },
   { source: 'browser/battle-four-public-live-integration.mjs', output: 'battle-four-public-live-integration.mjs', artifact: 'battle_four_public_live_integration', label: 'Battle four-public live integration' },
   { source: 'browser/battle-current-player-ui-runtime.mjs', output: 'battle-current-player-ui-runtime.mjs', artifact: 'battle_current_player_ui_runtime', label: 'Battle current player UI compositor' },

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RPS3-EXACT-TRIO-FAILFAST-R7-20260914T1535-SOL-A1",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_RPS3_EXACT_TRIO_FAILFAST_R7",
+  "acquireKey": "BATTLE-RPS3-EXACT-TRIO-FAILFAST-R7-20260914T1535-SOL-A1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_88E31C_PLUS_ADAPTER_BLOB_80FA3E_PLUS_ACTIVE_LEASE_A1438_20260914T1541JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R5_DONOR_SEMANTIC_DIFF_PLUS_CURRENT_ADAPTER_BLOB_IDENTICAL_TO_DONOR_BASE",
+  "proceedToken": "PROCEED|BATTLE-RPS3-EXACT-TRIO-FAILFAST-R7-20260914T1535-SOL-A1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|exact-trio-before-entropy|no-membership-selection",
+  "authorizationBaseSha": "88e31c137d9145eae2203b35d52c727cd4c4cd76",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_RPS3_EXACT_TRIO_FAILFAST_R7",
+  "leaseAcquireKey": "BATTLE-RPS3-EXACT-TRIO-FAILFAST-R7-20260914T1535-SOL-A1",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 15:41 JST",
+  "leaseUntilJst": "2026-09-14 16:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1438:L1438",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-rps3-exact-trio-failfast-r7-20260914 rebased/reset only from freshly read current main 88e31c137d9145eae2203b35d52c727cd4c4cd76; mutable browser/battle-new-base-live-consumer-adapter.mjs; tests/battle-new-base-live-consumer-adapter.test.mjs; own transient data/preaction-authorizations/BATTLE-RPS3-EXACT-TRIO-FAILFAST-R7-20260914T1535-SOL-A1.json; own branch/PR#1674/check/merge/readback only. READ_ONLY browser/GAMEROAD.html; browser/battle-janken-slidepad-runtime-mount.mjs; opening7 first RPS3 membership authority; gameplay/rules/target/legality/route/Shield/card identity/save/economy/network/build.",
+  "solutionSignature": "BATTLE_RPS3_EXACT_TRIO_FAILS_BEFORE_ENTROPY_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R5_DONOR_VALIDATION_ORDER_REAPPLIED_TO_FRESH_MAIN",
+  "solutionSearchEvidence": [
+    "Current main adapter blob remains identical to the R5 base adapter blob after the non-overlapping central-world merge.",
+    "The existing lower Hand3 uniform policy rejects non-three membership but is reached only after the adapter asks for caller uint32 entropy.",
+    "The repair validates exactly three distinct canonical physical card ids before any entropy request and preserves caller authority over membership.",
+    "Opening seven to first RPS3 trio membership remains unresolved and is not selected, inferred, sorted, or sampled by this WorkUnit."
+  ],
+  "scope": [
+    "browser/battle-new-base-live-consumer-adapter.mjs",
+    "tests/battle-new-base-live-consumer-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-new-base-live-consumer-adapter.mjs",
+    "tests/battle-new-base-live-consumer-adapter.test.mjs"
+  ]
+}

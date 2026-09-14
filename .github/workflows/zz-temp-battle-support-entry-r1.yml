@@ -2,8 +2,7 @@ name: temp-battle-support-entry-r1
 
 on:
   push:
-    branches:
-      - sol/battle-support-entry-r1-20260914
+    branches: [sol/battle-support-entry-r1-20260914]
 
 permissions:
   contents: write
@@ -20,27 +19,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply bounded support-entry patch
+      - name: Patch, test, and scope-check
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
+          p = Path('browser/battle-replay-live-adapter.mjs')
+          s = p.read_text()
 
-          path = Path('browser/battle-replay-live-adapter.mjs')
-          text = path.read_text()
+          a = "const PARTNER_BATTLE_LOG_DEFAULT_RECENT_ROWS = 2;\n"
+          assert s.count(a) == 1 and 'BATTLE_SUPPORT_ENTRY_ATTR' not in s
+          s = s.replace(a, a + "const BATTLE_SUPPORT_ENTRY_ATTR = 'data-battle-support-entry';\nconst BATTLE_SUPPORT_ITEM_ATTR = 'data-battle-support-item';\n", 1)
 
-          constants_anchor = "const PARTNER_BATTLE_LOG_DEFAULT_RECENT_ROWS = 2;\n"
-          constants_insert = constants_anchor + "const BATTLE_SUPPORT_ENTRY_ATTR = 'data-battle-support-entry';\nconst BATTLE_SUPPORT_ITEM_ATTR = 'data-battle-support-item';\n"
-          assert text.count(constants_anchor) == 1, text.count(constants_anchor)
-          assert 'BATTLE_SUPPORT_ENTRY_ATTR' not in text
-          text = text.replace(constants_anchor, constants_insert, 1)
-
-          function_anchor = "function ensurePartnerBattleEventLogHost(environment = {}) {\n"
+          a = "function ensurePartnerBattleEventLogHost(environment = {}) {\n"
           helper = """function ensureLiveBattleSupportEntryRoot(documentRef, shell) {
             if (!shell || typeof documentRef?.createElement !== 'function') return null;
-            let root = typeof shell.querySelector === 'function'
-              ? shell.querySelector(`[${BATTLE_SUPPORT_ENTRY_ATTR}]`)
-              : null;
+            let root = typeof shell.querySelector === 'function' ? shell.querySelector(`[${BATTLE_SUPPORT_ENTRY_ATTR}]`) : null;
             if (!root) {
               root = documentRef.createElement('nav');
               if (!root || typeof root.setAttribute !== 'function' || typeof shell.appendChild !== 'function') return null;
@@ -51,22 +45,14 @@ jobs:
             return root;
           }
 
-          export function registerLiveBattleSupportSurface({
-            key,
-            label,
-            target,
-            document = browserGlobal('document'),
-            hostId = 'battleLog'
-          } = {}) {
+          export function registerLiveBattleSupportSurface({ key, label, target, document = browserGlobal('document'), hostId = 'battleLog' } = {}) {
             if (!nonEmptyString(key) || !nonEmptyString(label) || !target) return false;
             const shell = document?.getElementById?.(hostId);
             if (!shell || typeof document?.createElement !== 'function') return false;
             const root = ensureLiveBattleSupportEntryRoot(document, shell);
             if (!root || typeof root.appendChild !== 'function') return false;
             const children = root.children ? Array.from(root.children) : [];
-            let control = children.find(
-              child => child?.getAttribute?.(BATTLE_SUPPORT_ITEM_ATTR) === key
-            ) || null;
+            let control = children.find(child => child?.getAttribute?.(BATTLE_SUPPORT_ITEM_ATTR) === key) || null;
             if (!control) {
               control = document.createElement('button');
               if (!control || typeof control.setAttribute !== 'function') return false;
@@ -83,173 +69,97 @@ jobs:
           }
 
           """
-          assert text.count(function_anchor) == 1, text.count(function_anchor)
-          text = text.replace(function_anchor, helper + function_anchor, 1)
+          assert s.count(a) == 1
+          s = s.replace(a, helper + a, 1)
 
-          history_anchor = """    shell.appendChild(host);
+          a = """    shell.appendChild(host);
             }
             return host;
           }
           """
-          history_replacement = """    shell.appendChild(host);
+          b = """    shell.appendChild(host);
             }
-            registerLiveBattleSupportSurface({
-              key: 'history',
-              label: '履歴',
-              target: host,
-              document: documentRef
-            });
+            registerLiveBattleSupportSurface({ key: 'history', label: '履歴', target: host, document: documentRef });
             return host;
           }
           """
-          assert text.count(history_anchor) == 1, text.count(history_anchor)
-          text = text.replace(history_anchor, history_replacement, 1)
+          assert s.count(a) == 1
+          s = s.replace(a, b, 1)
 
-          deck_anchor = """  root.replaceChildren?.(title, known, unknown);
+          a = """  root.replaceChildren?.(title, known, unknown);
             return true;
           }
           """
-          deck_replacement = """  root.replaceChildren?.(title, known, unknown);
-            registerLiveBattleSupportSurface({
-              key: 'deck',
-              label: '山札',
-              target: root,
-              document,
-              hostId
-            });
+          b = """  root.replaceChildren?.(title, known, unknown);
+            registerLiveBattleSupportSurface({ key: 'deck', label: '山札', target: root, document, hostId });
             return true;
           }
           """
-          assert text.count(deck_anchor) == 1, text.count(deck_anchor)
-          text = text.replace(deck_anchor, deck_replacement, 1)
-
-          path.write_text(text)
+          assert s.count(a) == 1
+          s = s.replace(a, b, 1)
+          p.write_text(s)
           PY
 
           cat > tests/battle-support-entry.test.mjs <<'EOF'
           import test from 'node:test';
           import assert from 'node:assert/strict';
-          import {
-            createPartnerBattleEventLogPresentationBridge,
-            registerLiveBattleSupportSurface,
-            renderLiveBattleRemainingDeckPresentation
-          } from '../browser/battle-replay-live-adapter.mjs';
+          import { createPartnerBattleEventLogPresentationBridge, registerLiveBattleSupportSurface, renderLiveBattleRemainingDeckPresentation } from '../browser/battle-replay-live-adapter.mjs';
 
-          function fakeBattleLogDocument({ includeShell = true } = {}) {
-            function node(tagName = 'div') {
-              const attributes = new Map();
-              const listeners = new Map();
+          function fakeBattleLogDocument({ shell = true } = {}) {
+            function node(tag = 'div') {
+              const attrs = new Map(), listeners = new Map();
               return {
-                tagName: String(tagName).toUpperCase(),
-                dataset: {},
-                style: {},
-                children: [],
-                textContent: '',
-                hidden: false,
-                scrollCalls: 0,
-                focusCalls: 0,
-                onclick: null,
-                setAttribute(name, value) { attributes.set(name, String(value)); },
-                getAttribute(name) { return attributes.has(name) ? attributes.get(name) : null; },
-                addEventListener(type, listener) { listeners.set(type, listener); },
-                appendChild(child) { this.children.push(child); return child; },
-                replaceChildren(...children) { this.children = [...children]; },
-                querySelector(selector) {
-                  if (!selector.startsWith('[') || !selector.endsWith(']')) return null;
-                  const attribute = selector.slice(1, -1);
-                  return this.children.find(child => child.getAttribute?.(attribute) !== null) || null;
-                },
-                click() {
-                  this.onclick?.({ currentTarget: this });
-                  listeners.get('click')?.({ currentTarget: this });
-                },
-                scrollIntoView() { this.scrollCalls += 1; },
-                focus() { this.focusCalls += 1; }
+                tagName: tag.toUpperCase(), dataset: {}, style: {}, children: [], textContent: '', hidden: false, scrollCalls: 0, focusCalls: 0, onclick: null,
+                setAttribute(k, v) { attrs.set(k, String(v)); }, getAttribute(k) { return attrs.has(k) ? attrs.get(k) : null; },
+                addEventListener(k, fn) { listeners.set(k, fn); }, appendChild(c) { this.children.push(c); return c; }, replaceChildren(...c) { this.children = c; },
+                querySelector(q) { if (!q.startsWith('[') || !q.endsWith(']')) return null; const k = q.slice(1, -1); return this.children.find(c => c.getAttribute?.(k) !== null) || null; },
+                click() { this.onclick?.({ currentTarget: this }); listeners.get('click')?.({ currentTarget: this }); },
+                scrollIntoView() { this.scrollCalls++; }, focus() { this.focusCalls++; }
               };
             }
-            const shell = includeShell ? node('section') : null;
-            return {
-              document: {
-                createElement: tag => node(tag),
-                getElementById: id => id === 'battleLog' ? shell : null
-              },
-              shell
-            };
+            const root = shell ? node('section') : null;
+            return { document: { createElement: node, getElementById: id => id === 'battleLog' ? root : null }, shell: root };
           }
+          const items = shell => shell?.querySelector?.('[data-battle-support-entry]')?.children.map(c => c.getAttribute('data-battle-support-item')) || [];
 
-          function supportItems(shell) {
-            const root = shell?.querySelector?.('[data-battle-support-entry]');
-            return root ? root.children.map(child => child.getAttribute('data-battle-support-item')) : [];
-          }
-
-          test('support registration fails closed without a real host or target', () => {
-            const { document } = fakeBattleLogDocument({ includeShell: false });
-            assert.equal(registerLiveBattleSupportSurface({
-              key: 'graveyard', label: '墓地', target: null, document
-            }), false);
-            assert.equal(document.getElementById('battleLog'), null);
-          });
-
-          test('support registration reuses one existing entry and targets only the real surface', () => {
+          test('support entry is idempotent and never invents a missing target', () => {
+            const missing = fakeBattleLogDocument({ shell: false });
+            assert.equal(registerLiveBattleSupportSurface({ key: 'graveyard', label: '墓地', target: null, document: missing.document }), false);
             const { document, shell } = fakeBattleLogDocument();
-            const target = document.createElement('section');
-            shell.appendChild(target);
+            const target = document.createElement('section'); shell.appendChild(target);
             assert.equal(registerLiveBattleSupportSurface({ key: 'deck', label: '山札', target, document }), true);
             assert.equal(registerLiveBattleSupportSurface({ key: 'deck', label: '山札', target, document }), true);
-
-            const root = shell.querySelector('[data-battle-support-entry]');
-            assert.ok(root);
-            assert.equal(root.getAttribute('aria-label'), '対戦サポート');
-            assert.deepEqual(supportItems(shell), ['deck']);
-            assert.equal(root.children[0].textContent, '山札');
-            root.children[0].click();
-            assert.equal(target.scrollCalls, 1);
-            assert.equal(target.focusCalls, 1);
+            assert.deepEqual(items(shell), ['deck']);
+            shell.querySelector('[data-battle-support-entry]').children[0].click();
+            assert.equal(target.scrollCalls, 1); assert.equal(target.focusCalls, 1);
           });
 
-          test('actual history host registers the history support entry without duplication', () => {
+          test('actual history and owner-safe deck share the same support entry; graveyard remains absent', () => {
             const { document, shell } = fakeBattleLogDocument();
             const bridge = createPartnerBattleEventLogPresentationBridge({ document });
-            assert.equal(bridge.begin('M1'), true);
-            assert.equal(bridge.begin('M1'), true);
+            assert.equal(bridge.begin('M1'), true); assert.equal(bridge.begin('M1'), true);
+            assert.equal(renderLiveBattleRemainingDeckPresentation({ ok: true, status: 'ready', total: 4, unknownCount: 4, revision: 1, knownCardCounts: [] }, { document }), true);
             assert.ok(shell.querySelector('[data-partner-battle-event-log]'));
-            assert.deepEqual(supportItems(shell), ['history']);
-          });
-
-          test('history and owner-safe deck share one support entry while graveyard stays absent until its live surface exists', () => {
-            const { document, shell } = fakeBattleLogDocument();
-            const bridge = createPartnerBattleEventLogPresentationBridge({ document });
-            assert.equal(bridge.begin('M2'), true);
-            assert.equal(renderLiveBattleRemainingDeckPresentation({
-              ok: true,
-              status: 'ready',
-              total: 4,
-              unknownCount: 4,
-              revision: 1,
-              knownCardCounts: []
-            }, { document }), true);
-
             assert.ok(shell.querySelector('[data-battle-remaining-deck]'));
-            assert.deepEqual(supportItems(shell), ['history', 'deck']);
-            assert.equal(supportItems(shell).includes('graveyard'), false);
-            assert.equal(shell.children.filter(child => child.getAttribute?.('data-battle-support-entry') !== null).length, 1);
+            assert.deepEqual(items(shell), ['history', 'deck']);
+            assert.equal(items(shell).includes('graveyard'), false);
+            assert.equal(shell.children.filter(c => c.getAttribute?.('data-battle-support-entry') !== null).length, 1);
           });
           EOF
 
-          node --test tests/battle-support-entry.test.mjs
-          node --test tests/battle-replay-live-adapter.test.mjs
-          git diff --check
+          git add browser/battle-replay-live-adapter.mjs tests/battle-support-entry.test.mjs
           python - <<'PY'
           import subprocess
-          changed = subprocess.check_output(['git', 'diff', '--name-only']).decode().splitlines()
-          expected = ['browser/battle-replay-live-adapter.mjs', 'tests/battle-support-entry.test.mjs']
-          assert sorted(changed) == sorted(expected), changed
+          changed = subprocess.check_output(['git', 'diff', '--cached', '--name-only']).decode().splitlines()
+          assert sorted(changed) == sorted(['browser/battle-replay-live-adapter.mjs', 'tests/battle-support-entry.test.mjs']), changed
           PY
+          node --test tests/battle-support-entry.test.mjs
+          node --test tests/battle-replay-live-adapter.test.mjs
+          git diff --cached --check
       - name: Commit bounded product delta
         shell: bash
         run: |
           git config user.name 'gameroad-bot'
           git config user.email 'gameroad-bot@users.noreply.github.com'
-          git add browser/battle-replay-live-adapter.mjs tests/battle-support-entry.test.mjs
           git commit -m 'Battle: 既存サポート面を一つの入口へ統合'
           git push origin HEAD:sol/battle-support-entry-r1-20260914

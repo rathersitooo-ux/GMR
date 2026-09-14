@@ -6,6 +6,7 @@ import {
   SAASUNA_DIALOGUE_SOURCE_ID,
   SAASUNA_BATTLE_SPEECH_ACT,
 } from './partner-saasuna-conversation-source.mjs';
+import { installPartnerAdviceBustupRuntime } from './partner-advice-bustup-runtime-mount.mjs';
 
 const SOURCE_STATE = 'approved_current';
 const DISPLAY_NAMES = Object.freeze({
@@ -242,6 +243,23 @@ function schedulePartnerDelegationLabelPresentation(win) {
   else queueMicrotask(install);
 }
 
+function schedulePartnerAdviceBustupPresentation(win) {
+  const doc = win?.document;
+  if (!doc) return;
+  const install = () => {
+    if (win.__GAMEROAD_PARTNER_ADVICE_BUSTUP__?.render) return win.__GAMEROAD_PARTNER_ADVICE_BUSTUP__;
+    const runtime = installPartnerAdviceBustupRuntime({
+      windowRef: win,
+      getPartnerId: () => currentAdvicePartnerId(win),
+    });
+    if (runtime) win.__GAMEROAD_PARTNER_ADVICE_BUSTUP__ = runtime;
+    return runtime;
+  };
+  if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', install, { once: true });
+  else queueMicrotask(install);
+}
+
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   schedulePartnerDelegationLabelPresentation(window);
+  schedulePartnerAdviceBustupPresentation(window);
 }

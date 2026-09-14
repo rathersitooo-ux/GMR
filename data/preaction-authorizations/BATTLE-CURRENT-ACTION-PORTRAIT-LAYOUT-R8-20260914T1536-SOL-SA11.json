@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CURRENT-ACTION-PORTRAIT-LAYOUT-R8-20260914T1536-SOL-SA11",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CURRENT_ACTION_PORTRAIT_LAYOUT_OWNER_R8",
+  "acquireKey": "BATTLE-CURRENT-ACTION-PORTRAIT-LAYOUT-R8-20260914T1536-SOL-SA11",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R7_RUN_34806056262_ARTIFACT_10333153182_EXACT_54PX_OVERLAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R7_PUBLIC_3VIEW_PLUS_CURRENT_LAYOUT_OWNER_SOURCE_AUDIT",
+  "proceedToken": "PROCEED|BATTLE-CURRENT-ACTION-PORTRAIT-LAYOUT-R8-20260914T1536-SOL-SA11|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|X11_LAYOUT_OWNER_PORTRAIT_OVERRIDE",
+  "authorizationBaseSha": "44120519c4225420b7e2e3001f63f8cb332e58a8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CURRENT_ACTION_PORTRAIT_LAYOUT_OWNER_R8",
+  "leaseAcquireKey": "BATTLE-CURRENT-ACTION-PORTRAIT-LAYOUT-R8-20260914T1536-SOL-SA11",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 15:36 JST",
+  "leaseUntilJst": "2026-09-14 16:36 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1454:L1454",
+  "leaseExactMutableResources": "browser/battle-current-player-ui-runtime.mjs; NEW tests/battle-current-action-portrait-layout-owner.test.mjs; transient .github/workflows/zz-temp-battle-current-action-portrait-layout-r8.yml; own transient data/preaction-authorizations/BATTLE-CURRENT-ACTION-PORTRAIT-LAYOUT-R8-20260914T1536-SOL-SA11.json; own branch/PR/check/merge/readback",
+  "scope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-action-portrait-layout-owner.test.mjs",
+    ".github/workflows/zz-temp-battle-current-action-portrait-layout-r8.yml",
+    "data/preaction-authorizations/BATTLE-CURRENT-ACTION-PORTRAIT-LAYOUT-R8-20260914T1536-SOL-SA11.json"
+  ],
+  "leaseScope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-action-portrait-layout-owner.test.mjs",
+    ".github/workflows/zz-temp-battle-current-action-portrait-layout-r8.yml",
+    "data/preaction-authorizations/BATTLE-CURRENT-ACTION-PORTRAIT-LAYOUT-R8-20260914T1536-SOL-SA11.json"
+  ],
+  "solutionSignature": "current-action-portrait-layout-owner-important-offset",
+  "reuseDisposition": "REUSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R7_EXACT_PUBLIC_REPRO_PLUS_LAYOUT_OWNER_IMPORTANT_OVERRIDE",
+  "solutionSearchEvidence": [
+    "R7 exact-public run 34806056262 bound build 3939252b72ed0f8d82e64e68561b27ff838d0092 and reproduced only the 390x844 13.5x4px current-action/publicPlayerStrip overlap; 667x375 and 1280x720 passed.",
+    "The shipped live adapter already contains the intended portrait translateY(6px), so reimplementing the current-action projection is prohibited.",
+    "Current battle-current-player-ui-runtime owns viewport placement and applies transform:none!important to the current-action zone, which overrides the adapter rule. The smallest repair is a later portrait owner rule transform:translateY(6px)!important.",
+    "No currentAction/inputOwner/waitReason, turn, legality, target, gameplay, state, HTML, build, or SlidePad authority changes are required."
+  ]
+}

@@ -1,0 +1,270 @@
+name: TEMP Battle Janken Focus Pointer Safety R6
+
+on:
+  push:
+    branches:
+      - sol/battle-janken-focus-pointer-safety-r6-20260914
+    paths:
+      - .github/workflows/zz-temp-battle-janken-focus-pointer-safety-r6.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-janken-focus-pointer-safety-r6-20260914
+          fetch-depth: 0
+      - name: Apply exact bounded pointer commit safety patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          runtime_path = Path('browser/battle-janken-focus-runtime-surface.mjs')
+          test_path = Path('tests/battle-janken-focus-runtime-surface.test.mjs')
+          runtime = runtime_path.read_text(encoding='utf-8')
+          tests = test_path.read_text(encoding='utf-8')
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly 1 anchor, got {count}')
+              return text.replace(old, new, 1)
+
+          runtime = replace_once(
+              runtime,
+              "function requiredMethod(owner, name, ownerName) {",
+              "const POINTER_COMMIT_MAX_TRAVEL_PX = 12;\n\nfunction requiredMethod(owner, name, ownerName) {",
+              'runtime constant anchor',
+          )
+
+          runtime = replace_once(
+              runtime,
+              "  let interactionVersion = 0;\n",
+              "  let interactionVersion = 0;\n  let pointerCommitGesture = null;\n  let pointerCommitClickArm = null;\n",
+              'runtime pointer state anchor',
+          )
+
+          old_handler = """  function handleClick(event) {
+    const actionNode = event?.target?.closest?.('[data-gr-janken-focus-action]');
+    const action = actionNode?.dataset?.grJankenFocusAction;
+    if (!action) return;
+    if (action === 'focus') void focus(actionNode.dataset.jankenHand);
+    else if (action === 'peek') boardPeek();
+    else if (action === 'return') returnFromBoardPeek();
+    else if (action === 'cancel') void cancel();
+    else if (action === 'commit') void commit();
+  }
+
+  host.addEventListener?.('click', handleClick);
+"""
+          new_handler = """  function actionNodeFromEvent(event) {
+    return event?.target?.closest?.('[data-gr-janken-focus-action]') ?? null;
+  }
+
+  function pointerPoint(event) {
+    const x = Number(event?.clientX);
+    const y = Number(event?.clientY);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    return { x, y };
+  }
+
+  function pointerTravelExceeded(event, gesture) {
+    const point = pointerPoint(event);
+    if (!point || !gesture) return true;
+    const dx = point.x - gesture.startX;
+    const dy = point.y - gesture.startY;
+    return ((dx * dx) + (dy * dy)) > (POINTER_COMMIT_MAX_TRAVEL_PX * POINTER_COMMIT_MAX_TRAVEL_PX);
+  }
+
+  function handlePointerDown(event) {
+    pointerCommitGesture = null;
+    pointerCommitClickArm = null;
+    const actionNode = actionNodeFromEvent(event);
+    if (actionNode?.dataset?.grJankenFocusAction !== 'commit') return;
+    if (event?.isPrimary === false) return;
+    if (Number.isFinite(event?.button) && event.button !== 0) return;
+    const point = pointerPoint(event);
+    if (event?.pointerId == null || !point) return;
+    pointerCommitGesture = {
+      pointerId: event.pointerId,
+      actionNode,
+      startX: point.x,
+      startY: point.y,
+      disarmed: false,
+    };
+  }
+
+  function handlePointerMove(event) {
+    const gesture = pointerCommitGesture;
+    if (!gesture || event?.pointerId !== gesture.pointerId || gesture.disarmed) return;
+    if (pointerTravelExceeded(event, gesture)) gesture.disarmed = true;
+  }
+
+  function handlePointerCancel(event) {
+    const gesture = pointerCommitGesture;
+    if (!gesture || event?.pointerId !== gesture.pointerId) return;
+    pointerCommitGesture = null;
+    pointerCommitClickArm = null;
+  }
+
+  function handlePointerUp(event) {
+    const gesture = pointerCommitGesture;
+    pointerCommitGesture = null;
+    pointerCommitClickArm = null;
+    if (!gesture || event?.pointerId !== gesture.pointerId || gesture.disarmed) return;
+    const actionNode = actionNodeFromEvent(event);
+    if (actionNode !== gesture.actionNode || actionNode?.dataset?.grJankenFocusAction !== 'commit') return;
+    if (pointerTravelExceeded(event, gesture)) return;
+    pointerCommitClickArm = actionNode;
+  }
+
+  function handleClick(event) {
+    const actionNode = actionNodeFromEvent(event);
+    const action = actionNode?.dataset?.grJankenFocusAction;
+    if (!action) {
+      pointerCommitClickArm = null;
+      return;
+    }
+    if (action === 'commit') {
+      const detail = Number(event?.detail);
+      const pointerDerived = Number.isFinite(detail) && detail > 0;
+      const authorized = !pointerDerived || pointerCommitClickArm === actionNode;
+      pointerCommitClickArm = null;
+      if (authorized) void commit();
+      return;
+    }
+    pointerCommitClickArm = null;
+    if (action === 'focus') void focus(actionNode.dataset.jankenHand);
+    else if (action === 'peek') boardPeek();
+    else if (action === 'return') returnFromBoardPeek();
+    else if (action === 'cancel') void cancel();
+  }
+
+  host.addEventListener?.('pointerdown', handlePointerDown);
+  host.addEventListener?.('pointermove', handlePointerMove);
+  host.addEventListener?.('pointerup', handlePointerUp);
+  host.addEventListener?.('pointercancel', handlePointerCancel);
+  host.addEventListener?.('click', handleClick);
+"""
+          runtime = replace_once(runtime, old_handler, new_handler, 'runtime click handler anchor')
+
+          runtime = replace_once(
+              runtime,
+              "    ++interactionVersion;\n    sourcePackages = nextPackages;",
+              "    ++interactionVersion;\n    pointerCommitGesture = null;\n    pointerCommitClickArm = null;\n    sourcePackages = nextPackages;",
+              'runtime sync reset anchor',
+          )
+
+          runtime = replace_once(
+              runtime,
+              "      busy = false;\n      host.removeEventListener?.('click', handleClick);",
+              "      busy = false;\n      pointerCommitGesture = null;\n      pointerCommitClickArm = null;\n      host.removeEventListener?.('pointerdown', handlePointerDown);\n      host.removeEventListener?.('pointermove', handlePointerMove);\n      host.removeEventListener?.('pointerup', handlePointerUp);\n      host.removeEventListener?.('pointercancel', handlePointerCancel);\n      host.removeEventListener?.('click', handleClick);",
+              'runtime destroy listener anchor',
+          )
+
+          marker = "pointer-derived commit requires same-control short pointer gesture"
+          if marker in tests:
+              raise SystemExit('test marker already present')
+          tests += r'''
+
+function pointerActionTarget(action) {
+  const node = {
+    dataset: { grJankenFocusAction: action },
+    closest(selector) {
+      return selector === '[data-gr-janken-focus-action]' ? node : null;
+    },
+  };
+  return node;
+}
+
+function dispatchFocusSurfaceEvent(runtime, type, event) {
+  const listener = runtime.host.listeners.get(type);
+  assert.equal(typeof listener, 'function', `listener ${type} must exist`);
+  listener(event);
+}
+
+test('pointer-derived commit requires same-control short pointer gesture', async () => {
+  const liveInputStack = createLiveStack();
+  const { runtime } = mount({ liveInputStack });
+  await runtime.focus('ROCK');
+  const commitButton = pointerActionTarget('commit');
+  dispatchFocusSurfaceEvent(runtime, 'pointerdown', { target: commitButton, pointerId: 1, isPrimary: true, button: 0, clientX: 100, clientY: 100 });
+  dispatchFocusSurfaceEvent(runtime, 'pointermove', { target: commitButton, pointerId: 1, clientX: 105, clientY: 104 });
+  dispatchFocusSurfaceEvent(runtime, 'pointerup', { target: commitButton, pointerId: 1, clientX: 106, clientY: 104 });
+  dispatchFocusSurfaceEvent(runtime, 'click', { target: commitButton, detail: 1 });
+  await Promise.resolve();
+  assert.equal(liveInputStack.calls.commit, 1);
+});
+
+test('pointer-derived commit stays disarmed after travel exceeds the threshold even if pointer returns', async () => {
+  const liveInputStack = createLiveStack();
+  const { runtime } = mount({ liveInputStack });
+  await runtime.focus('ROCK');
+  const commitButton = pointerActionTarget('commit');
+  dispatchFocusSurfaceEvent(runtime, 'pointerdown', { target: commitButton, pointerId: 2, isPrimary: true, button: 0, clientX: 0, clientY: 0 });
+  dispatchFocusSurfaceEvent(runtime, 'pointermove', { target: commitButton, pointerId: 2, clientX: 20, clientY: 0 });
+  dispatchFocusSurfaceEvent(runtime, 'pointerup', { target: commitButton, pointerId: 2, clientX: 0, clientY: 0 });
+  dispatchFocusSurfaceEvent(runtime, 'click', { target: commitButton, detail: 1 });
+  await Promise.resolve();
+  assert.equal(liveInputStack.calls.commit, 0);
+});
+
+test('pointercancel disarms pointer-derived commit', async () => {
+  const liveInputStack = createLiveStack();
+  const { runtime } = mount({ liveInputStack });
+  await runtime.focus('ROCK');
+  const commitButton = pointerActionTarget('commit');
+  dispatchFocusSurfaceEvent(runtime, 'pointerdown', { target: commitButton, pointerId: 3, isPrimary: true, button: 0, clientX: 40, clientY: 40 });
+  dispatchFocusSurfaceEvent(runtime, 'pointercancel', { target: commitButton, pointerId: 3, clientX: 40, clientY: 40 });
+  dispatchFocusSurfaceEvent(runtime, 'click', { target: commitButton, detail: 1 });
+  await Promise.resolve();
+  assert.equal(liveInputStack.calls.commit, 0);
+});
+
+test('pointer release on a different control cannot authorize a later commit click', async () => {
+  const liveInputStack = createLiveStack();
+  const { runtime } = mount({ liveInputStack });
+  await runtime.focus('ROCK');
+  const commitButton = pointerActionTarget('commit');
+  const cancelButton = pointerActionTarget('cancel');
+  dispatchFocusSurfaceEvent(runtime, 'pointerdown', { target: commitButton, pointerId: 4, isPrimary: true, button: 0, clientX: 20, clientY: 20 });
+  dispatchFocusSurfaceEvent(runtime, 'pointerup', { target: cancelButton, pointerId: 4, clientX: 22, clientY: 20 });
+  dispatchFocusSurfaceEvent(runtime, 'click', { target: commitButton, detail: 1 });
+  await Promise.resolve();
+  assert.equal(liveInputStack.calls.commit, 0);
+});
+
+test('keyboard-style detail zero click keeps the existing commit path', async () => {
+  const liveInputStack = createLiveStack();
+  const { runtime } = mount({ liveInputStack });
+  await runtime.focus('ROCK');
+  const commitButton = pointerActionTarget('commit');
+  dispatchFocusSurfaceEvent(runtime, 'click', { target: commitButton, detail: 0 });
+  await Promise.resolve();
+  assert.equal(liveInputStack.calls.commit, 1);
+});
+'''
+
+          runtime_path.write_text(runtime, encoding='utf-8')
+          test_path.write_text(tests, encoding='utf-8')
+          PY
+      - name: Focused tests
+        run: node --test tests/battle-janken-focus-runtime-surface.test.mjs
+      - name: Verify bounded diff and commit product files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed=$(git diff --name-only | sort)
+          expected=$(printf '%s\n' 'browser/battle-janken-focus-runtime-surface.mjs' 'tests/battle-janken-focus-runtime-surface.test.mjs' | sort)
+          test "$changed" = "$expected"
+          git config user.name 'gameroad-bounded-writer'
+          git config user.email 'gameroad-bounded-writer@users.noreply.github.com'
+          git add browser/battle-janken-focus-runtime-surface.mjs tests/battle-janken-focus-runtime-surface.test.mjs
+          git commit -m 'Battle: pointer由来の最終決定を短距離同一操作に限定'
+          git push origin HEAD:sol/battle-janken-focus-pointer-safety-r6-20260914

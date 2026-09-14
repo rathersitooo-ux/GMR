@@ -1,0 +1,42 @@
+{
+  "acquireKey": "BATTLE-HONEY-SHORTFALL-LIVE-PRODUCER-R5-20260914T1029-SOL",
+  "task": "BATTLE_HONEY_FORCED_SHORTFALL_ABILITY_PRODUCER_R5",
+  "authority": "CURRENT / address 12 resource HUD continuation",
+  "baseMainSha": "d3993fa124b9cf1d9f44f2dac1e784c5deea2f44",
+  "targetHtmlBlobSha": "a52b4a3f1b2d9d2815f0ce4312c44af04f60d9f1",
+  "leaseReadback": "CURRENT_ACTIVE_LEASES!A1417:L1417",
+  "mutableScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-honey-shortfall-live-producer.test.mjs",
+    "data/preaction-authorizations/BATTLE-HONEY-SHORTFALL-LIVE-PRODUCER-R5-20260914T1029-SOL.json"
+  ],
+  "readOnly": [
+    "browser/battle-critical-resource-hud-runtime.mjs",
+    "browser/battle-critical-resource-hud-live-adapter.mjs",
+    "browser/battle-critical-resource-hud-dock-bridge.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "normal Battle numeric total-insufficiency semantics",
+    "Road cost",
+    "Chip/HATE",
+    "save/economy/network"
+  ],
+  "change": "Preserve existing ability no-pay path. Change ability affordability/payment from Mana-only to Mana+Honey, paying Mana first and exact Honey shortfall automatically. Return an atomic R3-compatible receipt while preserving base/reduction/due.",
+  "mustNotChange": [
+    "normal Battle card numeric payment while Mana+Honey total-insufficiency behavior remains unresolved",
+    "Road payment semantics",
+    "HATE behavior",
+    "Chip semantics",
+    "board Honey",
+    "package/build manifest while another owner holds it"
+  ],
+  "success": [
+    "Mana-only sufficient ability payment remains equivalent",
+    "Mana shortfall is paid exactly from Honey without choice/prompt",
+    "combined Mana+Honey insufficiency remains canAfford=false and existing no-pay behavior is preserved",
+    "ability cost reduction semantics remain intact",
+    "receipt contains cost/manaPaid/honeyPaid/manaAfter/honeyAfter/source and matches post-payment state",
+    "focused regression test passes",
+    "PR diff stays in lease scope"
+  ],
+  "rollback": "Close PR without merge and release lease if exact-source replacement, focused test, or required CI fails."
+}

@@ -173,6 +173,80 @@ if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stat
     errors.push('public HUD QA probe does not expose viewer-relative peer ids');
   }
   errors.push(...collectHomeVisualShellErrors(html));
+  const symmetricGateFieldContracts = [
+    [/data-field=["']FIELD-01["'][^>]*>草原<\/button>/, 'existing field choice is missing'],
+    [/data-field=["']FIELD-10["'][^>]*>新フィールド<\/button>/, 'new symmetric field choice is missing'],
+    [/setupField:BATTLE_FIELD_CURRENT_ID/, 'field selection is not part of current setup state'],
+    [/setupField:normalizeBattleFieldId\(state\.setupField\)/, 'field selection is not persisted in the existing save pack'],
+    [/const SYMMETRIC_FIELD_START_ID=['"]F:D:4['"]/, 'new field shared start is missing'],
+    [/const SYMMETRIC_FIELD_GOAL_VISUAL_COLUMNS=9/, 'new field GOAL visual band is not nine columns'],
+    [/const SYMMETRIC_FIELD_GATE_BOUNDARY_Z=-3\.1/, 'Gate boundary presentation is missing'],
+    [/id=["']fieldTopologyLayer["']/, 'new field continuous topology layer is missing'],
+    [/gateRole:['"]BOUNDARY_EDGE_ONLY['"]/, 'Gate is not explicitly boundary-only'],
+    [/gateNodeCount:SYMMETRIC_FIELD_NODE_IDS\.filter\(id=>id\.includes\(['"]GATE['"]\)\)\.length/, 'Gate-node zero-count receipt is missing'],
+    [/topCenterHasDirectShieldPort:Object\.values\(SYMMETRIC_FIELD_PORTS\)\.includes\(['"]F:U:6['"]\)/, 'top-center no-upward-connection receipt is missing'],
+    [/for\(const p of ps\)p\.position=battleFieldStartPosition\(fieldId\)/, 'new matches do not use the selected field start'],
+    [/state\.match=\{id:'M'\+Date\.now\(\),mode:snapshot\.setup\.mode,contentId:snapshot\.setup\.content,fieldId,round:1/, 'selected field identity is not pinned into the match'],
+    [/if\(symmetricFieldActive\(\)\)return SYMMETRIC_FIELD_PORTS\[`\$\{owner\}:\$\{lane\}`\]\|\|null/, 'new field does not connect shared field directly to existing Shield identities'],
+    [/if\(id\.startsWith\(['"]F:['"]\)\)\{[\s\S]*?symmetricFieldNeighbors\(id\)[\s\S]*?centerPort\(p\.id,l,viewer\)===id/, 'new common field movement graph is not wired into existing Shield neighbor authority'],
+    [/host\.hidden=symmetric;host\.setAttribute\(['"]aria-hidden['"],String\(symmetric\)\);if\(symmetric\)return true/, 'old Flanora topology remains overlaid on the new field'],
+  ];
+  for (const [pattern, message] of symmetricGateFieldContracts) if (!pattern.test(html)) errors.push(message);
+  const cleanTopPortExpected = [
+    ["'P1:L':'F:U:0'",0],["'P1:C':'F:U:1'",1],["'P1:R':'F:U:2'",2],
+    ["'P2:L':'F:U:3'",3],["'P2:C':'F:U:4'",4],["'P2:R':'F:U:5'",5],
+    ["'P3:L':'F:U:7'",7],["'P3:C':'F:U:8'",8],["'P3:R':'F:U:9'",9],
+    ["'P4:L':'F:U:10'",10],["'P4:C':'F:U:11'",11],["'P4:R':'F:U:12'",12],
+  ];
+  const cleanPortsStart = html.indexOf('const SYMMETRIC_FIELD_PORTS=Object.freeze({');
+  const cleanPortsEnd = html.indexOf('const SYMMETRIC_FIELD_START_ID=', cleanPortsStart);
+  const cleanPortsBlock = cleanPortsStart >= 0 && cleanPortsEnd > cleanPortsStart ? html.slice(cleanPortsStart, cleanPortsEnd) : '';
+  if ((cleanPortsBlock.match(/'P[1-4]:[LCR]':'F:U:\d+'/g) ?? []).length !== 12) errors.push('all 12 Shield columns are not mapped to top-row ports');
+  if (/:'F:[LR]:/.test(cleanPortsBlock)) errors.push('a Shield column still enters the common field through a side port');
+  if (cleanPortsBlock.includes("'F:U:6'")) errors.push('the exact top-center common-field point is not reserved as the single direct-connection gap');
+  const cleanPortValues = [...cleanPortsBlock.matchAll(/'P[1-4]:[LCR]':'(F:U:\d+)'/g)].map(m=>m[1]);
+  if (new Set(cleanPortValues).size !== 12) errors.push('Shield columns share a common-field top port');
+  for (const [literal] of cleanTopPortExpected) if (!cleanPortsBlock.includes(literal)) errors.push(`ordered top-port mapping missing: ${literal}`);
+  if (!/const SYMMETRIC_FIELD_TOP_PORT_IDS=Object\.freeze\(\[[\s\S]*?'F:U:0'[\s\S]*?'F:U:5'[\s\S]*?'F:U:7'[\s\S]*?'F:U:12'[\s\S]*?\]\)/.test(html)) errors.push('clean top-port rail identity list is missing');
+  if (!/if\(band==='U'&&Number\.isInteger\(index\)&&index>=0&&index<=12\)\{const laneIndex=index<6\?index:index>6\?index-1:null,x=laneIndex===null\?0:\(laneIndex-5\.5\)\*1\.45;/.test(html)) errors.push('top ports are not aligned one-to-one with the 12 Shield-column x positions');
+  const topRailBlockStart = html.indexOf('const SYMMETRIC_FIELD_EDGES=Object.freeze([');
+  const topRailBlockEnd = html.indexOf('const SYMMETRIC_FIELD_TOP_PORT_IDS=', topRailBlockStart);
+  const topRailBlock = topRailBlockStart >= 0 && topRailBlockEnd > topRailBlockStart ? html.slice(topRailBlockStart, topRailBlockEnd) : '';
+  for (let i=0;i<12;i++) if (!topRailBlock.includes(`['F:U:${i}','F:U:${i+1}']`)) errors.push(`top common-field rail is broken between U${i} and U${i+1}`);
+  const redundantTangleEdges = [
+    "['F:U:1','F:L:0']","['F:U:0','F:L:1']","['F:L:0','F:L:2']","['F:L:1','F:L:3']",
+    "['F:U:11','F:R:0']","['F:U:12','F:R:1']","['F:R:0','F:R:2']","['F:R:1','F:R:3']",
+  ];
+  for (const edge of redundantTangleEdges) if (topRailBlock.includes(edge)) errors.push(`redundant tangled side edge remains: ${edge}`);
+
+  const garden3DFieldContracts = [
+    [/data-field=["']FIELD-11["'][^>]*>立体庭園<\/button>/, 'Garden3D field choice is missing'],
+    [/const BATTLE_FIELD_GARDEN3D_ID=['"]FIELD-11['"]/, 'Garden3D field identity is missing'],
+    [/function symmetricFieldActive\(\)\{const id=currentBattleFieldId\(\);return id===BATTLE_FIELD_SYMMETRIC_GATE_ID\|\|id===BATTLE_FIELD_GARDEN3D_ID\}/, 'Garden3D does not reuse the symmetric legal topology'],
+    [/function garden3DFieldActive\(\)\{return currentBattleFieldId\(\)===BATTLE_FIELD_GARDEN3D_ID\}/, 'Garden3D active-field resolver is missing'],
+    [/id=["']garden3dPhotoStage["'][^>]*aria-hidden=["']true["']/, 'Garden3D actual-photo presentation stage is missing'],
+    [/const GARDEN3D_SCENE_MATERIALS=Object\.freeze\(\[/, 'Garden3D scene material pack is missing'],
+    [/function garden3DSharedHeight\(band,index\)/, 'Garden3D vertical node projection is missing'],
+    [/function pushGarden3DSceneGeometry\(items,all,viewer\)/, 'Garden3D rocks/leaves/branches scene geometry is missing'],
+    [/syncGarden3DPhotoStage\(viewer\)/, 'Garden3D photo materials are not mounted into the live field renderer'],
+    [/if\(garden3DFieldActive\(\)\)pushGarden3DSceneGeometry\(items,all,viewer\)/, 'Garden3D geometry is not mounted into the live WebGL field renderer'],
+    [/!==BATTLE_FIELD_CURRENT_ID\?SYMMETRIC_FIELD_START_ID:'C:0:0'/, 'Garden3D does not enter through the accepted shared-field start'],
+    [/\.garden3dPhotoStage\{[^}]*pointer-events:none[^}]*\}/, 'Garden3D photo material can intercept battle input'],
+  ];
+  for (const [pattern, message] of garden3DFieldContracts) if (!pattern.test(html)) errors.push(message);
+  const gardenMaterialBlockStart = html.indexOf('const GARDEN3D_SCENE_MATERIALS=Object.freeze([');
+  const gardenMaterialBlockEnd = html.indexOf('function garden3DSceneMaterial', gardenMaterialBlockStart);
+  const gardenMaterialBlock = gardenMaterialBlockStart >= 0 && gardenMaterialBlockEnd > gardenMaterialBlockStart ? html.slice(gardenMaterialBlockStart, gardenMaterialBlockEnd) : '';
+  if ((gardenMaterialBlock.match(/source:'user-photo'/g) ?? []).length !== 10) errors.push('Garden3D must ship exactly ten user-photo materials');
+  if ((gardenMaterialBlock.match(/data:image\/webp;base64,/g) ?? []).length !== 11) errors.push('Garden3D material pack must contain ten user photos plus one accepted concept image');
+  if ((gardenMaterialBlock.match(/source:'accepted-concept'/g) ?? []).length !== 1) errors.push('Garden3D accepted concept material count is not exactly one');
+  if (/THREE\.|new THREE|three\.module/i.test(gardenMaterialBlock)) errors.push('Garden3D introduced a second Three.js engine instead of reusing current WebGL');
+  const symmetricPortsStart = html.indexOf('const SYMMETRIC_FIELD_PORTS=Object.freeze({');
+  const symmetricPortsEnd = html.indexOf('const SYMMETRIC_FIELD_START_ID=', symmetricPortsStart);
+  const symmetricPortsBlock = symmetricPortsStart >= 0 && symmetricPortsEnd > symmetricPortsStart ? html.slice(symmetricPortsStart, symmetricPortsEnd) : '';
+  if (symmetricPortsBlock.includes("'F:U:6'")) errors.push('central-top shared-field point is directly connected upward to a Shield/Gate edge');
+  if (/SYMMETRIC_FIELD_(?:GATE_NODE|GATE_CELL|GATE_STOP)/.test(html)) errors.push('Gate was implemented as a node/cell/stop instead of an edge boundary');
+
   const centralWorldLiveContracts = [
     [/id=["']battleCentralWorldLiveHost["'][^>]*class=["']battleCentralWorldLiveHost["'][^>]*aria-label=["']フラノラ盤面の進行表示["']/, 'central Flanora live presentation host is missing'],
     [/BATTLE_CENTRAL_WORLD_LIVE_MOUNT_R8/, 'central Flanora live mount marker is missing'],

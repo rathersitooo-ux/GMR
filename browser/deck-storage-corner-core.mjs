@@ -89,6 +89,10 @@ export function resolveDeckEditorSwipe({ surface, deltaX, deltaY, thresholdPx = 
   if (!['collection', 'deck'].includes(surface)) throw new RangeError('SURFACE_INVALID');
   if (![deltaX, deltaY, thresholdPx].every(Number.isFinite) || thresholdPx <= 0) throw new TypeError('SWIPE_INPUT_INVALID');
   if (Math.abs(deltaX) < thresholdPx || Math.abs(deltaX) <= Math.abs(deltaY) * 1.15) return Object.freeze({ action: 'none' });
-  if (surface === 'collection') return Object.freeze({ action: deltaX < 0 ? 'deck-remove' : 'deck-add' });
+  if (surface === 'collection') {
+    return deltaX < 0
+      ? Object.freeze({ action: 'none', consumed: true })
+      : Object.freeze({ action: 'deck-add' });
+  }
   return Object.freeze({ action: deltaX < 0 ? 'deck-remove' : 'none' });
 }

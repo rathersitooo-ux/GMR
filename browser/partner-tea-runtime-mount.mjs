@@ -1,6 +1,7 @@
 import { PARTNER_TEA_QUICK_CHOICES } from './partner-tea-quick-choice-core.mjs';
 import { nextPartnerShellView } from './partner-shell-presentation-core.mjs';
 import { mountPartnerShellRuntime } from './partner-shell-runtime-mount.mjs';
+import { createPartnerCostumeMainSaveProfileAdapter } from './partner-costume-main-save-profile-adapter.mjs';
 
 const RUNTIME_NAME = 'GAMEROAD_PARTNER_TEA_QUICK_CHOICE_RUNTIME';
 const RUNTIME_VERSION = 'gameroad.partner-tea-quick-choice-runtime.v1';
@@ -12,7 +13,7 @@ const HUB_OVERLAY_SELECTOR = '[data-partner-hub-overlay="1"]';
 const PRESS_STATE_KEY = 'grPartnerTeaPressState';
 const PRESS_KEYS = new Set(['Enter', ' ']);
 const PARTNER_HUB_MOUNTED_KEY = 'partnerHubOverlayMounted';
-const PARTNER_HUB_ALLOWED_ACTION_SET = new Set(['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'BACK_HUB']);
+const PARTNER_HUB_ALLOWED_ACTION_SET = new Set(['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'OPEN_COSTUME', 'BACK_HUB']);
 const partnerHubMounts = new WeakMap();
 
 export const PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS = Object.freeze([...PARTNER_HUB_ALLOWED_ACTION_SET]);
@@ -169,6 +170,30 @@ function isConversationSurface(surface) {
   );
 }
 
+export function currentPartnerCostumeServices(global = globalThis) {
+  const bridge = global?.GAMEROAD_PARTNER_COSTUME_MAIN_SAVE;
+  const catalog = global?.GAMEROAD_PARTNER_COSTUME_CATALOG;
+  const ownedSource = global?.GAMEROAD_PARTNER_COSTUME_OWNED_ITEM_IDS_BY_PARTNER;
+  if (!bridge || typeof bridge.getSelectedPartnerId !== 'function'
+    || typeof bridge.getPartnerProfiles !== 'function'
+    || typeof bridge.persistPartnerEquipment !== 'function'
+    || !catalog || typeof catalog !== 'object' || Array.isArray(catalog)
+    || (!ownedSource || (typeof ownedSource !== 'object' && typeof ownedSource !== 'function'))) return null;
+  const readOwned = () => typeof ownedSource === 'function' ? ownedSource() : ownedSource;
+  const adapter = createPartnerCostumeMainSaveProfileAdapter({
+    getSelectedPartnerId: bridge.getSelectedPartnerId,
+    getPartnerProfiles: bridge.getPartnerProfiles,
+    getOwnedItemIdsByPartner: readOwned,
+    persistPartnerEquipment: bridge.persistPartnerEquipment,
+  });
+  return Object.freeze({
+    catalog,
+    loadAuthoritativeSnapshot: adapter.loadAuthoritativeSnapshot,
+    saveAuthoritativeSelection: adapter.saveAuthoritativeSelection,
+    createSaveRequestId: () => `partner-costume:${Date.now()}:${Math.random().toString(36).slice(2)}`,
+  });
+}
+
 function mountPartnerConversationHubOnSurface(surface) {
   if (!isConversationSurface(surface)) return null;
   const existing = partnerHubMounts.get(surface);
@@ -220,8 +245,10 @@ function mountPartnerConversationHubOnSurface(surface) {
   let open = false;
   let view = 'hub';
 
+  const costume = currentPartnerCostumeServices(globalThis);
   const shell = mountPartnerShellRuntime({
     root: shellRoot,
+    costume,
     getInput: () => createPartnerConversationHubInput(view),
     canDispatch: partnerConversationHubCanDispatch,
     onAction: ({ action }) => {

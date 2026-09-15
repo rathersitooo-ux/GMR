@@ -129,7 +129,10 @@ function historicalCardLabel(id, win = globalThis) {
   const key = cleanText(id, 120);
   if (!key) return '';
   const cardData = win?.__CARD_DATA__;
-  const card = cardData?.get?.(id) ?? cardData?.[id] ?? cardData?.[key] ?? null;
+  const arrayCard = Array.isArray(cardData)
+    ? cardData.find((entry) => cleanText(entry?.id, 120) === key)
+    : null;
+  const card = arrayCard ?? cardData?.get?.(id) ?? cardData?.[id] ?? cardData?.[key] ?? null;
   const name = cleanText(card?.name, 80);
   return name ? `${name}（${key}）` : key;
 }

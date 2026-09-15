@@ -100,7 +100,7 @@ function fakeBattleLogDocument() {
       appendChild(child) { this.children.push(child); return child; },
       replaceChildren(...children) { this.children = [...children]; },
       querySelector(selector) { if (!selector.startsWith('[') || !selector.endsWith(']')) return null; const attribute = selector.slice(1, -1); return this.children.find(child => child.getAttribute?.(attribute) !== null) || null; },
-      click() { listeners.get('click')?.({ currentTarget: this }); }
+      click() { this.onclick?.({ currentTarget: this }); listeners.get('click')?.({ currentTarget: this }); }
     };
   }
   const shell = node('section');
@@ -224,6 +224,40 @@ test('actual History and owner-safe Deck share one support entry while Graveyard
   assert.deepEqual(support.children.map(child => child.getAttribute('data-battle-support-item')), ['history', 'deck']);
   assert.equal(support.children.some(child => child.getAttribute('data-battle-support-item') === 'graveyard'), false);
   assert.equal(shell.children.filter(child => child.getAttribute?.('data-battle-support-entry') !== null).length, 1);
+});
+
+test('History support entry expands the existing viewer-safe causal log in one action', () => {
+  const { document, shell } = fakeBattleLogDocument();
+  const bridge = createPartnerBattleEventLogPresentationBridge({ document });
+  assert.equal(bridge.begin('M-HISTORY-ONETAP'), true);
+  const history = shell.querySelector('[data-partner-battle-event-log]');
+  const toggle = shell.querySelector('[data-partner-battle-event-log-toggle]');
+  assert.ok(history);
+  assert.ok(toggle);
+  for (let index = 0; index < 4; index += 1) {
+    const row = document.createElement('div');
+    row.textContent = `event-${index + 1}`;
+    row.hidden = index < 2;
+    history.appendChild(row);
+  }
+  history.dataset.partnerBattleEventCount = '4';
+  history.dataset.partnerBattleEventLogExpanded = 'false';
+  toggle.hidden = false;
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.textContent = '履歴を表示';
+
+  assert.equal(renderLiveBattleRemainingDeckPresentation({
+    ok: true, status: 'ready', total: 4, unknownCount: 4, revision: 1, knownCardCounts: []
+  }, { document }), true);
+  const support = shell.querySelector('[data-battle-support-entry]');
+  const historyButton = support.children.find(child => child.getAttribute('data-battle-support-item') === 'history');
+  assert.ok(historyButton);
+  historyButton.click();
+
+  assert.equal(history.dataset.partnerBattleEventLogExpanded, 'true');
+  assert.deepEqual(history.children.map(row => row.hidden), [false, false, false, false]);
+  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+  assert.equal(toggle.textContent, '直近だけ');
 });
 
 test('production session still requires all exact version authorities; capture never invents them', () => {

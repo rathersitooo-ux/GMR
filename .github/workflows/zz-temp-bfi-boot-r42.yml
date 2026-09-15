@@ -1,0 +1,62 @@
+name: TEMP BFI Boot Readiness R42
+
+on:
+  push:
+    branches:
+      - fix/bfi-boot-readiness-r39
+    paths:
+      - '.github/workflows/zz-temp-bfi-boot-r42.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/bfi-boot-readiness-r39
+          fetch-depth: 0
+      - name: Guard branch head
+        env:
+          EXPECTED_PARENT: 5cded3de74ef5919a4756296032c462ce0d1102a
+        run: |
+          actual_parent="$(git rev-parse HEAD^)"
+          test "$actual_parent" = "$EXPECTED_PARENT" || { echo "unexpected parent: $actual_parent"; exit 1; }
+      - name: Apply exact bounded repair
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('browser/GAMEROAD.html')
+          text = path.read_text(encoding='utf-8')
+          old_runtime = 'async function currentScreenTransitionRuntime(timeoutMs=5000){const startedAt=performance.now();for(;;){const runtime=globalThis.GAMEROAD_SCREEN_TRANSITION;if(runtime&&typeof runtime.navigate==="function"&&typeof runtime.back==="function")return runtime;if(performance.now()-startedAt>=timeoutMs)throw new Error("GAMEROAD screen transition runtime is not ready");await new Promise(resolve=>setTimeout(resolve,16))}}'
+          new_runtime = '''function readScreenTransitionRuntime(){const runtime=globalThis.GAMEROAD_SCREEN_TRANSITION;if(runtime&&typeof runtime.navigate==="function"&&typeof runtime.back==="function")return runtime;return null}\nfunction waitForScreenTransitionRuntime(timeoutMs=5000){const startedAt=performance.now();return new Promise((resolve,reject)=>{const probe=()=>{const runtime=readScreenTransitionRuntime();if(runtime){resolve(runtime);return}if(performance.now()-startedAt>=timeoutMs){reject(new Error("GAMEROAD screen transition runtime is not ready"));return}setTimeout(probe,16)};probe()})}\nconst screenTransitionReadinessProxy=Object.freeze({navigate:(target,meta)=>waitForScreenTransitionRuntime().then(runtime=>runtime.navigate(target,meta)),back:(entry,meta)=>waitForScreenTransitionRuntime().then(runtime=>runtime.back(entry,meta))});\nfunction currentScreenTransitionRuntime(){return readScreenTransitionRuntime()||screenTransitionReadinessProxy}'''
+          replacements = [
+              (old_runtime, new_runtime),
+              ('async function navigateDetail(target){const runtime=await currentScreenTransitionRuntime();return runtime.navigate(target,{reason:\'detail\'})}', 'function navigateDetail(target){return currentScreenTransitionRuntime().navigate(target,{reason:\'detail\'})}'),
+              ('async function navigateRoot(target){const runtime=await currentScreenTransitionRuntime();return runtime.navigate(target,{reason:\'root\'})}', 'function navigateRoot(target){return currentScreenTransitionRuntime().navigate(target,{reason:\'root\'})}'),
+              ('async function navigateBack(){const runtime=await currentScreenTransitionRuntime();const entry=gameroadNav.stack[gameroadNav.stack.length-1];return runtime.back(entry,{reason:\'back\'})}', 'function navigateBack(){const entry=gameroadNav.stack[gameroadNav.stack.length-1];return currentScreenTransitionRuntime().back(entry,{reason:\'back\'})}'),
+          ]
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'exact anchor count {count} for {old[:80]!r}')
+              text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+      - name: Verify bounded contract
+        run: |
+          node tests/browser-static-check.mjs
+          node --check tests/browser-full-interaction.spec.mjs
+          git diff --check
+          git diff -- browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
+      - name: Remove transient executor and commit repair
+        run: |
+          git rm .github/workflows/zz-temp-bfi-boot-r42.yml
+          git config user.name 'gameroad-r42-bounded-executor'
+          git config user.email 'actions@users.noreply.github.com'
+          git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
+          git diff --cached --check
+          git commit -m 'fix(browser): preserve transition delegation during boot readiness'
+          git push origin HEAD:fix/bfi-boot-readiness-r39

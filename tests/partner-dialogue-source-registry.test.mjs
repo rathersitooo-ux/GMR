@@ -2,13 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  approvedPartnerAdviceReplyPairSource,
   approvedPartnerDialogueDescriptor,
+  createPartnerAdviceReplyPairPresentationControl,
   currentAdvicePartnerId,
   cycleAdvicePartner,
   installPartnerDelegationLabelPresentation,
   normalizePartnerDelegationControlPresentation,
   partnerDisplayName,
   partnerRosterIdsFromRuntime,
+  projectApprovedPartnerAdviceReplyPair,
   selectApprovedPartnerBattleUtterance,
   selectApprovedPartnerIdleUtterance,
   setAdvicePartnerId,
@@ -121,6 +124,81 @@ test('idle readable dialogue uses only the approved current source and stays det
   assert.equal(first.automaticGameMutationAllowed, false);
 });
 
+test('approved Saasuna Advice emits exactly two reversible player replies', () => {
+  const input = {
+    partnerId: 'partner.saasuna',
+    matchId: 'match-replypair-r2',
+    round: 3,
+    adviceText: 'ここは中央を守って。',
+  };
+  const source = approvedPartnerAdviceReplyPairSource(input);
+  assert.ok(source);
+  assert.equal(source.approvedCurrent, true);
+  assert.equal(source.wordingAuthority, 'ai-delegated-reversible');
+  assert.equal(source.userDirectRaw, false);
+  assert.deepEqual(source.options, [
+    { id: 'hint-only', label: 'ヒントだけ教えて' },
+    { id: 'answer-through', label: '答えまで教えて' },
+  ]);
+
+  const projection = projectApprovedPartnerAdviceReplyPair(input);
+  assert.equal(projection.visible, true);
+  assert.equal(projection.options.length, 2);
+  assert.deepEqual(projection.options.map((option) => option.label), ['ヒントだけ教えて', '答えまで教えて']);
+  assert.equal(projection.options.some((option) => option.label === 'まかせた！' || option.label === 'まかせろ！'), false);
+  assert.equal(projection.presentationOnly, true);
+  assert.equal(projection.autoExecute, false);
+  assert.equal(projection.emits2v2Ping, false);
+  assert.equal(projection.gameplayAuthorityMutated, false);
+});
+
+test('unapproved or stale reply context fails closed instead of borrowing Saasuna text', () => {
+  assert.equal(approvedPartnerAdviceReplyPairSource({
+    partnerId: 'partner.naki',
+    matchId: 'match-replypair-r2',
+    round: 3,
+    adviceText: 'ここは中央を守って。',
+  }), null);
+  assert.equal(projectApprovedPartnerAdviceReplyPair({
+    partnerId: 'partner.saasuna',
+    matchId: '',
+    round: 3,
+    adviceText: 'ここは中央を守って。',
+  }).visible, false);
+  assert.equal(projectApprovedPartnerAdviceReplyPair({
+    partnerId: 'partner.saasuna',
+    matchId: 'match-replypair-r2',
+    round: 3,
+    adviceText: '',
+  }).visible, false);
+  assert.equal(PARTNER_DIALOGUE_SOURCE_REGISTRY_CONTRACT.saasunaFallbackForOtherCharacters, false);
+});
+
+test('reply selection remains presentation-only and resets for the next conversation', () => {
+  const control = createPartnerAdviceReplyPairPresentationControl();
+  const first = {
+    partnerId: 'partner.saasuna',
+    matchId: 'match-replypair-r2',
+    round: 3,
+    adviceText: 'ここは中央を守って。',
+  };
+  assert.equal(control.status(first).visible, true);
+  const receipt = control.choose({ ...first, optionId: 'hint-only' });
+  assert.ok(receipt);
+  assert.equal(receipt.playerText, 'ヒントだけ教えて');
+  assert.equal(receipt.presentationOnly, true);
+  assert.equal(receipt.autoExecute, false);
+  assert.equal(receipt.emits2v2Ping, false);
+  assert.equal(receipt.gameplayAuthorityMutated, false);
+  assert.equal(control.status(first).visible, false);
+  assert.equal(control.status(first).selectedOption.id, 'hint-only');
+  assert.equal(control.choose({ ...first, optionId: 'answer-through' }), null);
+
+  const next = { ...first, round: 4 };
+  assert.equal(control.status(next).visible, true);
+  assert.equal(control.status(next).selectedOption, null);
+});
+
 test('real delegation control gets the approved manual and delegated display labels only', () => {
   const manual = presentationButton('まかせた');
   assert.equal(normalizePartnerDelegationControlPresentation(manual), true);
@@ -135,6 +213,8 @@ test('real delegation control gets the approved manual and delegated display lab
 
   assert.equal(PARTNER_DIALOGUE_SOURCE_REGISTRY_CONTRACT.delegationLabelPresentation, 'existing-real-button-text-only');
   assert.equal(PARTNER_DIALOGUE_SOURCE_REGISTRY_CONTRACT.delegationGameplayAuthority, 'existing-gameplay-runtime');
+  assert.equal(PARTNER_DIALOGUE_SOURCE_REGISTRY_CONTRACT.adviceReplyPairAutoExecute, false);
+  assert.equal(PARTNER_DIALOGUE_SOURCE_REGISTRY_CONTRACT.adviceReplyPairEmits2v2Ping, false);
 });
 
 test('forced or unknown delegation presentation fails closed without rewriting text', () => {

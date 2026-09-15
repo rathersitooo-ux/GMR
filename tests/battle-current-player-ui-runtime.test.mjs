@@ -113,6 +113,8 @@ function fixture() {
   const legacyPhaseStrip = new FakeElement('div', rect(0, 48, 667, 20));
   const detailsDrawer = new FakeElement('aside', rect(80, 40, 507, 294));
   const partner = new FakeElement('aside', rect(8, 177, 96, 98));
+  const partnerVisual = new FakeElement('div', rect(0, 165, 150, 210));
+  const manaArt = new FakeElement('section', rect(82, 205, 112, 112));
 
   root.appendChild(battleMap);
   battleMap.appendChild(board);
@@ -135,12 +137,15 @@ function fixture() {
   battleMap.appendChild(legacyPhaseStrip);
   battleMap.appendChild(detailsDrawer);
   root.appendChild(partner);
+  battleMap.appendChild(partnerVisual);
+  battleMap.appendChild(manaArt);
   document.body.appendChild(root);
 
   const nodes = {
     battleMap, board, boardPlayers, controlledCharacter, currentAction, resources, battleScreenHud,
     public4p, hand, battleInfo, thumbActions, quickDecision, quickCoil, jankenSlidePad,
-    roulette, targetConfirm, secondaryActions, supportEntry, legacyPhaseStrip, detailsDrawer, partner
+    roulette, targetConfirm, secondaryActions, supportEntry, legacyPhaseStrip, detailsDrawer, partner,
+    partnerVisual, manaArt
   };
   for (const [key, selectors] of Object.entries(BATTLE_CURRENT_PLAYER_UI_SELECTORS)) {
     const node = nodes[key];
@@ -159,16 +164,21 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.productionHtmlMutationOwnedHere, f
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.currentAction[0], '[data-battle-current-action="1"]');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.resources[0], '[data-battle-critical-resource-hud="1"]');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.partner[0], '#partnerAdviceChatPresentation');
+assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.partnerVisual[0], '#battleAdvicePartnerStage');
+assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.manaArt[0], '#battleManaArtR8');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.jankenSlidePad[0], '[data-battle-janken-slidepad="1"]');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.roulette[0], '[data-battle-playable-hand-row-roulette-live="1"]');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.supportEntry[0], '#detailsBtn');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.supportEntryPolicy, 'EXISTING_DETAILS_HISTORY_DECK_ENTRY_LOWER_LEFT');
+assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.boardProtagonistPolicy, 'BOUND_EXISTING_PARTNER_VISUAL_AND_MANA_ART_WITHOUT_RELOCATION_OR_STATE_WRITE');
 
 {
   const { document, root, nodes } = fixture();
   const originalResourceParent = nodes.resources.parentNode;
   const originalPartnerParent = nodes.partner.parentNode;
   const originalSupportEntryParent = nodes.supportEntry.parentNode;
+  const originalPartnerVisualParent = nodes.partnerVisual.parentNode;
+  const originalManaArtParent = nodes.manaArt.parentNode;
   const runtime = mountBattleCurrentPlayerUi({ document }, {
     initialState: {
       decisionActive: false,
@@ -188,9 +198,12 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.supportEntryPolicy, 'EXISTING_DETA
   assert.equal(root.getAttribute('data-gr-current-player-ui'), '1');
   assert.equal(root.getAttribute('data-gr-ui-authority'), 'presentation-only');
   assert.equal(root.getAttribute('data-gr-ui-layout'), 'world-primary-thumb-reserved');
+  assert.equal(root.getAttribute('data-gr-board-protagonist'), '1');
   assert.equal(nodes.currentAction.getAttribute('data-gr-current-ui-zone'), 'current-action');
   assert.equal(nodes.resources.getAttribute('data-gr-current-ui-zone'), 'resources');
   assert.equal(nodes.partner.getAttribute('data-gr-current-ui-zone'), 'partner');
+  assert.equal(nodes.partnerVisual.getAttribute('data-gr-current-ui-zone'), 'partner-visual');
+  assert.equal(nodes.manaArt.getAttribute('data-gr-current-ui-zone'), 'mana-art');
   assert.equal(nodes.supportEntry.getAttribute('data-gr-current-ui-zone'), 'support-entry');
   assert.equal(nodes.jankenSlidePad.getAttribute('data-gr-current-ui-zone'), 'janken-slidepad');
   assert.equal(nodes.roulette.getAttribute('data-gr-current-ui-zone'), 'conditional-roulette');
@@ -199,11 +212,15 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.supportEntryPolicy, 'EXISTING_DETA
   assert.equal(nodes.resources.parentNode, nodes.battleMap);
   assert.equal(nodes.partner.parentNode, nodes.battleMap);
   assert.equal(nodes.supportEntry.parentNode, nodes.battleMap);
+  assert.equal(nodes.partnerVisual.parentNode, originalPartnerVisualParent);
+  assert.equal(nodes.manaArt.parentNode, originalManaArtParent);
   assert.equal(nodes.secondaryActions.children.includes(nodes.supportEntry), false);
   assert.equal(document.head.children.length, 1);
   assert.match(document.head.children[0].textContent, /data-battle-janken-slidepad/);
   assert.match(document.head.children[0].textContent, /data-battle-playable-hand-row-roulette-live/);
   assert.match(document.head.children[0].textContent, /data-gr-current-ui-zone="support-entry"/);
+  assert.match(document.head.children[0].textContent, /data-gr-current-ui-zone="partner-visual"/);
+  assert.match(document.head.children[0].textContent, /data-gr-current-ui-zone="mana-art"/);
   assert.match(document.head.children[0].textContent, /backdrop-filter:none/);
   const styleText = document.head.children[0].textContent;
   const roulettePlacementRules = [...styleText.matchAll(/\[data-battle-playable-hand-row-roulette-live="1"\]\{([^}]*)\}/g)]
@@ -212,26 +229,47 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.supportEntryPolicy, 'EXISTING_DETA
   for (const rule of roulettePlacementRules) {
     assert.doesNotMatch(rule, /(?:^|;)(?:left|right|top|bottom|transform-origin):/);
   }
+  const partnerVisualRules = [...styleText.matchAll(/\[data-gr-current-ui-zone="partner-visual"\]\{([^}]*)\}/g)]
+    .map((match) => match[1]);
+  assert.ok(partnerVisualRules.length >= 3);
+  for (const rule of partnerVisualRules) {
+    assert.doesNotMatch(rule, /(?:^|;)(?:left|right|top|bottom):/);
+  }
+  const manaArtRules = [...styleText.matchAll(/\[data-gr-current-ui-zone="mana-art"\]\{([^}]*)\}/g)]
+    .map((match) => match[1]);
+  assert.ok(manaArtRules.length >= 3);
+  for (const rule of manaArtRules) {
+    assert.doesNotMatch(rule, /(?:^|;)(?:left|right|top|bottom):/);
+  }
   assert.match(styleText, /\[data-gr-current-ui-zone="support-entry"\]\{[^}]*left:var\(--gr-ui-edge\)!important[^}]*bottom:calc\(var\(--gr-ui-edge\) \+ 46px\)!important/);
   assert.match(styleText, /\[data-gr-current-ui-zone="partner"\]\{[^}]*bottom:calc\(var\(--gr-ui-edge\) \+ 92px\)!important/);
+  assert.match(styleText, /\[data-gr-current-ui-zone="partner-visual"\]\{width:clamp\(132px,15vw,190px\)!important;height:min\(34vh,245px\)!important\}/);
+  assert.match(styleText, /\[data-gr-current-ui-zone="mana-art"\]\{--r8-size:clamp\(84px,8\.5vw,108px\)!important;width:var\(--r8-size\)!important;height:var\(--r8-size\)!important\}/);
   assert.match(styleText, /\.planBox\{[^}]*transform:none!important/);
   assert.match(styleText, /\.battleRail\{[^}]*max-width:min\(28vw,340px\)!important[^}]*transform:none!important/);
   assert.match(styleText, /data-battle-janken-slidepad=\"1\"\]\{[^}]*width:var\(--gr-thumb-w\)!important[^}]*height:var\(--gr-thumb-h\)!important/);
+  assert.match(styleText, /@media\(max-height:430px\)[\s\S]*\[data-gr-current-ui-zone="partner-visual"\]\{width:112px!important;height:160px!important\}/);
+  assert.match(styleText, /@media\(max-height:430px\)[\s\S]*\[data-gr-current-ui-zone="mana-art"\]\{--r8-size:84px!important\}/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\.battleInfo\{[^}]*right:calc\(var\(--gr-thumb-w\) \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\)\)!important/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="support-entry"\]\{[^}]*bottom:calc\(28vh \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\) \+ 46px\)!important/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="partner"\]\{[^}]*bottom:calc\(28vh \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\) \+ 92px\)!important/);
+  assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="partner-visual"\]\{width:96px!important;height:154px!important\}/);
+  assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="mana-art"\]\{--r8-size:82px!important\}/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\.battleRail\{[^}]*top:118px!important[^}]*max-width:none!important/);
   assert.equal(styleText.includes('.battleRail{top:144px!important;bottom:auto!important;max-width:168px!important}'), true);
 
   assert.match(styleText, /@media\(max-width:520px\) and \(orientation:portrait\)\{[\s\S]*?\[data-gr-current-ui-zone="current-action"\]\{transform:translateY\(6px\)!important\}/);
   const snapshot = runtime.inspect();
+  assert.equal(snapshot.boardProtagonist, true);
   assert.deepEqual(snapshot.resolvedLiveConsumers, {
     currentAction: true,
     resources: true,
     partner: true,
     supportEntry: true,
     jankenSlidePad: true,
-    roulette: true
+    roulette: true,
+    partnerVisual: true,
+    manaArt: true
   });
   assert.equal(snapshot.collisions.handVsJanken, false);
   assert.equal(snapshot.collisions.thumbActionsVsJanken, false);
@@ -255,9 +293,12 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.supportEntryPolicy, 'EXISTING_DETA
   assert.equal(runtime.destroy(), true);
   assert.equal(runtime.destroy(), false);
   assert.equal(root.hasAttribute('data-gr-current-player-ui'), false);
+  assert.equal(root.hasAttribute('data-gr-board-protagonist'), false);
   assert.equal(nodes.resources.parentNode, originalResourceParent);
   assert.equal(nodes.partner.parentNode, originalPartnerParent);
   assert.equal(nodes.supportEntry.parentNode, originalSupportEntryParent);
+  assert.equal(nodes.partnerVisual.parentNode, originalPartnerVisualParent);
+  assert.equal(nodes.manaArt.parentNode, originalManaArtParent);
   assert.equal(document.head.children.length, 0);
 }
 

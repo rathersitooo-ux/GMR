@@ -3,7 +3,7 @@ import { nextPartnerShellView } from './partner-shell-presentation-core.mjs';
 import { mountPartnerShellRuntime } from './partner-shell-runtime-mount.mjs';
 
 const RUNTIME_NAME = 'GAMEROAD_PARTNER_TEA_QUICK_CHOICE_RUNTIME';
-const RUNTIME_VERSION = 'gameroad.partner-tea-quick-choice-runtime.v1';
+const RUNTIME_VERSION = 'gameroad.partner-tea-quick-choice-runtime.v2';
 const STYLE_ID = 'gameroad-partner-tea-quick-choice-style';
 const CONVERSATION_SELECTOR = '[data-gr-partner-conversation="1"]';
 const TEA_BAR_SELECTOR = '[data-gr-partner-tea-quick-choice="1"]';
@@ -12,7 +12,7 @@ const HUB_OVERLAY_SELECTOR = '[data-partner-hub-overlay="1"]';
 const PRESS_STATE_KEY = 'grPartnerTeaPressState';
 const PRESS_KEYS = new Set(['Enter', ' ']);
 const PARTNER_HUB_MOUNTED_KEY = 'partnerHubOverlayMounted';
-const PARTNER_HUB_ALLOWED_ACTION_SET = new Set(['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'BACK_HUB']);
+const PARTNER_HUB_ALLOWED_ACTION_SET = new Set(['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'OPEN_TEA', 'BACK_HUB']);
 const partnerHubMounts = new WeakMap();
 
 export const PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS = Object.freeze([...PARTNER_HUB_ALLOWED_ACTION_SET]);
@@ -46,6 +46,8 @@ export function partnerConversationHubProjectionPlan() {
     directConversationDefault: true,
     conversationDomPreserved: true,
     allowedActions: [...PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS],
+    teaPresentation: 'existing_inline_quick_choice',
+    teaCreatesStandaloneView: false,
     minimumTargetPx: 44,
     createsConversationSession: false,
     relationshipMutationAllowed: false,
@@ -159,6 +161,17 @@ function syncQuickChoiceBusyState(bar, input, send) {
   return busy;
 }
 
+function focusTeaQuickChoice(surface) {
+  const bar = surface?.querySelector?.(TEA_BAR_SELECTOR);
+  if (!bar) return false;
+  const button = typeof bar.querySelector === 'function'
+    ? bar.querySelector('.grPartnerTeaQuickChoiceButton')
+    : Array.from(bar.children || []).find((child) => child?.className === 'grPartnerTeaQuickChoiceButton');
+  if (!button || button.disabled) return false;
+  button.focus?.();
+  return true;
+}
+
 function isConversationSurface(surface) {
   return Boolean(
     surface
@@ -223,10 +236,19 @@ function mountPartnerConversationHubOnSurface(surface) {
   const shell = mountPartnerShellRuntime({
     root: shellRoot,
     getInput: () => createPartnerConversationHubInput(view),
-    canDispatch: partnerConversationHubCanDispatch,
+    canDispatch: (action, context) => {
+      if (!partnerConversationHubCanDispatch(action, context)) return false;
+      if (action !== 'OPEN_TEA') return true;
+      return Boolean(surface.querySelector(TEA_BAR_SELECTOR));
+    },
     onAction: ({ action }) => {
       if (action === 'OPEN_CONVERSATION') {
         close();
+        return;
+      }
+      if (action === 'OPEN_TEA') {
+        close();
+        focusTeaQuickChoice(surface);
         return;
       }
       const next = nextPartnerShellView(view, action);

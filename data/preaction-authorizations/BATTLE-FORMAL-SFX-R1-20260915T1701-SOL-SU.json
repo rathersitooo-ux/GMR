@@ -8,8 +8,8 @@
   "predictionStatus": "PASS",
   "predictionEvidenceId": "FRESH_MAIN_FORMAL_SFX_3FILES_AND_NONCONFLICTING_PROVIDER_SCOPE_20260915T1701JST",
   "rehearsalStatus": "PASS",
-  "rehearsalEvidenceId": "EXISTING_BATTLE_FEEDBACK_RUNTIME_PLAYFORMALSFX_INJECTION_PLUS_CONVENTIONAL_TEST_GATE",
-  "proceedToken": "PROCEED|BATTLE-FORMAL-SFX-R1-20260915T1701-SOL-SU|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|formal-battle-sfx-provider|module-test|active-lease",
+  "rehearsalEvidenceId": "EXISTING_BATTLE_FEEDBACK_RUNTIME_PLAYFORMALSFX_INJECTION_PLUS_CONVENTIONAL_TEST_GATE_PLUS_FORMAL_PUBLIC_PACKAGING",
+  "proceedToken": "PROCEED|BATTLE-FORMAL-SFX-R1-20260915T1701-SOL-SU|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|formal-battle-sfx-provider|module-test-public-packaging|active-lease",
   "authorizationBaseSha": "061c899df9df59d3b798034f097dbe9951946c6d",
   "stateModelVersion": "STATE_MODEL_V1",
   "leaseAuthority": "CURRENT_ACTIVE_LEASES",
@@ -20,24 +20,27 @@
   "leaseSnapshotReadbackAtJst": "2026-09-15 17:01 JST",
   "leaseUntilJst": "2026-09-15 18:01 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A14:N14",
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-formal-sfx-provider-r1-20260915 from exact main 061c899df9df59d3b798034f097dbe9951946c6d; mutable browser/battle-formal-sfx-provider.mjs; tests/battle-formal-sfx-provider.test.mjs; own data/preaction-authorizations/BATTLE-FORMAL-SFX-R1-20260915T1701-SOL-SU.json; own branch/PR/check/readback. READ_ONLY browser/GAMEROAD.html; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; browser/battle-interaction-feedback-runtime.mjs; cue vocabulary; gameplay/rules/save/economy/network.",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-formal-sfx-provider-r1-20260915 from exact main 061c899df9df59d3b798034f097dbe9951946c6d; mutable browser/battle-formal-sfx-provider.mjs; tests/battle-formal-sfx-provider.test.mjs; deploy/cloudflare/scripts/build.mjs; own data/preaction-authorizations/BATTLE-FORMAL-SFX-R1-20260915T1701-SOL-SU.json; own branch/PR/check/readback. READ_ONLY browser/GAMEROAD.html; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; browser/battle-interaction-feedback-runtime.mjs; cue vocabulary; deploy/cloudflare/tests/build.test.mjs; gameplay/rules/save/economy/network.",
   "solutionSignature": "BATTLE_FORMAL_SFX_EXISTING_KEY_TO_ACCEPTED_ASSET_PROVIDER_V1",
   "reuseDisposition": "COMPOSE",
   "solutionSearchStatus": "PASS",
   "reuseDecisionEvidenceId": "CURRENT_CUE_RUNTIME_PLUS_ACCEPTED_AUDIO_BINARIES_AND_AUDIO_OWNER",
   "solutionSearchEvidence": [
     "Current main already contains assets/audio/sfx/click_002.ogg, cardSlide6.ogg, and cardPlace1.ogg.",
+    "Cloudflare build already verifies the exact formal git blob for those three files and publishes them as click_002.ogg, cardSlide6.ogg, and cardPlace1.ogg in the public dist root.",
     "battle-interaction-feedback-cue-core.mjs already owns the formal key vocabulary click/cardSlide/cardPlace.",
     "battle-interaction-feedback-runtime.mjs already accepts caller-injected playFormalSfx(key), so no second feedback runtime is needed.",
-    "The current audio authority already owns mute/volume behavior; this provider will only map accepted keys to accepted asset paths and delegate actual playback to an injected existing asset player.",
+    "The current audio authority already owns mute/volume behavior; this provider will only map accepted keys to accepted public asset paths and delegate actual playback to an injected existing asset player.",
     "battle-screen-runtime-mount.mjs is actively leased by another WorkUnit until 17:46 JST and remains read-only here."
   ],
   "scope": [
     "browser/battle-formal-sfx-provider.mjs",
-    "tests/battle-formal-sfx-provider.test.mjs"
+    "tests/battle-formal-sfx-provider.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
   ],
   "leaseScope": [
     "browser/battle-formal-sfx-provider.mjs",
-    "tests/battle-formal-sfx-provider.test.mjs"
+    "tests/battle-formal-sfx-provider.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
   ]
 }

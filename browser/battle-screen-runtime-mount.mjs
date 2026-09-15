@@ -14,6 +14,7 @@ const PLAN_SLOT_ATTR = 'data-battle-plan-slot';
 const LANE_ATTR = 'data-battle-screen-lane';
 const HUD_ATTR = 'data-battle-r75-hud';
 const CURRENT_ACTION_ATTR = 'data-battle-current-action';
+const CAUSAL_TRACE_ATTR = 'data-battle-causal-trace';
 const PROGRESS_GUIDE_ATTR = 'data-battle-progress-guide';
 const FIELD_LANDMARK_ATTR = 'data-battle-field-landmark';
 const SHIELD_RAIL_ATTR = 'data-battle-shield-lane-rail';
@@ -96,6 +97,16 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"] .grBattleHudLoad b{font-size:clamp(14px,1.6vw,20px);line-height:1.1}
 [${CURRENT_ACTION_ATTR}]{position:absolute;z-index:8;top:clamp(206px,34vh,264px);left:50%;transform:translateX(-50%);max-width:min(42vw,420px);padding:5px 10px;border:1px solid rgba(245,248,225,.48);border-radius:999px;background:rgba(4,28,24,.80);box-shadow:0 6px 18px rgba(0,0,0,.24);pointer-events:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f8fbeb;text-shadow:0 2px 8px rgba(0,0,0,.72);font-size:clamp(11px,1vw,14px);font-weight:900;letter-spacing:.05em}
 [${CURRENT_ACTION_ATTR}][data-phase="settle"]{max-width:min(76vw,620px)}
+[${CAUSAL_TRACE_ATTR}]{position:absolute;z-index:8;top:clamp(144px,24vh,190px);left:50%;transform:translateX(-50%);width:min(76vw,720px);display:flex;align-items:stretch;justify-content:center;gap:4px;pointer-events:none;color:#f8fbeb;text-shadow:0 2px 8px rgba(0,0,0,.72)}
+[${CAUSAL_TRACE_ATTR}][hidden]{display:none!important}
+[${CAUSAL_TRACE_ATTR}] .grBattleCausalTraceStage{position:relative;min-width:0;flex:1 1 0;padding:5px 7px;border:1px solid rgba(245,248,225,.38);border-radius:8px;background:rgba(4,28,24,.76);box-shadow:0 5px 14px rgba(0,0,0,.2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font-size:clamp(9px,.84vw,12px);font-weight:900;letter-spacing:.03em;opacity:.9}
+[${CAUSAL_TRACE_ATTR}] .grBattleCausalTraceStage:not(:last-child)::after{content:"›";position:absolute;right:-6px;top:50%;transform:translateY(-52%);z-index:2;color:#ffe181;font-size:15px;text-shadow:0 1px 6px rgba(0,0,0,.8)}
+[${CAUSAL_TRACE_ATTR}] .grBattleCausalTraceStage[data-kind="processing"]{border-color:rgba(161,219,255,.48);background:rgba(12,43,58,.8)}
+[${CAUSAL_TRACE_ATTR}] .grBattleCausalTraceStage[data-kind="accepted_resolution"]{border-color:rgba(255,226,129,.54);background:rgba(70,57,18,.82)}
+[${CAUSAL_TRACE_ATTR}] .grBattleCausalTraceStage[data-kind="destination"]{border-color:rgba(255,190,135,.64);background:rgba(78,38,18,.84)}
+[${CAUSAL_TRACE_ATTR}][data-motion="causal_return"] .grBattleCausalTraceStage{animation:grBattleCausalTraceStage 1.35s cubic-bezier(.2,.72,.24,1) both}
+[${CAUSAL_TRACE_ATTR}][data-motion="static_causal_trace"] .grBattleCausalTraceStage{animation:none!important;opacity:1!important;transform:none!important}
+@keyframes grBattleCausalTraceStage{0%{opacity:.18;transform:translateY(8px) scale(.97)}45%{opacity:1;transform:translateY(0) scale(1.02)}100%{opacity:.9;transform:translateY(0) scale(1)}}
 [${SHELL_ATTR}="1"] [${PLAN_SLOT_ATTR}]{position:absolute;inset:0;z-index:2;min-width:0;min-height:0}
 [${SHELL_ATTR}="1"] #battlePhaseSurface{position:static!important;inset:auto!important;z-index:auto!important;overflow:visible!important;background:none!important;pointer-events:none!important;display:contents}
 [${SHELL_ATTR}="1"] #battlePhaseSurface[hidden]{display:none!important}
@@ -351,6 +362,76 @@ function writeCurrentActionCue(cue, model) {
   setData(cue, 'causalCardId', model?.causalReturn?.sourceCard?.cardId ?? null);
   setData(cue, 'causalJanken', model?.causalReturn?.sourceCard?.jankenHand ?? null);
   return text;
+}
+
+function causalStageLabel(stage, model) {
+  if (!stage || typeof stage !== 'object') return '';
+  if (stage.kind === 'cause') {
+    const handKey = typeof stage.jankenHand === 'string' ? stage.jankenHand.trim().toLowerCase() : '';
+    const hand = LOAD_JANKEN_LABELS[handKey] ?? stage.jankenHand ?? '';
+    return `攻撃 ${stage.cardId ?? ''}${hand ? `（${hand}）` : ''}`.trim();
+  }
+  if (stage.kind === 'processing') {
+    const order = Array.isArray(stage.processingOrder)
+      ? stage.processingOrder.map(id => participantLabelById(model, id) || id).filter(Boolean)
+      : [];
+    return order.length ? `比較 ${order.join(' → ')}` : '比較';
+  }
+  if (stage.kind === 'accepted_resolution') return '結果確定';
+  if (stage.kind === 'return_path') return '盤面へ帰着';
+  if (stage.kind === 'destination') {
+    const participant = participantLabelById(model, stage.opponentId) || stage.opponentId || '';
+    const shield = stage.shieldLane ? `Shield ${stage.shieldLane}` : '';
+    return [participant, shield].filter(Boolean).join(' / ');
+  }
+  return '';
+}
+
+function createCausalTrace(document) {
+  const trace = createNode(document, 'section', 'grBattleCausalTrace');
+  trace.setAttribute?.(CAUSAL_TRACE_ATTR, '1');
+  trace.setAttribute?.('role', 'status');
+  trace.setAttribute?.('aria-live', 'polite');
+  trace.setAttribute?.('aria-atomic', 'true');
+  trace.setAttribute?.('aria-label', '攻撃から盤面反映までの因果');
+  trace.dataset.presentationOnly = 'true';
+  trace.dataset.authority = 'accepted-causal-return-stages-only';
+  trace.hidden = true;
+  return trace;
+}
+
+function writeCausalTrace(document, trace, model) {
+  clearChildren(trace);
+  const causal = model?.causalReturn;
+  const stages = Array.isArray(causal?.stages) ? causal.stages : [];
+  setData(trace, 'traceKey', null);
+  setData(trace, 'eventId', null);
+  setData(trace, 'motion', null);
+  setData(trace, 'stageCount', null);
+  setData(trace, 'preserveStageOrder', null);
+  if (!causal || stages.length === 0) {
+    trace.hidden = true;
+    trace.setAttribute?.('aria-hidden', 'true');
+    return null;
+  }
+
+  for (let index = 0; index < stages.length; index += 1) {
+    const stage = stages[index];
+    const label = causalStageLabel(stage, model);
+    const item = createNode(document, 'span', 'grBattleCausalTraceStage', label);
+    setData(item, 'kind', stage.kind ?? null);
+    setData(item, 'stageIndex', index + 1);
+    item.style.animationDelay = `${index * 160}ms`;
+    trace.appendChild(item);
+  }
+  trace.hidden = false;
+  trace.setAttribute?.('aria-hidden', 'false');
+  setData(trace, 'traceKey', causal.traceKey ?? null);
+  setData(trace, 'eventId', causal.eventId ?? null);
+  setData(trace, 'motion', causal.motion?.mode ?? null);
+  setData(trace, 'stageCount', stages.length);
+  setData(trace, 'preserveStageOrder', causal.motion?.preserveStageOrder === true ? 'true' : null);
+  return trace;
 }
 
 function clearChildren(node) {
@@ -748,6 +829,9 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   const currentActionHost = adoptingExistingPhase && validRoot(root) ? root : shell;
   currentActionHost.appendChild(currentActionCue);
 
+  const causalTrace = createCausalTrace(document);
+  currentActionHost.appendChild(causalTrace);
+
   const progressGuide = createProgressGuide(document);
   visualHost.appendChild(progressGuide);
 
@@ -916,6 +1000,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
 
     // Rejected/stale input must not leave the previous accepted return highlighted.
     writeCurrentActionCue(currentActionCue, null);
+    writeCausalTrace(document, causalTrace, null);
     setData(shell, 'boardReturnDestination', null);
     setData(phaseSurface, 'battleBoardReturnDestination', null);
     setData(resolutionSurface, 'battleBoardReturnDestination', null);
@@ -956,6 +1041,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     phaseSurface.hidden = !battle;
     hud.root.hidden = !battle;
     writeCurrentActionCue(currentActionCue, resultExit ? null : model);
+    writeCausalTrace(document, causalTrace, resultExit ? null : model);
     if (planSlot) planSlot.hidden = battle || resultExit;
     syncFieldLandmark(fieldLandmark, phaseSurface, shell, root);
 
@@ -1000,6 +1086,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     currentPlayerUi?.destroy?.();
     if (fieldLandmark?.parentNode && typeof fieldLandmark.parentNode.removeChild === 'function') fieldLandmark.parentNode.removeChild(fieldLandmark);
     if (currentActionCue?.parentNode && typeof currentActionCue.parentNode.removeChild === 'function') currentActionCue.parentNode.removeChild(currentActionCue);
+    if (causalTrace?.parentNode && typeof causalTrace.parentNode.removeChild === 'function') causalTrace.parentNode.removeChild(causalTrace);
     if (progressGuide?.parentNode && typeof progressGuide.parentNode.removeChild === 'function') progressGuide.parentNode.removeChild(progressGuide);
     if (grid?.parentNode && typeof grid.parentNode.removeChild === 'function') grid.parentNode.removeChild(grid);
     resourceHud.destroy();
@@ -1022,6 +1109,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     resolutionSurface,
     fieldLandmark,
     currentActionCue,
+    causalTrace,
     progressGuide,
     hud,
     resourceHud,
@@ -1045,6 +1133,8 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   presentationOnly: true,
   authority: 'NONE',
   currentActionAuthority: 'ACCEPTED_PUBLIC_MODEL_ONLY',
+  causalTraceAuthority: 'MODEL_CAUSAL_RETURN_STAGES_ONLY_NO_RECALCULATION',
+  causalTraceStageOrder: 'MODEL_ORDER_ONLY',
   planCurrentActionPolicy: 'GENERIC_SELECTION_LABEL_ONLY_NO_LEGAL_ACTION_INFERENCE',
   hudAuthority: 'CALLER_ONLY_FAIL_CLOSED_PLACEHOLDERS',
   resourceHudAuthority: 'CALLER_ONLY_EXISTING_RESOURCE_HUD',

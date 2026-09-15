@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-BATTLE-CURRENT-UI-LIFECYCLE-R1-20260915T2347",
+  "taskId": "BROWSER-BATTLE-VISUAL-AOI-REBASE-001",
+  "workUnitKey": "BATTLE_CURRENT_PLAYER_UI_SHARED_MOUNT_PREACTION_R1",
+  "acquireKey": "BATTLE-CURRENT-UI-PREACTION-R1-20260915T2347-SOL-MAKASE",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_DUAL_MOUNT_PATH_CONFIRMED_LIVE_ADAPTER_PLUS_SCREEN_RUNTIME",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FOCUSED_SAME_ROOT_DUAL_DESTROY_ORDER_REGRESSION_CONTRACT",
+  "proceedToken": "PROCEED|VWORK-BATTLE-CURRENT-UI-LIFECYCLE-R1-20260915T2347|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-main-readback|lease-snapshot",
+  "authorizationBaseSha": "f09c6e85727297089644918d812db98ff992173d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-VISUAL-AOI-REBASE-001",
+  "leaseWorkUnitKey": "BATTLE_CURRENT_PLAYER_UI_SHARED_MOUNT_PREACTION_R1",
+  "leaseAcquireKey": "BATTLE-CURRENT-UI-PREACTION-R1-20260915T2347-SOL-MAKASE",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 23:47 JST",
+  "leaseUntilJst": "2026-09-16 00:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "browser/battle-current-player-ui-runtime.mjs; tests/battle-current-player-ui-runtime-lifecycle.test.mjs; data/preaction-authorizations/VWORK-BATTLE-CURRENT-UI-LIFECYCLE-R1-20260915T2347.json",
+  "scope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime-lifecycle.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime-lifecycle.test.mjs"
+  ]
+}

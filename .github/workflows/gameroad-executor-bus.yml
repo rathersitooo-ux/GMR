@@ -6,7 +6,10 @@ on:
       - '.github/workflows/gameroad-executor-bus.yml'
       - 'tools/executor-bus-packet.mjs'
       - 'tests/executor-bus-packet.test.mjs'
+      - 'tools/free-autopilot-worker.mjs'
+      - 'tests/free-autopilot-worker.test.mjs'
       - 'docs/executor-bus.md'
+      - 'docs/free-autopilot.md'
   workflow_dispatch:
   issues:
     types: [opened, edited, reopened]
@@ -31,6 +34,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run executor bus packet tests
         run: node --test tests/executor-bus-packet.test.mjs
+      - name: Run free local coder guard tests
+        run: node --test tests/free-autopilot-worker.test.mjs
       - name: Verify provider-backed receipt lookups
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -164,6 +169,266 @@ jobs:
         if: steps.queue_validate.outcome != 'success'
         run: exit 1
 
+  free-local-coder:
+    needs: queue-packet
+    if: >-
+      github.event_name == 'issues' &&
+      startsWith(github.event.issue.title, '[EXECUTOR]') &&
+      contains(github.event.issue.body, 'FREE_LOCAL_CODER') &&
+      github.event.issue.user.login == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      actions: read
+    env:
+      BODY_FILE: ${{ runner.temp }}/executor-free-body.txt
+      PACKET_FILE: ${{ runner.temp }}/executor-free-packet.json
+      PROMPT_FILE: ${{ runner.temp }}/executor-free-prompt.txt
+      MODEL_OUTPUT_FILE: ${{ runner.temp }}/executor-free-model-output.txt
+      DIFF_FILE: ${{ runner.temp }}/executor-free-candidate.diff
+      MODEL_FILE: ${{ runner.temp }}/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
+      LLAMA_ARCHIVE: ${{ runner.temp }}/llama-b10951-bin-ubuntu-x64.tar.gz
+      LLAMA_DIR: ${{ runner.temp }}/llama-b10951
+      MODEL_URL: https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/38f6bab61d341b23a6c00226f32c0d6148bf9f43/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf?download=true
+      MODEL_SHA256: cc324af070c2ecbfd324a30884d2f951a7ff756aba85cb811a6ec436933bb046
+      LLAMA_URL: https://github.com/ggml-org/llama.cpp/releases/download/b10951/llama-b10951-bin-ubuntu-x64.tar.gz
+      LLAMA_SHA256: cb0e453d8d88b62a8962c5b13e46c117315f7740017f2636bcf0de20c6253f7a
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Persist owner-authored queue body
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            fs.writeFileSync(process.env.BODY_FILE, context.payload.issue.body || '', 'utf8');
+      - name: Validate bounded FREE_LOCAL_CODER packet
+        id: free_prepare
+        run: >-
+          node tools/free-autopilot-worker.mjs prepare
+          --body-file "$BODY_FILE"
+          --packet-out "$PACKET_FILE"
+          --prompt-out "$PROMPT_FILE"
+      - name: Verify packet base is the current default branch head
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const packet = JSON.parse(fs.readFileSync(process.env.PACKET_FILE, 'utf8'));
+            const repo = await github.rest.repos.get({ owner: context.repo.owner, repo: context.repo.repo });
+            const branch = await github.rest.repos.getBranch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch: repo.data.default_branch,
+            });
+            if (branch.data.commit.sha !== packet.baseRef) {
+              core.setFailed(`FREE_AUTOPILOT_BASE_MOVED expected=${packet.baseRef} actual=${branch.data.commit.sha}`);
+            }
+      - name: Rebuild prompt from exact packet base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE_SHA="$(node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync(process.env.PACKET_FILE,'utf8'));process.stdout.write(p.baseRef)")"
+          git checkout --detach "$BASE_SHA"
+          node tools/free-autopilot-worker.mjs prepare \
+            --body-file "$BODY_FILE" \
+            --packet-out "$PACKET_FILE" \
+            --prompt-out "$PROMPT_FILE"
+      - name: Download and verify pinned zero-cash inference runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "$LLAMA_URL" -o "$LLAMA_ARCHIVE"
+          echo "$LLAMA_SHA256  $LLAMA_ARCHIVE" | sha256sum -c -
+          mkdir -p "$LLAMA_DIR"
+          tar -xzf "$LLAMA_ARCHIVE" -C "$LLAMA_DIR"
+          LLAMA_CLI="$(find "$LLAMA_DIR" -type f -name llama-cli -print -quit)"
+          test -n "$LLAMA_CLI"
+          chmod +x "$LLAMA_CLI"
+          printf '%s\n' "$LLAMA_CLI" > "$RUNNER_TEMP/llama-cli-path.txt"
+      - name: Download and verify pinned Qwen coder model
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 "$MODEL_URL" -o "$MODEL_FILE"
+          echo "$MODEL_SHA256  $MODEL_FILE" | sha256sum -c -
+      - name: Run local CPU inference with no paid fallback
+        shell: bash
+        run: |
+          set -euo pipefail
+          LLAMA_CLI="$(cat "$RUNNER_TEMP/llama-cli-path.txt")"
+          export LD_LIBRARY_PATH="$(dirname "$LLAMA_CLI"):${LD_LIBRARY_PATH:-}"
+          timeout 720 "$LLAMA_CLI" \
+            -m "$MODEL_FILE" \
+            -f "$PROMPT_FILE" \
+            -n 2048 \
+            -c 8192 \
+            -t 4 \
+            --temp 0.1 \
+            --seed 42 \
+            > "$MODEL_OUTPUT_FILE"
+      - name: Validate and apply model candidate diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/free-autopilot-worker.mjs validate \
+            --packet-file "$PACKET_FILE" \
+            --model-output-file "$MODEL_OUTPUT_FILE" \
+            --diff-out "$DIFF_FILE"
+          git apply --check "$DIFF_FILE"
+          git apply "$DIFF_FILE"
+      - name: Run every focused test declared mutable by the packet
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { spawnSync } from 'node:child_process';
+          const packet = JSON.parse(fs.readFileSync(process.env.PACKET_FILE, 'utf8'));
+          const tests = packet.exactMutableResources.filter((p) => p.startsWith('tests/') && p.endsWith('.test.mjs'));
+          if (!tests.length) process.exit(2);
+          for (const testPath of tests) {
+            if (!fs.existsSync(testPath)) {
+              console.error(`focused test missing after patch: ${testPath}`);
+              process.exit(1);
+            }
+            const run = spawnSync(process.execPath, ['--test', testPath], { stdio: 'inherit' });
+            if (run.status !== 0) process.exit(run.status ?? 1);
+          }
+          NODE
+      - name: Fail closed if main advanced during inference
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE_SHA="$(node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync(process.env.PACKET_FILE,'utf8'));process.stdout.write(p.baseRef)")"
+          DEFAULT_BRANCH="${{ github.event.repository.default_branch }}"
+          git fetch --quiet origin "$DEFAULT_BRANCH"
+          ACTUAL_SHA="$(git rev-parse FETCH_HEAD)"
+          test "$BASE_SHA" = "$ACTUAL_SHA" || { echo "FREE_AUTOPILOT_BASE_MOVED expected=$BASE_SHA actual=$ACTUAL_SHA"; exit 1; }
+      - name: Commit and push bounded candidate branch
+        id: candidate_publish
+        shell: bash
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          BRANCH="work/free-auto-${ISSUE_NUMBER}-${GITHUB_RUN_ID}"
+          git checkout -b "$BRANCH"
+          git add -A
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          const packet = JSON.parse(fs.readFileSync(process.env.PACKET_FILE, 'utf8'));
+          const allowed = new Set(packet.exactMutableResources);
+          const changed = execFileSync('git', ['diff', '--cached', '--name-only'], { encoding: 'utf8' }).trim().split(/\r?\n/).filter(Boolean);
+          if (!changed.length) throw new Error('candidate_has_no_staged_paths');
+          for (const path of changed) {
+            if (!allowed.has(path)) throw new Error(`staged_path_out_of_scope:${path}`);
+          }
+          NODE
+          git config user.name "gameroad-free-autopilot[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          WORK_UNIT="$(node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync(process.env.PACKET_FILE,'utf8'));process.stdout.write(p.workUnitKey)")"
+          git commit -m "Free autopilot candidate: $WORK_UNIT"
+          git push origin "HEAD:$BRANCH"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "commit_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Open draft candidate PR
+        id: candidate_pr
+        uses: actions/github-script@v7
+        env:
+          PACKET_FILE: ${{ env.PACKET_FILE }}
+          CANDIDATE_BRANCH: ${{ steps.candidate_publish.outputs.branch }}
+          CANDIDATE_SHA: ${{ steps.candidate_publish.outputs.commit_sha }}
+        with:
+          script: |
+            const fs = require('fs');
+            const packet = JSON.parse(fs.readFileSync(process.env.PACKET_FILE, 'utf8'));
+            const pr = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[FREE AUTO] ${packet.workUnitKey}`,
+              head: process.env.CANDIDATE_BRANCH,
+              base: context.payload.repository.default_branch,
+              draft: true,
+              body: [
+                'Zero-cash FREE_LOCAL_CODER candidate generated by the existing GAMEROAD Executor Bus.',
+                '',
+                `Task: ${packet.taskId}`,
+                `WorkUnit: ${packet.workUnitKey}`,
+                `AcquireKey: ${packet.acquireKey}`,
+                `Packet base: ${packet.baseRef}`,
+                `Candidate commit: ${process.env.CANDIDATE_SHA}`,
+                '',
+                'Focused packet tests passed before push. This draft is not a product/game success claim and must not be merged without fresh CURRENT adoption.',
+                'This PR is created with GITHUB_TOKEN; recursive pull_request workflow dispatch is intentionally not relied on.',
+              ].join('\n'),
+            });
+            core.setOutput('number', String(pr.data.number));
+            core.setOutput('url', pr.data.html_url);
+      - name: Return candidate to the originating Executor issue
+        if: success()
+        uses: actions/github-script@v7
+        env:
+          PACKET_FILE: ${{ env.PACKET_FILE }}
+          CANDIDATE_SHA: ${{ steps.candidate_publish.outputs.commit_sha }}
+          PR_NUMBER: ${{ steps.candidate_pr.outputs.number }}
+          PR_URL: ${{ steps.candidate_pr.outputs.url }}
+        with:
+          script: |
+            const fs = require('fs');
+            const packet = JSON.parse(fs.readFileSync(process.env.PACKET_FILE, 'utf8'));
+            const result = {
+              schemaVersion: 'gameroad-executor-bus-v1',
+              kind: 'result',
+              taskId: packet.taskId,
+              workUnitKey: packet.workUnitKey,
+              acquireKey: packet.acquireKey,
+              status: 'RETURNED',
+              evidence: [`focused-tests:PASS`, `workflow-run:${context.runId}`],
+              unresolved: ['Fresh CURRENT authority/adoption is still required before merge or success claim.'],
+              producedRefs: [`commit:${process.env.CANDIDATE_SHA}`, `pr:${process.env.PR_NUMBER}`, `workflow-run:${context.runId}`],
+              nextAction: 'HEAD fresh CURRENT adoption and exact provider readback',
+            };
+            const body = `<!-- gameroad-free-autopilot:origin-run -->\nFREE_AUTOPILOT_CANDIDATE_RETURNED\n\n\`\`\`executor-result\n${JSON.stringify(result, null, 2)}\n\`\`\`\n\nDraft PR: ${process.env.PR_URL}\nThe origin run validated the bounded patch and focused tests. Recursive workflow dispatch from GITHUB_TOKEN is not treated as evidence.`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+      - name: Persist fail-closed worker result
+        if: failure() && steps.free_prepare.outcome == 'success'
+        uses: actions/github-script@v7
+        env:
+          PACKET_FILE: ${{ env.PACKET_FILE }}
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync(process.env.PACKET_FILE)) return;
+            const packet = JSON.parse(fs.readFileSync(process.env.PACKET_FILE, 'utf8'));
+            const result = {
+              schemaVersion: 'gameroad-executor-bus-v1',
+              kind: 'result',
+              taskId: packet.taskId,
+              workUnitKey: packet.workUnitKey,
+              acquireKey: packet.acquireKey,
+              status: 'FAILED',
+              evidence: [`workflow-run:${context.runId}`],
+              unresolved: ['Free local candidate did not reach tested draft-PR return. No paid fallback was attempted.'],
+              producedRefs: [`workflow-run:${context.runId}`],
+              nextAction: 'Inspect the origin workflow run and requeue only after the blocking condition is resolved.',
+            };
+            const body = `<!-- gameroad-free-autopilot:origin-run-failed -->\nFREE_AUTOPILOT_FAILED_CLOSED\n\n\`\`\`executor-result\n${JSON.stringify(result, null, 2)}\n\`\`\`\n\nNo paid fallback was attempted.`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
   result-packet:
     if: github.event_name == 'issue_comment' && startsWith(github.event.issue.title, '[EXECUTOR]') && contains(github.event.comment.body, '```executor-result')
     runs-on: ubuntu-latest
@@ -215,91 +480,41 @@ jobs:
               let match = ref.match(/^commit:([0-9a-fA-F]{40})$/);
               if (match) {
                 try {
-                  const response = await github.rest.repos.getCommit({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    ref: match[1],
-                  });
-                  verifiedRefs.push({
-                    ref,
-                    kind: 'commit',
-                    actual: {
-                      sha: response.data.sha,
-                      url: response.data.html_url,
-                    },
-                  });
+                  const response = await github.rest.repos.getCommit({ owner: context.repo.owner, repo: context.repo.repo, ref: match[1] });
+                  verifiedRefs.push({ ref, kind: 'commit', actual: { sha: response.data.sha, url: response.data.html_url } });
                 } catch (error) {
                   if (error.status === 404 || error.status === 422) invalidRefs.push(ref);
                   else lookupErrors.push({ ref, status: error.status || null, message: error.message });
                 }
                 return;
               }
-              if (ref.startsWith('commit:')) {
-                invalidRefs.push(ref);
-                return;
-              }
+              if (ref.startsWith('commit:')) { invalidRefs.push(ref); return; }
 
               match = ref.match(/^pr:([1-9][0-9]*)$/);
               if (match) {
                 try {
-                  const response = await github.rest.pulls.get({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    pull_number: Number(match[1]),
-                  });
-                  verifiedRefs.push({
-                    ref,
-                    kind: 'pull_request',
-                    actual: {
-                      number: response.data.number,
-                      state: response.data.state,
-                      merged: Boolean(response.data.merged),
-                      headSha: response.data.head.sha,
-                      baseSha: response.data.base.sha,
-                      url: response.data.html_url,
-                    },
-                  });
+                  const response = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: Number(match[1]) });
+                  verifiedRefs.push({ ref, kind: 'pull_request', actual: { number: response.data.number, state: response.data.state, merged: Boolean(response.data.merged), headSha: response.data.head.sha, baseSha: response.data.base.sha, url: response.data.html_url } });
                 } catch (error) {
                   if (error.status === 404 || error.status === 422) invalidRefs.push(ref);
                   else lookupErrors.push({ ref, status: error.status || null, message: error.message });
                 }
                 return;
               }
-              if (ref.startsWith('pr:')) {
-                invalidRefs.push(ref);
-                return;
-              }
+              if (ref.startsWith('pr:')) { invalidRefs.push(ref); return; }
 
               match = ref.match(/^workflow-run:([1-9][0-9]*)$/);
               if (match) {
                 try {
-                  const response = await github.rest.actions.getWorkflowRun({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    run_id: Number(match[1]),
-                  });
-                  verifiedRefs.push({
-                    ref,
-                    kind: 'workflow_run',
-                    actual: {
-                      id: response.data.id,
-                      status: response.data.status,
-                      conclusion: response.data.conclusion,
-                      headSha: response.data.head_sha,
-                      url: response.data.html_url,
-                    },
-                  });
+                  const response = await github.rest.actions.getWorkflowRun({ owner: context.repo.owner, repo: context.repo.repo, run_id: Number(match[1]) });
+                  verifiedRefs.push({ ref, kind: 'workflow_run', actual: { id: response.data.id, status: response.data.status, conclusion: response.data.conclusion, headSha: response.data.head_sha, url: response.data.html_url } });
                 } catch (error) {
                   if (error.status === 404 || error.status === 422) invalidRefs.push(ref);
                   else lookupErrors.push({ ref, status: error.status || null, message: error.message });
                 }
                 return;
               }
-              if (ref.startsWith('workflow-run:')) {
-                invalidRefs.push(ref);
-                return;
-              }
-
+              if (ref.startsWith('workflow-run:')) { invalidRefs.push(ref); return; }
               pendingExternalRefs.push(ref);
             }
 
@@ -327,9 +542,7 @@ jobs:
             fs.writeFileSync(process.env.VERIFICATION_FILE, JSON.stringify(receipt, null, 2) + '\n', 'utf8');
             core.setOutput('verification_status', verificationStatus);
             core.setOutput('provider_check_ok', providerCheckOk ? 'true' : 'false');
-            if (!providerCheckOk) {
-              core.setFailed(`returned reference verification failed: ${verificationStatus}`);
-            }
+            if (!providerCheckOk) core.setFailed(`returned reference verification failed: ${verificationStatus}`);
       - name: Upload result validation status
         if: always()
         uses: actions/upload-artifact@v4
@@ -359,20 +572,13 @@ jobs:
             const fs = require('fs');
             const status = JSON.parse(fs.readFileSync(process.env.STATUS_FILE, 'utf8'));
             let verification = null;
-            if (fs.existsSync(process.env.VERIFICATION_FILE)) {
-              verification = JSON.parse(fs.readFileSync(process.env.VERIFICATION_FILE, 'utf8'));
-            }
+            if (fs.existsSync(process.env.VERIFICATION_FILE)) verification = JSON.parse(fs.readFileSync(process.env.VERIFICATION_FILE, 'utf8'));
             const providerCheckOk = !verification || verification.providerCheckOk === true;
             const state = status.ok && providerCheckOk ? 'BUS_RESULT_ACCEPTED' : 'BUS_RESULT_REJECTED';
             const verificationStatus = verification ? verification.verificationStatus : 'NOT_RUN';
             const marker = `<!-- gameroad-executor-bus:result:${context.payload.comment.id} -->`;
             const body = `${marker}\n${state}: ${status.reason}\nACTUAL_REFERENCE_VERIFICATION: ${verificationStatus}\n\nTransport acceptance is separate from actual-result verification. Supported GitHub references are provider-read above; external-only references remain unverified until HEAD performs a fresh external read. Neither state alone proves product/game success.`;
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body,
-            });
+            await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body });
       - name: Fail rejected result event
         if: steps.result_validate.outcome != 'success' || steps.result_verify.outcome == 'failure'
         run: exit 1

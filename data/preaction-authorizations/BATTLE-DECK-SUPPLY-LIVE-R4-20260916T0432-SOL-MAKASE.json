@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-DECK-SUPPLY-LIVE-R4-20260916T0432-SOL-MAKASE",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_DECK_SUPPLY_LIVE_INTEGRATION_R1",
+  "acquireKey": "BATTLE-DECK-SUPPLY-LIVE-R4-20260916T0432-SOL-MAKASE",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1735_EXACT3_DIFF_REVIEW_PLUS_CURRENT_MAIN_BASE_MATCH_20260916",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1735_OBSERVABILITY_35005753172_SUCCESS_AND_PRODUCT_DIFF_REVIEW",
+  "proceedToken": "PROCEED|BATTLE-DECK-SUPPLY-LIVE-R4-20260916T0432-SOL-MAKASE|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CLEAN_HISTORY_REBUILD",
+  "authorizationBaseSha": "78f6090a157266474faf36986d0ffc41a26bc7cf",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/browser-static-check.mjs",
+    ".github/workflows/zz-temp-battle-deck-supply-live-r4.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_DECK_SUPPLY_LIVE_INTEGRATION_R1",
+  "leaseAcquireKey": "BATTLE-DECK-SUPPLY-LIVE-R4-20260916T0432-SOL-MAKASE",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 04:32 JST",
+  "leaseUntilJst": "2026-09-16 05:32 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:N11",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR current main 78f6090a157266474faf36986d0ffc41a26bc7cf; mutable browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs; tests/browser-static-check.mjs; transient .github/workflows/zz-temp-battle-deck-supply-live-r4.yml; transient data/preaction-authorizations/BATTLE-DECK-SUPPLY-LIVE-R4-20260916T0432-SOL-MAKASE.json; own fresh branch sol/battle-deck-supply-live-r4-20260916 / PR/check/merge/readback. READ_ONLY deploy/cloudflare/tests/build.test.mjs; browser/battle-deck-supply-boundary.mjs; deckTopToChip semantics; card values/final-resort rank semantics; movement/target/Shield/GOAL/save/network/economy/assets; unrelated active WorkUnits.",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/browser-static-check.mjs",
+    ".github/workflows/zz-temp-battle-deck-supply-live-r4.yml"
+  ],
+  "solutionSignature": "LIVE_HTML_DECK_SUPPLY_EXISTING_CORE_CLEAN_HISTORY_R4",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1735_EXACT3_PRODUCT_DIFF_REUSED_ON_IDENTICAL_BASE",
+  "solutionSearchEvidence": [
+    "PR#1735 exact 3-file final diff",
+    "current main 78f6090a157266474faf36986d0ffc41a26bc7cf equals PR#1735 base",
+    "browser/battle-deck-supply-boundary.mjs existing current authority",
+    "Observability run 35005753172 success"
+  ]
+}

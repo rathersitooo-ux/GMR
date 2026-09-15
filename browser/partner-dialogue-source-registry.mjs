@@ -1,4 +1,5 @@
 import {
+  getSaasunaAdviceReplyPairSource,
   selectSaasunaBattleUtterance,
   selectSaasunaFallback,
   SAASUNA_PARTNER_ID,
@@ -35,6 +36,7 @@ const SOURCES = new Map([
     battleSpeechAct: SAASUNA_BATTLE_SPEECH_ACT,
     sourceState: SOURCE_STATE,
     selectBattleUtterance: selectSaasunaBattleUtterance,
+    resolveAdviceReplyPair: getSaasunaAdviceReplyPairSource,
   })],
 ]);
 
@@ -58,6 +60,29 @@ export function partnerRosterIdsFromRuntime(win = globalThis.window) {
 export function resolveApprovedPartnerDialogueSource(partnerId) {
   const id = exactId(partnerId);
   return id ? SOURCES.get(id) || null : null;
+}
+
+export function resolveApprovedPartnerAdviceReplyPairSource(partnerId) {
+  const source = resolveApprovedPartnerDialogueSource(partnerId);
+  if (!source || typeof source.resolveAdviceReplyPair !== 'function') return null;
+  try {
+    const pair = source.resolveAdviceReplyPair({
+      partnerId: source.partnerId,
+      dialogueVersion: source.dialogueVersion,
+      sourceId: source.sourceId,
+    });
+    if (
+      !pair ||
+      pair.partnerId !== source.partnerId ||
+      pair.dialogueVersion !== source.dialogueVersion ||
+      pair.sourceId !== source.sourceId ||
+      pair.sourceState !== SOURCE_STATE ||
+      pair.approvedCurrent !== true
+    ) return null;
+    return pair;
+  } catch {
+    return null;
+  }
 }
 
 export function selectApprovedPartnerBattleUtterance({
@@ -230,6 +255,7 @@ export const PARTNER_DIALOGUE_SOURCE_REGISTRY_CONTRACT = Object.freeze({
   adviceSelectionStorage: 'existing-main-save.settings.advicePartnerId',
   unknownSourcePolicy: 'fail-closed-silent',
   saasunaFallbackForOtherCharacters: false,
+  adviceReplyPairSource: 'approved-current-source-only',
   delegationLabelPresentation: 'existing-real-button-text-only',
   delegationGameplayAuthority: 'existing-gameplay-runtime',
 });

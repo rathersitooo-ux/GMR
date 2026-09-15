@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "SHOP-MANII-CURRENCY-R1-20260915T1707-SOL",
+  "taskId": "SHOP-SAFE-ECONOMY-INTEGRATION-001",
+  "workUnitKey": "SHOP_COSMETIC_MANII_CURRENCY_SEPARATION_R1",
+  "acquireKey": "SHOP-MANII-CURRENCY-R1-20260915T1707-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_DIRECT_MANII_PLUS_FRESH_SHOP_ADAPTER_20260915T1707JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_FAIL_CLOSED_CONTROL_WITNESS_ONLY_PRODUCT_DIFF_REUSED",
+  "proceedToken": "PROCEED|SHOP-MANII-CURRENCY-R1-20260915T1707-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|shop-cosmetic-currency|adapter-test|active-lease",
+  "authorizationBaseSha": "061c899df9df59d3b798034f097dbe9951946c6d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHOP-SAFE-ECONOMY-INTEGRATION-001",
+  "leaseWorkUnitKey": "SHOP_COSMETIC_MANII_CURRENCY_SEPARATION_R1",
+  "leaseAcquireKey": "SHOP-MANII-CURRENCY-R1-20260915T1707-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 17:07 JST",
+  "leaseUntilJst": "2026-09-15 18:07 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A13:L13",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main 061c899df9df59d3b798034f097dbe9951946c6d; mutable browser/shop-transaction-presentation-adapter.mjs; tests/shop-transaction-presentation-adapter.test.mjs; own branch/PR/check/readback. Drive mutable central row1314 current economy wording only. READ_ONLY Battle Honey/Mana/Chip/HATE, normal Shop COIN semantics, prices/ProductIDs/ownership/save/network.",
+  "solutionSignature": "SHOP_COSMETIC_HONEY_TO_MANII_SEPARATION_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_SHOP_ADAPTER_DIRECT_READ_USER_DIRECT_RULING",
+  "solutionSearchEvidence": [
+    "Current fan-art Shop catalog adapter hard-requires acquisition.currency=HONEY and projects HONEY.",
+    "Current focused tests encode the same HONEY contract.",
+    "User directly ruled Shop-side cosmetic currency to Manii to separate it from Battle Honey.",
+    "Normal Shop COIN and Battle Honey are outside this WorkUnit and remain unchanged.",
+    "R1 Required Gate failed only because leaseSnapshotReadbackRef used A15:N15 instead of validator-required CURRENT_ACTIVE_LEASES!A<row>:L<row>; product diff was not executed by the gate."
+  ],
+  "scope": [
+    "browser/shop-transaction-presentation-adapter.mjs",
+    "tests/shop-transaction-presentation-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/shop-transaction-presentation-adapter.mjs",
+    "tests/shop-transaction-presentation-adapter.test.mjs"
+  ]
+}

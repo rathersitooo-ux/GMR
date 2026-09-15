@@ -9,6 +9,7 @@ import {
   normalizePartnerDelegationControlPresentation,
   partnerDisplayName,
   partnerRosterIdsFromRuntime,
+  resolveApprovedPartnerAdviceReplyPairSource,
   selectApprovedPartnerBattleUtterance,
   selectApprovedPartnerIdleUtterance,
   setAdvicePartnerId,
@@ -96,6 +97,25 @@ test('only an approved current source can emit character dialogue', () => {
   assert.equal(saasuna.partnerId, 'partner.saasuna');
   assert.equal(saasuna.sourceState, 'approved_current');
   assert.equal(PARTNER_DIALOGUE_SOURCE_REGISTRY_CONTRACT.saasunaFallbackForOtherCharacters, false);
+});
+
+test('separate advice reply pair comes only from the approved Saasuna source', () => {
+  assert.equal(resolveApprovedPartnerAdviceReplyPairSource('partner.naki'), null);
+  assert.equal(resolveApprovedPartnerAdviceReplyPairSource('partner.mato'), null);
+  const pair = resolveApprovedPartnerAdviceReplyPairSource('partner.saasuna');
+  assert.ok(pair);
+  assert.equal(pair.approvedCurrent, true);
+  assert.equal(pair.sourceState, 'approved_current');
+  assert.equal(pair.wordingProvenance, 'ai-authored-user-delegated');
+  assert.deepEqual(pair.options, [
+    { id: 'acknowledge', label: 'わかった' },
+    { id: 'consider', label: 'ちょっと考える' },
+  ]);
+  assert.equal(pair.options.some((option) => option.label === 'まかせた！' || option.label === 'まかせろ！'), false);
+  assert.equal(pair.options.some((option) => option.label.includes('上策')), false);
+  assert.equal(pair.presentationOnly, true);
+  assert.equal(pair.automaticGameMutationAllowed, false);
+  assert.equal(PARTNER_DIALOGUE_SOURCE_REGISTRY_CONTRACT.adviceReplyPairSource, 'approved-current-source-only');
 });
 
 test('current display labels remain Japanese while roster authority remains external', () => {

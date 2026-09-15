@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-COLLECTION-LEFT-NOOP-R1-20260915T1724-SOL-SE",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "CARDS_COLLECTION_LEFT_NOOP_CONTRACT_REPAIR_R1",
+  "acquireKey": "CARDS-COLLECTION-LEFT-NOOP-R1-20260915T1724-SOL-SE",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_R80_PLUS_FRESH_MAIN_00A410C_REGRESSION_20260915T1736JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1711_FAILCLOSED_HISTORY_LESSON_PLUS_EXISTING_R80_CONTRACT",
+  "proceedToken": "PROCEED|CARDS-COLLECTION-LEFT-NOOP-R1-20260915T1724-SOL-SE|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|cards-swipe-contract|existing-module-tests|active-lease",
+  "authorizationBaseSha": "00a410c02392e66a6c2a9e58830067c82f67e1ca",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "CARDS_COLLECTION_LEFT_NOOP_CONTRACT_REPAIR_R1",
+  "leaseAcquireKey": "CARDS-COLLECTION-LEFT-NOOP-R1-20260915T1724-SOL-SE",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 17:36 JST",
+  "leaseUntilJst": "2026-09-15 18:23 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:N11",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean rebuild branch sol/cards-collection-left-noop-r2-20260915 from exact main 00a410c02392e66a6c2a9e58830067c82f67e1ca; mutable browser/deck-storage-corner-core.mjs; tests/deck-storage-corner-core.test.mjs; tests/deck-storage-corner-runtime.test.mjs; own transient data/preaction-authorizations/CARDS-COLLECTION-LEFT-NOOP-R1-20260915T1724-SOL-SE.json; own replacement branch/PR/check/merge/readback. browser/deck-storage-corner-runtime.mjs; browser/cards-deck-presentation.mjs; browser/GAMEROAD.html; gameplay/rules/save/economy/network/assets READ_ONLY. Old branch sol/cards-collection-left-noop-r1-20260915 and PR#1711 are contaminated historical evidence only; NO_MERGE.",
+  "solutionSignature": "CARDS_COLLECTION_LEFT_NOOP_CURRENT_R80_CONTRACT_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_R80_EXISTING_CORE_RUNTIME_REPAIR_CLEAN_REBUILD",
+  "solutionSearchEvidence": [
+    "CURRENT R80 fixes the semantic contract: Collection-left is consumed with no mutation, Collection-right adds to Deck, and Deck-left removes one card.",
+    "Fresh main 00a410c retains the regression in deck-storage-corner-core and does not contain competing changes in the authorized three-file scope.",
+    "The existing core/controller remain the correct authority; no second gesture engine, router, Storage path, runtime product file, or HTML change is required.",
+    "The same-cardId runtime regression belongs in the existing tests/deck-storage-corner-runtime.test.mjs; no standalone test path will be created on this clean branch."
+  ],
+  "scope": [
+    "browser/deck-storage-corner-core.mjs",
+    "tests/deck-storage-corner-core.test.mjs",
+    "tests/deck-storage-corner-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/deck-storage-corner-core.mjs",
+    "tests/deck-storage-corner-core.test.mjs",
+    "tests/deck-storage-corner-runtime.test.mjs"
+  ]
+}

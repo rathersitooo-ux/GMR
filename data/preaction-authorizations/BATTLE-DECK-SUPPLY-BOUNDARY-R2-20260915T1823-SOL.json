@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-DECK-SUPPLY-BOUNDARY-R2-20260915T1823-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_DECK_SUPPLY_BOUNDARY_R2",
+  "acquireKey": "BATTLE-DECK-SUPPLY-BOUNDARY-R2-20260915T1823-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_3A7D8CE_GUARD_PASS_LEASE_NONOVERLAP_20260915T1823JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_LOCAL_7_OF_7_PLUS_CURRENT_VALIDATOR_CONTRACT_REVIEW_R2",
+  "proceedToken": "PROCEED|BATTLE-DECK-SUPPLY-BOUNDARY-R2-20260915T1823-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|deck-supply-boundary|clean-r2|active-lease",
+  "authorizationBaseSha": "3a7d8ce484efbd7e1af218cdc251dcc55eda976c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_DECK_SUPPLY_BOUNDARY_R2",
+  "leaseAcquireKey": "BATTLE-DECK-SUPPLY-BOUNDARY-R2-20260915T1823-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 18:23 JST",
+  "leaseUntilJst": "2026-09-15 19:22 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main 3a7d8ce484efbd7e1af218cdc251dcc55eda976c; mutable NEW browser/battle-deck-supply-boundary.mjs; NEW tests/battle-deck-supply-boundary.test.mjs; own transient data/preaction-authorizations/BATTLE-DECK-SUPPLY-BOUNDARY-R2-20260915T1823-SOL.json; own clean branch sol/battle-deck-supply-boundary-r2-20260915 / PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html while BFI R39 owns it; READ_ONLY browser/base52-face-layout-candidate.mjs; gameplay card values/costs/RPS/order; save/network/economy/assets; all active parallel WorkUnits; R1 branch/PR#1719 historical NO_MERGE only.",
+  "solutionSignature": "BATTLE_DECK_SUPPLY_STATE_BOUNDARY_FAIL_CLOSED_V1",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "NO_CURRENT_FORMAL_GAMEPLAY_SUPPLY_BOUNDARY_FOUND_BASE52_IS_PRESENTATION_ONLY_AND_LIVE_HTML_IS_DIRECT_DRAW",
+  "buildResidualReason": "Current main has no formal reusable gameplay boundary that owns main-deck exhaustion -> existing Battle subdeck shuffle -> final-resort-required while keeping playing-card generation and rank gameplay semantics unresolved. The existing BASE52 module is explicitly presentation candidate data, and GAMEROAD.html remains direct-draw actual plus is owned by a parallel BFI WorkUnit. A narrow pure boundary is therefore the minimum residual build.",
+  "solutionSearchEvidence": [
+    "Current user authority fixes main deck -> shuffled remaining existing Battle subdeck -> later final-resort-required.",
+    "Current base52-face-layout-candidate.mjs is NONFORMAL_CANDIDATE presentation data and cannot be promoted to gameplay authority.",
+    "Current live HTML earlier in this same outcome chain used direct p.deck shift/refill behavior and exposes no reusable formal subdeck supply boundary.",
+    "Parallel BFI R39 owns browser/GAMEROAD.html, so this WorkUnit must remain isolated and non-overlapping.",
+    "Playing-card infinite generation mechanism and rank gameplay values remain unresolved, so this boundary must stop at FINAL_RESORT_REQUIRED rather than invent a draw."
+  ],
+  "scope": [
+    "browser/battle-deck-supply-boundary.mjs",
+    "tests/battle-deck-supply-boundary.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-deck-supply-boundary.mjs",
+    "tests/battle-deck-supply-boundary.test.mjs"
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "AICAP-R45-PC-CURRENT-BRIDGE-20260916T0644-SOL-K7M3P8",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "NONCHAT_CURRENT_TO_EXECUTOR_BRIDGE_PC_R45",
+  "acquireKey": "AICAP-R45-PC-CURRENT-BRIDGE-20260916T0644-SOL-K7M3P8",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R44_PRIVATE_CURRENT_BRIDGE_GAP_PLUS_PC_RESUMETRIGGER_A",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R3_DIRECT_INSPECTION_PLUS_EXISTING_EXECUTOR_BUS_AND_OFFICIAL_GITHUB_GOOGLE_AUTH_RESEARCH",
+  "proceedToken": "PROCEED|AICAP-R45-PC-CURRENT-BRIDGE-20260916T0644-SOL-K7M3P8|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|20260916T0644JST",
+  "authorizationBaseSha": "eb85938e807cb8fd649e6b78f34a86e8865df8c0",
+  "scope": [
+    ".github/workflows/gameroad-current-bridge.yml",
+    ".github/workflows/gameroad-executor-bus.yml",
+    "tools/gameroad-current-bridge.py",
+    "tests/test_gameroad_current_bridge.py",
+    "docs/gameroad-current-bridge.md"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "NONCHAT_CURRENT_TO_EXECUTOR_BRIDGE_PC_R45",
+  "leaseAcquireKey": "AICAP-R45-PC-CURRENT-BRIDGE-20260916T0644-SOL-K7M3P8",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 06:44 JST",
+  "leaseUntilJst": "2026-09-16 07:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A16:L16",
+  "leaseScope": [
+    ".github/workflows/gameroad-current-bridge.yml",
+    ".github/workflows/gameroad-executor-bus.yml",
+    "tools/gameroad-current-bridge.py",
+    "tests/test_gameroad_current_bridge.py",
+    "docs/gameroad-current-bridge.md",
+    "data/preaction-authorizations/AICAP-R45-PC-CURRENT-BRIDGE-20260916T0644-SOL-K7M3P8.json"
+  ],
+  "leaseExactMutableResources": "NEW .github/workflows/gameroad-current-bridge.yml; .github/workflows/gameroad-executor-bus.yml bounded workflow_dispatch packet input only; NEW tools/gameroad-current-bridge.py; NEW tests/test_gameroad_current_bridge.py; NEW docs/gameroad-current-bridge.md; transient data/preaction-authorizations/AICAP-R45-PC-CURRENT-BRIDGE-20260916T0644-SOL-K7M3P8.json; own branch/PR/check/readback",
+  "solutionSignature": "windows-self-hosted-runner-service-plus-fresh-private-drive-oauth-plus-existing-executor-bus-dispatch-r45",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE_R3_AND_EXECUTOR_BUS_NO_SECOND_TASK_SYSTEM",
+  "solutionSearchEvidence": [
+    "Current R3 already proves a bounded Windows launcher and explicitly leaves project-head selection outside the launcher; it is reused rather than replaced.",
+    "Existing gameroad-executor-bus.yml already owns FREE_LOCAL_CODER packet validation, bounded candidate generation, tests and draft PR publication.",
+    "GitHub officially supports a Windows self-hosted runner as a startup service and scheduled workflows can target it without Windows Task Scheduler.",
+    "GitHub documents that workflow_dispatch triggered with GITHUB_TOKEN creates a workflow run, avoiding a long-lived GitHub PAT on the PC.",
+    "Google documents user Application Default Credentials with explicit non-Cloud scopes via OAuth client ID, allowing a private Drive read/write bridge without making CURRENT public or mirroring it into GitHub."
+  ]
+}

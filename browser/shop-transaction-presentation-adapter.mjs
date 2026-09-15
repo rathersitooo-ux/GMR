@@ -120,7 +120,7 @@ function validateApprovedFanArtShopItem(raw) {
     const currency = token(acquisition.currency, 32);
     const price = Number.isSafeInteger(acquisition.price) && acquisition.price > 0 ? acquisition.price : null;
     if (!productId) reasons.push('productId-invalid');
-    if (currency !== 'HONEY') reasons.push('currency-must-be-honey');
+    if (currency !== 'MANII') reasons.push('currency-must-be-manii');
     if (price == null) reasons.push('price-invalid');
   }
 
@@ -140,7 +140,7 @@ function validateApprovedFanArtShopItem(raw) {
       imageAssetId,
       acquisition:Object.freeze({
         productId: acquisition.productId.trim(),
-        currency: 'HONEY',
+        currency: 'MANII',
         price: acquisition.price,
       }),
       actions:Object.freeze(['VIEW', 'ACQUIRE']),
@@ -154,7 +154,7 @@ function validateApprovedFanArtShopItem(raw) {
  * - zero works => section hidden
  * - any malformed/inconsistent/duplicate catalog entry => whole catalog hidden
  * - Human approval, image review, game/shop use approval and acquisition authority are mandatory
- * - acquisition must already carry an explicit HONEY price/product identity
+ * - acquisition must already carry an explicit MANII price/product identity
  * - candidate/formal provenance internals are validation-only and are not exposed to the client projection
  * - user listing/trading/resale stay disabled
  *

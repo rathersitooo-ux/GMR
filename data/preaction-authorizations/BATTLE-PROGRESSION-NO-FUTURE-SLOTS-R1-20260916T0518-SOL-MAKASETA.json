@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PROGRESSION-NO-FUTURE-SLOTS-R1-20260916T0518-SOL-MAKASETA",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PROGRESSION_BUILT_ONLY_VISUAL_R1",
+  "acquireKey": "BATTLE-PROGRESSION-NO-FUTURE-SLOTS-R1-20260916T0518-SOL-MAKASETA",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_5042DDEE_FLANORA_PRECREATES_84_FUTURE_STAGE_NODES",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "READ_ONLY_CURRENT_FLANORA_RUNTIME_TEST_AND_PROGRESSION_PRESENTATION_INSPECTION",
+  "proceedToken": "PROCEED|BATTLE-PROGRESSION-NO-FUTURE-SLOTS-R1-20260916T0518-SOL-MAKASETA|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|progression-built-only-visual|two-file-slice|active-lease",
+  "authorizationBaseSha": "5042ddeee2e543931418dbb174bd468f425f5fd0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PROGRESSION_BUILT_ONLY_VISUAL_R1",
+  "leaseAcquireKey": "BATTLE-PROGRESSION-NO-FUTURE-SLOTS-R1-20260916T0518-SOL-MAKASETA",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 05:18 JST",
+  "leaseUntilJst": "2026-09-16 06:18 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A13:L13",
+  "leaseExactMutableResources": "browser/new-base-flanora-board-surface-runtime.mjs; tests/new-base-flanora-board-surface-runtime.test.mjs; own transient data/preaction-authorizations/BATTLE-PROGRESSION-NO-FUTURE-SLOTS-R1-20260916T0518-SOL-MAKASETA.json; own branch/PR/check/merge/readback. READ_ONLY browser/new-base-flanora-map-layout-core.mjs; browser/new-base-progression-lane-presentation-core.mjs; browser/GAMEROAD.html; gameplay movement/target/Shield/GOAL/rules/state; all parallel WorkUnits.",
+  "solutionSignature": "FLANORA_BUILT_ONLY_DISCRETE_PROGRESSION_VISUAL_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_CONTINUOUS_ROAD_TRACK_AND_EXISTING_PROGRESSION_PRESENTATION_AUTHORITY_REUSED",
+  "solutionSearchEvidence": [
+    "Current Flanora board already has one continuous road track per lane and a separate authority-derived progression presentation.",
+    "Current runtime precreates all seven discrete stage nodes per lane, including UNRESOLVED/LATENT future stages; this repair removes only that player-facing precreation.",
+    "Existing progression projection remains the sole source of BUILT versus LATENT stage state; no second progression engine or legality computation is introduced.",
+    "Only BUILT stages receive discrete DOM/card markers; future progression is represented by the existing continuous road line, not empty card/cell slots.",
+    "GOAL, Shield, lane identity, seven-built connection semantics, gameplay movement, target and result authority remain read-only."
+  ],
+  "scope": [
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs",
+    "data/preaction-authorizations/BATTLE-PROGRESSION-NO-FUTURE-SLOTS-R1-20260916T0518-SOL-MAKASETA.json"
+  ],
+  "leaseScope": [
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs",
+    "data/preaction-authorizations/BATTLE-PROGRESSION-NO-FUTURE-SLOTS-R1-20260916T0518-SOL-MAKASETA.json"
+  ]
+}

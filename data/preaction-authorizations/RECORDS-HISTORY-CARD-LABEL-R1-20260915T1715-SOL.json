@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RECORDS-HISTORY-CARD-LABEL-R1-20260915T1715-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "RECORDS_RECENT_HISTORY_CARD_LABEL_ARRAY_R1",
+  "acquireKey": "RECORDS-HISTORY-CARD-LABEL-R1-20260915T1715-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_PROFILE_RECORDS_ARRAY_CARD_DATA_MISMATCH_20260915",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "SOURCE_SHAPE_ORACLE_LIVE_BFI_ARRAY_VS_PROFILE_RESOLVER_20260915",
+  "proceedToken": "PROCEED|RECORDS-HISTORY-CARD-LABEL-R1-20260915T1715-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-array-shape|lease-snapshot",
+  "authorizationBaseSha": "061c899df9df59d3b798034f097dbe9951946c6d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "RECORDS_RECENT_HISTORY_CARD_LABEL_ARRAY_R1",
+  "leaseAcquireKey": "RECORDS-HISTORY-CARD-LABEL-R1-20260915T1715-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 17:15 JST",
+  "leaseUntilJst": "2026-09-15 18:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A19:L19",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/records-history-card-label-array-r1-20260915 only: browser/profile-presentation-runtime-mount.mjs; tests/profile-presentation-runtime-mount.test.mjs; own PRE_ACTION/branch/PR/check/readback only.",
+  "scope": [
+    "browser/profile-presentation-runtime-mount.mjs",
+    "tests/profile-presentation-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/profile-presentation-runtime-mount.mjs",
+    "tests/profile-presentation-runtime-mount.test.mjs"
+  ]
+}

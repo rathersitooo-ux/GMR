@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ROULETTE-OPTIONAL-AUTOMOUNT-R1-20260915T2226-SOL-KU",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_ROULETTE_OPTIONAL_AUTOMOUNT_WU8_R1",
+  "acquireKey": "BATTLE-ROULETTE-OPTIONAL-AUTOMOUNT-R1-20260915T2226-SOL-KU",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "X8_OPTIONAL_AUTOMOUNT_SOURCE_READBACK_F09C6E85",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_RUNTIME_CONTRACT_AND_FOCUSED_TEST_BASELINE",
+  "proceedToken": "PROCEED|BATTLE-ROULETTE-OPTIONAL-AUTOMOUNT-R1-20260915T2226-SOL-KU|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|X8_OPTIONAL_AUTOMOUNT_R1",
+  "authorizationBaseSha": "f09c6e85727297089644918d812db98ff992173d",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_ROULETTE_OPTIONAL_AUTOMOUNT_WU8_R1",
+  "leaseAcquireKey": "BATTLE-ROULETTE-OPTIONAL-AUTOMOUNT-R1-20260915T2226-SOL-KU",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 22:26 JST",
+  "leaseUntilJst": "2026-09-15 23:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A17:L17",
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR authorizationBase main f09c6e85727297089644918d812db98ff992173d; mutable browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; own transient data/preaction-authorizations/BATTLE-ROULETTE-OPTIONAL-AUTOMOUNT-R1-20260915T2226-SOL-KU.json; own branch sol/battle-roulette-optional-automount-r1-20260915; PR/check/merge/readback. READ_ONLY browser/battle-optional-rule-activation-core.mjs; browser/battle-new-base-live-consumer-adapter.mjs; browser/battle-playable-hand-row-roulette-runtime.mjs; browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs; gameplay/rules/candidate selection/economy/result/refill/save/network/assets; all parallel WorkUnits."
+}

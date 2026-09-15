@@ -18,7 +18,108 @@ import { mountStudyRunFromCurrentBrowser } from './study-run-runtime-mount.mjs';
 // [data-go="settings"]::before
 // HOME_CONTEXTUAL_REPLAY_LABEL
 
+const HOME_ROUTE_SELECTOR = 'section[data-screen="home"] .homePadChoice[data-home-target]';
+const NAV_GUARD_ATTR = 'data-home-nav-readiness-guard';
+const NAV_PREV_ARIA_ATTR = 'data-home-nav-readiness-prev-aria-disabled';
+const NAV_PREV_DISABLED_ATTR = 'data-home-nav-readiness-prev-disabled';
+const NAV_PREV_ARIA_MISSING = '__missing__';
+const NAV_READINESS_POLL_MS = 50;
+
+export function isHomeNavigationAuthorityReady(globalScope = globalThis) {
+  const runtime = globalScope && globalScope.__GAMEROAD_SCREEN_TRANSITION__;
+  return Boolean(runtime && typeof runtime.navigateDetail === 'function');
+}
+
+function readRouteControls(root) {
+  if (!root || typeof root.querySelectorAll !== 'function') return [];
+  return Array.from(root.querySelectorAll(HOME_ROUTE_SELECTOR));
+}
+
+function guardRouteControl(control) {
+  if (!control || typeof control.getAttribute !== 'function' || typeof control.setAttribute !== 'function') return false;
+  if (control.getAttribute(NAV_GUARD_ATTR) === 'true') return false;
+
+  const disabled = 'disabled' in control ? Boolean(control.disabled) : false;
+  const ariaDisabled = control.getAttribute('aria-disabled');
+  if (disabled || ariaDisabled === 'true') return false;
+
+  control.setAttribute(NAV_GUARD_ATTR, 'true');
+  control.setAttribute(NAV_PREV_DISABLED_ATTR, disabled ? 'true' : 'false');
+  control.setAttribute(NAV_PREV_ARIA_ATTR, ariaDisabled === null ? NAV_PREV_ARIA_MISSING : ariaDisabled);
+  if ('disabled' in control) control.disabled = true;
+  control.setAttribute('aria-disabled', 'true');
+  return true;
+}
+
+function restoreRouteControl(control) {
+  if (!control || typeof control.getAttribute !== 'function' || typeof control.removeAttribute !== 'function') return false;
+  if (control.getAttribute(NAV_GUARD_ATTR) !== 'true') return false;
+
+  const wasDisabled = control.getAttribute(NAV_PREV_DISABLED_ATTR) === 'true';
+  const previousAria = control.getAttribute(NAV_PREV_ARIA_ATTR);
+  if ('disabled' in control) control.disabled = wasDisabled;
+  if (previousAria === NAV_PREV_ARIA_MISSING || previousAria === null) {
+    control.removeAttribute('aria-disabled');
+  } else {
+    control.setAttribute('aria-disabled', previousAria);
+  }
+  control.removeAttribute(NAV_GUARD_ATTR);
+  control.removeAttribute(NAV_PREV_DISABLED_ATTR);
+  control.removeAttribute(NAV_PREV_ARIA_ATTR);
+  return true;
+}
+
+export function syncHomeNavigationReadiness({ root = document, globalScope = globalThis } = {}) {
+  const ready = isHomeNavigationAuthorityReady(globalScope);
+  let gated = 0;
+  let restored = 0;
+
+  for (const control of readRouteControls(root)) {
+    if (ready) {
+      if (restoreRouteControl(control)) restored += 1;
+    } else if (guardRouteControl(control)) {
+      gated += 1;
+    }
+  }
+
+  return Object.freeze({ ready, gated, restored });
+}
+
+export function mountHomeNavigationReadinessGuard({
+  root = document,
+  globalScope = globalThis,
+  schedule = globalThis.setTimeout,
+  pollMs = NAV_READINESS_POLL_MS,
+} = {}) {
+  let stopped = false;
+  let timer = null;
+
+  const stop = () => {
+    stopped = true;
+    if (timer !== null && typeof globalScope.clearTimeout === 'function') {
+      globalScope.clearTimeout(timer);
+    }
+    timer = null;
+  };
+
+  const check = () => {
+    if (stopped) return;
+    const state = syncHomeNavigationReadiness({ root, globalScope });
+    if (state.ready) {
+      stop();
+      return;
+    }
+    if (typeof schedule === 'function') {
+      timer = schedule(check, pollMs);
+    }
+  };
+
+  check();
+  return Object.freeze({ stop });
+}
+
 function mountStudyAfterHome() {
+  mountHomeNavigationReadinessGuard();
   mountStudyRunFromCurrentBrowser();
 }
 

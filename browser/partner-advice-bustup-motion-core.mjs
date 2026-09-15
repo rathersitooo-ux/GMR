@@ -26,6 +26,11 @@ function normalizeProfile(profile) {
     ? profile.states
     : null;
   if (!partnerId || !personality || !initialState || !guideState || !states?.[initialState] || !states?.[guideState]) return null;
+  for (const spec of Object.values(states)) {
+    if (!exactToken(spec?.mode) || !exactToken(spec?.assetPath, 512) || !exactToken(spec?.animationKey) || !exactToken(spec?.motionPreset)) {
+      return null;
+    }
+  }
   return profile;
 }
 
@@ -55,6 +60,7 @@ function presentation(profile, stateId, nowMs, activeReaction, queuedReaction, g
     mode: spec.mode,
     assetPath: spec.assetPath,
     animationKey: spec.animationKey,
+    motionPreset: spec.motionPreset,
     guideActive,
     reactionActive: Boolean(activeReaction),
     queuedStateId: queuedReaction?.stateId ?? null,

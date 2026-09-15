@@ -1,0 +1,84 @@
+name: TEMP PR1735 package and classification repair R3
+
+on:
+  push:
+    branches:
+      - sol/battle-deck-supply-live-r2-20260916
+    paths:
+      - .github/workflows/zz-temp-battle-deck-supply-live-r3.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temp-battle-deck-supply-live-r3
+  cancel-in-progress: false
+
+jobs:
+  repair-test-clean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: sol/battle-deck-supply-live-r2-20260916
+
+      - name: Package existing supply core and absorb live wiring test into static contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          build_path = Path('deploy/cloudflare/scripts/build.mjs')
+          build = build_path.read_text(encoding='utf-8')
+          artifact_line = "  { source: 'browser/battle-deck-supply-boundary.mjs', output: 'battle-deck-supply-boundary.mjs', artifact: 'battle_deck_supply_boundary', label: 'Battle deck supply boundary' },\n"
+          anchor = "  { source: 'browser/battle-self-deck-owner-knowledge-adapter.mjs', output: 'battle-self-deck-owner-knowledge-adapter.mjs', artifact: 'battle_self_deck_owner_knowledge_adapter', label: 'Battle owner-safe remaining Deck knowledge adapter' },\n"
+          if artifact_line not in build:
+              if build.count(anchor) != 1:
+                  raise SystemExit(f'build artifact anchor count={build.count(anchor)}')
+              build = build.replace(anchor, artifact_line + anchor, 1)
+          build_path.write_text(build, encoding='utf-8')
+
+          static_path = Path('tests/browser-static-check.mjs')
+          static = static_path.read_text(encoding='utf-8')
+          refill_line = "    [/function refill\\(p\\)\\{while\\(p\\.hand\\.length<3\\)\\{const card=consumeOrdinaryBattleSupply\\(p\\);if\\(card==null\\)break;p\\.hand\\.push\\(card\\)\\}\\}/, 'post-use refill target is no longer three or bypasses shared deck-supply boundary'],\n"
+          live_contracts = (
+              "    [/GAMEROAD_BATTLE_DECK_SUPPLY_LIVE_R2/, 'Battle deck supply live mount marker is missing'],\n"
+              "    [/import \\{ consumeNextBattleSupply \\} from [\\\"]\\.\\/battle-deck-supply-boundary\\.mjs[\\\"]/, 'Battle deck supply boundary is not imported by the live Browser'],\n"
+              "    [/deck,subDeck:\\[\\],hand,shields:/, 'player live state does not expose the dynamic public-lower subDeck zone'],\n"
+              "    [/finalResortMode:false,finalResortPolicy:null/, 'player live state does not expose fail-closed final-resort state'],\n"
+              "    [/case'drawAndReduceCost':\\{const drawn=consumeOrdinaryBattleSupply\\(p\\)/, 'drawAndReduceCost bypasses the shared deck-supply boundary'],\n"
+              "    [/case'deckTopToChip':\\{const moved=p\\.deck\\.shift\\(\\);p\\.chip\\.push\\(moved\\)/, 'deckTopToChip changed despite its current HOLD boundary'],\n"
+          )
+          if "Battle deck supply live mount marker is missing" not in static:
+              if static.count(refill_line) != 1:
+                  raise SystemExit(f'static refill anchor count={static.count(refill_line)}')
+              static = static.replace(refill_line, refill_line + live_contracts, 1)
+          static_path.write_text(static, encoding='utf-8')
+          PY
+          test -f tests/battle-deck-supply-live-integration.test.mjs
+          rm tests/battle-deck-supply-live-integration.test.mjs
+
+      - name: Run existing behavioral, live static, and public build tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/battle-deck-supply-boundary.test.mjs
+          node tests/browser-static-check.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+          git diff --check
+
+      - name: Commit exact gate repair and remove transient authorization files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "gameroad-deck-supply-live-r3"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/zz-temp-battle-deck-supply-live-r3.yml
+          git rm data/preaction-authorizations/BATTLE-DECK-SUPPLY-LIVE-R3-20260916T0308-SOL.json
+          git add deploy/cloudflare/scripts/build.mjs tests/browser-static-check.mjs tests/battle-deck-supply-live-integration.test.mjs
+          git diff --cached --check
+          git commit -m "Battle: package live deck supply boundary"
+          git push origin HEAD:sol/battle-deck-supply-live-r2-20260916

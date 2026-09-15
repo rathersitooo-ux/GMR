@@ -1,6 +1,8 @@
 import datetime as dt
 import importlib.util
+import json
 import pathlib
+import tempfile
 import unittest
 
 MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "tools" / "gameroad-current-bridge.py"
@@ -120,14 +122,22 @@ class CurrentBridgeTests(unittest.TestCase):
 
     def test_google_provider_failure_is_fail_closed(self):
         original = bridge._google_current_read
+        tmp_path = None
         try:
+            with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".json", delete=False) as handle:
+                json.dump(packet(), handle)
+                tmp_path = pathlib.Path(handle.name)
+
             def fail():
                 raise bridge.BridgeError("private_current_read_failed:test")
+
             bridge._google_current_read = fail
             with self.assertRaisesRegex(bridge.BridgeError, "private_current_read_failed"):
-                bridge.dispatch(pathlib.Path("never-read.json"), "rathersitooo-ux/GMR", "token")
+                bridge.dispatch(tmp_path, "rathersitooo-ux/GMR", "token")
         finally:
             bridge._google_current_read = original
+            if tmp_path is not None:
+                tmp_path.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

@@ -19,6 +19,8 @@ import { advanceSlotRollDrag, resolveSlotRollCommit } from '../browser/slidepad-
 import {
   HOME_CONTEXTUAL_REPLAY_LABEL,
   HOME_QUICKSET_CANCEL_LABEL,
+  setHomeObservedAttributeIfChanged,
+  setHomeObservedTextContentIfChanged,
   createHomeQuickSetSlotRoll,
   QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS,
   containSharedQuickSettingsTabFocus,
@@ -609,4 +611,58 @@ test('Home low-frequency chrome keeps duplicate rails and normal save status out
   }
   assert.equal(source.includes('[data-home-contextual-replay-trigger="true"]::before'), false);
   assert.equal(source.includes('HOME_CONTEXTUAL_REPLAY_LABEL'), true);
+});
+
+
+test('Home refresh observed-attribute writes are idempotent and do not retrigger the observer on equal aria state', () => {
+  let current = 'false';
+  let writes = 0;
+  const node = {
+    getAttribute(name) {
+      assert.equal(name, 'aria-pressed');
+      return current;
+    },
+    setAttribute(name, value) {
+      assert.equal(name, 'aria-pressed');
+      current = String(value);
+      writes += 1;
+    },
+  };
+
+  assert.equal(setHomeObservedAttributeIfChanged(node, 'aria-pressed', 'false'), false);
+  assert.equal(writes, 0);
+  assert.equal(setHomeObservedAttributeIfChanged(node, 'aria-pressed', 'true'), true);
+  assert.equal(writes, 1);
+  assert.equal(setHomeObservedAttributeIfChanged(node, 'aria-pressed', 'true'), false);
+  assert.equal(writes, 1);
+
+  const runtimeSource = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
+  assert.ok(runtimeSource.includes("setHomeObservedAttributeIfChanged(trigger, 'aria-pressed'"));
+  assert.ok(runtimeSource.includes("setHomeObservedAttributeIfChanged(replayTrigger, 'aria-pressed', 'false')"));
+});
+
+
+test('Home contextual replay child text refresh is idempotent under the childList observer', () => {
+  let current = HOME_CONTEXTUAL_REPLAY_LABEL;
+  let writes = 0;
+  const node = {
+    get textContent() { return current; },
+    set textContent(value) {
+      current = String(value);
+      writes += 1;
+    },
+  };
+
+  assert.equal(setHomeObservedTextContentIfChanged(node, HOME_CONTEXTUAL_REPLAY_LABEL), false);
+  assert.equal(writes, 0);
+  assert.equal(setHomeObservedTextContentIfChanged(node, '別表示'), true);
+  assert.equal(writes, 1);
+  assert.equal(setHomeObservedTextContentIfChanged(node, '別表示'), false);
+  assert.equal(writes, 1);
+
+  const runtimeSource = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
+  assert.ok(runtimeSource.includes("setHomeObservedTextContentIfChanged(trigger, HOME_CONTEXTUAL_REPLAY_LABEL);"));
+  assert.equal(runtimeSource.includes("trigger.textContent = HOME_CONTEXTUAL_REPLAY_LABEL;"), false);
+  assert.ok(runtimeSource.includes('subtree: true'));
+  assert.ok(runtimeSource.includes('childList: true'));
 });

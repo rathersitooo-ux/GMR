@@ -56,9 +56,9 @@ jobs:
           old_probe = '''    const roadSelect = battle.locator('#roadSelect:visible');\n    if ((await roadSelect.count()) > 0 && (await roadSelect.isEnabled())) {\n      await submitVisiblePlan(battle);'''
           new_probe = '''    const planReady = await battle.evaluate((root) => {\n      const roadSelect = root.querySelector('#roadSelect');\n      if (!roadSelect || roadSelect.disabled || roadSelect.getClientRects().length === 0) return false;\n      const style = getComputedStyle(roadSelect);\n      return style.visibility !== 'hidden' && style.display !== 'none';\n    });\n    if (planReady) {\n      await submitVisiblePlan(battle);'''
           count = spec.count(old_probe)
-          if count != 1:
-              raise SystemExit(f'BFI roadSelect probe anchor count={count}, expected=1')
-          spec = spec.replace(old_probe, new_probe, 1)
+          if count != 2:
+              raise SystemExit(f'BFI roadSelect probe anchor count={count}, expected=2')
+          spec = spec.replace(old_probe, new_probe)
           spec_path.write_text(spec, encoding='utf-8')
           PY
 

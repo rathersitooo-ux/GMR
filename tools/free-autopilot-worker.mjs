@@ -26,7 +26,7 @@ function fail(reason) {
 
 function cleanRepoPath(value) {
   if (typeof value !== 'string') throw new Error('resource_path_must_be_string');
-  const raw = value.trim().replaceAll('\\', '/');
+  const raw = value.trim().replaceAll('\\\\', '/');
   if (!raw || raw.startsWith('/') || raw.includes('\u0000')) throw new Error(`resource_path_invalid:${raw}`);
   const normalized = path.posix.normalize(raw);
   if (normalized === '.' || normalized.startsWith('../') || normalized.includes('/../')) {
@@ -48,6 +48,9 @@ export function validateFreePacket(packet) {
     }
     if (packet.exactMutableResources.length > MAX_FILES) throw new Error('mutable_resource_limit');
     const mutablePaths = packet.exactMutableResources.map(cleanRepoPath);
+    if (!mutablePaths.some((item) => item.startsWith('tests/') && item.endsWith('.test.mjs'))) {
+      throw new Error('focused_test_path_required');
+    }
     for (const item of mutablePaths) {
       if (FORBIDDEN_EXACT.has(item) || FORBIDDEN_PREFIXES.some((prefix) => item.startsWith(prefix))) {
         throw new Error(`control_plane_mutation_forbidden:${item}`);

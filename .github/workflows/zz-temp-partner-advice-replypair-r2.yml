@@ -1,0 +1,46 @@
+name: TEMP Partner Advice Reply Pair R2
+
+on:
+  push:
+    branches:
+      - sol/su13d-partner-advice-replypair-r2-current
+    paths:
+      - '.github/workflows/zz-temp-partner-advice-replypair-r2.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temp-partner-advice-replypair-r2
+  cancel-in-progress: false
+
+jobs:
+  apply-test-cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: sol/su13d-partner-advice-replypair-r2-current
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Patch public package and run focused rehearsal
+        run: python3 tools/temp-partner-advice-replypair-r2.py
+
+      - name: Commit tested product diff and remove transient executor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git status --short
+          git commit -m 'Partner Advice: package and verify two-choice reply consumer'
+          git push origin HEAD:sol/su13d-partner-advice-replypair-r2-current

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-INVALIDATED-RETURN-R1-20260915T2344-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_INVALIDATED_RETURN_BOUNDARY_R1",
+  "acquireKey": "BATTLE-JANKEN-INVALIDATED-RETURN-R1-20260915T2344-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_F09C6E8_LEASE_NONOVERLAP_CURRENT_20260915T2344JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOCAL_NODE_TEST_6_OF_6_INVALIDATED_RETURN_BOUNDARY_R1",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-INVALIDATED-RETURN-R1-20260915T2344-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|invalidated-janken-return|pure-boundary|active-lease",
+  "authorizationBaseSha": "f09c6e85727297089644918d812db98ff992173d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_INVALIDATED_RETURN_BOUNDARY_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-INVALIDATED-RETURN-R1-20260915T2344-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 23:44 JST",
+  "leaseUntilJst": "2026-09-16 00:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main f09c6e85727297089644918d812db98ff992173d; mutable NEW browser/battle-janken-invalidated-return-boundary.mjs; NEW tests/battle-janken-invalidated-return-boundary.test.mjs; own transient data/preaction-authorizations/BATTLE-JANKEN-INVALIDATED-RETURN-R1-20260915T2344-SOL.json; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; triad-resolver-core.mjs; battle-new-base-live-consumer-adapter.mjs; compound package core; gameplay movement/target/Shield/save/network/economy/assets; all active parallel WorkUnits.",
+  "solutionSignature": "BATTLE_JANKEN_INVALIDATED_SAME_PHYSICAL_CARD_RETURN_BOUNDARY_V1",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "TRIAD_RESOLVER_INTENTIONALLY_DESTINATION_AGNOSTIC_NO_CURRENT_RETURN_BOUNDARY_FOUND",
+  "buildResidualReason": "Current triad resolver intentionally leaves invalidated-card destination to the caller. Current user authority now fixes that disposition as return of the same physical card to hand after comparison, while INVALIDATED remains transient and already-authoritative movement is not rolled back. A narrow pure projection boundary is the minimum non-overlapping residual build; live HTML/state mutation remains out of scope.",
+  "solutionSearchEvidence": [
+    "Current triad-resolver-core explicitly does not decide any destination for invalidated cards.",
+    "Current user authority fixes default invalidated disposition to same physical card returning to hand after comparison.",
+    "Current user authority fixes INVALIDATED as transient comparison state and movement rollback as false.",
+    "Current live consumer/compound package preserve cardId but do not own this post-comparison zone transition.",
+    "Shared browser/GAMEROAD.html is actively owned by BFI R42, so this WorkUnit remains isolated and pure."
+  ],
+  "scope": [
+    "browser/battle-janken-invalidated-return-boundary.mjs",
+    "tests/battle-janken-invalidated-return-boundary.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-invalidated-return-boundary.mjs",
+    "tests/battle-janken-invalidated-return-boundary.test.mjs"
+  ]
+}

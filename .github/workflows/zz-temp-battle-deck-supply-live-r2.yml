@@ -65,11 +65,24 @@ jobs:
 
           static_path = Path('tests/browser-static-check.mjs')
           static_text = static_path.read_text(encoding='utf-8')
-          old_static = r"    [/function refill\\(p\\)\\{while\\(p\\.hand\\.length<3&&p\\.deck\\.length\\)p\\.hand\\.push\\(p\\.deck\\.shift\\(\\)\\)\\}/, 'post-use refill target is no longer three'],"
-          new_static = r"    [/function refill\\(p\\)\\{while\\(p\\.hand\\.length<3\\)\\{const card=consumeOrdinaryBattleSupply\\(p\\);if\\(card==null\\)break;p\\.hand\\.push\\(card\\)\\}\\}/, 'post-use refill target is no longer three or bypasses shared deck-supply boundary'],"
-          if static_text.count(old_static) != 1:
-              raise SystemExit(f'static-refill-contract: expected exactly 1 old contract, got {static_text.count(old_static)}')
-          static_text = static_text.replace(old_static, new_static, 1)
+          marker = "'post-use refill target is no longer three'"
+          if static_text.count(marker) != 1:
+              raise SystemExit(f'static-refill-contract marker count={static_text.count(marker)}')
+          at = static_text.index(marker)
+          start = static_text.rfind('\n', 0, at) + 1
+          end = static_text.find('\n', at)
+          if end < 0:
+              end = len(static_text)
+          old_line = static_text[start:end]
+          required_old = [
+              'function refill\\(p\\)',
+              'p\\.hand\\.length<3&&p\\.deck\\.length',
+              'p\\.deck\\.shift\\(\\)',
+          ]
+          if not all(part in old_line for part in required_old):
+              raise SystemExit(f'static-refill-contract unexpected old line: {old_line}')
+          new_line = "    [/function refill\\(p\\)\\{while\\(p\\.hand\\.length<3\\)\\{const card=consumeOrdinaryBattleSupply\\(p\\);if\\(card==null\\)break;p\\.hand\\.push\\(card\\)\\}\\}/, 'post-use refill target is no longer three or bypasses shared deck-supply boundary'],"
+          static_text = static_text[:start] + new_line + static_text[end:]
           static_path.write_text(static_text, encoding='utf-8')
 
           test = r'''import test from 'node:test';

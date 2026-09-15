@@ -24,7 +24,9 @@ const SELECTOR_CANDIDATES = Object.freeze({
   supportEntry: Object.freeze(['#detailsBtn']),
   legacyPhaseStrip: Object.freeze(['#phaseBar']),
   detailsDrawer: Object.freeze(['#battleDrawer']),
-  partner: Object.freeze(['#partnerAdviceChatPresentation'])
+  partner: Object.freeze(['#partnerAdviceChatPresentation']),
+  partnerVisual: Object.freeze(['#battleAdvicePartnerStage']),
+  manaArt: Object.freeze(['#battleManaArtR8'])
 });
 
 const STYLE_TEXT = `
@@ -53,6 +55,9 @@ const STYLE_TEXT = `
 .screen.battle[${ROOT_ATTR}="1"] .battleRail .railBtn{min-width:44px!important;min-height:36px!important;width:auto!important;height:36px!important;max-height:36px!important;padding:5px 8px!important;margin:0!important;transform:none!important;box-sizing:border-box!important;flex:0 0 auto!important;font-size:9px!important}
 .screen.battle[${ROOT_ATTR}="1"][data-gr-decision-active="false"] #quickCoil{display:none!important}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner"]{position:absolute!important;z-index:30!important;left:var(--gr-ui-edge)!important;right:auto!important;bottom:calc(var(--gr-ui-edge) + 92px)!important;width:min(23vw,170px)!important;max-height:30vh!important;overflow:hidden!important}
+.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner-visual"]{width:clamp(132px,15vw,190px)!important;height:min(34vh,245px)!important}
+.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="mana-art"]{--r8-size:clamp(84px,8.5vw,108px)!important;width:var(--r8-size)!important;height:var(--r8-size)!important}
+.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="mana-art"] .r8ManaNumber{font-size:clamp(24px,2.5vw,32px)!important}
 .screen.battle[${ROOT_ATTR}="1"] #battleDrawer{z-index:60!important}
 .screen.battle[${ROOT_ATTR}="1"][data-gr-stale="true"] #hand,
 .screen.battle[${ROOT_ATTR}="1"][data-gr-reconnecting="true"] #hand,
@@ -76,6 +81,9 @@ const STYLE_TEXT = `
   .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud{width:min(44vw,400px)!important;max-height:44px!important;padding:2px 4px!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{max-width:104px!important;font-size:8px!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="support-entry"]{min-height:32px!important;height:32px!important;max-height:32px!important;padding:3px 6px!important;font-size:8px!important}
+  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner-visual"]{width:112px!important;height:160px!important}
+  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="mana-art"]{--r8-size:84px!important}
+  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="mana-art"] .r8ManaNumber{font-size:24px!important}
   .screen.battle[${ROOT_ATTR}="1"] .battleInfo{left:104px!important;grid-template-columns:minmax(0,1fr) minmax(126px,27%)!important}
   .screen.battle[${ROOT_ATTR}="1"] .planBox{max-width:172px!important;padding:3px!important}
   .screen.battle[${ROOT_ATTR}="1"] .battleRail{top:144px!important;bottom:auto!important;max-width:168px!important}
@@ -91,6 +99,9 @@ const STYLE_TEXT = `
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{max-width:30vw!important;bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap))!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="support-entry"]{bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap) + 46px)!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner"]{bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap) + 92px)!important}
+  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner-visual"]{width:96px!important;height:154px!important}
+  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="mana-art"]{--r8-size:82px!important}
+  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="mana-art"] .r8ManaNumber{font-size:22px!important}
   .screen.battle[${ROOT_ATTR}="1"] .battleInfo{left:1.5%!important;right:calc(var(--gr-thumb-w) + var(--gr-ui-edge) + var(--gr-ui-gap))!important;height:28vh!important;grid-template-columns:1fr!important;grid-template-rows:minmax(0,1fr) auto!important}
   .screen.battle[${ROOT_ATTR}="1"] .planBox{max-width:none!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}
   .screen.battle[${ROOT_ATTR}="1"] [data-battle-janken-slidepad="1"]{width:var(--gr-thumb-w)!important;height:var(--gr-thumb-h)!important;right:var(--gr-ui-edge)!important;bottom:var(--gr-ui-edge)!important}
@@ -196,6 +207,7 @@ export function mountBattleCurrentPlayerUi(global = globalThis, options = {}) {
   writeAttr(attrs, root, 'data-gr-ui-authority', 'presentation-only');
   writeAttr(attrs, root, 'data-gr-ui-privacy', 'public-only-no-private-count-projection');
   writeAttr(attrs, root, 'data-gr-ui-layout', 'world-primary-thumb-reserved');
+  writeAttr(attrs, root, 'data-gr-board-protagonist', '1');
 
   const zones = [
     ['battleMap', 'world'], ['board', 'board'], ['boardPlayers', 'four-player-board'],
@@ -204,7 +216,8 @@ export function mountBattleCurrentPlayerUi(global = globalThis, options = {}) {
     ['hand', 'ordinary-hand'], ['thumbActions', 'thumb-actions'], ['quickDecision', 'quick-decision'],
     ['jankenSlidePad', 'janken-slidepad'], ['roulette', 'conditional-roulette'],
     ['targetConfirm', 'target-confirm'], ['secondaryActions', 'secondary-actions'], ['supportEntry', 'support-entry'],
-    ['legacyPhaseStrip', 'legacy-phase-strip'], ['detailsDrawer', 'details-on-demand'], ['partner', 'partner']
+    ['legacyPhaseStrip', 'legacy-phase-strip'], ['detailsDrawer', 'details-on-demand'], ['partner', 'partner'],
+    ['partnerVisual', 'partner-visual'], ['manaArt', 'mana-art']
   ];
   for (const [key, zone] of zones) if (surfaces[key]) writeAttr(attrs, surfaces[key], ZONE_ATTR, zone);
   if (surfaces.legacyPhaseStrip) writeAttr(attrs, surfaces.legacyPhaseStrip, 'data-gr-current-ui-disposition', 'legacy-hidden');
@@ -231,7 +244,7 @@ export function mountBattleCurrentPlayerUi(global = globalThis, options = {}) {
   }
 
   function inspect() {
-    const keys = ['battleMap', 'board', 'controlledCharacter', 'currentAction', 'resources', 'battleScreenHud', 'public4p', 'hand', 'thumbActions', 'jankenSlidePad', 'roulette', 'targetConfirm', 'secondaryActions', 'supportEntry', 'partner'];
+    const keys = ['battleMap', 'board', 'controlledCharacter', 'currentAction', 'resources', 'battleScreenHud', 'public4p', 'hand', 'thumbActions', 'jankenSlidePad', 'roulette', 'targetConfirm', 'secondaryActions', 'supportEntry', 'partner', 'partnerVisual', 'manaArt'];
     const geometry = Object.fromEntries(keys.map((key) => [key, rectOf(surfaces[key])]));
     const collisions = Object.freeze({
       handVsJanken: overlaps(geometry.hand, geometry.jankenSlidePad),
@@ -248,6 +261,7 @@ export function mountBattleCurrentPlayerUi(global = globalThis, options = {}) {
       schema: SCHEMA,
       mounted: !destroyed,
       rootDecorated: root.getAttribute?.(ROOT_ATTR) === '1',
+      boardProtagonist: root.getAttribute?.('data-gr-board-protagonist') === '1',
       presentationOnly: true,
       gameplayAuthority: false,
       gameStateWrite: false,
@@ -259,7 +273,9 @@ export function mountBattleCurrentPlayerUi(global = globalThis, options = {}) {
         partner: Boolean(surfaces.partner),
         supportEntry: Boolean(surfaces.supportEntry),
         jankenSlidePad: Boolean(surfaces.jankenSlidePad),
-        roulette: Boolean(surfaces.roulette)
+        roulette: Boolean(surfaces.roulette),
+        partnerVisual: Boolean(surfaces.partnerVisual),
+        manaArt: Boolean(surfaces.manaArt)
       }),
       zones: Object.freeze(Object.fromEntries(zones.filter(([key]) => surfaces[key]).map(([key, zone]) => [key, zone]))),
       geometry: Object.freeze(geometry),
@@ -299,6 +315,7 @@ export const BATTLE_CURRENT_PLAYER_UI_RUNTIME = Object.freeze({
   legacyPhaseStripPolicy: 'HIDDEN_BY_CURRENT_COMPOSITION',
   secondaryActionPolicy: 'COMPACT_RANGE_EXIT_RAIL_SUPPORT_ENTRY_LOWER_LEFT',
   supportEntryPolicy: 'EXISTING_DETAILS_HISTORY_DECK_ENTRY_LOWER_LEFT',
+  boardProtagonistPolicy: 'BOUND_EXISTING_PARTNER_VISUAL_AND_MANA_ART_WITHOUT_RELOCATION_OR_STATE_WRITE',
   lowPerfPolicy: 'REMOVE_COMPOSITOR_BACKDROP_FILTER_ONLY',
   unresolvedGameplayPolicy: 'DO_NOT_INFER',
   productionHtmlMutationOwnedHere: false

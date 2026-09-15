@@ -83,8 +83,8 @@ html = replace_once(
 # columns must occupy every other top point exactly once in physical left-to-right order.
 test = replace_once(
     test,
-    r"[/topCenterHasDirectShieldPort:Object\.values\(SYMMETRIC_FIELD_PORTS\)\.includes\(['\"]F:U:4['\"]\)/, 'top-center no-upward-connection receipt is missing'],",
-    r"[/topCenterHasDirectShieldPort:Object\.values\(SYMMETRIC_FIELD_PORTS\)\.includes\(['\"]F:U:6['\"]\)/, 'top-center no-upward-connection receipt is missing'],",
+    "[/topCenterHasDirectShieldPort:Object\\.values\\(SYMMETRIC_FIELD_PORTS\\)\\.includes\\(['\"]F:U:4['\"]\\)/, 'top-center no-upward-connection receipt is missing'],",
+    "[/topCenterHasDirectShieldPort:Object\\.values\\(SYMMETRIC_FIELD_PORTS\\)\\.includes\\(['\"]F:U:6['\"]\\)/, 'top-center no-upward-connection receipt is missing'],",
     'static center-gap receipt regex',
 )
 

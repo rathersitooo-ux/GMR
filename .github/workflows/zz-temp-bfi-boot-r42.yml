@@ -1,0 +1,71 @@
+name: TEMP BFI Boot R42 exact-final verification
+
+on:
+  push:
+    branches:
+      - fix/bfi-boot-readiness-r39
+    paths:
+      - .github/workflows/zz-temp-bfi-boot-r42.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temp-bfi-boot-r42-exact-final
+  cancel-in-progress: false
+
+jobs:
+  verify-and-clean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: fix/bfi-boot-readiness-r39
+
+      - name: Materialize exact final head locally
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "gameroad-r42-bfi-verifier"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/zz-temp-bfi-boot-r42.yml
+          git commit -m "chore: remove transient exact-final BFI workflow"
+          echo "TESTED_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          test -z "$(git status --porcelain)"
+
+      - name: Verify exact final diff scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check origin/main...HEAD
+          mapfile -t changed < <(git diff --name-only origin/main...HEAD)
+          printf 'changed=%s\n' "${changed[*]}"
+          test "${#changed[@]}" -eq 2
+          printf '%s\n' "${changed[@]}" | grep -Fx 'browser/GAMEROAD.html'
+          printf '%s\n' "${changed[@]}" | grep -Fx 'tests/browser-full-interaction.spec.mjs'
+          node tests/browser-static-check.mjs
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run exact-final Browser Full Interaction
+        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
+
+      - name: Confirm exact tested commit and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TESTED_SHA"
+          test -z "$(git status --porcelain)"
+          git push origin "HEAD:fix/bfi-boot-readiness-r39"
+          echo "BFI_EXACT_FINAL_SHA=$TESTED_SHA"

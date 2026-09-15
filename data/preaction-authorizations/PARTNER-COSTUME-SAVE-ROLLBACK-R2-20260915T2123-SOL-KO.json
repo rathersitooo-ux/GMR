@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-COSTUME-SAVE-ROLLBACK-R2-20260915T2123-SOL-KO",
+  "taskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "workUnitKey": "PARTNER_COSTUME_SAVE_ROLLBACK_R2",
+  "acquireKey": "PARTNER-COSTUME-SAVE-ROLLBACK-R2-20260915T2123-SOL-KO",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ROW1346_R1_PR1722_DIFF_MAIN_TARGET_BLOBS_UNCHANGED",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1722_FOCUSED_NODE_6_OF_6_ON_UNCHANGED_TARGET_BLOBS",
+  "proceedToken": "PROCEED|PARTNER-COSTUME-SAVE-ROLLBACK-R2-20260915T2123-SOL-KO|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_LEASE_A14_R2_CLEAN_REBUILD",
+  "authorizationBaseSha": "51fe0b38f93d99d8dd368d1017a656d4b5d88e01",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "leaseWorkUnitKey": "PARTNER_COSTUME_SAVE_ROLLBACK_R2",
+  "leaseAcquireKey": "PARTNER-COSTUME-SAVE-ROLLBACK-R2-20260915T2123-SOL-KO",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 21:23 JST",
+  "leaseUntilJst": "2026-09-15 22:22 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A14:L14",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR authorizationBase main 51fe0b38f93d99d8dd368d1017a656d4b5d88e01; mutable browser/partner-costume-durable-store.mjs; tests/partner-costume-durable-store.test.mjs; transient data/preaction-authorizations/PARTNER-COSTUME-SAVE-ROLLBACK-R2-20260915T2123-SOL-KO.json; branch sol/partner-costume-save-rollback-r2-20260915; PR/check/merge/readback; Drive R23 own checkpoint append/readback. READ_ONLY browser/GAMEROAD.html; browser/partner-costume-main-save-profile-adapter.mjs; browser/partner-costume-browser-session-runtime.mjs; gameplay/rules/economy/network/formal assets; active parallel WorkUnits.",
+  "scope": [
+    "browser/partner-costume-durable-store.mjs",
+    "tests/partner-costume-durable-store.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-costume-durable-store.mjs",
+    "tests/partner-costume-durable-store.test.mjs"
+  ]
+}

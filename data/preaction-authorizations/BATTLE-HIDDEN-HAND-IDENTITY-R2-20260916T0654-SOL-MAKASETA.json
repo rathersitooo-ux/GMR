@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HIDDEN-HAND-IDENTITY-R2-20260916T0654-SOL-MAKASETA",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_HIDDEN_HAND_IDENTITY_PIPELINE_R2",
+  "acquireKey": "BATTLE-HIDDEN-HAND-IDENTITY-R2-20260916T0654-SOL-MAKASETA",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_EB85938_HIDDEN_IDENTITY_MISSING_PLUS_R1_GATE_EXACT_BLOB_FIXTURE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1743_REQUIRED_GATE_35028000436_PRODUCT_TESTS_PASS_PACKAGE_FIXTURE_ONLY_FAIL",
+  "proceedToken": "PROCEED|BATTLE-HIDDEN-HAND-IDENTITY-R2-20260916T0654-SOL-MAKASETA|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|hidden-hand-identity-pipeline-r2|four-file-slice|active-lease",
+  "authorizationBaseSha": "eb85938e807cb8fd649e6b78f34a86e8865df8c0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_HIDDEN_HAND_IDENTITY_PIPELINE_R2",
+  "leaseAcquireKey": "BATTLE-HIDDEN-HAND-IDENTITY-R2-20260916T0654-SOL-MAKASETA",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 06:54 JST",
+  "leaseUntilJst": "2026-09-16 07:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A18:L18",
+  "leaseExactMutableResources": "browser/deck-save-ack-core.mjs; browser/new-base-hidden-hand-runtime-core.mjs; tests/new-base-hidden-hand-runtime-core.test.mjs; deploy/cloudflare/tests/build.test.mjs exact currentBlob fixture for deck-save-ack-core only; own transient data/preaction-authorizations/BATTLE-HIDDEN-HAND-IDENTITY-R2-20260916T0654-SOL-MAKASETA.json; own clean branch/PR/check/merge/readback. READ_ONLY deploy/cloudflare/scripts/build.mjs while BATTLE-DECK-SUPPLY-LIVE-R6 owns it until 07:04 JST; browser/GAMEROAD.html; browser/battle-hidden-road-janken-add-control.mjs; browser/battle-janken-slidepad-runtime-mount.mjs; Deck Editor UI/save transport/gameplay commit.",
+  "solutionSignature": "HIDDEN_HAND_IDENTITY_EXISTING_MATCH_START_SNAPSHOT_PIPELINE_R2",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_MATCH_START_SNAPSHOT_PLUS_MERGED_GOLD_BUTTON_PLUS_R1_GATE_FEEDBACK",
+  "solutionSearchEvidence": [
+    "Current Browser already creates one immutable deckStartSnapshot through createDeckMatchStartSnapshot and retains it on state.match.",
+    "Merged gold-button adapter already delegates the exact reserved cardId into an existing Road staging callback and must not own card selection or hidden privilege consumption.",
+    "PR1743 product focused tests passed; Required Gate failed only because deploy/cloudflare/tests/build.test.mjs still pinned the old deck-save-ack-core blob.",
+    "The R2 rebuild preserves the R1 product semantics and atomically updates only that existing exact-blob fixture; build.mjs remains untouched because the new runtime has no production import yet.",
+    "No hidden card is auto-selected and no fourth hand, second store, extra Road, mana change, or combat authority is introduced."
+  ],
+  "scope": [
+    "browser/deck-save-ack-core.mjs",
+    "browser/new-base-hidden-hand-runtime-core.mjs",
+    "tests/new-base-hidden-hand-runtime-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/BATTLE-HIDDEN-HAND-IDENTITY-R2-20260916T0654-SOL-MAKASETA.json"
+  ],
+  "leaseScope": [
+    "browser/deck-save-ack-core.mjs",
+    "browser/new-base-hidden-hand-runtime-core.mjs",
+    "tests/new-base-hidden-hand-runtime-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/BATTLE-HIDDEN-HAND-IDENTITY-R2-20260916T0654-SOL-MAKASETA.json"
+  ]
+}

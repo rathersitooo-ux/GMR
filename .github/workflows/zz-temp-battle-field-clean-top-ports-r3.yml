@@ -1,0 +1,38 @@
+name: Temp Battle Clean Top Ports R3
+on:
+  push:
+    branches:
+      - sol/battle-field-clean-top-ports-r3-20260915
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-field-clean-top-ports-r3-20260915
+          fetch-depth: 0
+      - name: Inspect exact field topology seams
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          needles=[
+            'const SYMMETRIC_FIELD_NODE_IDS=',
+            'const SYMMETRIC_FIELD_EDGES=',
+            'const SYMMETRIC_FIELD_PORTS=',
+            'function symmetricFieldCoord(',
+            'function symmetricFieldNeighbors(',
+            'function centerPort(',
+            'function garden3DSharedHeight(',
+          ]
+          for n in needles:
+            i=s.find(n)
+            print('\n===',n,'@',i,'===')
+            if i<0: continue
+            print(s[i:i+5000])
+          PY

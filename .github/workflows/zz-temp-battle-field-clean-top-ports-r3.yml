@@ -24,7 +24,7 @@ jobs:
           test "$(git rev-parse HEAD:tests/browser-static-check.mjs)" = "e80fc906c6c9a4a84d727f7db5e5d565195e73bd"
           test -f data/preaction-authorizations/BATTLE-CLEAN-TOP-PORTS-R3-20260915T1348-SOL-FIELD.json
           grep -Fq '12-clean-top-ports' data/preaction-authorizations/BATTLE-CLEAN-TOP-PORTS-R3-20260915T1348-SOL-FIELD.json
-          grep -Fq 'GATE_EDGE_ONLY' data/preaction-authorizations/BATTLE-CLEAN-TOP-PORTS-R3-20260915T1348-SOL-FIELD.json
+          grep -Fq 'gate-edge-only' data/preaction-authorizations/BATTLE-CLEAN-TOP-PORTS-R3-20260915T1348-SOL-FIELD.json
       - name: Apply clean ordered top-port topology
         shell: bash
         run: |

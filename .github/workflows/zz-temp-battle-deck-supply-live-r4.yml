@@ -1,0 +1,56 @@
+name: TEMP Battle Deck Supply Live R4
+
+on:
+  push:
+    branches:
+      - sol/battle-deck-supply-live-r4-20260916
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    if: ${{ !contains(github.event.head_commit.message, '[R4-CLEANUP]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: sol/battle-deck-supply-live-r4-20260916
+      - name: Verify clean PRE_ACTION history
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD~1)" = "839fd4bd954f02afe3986274225a7c608292e7f6"
+          test "$(git rev-parse HEAD~2)" = "78f6090a157266474faf36986d0ffc41a26bc7cf"
+          test -f data/preaction-authorizations/BATTLE-DECK-SUPPLY-LIVE-R4-20260916T0432-SOL-MAKASE.json
+      - name: Apply reviewed PR1735 exact product diff
+        run: |
+          set -euo pipefail
+          git diff --binary 78f6090a157266474faf36986d0ffc41a26bc7cf..32c8625a13a5899c7d41eff20fb553d14e3b54f0 -- \
+            browser/GAMEROAD.html \
+            deploy/cloudflare/scripts/build.mjs \
+            tests/browser-static-check.mjs > /tmp/r4.patch
+          test -s /tmp/r4.patch
+          git apply --index /tmp/r4.patch
+          changed="$(git diff --cached --name-only | sort)"
+          expected="$(printf '%s\n' browser/GAMEROAD.html deploy/cloudflare/scripts/build.mjs tests/browser-static-check.mjs | sort)"
+          test "$changed" = "$expected"
+      - name: Focused validation
+        run: |
+          set -euo pipefail
+          node --check deploy/cloudflare/scripts/build.mjs
+          node tests/browser-static-check.mjs
+          git diff --check --cached
+      - name: Commit exact product diff
+        run: |
+          set -euo pipefail
+          git config user.name "gameroad-deck-supply-live-r4"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Battle: rebuild live deck supply integration on clean PRE_ACTION history"
+      - name: Remove transient authorization and workflow
+        run: |
+          set -euo pipefail
+          git rm data/preaction-authorizations/BATTLE-DECK-SUPPLY-LIVE-R4-20260916T0432-SOL-MAKASE.json
+          git rm .github/workflows/zz-temp-battle-deck-supply-live-r4.yml
+          git commit -m "[R4-CLEANUP] remove transient deck supply executor and authorization"
+          git push origin HEAD:sol/battle-deck-supply-live-r4-20260916

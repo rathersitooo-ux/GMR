@@ -1,0 +1,402 @@
+name: GAMEROAD Free Autopilot Candidate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/gameroad-free-autopilot.yml'
+      - 'tools/free-autopilot-worker.mjs'
+      - 'tests/free-autopilot-worker.test.mjs'
+      - 'docs/free-autopilot.md'
+  issues:
+    types: [opened, edited, reopened]
+  schedule:
+    - cron: '41 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Existing [EXECUTOR] issue number. Leave empty for self-test only.'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: read
+
+concurrency:
+  group: free-autopilot-${{ github.event.issue.number || inputs.issue_number || 'scheduled' }}
+  cancel-in-progress: false
+
+env:
+  LLAMA_CPP_COMMIT: 391fac16460f15233a7740550d858ac96df3419d
+  MODEL_REVISION: 2ab9f8f42af02fc212effaef7c4850c885e965f4
+  MODEL_FILE: qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
+  MODEL_SHA256: cc324af070c2ecbfd324a30884d2f951a7ff756aba85cb811a6ec436933bb046
+
+jobs:
+  self-test:
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'workflow_dispatch' && inputs.issue_number == '')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Free worker focused tests
+        run: node --test tests/free-autopilot-worker.test.mjs tests/executor-bus-packet.test.mjs
+      - name: Zero-cash policy remains fail-closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs');
+          const p = JSON.parse(fs.readFileSync('config/zero-cash-runtime-policy.json', 'utf8'));
+          if (p.cashSpendAllowed !== false) throw new Error('cashSpendAllowed must remain false');
+          if (p.automaticPaidFallbackAllowed !== false) throw new Error('automaticPaidFallbackAllowed must remain false');
+          if (p.quotaExhaustionBehavior !== 'DEGRADE_PAUSE_OR_FAIL_CLOSED') throw new Error('quota exhaustion must fail closed');
+          NODE
+
+  candidate:
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.issue_number != '') ||
+      (github.event_name == 'issues' && startsWith(github.event.issue.title, '[EXECUTOR]') && contains(github.event.issue.body, 'FREE_LOCAL_CODER'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Resolve one eligible Executor issue
+        id: issue
+        uses: actions/github-script@v7
+        env:
+          MANUAL_ISSUE: ${{ inputs.issue_number }}
+          BODY_FILE: ${{ runner.temp }}/free-autopilot-issue-body.txt
+        with:
+          script: |
+            const fs = require('fs');
+            let issue = null;
+            if (context.eventName === 'issues') {
+              issue = context.payload.issue;
+            } else if (process.env.MANUAL_ISSUE) {
+              const response = await github.rest.issues.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: Number(process.env.MANUAL_ISSUE),
+              });
+              issue = response.data;
+            } else {
+              const response = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                sort: 'created',
+                direction: 'asc',
+                per_page: 100,
+              });
+              for (const candidate of response.data) {
+                if (candidate.pull_request) continue;
+                if (!String(candidate.title || '').startsWith('[EXECUTOR]')) continue;
+                if (!String(candidate.body || '').includes('FREE_LOCAL_CODER')) continue;
+                const acquireMatch = String(candidate.body || '').match(/"acquireKey"\s*:\s*"([^"]+)"/);
+                if (!acquireMatch) continue;
+                const comments = await github.rest.issues.listComments({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: candidate.number,
+                  per_page: 100,
+                });
+                const marker = `<!-- gameroad-free-autopilot:terminal:${acquireMatch[1]} -->`;
+                if (comments.data.some((comment) => String(comment.body || '').includes(marker))) continue;
+                issue = candidate;
+                break;
+              }
+            }
+            if (!issue) {
+              core.setOutput('found', 'false');
+              return;
+            }
+            if (!String(issue.title || '').startsWith('[EXECUTOR]') || !String(issue.body || '').includes('FREE_LOCAL_CODER')) {
+              core.setFailed('selected issue is not explicitly FREE_LOCAL_CODER eligible');
+              return;
+            }
+            if (String(issue.user?.login || '') !== context.repo.owner) {
+              core.setFailed('FREE_LOCAL_CODER issue must be authored by the repository owner');
+              return;
+            }
+            const acquireMatch = String(issue.body || '').match(/"acquireKey"\s*:\s*"([^"]+)"/);
+            if (!acquireMatch) {
+              core.setFailed('FREE_LOCAL_CODER issue has no parseable acquireKey');
+              return;
+            }
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              per_page: 100,
+            });
+            const terminalMarker = `<!-- gameroad-free-autopilot:terminal:${acquireMatch[1]} -->`;
+            if (comments.data.some((comment) => String(comment.body || '').includes(terminalMarker))) {
+              core.setOutput('found', 'false');
+              return;
+            }
+            fs.writeFileSync(process.env.BODY_FILE, issue.body || '', 'utf8');
+            core.setOutput('found', 'true');
+            core.setOutput('number', String(issue.number));
+
+      - name: No eligible issue
+        if: steps.issue.outputs.found != 'true'
+        run: echo 'No FREE_LOCAL_CODER Executor issue is currently eligible.'
+
+      - name: Checkout current main
+        if: steps.issue.outputs.found == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Node
+        if: steps.issue.outputs.found == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Enforce zero-cash runtime boundary
+        if: steps.issue.outputs.found == 'true'
+        env:
+          REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$REPOSITORY_PRIVATE" = "false"
+          node - <<'NODE'
+          const fs = require('fs');
+          const p = JSON.parse(fs.readFileSync('config/zero-cash-runtime-policy.json', 'utf8'));
+          if (p.cashSpendAllowed !== false) throw new Error('cash spend is not disabled');
+          if (p.automaticPaidFallbackAllowed !== false) throw new Error('paid fallback is not disabled');
+          if (p.unknownBillingStateBehavior !== 'HOLD') throw new Error('unknown billing must HOLD');
+          const allowed = new Set(p.github?.allowedStandardRunnerLabels || []);
+          if (!allowed.has('ubuntu-latest')) throw new Error('ubuntu-latest is not in zero-cash runner allowlist');
+          NODE
+
+      - name: Validate packet and build bounded prompt
+        if: steps.issue.outputs.found == 'true'
+        env:
+          BODY_FILE: ${{ runner.temp }}/free-autopilot-issue-body.txt
+          PACKET_FILE: ${{ runner.temp }}/free-autopilot-packet.json
+          PROMPT_FILE: ${{ runner.temp }}/free-autopilot-prompt.txt
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/free-autopilot-worker.mjs prepare \
+            --body-file "$BODY_FILE" \
+            --packet-out "$PACKET_FILE" \
+            --prompt-out "$PROMPT_FILE"
+          node -e "const p=require(process.env.PACKET_FILE); console.log('task='+p.taskId+' workUnit='+p.workUnitKey+' acquire='+p.acquireKey)"
+
+      - name: Require exact current main base
+        if: steps.issue.outputs.found == 'true'
+        env:
+          PACKET_FILE: ${{ runner.temp }}/free-autopilot-packet.json
+          STATUS_FILE: ${{ runner.temp }}/free-autopilot-status.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          CURRENT_SHA="$(git rev-parse HEAD)"
+          BASE_SHA="$(node -p "JSON.parse(require('fs').readFileSync(process.env.PACKET_FILE,'utf8')).baseRef")"
+          if [ "$CURRENT_SHA" != "$BASE_SHA" ]; then
+            node - <<'NODE'
+            const fs = require('fs');
+            const p = JSON.parse(fs.readFileSync(process.env.PACKET_FILE, 'utf8'));
+            fs.writeFileSync(process.env.STATUS_FILE, JSON.stringify({
+              status: 'BLOCKED',
+              evidence: [`baseRef ${p.baseRef} is not current main`],
+              unresolved: ['Fresh CURRENT acquire/baseRef is required before code generation.'],
+              producedRefs: [],
+              nextAction: 'Refresh the existing WorkUnit/lease and edit the same Executor issue with the new baseRef.'
+            }, null, 2) + '\n');
+            NODE
+            echo 'Executor packet base is stale; fail closed.'
+            exit 1
+          fi
+
+      - name: Build pinned llama.cpp locally
+        if: steps.issue.outputs.found == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          LLAMA_DIR="$RUNNER_TEMP/llama.cpp"
+          git init "$LLAMA_DIR"
+          git -C "$LLAMA_DIR" remote add origin https://github.com/ggml-org/llama.cpp.git
+          git -C "$LLAMA_DIR" fetch --depth 1 origin "$LLAMA_CPP_COMMIT"
+          git -C "$LLAMA_DIR" checkout --detach FETCH_HEAD
+          cmake -S "$LLAMA_DIR" -B "$LLAMA_DIR/build" -DGGML_NATIVE=OFF -DGGML_CCACHE=OFF -DLLAMA_CURL=OFF
+          cmake --build "$LLAMA_DIR/build" --target llama-cli -j 4
+
+      - name: Download pinned open-weight coder
+        if: steps.issue.outputs.found == 'true'
+        env:
+          MODEL_PATH: ${{ runner.temp }}/qwen-coder.gguf
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/${MODEL_REVISION}/${MODEL_FILE}?download=true"
+          curl --fail --location --retry 3 --retry-all-errors --output "$MODEL_PATH" "$URL"
+          SIZE="$(stat -c%s "$MODEL_PATH")"
+          if [ "$SIZE" -lt 1000000000 ] || [ "$SIZE" -gt 1300000000 ]; then
+            echo "Unexpected pinned model size: $SIZE"
+            exit 1
+          fi
+          echo "${MODEL_SHA256}  ${MODEL_PATH}" | sha256sum --check --strict
+
+      - name: Generate one bounded candidate patch locally
+        if: steps.issue.outputs.found == 'true'
+        env:
+          PROMPT_FILE: ${{ runner.temp }}/free-autopilot-prompt.txt
+          MODEL_PATH: ${{ runner.temp }}/qwen-coder.gguf
+          MODEL_OUTPUT: ${{ runner.temp }}/free-autopilot-model-output.txt
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/llama.cpp/build/bin/llama-cli" \
+            -m "$MODEL_PATH" \
+            -f "$PROMPT_FILE" \
+            -c 8192 \
+            -n 2048 \
+            --temp 0.15 \
+            --seed 1 \
+            --no-display-prompt \
+            > "$MODEL_OUTPUT"
+
+      - name: Validate and apply candidate patch
+        if: steps.issue.outputs.found == 'true'
+        env:
+          PACKET_FILE: ${{ runner.temp }}/free-autopilot-packet.json
+          MODEL_OUTPUT: ${{ runner.temp }}/free-autopilot-model-output.txt
+          DIFF_FILE: ${{ runner.temp }}/free-autopilot.patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/free-autopilot-worker.mjs validate \
+            --packet-file "$PACKET_FILE" \
+            --model-output-file "$MODEL_OUTPUT" \
+            --diff-out "$DIFF_FILE"
+          git apply --check "$DIFF_FILE"
+          git apply "$DIFF_FILE"
+
+      - name: Run focused mutable tests
+        if: steps.issue.outputs.found == 'true'
+        env:
+          PACKET_FILE: ${{ runner.temp }}/free-autopilot-packet.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t TESTS < <(node - <<'NODE'
+          const fs = require('fs');
+          const p = JSON.parse(fs.readFileSync(process.env.PACKET_FILE, 'utf8'));
+          for (const f of p.exactMutableResources) {
+            if (f.startsWith('tests/') && f.endsWith('.test.mjs') && fs.existsSync(f)) console.log(f);
+          }
+          NODE
+          )
+          if [ "${#TESTS[@]}" -eq 0 ]; then
+            echo 'No focused .test.mjs path exists in exactMutableResources.'
+            exit 1
+          fi
+          node --test "${TESTS[@]}"
+
+      - name: Persist candidate branch and draft PR
+        if: steps.issue.outputs.found == 'true'
+        id: persist
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+          PACKET_FILE: ${{ runner.temp }}/free-autopilot-packet.json
+          STATUS_FILE: ${{ runner.temp }}/free-autopilot-status.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          TASK_ID="$(node -p "JSON.parse(require('fs').readFileSync(process.env.PACKET_FILE,'utf8')).taskId")"
+          WORK_UNIT="$(node -p "JSON.parse(require('fs').readFileSync(process.env.PACKET_FILE,'utf8')).workUnitKey")"
+          BRANCH="work/free-autopilot-${ISSUE_NUMBER}-${GITHUB_RUN_ID}"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b "$BRANCH"
+          git add --all
+          git commit -m "FREE AUTOPILOT candidate: ${TASK_ID}/${WORK_UNIT}"
+          COMMIT_SHA="$(git rev-parse HEAD)"
+          git push origin "$BRANCH"
+          PR_URL="$(gh pr create --draft --base main --head "$BRANCH" --title "[FREE AUTOPILOT] ${WORK_UNIT}" --body "Candidate generated locally on a free standard public-repo GitHub Actions runner from Executor issue #${ISSUE_NUMBER}. No paid inference API was used. Draft only: CURRENT/lease adoption remains required before merge.")"
+          PR_NUMBER="$(gh pr view "$PR_URL" --json number --jq .number)"
+          COMMIT_SHA="$COMMIT_SHA" PR_NUMBER="$PR_NUMBER" node - <<'NODE'
+          const fs = require('fs');
+          fs.writeFileSync(process.env.STATUS_FILE, JSON.stringify({
+            status: 'RETURNED',
+            evidence: [
+              'FREE_LOCAL_CODER ran on standard ubuntu-latest in the public repository.',
+              'Qwen2.5-Coder 1.5B GGUF inference ran locally; no paid inference API token was used.',
+              'Generated unified diff passed deterministic scope guard and git apply --check.',
+              'Focused mutable node:test suite passed before persistence.'
+            ],
+            unresolved: ['Draft PR still requires fresh CURRENT/owner/lease adoption before merge.'],
+            producedRefs: [`commit:${process.env.COMMIT_SHA}`, `pr:${process.env.PR_NUMBER}`],
+            nextAction: 'Fresh-read CURRENT/lease, audit the draft diff and evidence, then adopt or reject without bypassing the existing gate.'
+          }, null, 2) + '\n');
+          NODE
+          echo "commit_sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
+          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+
+      - name: Return result to existing Executor Bus
+        if: always() && steps.issue.outputs.found == 'true'
+        uses: actions/github-script@v7
+        env:
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+          PACKET_FILE: ${{ runner.temp }}/free-autopilot-packet.json
+          STATUS_FILE: ${{ runner.temp }}/free-autopilot-status.json
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync(process.env.PACKET_FILE)) {
+              const marker = '<!-- gameroad-free-autopilot:terminal:unparsed -->';
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: Number(process.env.ISSUE_NUMBER),
+                body: `${marker}\nFREE_AUTOPILOT_REJECTED: queue packet did not pass the deterministic eligibility guard. No product mutation was authorized.`,
+              });
+              return;
+            }
+            const packet = JSON.parse(fs.readFileSync(process.env.PACKET_FILE, 'utf8'));
+            const marker = `<!-- gameroad-free-autopilot:terminal:${packet.acquireKey} -->`;
+            let status = {
+              status: 'FAILED',
+              evidence: ['Free worker stopped before a tested draft candidate was persisted.'],
+              unresolved: ['Inspect the workflow log and refresh the same bounded WorkUnit if retry is justified.'],
+              producedRefs: [],
+              nextAction: 'Do not claim product progress from this run.'
+            };
+            if (fs.existsSync(process.env.STATUS_FILE)) {
+              status = JSON.parse(fs.readFileSync(process.env.STATUS_FILE, 'utf8'));
+            }
+            const result = {
+              schemaVersion: 'gameroad-executor-bus-v1',
+              kind: 'result',
+              taskId: packet.taskId,
+              workUnitKey: packet.workUnitKey,
+              acquireKey: packet.acquireKey,
+              status: status.status,
+              evidence: status.evidence,
+              unresolved: status.unresolved,
+              producedRefs: status.producedRefs,
+              nextAction: status.nextAction,
+            };
+            const body = `${marker}\n\`\`\`executor-result\n${JSON.stringify(result, null, 2)}\n\`\`\``;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number(process.env.ISSUE_NUMBER),
+              body,
+            });

@@ -47,6 +47,17 @@ function decode(value) {
   }
 }
 
+async function restorePreviousRaw(io, key, previousRaw) {
+  if (typeof previousRaw !== 'string') return;
+  try {
+    await io.setItem(key, previousRaw);
+    const rollbackReadback = requireText(await io.getItem(key));
+    if (rollbackReadback !== previousRaw) fail('durable store rollback readback does not match the previous partner costume snapshot');
+  } catch (error) {
+    throw new TypeError(`durable store rollback failed after partner costume snapshot save failure: ${error?.message ?? String(error)}`);
+  }
+}
+
 /**
  * Durable-string adapter only. The caller keeps production-key, auth, transport,
  * retry, encryption, ownership, and entitlement authority outside this module.
@@ -57,9 +68,17 @@ export function createPartnerCostumeDurableStore({ store, storageKey } = {}) {
 
   async function saveSnapshot(snapshot) {
     const encoded = encode(snapshot);
+    const previousRaw = await io.getItem(key);
     await io.setItem(key, encoded);
-    const readback = requireText(await io.getItem(key));
-    if (readback !== encoded) fail('durable store readback does not match the written partner costume snapshot');
+
+    let readback;
+    try {
+      readback = requireText(await io.getItem(key));
+      if (readback !== encoded) fail('durable store readback does not match the written partner costume snapshot');
+    } catch (error) {
+      await restorePreviousRaw(io, key, previousRaw);
+      throw error;
+    }
     return snapshot;
   }
 

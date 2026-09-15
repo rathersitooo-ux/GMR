@@ -761,7 +761,7 @@ function ensureLiveBattleSupportEntryRoot(documentRef, shell) {
   return root;
 }
 
-export function registerLiveBattleSupportSurface({ key, label, target, document = browserGlobal('document'), hostId = 'battleLog' } = {}) {
+export function registerLiveBattleSupportSurface({ key, label, target, activate = null, document = browserGlobal('document'), hostId = 'battleLog' } = {}) {
   if (!nonEmptyString(key) || !nonEmptyString(label) || !target) return false;
   const shell = document?.getElementById?.(hostId);
   if (!shell || typeof document?.createElement !== 'function') return false;
@@ -778,6 +778,9 @@ export function registerLiveBattleSupportSurface({ key, label, target, document 
   }
   control.textContent = label;
   control.onclick = () => {
+    if (typeof activate === 'function') {
+      try { activate(); } catch {}
+    }
     target.scrollIntoView?.({ block: 'nearest' });
     target.focus?.({ preventScroll: true });
   };
@@ -864,6 +867,14 @@ function ensurePartnerBattleEventLogToggle(host, environment = {}) {
     shell.appendChild(toggle);
   }
   return toggle;
+}
+
+function expandPartnerBattleEventLog(host, environment = {}) {
+  if (!host?.dataset) return false;
+  const toggle = ensurePartnerBattleEventLogToggle(host, environment);
+  if (!toggle) return false;
+  host.dataset.partnerBattleEventLogExpanded = 'true';
+  return applyPartnerBattleEventLogPresentation(host, toggle, environment);
 }
 
 function resetPartnerBattleEventLogHost(host, environment = {}) {
@@ -1231,7 +1242,14 @@ export function renderLiveBattleRemainingDeckPresentation(presentation, {
   root.replaceChildren?.(title, known, unknown);
   const historyTarget = host.querySelector?.('[data-partner-battle-event-log]') || null;
   if (historyTarget) {
-    registerLiveBattleSupportSurface({ key: 'history', label: '履歴', target: historyTarget, document, hostId });
+    registerLiveBattleSupportSurface({
+      key: 'history',
+      label: '履歴',
+      target: historyTarget,
+      activate: () => expandPartnerBattleEventLog(historyTarget, { document }),
+      document,
+      hostId
+    });
   }
   registerLiveBattleSupportSurface({ key: 'deck', label: '山札', target: root, document, hostId });
   return true;

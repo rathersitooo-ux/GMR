@@ -37,3 +37,40 @@ test('save rejects a readback mismatch', async () => {
   const adapter = createPartnerCostumeDurableStore({ store, storageKey: 'k' });
   await assert.rejects(() => adapter.saveSnapshot({ ok: true }), /readback does not match/);
 });
+
+test('failed verified save restores the previous durable snapshot', async () => {
+  const previous = { schema: 'partner-costume-state-v1', partners: { naki: { savedSelection: { accessory: 'old' } } } };
+  const previousRaw = JSON.stringify(previous);
+  let raw = previousRaw;
+  let writes = 0;
+  const store = {
+    async getItem() { return raw; },
+    async setItem(key, value) {
+      writes += 1;
+      raw = writes === 1 ? '{"different":true}' : value;
+    },
+  };
+  const adapter = createPartnerCostumeDurableStore({ store, storageKey: 'k' });
+
+  await assert.rejects(
+    () => adapter.saveSnapshot({ schema: 'partner-costume-state-v1', partners: { naki: { savedSelection: { accessory: 'new' } } } }),
+    /readback does not match/,
+  );
+  assert.equal(raw, previousRaw);
+  assert.deepEqual(await adapter.loadSnapshot(), previous);
+});
+
+test('rollback failure is surfaced instead of claiming the previous snapshot was preserved', async () => {
+  const previousRaw = JSON.stringify({ schema: 'partner-costume-state-v1', partners: { naki: { savedSelection: { accessory: 'old' } } } });
+  let raw = previousRaw;
+  const store = {
+    async getItem() { return raw; },
+    async setItem() { raw = '{"different":true}'; },
+  };
+  const adapter = createPartnerCostumeDurableStore({ store, storageKey: 'k' });
+
+  await assert.rejects(
+    () => adapter.saveSnapshot({ schema: 'partner-costume-state-v1', partners: { naki: { savedSelection: { accessory: 'new' } } } }),
+    /rollback failed/,
+  );
+});

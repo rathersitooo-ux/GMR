@@ -1,4 +1,5 @@
 import './home-boot-runtime-mount.mjs';
+import './title-boot-runtime-mount.mjs';
 
 const STYLE_ID = 'gameroad-homecards-2p5d-style';
 const STAGE_ID = 'gameroad-homecards-2p5d-stage';

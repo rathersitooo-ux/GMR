@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RESOURCE-PAYMENT-BOUNDARY-R1-20260915T1729-SOL-KI",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FORMAL_RESOURCE_PAYMENT_BOUNDARY_R1",
+  "acquireKey": "BATTLE-RESOURCE-PAYMENT-BOUNDARY-R1-20260915T1729-SOL-KI",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_FIXED_RESOURCE_PAYMENT_BOUNDARY_20260915_AND_MAIN_7abd4612",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PURE_STATELESS_BOUNDARY_WITH_NODE_TEST_AND_GITHUB_REQUIRED_GATE",
+  "proceedToken": "PROCEED|BATTLE-RESOURCE-PAYMENT-BOUNDARY-R1-20260915T1729-SOL-KI|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|USER_DELEGATED_CONTINUATION",
+  "authorizationBaseSha": "7abd4612d96a9cbdefba4d08fd60ca5128f108ba",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_FORMAL_RESOURCE_PAYMENT_BOUNDARY_R1",
+  "leaseAcquireKey": "BATTLE-RESOURCE-PAYMENT-BOUNDARY-R1-20260915T1729-SOL-KI",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 17:32 JST",
+  "leaseUntilJst": "2026-09-15 18:29 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A14:L14",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main 7abd4612d96a9cbdefba4d08fd60ca5128f108ba; mutable NEW browser/battle-formal-resource-payment-boundary.mjs; NEW tests/battle-formal-resource-payment-boundary.test.mjs; own transient data/preaction-authorizations/BATTLE-RESOURCE-PAYMENT-BOUNDARY-R1-20260915T1729-SOL-KI.json; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; existing battle-rule-coverage-chain-core.mjs; critical-resource HUD modules; gameplay state/save/network/economy/assets; all active parallel WorkUnits.",
+  "scope": [
+    "browser/battle-formal-resource-payment-boundary.mjs",
+    "tests/battle-formal-resource-payment-boundary.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-formal-resource-payment-boundary.mjs",
+    "tests/battle-formal-resource-payment-boundary.test.mjs"
+  ],
+  "solutionSignature": "formal generic Battle/Road Mana cost plus Mana-first forced Honey deficit settlement projection",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "browser/battle-rule-coverage-chain-core.mjs@main:diagnostic-only-no-gameplay-write",
+    "browser/battle-critical-resource-hud-live-adapter.mjs@main:consumes-paymentReceipt-does-not-author-settlement",
+    "tests/battle-critical-resource-hud-live-adapter.test.mjs@main:receipt-shape-existing"
+  ],
+  "reuseDecisionEvidenceId": "REUSE_SEARCH_RESOURCE_PAYMENT_BOUNDARY_20260915",
+  "buildResidualReason": "Existing modules either diagnose rule coverage or render caller-provided payment receipts; none author the fixed Road/Battle generic cost and forced Honey deficit boundary. Build only the missing stateless projection, not a second general rule engine."
+}

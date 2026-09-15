@@ -143,14 +143,12 @@ function ensureStyle(documentLike) {
 [data-new-base-flanora-board-surface="1"]{position:relative;display:grid;grid-template-rows:minmax(0,1fr) minmax(64px,22%);gap:clamp(4px,.8vh,8px);width:100%;height:100%;min-width:0;min-height:0;box-sizing:border-box;padding:clamp(4px,.7vw,8px);isolation:isolate;overflow:hidden}
 [data-new-base-flanora-board-surface="1"] .grFlanoraUpper{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr));column-gap:clamp(10px,1.4vw,18px);row-gap:clamp(3px,.5vh,6px);min-width:0;min-height:0;align-items:stretch}
 [data-new-base-flanora-board-surface="1"] .grFlanoraLane{display:grid;grid-template-columns:clamp(28px,4.6vw,42px) minmax(0,1fr) clamp(32px,5.4vw,48px);grid-template-rows:minmax(0,1fr);gap:clamp(3px,.55vw,7px);min-width:0;min-height:0;align-items:center;justify-items:stretch}
-[data-new-base-flanora-board-surface="1"] .grFlanoraGoal{display:grid;place-items:center;justify-self:start;width:clamp(24px,3.8vh,34px);height:clamp(24px,3.8vh,34px);border:1px solid rgba(255,235,154,.78);border-radius:50%;background:rgba(88,70,23,.78);font-size:clamp(7px,.7vw,10px);font-weight:900;line-height:1;color:#fff6c4}
+[data-new-base-flanora-board-surface="1"] .grFlanoraGoal{display:grid;place-items:center;justify-self:start;width:clamp(24px,3.8vh,34px);height:clamp(24px,3.8vh,34px);border:1px solid rgba(255,235,154,.78);border-radius:50%;background:rgba(88,70,23,.78);font-size:clamp(7px,.7vw,10px);font-weight:900;line-height:1;color:#fff6c4;box-shadow:0 0 12px rgba(255,224,120,.16)}
 [data-new-base-flanora-board-surface="1"] .grFlanoraRoad{position:relative;display:grid;grid-template-columns:repeat(7,minmax(4px,1fr));grid-template-rows:minmax(0,1fr);direction:rtl;gap:2px;width:100%;height:100%;min-width:0;min-height:0;align-items:center;justify-items:center}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoad::before{content:"";position:absolute;left:3%;right:3%;top:50%;height:2px;transform:translateY(-50%);border-radius:99px;background:rgba(231,244,229,.42)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{position:relative;z-index:1;width:clamp(5px,.75vw,10px);height:clamp(5px,.75vw,10px);border:1px solid rgba(244,250,238,.62);border-radius:50%;background:rgba(24,64,54,.92);box-shadow:0 0 0 2px rgba(9,30,25,.24)}
-/* BATTLE_PROGRESSION_LATENT_LIVE_R3: established progress is visually distinct from future/unresolved slots without granting interaction */
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep[data-progression-stage-state="UNRESOLVED"]{width:clamp(3px,.42vw,6px);height:clamp(3px,.42vw,6px);border-style:dotted;background:transparent;box-shadow:none;opacity:.28}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep[data-progression-stage-state="LATENT"]{width:clamp(4px,.55vw,7px);height:clamp(4px,.55vw,7px);border-style:dashed;background:transparent;box-shadow:none;opacity:.44}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep[data-progression-stage-state="BUILT"]{width:clamp(7px,.9vw,12px);height:clamp(7px,.9vw,12px);border-width:2px;border-style:solid;background:rgba(224,241,218,.92);box-shadow:0 0 0 2px rgba(9,30,25,.28),0 0 8px rgba(224,241,218,.26);opacity:1}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoad::before{content:"";position:absolute;left:3%;right:3%;top:50%;height:2px;transform:translateY(-50%);border-radius:99px;background:linear-gradient(90deg,rgba(255,236,152,.48),rgba(231,244,229,.5) 26%,rgba(231,244,229,.26));box-shadow:0 0 7px rgba(229,244,220,.12)}
+/* Only authority-established progress becomes a discrete card-shaped object. Future stages remain the continuous road itself. */
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{position:relative;z-index:1;width:clamp(8px,1vw,13px);aspect-ratio:.72;border:1px solid rgba(239,248,232,.9);border-radius:2px;background:linear-gradient(145deg,rgba(236,246,228,.96),rgba(104,145,112,.95));box-shadow:0 2px 5px rgba(0,0,0,.28),0 0 7px rgba(224,241,218,.2);transform:translateY(-1px);pointer-events:none}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep::after{content:"";position:absolute;inset:2px;border:1px solid rgba(31,74,56,.42);border-radius:1px}
 [data-new-base-flanora-board-surface="1"] .grFlanoraShield{display:grid;place-items:center;justify-self:end;width:clamp(32px,5vw,44px);min-height:clamp(15px,2.4vh,23px);border:1px solid rgba(188,229,241,.78);border-radius:8px;background:rgba(26,68,83,.88);font-size:clamp(8px,.8vw,11px);font-weight:950;color:#e8f8ff}
 [data-new-base-flanora-board-surface="1"] .grFlanoraClearing{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:clamp(3px,.5vw,7px);min-width:0;min-height:0;padding:clamp(2px,.4vw,5px)}
 [data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell{place-self:center;width:clamp(15px,2.6vw,30px);height:clamp(15px,2.6vw,30px);border:1px solid rgba(238,247,232,.7);border-radius:50%;background:rgba(47,91,66,.88);box-shadow:0 2px 7px rgba(0,0,0,.22)}
@@ -168,77 +166,119 @@ function performanceProfile({ reducedMotion = false, lowPerf = false } = {}) {
   return 'standard';
 }
 
-function writeProgressionStagePresentation(node, { state, stageIndex, established, latent }) {
-  setAttr(node, 'data-progression-stage-state', state);
-  setAttr(node, 'data-progression-established', established ? 'true' : 'false');
-  setAttr(node, 'data-progression-latent', latent ? 'true' : 'false');
-  setAttr(node, 'data-progression-actionable', 'false');
-  setAttr(node, 'data-progression-traversable', 'false');
-  setAttr(node, 'data-progression-authority', 'presentation-only');
-  const label = state === 'BUILT'
-    ? `進行済み ${stageIndex}/7`
-    : state === 'LATENT'
-      ? `未成立 ${stageIndex}/7`
-      : `進行状態未確定 ${stageIndex}/7`;
-  setAttr(node, 'aria-label', label);
-}
-
-function primeUnresolvedProgressionStage(node, stageIndex) {
-  writeProgressionStagePresentation(node, {
-    state: 'UNRESOLVED',
-    stageIndex,
-    established: false,
-    latent: false,
+function failProgression(reason) {
+  return deepFreeze({
+    applied: false,
+    reason,
+    builtStageCount: null,
+    latentStageCount: null,
+    presentationOnly: true,
+    gameplayAuthority: false,
+    movementAuthority: false,
+    legalityAuthority: false,
+    gameStateWrite: false,
   });
 }
 
-function syncProgressionLanePresentationToRoadSteps(presentation, roadStepsByKey) {
+function writeBuiltProgressionStagePresentation(node, stageIndex) {
+  setAttr(node, 'data-progression-stage-state', 'BUILT');
+  setAttr(node, 'data-progression-established', 'true');
+  setAttr(node, 'data-progression-latent', 'false');
+  setAttr(node, 'data-progression-actionable', 'false');
+  setAttr(node, 'data-progression-traversable', 'false');
+  setAttr(node, 'data-progression-authority', 'presentation-only');
+  setAttr(node, 'aria-label', `進行済み ${stageIndex}/7`);
+}
+
+function validateProgressionPresentation(presentation, roadsByLaneKey, roadStepMetaById) {
   if (!isNewBaseProgressionLanePresentation(presentation) || presentation.ok !== true) {
-    return deepFreeze({
-      applied: false,
-      reason: 'PROGRESSION_PRESENTATION_REQUIRED',
-      builtStageCount: null,
-      latentStageCount: null,
-      presentationOnly: true,
-      gameplayAuthority: false,
-      movementAuthority: false,
-      legalityAuthority: false,
-      gameStateWrite: false,
-    });
+    return { ok: false, reason: 'PROGRESSION_PRESENTATION_REQUIRED' };
+  }
+  if (presentation.lanePresentations.length !== roadsByLaneKey.size) {
+    return { ok: false, reason: 'FULL_FLANORA_PROGRESSION_REQUIRED' };
   }
 
-  const assignments = [];
+  const seenLaneKeys = new Set();
   const seenRoadStepIds = new Set();
+  const builtAssignments = [];
+  const laneCounts = new Map();
+
   for (const lane of presentation.lanePresentations) {
-    if (!Array.isArray(lane?.stages) || lane.stages.length !== ROAD_STEPS.length) {
-      return deepFreeze({ applied: false, reason: 'PROGRESSION_STAGE_SET_INVALID', presentationOnly: true, gameplayAuthority: false, movementAuthority: false, legalityAuthority: false, gameStateWrite: false });
+    const road = roadsByLaneKey.get(lane?.key);
+    if (!road || seenLaneKeys.has(lane.key) || !Array.isArray(lane?.stages) || lane.stages.length !== ROAD_STEPS.length) {
+      return { ok: false, reason: 'PROGRESSION_STAGE_SET_INVALID' };
     }
+    seenLaneKeys.add(lane.key);
+    let builtCount = 0;
+    let latentCount = 0;
+
     for (const stage of lane.stages) {
-      const node = roadStepsByKey.get(stage?.roadStepId);
+      const meta = roadStepMetaById.get(stage?.roadStepId);
       const built = stage?.visualState === 'BUILT';
       const latent = stage?.visualState === 'LATENT';
-      if (!node || seenRoadStepIds.has(stage?.roadStepId) || (!built && !latent)
+      if (!meta || meta.laneKey !== lane.key || meta.roadIndex !== stage?.stageIndex
+          || seenRoadStepIds.has(stage?.roadStepId) || (!built && !latent)
           || stage?.established !== built || stage?.latent !== latent
           || stage?.actionable !== false || stage?.traversable !== false
           || stage?.legalityAuthority !== false || stage?.movementAuthority !== false) {
-        return deepFreeze({ applied: false, reason: 'PROGRESSION_STAGE_ASSIGNMENT_INVALID', presentationOnly: true, gameplayAuthority: false, movementAuthority: false, legalityAuthority: false, gameStateWrite: false });
+        return { ok: false, reason: 'PROGRESSION_STAGE_ASSIGNMENT_INVALID' };
       }
       seenRoadStepIds.add(stage.roadStepId);
-      assignments.push({
-        node,
-        state: stage.visualState,
-        stageIndex: stage.stageIndex,
-        established: built,
-        latent,
-      });
+      if (built) {
+        builtCount += 1;
+        builtAssignments.push({ road, meta });
+      } else {
+        latentCount += 1;
+      }
     }
+    laneCounts.set(lane.key, { builtCount, latentCount });
   }
 
-  if (assignments.length !== roadStepsByKey.size || seenRoadStepIds.size !== roadStepsByKey.size) {
-    return deepFreeze({ applied: false, reason: 'FULL_FLANORA_PROGRESSION_REQUIRED', presentationOnly: true, gameplayAuthority: false, movementAuthority: false, legalityAuthority: false, gameStateWrite: false });
+  if (seenLaneKeys.size !== roadsByLaneKey.size || seenRoadStepIds.size !== roadStepMetaById.size) {
+    return { ok: false, reason: 'FULL_FLANORA_PROGRESSION_REQUIRED' };
+  }
+  return { ok: true, builtAssignments, laneCounts };
+}
+
+function syncProgressionLanePresentation({
+  presentation,
+  documentLike,
+  roadsByLaneKey,
+  roadStepMetaById,
+  roadStepsByKey,
+}) {
+  const validated = validateProgressionPresentation(presentation, roadsByLaneKey, roadStepMetaById);
+  if (!validated.ok) return failProgression(validated.reason);
+
+  const nextBuiltIds = new Set(validated.builtAssignments.map(({ meta }) => meta.id));
+  for (const [roadStepId, node] of [...roadStepsByKey]) {
+    if (nextBuiltIds.has(roadStepId)) continue;
+    node.remove?.();
+    if (node.parentNode && typeof node.parentNode.removeChild === 'function') node.parentNode.removeChild(node);
+    roadStepsByKey.delete(roadStepId);
   }
 
-  for (const assignment of assignments) writeProgressionStagePresentation(assignment.node, assignment);
+  for (const { road, meta } of validated.builtAssignments) {
+    let node = roadStepsByKey.get(meta.id);
+    if (!node) {
+      node = createNode(documentLike, 'span', 'grFlanoraRoadStep');
+      setAttr(node, 'data-flanora-road-step', meta.roadIndex);
+      setAttr(node, 'data-flanora-road-step-id', meta.id);
+      setAttr(node, 'data-row-index', meta.rowIndex);
+      road.appendChild(node);
+      roadStepsByKey.set(meta.id, node);
+    }
+    writeBuiltProgressionStagePresentation(node, meta.roadIndex);
+  }
+
+  for (const [key, road] of roadsByLaneKey) {
+    const counts = validated.laneCounts.get(key);
+    setAttr(road, 'data-progression-built-count', counts.builtCount);
+    setAttr(road, 'data-progression-latent-count', counts.latentCount);
+    setAttr(road, 'data-future-discrete-slots', 'false');
+    setAttr(road, 'aria-label', `成立済み ${counts.builtCount}/7。未成立位置は連続した道として表示`);
+  }
+
   return deepFreeze({
     applied: true,
     reason: 'PROGRESSION_PRESENTATION_APPLIED',
@@ -284,7 +324,8 @@ export function mountFlanoraBoardSurface({
   setAttr(root, 'data-road-entry-edge', 'right');
   setAttr(root, 'data-progression-direction', 'right-to-left');
   setAttr(root, 'data-central-world-layout', 'participant-groups-2x2');
-  setAttr(root, 'aria-label', '4人×各3レーン。GOAL左端、ROAD開始側右端。右から左のGOALへ進む12レーン盤面');
+  setAttr(root, 'data-future-discrete-progression-slots', 'false');
+  setAttr(root, 'aria-label', '4人×各3レーン。GOAL左端、ROAD開始側右端。成立済み進行だけをカード状に表示し、未成立位置は連続した道で示す');
 
   const upper = createNode(documentLike, 'div', 'grFlanoraUpper');
   const clearing = createNode(documentLike, 'div', 'grFlanoraClearing');
@@ -294,6 +335,8 @@ export function mountFlanoraBoardSurface({
 
   const goalsByLaneKey = new Map();
   const shieldsByLaneKey = new Map();
+  const roadsByLaneKey = new Map();
+  const roadStepMetaById = new Map();
   const roadStepsByKey = new Map();
   const clearingByCellId = new Map();
 
@@ -318,15 +361,13 @@ export function mountFlanoraBoardSurface({
     setAttr(goal, 'data-flanora-goal', lane.key);
     const road = createNode(documentLike, 'div', 'grFlanoraRoad');
     setAttr(road, 'data-flanora-road-track', lane.key);
-    for (const step of lane.roadSteps) {
-      const stepNode = createNode(documentLike, 'span', 'grFlanoraRoadStep');
-      setAttr(stepNode, 'data-flanora-road-step', step.roadIndex);
-      setAttr(stepNode, 'data-flanora-road-step-id', step.id);
-      setAttr(stepNode, 'data-row-index', step.rowIndex);
-      primeUnresolvedProgressionStage(stepNode, step.roadIndex);
-      road.appendChild(stepNode);
-      roadStepsByKey.set(step.id, stepNode);
-    }
+    setAttr(road, 'data-progression-capacity', ROAD_STEPS.length);
+    setAttr(road, 'data-progression-built-count', 0);
+    setAttr(road, 'data-progression-latent-count', ROAD_STEPS.length);
+    setAttr(road, 'data-future-discrete-slots', 'false');
+    setAttr(road, 'aria-label', '成立済み 0/7。未成立位置は連続した道として表示');
+    for (const step of lane.roadSteps) roadStepMetaById.set(step.id, { ...step, laneKey: lane.key });
+
     const shield = createNode(documentLike, 'span', 'grFlanoraShield');
     shield.textContent = `S ${lane.laneLabel}`;
     setAttr(shield, 'data-flanora-shield', lane.key);
@@ -338,6 +379,7 @@ export function mountFlanoraBoardSurface({
     upper.appendChild(laneNode);
     goalsByLaneKey.set(lane.key, goal);
     shieldsByLaneKey.set(lane.key, shield);
+    roadsByLaneKey.set(lane.key, road);
   }
 
   for (const cell of model.clearingCells) {
@@ -384,8 +426,8 @@ export function mountFlanoraBoardSurface({
       return roadStepsByKey.get(`road:${resolveLaneKey(participantId, laneIndex)}:${roadIndex}`) ?? null;
     },
     syncProgressionPresentation(presentation) {
-      if (destroyed) return deepFreeze({ applied: false, reason: 'RUNTIME_DESTROYED', presentationOnly: true, gameplayAuthority: false, movementAuthority: false, legalityAuthority: false, gameStateWrite: false });
-      return syncProgressionLanePresentationToRoadSteps(presentation, roadStepsByKey);
+      if (destroyed) return failProgression('RUNTIME_DESTROYED');
+      return syncProgressionLanePresentation({ presentation, documentLike, roadsByLaneKey, roadStepMetaById, roadStepsByKey });
     },
     resolveClearingCell(cellId) {
       return nonEmptyString(cellId) ? clearingByCellId.get(cellId) ?? null : null;
@@ -395,7 +437,8 @@ export function mountFlanoraBoardSurface({
         laneCount: model.lanes.length,
         goalCount: goalsByLaneKey.size,
         shieldCount: shieldsByLaneKey.size,
-        roadStepCount: roadStepsByKey.size,
+        roadStepCount: roadStepMetaById.size,
+        visibleBuiltRoadStepCount: roadStepsByKey.size,
         clearingCellCount: clearingByCellId.size,
         clearingCycleCellIds: [...model.clearingCycleCellIds],
         performanceProfile: root.dataset?.performanceProfile ?? performanceProfile({ reducedMotion, lowPerf }),
@@ -429,7 +472,8 @@ export const FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT = deepFreeze({
   laneCount: 12,
   roadStepsPerLane: 7,
   progressionPresentationSource: 'EXISTING_NEW_BASE_PROGRESSION_LANE_PRESENTATION',
-  unresolvedStageDefault: 'VISUALLY_SUBDUED_NOT_OPEN',
+  unresolvedStageDefault: 'NO_DISCRETE_NODE_CONTINUOUS_TRACK_ONLY',
+  futureDiscreteStageNodes: false,
   progressionSyncWritesGameState: false,
   goalEndpointCount: 12,
 });

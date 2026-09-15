@@ -128,6 +128,29 @@ test('Historical record deck text uses the frozen match-start snapshot with exac
   );
 });
 
+test('Historical record deck text resolves the live Array card-data shape and keeps unknown IDs as fallback', () => {
+  const historyEntry = {
+    deckStartSnapshot: {
+      deckRef: { deckSlotId: 'deck-live' },
+      deck: {
+        main: ['A', 'UNKNOWN'],
+        ex: ['EX1'],
+      },
+    },
+  };
+  const fakeWindow = {
+    __CARD_DATA__: [
+      { id: 'A', name: '森の札' },
+      { id: 'EX1', name: 'EX札' },
+    ],
+  };
+
+  assert.equal(
+    projectHistoricalDeckText(historyEntry, fakeWindow),
+    '使用デッキ（deck-live）\nメイン 2枚：森の札（A） / UNKNOWN\nEX 1枚：EX札（EX1）',
+  );
+});
+
 test('Historical record deck text keeps legacy entries explicitly unrecorded', () => {
   assert.equal(projectHistoricalDeckText(null), '使用デッキ：この対戦履歴では未記録です。');
   assert.equal(projectHistoricalDeckText({ deckStartSnapshot: {} }), '使用デッキ：この対戦履歴では未記録です。');

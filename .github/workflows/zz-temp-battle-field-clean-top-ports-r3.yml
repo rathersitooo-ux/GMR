@@ -7,32 +7,73 @@ on:
 permissions:
   contents: write
 jobs:
-  inspect:
+  materialize:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
           ref: sol/battle-field-clean-top-ports-r3-20260915
           fetch-depth: 0
-      - name: Inspect exact field topology seams
+      - name: Verify lease-bound product base and pre-action authorization
         shell: bash
         run: |
           set -euo pipefail
+          test "$(git merge-base HEAD 9154762fccdefdbd5e44d632ac40ea7d481b81c2)" = "9154762fccdefdbd5e44d632ac40ea7d481b81c2"
+          test "$(git rev-parse HEAD:browser/GAMEROAD.html)" = "e99af0f8c91fe95306ca9f7fc5101feb4d636e10"
+          test "$(git rev-parse HEAD:tests/browser-static-check.mjs)" = "e80fc906c6c9a4a84d727f7db5e5d565195e73bd"
+          test -f data/preaction-authorizations/BATTLE-CLEAN-TOP-PORTS-R3-20260915T1348-SOL-FIELD.json
+          grep -Fq '12-clean-top-ports' data/preaction-authorizations/BATTLE-CLEAN-TOP-PORTS-R3-20260915T1348-SOL-FIELD.json
+          grep -Fq 'GATE_EDGE_ONLY' data/preaction-authorizations/BATTLE-CLEAN-TOP-PORTS-R3-20260915T1348-SOL-FIELD.json
+      - name: Apply clean ordered top-port topology
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/temp-battle-field-clean-top-ports-r3.py
+      - name: Verify topology, static contracts, and no Gate-cell regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/browser-static-check.mjs
+          git diff --check
           python - <<'PY'
           from pathlib import Path
+          import re
           s=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          needles=[
-            'const SYMMETRIC_FIELD_NODE_IDS=',
-            'const SYMMETRIC_FIELD_EDGES=',
-            'const SYMMETRIC_FIELD_PORTS=',
-            'function symmetricFieldCoord(',
-            'function symmetricFieldNeighbors(',
-            'function centerPort(',
-            'function garden3DSharedHeight(',
+          a=s.index('const SYMMETRIC_FIELD_PORTS=Object.freeze({')
+          b=s.index('const SYMMETRIC_FIELD_START_ID=',a)
+          ports=s[a:b]
+          pairs=re.findall(r"'(P[1-4]:[LCR])':'(F:U:\\d+)'",ports)
+          expected=[
+            ('P1:L','F:U:0'),('P1:C','F:U:1'),('P1:R','F:U:2'),
+            ('P2:L','F:U:3'),('P2:C','F:U:4'),('P2:R','F:U:5'),
+            ('P3:L','F:U:7'),('P3:C','F:U:8'),('P3:R','F:U:9'),
+            ('P4:L','F:U:10'),('P4:C','F:U:11'),('P4:R','F:U:12'),
           ]
-          for n in needles:
-            i=s.find(n)
-            print('\n===',n,'@',i,'===')
-            if i<0: continue
-            print(s[i:i+5000])
+          assert pairs == expected, (pairs, expected)
+          assert len({v for _,v in pairs}) == 12
+          assert 'F:U:6' not in {v for _,v in pairs}
+          assert "'F:L:" not in ports and "'F:R:" not in ports
+          assert not re.search(r'SYMMETRIC_FIELD_(?:GATE_NODE|GATE_CELL|GATE_STOP)',s)
+          assert "gateRole:'BOUNDARY_EDGE_ONLY'" in s
+          assert "const SYMMETRIC_FIELD_GOAL_VISUAL_COLUMNS=9" in s
+          assert "function symmetricFieldActive(){const id=currentBattleFieldId();return id===BATTLE_FIELD_SYMMETRIC_GATE_ID||id===BATTLE_FIELD_GARDEN3D_ID}" in s
+          print('BATTLE_CLEAN_TOP_PORTS_R3_ACCEPTANCE_PASS')
           PY
+      - name: Commit verified product mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name gameroad-sol
+          git config user.email gameroad-sol@users.noreply.github.com
+          git add browser/GAMEROAD.html tests/browser-static-check.mjs
+          git commit -m "Battle: align all Shield columns to clean common-field top ports"
+      - name: Close transient authorization lane and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm data/preaction-authorizations/BATTLE-CLEAN-TOP-PORTS-R3-20260915T1348-SOL-FIELD.json
+          git rm tools/temp-battle-field-clean-top-ports-r3.py
+          git rm .github/workflows/zz-temp-battle-field-clean-top-ports-r3.yml
+          git commit -m "chore: close clean top-port pre-action lane"
+          git push origin HEAD:sol/battle-field-clean-top-ports-r3-20260915

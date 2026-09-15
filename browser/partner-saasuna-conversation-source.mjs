@@ -2,6 +2,11 @@ const PARTNER_ID = 'partner.saasuna';
 const DIALOGUE_VERSION = 'saasuna.dialogue.current.r1.20260810';
 const SOURCE_ID = 'SOURCE-DIALOGUE-SAASUNA-20260810';
 const CHARACTER_UTTERANCE = 'character_utterance';
+const ADVICE_REPLY_CONVERSATION_ID = 'battle_advice_reply_pair';
+const ADVICE_REPLY_OPTIONS = Object.freeze([
+  Object.freeze({ id: 'acknowledge', label: 'わかった' }),
+  Object.freeze({ id: 'consider', label: 'ちょっと考える' }),
+]);
 
 const FALLBACK_LINES = Object.freeze([
   '優秀なんですよ、私。',
@@ -88,6 +93,25 @@ export function getSaasunaConversationSource(input = {}) {
     unresolvedDialogueEnabled: false,
     automaticCanonMutationAllowed: false,
     automaticRelationshipMutationAllowed: false,
+  });
+}
+
+export function getSaasunaAdviceReplyPairSource(input = {}) {
+  const source = getSaasunaConversationSource(input);
+  if (!source) return null;
+  return freezeDeep({
+    partnerId: PARTNER_ID,
+    dialogueVersion: DIALOGUE_VERSION,
+    sourceId: SOURCE_ID,
+    sourceState: 'approved_current',
+    approvedCurrent: true,
+    conversationId: ADVICE_REPLY_CONVERSATION_ID,
+    options: ADVICE_REPLY_OPTIONS.map((option) => ({ ...option })),
+    wordingProvenance: 'ai-authored-user-delegated',
+    presentationOnly: true,
+    automaticCanonMutationAllowed: false,
+    automaticRelationshipMutationAllowed: false,
+    automaticGameMutationAllowed: false,
   });
 }
 

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-ADVICE-REPLYPAIR-R2-20260915T2120-SOL-SU13D",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_ADVICE_REPLY_PAIR_RUNTIME_CONSUMER_R2",
+  "acquireKey": "PARTNER-ADVICE-REPLYPAIR-R2-20260915T2120-SOL-SU13D",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_REPLY_PAIR_FAILCLOSED_CORE_PLUS_FRESH_SOURCE_RUNTIME_PACKAGE_AUDIT_20260915",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_PROJECTOR_EXACT_TWO_BOUNDARY_AND_CURRENT_SINGLE_PARTNER_SURFACE",
+  "proceedToken": "PROCEED|PARTNER-ADVICE-REPLYPAIR-R2-20260915T2120-SOL-SU13D|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-advice-reply-pair|runtime-package|active-lease",
+  "authorizationBaseSha": "70ec0c991559d9c81818f80f554fd69dc3117748",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_ADVICE_REPLY_PAIR_RUNTIME_CONSUMER_R2",
+  "leaseAcquireKey": "PARTNER-ADVICE-REPLYPAIR-R2-20260915T2120-SOL-SU13D",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 21:27 JST",
+  "leaseUntilJst": "2026-09-15 22:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main 70ec0c991559d9c81818f80f554fd69dc3117748; mutable browser/partner-saasuna-conversation-source.mjs; browser/partner-dialogue-source-registry.mjs; browser/partner-advice-runtime-mount.mjs; tests/partner-dialogue-source-registry.test.mjs; tests/partner-advice-runtime-mount.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; own transient data/preaction-authorizations/PARTNER-ADVICE-REPLYPAIR-R2-20260915T2120-SOL-SU13D.json; own branch/PR/check/merge/readback. READ_ONLY browser/partner-advice-player-control-core.mjs; browser/GAMEROAD.html; gameplay/rules/legality/target/save/economy/network; 2v2 ping; delegation authority; formal art/voice.",
+  "solutionSignature": "PARTNER_ADVICE_APPROVED_REPLY_PAIR_SINGLE_SURFACE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_FAILCLOSED_REPLY_PAIR_CORE_PLUS_EXISTING_UNIFIED_PARTNER_SURFACE",
+  "solutionSearchEvidence": [
+    "Current main already contains projectPartnerAdviceReplyPair in the read-only player-control core with exact-two, approved-current, no-autoexecute, no-2v2-ping and no-gameplay-authority boundaries.",
+    "Current Partner runtime does not consume that projector and the Cloudflare package does not yet include the player-control core dependency.",
+    "The existing unified Partner chat surface and delegation control remain the presentation owner; no second panel or second delegation path is needed.",
+    "The old 上策 reply candidates remain source-unverified and are not reused.",
+    "User delegation in the current continuation permits reversible wording design inside the already-approved separate reply-pair feature; provenance remains AI-authored/user-delegated rather than USER_DIRECT_RAW."
+  ],
+  "scope": [
+    "browser/partner-saasuna-conversation-source.mjs",
+    "browser/partner-dialogue-source-registry.mjs",
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-dialogue-source-registry.test.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-saasuna-conversation-source.mjs",
+    "browser/partner-dialogue-source-registry.mjs",
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-dialogue-source-registry.test.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

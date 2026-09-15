@@ -87,6 +87,7 @@ jobs:
           multi_agent_match_follow=false
           board_visual=false
           executor_bus=false
+          pc_current_bridge=false
           conventional_node=false
           unclassified=false
           : > /tmp/gameroad-conventional-tests.txt
@@ -374,6 +375,11 @@ jobs:
               tests/luna-sol-codex-browser-bridge-local-queue-gate.test.mjs)
                 executor_bus=true
                 ;;
+              .github/workflows/gameroad-current-bridge.yml|\
+              tools/gameroad-current-bridge.py|\
+              tests/test_gameroad_current_bridge.py)
+                pc_current_bridge=true
+                ;;
               .github/workflows/gameroad-required-gate.yml|\
               .github/workflows/gameroad-observability-ci.yml|\
               .github/workflows/post-merge-branch-cleanup.yml|\
@@ -470,6 +476,7 @@ jobs:
             echo "multi_agent_match_follow=${multi_agent_match_follow}"
             echo "board_visual=${board_visual}"
             echo "executor_bus=${executor_bus}"
+            echo "pc_current_bridge=${pc_current_bridge}"
             echo "conventional_node=${conventional_node}"
             echo "unclassified=${unclassified}"
           } >> "${GITHUB_OUTPUT}"
@@ -488,6 +495,12 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Set up Python for PC CURRENT bridge
+        if: steps.classify.outputs.pc_current_bridge == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Enforce PRE_ACTION authorization before material PR merge
         if: github.event_name == 'pull_request'
         env:
@@ -496,6 +509,10 @@ jobs:
         run: |
           node --test tests/preaction-authorization-validator.test.mjs
           node tools/preaction-authorization-validator.mjs --base "${BASE_SHA}" --head "${HEAD_SHA}" --changed /tmp/gameroad-changed.txt
+
+      - name: Run PC CURRENT bridge focused tests
+        if: steps.classify.outputs.pc_current_bridge == 'true'
+        run: python -m unittest tests/test_gameroad_current_bridge.py -v
 
       - name: Run conventional Node module tests
         if: steps.classify.outputs.conventional_node == 'true'

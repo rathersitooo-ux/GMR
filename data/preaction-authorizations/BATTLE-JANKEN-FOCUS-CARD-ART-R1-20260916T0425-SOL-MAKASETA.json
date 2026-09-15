@@ -19,7 +19,7 @@
   "leaseAcquireKey": "BATTLE-JANKEN-FOCUS-CARD-ART-R1-20260916T0425-SOL-MAKASETA",
   "leaseSnapshotReadbackAtJst": "2026-09-16 04:26 JST",
   "leaseUntilJst": "2026-09-16 05:25 JST",
-  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:N11",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
   "leaseExactMutableResources": "browser/battle-janken-focus-runtime-surface.mjs; tests/battle-janken-focus-runtime-surface.test.mjs; own transient data/preaction-authorizations/BATTLE-JANKEN-FOCUS-CARD-ART-R1-20260916T0425-SOL-MAKASETA.json; own branch/PR/check/merge/readback. browser/battle-screen-runtime-mount.mjs, existing card catalog/art registry, deploy/cloudflare/scripts/build.mjs, gameplay/target/route/Shield are READ_ONLY.",
   "solutionSignature": "JANKEN_FOCUS_EXACT_PHYSICAL_CARD_ART_PROVIDER_REUSE_V1",
   "reuseDisposition": "ADAPT",

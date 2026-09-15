@@ -24,7 +24,7 @@ const HOME_JOURNEY_ATTR = 'data-gameroad-home-journey';
 const HOME_JOURNEY_STYLE_ID = 'gameroad-home-journey-style-r1';
 const HOME_JOURNEY_ROUTE_SELECTOR = '.homePadChoice[data-home-target]';
 const HOME_JOURNEY_MODE_LABELS = Object.freeze({ '2p': '二人', '4p': '四人', '2v2': '二対二' });
-const HOME_JOURNEY_ROUTE_LABELS = Object.freeze({ setup: 'バトル', battle: 'バトル', cards: 'カード', partner: 'パートナー', characters: 'パートナー', shop: 'ショップ' });
+const HOME_JOURNEY_ROUTE_LABELS = Object.freeze({ setup: 'バトル', battle: 'バトル', cards: 'カード', partner: 'パートナー', characters: 'キャラクター', shop: 'ショップ' });
 
 const journeyRuntime = {
   home: null,

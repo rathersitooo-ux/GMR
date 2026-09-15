@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "FRIEND-BUILD-STAGE-R3-20260915T1708-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "FRIEND_BUILD_STAGED_ENTRY_R1",
+  "acquireKey": "FRIEND-BUILD-STAGE-R3-20260915T1708-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_061C899_AND_ISOLATED_ROW20_CURRENT_20260915T1708JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1692_LOCAL_CONTRACT_3_OF_3_PLUS_PR1694_VALIDATOR_REF_DIAGNOSIS",
+  "proceedToken": "PROCEED|FRIEND-BUILD-STAGE-R3-20260915T1708-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|friend-build-route-staging|isolated-module-test|active-lease-row20",
+  "authorizationBaseSha": "061c899df9df59d3b798034f097dbe9951946c6d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "FRIEND_BUILD_STAGED_ENTRY_R1",
+  "leaseAcquireKey": "FRIEND-BUILD-STAGE-R3-20260915T1708-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 17:08 JST",
+  "leaseUntilJst": "2026-09-15 17:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A20:L20",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main 061c899df9df59d3b798034f097dbe9951946c6d; fresh branch sol/friend-build-staged-entry-r3-20260915; mutable browser/friend-build-route-staging.mjs; tests/friend-build-route-staging.test.mjs; own transient data/preaction-authorizations/FRIEND-BUILD-STAGE-R3-20260915T1708-SOL.json only; own draft PR/check/readback. READ_ONLY browser/home-boot-runtime-mount.mjs, browser/home-boot-runtime-base-r3.mjs, browser/GAMEROAD.html, tests/browser-full-interaction.spec.mjs, PR#1691 and all active owner resources. No consumer mount in R3.",
+  "solutionSignature": "FRIEND_BUILD_EXISTING_HOME_ROUTE_STAGING_POLICY_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_HOME_ROUTE_AND_GACHA_TRUTHFUL_PREVIEW_EVIDENCE_20260915",
+  "solutionSearchEvidence": [
+    "Current Home already exposes existing route entries and must remain the single navigation surface; no second menu or router is required.",
+    "Current screen navigation truthfully labels gacha as an animation preview whose shown card is not added to ownership or save state, providing direct DEFER evidence for Friend Build.",
+    "Active exact-current BFI and global journey owners overlap the Home/public consumer seam, so this WorkUnit isolates policy and tests and keeps Home mount read-only.",
+    "R1 local contract passed 3/3; R2 Required Gate isolated its remaining process failure to leaseSnapshotReadbackRef, and validator source requires CURRENT_ACTIVE_LEASES!A<row>:L<row>.",
+    "R3 lease was atomically written to isolated row20 and read back before authorization; unknown or actively repaired routes default KEEP."
+  ],
+  "scope": [
+    "browser/friend-build-route-staging.mjs",
+    "tests/friend-build-route-staging.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/friend-build-route-staging.mjs",
+    "tests/friend-build-route-staging.test.mjs"
+  ]
+}

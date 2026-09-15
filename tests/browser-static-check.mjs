@@ -184,7 +184,7 @@ if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stat
     [/id=["']fieldTopologyLayer["']/, 'new field continuous topology layer is missing'],
     [/gateRole:['"]BOUNDARY_EDGE_ONLY['"]/, 'Gate is not explicitly boundary-only'],
     [/gateNodeCount:SYMMETRIC_FIELD_NODE_IDS\.filter\(id=>id\.includes\(['"]GATE['"]\)\)\.length/, 'Gate-node zero-count receipt is missing'],
-    [/topCenterHasDirectShieldPort:Object\.values\(SYMMETRIC_FIELD_PORTS\)\.includes\(['"]F:U:4['"]\)/, 'top-center no-upward-connection receipt is missing'],
+    [/topCenterHasDirectShieldPort:Object\.values\(SYMMETRIC_FIELD_PORTS\)\.includes\(['"]F:U:6['"]\)/, 'top-center no-upward-connection receipt is missing'],
     [/for\(const p of ps\)p\.position=battleFieldStartPosition\(fieldId\)/, 'new matches do not use the selected field start'],
     [/state\.match=\{id:'M'\+Date\.now\(\),mode:snapshot\.setup\.mode,contentId:snapshot\.setup\.content,fieldId,round:1/, 'selected field identity is not pinned into the match'],
     [/if\(symmetricFieldActive\(\)\)return SYMMETRIC_FIELD_PORTS\[`\$\{owner\}:\$\{lane\}`\]\|\|null/, 'new field does not connect shared field directly to existing Shield identities'],
@@ -192,6 +192,32 @@ if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stat
     [/host\.hidden=symmetric;host\.setAttribute\(['"]aria-hidden['"],String\(symmetric\)\);if\(symmetric\)return true/, 'old Flanora topology remains overlaid on the new field'],
   ];
   for (const [pattern, message] of symmetricGateFieldContracts) if (!pattern.test(html)) errors.push(message);
+  const cleanTopPortExpected = [
+    ["'P1:L':'F:U:0'",0],["'P1:C':'F:U:1'",1],["'P1:R':'F:U:2'",2],
+    ["'P2:L':'F:U:3'",3],["'P2:C':'F:U:4'",4],["'P2:R':'F:U:5'",5],
+    ["'P3:L':'F:U:7'",7],["'P3:C':'F:U:8'",8],["'P3:R':'F:U:9'",9],
+    ["'P4:L':'F:U:10'",10],["'P4:C':'F:U:11'",11],["'P4:R':'F:U:12'",12],
+  ];
+  const cleanPortsStart = html.indexOf('const SYMMETRIC_FIELD_PORTS=Object.freeze({');
+  const cleanPortsEnd = html.indexOf('const SYMMETRIC_FIELD_START_ID=', cleanPortsStart);
+  const cleanPortsBlock = cleanPortsStart >= 0 && cleanPortsEnd > cleanPortsStart ? html.slice(cleanPortsStart, cleanPortsEnd) : '';
+  if ((cleanPortsBlock.match(/'P[1-4]:[LCR]':'F:U:\d+'/g) ?? []).length !== 12) errors.push('all 12 Shield columns are not mapped to top-row ports');
+  if (/:'F:[LR]:/.test(cleanPortsBlock)) errors.push('a Shield column still enters the common field through a side port');
+  if (cleanPortsBlock.includes("'F:U:6'")) errors.push('the exact top-center common-field point is not reserved as the single direct-connection gap');
+  const cleanPortValues = [...cleanPortsBlock.matchAll(/'P[1-4]:[LCR]':'(F:U:\d+)'/g)].map(m=>m[1]);
+  if (new Set(cleanPortValues).size !== 12) errors.push('Shield columns share a common-field top port');
+  for (const [literal] of cleanTopPortExpected) if (!cleanPortsBlock.includes(literal)) errors.push(`ordered top-port mapping missing: ${literal}`);
+  if (!/const SYMMETRIC_FIELD_TOP_PORT_IDS=Object\.freeze\(\[[\s\S]*?'F:U:0'[\s\S]*?'F:U:5'[\s\S]*?'F:U:7'[\s\S]*?'F:U:12'[\s\S]*?\]\)/.test(html)) errors.push('clean top-port rail identity list is missing');
+  if (!/if\(band==='U'&&Number\.isInteger\(index\)&&index>=0&&index<=12\)\{const laneIndex=index<6\?index:index>6\?index-1:null,x=laneIndex===null\?0:\(laneIndex-5\.5\)\*1\.45;/.test(html)) errors.push('top ports are not aligned one-to-one with the 12 Shield-column x positions');
+  const topRailBlockStart = html.indexOf('const SYMMETRIC_FIELD_EDGES=Object.freeze([');
+  const topRailBlockEnd = html.indexOf('const SYMMETRIC_FIELD_TOP_PORT_IDS=', topRailBlockStart);
+  const topRailBlock = topRailBlockStart >= 0 && topRailBlockEnd > topRailBlockStart ? html.slice(topRailBlockStart, topRailBlockEnd) : '';
+  for (let i=0;i<12;i++) if (!topRailBlock.includes(`['F:U:${i}','F:U:${i+1}']`)) errors.push(`top common-field rail is broken between U${i} and U${i+1}`);
+  const redundantTangleEdges = [
+    "['F:U:1','F:L:0']","['F:U:0','F:L:1']","['F:L:0','F:L:2']","['F:L:1','F:L:3']",
+    "['F:U:11','F:R:0']","['F:U:12','F:R:1']","['F:R:0','F:R:2']","['F:R:1','F:R:3']",
+  ];
+  for (const edge of redundantTangleEdges) if (topRailBlock.includes(edge)) errors.push(`redundant tangled side edge remains: ${edge}`);
 
   const garden3DFieldContracts = [
     [/data-field=["']FIELD-11["'][^>]*>立体庭園<\/button>/, 'Garden3D field choice is missing'],
@@ -218,7 +244,7 @@ if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stat
   const symmetricPortsStart = html.indexOf('const SYMMETRIC_FIELD_PORTS=Object.freeze({');
   const symmetricPortsEnd = html.indexOf('const SYMMETRIC_FIELD_START_ID=', symmetricPortsStart);
   const symmetricPortsBlock = symmetricPortsStart >= 0 && symmetricPortsEnd > symmetricPortsStart ? html.slice(symmetricPortsStart, symmetricPortsEnd) : '';
-  if (symmetricPortsBlock.includes("'F:U:4'")) errors.push('central-top shared-field point is directly connected upward to a Shield/Gate edge');
+  if (symmetricPortsBlock.includes("'F:U:6'")) errors.push('central-top shared-field point is directly connected upward to a Shield/Gate edge');
   if (/SYMMETRIC_FIELD_(?:GATE_NODE|GATE_CELL|GATE_STOP)/.test(html)) errors.push('Gate was implemented as a node/cell/stop instead of an edge boundary');
 
   const centralWorldLiveContracts = [

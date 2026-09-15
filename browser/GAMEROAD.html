@@ -1607,22 +1607,26 @@ function startMatch(){const eligibility=deckEligibility(state.savedDeck);if(!eli
 $('#startMatch').addEventListener('click',startMatch);
 function log(t){if(!state.match)return;state.match.log.unshift(t);state.match.log=state.match.log.slice(0,30)}
 const SYMMETRIC_FIELD_NODE_IDS=Object.freeze([
-  'F:U:0','F:U:1','F:U:2','F:U:3','F:U:4','F:U:5','F:U:6','F:U:7','F:U:8',
+  'F:U:0','F:U:1','F:U:2','F:U:3','F:U:4','F:U:5','F:U:6','F:U:7','F:U:8','F:U:9','F:U:10','F:U:11','F:U:12',
   'F:D:0','F:D:1','F:D:2','F:D:3','F:D:4','F:D:5','F:D:6','F:D:7','F:D:8',
   'F:L:0','F:L:1','F:L:2','F:L:3','F:R:0','F:R:1','F:R:2','F:R:3'
 ]);
 const SYMMETRIC_FIELD_EDGES=Object.freeze([
-  ['F:U:0','F:U:1'],['F:U:1','F:U:2'],['F:U:2','F:U:3'],['F:U:3','F:U:4'],['F:U:4','F:U:5'],['F:U:5','F:U:6'],['F:U:6','F:U:7'],['F:U:7','F:U:8'],
+  ['F:U:0','F:U:1'],['F:U:1','F:U:2'],['F:U:2','F:U:3'],['F:U:3','F:U:4'],['F:U:4','F:U:5'],['F:U:5','F:U:6'],['F:U:6','F:U:7'],['F:U:7','F:U:8'],['F:U:8','F:U:9'],['F:U:9','F:U:10'],['F:U:10','F:U:11'],['F:U:11','F:U:12'],
   ['F:D:0','F:D:1'],['F:D:1','F:D:2'],['F:D:2','F:D:3'],['F:D:3','F:D:4'],['F:D:4','F:D:5'],['F:D:5','F:D:6'],['F:D:6','F:D:7'],['F:D:7','F:D:8'],
-  ['F:U:1','F:D:1'],['F:U:3','F:D:3'],['F:U:4','F:D:4'],['F:U:5','F:D:5'],['F:U:7','F:D:7'],
-  ['F:U:0','F:L:0'],['F:U:1','F:L:0'],['F:U:0','F:L:1'],['F:L:0','F:L:1'],['F:L:0','F:L:2'],['F:L:1','F:L:2'],['F:L:1','F:L:3'],['F:L:2','F:L:3'],['F:L:2','F:D:0'],['F:L:3','F:D:1'],['F:U:2','F:L:2'],['F:D:2','F:L:3'],
-  ['F:U:8','F:R:0'],['F:U:7','F:R:0'],['F:U:8','F:R:1'],['F:R:0','F:R:1'],['F:R:0','F:R:2'],['F:R:1','F:R:2'],['F:R:1','F:R:3'],['F:R:2','F:R:3'],['F:R:2','F:D:8'],['F:R:3','F:D:7'],['F:U:6','F:R:2'],['F:D:6','F:R:3']
+  ['F:U:1','F:D:1'],['F:U:4','F:D:3'],['F:U:6','F:D:4'],['F:U:8','F:D:5'],['F:U:11','F:D:7'],
+  ['F:U:0','F:L:0'],['F:L:0','F:L:1'],['F:L:1','F:L:2'],['F:L:2','F:L:3'],['F:L:2','F:D:0'],['F:L:3','F:D:1'],['F:U:3','F:L:2'],['F:D:2','F:L:3'],
+  ['F:U:12','F:R:0'],['F:R:0','F:R:1'],['F:R:1','F:R:2'],['F:R:2','F:R:3'],['F:R:2','F:D:8'],['F:R:3','F:D:7'],['F:U:9','F:R:2'],['F:D:6','F:R:3']
 ].map(pair=>Object.freeze(pair)));
+const SYMMETRIC_FIELD_TOP_PORT_IDS=Object.freeze([
+  'F:U:0','F:U:1','F:U:2','F:U:3','F:U:4','F:U:5',
+  'F:U:7','F:U:8','F:U:9','F:U:10','F:U:11','F:U:12'
+]);
 const SYMMETRIC_FIELD_PORTS=Object.freeze({
-  'P1:L':'F:U:0','P1:C':'F:L:0','P1:R':'F:U:1',
-  'P2:L':'F:L:2','P2:C':'F:U:2','P2:R':'F:U:3',
-  'P3:L':'F:U:5','P3:C':'F:U:6','P3:R':'F:R:2',
-  'P4:L':'F:U:7','P4:C':'F:R:0','P4:R':'F:U:8'
+  'P1:L':'F:U:0','P1:C':'F:U:1','P1:R':'F:U:2',
+  'P2:L':'F:U:3','P2:C':'F:U:4','P2:R':'F:U:5',
+  'P3:L':'F:U:7','P3:C':'F:U:8','P3:R':'F:U:9',
+  'P4:L':'F:U:10','P4:C':'F:U:11','P4:R':'F:U:12'
 });
 const SYMMETRIC_FIELD_START_ID='F:D:4';
 const SYMMETRIC_FIELD_GATE_BOUNDARY_Z=-3.1;
@@ -1632,12 +1636,12 @@ function battleFieldStartPosition(fieldId){return normalizeBattleFieldId(fieldId
 function symmetricFieldNodeIds(){return [...SYMMETRIC_FIELD_NODE_IDS]}
 function symmetricFieldNeighbors(id){const out=[];for(const [a,b] of SYMMETRIC_FIELD_EDGES){if(a===id)out.push(b);else if(b===id)out.push(a)}return out}
 function garden3DSharedHeight(band,index){
- const upper=[.78,1.06,1.42,1.78,2.08,1.78,1.42,1.06,.78],lower=[.22,.32,.44,.58,.72,.58,.44,.32,.22],side=[1.18,.9,.66,.94];
+ const upper=[.72,.82,.94,1.06,1.16,1.24,1.32,1.24,1.16,1.06,.94,.82,.72],lower=[.22,.32,.44,.58,.72,.58,.44,.32,.22],side=[1.18,.9,.66,.94];
  if(band==='U')return upper[index]??.24;if(band==='D')return lower[index]??.24;if(band==='L'||band==='R')return side[index]??.24;return .24
 }
 function symmetricFieldWorld(id){
  const parts=id.split(':'),band=parts[1],index=Number(parts[2]),garden=garden3DFieldActive();
- if(band==='U'&&Number.isInteger(index)&&index>=0&&index<=8)return{x:(index-4)*1.8,z:-1.9,y:garden?garden3DSharedHeight(band,index):.24};
+ if(band==='U'&&Number.isInteger(index)&&index>=0&&index<=12){const laneIndex=index<6?index:index>6?index-1:null,x=laneIndex===null?0:(laneIndex-5.5)*1.45;return{x,z:-1.9,y:garden?garden3DSharedHeight(band,index):.24}}
  if(band==='D'&&Number.isInteger(index)&&index>=0&&index<=8)return{x:(index-4)*1.8,z:2.7,y:garden?garden3DSharedHeight(band,index):.24};
  const side={L:{0:[-8.1,-.9],1:[-9.25,.25],2:[-8.35,1.55],3:[-6.75,.8]},R:{0:[8.1,-.9],1:[9.25,.25],2:[8.35,1.55],3:[6.75,.8]}}[band]?.[index];
  return side?{x:side[0],z:side[1],y:garden?garden3DSharedHeight(band,index):.24}:null
@@ -2537,7 +2541,7 @@ window.__GAMEROAD_SYMMETRIC_GATE_FIELD_R1__=Object.freeze({
  nodeIds:Object.freeze([...SYMMETRIC_FIELD_NODE_IDS]),
  edges:Object.freeze(SYMMETRIC_FIELD_EDGES.map(edge=>Object.freeze([...edge]))),
  ports:SYMMETRIC_FIELD_PORTS,
- snapshot:()=>Object.freeze({selectedFieldId:currentBattleFieldId(),active:symmetricFieldActive(),gateNodeCount:SYMMETRIC_FIELD_NODE_IDS.filter(id=>id.includes('GATE')).length,topCenterHasDirectShieldPort:Object.values(SYMMETRIC_FIELD_PORTS).includes('F:U:4'),sharedNodeCount:SYMMETRIC_FIELD_NODE_IDS.length,sharedEdgeCount:SYMMETRIC_FIELD_EDGES.length,goalVisualColumns:SYMMETRIC_FIELD_GOAL_VISUAL_COLUMNS,startPosition:battleFieldStartPosition(BATTLE_FIELD_SYMMETRIC_GATE_ID),gameplayAuthority:'existing-neighbors-and-existing-shield-road-authority'})
+ snapshot:()=>Object.freeze({selectedFieldId:currentBattleFieldId(),active:symmetricFieldActive(),gateNodeCount:SYMMETRIC_FIELD_NODE_IDS.filter(id=>id.includes('GATE')).length,topCenterHasDirectShieldPort:Object.values(SYMMETRIC_FIELD_PORTS).includes('F:U:6'),sharedNodeCount:SYMMETRIC_FIELD_NODE_IDS.length,sharedEdgeCount:SYMMETRIC_FIELD_EDGES.length,goalVisualColumns:SYMMETRIC_FIELD_GOAL_VISUAL_COLUMNS,startPosition:battleFieldStartPosition(BATTLE_FIELD_SYMMETRIC_GATE_ID),gameplayAuthority:'existing-neighbors-and-existing-shield-road-authority'})
 });
 window.__V106_FIELD_TEST__={nodeWorld,fieldProject,renderField3D,beginRouteDrag,moveRouteDrag,endRouteDrag,spawnHoneyFromRoads,collectEndpointHoney,awakeManaFromHoney,honeySourceNodesForPower,honeySourceContract:'lane-card-same-power; shields excluded; player+lane+position retained; endpoint pile pickup=all; win=one lane >=7 real cards',injectHoney:(id,n=1)=>{const m=state.match;if(!m)return false;m.honey.byNode[id]=n;renderBattle();return true},setContent:(id)=>{state.setupContent=id;return id},route:()=>state.match?.players?.[0]?.plan?.path||[],projection:()=>Object.fromEntries(fieldProjection),honey:()=>state.match?.honey?{byNode:{...state.match.honey.byNode},receipts:[...state.match.honey.receipts]}:null};window.__GAMEROAD_BUILD__={version:'10.7',workId:'BROWSER-V107-DECK-BATTLE-INTEGRATION-001',rulings:{honeyPilePickup:'all',win:'one-lane-seven-or-more-real-cards',deckRule:'FIRST_REGULATION@3',mainDesign:40,mainMax:40,exMax:7,sameNameBase:1}};load();initDeckLibrary();renderHome();
 

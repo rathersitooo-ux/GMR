@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PROGRESSION-NO-FUTURE-SLOTS-R2-20260916T0529-SOL-MAKASETA",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PROGRESSION_BUILT_ONLY_VISUAL_R2",
+  "acquireKey": "BATTLE-PROGRESSION-NO-FUTURE-SLOTS-R2-20260916T0529-SOL-MAKASETA",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1739_FOCUSED_TESTS_PASS_PACKAGE_FIXTURE_ONLY_REMAINED",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1739_RUN_35019497308_RUNTIME_TEST_8_OF_8_PASS",
+  "proceedToken": "PROCEED|BATTLE-PROGRESSION-NO-FUTURE-SLOTS-R2-20260916T0529-SOL-MAKASETA|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|progression-built-only-visual|three-file-clean-history|active-lease",
+  "authorizationBaseSha": "5042ddeee2e543931418dbb174bd468f425f5fd0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PROGRESSION_BUILT_ONLY_VISUAL_R2",
+  "leaseAcquireKey": "BATTLE-PROGRESSION-NO-FUTURE-SLOTS-R2-20260916T0529-SOL-MAKASETA",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 05:29 JST",
+  "leaseUntilJst": "2026-09-16 06:29 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A13:L13",
+  "leaseExactMutableResources": "browser/new-base-flanora-board-surface-runtime.mjs; tests/new-base-flanora-board-surface-runtime.test.mjs; deploy/cloudflare/tests/build.test.mjs; own transient data/preaction-authorizations/BATTLE-PROGRESSION-NO-FUTURE-SLOTS-R2-20260916T0529-SOL-MAKASETA.json; own branch/PR/check/merge/readback. READ_ONLY deploy/cloudflare/scripts/build.mjs; browser/new-base-flanora-map-layout-core.mjs; browser/new-base-progression-lane-presentation-core.mjs; browser/GAMEROAD.html; gameplay movement/target/Shield/GOAL/rules/state; all parallel WorkUnits.",
+  "solutionSignature": "FLANORA_BUILT_ONLY_DISCRETE_PROGRESSION_VISUAL_V2",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_CONTINUOUS_ROAD_AND_EXISTING_PROGRESSION_PRESENTATION_PLUS_EXISTING_PACKAGE_PROVENANCE_FIXTURE_REUSED",
+  "solutionSearchEvidence": [
+    "Existing Flanora board continuous road track remains the future-progression visual; no new path system is introduced.",
+    "Existing new-base progression lane presentation remains the sole BUILT/LATENT authority; no second progression or legality engine is introduced.",
+    "PR #1739 already demonstrated the runtime and focused regression behavior with 8/8 tests passing.",
+    "PR #1739 Required Gate failed only because deploy/cloudflare/tests/build.test.mjs pinned the previous runtime blob in the existing public-package provenance fixture.",
+    "R2 therefore reuses the same product repair and updates only that existing provenance fixture to the exact new runtime blob; deploy/cloudflare/scripts/build.mjs remains read-only."
+  ],
+  "scope": [
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/BATTLE-PROGRESSION-NO-FUTURE-SLOTS-R2-20260916T0529-SOL-MAKASETA.json"
+  ],
+  "leaseScope": [
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/BATTLE-PROGRESSION-NO-FUTURE-SLOTS-R2-20260916T0529-SOL-MAKASETA.json"
+  ]
+}

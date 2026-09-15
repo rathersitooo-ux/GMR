@@ -173,6 +173,31 @@ if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stat
     errors.push('public HUD QA probe does not expose viewer-relative peer ids');
   }
   errors.push(...collectHomeVisualShellErrors(html));
+  const symmetricGateFieldContracts = [
+    [/data-field=["']FIELD-01["'][^>]*>草原<\/button>/, 'existing field choice is missing'],
+    [/data-field=["']FIELD-10["'][^>]*>新フィールド<\/button>/, 'new symmetric field choice is missing'],
+    [/setupField:BATTLE_FIELD_CURRENT_ID/, 'field selection is not part of current setup state'],
+    [/setupField:normalizeBattleFieldId\(state\.setupField\)/, 'field selection is not persisted in the existing save pack'],
+    [/const SYMMETRIC_FIELD_START_ID=['"]F:D:4['"]/, 'new field shared start is missing'],
+    [/const SYMMETRIC_FIELD_GOAL_VISUAL_COLUMNS=9/, 'new field GOAL visual band is not nine columns'],
+    [/const SYMMETRIC_FIELD_GATE_BOUNDARY_Z=-3\.1/, 'Gate boundary presentation is missing'],
+    [/id=["']fieldTopologyLayer["']/, 'new field continuous topology layer is missing'],
+    [/gateRole:['"]BOUNDARY_EDGE_ONLY['"]/, 'Gate is not explicitly boundary-only'],
+    [/gateNodeCount:SYMMETRIC_FIELD_NODE_IDS\.filter\(id=>id\.includes\(['"]GATE['"]\)\)\.length/, 'Gate-node zero-count receipt is missing'],
+    [/topCenterHasDirectShieldPort:Object\.values\(SYMMETRIC_FIELD_PORTS\)\.includes\(['"]F:U:4['"]\)/, 'top-center no-upward-connection receipt is missing'],
+    [/for\(const p of ps\)p\.position=battleFieldStartPosition\(fieldId\)/, 'new matches do not use the selected field start'],
+    [/state\.match=\{id:'M'\+Date\.now\(\),mode:snapshot\.setup\.mode,contentId:snapshot\.setup\.content,fieldId,round:1/, 'selected field identity is not pinned into the match'],
+    [/if\(symmetricFieldActive\(\)\)return SYMMETRIC_FIELD_PORTS\[`\$\{owner\}:\$\{lane\}`\]\|\|null/, 'new field does not connect shared field directly to existing Shield identities'],
+    [/if\(id\.startsWith\(['"]F:['"]\)\)\{[\s\S]*?symmetricFieldNeighbors\(id\)[\s\S]*?centerPort\(p\.id,l,viewer\)===id/, 'new common field movement graph is not wired into existing Shield neighbor authority'],
+    [/host\.hidden=symmetric;host\.setAttribute\(['"]aria-hidden['"],String\(symmetric\)\);if\(symmetric\)return true/, 'old Flanora topology remains overlaid on the new field'],
+  ];
+  for (const [pattern, message] of symmetricGateFieldContracts) if (!pattern.test(html)) errors.push(message);
+  const symmetricPortsStart = html.indexOf('const SYMMETRIC_FIELD_PORTS=Object.freeze({');
+  const symmetricPortsEnd = html.indexOf('const SYMMETRIC_FIELD_START_ID=', symmetricPortsStart);
+  const symmetricPortsBlock = symmetricPortsStart >= 0 && symmetricPortsEnd > symmetricPortsStart ? html.slice(symmetricPortsStart, symmetricPortsEnd) : '';
+  if (symmetricPortsBlock.includes("'F:U:4'")) errors.push('central-top shared-field point is directly connected upward to a Shield/Gate edge');
+  if (/SYMMETRIC_FIELD_(?:GATE_NODE|GATE_CELL|GATE_STOP)/.test(html)) errors.push('Gate was implemented as a node/cell/stop instead of an edge boundary');
+
   const centralWorldLiveContracts = [
     [/id=["']battleCentralWorldLiveHost["'][^>]*class=["']battleCentralWorldLiveHost["'][^>]*aria-label=["']フラノラ盤面の進行表示["']/, 'central Flanora live presentation host is missing'],
     [/BATTLE_CENTRAL_WORLD_LIVE_MOUNT_R8/, 'central Flanora live mount marker is missing'],

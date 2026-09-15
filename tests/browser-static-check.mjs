@@ -197,6 +197,12 @@ if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stat
   const correctedBattleResourceContracts = [
     [/const hand=deck\.splice\(0,7\);/, 'fresh Battle ordinary hand is not initialized to seven'],
     [/function refill\(p\)\{while\(p\.hand\.length<3\)\{const card=consumeOrdinaryBattleSupply\(p\);if\(card==null\)break;p\.hand\.push\(card\)\}\}/, 'post-use refill target is no longer three or bypasses shared deck-supply boundary'],
+    [/GAMEROAD_BATTLE_DECK_SUPPLY_LIVE_R2/, 'Battle deck supply live mount marker is missing'],
+    [/import \{ consumeNextBattleSupply \} from [\"]\.\/battle-deck-supply-boundary\.mjs[\"]/, 'Battle deck supply boundary is not imported by the live Browser'],
+    [/deck,subDeck:\[\],hand,shields:/, 'player live state does not expose the dynamic public-lower subDeck zone'],
+    [/finalResortMode:false,finalResortPolicy:null/, 'player live state does not expose fail-closed final-resort state'],
+    [/case'drawAndReduceCost':\{const drawn=consumeOrdinaryBattleSupply\(p\)/, 'drawAndReduceCost bypasses the shared deck-supply boundary'],
+    [/case'deckTopToChip':\{const moved=p\.deck\.shift\(\);p\.chip\.push\(moved\)/, 'deckTopToChip changed despite its current HOLD boundary'],
     [/manaCurrent:7,manaMax:10,honey:0,chip:/, 'numeric Mana 7/10 and player-owned Honey balance are not initialized'],
     [/function currentPlacementRanks\(m=state\.match\)/, 'current placement ranking was not made reusable for round income'],
     [/position:p\.position,manaCurrent:Number\(p\.manaCurrent\)\|\|0,manaMax:Number\(p\.manaMax\)\|\|10,honey:Number\(p\.honey\)\|\|0,chip:/, 'friend projection drops numeric Mana or player-owned Honey'],

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { projectBattleActionOrderChain } from '../browser/battle-action-order-presentation-core.mjs';
 import { createBattleScreenModel } from '../browser/battle-screen-presentation-core.mjs';
 import {
   BATTLE_SCREEN_RUNTIME,
@@ -160,6 +161,13 @@ assert.equal(runtime.currentActionCue.getAttribute('aria-live'), 'polite');
 assert.equal(runtime.currentActionCue.dataset.presentationOnly, 'true');
 assert.equal(runtime.currentActionCue.dataset.authority, 'accepted-public-model-only');
 assert.equal(runtime.currentActionCue.hidden, true);
+assert.ok(runtime.causalTrace);
+assert.equal(runtime.causalTrace.getAttribute('data-battle-causal-trace'), '1');
+assert.equal(runtime.causalTrace.getAttribute('role'), 'status');
+assert.equal(runtime.causalTrace.getAttribute('aria-live'), 'polite');
+assert.equal(runtime.causalTrace.dataset.presentationOnly, 'true');
+assert.equal(runtime.causalTrace.dataset.authority, 'accepted-causal-return-stages-only');
+assert.equal(runtime.causalTrace.hidden, true);
 assert.ok(runtime.progressGuide);
 assert.equal(runtime.progressGuide.getAttribute('data-battle-progress-guide'), '1');
 assert.equal(runtime.progressGuide.getAttribute('aria-label'), 'ROADからGOALへの進行方向');
@@ -204,6 +212,10 @@ assert.ok(runtimeStyle.textContent.includes('.grBattleLanePublicCard'));
 assert.ok(runtimeStyle.textContent.includes('[data-public-card-visible'));
 assert.ok(runtimeStyle.textContent.includes('[data-battle-current-action]'));
 assert.ok(runtimeStyle.textContent.includes('max-width:min(42vw,420px)'));
+assert.ok(runtimeStyle.textContent.includes('[data-battle-causal-trace]'));
+assert.ok(runtimeStyle.textContent.includes('.grBattleCausalTraceStage'));
+assert.ok(runtimeStyle.textContent.includes('@keyframes grBattleCausalTraceStage'));
+assert.ok(runtimeStyle.textContent.includes('[data-motion="static_causal_trace"] .grBattleCausalTraceStage{animation:none!important'));
 assert.ok(runtimeStyle.textContent.includes('[data-battle-progress-guide]'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleProgressArrow::before{content:"◀"'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleProgressArrow::before{content:"▲"'));
@@ -524,12 +536,56 @@ assert.equal(p3ShieldSlots[2].dataset.boardReturnEventId, 'settle-1');
 assert.equal(p3ShieldSlots[2].dataset.boardReturnDestination, 'P3:R');
 assert.equal(p3ShieldSlots[2].getAttribute('aria-label'), 'Shield R → ROAD R、解決結果の帰着先');
 assert.equal(runtime.shieldRails[3].children[2].dataset.boardReturnTarget, undefined);
+assert.equal(runtime.causalTrace.hidden, false);
+assert.equal(runtime.causalTrace.dataset.traceKey, 'settle-1:P3:R');
+assert.equal(runtime.causalTrace.dataset.motion, 'causal_return');
+assert.equal(runtime.causalTrace.dataset.stageCount, '4');
+assert.equal(runtime.causalTrace.dataset.preserveStageOrder, 'true');
+assert.deepEqual(runtime.causalTrace.children.map(node => node.dataset.kind), ['cause', 'accepted_resolution', 'return_path', 'destination']);
+assert.deepEqual(runtime.causalTrace.children.map(node => node.textContent), ['攻撃 C1（グー）', '結果確定', '盤面へ帰着', 'B-1 / Shield R']);
 
-const reducedSettle = createBattleScreenModel({ participants, plan: settlePlan, returnIntent: 'MATCH_PLAN', reducedMotion: true });
+const acceptedActionOrder = projectBattleActionOrderChain({
+  orderedCards: [
+    { participantId: 'P2', cardId: 'C2', printedNumber: 2, jankenHand: 'SCISSORS' },
+    { participantId: 'P4', cardId: 'C4', printedNumber: 4, jankenHand: 'PAPER' },
+    { participantId: 'P1', cardId: 'C1', printedNumber: 7, jankenHand: 'ROCK' },
+    { participantId: 'P3', cardId: 'C3', printedNumber: 9, jankenHand: 'ROCK' }
+  ],
+  resolution: {
+    processingOrder: ['P2', 'P4', 'P1', 'P3'],
+    resolvedWinners: ['P3'],
+    invalidated: ['P2', 'P4', 'P1'],
+    unresolvedSurvivors: [],
+    steps: [
+      { processedPlayerId: 'P2', winningHand: null, resolvedWinner: false, invalidated: [], survivors: ['P2', 'P4', 'P1', 'P3'] },
+      { processedPlayerId: 'P4', winningHand: null, resolvedWinner: false, invalidated: ['P2'], survivors: ['P4', 'P1', 'P3'] },
+      { processedPlayerId: 'P1', winningHand: null, resolvedWinner: false, invalidated: ['P4'], survivors: ['P1', 'P3'] },
+      { processedPlayerId: 'P3', winningHand: 'ROCK', resolvedWinner: true, invalidated: ['P1'], survivors: ['P3'] }
+    ]
+  }
+});
+const orderedSettle = createBattleScreenModel({
+  participants,
+  plan: settlePlan,
+  returnIntent: 'MATCH_PLAN',
+  actionOrder: acceptedActionOrder
+});
+runtime.render(orderedSettle);
+assert.equal(runtime.causalTrace.hidden, false);
+assert.equal(runtime.causalTrace.dataset.stageCount, '5');
+assert.deepEqual(runtime.causalTrace.children.map(node => node.dataset.kind), ['cause', 'processing', 'accepted_resolution', 'return_path', 'destination']);
+assert.equal(runtime.causalTrace.children[1].textContent, '比較 A-2 → B-2 → A-1 → B-1');
+assert.deepEqual(runtime.causalTrace.children.map(node => node.dataset.stageIndex), ['1', '2', '3', '4', '5']);
+assert.deepEqual(runtime.causalTrace.children.map(node => node.style.animationDelay), ['0ms', '160ms', '320ms', '480ms', '640ms']);
+
+const reducedSettle = createBattleScreenModel({ participants, plan: settlePlan, returnIntent: 'MATCH_PLAN', reducedMotion: true, actionOrder: acceptedActionOrder });
 runtime.render(reducedSettle);
 assert.equal(runtime.shell.dataset.motion, 'static_only');
 assert.equal(runtime.shieldRails[2].children[2].dataset.boardReturnTarget, 'true');
 assert.equal(runtime.currentActionCue.textContent, '今：盤面反映 C1（グー） → 解決 → B-1 / Shield R');
+assert.equal(runtime.causalTrace.dataset.motion, 'static_causal_trace');
+assert.equal(runtime.causalTrace.dataset.stageCount, '5');
+assert.deepEqual(runtime.causalTrace.children.map(node => node.dataset.kind), ['cause', 'processing', 'accepted_resolution', 'return_path', 'destination']);
 
 const lowPerfSettle = createBattleScreenModel({ participants, plan: settlePlan, returnIntent: 'MATCH_PLAN', lowPerf: true });
 runtime.render(lowPerfSettle);
@@ -541,6 +597,9 @@ const malformedReturn = { ...settle, boardReturn: { ...settle.boardReturn, shiel
 assert.throws(() => runtime.render(malformedReturn), /BATTLE_SCREEN_MODEL_REJECTED/);
 assert.equal(runtime.currentActionCue.hidden, true);
 assert.equal(runtime.currentActionCue.dataset.causalCardId, undefined);
+assert.equal(runtime.causalTrace.hidden, true);
+assert.equal(runtime.causalTrace.children.length, 0);
+assert.equal(runtime.causalTrace.dataset.traceKey, undefined);
 assert.equal(runtime.shell.dataset.boardReturnDestination, undefined);
 assert.equal(runtime.shieldRails[2].dataset.boardReturnParticipant, undefined);
 assert.equal(runtime.shieldRails.flatMap(rail => rail.children).some(node => node.dataset.boardReturnTarget === 'true'), false);
@@ -555,6 +614,8 @@ assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, undefined)
 assert.equal(runtime.currentActionCue.dataset.causalTraceKey, undefined);
 assert.equal(runtime.currentActionCue.dataset.causalCardId, undefined);
 assert.equal(runtime.currentActionCue.dataset.causalJanken, undefined);
+assert.equal(runtime.causalTrace.hidden, true);
+assert.equal(runtime.causalTrace.children.length, 0);
 assert.equal(runtime.shieldRails[2].dataset.boardReturnParticipant, undefined);
 assert.equal(runtime.shieldRails.flatMap(rail => rail.children).some(node => node.dataset.boardReturnTarget === 'true'), false);
 assert.equal(p3ShieldSlots[2].getAttribute('aria-label'), 'Shield R → ROAD R');
@@ -621,12 +682,14 @@ assert.deepEqual(roleSurfaces.map(node => node.textContent), ['攻撃', '', '', 
 const progressGuide = runtime.progressGuide;
 const fieldLandmark = runtime.fieldLandmark;
 const currentActionCue = runtime.currentActionCue;
+const causalTrace = runtime.causalTrace;
 const resourceHudRoot = runtime.resourceHud.root;
 assert.equal(runtime.destroy(), true);
 assert.equal(runtime.destroy(), false);
 assert.equal(progressGuide.parentNode, null);
 assert.equal(fieldLandmark.parentNode, null);
 assert.equal(currentActionCue.parentNode, null);
+assert.equal(causalTrace.parentNode, null);
 assert.equal(resourceHudRoot.parentNode, null);
 assert.equal(root.children.includes(runtime.shell), false);
 assert.throws(() => runtime.render(idle), /RUNTIME_DESTROYED/);
@@ -663,6 +726,8 @@ assert.equal(adopted.shell.dataset.owner, 'runtime_overlay');
 assert.equal(adopted.hud.root.parentNode, adopted.shell);
 assert.equal(adopted.currentActionCue.parentNode, existingShell);
 assert.equal(adopted.currentActionCue.dataset.presentationOnly, 'true');
+assert.equal(adopted.causalTrace.parentNode, existingShell);
+assert.equal(adopted.causalTrace.dataset.presentationOnly, 'true');
 assert.equal(adopted.progressGuide.parentNode, adopted.shell);
 assert.equal(adopted.progressGuide.dataset.presentationOnly, 'true');
 assert.equal(adopted.fieldLandmark.parentNode, adopted.shell);
@@ -684,6 +749,8 @@ assert.equal(adopted.currentActionCue.textContent, '今：攻撃 A-1 → B-2');
 adopted.render(settle);
 assert.equal(existingResolution.textContent, 'KEEP');
 assert.equal(adopted.currentActionCue.textContent, '今：盤面反映 C1（グー） → 解決 → B-1 / Shield R');
+assert.equal(adopted.causalTrace.hidden, false);
+assert.deepEqual(adopted.causalTrace.children.map(node => node.dataset.kind), ['cause', 'accepted_resolution', 'return_path', 'destination']);
 assert.equal(adopted.resolutionSurface.dataset.battleBoardReturnDestination, 'P3:R');
 assert.equal(adopted.shieldRails[2].children[2].dataset.boardReturnTarget, 'true');
 adopted.render(terminalResult);
@@ -692,14 +759,18 @@ assert.equal(existingPhase.hidden, true);
 assert.equal(adopted.shell.hidden, true);
 assert.equal(adopted.hud.root.hidden, true);
 assert.equal(adopted.currentActionCue.hidden, true);
+assert.equal(adopted.causalTrace.hidden, true);
+assert.equal(adopted.causalTrace.children.length, 0);
 assert.equal(adopted.resolutionSurface.dataset.battleBoardReturnDestination, undefined);
 const adoptedOverlay = adopted.shell;
 const adoptedCurrentActionCue = adopted.currentActionCue;
+const adoptedCausalTrace = adopted.causalTrace;
 const adoptedProgressGuide = adopted.progressGuide;
 const adoptedFieldLandmark = adopted.fieldLandmark;
 assert.equal(adopted.destroy(), true);
 assert.equal(adoptedOverlay.parentNode, null);
 assert.equal(adoptedCurrentActionCue.parentNode, null);
+assert.equal(adoptedCausalTrace.parentNode, null);
 assert.equal(adoptedProgressGuide.parentNode, null);
 assert.equal(adoptedFieldLandmark.parentNode, null);
 assert.equal(adoptedDocument.body.children.includes(existingShell), true);
@@ -723,6 +794,8 @@ assert.throws(
 assert.equal(BATTLE_SCREEN_RUNTIME.presentationOnly, true);
 assert.equal(BATTLE_SCREEN_RUNTIME.authority, 'NONE');
 assert.equal(BATTLE_SCREEN_RUNTIME.currentActionAuthority, 'ACCEPTED_PUBLIC_MODEL_ONLY');
+assert.equal(BATTLE_SCREEN_RUNTIME.causalTraceAuthority, 'MODEL_CAUSAL_RETURN_STAGES_ONLY_NO_RECALCULATION');
+assert.equal(BATTLE_SCREEN_RUNTIME.causalTraceStageOrder, 'MODEL_ORDER_ONLY');
 assert.equal(BATTLE_SCREEN_RUNTIME.shieldLanePresentation, 'STRUCTURE_PLUS_EXACT_ACCEPTED_BOARD_RETURN_CUE_NO_SHIELD_STATE_INFERENCE');
 assert.equal(BATTLE_SCREEN_RUNTIME.boardReturnAuthority, 'MODEL_ONLY_EXACT_OPPONENT_PLUS_SHIELD_LANE');
 assert.equal(BATTLE_SCREEN_RUNTIME.productionHtmlMutationOwnedHere, false);

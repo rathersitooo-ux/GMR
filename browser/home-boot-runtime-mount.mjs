@@ -24,7 +24,9 @@ function mountStudyAfterHome() {
 
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', mountStudyAfterHome, { once: true });
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(mountStudyAfterHome, 0);
+    }, { once: true });
   } else {
     mountStudyAfterHome();
   }

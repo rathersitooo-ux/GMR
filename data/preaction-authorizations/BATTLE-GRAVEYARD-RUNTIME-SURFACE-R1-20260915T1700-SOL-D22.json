@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-GRAVEYARD-RUNTIME-SURFACE-R1-20260915T1700-SOL-D22",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_GRAVEYARD_INFORMATION_PLAYER_SURFACE_R1",
+  "acquireKey": "BATTLE-GRAVEYARD-RUNTIME-SURFACE-R1-20260915T1700-SOL-D22",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "EXISTING-GRAVEYARD-CORE-PLUS-NONOVERLAPPING-NEW-SURFACE-PATHS",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING-CORE-FOCUSED-TESTS-AND-ISOLATED-DOM-SURFACE-DESIGN",
+  "proceedToken": "PROCEED|BATTLE-GRAVEYARD-RUNTIME-SURFACE-R1-20260915T1700-SOL-D22|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|reuse-existing-zone-core|lease-snapshot-A13",
+  "authorizationBaseSha": "061c899df9df59d3b798034f097dbe9951946c6d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_GRAVEYARD_INFORMATION_PLAYER_SURFACE_R1",
+  "leaseAcquireKey": "BATTLE-GRAVEYARD-RUNTIME-SURFACE-R1-20260915T1700-SOL-D22",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 17:00 JST",
+  "leaseUntilJst": "2026-09-15 18:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A13:N13",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-graveyard-runtime-surface-r1-20260915 ONLY: browser/battle-card-zone-information-runtime-surface.mjs; tests/battle-card-zone-information-runtime-surface.test.mjs; own transient data/preaction-authorizations/BATTLE-GRAVEYARD-RUNTIME-SURFACE-R1-20260915T1700-SOL-D22.json; CURRENT_ACTIVE_LEASES own AcquireKey row only.",
+  "scope": [
+    "browser/battle-card-zone-information-runtime-surface.mjs",
+    "tests/battle-card-zone-information-runtime-surface.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-card-zone-information-runtime-surface.mjs",
+    "tests/battle-card-zone-information-runtime-surface.test.mjs"
+  ],
+  "solutionSignature": "Reuse the existing viewer-safe battle card-zone projection to render a bounded graveyard entry/count/recent/list surface with validated detail handoff, without owning storage, gameplay, or card metadata.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MAIN-BATTLE-CARD-ZONE-INFORMATION-CORE",
+  "solutionSearchEvidence": [
+    "Current main already contains battle-card-zone-information-core.mjs with explicit viewerSafe and permission boundaries",
+    "battle-screen runtime/test are currently owned by another ACTIVE lease, so this WorkUnit isolates the reusable player-facing surface instead of duplicating or preempting the live runtime"
+  ]
+}

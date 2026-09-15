@@ -20,7 +20,7 @@
   "leaseSnapshotReadbackAtJst": "2026-09-15 21:27 JST",
   "leaseUntilJst": "2026-09-15 22:20 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main 70ec0c991559d9c81818f80f554fd69dc3117748; mutable browser/partner-saasuna-conversation-source.mjs; browser/partner-dialogue-source-registry.mjs; browser/partner-advice-runtime-mount.mjs; tests/partner-dialogue-source-registry.test.mjs; tests/partner-advice-runtime-mount.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; own transient data/preaction-authorizations/PARTNER-ADVICE-REPLYPAIR-R2-20260915T2120-SOL-SU13D.json; own branch/PR/check/merge/readback. READ_ONLY browser/partner-advice-player-control-core.mjs; browser/GAMEROAD.html; gameplay/rules/legality/target/save/economy/network; 2v2 ping; delegation authority; formal art/voice.",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main 70ec0c991559d9c81818f80f554fd69dc3117748; mutable browser/partner-saasuna-conversation-source.mjs; browser/partner-dialogue-source-registry.mjs; browser/partner-advice-runtime-mount.mjs; tests/partner-dialogue-source-registry.test.mjs; tests/partner-advice-runtime-mount.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; transient tools/temp-partner-advice-replypair-r2.py; transient .github/workflows/zz-temp-partner-advice-replypair-r2.yml; own transient data/preaction-authorizations/PARTNER-ADVICE-REPLYPAIR-R2-20260915T2120-SOL-SU13D.json; own branch/PR/check/merge/readback. READ_ONLY browser/partner-advice-player-control-core.mjs; browser/GAMEROAD.html; gameplay/rules/legality/target/save/economy/network; 2v2 ping; delegation authority; formal art/voice.",
   "solutionSignature": "PARTNER_ADVICE_APPROVED_REPLY_PAIR_SINGLE_SURFACE_V1",
   "reuseDisposition": "COMPOSE",
   "solutionSearchStatus": "PASS",
@@ -39,7 +39,9 @@
     "tests/partner-dialogue-source-registry.test.mjs",
     "tests/partner-advice-runtime-mount.test.mjs",
     "deploy/cloudflare/scripts/build.mjs",
-    "deploy/cloudflare/tests/build.test.mjs"
+    "deploy/cloudflare/tests/build.test.mjs",
+    "tools/temp-partner-advice-replypair-r2.py",
+    ".github/workflows/zz-temp-partner-advice-replypair-r2.yml"
   ],
   "leaseScope": [
     "browser/partner-saasuna-conversation-source.mjs",
@@ -48,6 +50,8 @@
     "tests/partner-dialogue-source-registry.test.mjs",
     "tests/partner-advice-runtime-mount.test.mjs",
     "deploy/cloudflare/scripts/build.mjs",
-    "deploy/cloudflare/tests/build.test.mjs"
+    "deploy/cloudflare/tests/build.test.mjs",
+    "tools/temp-partner-advice-replypair-r2.py",
+    ".github/workflows/zz-temp-partner-advice-replypair-r2.yml"
   ]
 }

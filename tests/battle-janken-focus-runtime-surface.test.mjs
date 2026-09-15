@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT,
   mountBattleJankenFocusRuntimeSurface,
+  resolveViewerLocalFocusCardArt,
 } from '../browser/battle-janken-focus-runtime-surface.mjs';
 
 const AUTHORITATIVE_SELECTION_FIXTURE_NOTE = 'authoritative_selection_already_happened';
@@ -35,9 +36,15 @@ class FakeElement {
   }
 }
 
-function createFakeDocument() {
+function createFakeDocument(artByCardId = {}) {
   const body = new FakeElement('body');
   const head = new FakeElement('head');
+  const collectionCards = Object.entries(artByCardId).map(([cardId, src]) => ({
+    dataset: { id: cardId },
+    querySelector(selector) {
+      return selector === '[data-role="fanart-local-skin-overlay"]' ? { src } : null;
+    },
+  }));
   return {
     body,
     head,
@@ -47,6 +54,9 @@ function createFakeDocument() {
         return head.children.find((child) => child.attributes.has('data-gr-janken-focus-surface-style')) ?? null;
       }
       return null;
+    },
+    querySelectorAll(selector) {
+      return selector === '#collectionGrid [data-id]' ? collectionCards : [];
     },
   };
 }
@@ -65,6 +75,14 @@ function authoritativeCardCatalog(generation = 'g1') {
     { id: `scissors-card-${generation}`, display_name: `刃札 ${generation}`, suit: 'HT', rank: 'Q', power: 12, authority: AUTHORITATIVE_SELECTION_FIXTURE_NOTE },
     { id: `paper-card-${generation}`, display_name: `紙札 ${generation}`, suit: 'DI', rank: '3', power: 3, authority: AUTHORITATIVE_SELECTION_FIXTURE_NOTE },
   ];
+}
+
+function exactArt(generation = 'g1') {
+  return {
+    [`rock-card-${generation}`]: `https://assets.example/${generation}/rock.webp`,
+    [`scissors-card-${generation}`]: `https://assets.example/${generation}/scissors.webp`,
+    [`paper-card-${generation}`]: `https://assets.example/${generation}/paper.webp`,
+  };
 }
 
 function createLiveStack({ rejectCommit = false, rejectCancel = false, rejectFocus = false } = {}) {
@@ -107,7 +125,7 @@ function createLiveStack({ rejectCommit = false, rejectCancel = false, rejectFoc
 }
 
 function mount(options = {}) {
-  const documentRef = createFakeDocument();
+  const documentRef = createFakeDocument(options.artByCardId ?? {});
   const liveInputStack = options.liveInputStack ?? createLiveStack();
   const generationId = options.generationId ?? 'g1';
   const runtime = mountBattleJankenFocusRuntimeSurface({
@@ -137,18 +155,26 @@ test('JANKEN_FOCUS renders all three exact authoritative choices including targe
   assert.equal(runtime.snapshot().gameplayAuthority, false);
 });
 
-test('JANKEN_FOCUS keeps the exact physical card face primary and RPS only as a secondary role badge', () => {
-  const { runtime } = mount();
+test('JANKEN_FOCUS keeps exact physical card art primary and RPS only as a secondary role badge', () => {
+  const { runtime } = mount({ artByCardId: exactArt() });
   const html = runtime.host.innerHTML;
   assert.match(html, /data-physical-card-id="rock-card-g1"/);
   assert.match(html, /data-card-identity-source="GLOBAL_CARD_DATA_EXACT_ID"/);
   assert.match(html, /data-native-suit="SP"/);
   assert.match(html, /data-printed-rank="7"/);
+  assert.match(html, /data-card-art-status="BOUND"/);
+  assert.match(html, /class="grJankenCardArt" data-card-art-source="viewer_local_exact_card_id" src="https:\/\/assets\.example\/g1\/rock\.webp"/);
   assert.match(html, /岩札 g1/);
   assert.match(html, /♠/);
   assert.match(html, /SPADE · ID rock-card-g1/);
-  assert.match(html, /イラスト未接続/);
+  assert.doesNotMatch(html, /イラスト未接続/);
   assert.match(html, /data-janken-role="ROCK">✊ グー/);
+});
+
+test('exact card-art resolver never borrows a different card image', () => {
+  const documentRef = createFakeDocument({ 'foreign-card': 'https://assets.example/foreign.webp', 'rock-card-g1': 'https://assets.example/rock.webp' });
+  assert.deepEqual(resolveViewerLocalFocusCardArt(documentRef, 'rock-card-g1'), { src: 'https://assets.example/rock.webp', source: 'viewer_local_exact_card_id' });
+  assert.equal(resolveViewerLocalFocusCardArt(documentRef, 'paper-card-g1'), null);
 });
 
 test('fixture explicitly models that authoritative opening-hand selection already happened', () => {
@@ -156,14 +182,19 @@ test('fixture explicitly models that authoritative opening-hand selection alread
   assert.ok(authoritativeCardCatalog().every((card) => card.authority === AUTHORITATIVE_SELECTION_FIXTURE_NOTE));
 });
 
-test('missing catalog metadata preserves exact package cardId and never borrows another card identity', () => {
-  const { runtime } = mount({ cardCatalog: [{ id: 'foreign-card', display_name: '別カード', suit: 'CL', rank: 'K' }] });
+test('missing catalog metadata preserves exact package cardId and never borrows another card identity or art', () => {
+  const { runtime } = mount({
+    cardCatalog: [{ id: 'foreign-card', display_name: '別カード', suit: 'CL', rank: 'K' }],
+    artByCardId: { 'foreign-card': 'https://assets.example/foreign.webp' },
+  });
   const html = runtime.host.innerHTML;
   assert.match(html, /data-physical-card-id="rock-card-g1"/);
   assert.match(html, /data-card-identity-source="PACKAGE_CARD_ID_ONLY"/);
+  assert.match(html, /data-card-art-status="MISSING"/);
   assert.match(html, /カード情報未接続/);
   assert.match(html, /イラスト未接続/);
   assert.doesNotMatch(html, /別カード/);
+  assert.doesNotMatch(html, /foreign\.webp/);
 });
 
 test('JANKEN_FOCUS exposes exactly one target-rail switch for each authoritative package and no free target', async () => {
@@ -179,7 +210,6 @@ test('JANKEN_FOCUS exposes exactly one target-rail switch for each authoritative
   assert.match(html, /data-shield-lane="CENTER"/);
   assert.match(html, /data-opponent-id="opponent-paper-g1"/);
   assert.match(html, /data-shield-lane="RIGHT"/);
-
   const result = await runtime.focus('PAPER');
   assert.equal(result.ok, true);
   assert.deepEqual(liveInputStack.calls.focus, ['PAPER']);
@@ -200,14 +230,16 @@ test('JANKEN_FOCUS uses centered flower-bloom presentation with a reduced-motion
   assert.match(style.textContent, /nth-child\(2\).*animation-delay:35ms/);
   assert.match(style.textContent, /nth-child\(3\).*animation-delay:70ms/);
   assert.match(style.textContent, /prefers-reduced-motion:reduce/);
-  assert.match(style.textContent, /\.grJankenRoleBadge\{position:absolute;[^}]*font-size:10px/);
-  assert.doesNotMatch(style.textContent, /grJankenRoleBadge\{display:block;font-size:18px/);
-  assert.doesNotMatch(style.textContent, /grJankenFocusBloomPanel \.grJankenRoleBadge\{text-align:center;font-size:20px/);
+  assert.match(style.textContent, /\.grJankenCardArt\{position:absolute;[^}]*object-fit:cover/);
+  assert.match(style.textContent, /\.grJankenRoleBadge\{position:absolute;[^}]*z-index:3/);
 });
 
-test('focus delegates to the existing live stack and enters enlarged LOAD_FOCUS only after its visible preview is ready', async () => {
+test('focus preserves the same exact physical card art into enlarged LOAD_FOCUS', async () => {
   const liveInputStack = createLiveStack();
-  const { runtime } = mount({ liveInputStack });
+  const artByCardId = exactArt();
+  const { runtime } = mount({ liveInputStack, artByCardId });
+  const focusHtml = runtime.host.innerHTML;
+  assert.match(focusHtml, /src="https:\/\/assets\.example\/g1\/scissors\.webp"/);
   const result = await runtime.focus('SCISSORS');
   assert.deepEqual(liveInputStack.calls.focus, ['SCISSORS']);
   assert.equal(liveInputStack.calls.commit, 0);
@@ -215,12 +247,11 @@ test('focus delegates to the existing live stack and enters enlarged LOAD_FOCUS 
   assert.equal(runtime.snapshot().presentation.surface, 'LOAD_FOCUS');
   assert.equal(runtime.snapshot().presentation.focusedHand, 'SCISSORS');
   assert.match(runtime.host.innerHTML, /ロード確認/);
-  assert.match(runtime.host.innerHTML, /ロックオン固定/);
-  assert.match(runtime.host.innerHTML, /scissors-card-g1/);
   assert.match(runtime.host.innerHTML, /data-physical-card-id="scissors-card-g1"/);
   assert.match(runtime.host.innerHTML, /data-native-suit="HT"/);
   assert.match(runtime.host.innerHTML, /data-printed-rank="Q"/);
-  assert.match(runtime.host.innerHTML, /刃札 g1/);
+  assert.match(runtime.host.innerHTML, /data-card-art-status="BOUND"/);
+  assert.match(runtime.host.innerHTML, /src="https:\/\/assets\.example\/g1\/scissors\.webp"/);
   assert.match(runtime.host.innerHTML, /data-janken-role="SCISSORS">✌ チョキ/);
   assert.match(runtime.host.innerHTML, /opponent-scissors-g1/);
   assert.match(runtime.host.innerHTML, /CENTER \/ shield-scissors-g1/);
@@ -241,7 +272,7 @@ test('failed visible preview stays fail-closed in JANKEN_FOCUS and never exposes
 
 test('BOARD_PEEK round-trip preserves the exact focused package and returns to LOAD_FOCUS without restaging', async () => {
   const liveInputStack = createLiveStack();
-  const { runtime } = mount({ liveInputStack });
+  const { runtime } = mount({ liveInputStack, artByCardId: exactArt() });
   await runtime.focus('ROCK');
   const before = runtime.snapshot().presentation.focusedPackage;
   assert.equal(runtime.boardPeek(), true);
@@ -251,6 +282,7 @@ test('BOARD_PEEK round-trip preserves the exact focused package and returns to L
   const after = runtime.snapshot().presentation.focusedPackage;
   assert.equal(runtime.snapshot().presentation.surface, 'LOAD_FOCUS');
   assert.equal(after, before);
+  assert.match(runtime.host.innerHTML, /src="https:\/\/assets\.example\/g1\/rock\.webp"/);
   assert.deepEqual(liveInputStack.calls.focus, ['ROCK']);
 });
 
@@ -309,6 +341,8 @@ test('surface contract stays presentation-only and exposes no rule or transport 
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.targetRailSource, 'EXISTING_THREE_COMPOUND_PACKAGES_ONLY');
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.targetRailMayCreateTarget, false);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.physicalCardLineageSource, 'EXACT_PACKAGE_CARD_ID_JOIN_GLOBAL_CARD_DATA');
+  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.cardArtSource, 'VIEWER_LOCAL_COLLECTION_EXACT_CARD_ID');
+  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.cardArtExactIdRequired, true);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.jankenRoleIsSecondaryBadge, true);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.inventedCardIdentityAllowed, false);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.cardArtFallback, 'EXPLICIT_ART_UNAVAILABLE_NO_INVENTION');

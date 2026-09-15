@@ -7,6 +7,12 @@ import {
   createNewBaseGoalResultPresentation,
   createNewBaseGoalTerminalState
 } from '../browser/new-base-goal-result-core.mjs';
+import {
+  createNewBaseGoalPathLayout,
+  projectNewBaseGoalPathConnections
+} from '../browser/new-base-goal-path-core.mjs';
+import { shouldForwardLegacySevenRoadWin } from '../browser/new-base-legacy-seven-win-gate-core.mjs';
+import { compatible } from '../browser/road-move-compatibility-core.mjs';
 import { projectResultPresentation } from '../browser/result-presentation-core.mjs';
 
 function goalEvent(overrides = {}) {
@@ -72,6 +78,68 @@ test('ROAD completion, including a seven-card claim, cannot terminate this core'
   assert.equal(rejected.reason, 'GOAL_REACHED_REQUIRED');
   assert.equal(rejected.state.status, 'ACTIVE');
   assert.equal(rejected.state.finalizedResult, null);
+});
+
+test('the numeral seven stays domain-local across Road movement, straight progression, and terminal GOAL', () => {
+  const movementState = {
+    roadValueOf(card) {
+      return card?.kind === 'road' ? card.value : null;
+    },
+    pathStepCountOf(path) {
+      return path?.steps;
+    },
+    isPathLegal() {
+      return true;
+    },
+    isPathStoppable() {
+      return true;
+    }
+  };
+
+  assert.equal(compatible({ id: 'road-6', kind: 'road', value: 6 }, { steps: 6 }, movementState), true);
+  assert.equal(compatible({ id: 'road-7', kind: 'road', value: 7 }, { steps: 1 }, movementState), false);
+
+  const participantIds = ['p1', 'p2', 'p3', 'p4'];
+  const layout = createNewBaseGoalPathLayout({
+    participantIds,
+    horizontalCellCount: 12,
+    shieldLinkedLaneColumnsByParticipant: {
+      p1: [0, 1, 2],
+      p2: [3, 4, 5],
+      p3: [6, 7, 8],
+      p4: [9, 10, 11]
+    }
+  });
+  const straightCardIdsByColumn = Array.from({ length: 12 }, () => []);
+  straightCardIdsByColumn[0] = Array.from({ length: 7 }, (_, index) => `p1-l0-${index + 1}`);
+  const goalPath = projectNewBaseGoalPathConnections(layout, { straightCardIdsByColumn });
+
+  assert.equal(goalPath.ok, true);
+  assert.equal(goalPath.connectedGoalPaths.length, 1);
+  assert.equal(goalPath.connectedGoalPaths[0].straightCardCount, 7);
+  assert.equal(goalPath.connectedGoalPaths[0].connectedToGoal, true);
+  assert.equal(goalPath.terminalWin, false);
+  assert.equal(
+    shouldForwardLegacySevenRoadWin({ rulesetIsNewBase: true, legacySevenRoadWin: true }),
+    false
+  );
+
+  const initial = createNewBaseGoalTerminalState({ matchId: 'match-1' });
+  const premature = applyAuthoritativeNewBaseGoalArrival(initial, {
+    ...goalEvent(),
+    type: 'ROAD_COMPLETED',
+    roadCardCount: 7,
+    roadComplete: true
+  });
+  assert.equal(premature.accepted, false);
+  assert.equal(premature.reason, 'GOAL_REACHED_REQUIRED');
+  assert.equal(premature.state.status, 'ACTIVE');
+
+  const reached = applyAuthoritativeNewBaseGoalArrival(premature.state, goalEvent());
+  assert.equal(reached.accepted, true);
+  assert.equal(reached.reason, 'GOAL_ACCEPTED');
+  assert.equal(reached.state.status, 'ENDED');
+  assert.equal(reached.state.finalizedResult.terminalReason, 'GOAL_REACHED');
 });
 
 test('non-authoritative or cross-match GOAL facts fail closed', () => {

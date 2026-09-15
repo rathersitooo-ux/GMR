@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-HERO-LIVE-R3-20260915T1706-SOL-WU1",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_BOARD_HERO_R6_ACTUAL_INTEGRATION_R1",
+  "acquireKey": "BATTLE-BOARD-HERO-LIVE-R3-20260915T1706-SOL-WU1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "EXACT_MAIN_061C899_PLUS_PUBLIC_BATTLE_SCREEN_ARTIFACT_10356286448",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R6_EXISTING_COMPOSITOR_BOUNDS_FOREGROUND_VISUALS_ONLY",
+  "proceedToken": "PROCEED|BATTLE-BOARD-HERO-LIVE-R3-20260915T1706-SOL-WU1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|board-protagonist-runtime|presentation-only|active-lease",
+  "authorizationBaseSha": "061c899df9df59d3b798034f097dbe9951946c6d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_BOARD_HERO_R6_ACTUAL_INTEGRATION_R1",
+  "leaseAcquireKey": "BATTLE-BOARD-HERO-LIVE-R3-20260915T1706-SOL-WU1",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 17:06 JST",
+  "leaseUntilJst": "2026-09-15 18:06 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main 061c899df9df59d3b798034f097dbe9951946c6d; mutable browser/battle-current-player-ui-runtime.mjs; tests/battle-current-player-ui-runtime.test.mjs; own transient data/preaction-authorizations/BATTLE-BOARD-HERO-LIVE-R3-20260915T1706-SOL-WU1.json; own branch/PR/check/merge/readback only. READ_ONLY browser/GAMEROAD.html; gameplay/rules/movement/target/Shield/GOAL/card identity/resources/save/economy/network/build.",
+  "solutionSignature": "BATTLE_EXISTING_WORLD_BOARD_PROTAGONIST_R6_PRESENTATION_V2",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_COMPOSITOR_PLUS_EXACT_PUBLIC_ARTIFACT_FOREGROUND_OCCLUSION",
+  "solutionSearchEvidence": [
+    "Current main 061c899df9df59d3b798034f097dbe9951946c6d already owns the current-player Battle compositor and authoritative board/world DOM identities.",
+    "Exact-main public interaction artifact 10356286448 shows the board already occupies the primary play area while #battleAdvicePartnerStage and #battleManaArtR8 remain disproportionately large foreground visuals.",
+    "The current compositor does not yet classify those two existing presentation surfaces, so the smallest safe closure is to bound their visual footprint without relocating them or changing state, topology, movement, targeting, Shield, GOAL, card identity, resource values, save, economy, network, or build semantics.",
+    "Existing #battleMap, #board, #boardPlayers and #battleRuntime remain the same world/position authorities; no second board, no new topology, and no GAMEROAD.html mutation are introduced.",
+    "Acceptance is presentation-only: board/world remains visually dominant at 667x375, 1280x720 and 390x844; partner/mana visuals remain visible but subordinate; current hand, right-thumb controls, top HUD and lower-left support consumers keep their existing meaning."
+  ],
+  "scope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs"
+  ]
+}

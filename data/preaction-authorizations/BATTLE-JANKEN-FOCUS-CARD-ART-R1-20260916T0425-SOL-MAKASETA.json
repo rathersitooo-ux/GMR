@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-FOCUS-CARD-ART-R1-20260916T0425-SOL-MAKASETA",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_FOCUS_CARD_ART_LINEAGE_R1",
+  "acquireKey": "BATTLE-JANKEN-FOCUS-CARD-ART-R1-20260916T0425-SOL-MAKASETA",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_78F6090_FOCUS_ART_ALWAYS_MISSING_EXISTING_EXACT_CARD_PROVIDER_AVAILABLE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "READ_ONLY_CURRENT_FOCUS_RUNTIME_TEST_AND_BATTLE_SCREEN_ART_PROVIDER_INSPECTION",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-FOCUS-CARD-ART-R1-20260916T0425-SOL-MAKASETA|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|janken-focus-card-art-lineage|two-file-slice|active-lease",
+  "authorizationBaseSha": "78f6090a157266474faf36986d0ffc41a26bc7cf",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_FOCUS_CARD_ART_LINEAGE_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-FOCUS-CARD-ART-R1-20260916T0425-SOL-MAKASETA",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 04:26 JST",
+  "leaseUntilJst": "2026-09-16 05:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:N11",
+  "leaseExactMutableResources": "browser/battle-janken-focus-runtime-surface.mjs; tests/battle-janken-focus-runtime-surface.test.mjs; own transient data/preaction-authorizations/BATTLE-JANKEN-FOCUS-CARD-ART-R1-20260916T0425-SOL-MAKASETA.json; own branch/PR/check/merge/readback. browser/battle-screen-runtime-mount.mjs, existing card catalog/art registry, deploy/cloudflare/scripts/build.mjs, gameplay/target/route/Shield are READ_ONLY.",
+  "solutionSignature": "JANKEN_FOCUS_EXACT_PHYSICAL_CARD_ART_PROVIDER_REUSE_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_BATTLE_SCREEN_EXACT_CARD_ART_PROVIDER_EXISTS_NO_SECOND_REGISTRY",
+  "solutionSearchEvidence": [
+    "Current JANKEN_FOCUS and LOAD_FOCUS preserve cardId, native suit and printed rank but always render the explicit art-missing placeholder.",
+    "Current Battle screen already resolves viewer-local played-card art by exact cardId; this slice reuses the same authoritative card-art source rather than introducing a second registry.",
+    "R/S/P remains a secondary role badge attached to the physical card identity and never replaces the card face.",
+    "Missing exact art remains a visible exact-card asset gap; unrelated artwork substitution is prohibited.",
+    "Target, route, Shield, legality, assignment, commit payload and gameplay state are read-only in this slice."
+  ],
+  "scope": [
+    "browser/battle-janken-focus-runtime-surface.mjs",
+    "tests/battle-janken-focus-runtime-surface.test.mjs",
+    "data/preaction-authorizations/BATTLE-JANKEN-FOCUS-CARD-ART-R1-20260916T0425-SOL-MAKASETA.json"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-focus-runtime-surface.mjs",
+    "tests/battle-janken-focus-runtime-surface.test.mjs",
+    "data/preaction-authorizations/BATTLE-JANKEN-FOCUS-CARD-ART-R1-20260916T0425-SOL-MAKASETA.json"
+  ]
+}

@@ -158,6 +158,17 @@ test('collection left swipe is consumed without Deck or Storage mutation', () =>
   assert.deepEqual(deck(), ['a']);
 });
 
+test('collection left swipe cannot remove the same cardId already present in Deck', () => {
+  const { controller, calls, deck } = fixture({ deck: ['same-card', 'other-card'] });
+  const result = controller.applySwipe({ surface: 'collection', cardId: 'same-card', deltaX: -90, deltaY: 3 });
+  assert.equal(result.ok, false);
+  assert.equal(result.action, 'none');
+  assert.equal(result.view.open, false);
+  assert.equal(result.view.storageCount, 0);
+  assert.deepEqual(calls, { add: [], remove: [] });
+  assert.deepEqual(deck(), ['same-card', 'other-card']);
+});
+
 test('collection right swipe below forty delegates directly to existing addDeckCard authority', () => {
   const { controller, calls, deck } = fixture();
   const result = controller.applySwipe({ surface: 'collection', cardId: 'N_2', deltaX: 90, deltaY: 2 });

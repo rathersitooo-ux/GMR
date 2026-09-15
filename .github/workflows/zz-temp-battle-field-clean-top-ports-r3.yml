@@ -43,7 +43,7 @@ jobs:
           a=s.index('const SYMMETRIC_FIELD_PORTS=Object.freeze({')
           b=s.index('const SYMMETRIC_FIELD_START_ID=',a)
           ports=s[a:b]
-          pairs=re.findall(r"'(P[1-4]:[LCR])':'(F:U:\\d+)'",ports)
+          pairs=re.findall(r"'(P[1-4]:[LCR])':'(F:U:\d+)'",ports)
           expected=[
             ('P1:L','F:U:0'),('P1:C','F:U:1'),('P1:R','F:U:2'),
             ('P2:L','F:U:3'),('P2:C','F:U:4'),('P2:R','F:U:5'),

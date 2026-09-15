@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ZERO-CASH-SELFHOSTED-R5-20260916T0754-SOL-PCBRIDGE",
+  "taskId": "COLLECTIVE-INTELLIGENCE-FREE-TIER-CAPACITY-AUDIT-001",
+  "workUnitKey": "ZERO_CASH_SELF_HOSTED_WINDOWS_RUNNER_POLICY_R5",
+  "acquireKey": "ZERO-CASH-SELFHOSTED-R5-20260916T0754-SOL-PCBRIDGE",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "OBSERVABILITY_RUN_35032848033_NON_FREE_OR_UNKNOWN_RUNNER_SELF_HOSTED_FALSE_POSITIVE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "GITHUB_OFFICIAL_SELF_HOSTED_FREE_ACTIONS_USAGE_AND_MACHINE_COST_EXTERNAL_20260916",
+  "proceedToken": "PROCEED|ZERO-CASH-SELFHOSTED-R5-20260916T0754-SOL-PCBRIDGE|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|20260916T0754JST",
+  "authorizationBaseSha": "957e92ac9fb3744d996fd90d5abe626d3d21d1e0",
+  "scope": [
+    "config/zero-cash-runtime-policy.json",
+    ".github/workflows/gameroad-observability-ci.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-INTELLIGENCE-FREE-TIER-CAPACITY-AUDIT-001",
+  "leaseWorkUnitKey": "ZERO_CASH_SELF_HOSTED_WINDOWS_RUNNER_POLICY_R5",
+  "leaseAcquireKey": "ZERO-CASH-SELFHOSTED-R5-20260916T0754-SOL-PCBRIDGE",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 07:54 JST",
+  "leaseUntilJst": "2026-09-16 08:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A20:N20",
+  "leaseScope": [
+    "config/zero-cash-runtime-policy.json",
+    ".github/workflows/gameroad-observability-ci.yml"
+  ],
+  "leaseExactMutableResources": "config/zero-cash-runtime-policy.json; .github/workflows/gameroad-observability-ci.yml exact authorized self-hosted Windows classification only; transient own PRE_ACTION manifest; own branch/PR/check/merge/readback",
+  "solutionSignature": "exact-workflow-scoped-self-hosted-runner-allowlist-r5",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE_EXISTING_ZERO_CASH_AUDIT_AND_KEEP_UNKNOWN_RUNNERS_FAIL_CLOSED",
+  "solutionSearchEvidence": [
+    "PR#1747 Observability run 35032848033 failed only because [self-hosted, Windows, X64] was treated as NON_FREE_OR_UNKNOWN_RUNNER by the existing generic runner scanner.",
+    "GitHub official current self-hosted runner documentation states self-hosted runners are free to use with GitHub Actions while the runner-machine maintenance cost remains the user's responsibility.",
+    "GitHub official current billing documentation states GitHub Actions usage is free for self-hosted runners.",
+    "The repair is bounded to an exact workflow-to-runner tuple allowlist; dynamic runners and all other unknown runner strings remain fail-closed.",
+    "The existing zero-cash policy remains the sole billing/cost authority; no second audit or paid fallback is introduced."
+  ]
+}

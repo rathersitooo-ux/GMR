@@ -40,9 +40,7 @@ export function projectFriendBuildRoutes(routeIds = []) {
   for (const rawId of Array.isArray(routeIds) ? routeIds : []) {
     const id = normalizeFriendBuildRouteId(rawId);
     if (!id) continue;
-    const target = resolveFriendBuildRouteDisposition(id) === null
-      ? FRIEND_BUILD_DISPOSITION.KEEP
-      : resolveFriendBuildRouteDisposition(id).disposition;
+    const target = resolveFriendBuildRouteDisposition(id).disposition;
     if (target === FRIEND_BUILD_DISPOSITION.DEFER) deferredRouteIds.push(id);
     else visibleRouteIds.push(id);
   }

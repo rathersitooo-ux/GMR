@@ -1,0 +1,74 @@
+name: TEMP BFI Boot R42 static-contract repair
+
+on:
+  push:
+    branches:
+      - fix/bfi-boot-readiness-r39
+    paths:
+      - .github/workflows/zz-temp-bfi-boot-r42.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temp-bfi-boot-r42-static-repair
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: fix/bfi-boot-readiness-r39
+
+      - name: Apply bounded exact-anchor repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html_path = Path('browser/GAMEROAD.html')
+          html = html_path.read_text(encoding='utf-8')
+
+          old_runtime = '''async function currentScreenTransitionRuntime(timeoutMs=5000){const startedAt=performance.now();for(;;){const runtime=globalThis.GAMEROAD_SCREEN_TRANSITION;if(runtime&&typeof runtime.navigate==="function"&&typeof runtime.back==="function")return runtime;if(performance.now()-startedAt>=timeoutMs)throw new Error("GAMEROAD screen transition runtime is not ready");await new Promise(resolve=>setTimeout(resolve,16))}}'''
+          new_runtime = '''function currentScreenTransitionRuntime(){const ready=globalThis.GAMEROAD_SCREEN_TRANSITION;if(ready&&typeof ready.navigate==="function"&&typeof ready.back==="function")return ready;const waitForRuntime=async(timeoutMs=5000)=>{const startedAt=performance.now();for(;;){const runtime=globalThis.GAMEROAD_SCREEN_TRANSITION;if(runtime&&typeof runtime.navigate==="function"&&typeof runtime.back==="function")return runtime;if(performance.now()-startedAt>=timeoutMs)throw new Error("GAMEROAD screen transition runtime is not ready");await new Promise(resolve=>setTimeout(resolve,16))}};return{async navigate(target,options){return(await waitForRuntime()).navigate(target,options)},async back(entry,options){return(await waitForRuntime()).back(entry,options)}}}'''
+
+          old_nav = '''async function navigateDetail(target){const runtime=await currentScreenTransitionRuntime();return runtime.navigate(target,{reason:'detail'})}\nasync function navigateRoot(target){const runtime=await currentScreenTransitionRuntime();return runtime.navigate(target,{reason:'root'})}\nasync function navigateBack(){const runtime=await currentScreenTransitionRuntime();const entry=gameroadNav.stack[gameroadNav.stack.length-1];return runtime.back(entry,{reason:'back'})}'''
+          new_nav = '''function navigateDetail(target){return currentScreenTransitionRuntime().navigate(target,{reason:'detail'})}\nfunction navigateRoot(target){return currentScreenTransitionRuntime().navigate(target,{reason:'root'})}\nfunction navigateBack(){const entry=gameroadNav.stack[gameroadNav.stack.length-1];return currentScreenTransitionRuntime().back(entry,{reason:'back'})}'''
+
+          for label, old, new in (
+              ('screen-transition runtime accessor', old_runtime, new_runtime),
+              ('navigation consumers', old_nav, new_nav),
+          ):
+              count = html.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label} anchor count={count}, expected=1')
+              html = html.replace(old, new, 1)
+
+          html_path.write_text(html, encoding='utf-8')
+          PY
+
+      - name: Verify bounded diff and static contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          mapfile -t changed < <(git diff --name-only)
+          printf 'changed=%s\n' "${changed[*]}"
+          test "${#changed[@]}" -eq 1
+          test "${changed[0]}" = "browser/GAMEROAD.html"
+          node tests/browser-static-check.mjs
+
+      - name: Commit and push repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "gameroad-r42-bounded-executor"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add browser/GAMEROAD.html
+          git commit -m "Browser: preserve transition static contract during boot wait"
+          git push origin "HEAD:fix/bfi-boot-readiness-r39"

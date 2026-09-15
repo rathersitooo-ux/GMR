@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GITHUB-CI-BROWSER-MJS-SMOKE-R1-20260915T1658-SOL",
+  "taskId": "GITHUB-CI-BROWSER-NODE-001",
+  "workUnitKey": "BROWSER_MJS_RUNTIME_SMOKE_CLASSIFIER_R1",
+  "acquireKey": "GITHUB-CI-BROWSER-MJS-SMOKE-R1-20260915T1658-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "MAIN_061C899_GENERIC_BROWSER_MJS_NODE_ONLY_GAP_20260915T1701JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "DIRECT_CLASSIFIER_AND_EXISTING_BROWSER_RUNTIME_LANE_READBACK_20260915T1701JST",
+  "proceedToken": "PROCEED|GITHUB-CI-BROWSER-MJS-SMOKE-R1-20260915T1658-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|browser-mjs-classifier|existing-browser-runtime-lane|active-lease",
+  "authorizationBaseSha": "061c899df9df59d3b798034f097dbe9951946c6d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-CI-BROWSER-NODE-001",
+  "leaseWorkUnitKey": "BROWSER_MJS_RUNTIME_SMOKE_CLASSIFIER_R1",
+  "leaseAcquireKey": "GITHUB-CI-BROWSER-MJS-SMOKE-R1-20260915T1658-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 17:01 JST",
+  "leaseUntilJst": "2026-09-15 17:58 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/browser-mjs-runtime-smoke-classifier-r1-20260915 from exact base 061c899df9df59d3b798034f097dbe9951946c6d; .github/workflows/gameroad-required-gate.yml; own transient data/preaction-authorizations/GITHUB-CI-BROWSER-MJS-SMOKE-R1-20260915T1658-SOL.json; own branch/PR/check/readback. DRIVE: own R23 events and own CURRENT_ACTIVE_LEASES row. READ_ONLY browser/GAMEROAD.html; browser/*.mjs product modules; tests/browser-runtime-smoke.spec.mjs; gameplay/rules/save/economy/network/assets; active parallel WorkUnits.",
+  "solutionSignature": "REUSE_EXISTING_BROWSER_RUNTIME_LANE_FOR_GENERIC_BROWSER_MJS_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_REQUIRED_GATE_EXISTING_BROWSER_FLAG_AND_RUNTIME_SMOKE_STEP",
+  "solutionSearchEvidence": [
+    "Current generic browser/*.mjs classification sets conventional_node=true when a paired Node test exists but does not set browser=true.",
+    "Current Run Browser runtime smoke step is already gated by steps.classify.outputs.browser == true.",
+    "The repair therefore reuses the existing Browser lane instead of introducing another Playwright workflow or runtime test system.",
+    "Generic tools/*.mjs remains conventional Node-only and is not broadened into Browser testing."
+  ],
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ]
+}

@@ -48,6 +48,12 @@ test('rejects control-plane and traversal mutation', () => {
   }
 });
 
+test('requires at least one focused node test path', () => {
+  const result = validateFreePacket(packet({ exactMutableResources: ['browser/example.mjs'] }));
+  assert.equal(result.ok, false);
+  assert.match(result.reason, /focused_test_path_required/);
+});
+
 test('parses normal executor bus issue body', () => {
   const p = packet();
   const body = `hello\n\`\`\`executor-bus\n${JSON.stringify(p)}\n\`\`\`\n`;

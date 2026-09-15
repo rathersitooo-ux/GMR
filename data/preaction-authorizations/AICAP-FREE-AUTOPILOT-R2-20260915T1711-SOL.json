@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "AICAP-FREE-AUTOPILOT-R2-20260915T1711-SOL",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "FREE_AUTOPILOT_EXISTING_BUS_R2",
+  "acquireKey": "AICAP-FREE-AUTOPILOT-R2-20260915T1711-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R1_SELFTEST_AND_ZERO_CASH_PASS_R2_EXISTING_BUS_RECOVERY_20260915",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_RUN34945179905_SELFTEST_SUCCESS_AND_OBSERVABILITY_RUN34945179822_SUCCESS",
+  "proceedToken": "PROCEED|AICAP-FREE-AUTOPILOT-R2-20260915T1711-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-executor-bus|free-local-coder|active-lease",
+  "authorizationBaseSha": "061c899df9df59d3b798034f097dbe9951946c6d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "FREE_AUTOPILOT_EXISTING_BUS_R2",
+  "leaseAcquireKey": "AICAP-FREE-AUTOPILOT-R2-20260915T1711-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 17:11 JST",
+  "leaseUntilJst": "2026-09-15 18:06 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A19:L19",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch work/free-autopilot-r2-20260915 from exact main 061c899df9df59d3b798034f097dbe9951946c6d; mutable .github/workflows/gameroad-executor-bus.yml; tools/free-autopilot-worker.mjs; tests/free-autopilot-worker.test.mjs; docs/free-autopilot.md; own transient data/preaction-authorizations/AICAP-FREE-AUTOPILOT-R2-20260915T1711-SOL.json; own branch/PR/check/readback. READ_ONLY config/zero-cash-runtime-policy.json, .github/workflows/gameroad-required-gate.yml, all game/product/runtime files.",
+  "solutionSignature": "EXISTING_EXECUTOR_BUS_PLUS_FREE_LOCAL_CODER_CANDIDATE_V2",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R1_REQUIRED_GATE_FAILURE_PLUS_EXISTING_EXECUTOR_BUS_CLASSIFICATION_20260915",
+  "solutionSearchEvidence": [
+    "The existing GAMEROAD Executor Bus is already the formal [EXECUTOR] transport and is classified by Required Gate as executor_bus.",
+    "R1 deterministic free-worker self-test succeeded in GitHub Actions run 34945179905.",
+    "R1 Observability zero-cash audit succeeded in run 34945179822.",
+    "R1 Required Gate rejected the new standalone workflow path as unclassified, not the local coder guard itself.",
+    "Composing the same bounded worker into the existing Executor Bus removes the unnecessary second workflow execution plane while retaining fail-closed transport semantics.",
+    "The worker remains candidate-only because GitHub Actions has no authorized fresh read of private Drive CURRENT lease authority."
+  ],
+  "scope": [
+    ".github/workflows/gameroad-executor-bus.yml",
+    "tools/free-autopilot-worker.mjs",
+    "tests/free-autopilot-worker.test.mjs",
+    "docs/free-autopilot.md"
+  ],
+  "leaseScope": [
+    ".github/workflows/gameroad-executor-bus.yml",
+    "tools/free-autopilot-worker.mjs",
+    "tests/free-autopilot-worker.test.mjs",
+    "docs/free-autopilot.md"
+  ]
+}

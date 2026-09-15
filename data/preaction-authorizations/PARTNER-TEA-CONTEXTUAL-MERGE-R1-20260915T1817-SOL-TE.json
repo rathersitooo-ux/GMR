@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-TEA-CONTEXTUAL-MERGE-R1-20260915T1817-SOL-TE",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "PARTNER_TEA_CONTEXTUAL_ENTRY_MERGE_R1",
+  "acquireKey": "PARTNER-TEA-CONTEXTUAL-MERGE-R1-20260915T1817-SOL-TE",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "MODE_ROLE_DISPOSITION_R1+CURRENT_partner_shell_OPEN_TEA+existing_partner_tea_inline_quick_choice",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "read_only_current_source_and_existing_focused_partner_tea_tests",
+  "proceedToken": "PROCEED|PARTNER-TEA-CONTEXTUAL-MERGE-R1-20260915T1817-SOL-TE|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-15T1817JST",
+  "authorizationBaseSha": "3a7d8ce484efbd7e1af218cdc251dcc55eda976c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "PARTNER_TEA_CONTEXTUAL_ENTRY_MERGE_R1",
+  "leaseAcquireKey": "PARTNER-TEA-CONTEXTUAL-MERGE-R1-20260915T1817-SOL-TE",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 18:17 JST",
+  "leaseUntilJst": "2026-09-15 19:17 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A15:L15",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main 3a7d8ce484efbd7e1af218cdc251dcc55eda976c; mutable browser/partner-tea-runtime-mount.mjs; tests/partner-tea-runtime-mount.test.mjs; own transient data/preaction-authorizations/PARTNER-TEA-CONTEXTUAL-MERGE-R1-20260915T1817-SOL-TE.json; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html, partner relationship/save/state authorities, gameplay/rules/economy/network/formal assets, all active parallel WorkUnits.",
+  "scope": [
+    "browser/partner-tea-runtime-mount.mjs",
+    "tests/partner-tea-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-tea-runtime-mount.mjs",
+    "tests/partner-tea-runtime-mount.test.mjs"
+  ]
+}

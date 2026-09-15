@@ -66,6 +66,23 @@ function buildCardCatalogIndex(source) {
   return index;
 }
 
+export function resolveViewerLocalFocusCardArt(documentRef, cardId) {
+  const id = String(cardId ?? '');
+  if (!documentRef || typeof documentRef.querySelectorAll !== 'function' || !id) return null;
+  const nodes = documentRef.querySelectorAll('#collectionGrid [data-id]') ?? [];
+  let sourceCard = null;
+  for (const node of nodes) {
+    if (String(node?.dataset?.id ?? '') === id) {
+      sourceCard = node;
+      break;
+    }
+  }
+  const localArt = sourceCard?.querySelector?.('[data-role="fanart-local-skin-overlay"]');
+  const src = typeof localArt?.src === 'string' ? localArt.src.trim() : '';
+  if (!src) return null;
+  return Object.freeze({ src, source: 'viewer_local_exact_card_id' });
+}
+
 function physicalCardIdentity(cardId, cardIndex) {
   const id = String(cardId ?? '');
   const card = cardIndex?.get?.(id);
@@ -93,22 +110,28 @@ function physicalCardIdentity(cardId, cardIndex) {
   });
 }
 
-function physicalCardMarkup(cardId, cardIndex, { jankenHand = null } = {}) {
+function physicalCardMarkup(cardId, cardIndex, { jankenHand = null, cardArt = null } = {}) {
   const card = physicalCardIdentity(cardId, cardIndex);
+  const artSrc = typeof cardArt?.src === 'string' ? cardArt.src.trim() : '';
+  const artSource = artSrc ? String(cardArt?.source ?? 'viewer_local_exact_card_id') : 'missing';
   const role = jankenHand
     ? `<span class="grJankenRoleBadge" data-janken-role="${escapeHtml(jankenHand)}">${escapeHtml(HAND_ICON[jankenHand] ?? '')} ${escapeHtml(HAND_LABEL[jankenHand] ?? jankenHand)}</span>`
     : '';
+  const art = artSrc
+    ? `<img class="grJankenCardArt" data-card-art-source="${escapeHtml(artSource)}" src="${escapeHtml(artSrc)}" alt="" aria-hidden="true">`
+    : '<span class="grJankenCardArtMissing" data-card-art-source="missing">イラスト未接続</span>';
   return `
-    <div class="grJankenPhysicalCard"
+    <div class="grJankenPhysicalCard${artSrc ? ' has-card-art' : ' is-card-art-missing'}"
       data-physical-card-id="${escapeHtml(card.id)}"
       data-card-identity-source="${escapeHtml(card.identitySource)}"
       data-native-suit="${escapeHtml(card.suit)}"
-      data-printed-rank="${escapeHtml(card.rank)}">
+      data-printed-rank="${escapeHtml(card.rank)}"
+      data-card-art-status="${artSrc ? 'BOUND' : 'MISSING'}">
+      ${art}
       <span class="grJankenCardWatermark" aria-hidden="true">${escapeHtml(card.suitGlyph)}</span>
       <strong class="grJankenCardRank">${escapeHtml(card.rank)}</strong>
       <span class="grJankenCardName">${escapeHtml(card.displayName)}</span>
       <small class="grJankenCardIdentity">${escapeHtml(card.suitLabel)} · ID ${escapeHtml(card.id)}</small>
-      <span class="grJankenCardArtMissing">イラスト未接続</span>
       ${role}
     </div>`;
 }
@@ -167,7 +190,7 @@ function targetRailMarkup(state, busy) {
     </div>`;
 }
 
-function choiceMarkup(choice, state, busy, cardIndex) {
+function choiceMarkup(choice, state, busy, cardIndex, resolveCardArt) {
   const focused = state.focusedHand === choice.jankenHand;
   return `
     <button type="button"
@@ -176,7 +199,7 @@ function choiceMarkup(choice, state, busy, cardIndex) {
       data-janken-hand="${choice.jankenHand}"
       aria-pressed="${focused ? 'true' : 'false'}"
       ${busy ? 'disabled' : ''}>
-      ${physicalCardMarkup(choice.preview?.cardId, cardIndex, { jankenHand: choice.jankenHand })}
+      ${physicalCardMarkup(choice.preview?.cardId, cardIndex, { jankenHand: choice.jankenHand, cardArt: resolveCardArt(choice.preview?.cardId) })}
       ${lockRows(choice.preview)}
     </button>`;
 }
@@ -208,13 +231,18 @@ function installStyle(documentRef) {
 .grJankenFocusChoice{min-width:0;min-height:116px;border:2px solid rgba(16,19,25,.3);border-radius:18px;background:#fff;padding:10px;text-align:left;font:inherit;color:inherit;cursor:pointer}
 .grJankenFocusChoice.is-focused{border-color:#101319;box-shadow:0 0 0 2px rgba(16,19,25,.12)}
 .grJankenFocusChoice:disabled{cursor:default;opacity:.62}
-.grJankenPhysicalCard{position:relative;display:flex;flex-direction:column;justify-content:center;min-height:86px;border:2px solid rgba(16,19,25,.24);border-radius:14px;background:linear-gradient(155deg,#fff,#f4f4f0);padding:8px 8px 7px 46px;box-sizing:border-box;overflow:hidden}
-.grJankenCardWatermark{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:31px;font-weight:900;line-height:1;opacity:.2}
+.grJankenPhysicalCard{position:relative;display:flex;flex-direction:column;justify-content:center;min-height:86px;border:2px solid rgba(16,19,25,.24);border-radius:14px;background:linear-gradient(155deg,#fff,#f4f4f0);padding:8px 8px 7px 46px;box-sizing:border-box;overflow:hidden;isolation:isolate}
+.grJankenPhysicalCard.has-card-art{justify-content:flex-end;background:#101319;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.92)}
+.grJankenPhysicalCard.has-card-art::after{content:"";position:absolute;inset:34% 0 0;z-index:1;background:linear-gradient(to bottom,transparent,rgba(3,4,7,.84) 72%,rgba(3,4,7,.96))}
+.grJankenCardArt{position:absolute;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+.grJankenCardWatermark{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:31px;font-weight:900;line-height:1;opacity:.2;z-index:2}
+.grJankenCardRank,.grJankenCardName,.grJankenCardIdentity{position:relative;z-index:2}
+.grJankenPhysicalCard.has-card-art .grJankenCardWatermark{top:11px;transform:none;font-size:25px;opacity:.92}
 .grJankenCardRank{font-size:23px;line-height:1;font-weight:950;letter-spacing:.02em}
 .grJankenCardName{max-width:100%;margin-top:3px;font-size:12px;line-height:1.12;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.grJankenCardIdentity{margin-top:3px;padding-right:2px;font-size:9px;line-height:1.1;font-weight:800;opacity:.62;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.grJankenCardArtMissing{margin-top:3px;font-size:8px;line-height:1.1;font-weight:800;opacity:.46}
-.grJankenRoleBadge{position:absolute;right:6px;top:6px;display:inline-flex;align-items:center;gap:3px;border:1px solid rgba(16,19,25,.28);border-radius:999px;background:rgba(255,255,255,.92);padding:3px 6px;font-size:10px;line-height:1;font-weight:900;white-space:nowrap}
+.grJankenCardIdentity{margin-top:3px;padding-right:2px;font-size:9px;line-height:1.1;font-weight:800;opacity:.72;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grJankenCardArtMissing{position:relative;z-index:2;margin-top:3px;font-size:8px;line-height:1.1;font-weight:800;opacity:.46}
+.grJankenRoleBadge{position:absolute;right:6px;top:6px;z-index:3;display:inline-flex;align-items:center;gap:3px;border:1px solid rgba(16,19,25,.28);border-radius:999px;background:rgba(255,255,255,.92);padding:3px 6px;font-size:10px;line-height:1;font-weight:900;color:#101319;text-shadow:none;white-space:nowrap}
 .grJankenFocusLockRow{display:grid;grid-template-columns:52px minmax(0,1fr);gap:6px;align-items:start;font-size:11px;line-height:1.25;margin-top:3px}
 .grJankenFocusLockRow span{opacity:.58;font-weight:800}
 .grJankenFocusLockRow strong{font-weight:800;overflow-wrap:anywhere}
@@ -238,7 +266,7 @@ function installStyle(documentRef) {
 .grJankenFocusBloomPanel .grJankenFocusChoice:nth-child(2){--petal-x:0px;--petal-y:-9px;--petal-r:0deg;animation-delay:35ms}
 .grJankenFocusBloomPanel .grJankenFocusChoice:nth-child(3){--petal-x:-8px;--petal-y:10px;--petal-r:7deg;animation-delay:70ms}
 .grJankenFocusBloomPanel .grJankenFocusChoice.is-focused{border-color:#101319;filter:brightness(1.04);box-shadow:0 0 0 3px rgba(16,19,25,.16),0 18px 34px rgba(5,7,10,.24)}
-@keyframes grJankenFocusPetalBloom{0%{opacity:.18;filter:brightness(.82) blur(1px);transform:translate(clamp(72px,16vw,152px),clamp(44px,12vh,94px)) rotate(22deg) scale(.58)}68%{opacity:1;filter:brightness(1.04) blur(0);transform:translate(calc(var(--petal-x) * .88),calc(var(--petal-y) * .88)) rotate(calc(var(--petal-r) * .88)) scale(1.035)}100%{opacity:1;filter:brightness(1) blur(0);transform:translate(var(--petal-x),var(--petal-y)) rotate(var(--petal-r)) scale(1)}}
+@keyframes grJankenFocusPetalBloom{0%{opacity:.18;filter:brightness(.82) blur(1px);transform:translate(clamp(72px,16vw,152px),clamp(44px,12vh,94px)) rotate(22deg) scale(.58)}68%{opacity:1;filter:brightness(1.04) blur(0);transform:translate(calc(var(--petal-x) * .88),calc(var(--petal-y) * .88)) rotate(calc(var(--petal-r) * .88)) scale(1.035)}100%{opacity:1;filter:brightness(1) blur(0);transform:translate(var(--petal-x),var(--petal-y)) rotate(var(--petal-r)) scale(1)} }
 @media (max-width:700px){.grJankenFocusPanel{padding:10px;border-radius:18px}.grJankenTargetRail{gap:5px;padding:5px}.grJankenTargetChip{grid-template-columns:24px minmax(0,1fr);min-height:46px;padding:5px}.grJankenTargetReticle{width:22px;height:22px}.grJankenTargetHand{grid-column:2;font-size:10px}.grJankenFocusChoices{gap:6px}.grJankenFocusChoice{min-height:96px;padding:7px;border-radius:14px}.grJankenFocusLockRow{grid-template-columns:42px minmax(0,1fr);font-size:10px}.grJankenRoleBadge{font-size:10px}.grJankenLoadHero{grid-template-columns:96px minmax(0,1fr);gap:10px}.grJankenLoadHero>.grJankenPhysicalCard{min-height:118px}.grJankenFocusActions{margin-top:7px}.grJankenFocusBloomPanel .grJankenFocusChoice{min-height:108px;border-radius:40% 60% 54% 46%/48% 43% 57% 52%}.grJankenFocusBloomPanel .grJankenRoleBadge{font-size:10px}}
 @media (max-height:430px) and (orientation:landscape){.grJankenFocusBloomPanel{top:50%;width:min(720px,calc(100% - 16px));padding:8px 10px}.grJankenFocusBloomPanel .grJankenFocusHeader{margin-bottom:4px}.grJankenFocusBloomPanel .grJankenFocusTitle{font-size:17px}.grJankenFocusBloomPanel .grJankenFocusSub{font-size:10px}.grJankenFocusBloomPanel .grJankenTargetRail{margin-bottom:4px;padding:4px}.grJankenFocusBloomPanel .grJankenTargetChip{min-height:38px;padding:3px 5px}.grJankenFocusBloomPanel .grJankenFocusChoice{min-height:86px;padding:6px}.grJankenFocusBloomPanel .grJankenFocusLockRow{display:none}.grJankenFocusBloomPanel .grJankenRoleBadge{font-size:9px}}
 @media (max-width:460px){.grJankenFocusPanel{width:calc(100% - 16px);bottom:8px}.grJankenTargetRail{grid-template-columns:1fr 1fr 1fr}.grJankenTargetChip{display:flex;justify-content:center;min-height:48px}.grJankenTargetIdentity{display:none}.grJankenTargetHand{font-size:11px}.grJankenFocusChoices{grid-template-columns:1fr}.grJankenFocusChoice{min-height:74px}.grJankenFocusChoice .grJankenFocusLockRow{display:none}.grJankenLoadPanel{width:calc(100% - 16px)}.grJankenLoadHero{grid-template-columns:82px minmax(0,1fr)}.grJankenLoadHero>.grJankenPhysicalCard{min-height:106px}.grJankenFocusBloomPanel{top:50%;bottom:auto;width:calc(100% - 12px);padding:10px 8px}.grJankenFocusBloomPanel .grJankenTargetChip{display:grid;grid-template-columns:20px minmax(0,1fr);justify-content:stretch;min-height:46px;padding:4px}.grJankenFocusBloomPanel .grJankenTargetIdentity{display:flex}.grJankenFocusBloomPanel .grJankenTargetHand{display:none}.grJankenFocusBloomPanel .grJankenFocusChoices{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding-bottom:6px}.grJankenFocusBloomPanel .grJankenFocusChoice{min-height:100px;padding:6px 4px}.grJankenFocusBloomPanel .grJankenFocusChoice .grJankenFocusLockRow{display:none}.grJankenFocusBloomPanel .grJankenRoleBadge{font-size:9px}}
@@ -256,7 +284,7 @@ function renderUnavailable(state, errorText = null) {
     </section>`;
 }
 
-function renderJanken(state, { busy, errorText, cardIndex }) {
+function renderJanken(state, { busy, errorText, cardIndex, resolveCardArt }) {
   return `
     <section class="grJankenFocusPanel grJankenFocusBloomPanel" data-janken-focus-visual="flower-bloom" aria-label="じゃんけん攻撃選択">
       <div class="grJankenFocusHeader">
@@ -264,12 +292,12 @@ function renderJanken(state, { busy, errorText, cardIndex }) {
         <button type="button" class="grJankenFocusAction" data-gr-janken-focus-action="peek" ${busy ? 'disabled' : ''}>盤面を見る</button>
       </div>
       ${targetRailMarkup(state, busy)}
-      <div class="grJankenFocusChoices">${state.choices.map((choice) => choiceMarkup(choice, state, busy, cardIndex)).join('')}</div>
+      <div class="grJankenFocusChoices">${state.choices.map((choice) => choiceMarkup(choice, state, busy, cardIndex, resolveCardArt)).join('')}</div>
       ${busy ? '<div class="grJankenFocusError">攻撃先を確認中…</div>' : errorText ? `<div class="grJankenFocusError">${escapeHtml(errorText)}</div>` : ''}
     </section>`;
 }
 
-function renderLoad(state, { busy, errorText, cardIndex }) {
+function renderLoad(state, { busy, errorText, cardIndex, resolveCardArt }) {
   const preview = state.focusedPreview;
   return `
     <section class="grJankenFocusPanel grJankenLoadPanel" role="dialog" aria-modal="false" aria-label="ロード確認">
@@ -278,7 +306,7 @@ function renderLoad(state, { busy, errorText, cardIndex }) {
         <button type="button" class="grJankenFocusAction" data-gr-janken-focus-action="peek" ${busy ? 'disabled' : ''}>盤面を見る</button>
       </div>
       <div class="grJankenLoadHero">
-        ${physicalCardMarkup(preview?.cardId, cardIndex, { jankenHand: state.focusedHand })}
+        ${physicalCardMarkup(preview?.cardId, cardIndex, { jankenHand: state.focusedHand, cardArt: resolveCardArt(preview?.cardId) })}
         <div class="grJankenLoadInfo">${lockRows(preview)}</div>
       </div>
       ${errorText ? `<div class="grJankenFocusError">${escapeHtml(errorText)}</div>` : ''}
@@ -289,11 +317,11 @@ function renderLoad(state, { busy, errorText, cardIndex }) {
     </section>`;
 }
 
-function renderCommitting(state, cardIndex) {
+function renderCommitting(state, cardIndex, resolveCardArt) {
   return `
     <section class="grJankenFocusPanel grJankenLoadPanel" role="status" aria-label="ロード決定中">
       <div class="grJankenFocusHeader"><div><div class="grJankenFocusTitle">ロード決定中</div><div class="grJankenFocusSub">${escapeHtml(HAND_LABEL[state.focusedHand] ?? state.focusedHand)}</div></div></div>
-      <div class="grJankenLoadHero">${physicalCardMarkup(state.focusedPreview?.cardId, cardIndex, { jankenHand: state.focusedHand })}<div class="grJankenLoadInfo">${lockRows(state.focusedPreview)}</div></div>
+      <div class="grJankenLoadHero">${physicalCardMarkup(state.focusedPreview?.cardId, cardIndex, { jankenHand: state.focusedHand, cardArt: resolveCardArt(state.focusedPreview?.cardId) })}<div class="grJankenLoadInfo">${lockRows(state.focusedPreview)}</div></div>
     </section>`;
 }
 
@@ -325,6 +353,7 @@ export function mountBattleJankenFocusRuntimeSurface({
   const commitLive = requiredMethod(liveInputStack, 'commit', 'liveInputStack');
   const liveStatus = requiredMethod(liveInputStack, 'status', 'liveInputStack');
   const cardIndex = buildCardCatalogIndex(cardCatalog);
+  const resolveCardArt = (cardId) => resolveViewerLocalFocusCardArt(documentRef, cardId);
 
   installStyle(documentRef);
   const host = documentRef.createElement('div');
@@ -383,16 +412,16 @@ export function mountBattleJankenFocusRuntimeSurface({
     }
     switch (presentation?.surface) {
       case BATTLE_JANKEN_FOCUS_SURFACE.JANKEN_FOCUS:
-        host.innerHTML = renderJanken(presentation, { busy, errorText, cardIndex });
+        host.innerHTML = renderJanken(presentation, { busy, errorText, cardIndex, resolveCardArt });
         break;
       case BATTLE_JANKEN_FOCUS_SURFACE.BOARD_PEEK:
         host.innerHTML = renderBoardPeek();
         break;
       case BATTLE_JANKEN_FOCUS_SURFACE.LOAD_FOCUS:
-        host.innerHTML = renderLoad(presentation, { busy, errorText, cardIndex });
+        host.innerHTML = renderLoad(presentation, { busy, errorText, cardIndex, resolveCardArt });
         break;
       case BATTLE_JANKEN_FOCUS_SURFACE.COMMITTING:
-        host.innerHTML = renderCommitting(presentation, cardIndex);
+        host.innerHTML = renderCommitting(presentation, cardIndex, resolveCardArt);
         break;
       default:
         host.innerHTML = renderUnavailable(presentation, errorText);
@@ -689,6 +718,8 @@ export const BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT = Object.freeze({
   targetRailMayCreateTarget: false,
   visibleLockFields: Object.freeze(['cardId', 'opponentId', 'shieldLane', 'shieldRef', 'route']),
   physicalCardLineageSource: 'EXACT_PACKAGE_CARD_ID_JOIN_GLOBAL_CARD_DATA',
+  cardArtSource: 'VIEWER_LOCAL_COLLECTION_EXACT_CARD_ID',
+  cardArtExactIdRequired: true,
   jankenRoleIsSecondaryBadge: true,
   inventedCardIdentityAllowed: false,
   cardArtFallback: 'EXPLICIT_ART_UNAVAILABLE_NO_INVENTION',

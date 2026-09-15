@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HISTORY-ONETAP-R2-20260915T2126-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_HISTORY_SUPPORT_ONE_TAP_R1",
+  "acquireKey": "BATTLE-HISTORY-ONETAP-R2-20260915T2126-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_45D7400_HISTORY_SUPPORT_AND_EXPAND_TOGGLE_EXIST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_PRODUCT_PATCH_BOUNDED_PREACTION_ONLY_FAILURE_PLUS_EXISTING_FOCUSED_TEST_SEAM",
+  "proceedToken": "PROCEED|BATTLE-HISTORY-ONETAP-R2-20260915T2126-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-history-surface|one-tap|active-lease",
+  "authorizationBaseSha": "45d7400d6aea89e9736cda5b9d5bca7476390b58",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_HISTORY_SUPPORT_ONE_TAP_R1",
+  "leaseAcquireKey": "BATTLE-HISTORY-ONETAP-R2-20260915T2126-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 21:26 JST",
+  "leaseUntilJst": "2026-09-15 22:26 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A15:L15",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main 45d7400d6aea89e9736cda5b9d5bca7476390b58; mutable browser/battle-replay-live-adapter.mjs; tests/battle-replay-live-adapter.test.mjs; own transient data/preaction-authorizations/BATTLE-HISTORY-ONETAP-R2-20260915T2126-SOL.json; own branch/PR/check/readback. READ_ONLY deploy/cloudflare/tests/build.test.mjs while PARTNER-ADVICE-REPLYPAIR-R2 owns it; READ_ONLY browser/GAMEROAD.html and tests/browser-full-interaction.spec.mjs while BFI R40 owns them; gameplay/rules/state/save/economy/network/assets.",
+  "leaseScope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs"
+  ],
+  "solutionSignature": "BATTLE_HISTORY_EXISTING_SURFACE_ONE_TAP_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_SUPPORT_HISTORY_BUTTON_PLUS_EXISTING_EXPAND_TOGGLE",
+  "solutionSearchEvidence": [
+    "Current adapter already renders viewer-safe causal history and owns an existing expand/collapse toggle.",
+    "Current support History action only scrolls/focuses the compact log, requiring another action to reveal older rows.",
+    "Reuse existing history/toggle; do not create a second log, store, event producer, gameplay rule, or privacy projection.",
+    "External DCCG comparison supports immediate access to recent action history; no foreign game semantics are copied.",
+    "Graveyard remains absent because no authoritative producer/use-site is present."
+  ],
+  "scope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs"
+  ]
+}

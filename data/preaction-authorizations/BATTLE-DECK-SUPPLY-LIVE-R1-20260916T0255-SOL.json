@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-DECK-SUPPLY-LIVE-R1-20260916T0255-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_DECK_SUPPLY_LIVE_INTEGRATION_R1",
+  "acquireKey": "BATTLE-DECK-SUPPLY-LIVE-R1-20260916T0255-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "DRIVE_SUBDECK_AUTHORITY_1etqz_PLUS_MAIN_D461_LIVE_ANCHOR_READBACK_20260916",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1723_DECK_SUPPLY_BOUNDARY_GATE_34952716497_PLUS_EXACT_MAIN_SOURCE_READBACK",
+  "proceedToken": "PROCEED|BATTLE-DECK-SUPPLY-LIVE-R1-20260916T0255-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXACT_ANCHOR_ONLY",
+  "authorizationBaseSha": "d461bbe04bf2df1572c76c8582321a42f1366fa0",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-deck-supply-live-integration.test.mjs",
+    ".github/workflows/zz-temp-battle-deck-supply-live-r1.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_DECK_SUPPLY_LIVE_INTEGRATION_R1",
+  "leaseAcquireKey": "BATTLE-DECK-SUPPLY-LIVE-R1-20260916T0255-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 02:55 JST",
+  "leaseUntilJst": "2026-09-16 03:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR authorizationBase main d461bbe04bf2df1572c76c8582321a42f1366fa0; mutable browser/GAMEROAD.html; NEW tests/battle-deck-supply-live-integration.test.mjs; transient .github/workflows/zz-temp-battle-deck-supply-live-r1.yml; transient data/preaction-authorizations/BATTLE-DECK-SUPPLY-LIVE-R1-20260916T0255-SOL.json; own branch sol/battle-deck-supply-live-r1-20260916 / PR/check/merge/readback. READ_ONLY browser/battle-deck-supply-boundary.mjs; deckTopToChip semantics; card values/final-resort rank semantics; movement/target/Shield/GOAL/save/network/economy/assets; all active parallel WorkUnits.",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-deck-supply-live-integration.test.mjs",
+    ".github/workflows/zz-temp-battle-deck-supply-live-r1.yml"
+  ],
+  "solutionSignature": "LIVE_HTML_DECK_SUPPLY_EXISTING_CORE_EXACT_ANCHOR_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1714_EXACT_WORKFLOW_PATTERN_PLUS_PR1723_SUPPLY_CORE",
+  "solutionSearchEvidence": [
+    "GitHub PR#1714 exact-final transient workflow pattern",
+    "browser/battle-deck-supply-boundary.mjs at main d461bbe04bf2df1572c76c8582321a42f1366fa0",
+    "Drive authority 1etqz_k5LTmkKC_CZ2TMyJSK_QDejaEqsUFac-mgX-1s"
+  ]
+}

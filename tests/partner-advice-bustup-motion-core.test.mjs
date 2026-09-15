@@ -39,6 +39,7 @@ test('登録済み9キーポーズを9つのmotion stateへ一意に接続する
   const assets = Object.values(states).map((state) => state.assetPath);
   assert.equal(new Set(assets).size, 9);
   assert.ok(assets.every((asset) => asset.startsWith('../assets/visual/partner/saasuna/')));
+  assert.ok(Object.values(states).every((state) => typeof state.motionPreset === 'string' && state.motionPreset.length > 0));
   assert.equal(saasunaAdviceMotionStateForTrigger('battle_card_submit'), 'SURPRISED');
 });
 
@@ -52,6 +53,57 @@ test('9つのruntime assetが実体として存在しWebPである', () => {
     assert.equal(payload.subarray(0, 4).toString('ascii'), 'RIFF', `${stateId}: RIFF header missing`);
     assert.equal(payload.subarray(8, 12).toString('ascii'), 'WEBP', `${stateId}: WEBP header missing`);
   }
+});
+
+test('共通controllerはサースナー固有state名や躁鬱sideに依存しない', () => {
+  let nowMs = 10;
+  const profile = Object.freeze({
+    partnerId: 'partner.synthetic',
+    motionPersonality: 'synthetic-profile',
+    initialState: 'REST',
+    guideState: 'TALK',
+    states: Object.freeze({
+      REST: Object.freeze({
+        side: 'calm',
+        mode: 'loop',
+        animationKey: 'rest',
+        motionPreset: 'quiet-idle',
+        assetPath: '../assets/synthetic-rest.webp',
+        reaction: false,
+      }),
+      TALK: Object.freeze({
+        side: 'speaking',
+        mode: 'speech-hold',
+        animationKey: 'talk',
+        motionPreset: 'quiet-guide',
+        assetPath: '../assets/synthetic-talk.webp',
+        reaction: false,
+      }),
+      POP: Object.freeze({
+        side: 'energetic',
+        mode: 'one-shot',
+        durationMs: 400,
+        priority: 1,
+        animationKey: 'pop',
+        motionPreset: 'active-burst',
+        assetPath: '../assets/synthetic-pop.webp',
+        reaction: true,
+      }),
+    }),
+  });
+  const controller = createPartnerAdviceBustupMotionController({ profile, now: () => nowMs });
+  assert.equal(controller.status().partnerId, 'partner.synthetic');
+  assert.equal(controller.status().stateId, 'REST');
+  assert.equal(controller.status().side, 'calm');
+  assert.equal(controller.status().motionPreset, 'quiet-idle');
+  controller.setGuideActive(true);
+  assert.equal(controller.status().stateId, 'TALK');
+  controller.setGuideActive(false);
+  assert.equal(controller.trigger('POP', { eventId: 'synthetic:1' }), true);
+  assert.equal(controller.status().stateId, 'POP');
+  assert.equal(controller.status().motionPreset, 'active-burst');
+  nowMs += 401;
+  assert.equal(controller.tick().stateId, 'REST');
 });
 
 test('GUIDE中の躁reactionは1件保留し、意味塊終了後に躁へ切り替えて鬱へ戻る', () => {

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GLOBAL-JOURNEY-HOME-MOUNT-R1-20260915T2125-SOL-TSU",
+  "taskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "workUnitKey": "GLOBAL_JOURNEY_HOME_VISIBLE_MOUNT_R1",
+  "acquireKey": "GLOBAL-JOURNEY-HOME-MOUNT-R1-20260915T2125-SOL-TSU",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "MERGED_GLOBAL_JOURNEY_CORE_MAIN_45D7400D_PLUS_FRESH_HOME_PACKAGE_SEAM",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "FRESH_CURRENT_LEASE_A15_L15_AND_MAIN_70EC0C99_NONOVERLAP_ADVANCE",
+  "proceedToken": "PROCEED|GLOBAL-JOURNEY-HOME-MOUNT-R1-20260915T2125-SOL-TSU|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|home-visible-journey-mount|home-runtime-package|active-lease",
+  "authorizationBaseSha": "70ec0c991559d9c81818f80f554fd69dc3117748",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "leaseWorkUnitKey": "GLOBAL_JOURNEY_HOME_VISIBLE_MOUNT_R1",
+  "leaseAcquireKey": "GLOBAL-JOURNEY-HOME-MOUNT-R1-20260915T2125-SOL-TSU",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 21:27 JST",
+  "leaseUntilJst": "2026-09-15 22:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A15:L15",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh main 70ec0c991559d9c81818f80f554fd69dc3117748; mutable NEW browser/home-journey-projection-runtime.mjs; browser/home-boot-runtime-mount.mjs; deploy/cloudflare/scripts/build.mjs; NEW tests/home-journey-projection-runtime.test.mjs; own branch sol/global-journey-home-mount-r1-20260915 and PR/check/readback. READ_ONLY browser/GAMEROAD.html, tests/browser-full-interaction.spec.mjs, Battle/gameplay/rules/reward/save/economy/network, Daily Tour, Title router, Cards active owner files and all parallel WorkUnits.",
+  "solutionSignature": "HOME_VISIBLE_GLOBAL_JOURNEY_DERIVED_MOUNT_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MERGED_GLOBAL_JOURNEY_CORE_PLUS_EXISTING_HOME_RUNTIME_MOUNT_AND_CLOUDFLARE_ARTIFACT_TRAIN",
+  "solutionSearchEvidence": [
+    "PR #1725 merged the authority-free global journey projection core to main with focused 6/6 tests and Required Gate success.",
+    "Existing browser/home-boot-runtime-mount.mjs is already the composition shim for Home-side runtimes, so this slice composes there instead of changing GAMEROAD.html or creating a second Home router.",
+    "Existing Cloudflare build ARTIFACT_SPECS already packages the Home runtime mount and base module; the new core/runtime must be added to that same artifact train rather than creating a second build path.",
+    "Live input is restricted to existing visible Home route buttons; enabled routes project available, disabled routes project ahead, and no completed state is inferred from selection/visit/history.",
+    "Title boot router, Daily Tour, gameplay, save, rewards, economy, network and shared HTML remain read-only."
+  ],
+  "scope": [
+    "browser/home-journey-projection-runtime.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/home-journey-projection-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-journey-projection-runtime.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/home-journey-projection-runtime.test.mjs"
+  ]
+}

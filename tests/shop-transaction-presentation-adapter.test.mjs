@@ -43,7 +43,7 @@ function approvedFanArt(overrides = {}) {
     imageReviewState:'APPROVED',
     gameUseApproved:true,
     shopUseApproved:true,
-    acquisition:{state:'READY', productId:'fanart:0001:v1', currency:'HONEY', price:500},
+    acquisition:{state:'READY', productId:'fanart:0001:v1', currency:'MANII', price:500},
     ...overrides,
   };
 }
@@ -118,7 +118,7 @@ test('formal approved work projects only public Shop data and view/acquire actio
   assert.equal(out.catalogState, 'READY');
   assert.equal(out.items.length, 1);
   assert.deepEqual(out.items[0].actions, ['VIEW','ACQUIRE']);
-  assert.equal(out.items[0].acquisition.currency, 'HONEY');
+  assert.equal(out.items[0].acquisition.currency, 'MANII');
   assert.equal(Object.hasOwn(out.items[0], 'creatorUserId'), false);
   assert.equal(Object.hasOwn(out.items[0], 'submissionRecordId'), false);
   assert.equal(Object.hasOwn(out.items[0], 'approvalRecordId'), false);
@@ -131,13 +131,13 @@ test('one inconsistent work stops the whole fan-art catalog instead of partial l
   const invalid = approvedFanArt({
     workId:'FANART-WORK-0002',
     approvalRecordId:'APP-FANART-0002',
-    acquisition:{state:'READY', productId:'fanart:0002:v1', currency:'COIN', price:500},
+    acquisition:{state:'READY', productId:'fanart:0002:v1', currency:'HONEY', price:500},
   });
   const out = projectApprovedFanArtShopCatalog({works:[approvedFanArt(), invalid]});
   assert.equal(out.visible, false);
   assert.equal(out.catalogState, 'STOPPED_INVALID_CATALOG');
   assert.deepEqual(out.items, []);
-  assert.ok(out.reasons.some((reason)=>reason.includes('currency-must-be-honey')));
+  assert.ok(out.reasons.some((reason)=>reason.includes('currency-must-be-manii')));
 });
 
 test('duplicate work/version stops the whole fan-art catalog', () => {
@@ -154,7 +154,7 @@ test('candidate, missing Human approval, image review, use approval, or acquisit
     approvedFanArt({imageReviewState:'PENDING'}),
     approvedFanArt({gameUseApproved:false}),
     approvedFanArt({shopUseApproved:false}),
-    approvedFanArt({acquisition:{state:'PENDING', productId:'fanart:0001:v1', currency:'HONEY', price:500}}),
+    approvedFanArt({acquisition:{state:'PENDING', productId:'fanart:0001:v1', currency:'MANII', price:500}}),
   ];
   for (const work of cases) {
     const out = projectApprovedFanArtShopCatalog({works:[work]});

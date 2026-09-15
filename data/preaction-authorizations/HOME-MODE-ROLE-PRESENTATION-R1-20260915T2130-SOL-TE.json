@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-MODE-ROLE-PRESENTATION-R1-20260915T2130-SOL-TE",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_MODE_ROLE_PRESENTATION_R1",
+  "acquireKey": "HOME-MODE-ROLE-PRESENTATION-R1-20260915T2130-SOL-TE",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_CURRENT_MAIN_FREE_HOME_BASE_20260915T2130JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_HOME_SLIDEPAD_ROUTE_BUTTONS_AND_MODE_ROLE_CANON_R1",
+  "proceedToken": "PROCEED|HOME-MODE-ROLE-PRESENTATION-R1-20260915T2130-SOL-TE|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|home-mode-role-badges|existing-slidepad|active-lease",
+  "authorizationBaseSha": "70ec0c991559d9c81818f80f554fd69dc3117748",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_MODE_ROLE_PRESENTATION_R1",
+  "leaseAcquireKey": "HOME-MODE-ROLE-PRESENTATION-R1-20260915T2130-SOL-TE",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 21:30 JST",
+  "leaseUntilJst": "2026-09-15 22:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A16:L16",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR authorizationBase main 70ec0c991559d9c81818f80f554fd69dc3117748; mutable browser/home-boot-runtime-base-r3.mjs; NEW tests/home-mode-role-presentation-r1.test.mjs; own transient data/preaction-authorizations/HOME-MODE-ROLE-PRESENTATION-R1-20260915T2130-SOL-TE.json; own branch sol/home-mode-role-presentation-r1-20260915; PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; browser/home-boot-runtime-mount.mjs; browser/home-journey-projection-runtime.mjs; deploy/cloudflare/scripts/build.mjs; Cards/Partner/Battle/gameplay/rules/save/economy/network/assets and all active parallel WorkUnits.",
+  "solutionSignature": "HOME_EXISTING_SLIDEPAD_MODE_ROLE_BADGES_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_HOME_BASE_ROUTE_SELECTOR_PLUS_APPROVED_MODE_ROLE_DISPOSITION_R1",
+  "solutionSearchEvidence": [
+    "Current Home already has one canonical SlidePad route authority via .homePadChoice[data-home-target].",
+    "The current Home base maps setup/battle, cards, partner/characters and shop without requiring a second router.",
+    "Approved mode-role canon requires player-facing Battle, Build and World while preserving existing runtime/state/save authorities.",
+    "A separate active GLOBAL_JOURNEY_HOME_VISIBLE_MOUNT_R1 owns home-boot-runtime-mount.mjs and build packaging, so those resources remain read-only here.",
+    "The minimal product delta is to annotate existing route buttons only; route IDs, handlers, gameplay, save, economy and network stay unchanged."
+  ],
+  "scope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-mode-role-presentation-r1.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-mode-role-presentation-r1.test.mjs"
+  ]
+}

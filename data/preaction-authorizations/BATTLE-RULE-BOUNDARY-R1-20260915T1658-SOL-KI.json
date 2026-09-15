@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RULE-BOUNDARY-R1-20260915T1658-SOL-KI",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_RULE_DOMAIN_BOUNDARY_REGRESSION_R1",
+  "acquireKey": "BATTLE-RULE-BOUNDARY-R1-20260915T1658-SOL-KI",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "EXISTING_FOCUSED_RULE_TESTS_PLUS_CROSS_DOMAIN_SEAM_20260915T1658JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "READ_ONLY_API_AND_EXISTING_TEST_CONTRACT_REHEARSAL_20260915T1658JST",
+  "proceedToken": "PROCEED|BATTLE-RULE-BOUNDARY-R1-20260915T1658-SOL-KI|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|test-only|cross-domain-seven-boundary|active-lease",
+  "authorizationBaseSha": "061c899df9df59d3b798034f097dbe9951946c6d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_RULE_DOMAIN_BOUNDARY_REGRESSION_R1",
+  "leaseAcquireKey": "BATTLE-RULE-BOUNDARY-R1-20260915T1658-SOL-KI",
+  "leaseSnapshotReadbackAtJst": "2026-09-15 16:58 JST",
+  "leaseUntilJst": "2026-09-15 17:58 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A12:L12",
+  "leaseExactMutableResources": "tests/new-base-goal-result-core.test.mjs; own transient data/preaction-authorizations/BATTLE-RULE-BOUNDARY-R1-20260915T1658-SOL-KI.json; own branch/PR/check/readback only. READ_ONLY browser/*.mjs production modules; browser/GAMEROAD.html; PR#1691; gameplay/rules/target/legality/result/Shield/path/save/economy/network/build.",
+  "scope": [
+    "tests/new-base-goal-result-core.test.mjs"
+  ],
+  "leaseScope": [
+    "tests/new-base-goal-result-core.test.mjs"
+  ]
+}

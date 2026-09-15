@@ -300,8 +300,13 @@ async function playVisibleTwoPlayerToResult(page, testInfo, evidencePrefix) {
       continue;
     }
 
-    const roadSelect = battle.locator('#roadSelect:visible');
-    if ((await roadSelect.count()) > 0 && (await roadSelect.isEnabled())) {
+    const planReady = await battle.evaluate((root) => {
+      const roadSelect = root.querySelector('#roadSelect');
+      if (!roadSelect || roadSelect.disabled || roadSelect.getClientRects().length === 0) return false;
+      const style = getComputedStyle(roadSelect);
+      return style.visibility !== 'hidden' && style.display !== 'none';
+    });
+    if (planReady) {
       await submitVisiblePlan(battle);
       roundsSubmitted += 1;
       continue;
@@ -1794,8 +1799,13 @@ test('R19 reaches Result from visible four-player Honey Hunt and returns Home', 
       targetConfirms += 1;
       continue;
     }
-    const roadSelect = battle.locator('#roadSelect:visible');
-    if ((await roadSelect.count()) > 0 && (await roadSelect.isEnabled())) {
+    const planReady = await battle.evaluate((root) => {
+      const roadSelect = root.querySelector('#roadSelect');
+      if (!roadSelect || roadSelect.disabled || roadSelect.getClientRects().length === 0) return false;
+      const style = getComputedStyle(roadSelect);
+      return style.visibility !== 'hidden' && style.display !== 'none';
+    });
+    if (planReady) {
       await submitVisiblePlan(battle);
       roundsSubmitted += 1;
       continue;

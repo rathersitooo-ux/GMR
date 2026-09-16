@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CI-BFI-SINGLE-OWNER-R10-20260916T1301-SOL-RECOVER",
+  "taskId": "GITHUB-CI-BROWSER-NODE-001",
+  "workUnitKey": "BROWSER_FULL_INTERACTION_PR_SINGLE_OWNER_R9",
+  "acquireKey": "CI-BFI-SINGLE-OWNER-R10-20260916T1301-SOL-RECOVER",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_BFI_TRIGGER_GAP_PLUS_PR1717_BOUNDED_DONOR",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1717_TWO_FILE_PATCH_AND_FRESH_MAIN_NONOVERLAP_COMPARE",
+  "proceedToken": "PROCEED|CI-BFI-SINGLE-OWNER-R10-20260916T1301-SOL-RECOVER|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|current-gap|lease-snapshot",
+  "authorizationBaseSha": "0a8b3bad6d77562dd258b65a1a7fcc81cf34d9f6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-CI-BROWSER-NODE-001",
+  "leaseWorkUnitKey": "BROWSER_FULL_INTERACTION_PR_SINGLE_OWNER_R9",
+  "leaseAcquireKey": "CI-BFI-SINGLE-OWNER-R10-20260916T1301-SOL-RECOVER",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 13:01 JST",
+  "leaseUntilJst": "2026-09-16 14:01 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A28:L28",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main 0a8b3bad6d77562dd258b65a1a7fcc81cf34d9f6; mutable .github/workflows/browser-full-interaction.yml; .github/workflows/required-gate-auto-merge.yml; own transient PRE_ACTION witness if current gate requires; own clean branch/PR/check/merge/readback. READ_ONLY .github/workflows/gameroad-required-gate.yml; product/runtime/gameplay/save/economy/network/assets; unrelated active WorkUnits.",
+  "scope": [
+    ".github/workflows/browser-full-interaction.yml",
+    ".github/workflows/required-gate-auto-merge.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/browser-full-interaction.yml",
+    ".github/workflows/required-gate-auto-merge.yml"
+  ]
+}

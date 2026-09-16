@@ -20,8 +20,8 @@ import { mountStudyRunFromCurrentBrowser } from './study-run-runtime-mount.mjs';
 
 const HOME_ROUTE_SELECTOR = 'section[data-screen="home"] .homePadChoice[data-home-target]';
 const NAV_GUARD_ATTR = 'data-home-nav-readiness-guard';
-const NAV_PREV_ARIA_ATTR = 'data-home-nav-readiness-prev-aria-disabled';
-const NAV_PREV_ARIA_MISSING = '__missing__';
+const NAV_PREV_BUSY_ATTR = 'data-home-nav-readiness-prev-aria-busy';
+const NAV_PREV_BUSY_MISSING = '__missing__';
 const NAV_READINESS_POLL_MS = 50;
 const guardedRouteActivationBlockers = new Map();
 
@@ -49,12 +49,13 @@ function guardRouteControl(control) {
   const ariaDisabled = control.getAttribute('aria-disabled');
   if (disabled || ariaDisabled === 'true') return false;
 
-  // Keep the control physically clickable so an early human/pointer attempt resolves immediately;
-  // block only its activation until the existing screen-transition authority is actually ready.
+  // Keep the control physically actionable so an early pointer attempt resolves immediately.
+  // The capture blocker prevents navigation until the existing transition authority is ready.
   const blocker = (event) => blockGuardedActivation(event);
+  const ariaBusy = control.getAttribute('aria-busy');
   control.setAttribute(NAV_GUARD_ATTR, 'true');
-  control.setAttribute(NAV_PREV_ARIA_ATTR, ariaDisabled === null ? NAV_PREV_ARIA_MISSING : ariaDisabled);
-  control.setAttribute('aria-disabled', 'true');
+  control.setAttribute(NAV_PREV_BUSY_ATTR, ariaBusy === null ? NAV_PREV_BUSY_MISSING : ariaBusy);
+  control.setAttribute('aria-busy', 'true');
   control.addEventListener?.('click', blocker, true);
   guardedRouteActivationBlockers.set(control, blocker);
   return true;
@@ -70,14 +71,14 @@ function restoreRouteControl(control) {
     guardedRouteActivationBlockers.delete(control);
   }
 
-  const previousAria = control.getAttribute(NAV_PREV_ARIA_ATTR);
-  if (previousAria === NAV_PREV_ARIA_MISSING || previousAria === null) {
-    control.removeAttribute('aria-disabled');
+  const previousBusy = control.getAttribute(NAV_PREV_BUSY_ATTR);
+  if (previousBusy === NAV_PREV_BUSY_MISSING || previousBusy === null) {
+    control.removeAttribute('aria-busy');
   } else {
-    control.setAttribute('aria-disabled', previousAria);
+    control.setAttribute('aria-busy', previousBusy);
   }
   control.removeAttribute(NAV_GUARD_ATTR);
-  control.removeAttribute(NAV_PREV_ARIA_ATTR);
+  control.removeAttribute(NAV_PREV_BUSY_ATTR);
   return true;
 }
 

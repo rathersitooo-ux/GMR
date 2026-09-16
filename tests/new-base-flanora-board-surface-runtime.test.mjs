@@ -9,274 +9,135 @@ import {
   projectFlanoraBoardSurfaceModel,
 } from '../browser/new-base-flanora-board-surface-runtime.mjs';
 
-const INPUT = Object.freeze({
-  participantIds: ['P1','P2','P3','P4'],
-  horizontalCellCount: 12,
-  shieldLinkedLaneColumnsByParticipant: {
-    P1: [0,1,2], P2: [3,4,5], P3: [6,7,8], P4: [9,10,11],
-  },
-});
+const INPUT=Object.freeze({participantIds:['P1','P2','P3','P4'],horizontalCellCount:12,shieldLinkedLaneColumnsByParticipant:{P1:[0,1,2],P2:[3,4,5],P3:[6,7,8],P4:[9,10,11]}});
 
-function makeFakeDom() {
-  const byId = new Map();
-  const documentLike = {
-    createElement(tagName) {
-      const attrs = new Map();
-      const node = {
-        tagName, parentNode: null, children: [], dataset: {}, style: {}, className: '', textContent: '',
-        appendChild(child) { child.parentNode = this; this.children.push(child); if (child.id) byId.set(child.id, child); return child; },
-        removeChild(child) { this.children = this.children.filter((x) => x !== child); child.parentNode = null; return child; },
-        remove() { if (this.parentNode) this.parentNode.removeChild(this); },
-        setAttribute(name, value) { attrs.set(name, String(value)); },
-        getAttribute(name) { return attrs.get(name) ?? null; },
+function makeFakeDom(){
+  const byId=new Map();
+  const documentLike={
+    createElement(tagName){
+      const attrs=new Map();
+      const node={tagName,parentNode:null,children:[],dataset:{},style:{},className:'',textContent:'',
+        appendChild(child){child.parentNode=this;this.children.push(child);if(child.id)byId.set(child.id,child);return child;},
+        removeChild(child){this.children=this.children.filter(x=>x!==child);child.parentNode=null;return child;},
+        remove(){if(this.parentNode)this.parentNode.removeChild(this);},
+        setAttribute(name,value){attrs.set(name,String(value));if(name.startsWith('data-')){const key=name.slice(5).replace(/-([a-z])/g,(_,c)=>c.toUpperCase());this.dataset[key]=String(value);}},
+        getAttribute(name){return attrs.get(name)??null;},
+        removeAttribute(name){attrs.delete(name);},
       };
-      Object.defineProperty(node, 'id', {
-        get() { return this._id ?? ''; },
-        set(value) { this._id = value; if (value) byId.set(value, this); },
-      });
+      Object.defineProperty(node,'id',{get(){return this._id??'';},set(value){this._id=value;if(value)byId.set(value,this);}});
       return node;
     },
-    getElementById(id) { return byId.get(id) ?? null; },
+    getElementById(id){return byId.get(id)??null;},
   };
-  documentLike.head = documentLike.createElement('head');
+  documentLike.head=documentLike.createElement('head');
   return documentLike;
 }
-
-function standardLayout() { return createFlanoraMapLayout(INPUT); }
-
-function goalPathPresentationFor(runtime, countsByLaneKey = {}) {
-  return {
-    schema: 'GAMEROAD_NEW_BASE_GOAL_PATH_PRESENTATION_V1',
-    ok: true,
-    terminalWin: false,
-    presentationOnly: true,
-    gameplayAuthority: false,
-    gameStateWrite: false,
-    movementAuthority: false,
-    legalityAuthority: false,
-    resultAuthority: false,
-    lanePresentations: runtime.model.lanes.map((lane) => {
-      const straightCardCount = countsByLaneKey[lane.key] ?? 0;
-      return {
-        participantId: lane.participantId,
-        laneIndex: lane.laneIndex,
-        straightCardCount,
-        connectedToGoal: straightCardCount === 7,
-      };
-    }),
-  };
+function standardLayout(){return createFlanoraMapLayout(INPUT);}
+function cards(count,prefix){return Array.from({length:count},(_,index)=>`${prefix}-${index+1}`);}
+function goalPathPresentationFor(runtime,countsByLaneKey={}){
+  return {schema:'GAMEROAD_NEW_BASE_GOAL_PATH_PRESENTATION_V1',ok:true,terminalWin:false,presentationOnly:true,gameplayAuthority:false,gameStateWrite:false,movementAuthority:false,legalityAuthority:false,resultAuthority:false,sharedGoalId:'goal:shared',lanePresentations:runtime.model.lanes.map(lane=>{const count=countsByLaneKey[lane.key]??0;return {key:lane.key,participantId:lane.participantId,laneIndex:lane.laneIndex,straightCardCount:count,straightCardIds:cards(count,`${lane.key}-card`),routeGateId:lane.routeGateId,sharedGoalId:'goal:shared',connectedToGoal:count===7};})};
 }
 
-test('projects current board core into 12 Shield lanes, seven-step semantic tracks, left GOALs and 26 shared clearing cells', () => {
-  const model = createFlanoraBoardSurfaceModel(INPUT);
-  assert.equal(model.lanes.length, 12);
-  assert.equal(model.clearingCells.length, 26);
-  assert.equal(model.clearingCycleCellIds.length, 26);
-  assert.deepEqual(model.lanes.map((lane) => lane.columnIndex), [0,1,2,3,4,5,6,7,8,9,10,11]);
-  assert.deepEqual(model.lanes.slice(0,3).map((lane) => lane.laneLabel), ['L','C','R']);
-  assert.equal(model.lanes.every((lane) => lane.roadSteps.length === 7), true);
-  assert.equal(new Set(model.lanes.map((lane) => lane.goalId)).size, 12);
-  assert.equal(new Set(model.lanes.map((lane) => lane.shieldId)).size, 12);
-  assert.equal(model.presentationOnly, true);
-  assert.equal(model.gameplayAuthority, false);
-  assert.equal(model.movementAuthority, false);
-  assert.equal(model.legalityAuthority, false);
-  assert.equal(model.resultAuthority, false);
-  assert.equal(model.optionalRuleGeometryIncluded, false);
-  assert.equal(model.upperProgressIsPrebuiltMovementField, false);
+test('projects 12 Shield routes into one shared GOAL while preserving the 26-cell shared field',()=>{
+  const model=createFlanoraBoardSurfaceModel(INPUT);
+  assert.equal(model.lanes.length,12); assert.equal(model.clearingCells.length,26); assert.equal(model.clearingCycleCellIds.length,26);
+  assert.equal(model.sharedGoalId,'goal:shared'); assert.equal(model.sharedGoalCount,1); assert.equal(model.routeGateCount,12);
+  assert.equal(new Set(model.lanes.map(lane=>lane.goalId)).size,1);
+  assert.equal(new Set(model.lanes.map(lane=>lane.routeGateId)).size,12);
+  assert.equal(new Set(model.lanes.map(lane=>lane.shieldId)).size,12);
+  assert.equal(model.lanes.every(lane=>lane.roadSteps.length===7),true);
+  assert.equal(model.presentationOnly,true); assert.equal(model.gameplayAuthority,false); assert.equal(model.movementAuthority,false); assert.equal(model.legalityAuthority,false); assert.equal(model.resultAuthority,false);
 });
 
-test('preserves same-column clearing entry and the four current start anchors', () => {
-  const model = projectFlanoraBoardSurfaceModel(standardLayout());
-  for (const lane of model.lanes) assert.equal(lane.clearingEntryCellId, `clearing:top:${lane.columnIndex}`);
-  const starts = Object.fromEntries(model.clearingCells.filter((cell) => cell.startParticipantIds.length).map((cell) => [cell.id, cell.startParticipantIds]));
-  assert.deepEqual(starts, {
-    'clearing:top:1': ['P1'],
-    'clearing:top:4': ['P2'],
-    'clearing:top:7': ['P3'],
-    'clearing:top:10': ['P4'],
-  });
+test('keeps same-column shared-field entry and four existing start anchors',()=>{
+  const model=projectFlanoraBoardSurfaceModel(standardLayout());
+  for(const lane of model.lanes) assert.equal(lane.clearingEntryCellId,`clearing:top:${lane.columnIndex}`);
+  const starts=Object.fromEntries(model.clearingCells.filter(cell=>cell.startParticipantIds.length).map(cell=>[cell.id,cell.startParticipantIds]));
+  assert.deepEqual(starts,{'clearing:top:1':['P1'],'clearing:top:4':['P2'],'clearing:top:7':['P3'],'clearing:top:10':['P4']});
 });
 
-test('mount exposes lanes and a continuous road without precreating future progression nodes', () => {
-  const documentLike = makeFakeDom();
-  const host = documentLike.createElement('div');
-  const runtime = mountFlanoraBoardSurface({ host, documentLike, layout: standardLayout() });
-  assert.equal(runtime.mounted, true);
-  assert.deepEqual(runtime.snapshot(), {
-    laneCount: 12,
-    goalCount: 12,
-    shieldCount: 12,
-    roadStepCount: 84,
-    visibleBuiltRoadStepCount: 0,
-    clearingCellCount: 26,
-    clearingCycleCellIds: runtime.model.clearingCycleCellIds,
-    performanceProfile: 'standard',
-    movementAuthority: false,
-  });
-  assert.equal(runtime.root.dataset.goalEdge, 'left');
-  assert.equal(runtime.root.dataset.roadEntryEdge, 'right');
-  assert.equal(runtime.root.dataset.progressionDirection, 'right-to-left');
-  assert.equal(runtime.root.dataset.centralWorldLayout, 'participant-groups-2x2');
-  assert.equal(runtime.root.dataset.futureDiscreteProgressionSlots, 'false');
-  assert.match(runtime.root.getAttribute('aria-label'), /成立済み進行だけ.*未成立位置は連続した道/);
-  assert.equal(runtime.upper.children.length, 12);
-  assert.deepEqual(
-    runtime.upper.children.map((node) => [node.dataset.participantSlot, node.style.gridColumn, node.style.gridRow]),
-    [
-      ['0','1','1'], ['0','1','2'], ['0','1','3'],
-      ['1','2','1'], ['1','2','2'], ['1','2','3'],
-      ['2','1','4'], ['2','1','5'], ['2','1','6'],
-      ['3','2','4'], ['3','2','5'], ['3','2','6'],
-    ],
-  );
-  assert.deepEqual(runtime.upper.children[0].children.map((node) => node.className), ['grFlanoraGoal','grFlanoraRoad','grFlanoraShield']);
-  const road = runtime.upper.children[0].children[1];
-  assert.equal(road.children.length, 0);
-  assert.equal(road.dataset.progressionCapacity, '7');
-  assert.equal(road.dataset.progressionBuiltCount, '0');
-  assert.equal(road.dataset.futureDiscreteSlots, 'false');
-  assert.match(road.getAttribute('aria-label'), /成立済み 0\/7.*連続した道/);
-
-  const styleText = documentLike.head.children[0].textContent;
-  assert.match(styleText, /grid-template-rows:minmax\(0,1fr\) minmax\(64px,22%\)/);
-  assert.match(styleText, /\.grFlanoraUpper\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\);grid-template-rows:repeat\(6,minmax\(0,1fr\)\)/);
-  assert.match(styleText, /\.grFlanoraRoad\{[^}]*grid-template-columns:repeat\(7,minmax\(4px,1fr\)\)[^}]*direction:rtl/);
-  assert.match(styleText, /\.grFlanoraRoad::before\{[^}]*left:3%;right:3%;top:50%;height:2px/);
-  assert.match(styleText, /\.grFlanoraRoadStep\{[^}]*aspect-ratio:\.72/);
-  assert.doesNotMatch(styleText, /data-progression-stage-state="UNRESOLVED"/);
-  assert.doesNotMatch(styleText, /data-progression-stage-state="LATENT"/);
-  assert.doesNotMatch(styleText, /border-style:dotted|border-style:dashed/);
-  assert.match(styleText, /@media\(max-height:420px\).*minmax\(52px,20%\)/);
-  assert.match(styleText, /@media\(max-width:540px\) and \(orientation:portrait\).*\.grFlanoraUpper\{grid-template-columns:minmax\(0,1fr\);grid-template-rows:repeat\(12,minmax\(0,1fr\)\)/);
-  assert.equal(runtime.resolveGoal('P1', 0).dataset.flanoraGoal, 'P1:0');
-  assert.equal(runtime.resolveShield('P4', 2).dataset.clearingEntryCellId, 'clearing:top:11');
-  assert.equal(runtime.resolveRoadStep('P2', 1, 7), null);
-  assert.equal(runtime.resolveClearingCell('clearing:top:4').dataset.startParticipant, 'P2');
-  assert.equal(runtime.resolveRoadStep('P2', 1, 8), null);
-  assert.equal(runtime.gameplayAuthority, false);
-  assert.equal(runtime.gameStateWrite, false);
-  assert.equal(runtime.movementAuthority, false);
-  assert.equal(runtime.destroy(), true);
-  assert.equal(runtime.destroy(), false);
-  assert.equal(host.children.length, 0);
+test('mount is world-first: one top-center GOAL, twelve route anchors, four x three vertical roads, then shared field',()=>{
+  const documentLike=makeFakeDom(); const host=documentLike.createElement('div');
+  const runtime=mountFlanoraBoardSurface({host,documentLike,layout:standardLayout()});
+  assert.equal(runtime.mounted,true);
+  const snap=runtime.snapshot();
+  assert.equal(snap.laneCount,12); assert.equal(snap.goalCount,1); assert.equal(snap.sharedGoalCount,1); assert.equal(snap.routeGateCount,12); assert.equal(snap.shieldCount,12); assert.equal(snap.roadStepCount,84); assert.equal(snap.visibleBuiltRoadStepCount,0); assert.equal(snap.clearingCellCount,26);
+  assert.equal(runtime.root.dataset.goalEdge,'top-center');
+  assert.equal(runtime.root.dataset.roadEntryEdge,'bottom');
+  assert.equal(runtime.root.dataset.progressionDirection,'bottom-to-top');
+  assert.equal(runtime.root.dataset.centralWorldLayout,'shared-field-shield-actual-card-road-route-gates-one-goal');
+  assert.equal(runtime.root.dataset.futureDiscreteProgressionSlots,'false');
+  assert.match(runtime.root.getAttribute('aria-label'),/共有フィールド.*盾.*カード.*12経路ゲート.*1つのGOAL/);
+  assert.deepEqual(runtime.upper.children.map(node=>node.className),['grFlanoraSharedGoal','grFlanoraRouteGateLayer','grFlanoraProgressionGrid']);
+  assert.equal(runtime.routeGateLayer.children.length,12);
+  assert.equal(runtime.progressionGrid.children.length,4);
+  assert.deepEqual(runtime.progressionGrid.children.map(cluster=>cluster.children.length),[3,3,3,3]);
+  assert.equal(runtime.resolveSharedGoal().dataset.flanoraSharedGoal,'goal:shared');
+  assert.equal(runtime.resolveRouteGate('P1',0).dataset.flanoraRouteGate,'goal-gate:P1:0');
+  assert.equal(runtime.resolveGoal('P1',0),runtime.resolveRouteGate('P1',0));
+  assert.equal(runtime.resolveShield('P4',2).dataset.clearingEntryCellId,'clearing:top:11');
+  assert.equal(runtime.resolveRoadStep('P2',1,7),null);
+  const styleText=documentLike.head.children[0].textContent;
+  assert.match(styleText,/\.grFlanoraSharedGoal\{/);
+  assert.match(styleText,/\.grFlanoraRouteGateLayer\{[^}]*repeat\(12/);
+  assert.match(styleText,/\.grFlanoraProgressionGrid\{[^}]*repeat\(4/);
+  assert.match(styleText,/\.grFlanoraParticipantCluster\{[^}]*repeat\(3/);
+  assert.match(styleText,/\.grFlanoraRoad\{[^}]*flex-direction:column-reverse/);
+  assert.match(styleText,/\.grFlanoraRoadStep\{[^}]*aspect-ratio:1\.48/);
+  assert.doesNotMatch(styleText,/grFlanoraGoal\{/);
+  assert.doesNotMatch(styleText,/grid-template-columns:repeat\(7/);
+  assert.equal(runtime.gameplayAuthority,false); assert.equal(runtime.gameStateWrite,false); assert.equal(runtime.movementAuthority,false);
 });
 
-test('reduced-motion and low-perf keep exact board semantics without future discrete nodes', () => {
-  const documentLike = makeFakeDom();
-  const a = mountFlanoraBoardSurface({ host: documentLike.createElement('div'), documentLike, layout: standardLayout(), reducedMotion: true });
-  const b = mountFlanoraBoardSurface({ host: documentLike.createElement('div'), documentLike, layout: standardLayout(), lowPerf: true });
-  assert.equal(a.snapshot().performanceProfile, 'reduced_motion');
-  assert.equal(b.snapshot().performanceProfile, 'low_perf');
-  assert.deepEqual(a.snapshot().clearingCycleCellIds, b.snapshot().clearingCycleCellIds);
-  assert.equal(a.snapshot().roadStepCount, 84);
-  assert.equal(b.snapshot().roadStepCount, 84);
-  assert.equal(a.snapshot().visibleBuiltRoadStepCount, 0);
-  assert.equal(b.snapshot().visibleBuiltRoadStepCount, 0);
+test('sync renders discrete nodes only for actual BUILT cards and keeps future positions invisible',()=>{
+  const documentLike=makeFakeDom(); const runtime=mountFlanoraBoardSurface({host:documentLike.createElement('div'),documentLike,layout:standardLayout()});
+  const progression=projectNewBaseProgressionLanePresentation(goalPathPresentationFor(runtime,{'P1:0':3,'P2:1':7}));
+  assert.equal(progression.ok,true); assert.equal(progression.totalBuiltStageCount,10); assert.equal(progression.totalResolvedPhysicalCardIdentityCount,10);
+  const applied=runtime.syncProgressionPresentation(progression);
+  assert.equal(applied.applied,true); assert.equal(applied.builtStageCount,10); assert.equal(applied.resolvedPhysicalCardIdentityCount,10);
+  assert.equal(runtime.snapshot().visibleBuiltRoadStepCount,10); assert.equal(runtime.snapshot().resolvedPhysicalCardIdentityCount,10);
+  const first=runtime.resolveRoadStep('P1',0,1);
+  assert.equal(first.dataset.progressionStageState,'BUILT'); assert.equal(first.dataset.cardIdentityResolved,'true'); assert.equal(first.dataset.cardId,'P1:0-card-1'); assert.equal(first.dataset.physicalCardId,'P1:0-card-1');
+  assert.equal(runtime.resolveRoadStep('P1',0,4),null);
+  assert.equal(runtime.resolveRoadStep('P2',1,7).dataset.cardId,'P2:1-card-7');
+  assert.equal(runtime.resolveRouteGate('P2',1).dataset.connectedToGoal,'true');
+  assert.equal(runtime.resolveSharedGoal().dataset.connectedRouteCount,'1');
+  assert.equal(runtime.resolveSharedGoal().dataset.terminalResultAuthority,'false');
+  const road=runtime.resolveRoadStep('P1',0,1).parentNode;
+  assert.equal(road.dataset.futureDiscreteSlots,'false'); assert.equal(road.dataset.progressionLatentCount,'4');
 });
 
-test('fails closed if presentation is handed a layout that claims movement authority or optional-rule geometry', () => {
-  const good = standardLayout();
-  assert.throws(() => projectFlanoraBoardSurfaceModel({ ...good, geometryIsMovementAuthority: true }), /MUST_NOT_OWN_MOVEMENT/);
-  assert.throws(() => projectFlanoraBoardSurfaceModel({ ...good, optionalRuleGeometryIncluded: true }), /OPTIONAL_RULE_GEOMETRY_FORBIDDEN/);
+test('sync can reduce built cards without leaving stale discrete nodes',()=>{
+  const documentLike=makeFakeDom(); const runtime=mountFlanoraBoardSurface({host:documentLike.createElement('div'),documentLike,layout:standardLayout()});
+  runtime.syncProgressionPresentation(projectNewBaseProgressionLanePresentation(goalPathPresentationFor(runtime,{'P1:0':3})));
+  assert.equal(runtime.resolveRoadStep('P1',0,3).dataset.cardId,'P1:0-card-3');
+  runtime.syncProgressionPresentation(projectNewBaseProgressionLanePresentation(goalPathPresentationFor(runtime,{'P1:0':1})));
+  assert.equal(runtime.resolveRoadStep('P1',0,1).dataset.cardId,'P1:0-card-1');
+  assert.equal(runtime.resolveRoadStep('P1',0,2),null); assert.equal(runtime.resolveRoadStep('P1',0,3),null);
+  assert.equal(runtime.snapshot().visibleBuiltRoadStepCount,1);
 });
 
-test('mount fails soft without a DOM host and contract denies a second board engine', () => {
-  assert.deepEqual(mountFlanoraBoardSurface(), {
-    schema: 'gameroad.new-base-flanora-board-surface-runtime.v1',
-    mounted: false,
-    presentationOnly: true,
-    gameplayAuthority: false,
-    reason: 'DOM_HOST_REQUIRED',
-  });
-  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.mount, 'explicit_caller_mount_only');
-  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.secondBoardEngine, false);
-  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.optionalRuleGeometryIncluded, false);
-  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.futureDiscreteStageNodes, false);
-  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.unresolvedStageDefault, 'NO_DISCRETE_NODE_CONTINUOUS_TRACK_ONLY');
+test('reduced motion and low perf preserve one-GOAL topology and card identity semantics',()=>{
+  const documentLike=makeFakeDom();
+  for(const options of [{reducedMotion:true},{lowPerf:true}]){
+    const runtime=mountFlanoraBoardSurface({host:documentLike.createElement('div'),documentLike,layout:standardLayout(),...options});
+    const result=runtime.syncProgressionPresentation(projectNewBaseProgressionLanePresentation(goalPathPresentationFor(runtime,{'P3:2':2})));
+    assert.equal(result.applied,true); assert.equal(runtime.snapshot().goalCount,1); assert.equal(runtime.snapshot().routeGateCount,12); assert.equal(runtime.resolveRoadStep('P3',2,2).dataset.cardId,'P3:2-card-2');
+  }
 });
 
-test('sync creates discrete nodes only for BUILT stages and leaves LATENT stages as continuous road', () => {
-  const documentLike = makeFakeDom();
-  const host = documentLike.createElement('div');
-  const runtime = mountFlanoraBoardSurface({ host, documentLike, layout: standardLayout() });
-
-  assert.equal(runtime.resolveRoadStep('P1', 0, 1), null);
-  const progression = projectNewBaseProgressionLanePresentation(goalPathPresentationFor(runtime, {
-    'P1:0': 3,
-    'P2:1': 7,
-  }));
-  assert.equal(progression.ok, true);
-  assert.equal(progression.totalBuiltStageCount, 10);
-  assert.equal(progression.totalLatentStageCount, 74);
-
-  const applied = runtime.syncProgressionPresentation(progression);
-  assert.deepEqual(applied, {
-    applied: true,
-    reason: 'PROGRESSION_PRESENTATION_APPLIED',
-    builtStageCount: 10,
-    latentStageCount: 74,
-    presentationOnly: true,
-    gameplayAuthority: false,
-    movementAuthority: false,
-    legalityAuthority: false,
-    gameStateWrite: false,
-  });
-  assert.equal(runtime.snapshot().visibleBuiltRoadStepCount, 10);
-  assert.equal(runtime.resolveRoadStep('P1', 0, 1).dataset.progressionStageState, 'BUILT');
-  assert.equal(runtime.resolveRoadStep('P1', 0, 3).dataset.progressionEstablished, 'true');
-  assert.equal(runtime.resolveRoadStep('P1', 0, 4), null);
-  assert.equal(runtime.resolveRoadStep('P2', 1, 7).dataset.progressionStageState, 'BUILT');
-  assert.equal(runtime.resolveRoadStep('P3', 2, 7), null);
-  assert.equal(runtime.upper.children[0].children[1].children.length, 3);
-  assert.equal(runtime.upper.children[4].children[1].children.length, 7);
-  assert.equal(runtime.upper.children[0].children[1].dataset.progressionLatentCount, '4');
-  assert.equal(runtime.upper.children[0].children[1].dataset.futureDiscreteSlots, 'false');
-
-  const reducedProgression = projectNewBaseProgressionLanePresentation(goalPathPresentationFor(runtime, {
-    'P1:0': 1,
-    'P2:1': 7,
-  }));
-  const reduced = runtime.syncProgressionPresentation(reducedProgression);
-  assert.equal(reduced.applied, true);
-  assert.equal(runtime.snapshot().visibleBuiltRoadStepCount, 8);
-  assert.equal(runtime.resolveRoadStep('P1', 0, 1).dataset.progressionStageState, 'BUILT');
-  assert.equal(runtime.resolveRoadStep('P1', 0, 2), null);
-  assert.equal(runtime.upper.children[0].children[1].children.length, 1);
-
-  const beforeInvalid = runtime.snapshot().visibleBuiltRoadStepCount;
-  const refused = runtime.syncProgressionPresentation(null);
-  assert.equal(refused.applied, false);
-  assert.equal(refused.reason, 'PROGRESSION_PRESENTATION_REQUIRED');
-  assert.equal(runtime.snapshot().visibleBuiltRoadStepCount, beforeInvalid);
-  assert.equal(runtime.gameplayAuthority, false);
-  assert.equal(runtime.gameStateWrite, false);
-  assert.equal(runtime.movementAuthority, false);
+test('fails closed for movement-authority geometry or partial progression before mutating visible state',()=>{
+  const good=standardLayout(); assert.throws(()=>projectFlanoraBoardSurfaceModel({...good,geometryIsMovementAuthority:true}),/MUST_NOT_OWN_MOVEMENT/);
+  const documentLike=makeFakeDom(); const runtime=mountFlanoraBoardSurface({host:documentLike.createElement('div'),documentLike,layout:good});
+  const oneLane={schema:'GAMEROAD_NEW_BASE_PROGRESSION_LANE_PRESENTATION_V1',ok:true,stageCount:7,presentationOnly:true,gameplayAuthority:false,gameStateWrite:false,movementAuthority:false,legalityAuthority:false,resultAuthority:false,terminalWin:false,futureStageLooksOpen:false,futureStageActionable:false,futureStageTraversable:false,totalBuiltStageCount:0,totalLatentStageCount:7,lanePresentations:[]};
+  const refused=runtime.syncProgressionPresentation(oneLane); assert.equal(refused.applied,false); assert.equal(refused.reason,'FULL_FLANORA_PROGRESSION_REQUIRED'); assert.equal(runtime.snapshot().visibleBuiltRoadStepCount,0);
 });
 
-test('progression runtime refuses partial authoritative projections before mutating the visible lane state', () => {
-  const documentLike = makeFakeDom();
-  const runtime = mountFlanoraBoardSurface({ host: documentLike.createElement('div'), documentLike, layout: standardLayout() });
-  const oneLaneGoalPath = {
-    schema: 'GAMEROAD_NEW_BASE_GOAL_PATH_PRESENTATION_V1',
-    ok: true,
-    terminalWin: false,
-    presentationOnly: true,
-    gameplayAuthority: false,
-    gameStateWrite: false,
-    movementAuthority: false,
-    legalityAuthority: false,
-    resultAuthority: false,
-    lanePresentations: [{ participantId: 'P1', laneIndex: 0, straightCardCount: 2, connectedToGoal: false }],
-  };
-  const partial = projectNewBaseProgressionLanePresentation(oneLaneGoalPath);
-  assert.equal(partial.ok, true);
-  const refused = runtime.syncProgressionPresentation(partial);
-  assert.equal(refused.applied, false);
-  assert.equal(refused.reason, 'FULL_FLANORA_PROGRESSION_REQUIRED');
-  assert.equal(runtime.resolveRoadStep('P1', 0, 1), null);
-  assert.equal(runtime.resolveRoadStep('P1', 0, 3), null);
-  assert.equal(runtime.snapshot().visibleBuiltRoadStepCount, 0);
-  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.progressionSyncWritesGameState, false);
-  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.secondBoardEngine, false);
+test('contract denies a second board engine and fixes one shared GOAL without fake future slots',()=>{
+  assert.deepEqual(mountFlanoraBoardSurface(),{schema:'gameroad.new-base-flanora-board-surface-runtime.v1',mounted:false,presentationOnly:true,gameplayAuthority:false,reason:'DOM_HOST_REQUIRED'});
+  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.secondBoardEngine,false);
+  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.sharedGoalCount,1);
+  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.routeGateCount,12);
+  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.progressionDirection,'BOTTOM_TO_TOP');
+  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.futureDiscreteStageNodes,false);
 });

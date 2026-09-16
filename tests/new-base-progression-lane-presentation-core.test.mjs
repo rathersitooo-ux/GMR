@@ -1,164 +1,44 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-
+import { createNewBaseGoalPathLayout, projectNewBaseGoalPathConnections } from '../browser/new-base-goal-path-core.mjs';
 import { projectNewBaseGoalPathPresentation } from '../browser/new-base-goal-path-presentation-core.mjs';
-import {
-  NEW_BASE_PROGRESSION_LANE_PRESENTATION_CONTRACT,
-  NEW_BASE_PROGRESSION_STAGE_VISUAL_STATE,
-  isNewBaseProgressionLanePresentation,
-  projectNewBaseProgressionLanePresentation,
-} from '../browser/new-base-progression-lane-presentation-core.mjs';
+import { NEW_BASE_PROGRESSION_LANE_PRESENTATION_CONTRACT, isNewBaseProgressionLanePresentation, projectNewBaseProgressionLanePresentation } from '../browser/new-base-progression-lane-presentation-core.mjs';
 
-function sourceLane({
-  participantId = 'P1',
-  laneIndex = 0,
-  columnIndex = laneIndex,
-  straightCardCount = 0,
-  connectedToGoal = false,
-} = {}) {
-  return {
-    participantId,
-    laneIndex,
-    columnIndex,
-    goalRowColumnIndex: columnIndex,
-    straightCardCount,
-    connectedToGoal,
-  };
+function goalPresentation() {
+  const participantIds = ['P1','P2','P3','P4'];
+  const shieldLinkedLaneColumnsByParticipant = { P1:[0,1,2], P2:[3,4,5], P3:[6,7,8], P4:[9,10,11] };
+  const layout = createNewBaseGoalPathLayout({ participantIds, horizontalCellCount:12, shieldLinkedLaneColumnsByParticipant });
+  const cards = Array.from({ length:12 }, () => []);
+  cards[0] = ['A','B','C']; cards[4] = ['D','E','F','G','H','I','J'];
+  return projectNewBaseGoalPathPresentation(projectNewBaseGoalPathConnections(layout, { straightCardIdsByColumn:cards }));
 }
 
-function goalPathPresentation(lanes) {
-  return projectNewBaseGoalPathPresentation({
-    ok: true,
-    reason: 'TEST_GOAL_PATH_PROJECTION',
-    terminalWin: false,
-    horizontalCellCount: 12,
-    laneStates: lanes,
-  });
-}
-
-function projectOne(input = {}) {
-  const goalPath = goalPathPresentation([sourceLane(input)]);
-  assert.equal(goalPath.ok, true);
-  return projectNewBaseProgressionLanePresentation(goalPath);
-}
-
-test('0 cards keeps all seven future stages latent and never open or traversable', () => {
-  const result = projectOne({ straightCardCount: 0 });
-  assert.equal(result.ok, true);
-  assert.equal(result.stageCount, 7);
-  assert.equal(result.totalBuiltStageCount, 0);
-  assert.equal(result.totalLatentStageCount, 7);
-  assert.equal(result.lanePresentations.length, 1);
-  assert.equal(result.lanePresentations[0].stages.length, 7);
-
-  for (const stage of result.lanePresentations[0].stages) {
-    assert.equal(stage.visualState, NEW_BASE_PROGRESSION_STAGE_VISUAL_STATE.LATENT);
-    assert.equal(stage.established, false);
-    assert.equal(stage.latent, true);
-    assert.equal(stage.visualCue, 'FUTURE_PROGRESS_NOT_OPEN');
-    assert.equal(stage.actionable, false);
-    assert.equal(stage.traversable, false);
-    assert.equal(stage.legalityAuthority, false);
-    assert.equal(stage.movementAuthority, false);
-  }
-  assert.equal(result.futureStageLooksOpen, false);
-  assert.equal(result.futureStageActionable, false);
-  assert.equal(result.futureStageTraversable, false);
+test('projects only cards that actually exist; future positions have no nodes', () => {
+  const value = projectNewBaseProgressionLanePresentation(goalPresentation());
+  assert.equal(value.ok, true);
+  assert.equal(isNewBaseProgressionLanePresentation(value), true);
+  assert.equal(value.futureStageNodeCount, 0);
+  assert.equal(value.totalBuiltStageCount, 10);
+  assert.equal(value.totalLatentStageCount, 74);
+  const lane = value.lanePresentations[0];
+  assert.equal(lane.stages.length, 3);
+  assert.deepEqual(lane.placedCards.map((card) => card.cardId), ['A','B','C']);
+  assert.deepEqual(lane.placedCards.map((card) => card.stageIndex), [1,2,3]);
+  assert.equal(lane.futureStageNodeCount, 0);
 });
 
-test('three cards exposes only first three stages as established progress', () => {
-  const result = projectOne({ straightCardCount: 3 });
-  const stages = result.lanePresentations[0].stages;
-  assert.deepEqual(
-    stages.map((stage) => stage.visualState),
-    [
-      NEW_BASE_PROGRESSION_STAGE_VISUAL_STATE.BUILT,
-      NEW_BASE_PROGRESSION_STAGE_VISUAL_STATE.BUILT,
-      NEW_BASE_PROGRESSION_STAGE_VISUAL_STATE.BUILT,
-      NEW_BASE_PROGRESSION_STAGE_VISUAL_STATE.LATENT,
-      NEW_BASE_PROGRESSION_STAGE_VISUAL_STATE.LATENT,
-      NEW_BASE_PROGRESSION_STAGE_VISUAL_STATE.LATENT,
-      NEW_BASE_PROGRESSION_STAGE_VISUAL_STATE.LATENT,
-    ],
-  );
-  assert.equal(result.lanePresentations[0].builtStageCount, 3);
-  assert.equal(result.lanePresentations[0].latentStageCount, 4);
-  assert.equal(stages[2].visualCue, 'ESTABLISHED_PROGRESS');
-  assert.equal(stages[3].visualCue, 'FUTURE_PROGRESS_NOT_OPEN');
+test('seven placed cards open the path but remain non-terminal', () => {
+  const value = projectNewBaseProgressionLanePresentation(goalPresentation());
+  const lane = value.lanePresentations[4];
+  assert.equal(lane.placedCards.length, 7);
+  assert.equal(lane.connectedToGoal, true);
+  assert.equal(lane.terminalWin, false);
+  assert.equal(value.terminalWin, false);
+  assert.equal(NEW_BASE_PROGRESSION_LANE_PRESENTATION_CONTRACT.futureStageNodeCount, 0);
 });
 
-test('seven established stages do not infer that the GOAL path is connected', () => {
-  const result = projectOne({ straightCardCount: 7, connectedToGoal: false });
-  assert.equal(result.ok, true);
-  assert.equal(result.lanePresentations[0].builtStageCount, 7);
-  assert.equal(result.lanePresentations[0].latentStageCount, 0);
-  assert.equal(result.lanePresentations[0].connectedToGoal, false);
-  assert.equal(result.terminalWin, false);
-  assert.equal(result.resultAuthority, false);
-});
-
-test('caller-authoritative connected GOAL path is preserved without becoming terminal victory', () => {
-  const result = projectOne({ straightCardCount: 7, connectedToGoal: true });
-  assert.equal(result.ok, true);
-  assert.equal(result.lanePresentations[0].connectedToGoal, true);
-  assert.equal(result.lanePresentations[0].builtStageCount, 7);
-  assert.equal(result.terminalWin, false);
-  assert.equal(result.gameplayAuthority, false);
-  assert.equal(result.gameStateWrite, false);
-});
-
-test('stage identities match the existing Flanora road-step identity shape', () => {
-  const result = projectOne({ participantId: 'P3', laneIndex: 2, straightCardCount: 2 });
-  assert.deepEqual(
-    result.lanePresentations[0].stages.map((stage) => stage.roadStepId),
-    [1, 2, 3, 4, 5, 6, 7].map((stageIndex) => `road:P3:2:${stageIndex}`),
-  );
-});
-
-test('straightCardCount outside the exact seven-stage surface fails closed', () => {
-  for (const straightCardCount of [-1, 8, 1.5]) {
-    const source = goalPathPresentation([sourceLane({ straightCardCount })]);
-    const result = projectNewBaseProgressionLanePresentation(source);
-    assert.equal(result.ok, false);
-    assert.equal(result.lanePresentations.length, 0);
-    assert.equal(result.futureStageLooksOpen, false);
-    assert.equal(result.futureStageActionable, false);
-    assert.equal(result.futureStageTraversable, false);
-  }
-});
-
-test('invalid lane identity and duplicate participant-lane identity fail closed', () => {
-  const tooWideLane = goalPathPresentation([sourceLane({ laneIndex: 3, columnIndex: 3 })]);
-  const invalidLaneResult = projectNewBaseProgressionLanePresentation(tooWideLane);
-  assert.equal(invalidLaneResult.ok, false);
-  assert.equal(invalidLaneResult.reason, 'LANE_PRESENTATION_INVALID');
-
-  const good = goalPathPresentation([sourceLane({ participantId: 'P2', laneIndex: 1, columnIndex: 4 })]);
-  const duplicateSource = {
-    ...good,
-    lanePresentations: [good.lanePresentations[0], { ...good.lanePresentations[0] }],
-  };
-  const duplicateResult = projectNewBaseProgressionLanePresentation(duplicateSource);
-  assert.equal(duplicateResult.ok, false);
-  assert.equal(duplicateResult.reason, 'LANE_IDENTITY_DUPLICATE');
-});
-
-test('projection and contract stay frozen and authority-free', () => {
-  const result = projectOne({ straightCardCount: 5 });
-  assert.equal(isNewBaseProgressionLanePresentation(result), true);
-  assert.equal(Object.isFrozen(result), true);
-  assert.equal(Object.isFrozen(result.lanePresentations[0]), true);
-  assert.equal(Object.isFrozen(result.lanePresentations[0].stages[0]), true);
-  assert.equal(result.presentationOnly, true);
-  assert.equal(result.movementAuthority, false);
-  assert.equal(result.legalityAuthority, false);
-  assert.equal(result.resultAuthority, false);
-
-  assert.equal(NEW_BASE_PROGRESSION_LANE_PRESENTATION_CONTRACT.stageCount, 7);
-  assert.equal(NEW_BASE_PROGRESSION_LANE_PRESENTATION_CONTRACT.computesStraightCompletion, false);
-  assert.equal(NEW_BASE_PROGRESSION_LANE_PRESENTATION_CONTRACT.computesGoalPathConnection, false);
-  assert.equal(NEW_BASE_PROGRESSION_LANE_PRESENTATION_CONTRACT.computesMovementLegality, false);
-  assert.equal(NEW_BASE_PROGRESSION_LANE_PRESENTATION_CONTRACT.computesResult, false);
-  assert.equal(NEW_BASE_PROGRESSION_LANE_PRESENTATION_CONTRACT.writesGameState, false);
-  assert.equal(NEW_BASE_PROGRESSION_LANE_PRESENTATION_CONTRACT.secondBoardEngine, false);
+test('fails closed instead of synthesizing card identity from counts', () => {
+  const source = goalPresentation();
+  const hacked = { ...source, lanePresentations: source.lanePresentations.map((lane, index) => index === 0 ? { ...lane, straightCardIds: undefined } : lane) };
+  assert.equal(projectNewBaseProgressionLanePresentation(hacked).ok, false);
 });

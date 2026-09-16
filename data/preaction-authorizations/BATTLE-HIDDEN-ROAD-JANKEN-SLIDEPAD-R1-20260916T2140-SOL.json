@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HIDDEN-ROAD-JANKEN-SLIDEPAD-R1-20260916T2140-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_HIDDEN_ROAD_JANKEN_SLIDEPAD_INTEGRATION_R1",
+  "acquireKey": "BATTLE-HIDDEN-ROAD-JANKEN-SLIDEPAD-R1-20260916T2140-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_AND_ACTIVE_LEASE_READBACK_20260916T2140JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_HIDDEN_RUNTIME_PLUS_EXISTING_GOLD_ADD_CONTROL_CONTRACTS",
+  "proceedToken": "PROCEED|BATTLE-HIDDEN-ROAD-JANKEN-SLIDEPAD-R1-20260916T2140-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|hidden-road-janken-slidepad-bridge|new-files-only|active-lease",
+  "authorizationBaseSha": "5f8792829ffc9bcc3fd5e61da8013691daf71566",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_HIDDEN_ROAD_JANKEN_SLIDEPAD_INTEGRATION_R1",
+  "leaseAcquireKey": "BATTLE-HIDDEN-ROAD-JANKEN-SLIDEPAD-R1-20260916T2140-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 21:40 JST",
+  "leaseUntilJst": "2026-09-16 22:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A28:N28",
+  "leaseExactMutableResources": "browser/battle-hidden-road-janken-slidepad-integration.mjs; tests/battle-hidden-road-janken-slidepad-integration.test.mjs; data/preaction-authorizations/BATTLE-HIDDEN-ROAD-JANKEN-SLIDEPAD-R1-20260916T2140-SOL.json",
+  "solutionSignature": "BATTLE_HIDDEN_ROAD_EXISTING_AUTHORITY_TO_EXISTING_JANKEN_ADD_CONTROL_BRIDGE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "HIDDEN_HAND_RUNTIME_V2_PLUS_ADD_CONTROL_V1_ALREADY_ON_MAIN",
+  "solutionSearchEvidence": [
+    "new-base-hidden-hand-runtime-core.mjs already projects only reservedCardId plus hiddenPrivilegeAvailable and consumes privilege only after an authoritative accepted legal Road commit.",
+    "battle-hidden-road-janken-add-control.mjs already owns the lemon/gold versus gray UI semantics and delegates the exact reserved physical card identity to caller-supplied existing Road staging.",
+    "No second hand, store, combat engine, copy privilege, mana rule, or replacement rule is needed or permitted for this WorkUnit.",
+    "battle-screen-runtime-mount.mjs is concurrently leased, so this slice creates only a composition bridge that can be mounted by that live caller after its lease clears."
+  ],
+  "scope": [
+    "browser/battle-hidden-road-janken-slidepad-integration.mjs",
+    "tests/battle-hidden-road-janken-slidepad-integration.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-hidden-road-janken-slidepad-integration.mjs",
+    "tests/battle-hidden-road-janken-slidepad-integration.test.mjs",
+    "data/preaction-authorizations/BATTLE-HIDDEN-ROAD-JANKEN-SLIDEPAD-R1-20260916T2140-SOL.json"
+  ]
+}

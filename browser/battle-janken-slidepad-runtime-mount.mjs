@@ -13,6 +13,9 @@ import {
   mountBattlePlayableHandRowRoulette,
 } from './battle-playable-hand-row-roulette-runtime.mjs';
 import {
+  mountBattleHiddenRoadJankenSlidePadIntegration,
+} from './battle-hidden-road-janken-slidepad-integration.mjs';
+import {
   captureBattleCardReleaseFlightEffect,
   playBattleCardReleaseFlightEffect,
 } from './battle-card-release-flight-runtime-effect.mjs';
@@ -33,6 +36,29 @@ export function normalizeBattleJankenFocusIntegration(value) {
     mountSurface: value.mountSurface,
     readContext: value.readContext,
     liveInputStack,
+  });
+}
+
+export const BATTLE_HIDDEN_HAND_SLIDEPAD_LIVE_MOUNT_SCHEMA =
+  'gameroad.battle-hidden-hand-slidepad-live-mount.v1';
+
+export function normalizeBattleHiddenHandSlidePadIntegration(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const required = [
+    'readHiddenHandRuntime',
+    'readViewerOwnsHiddenHand',
+    'readRoadJankenCardIds',
+    'isRoadCardId',
+    'addRoadJankenCardId',
+  ];
+  if (required.some((name) => typeof value[name] !== 'function')) return null;
+  return Object.freeze({
+    schema: BATTLE_HIDDEN_HAND_SLIDEPAD_LIVE_MOUNT_SCHEMA,
+    readHiddenHandRuntime: value.readHiddenHandRuntime,
+    readViewerOwnsHiddenHand: value.readViewerOwnsHiddenHand,
+    readRoadJankenCardIds: value.readRoadJankenCardIds,
+    isRoadCardId: value.isRoadCardId,
+    addRoadJankenCardId: value.addRoadJankenCardId,
   });
 }
 
@@ -878,15 +904,18 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   battleRoot = null,
   rouletteEnabled = false,
   focusIntegration = null,
+  hiddenHandIntegration = null,
 } = {}) {
   const documentRef = globalRef?.document;
   const root = battleRoot ?? documentRef?.querySelector?.('section[data-screen="battle"]');
   if (!documentRef || !root) return null;
   const initialDedicatedFocus = normalizeBattleJankenFocusIntegration(focusIntegration);
+  const initialHiddenHandIntegration = normalizeBattleHiddenHandSlidePadIntegration(hiddenHandIntegration);
   const existing = root.querySelector?.(`[${HOST_ATTR}="1"]`);
   if (existing?.__gameroadRuntime) {
     const existingRuntime = existing.__gameroadRuntime;
     if (initialDedicatedFocus) existingRuntime.attachFocusIntegration?.(initialDedicatedFocus);
+    if (initialHiddenHandIntegration) existingRuntime.attachHiddenHandIntegration?.(initialHiddenHandIntegration);
     return existingRuntime;
   }
   let dedicatedFocus = initialDedicatedFocus;
@@ -994,6 +1023,61 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   let focusSurfaceRuntime = null;
   let focusSurfaceVersion = 0;
   let focusAssignmentSyncPending = false;
+  let hiddenHandLiveIntegration = null;
+  let hiddenHandLiveRuntime = null;
+
+  function sameHiddenHandIntegration(a, b) {
+    return !!a && !!b
+      && a.readHiddenHandRuntime === b.readHiddenHandRuntime
+      && a.readViewerOwnsHiddenHand === b.readViewerOwnsHiddenHand
+      && a.readRoadJankenCardIds === b.readRoadJankenCardIds
+      && a.isRoadCardId === b.isRoadCardId
+      && a.addRoadJankenCardId === b.addRoadJankenCardId;
+  }
+
+  function syncHiddenHandIntegration() {
+    if (!hiddenHandLiveRuntime) return null;
+    try {
+      return hiddenHandLiveRuntime.sync?.() ?? null;
+    } catch {
+      const button = hiddenHandLiveRuntime.button;
+      if (button) {
+        button.hidden = true;
+        button.disabled = true;
+        if (button.style) button.style.pointerEvents = 'none';
+      }
+      return null;
+    }
+  }
+
+  function attachHiddenHandIntegration(nextIntegration) {
+    if (destroyed) return false;
+    const normalized = normalizeBattleHiddenHandSlidePadIntegration(nextIntegration);
+    if (!normalized) return false;
+    if (hiddenHandLiveIntegration) return sameHiddenHandIntegration(hiddenHandLiveIntegration, normalized);
+    let mounted = null;
+    try {
+      mounted = mountBattleHiddenRoadJankenSlidePadIntegration({
+        documentRef,
+        slidePadHost: host,
+        readHiddenHandRuntime: normalized.readHiddenHandRuntime,
+        readViewerOwnsHiddenHand: normalized.readViewerOwnsHiddenHand,
+        readRoadJankenCardIds: normalized.readRoadJankenCardIds,
+        isRoadCardId: normalized.isRoadCardId,
+        addRoadJankenCardId: normalized.addRoadJankenCardId,
+      });
+    } catch {
+      mounted = null;
+    }
+    if (!mounted) return false;
+    hiddenHandLiveIntegration = normalized;
+    hiddenHandLiveRuntime = mounted;
+    syncHiddenHandIntegration();
+    schedule();
+    return true;
+  }
+
+  if (initialHiddenHandIntegration) attachHiddenHandIntegration(initialHiddenHandIntegration);
 
   function closeDedicatedFocusSurface() {
     focusSurfaceVersion += 1;
@@ -1512,6 +1596,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   function render() {
     if (destroyed) return;
     bindHandInput();
+    syncHiddenHandIntegration();
     const roundText = root.querySelector?.('#roundNo')?.textContent;
     const hand = readHand(globalRef, root);
     if (!String(roundText ?? '').trim() || hand.length === 0) {
@@ -1658,6 +1743,9 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     rowRouletteSnapshot: () => rowRouletteController.snapshot(),
     loadPreviewSnapshot: () => projectBattleLoadCardPreview(model, armedHand),
     cardFocusSnapshot: () => syncHandCardFocusPresentation(),
+    attachHiddenHandIntegration,
+    hiddenHandConnected: () => hiddenHandLiveIntegration !== null,
+    hiddenHandSnapshot: () => syncHiddenHandIntegration(),
     attachFocusIntegration,
     dedicatedFocusConnected: () => dedicatedFocus !== null,
     focusSurfaceSnapshot: () => focusSurfaceRuntime?.snapshot?.() ?? null,
@@ -1686,6 +1774,9 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
         input.removeEventListener?.('change', schedule);
         input.removeEventListener?.('focus', schedule);
       }
+      hiddenHandLiveRuntime?.destroy?.();
+      hiddenHandLiveRuntime = null;
+      hiddenHandLiveIntegration = null;
       rowRouletteRuntime?.destroy?.();
       rowRouletteHost.remove?.();
       clearPlayableHandAffordance(root);

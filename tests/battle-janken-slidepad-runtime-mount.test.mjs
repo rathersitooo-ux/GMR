@@ -5,6 +5,8 @@ import {
   BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA,
   BATTLE_JANKEN_FOCUS_LIVE_MOUNT_SCHEMA,
   normalizeBattleJankenFocusIntegration,
+  BATTLE_HIDDEN_HAND_SLIDEPAD_LIVE_MOUNT_SCHEMA,
+  normalizeBattleHiddenHandSlidePadIntegration,
   BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS,
   advanceBattleJankenSlotRollState,
   buildBattleJankenSlidePadModel,
@@ -468,6 +470,39 @@ test('390x844 portrait keeps SlidePad and optional roulette in the right-thumb d
 
 
 
+// BATTLE_HIDDEN_HAND_SLIDEPAD_LIVE_MOUNT_R1_BEGIN
+
+test('hidden hand SlidePad integration accepts only the exact caller-owned authority adapters', () => {
+  const adapters = {
+    readHiddenHandRuntime() {},
+    readViewerOwnsHiddenHand() {},
+    readRoadJankenCardIds() {},
+    isRoadCardId() {},
+    addRoadJankenCardId() {},
+  };
+  const normalized = normalizeBattleHiddenHandSlidePadIntegration(adapters);
+  assert.equal(normalized.schema, BATTLE_HIDDEN_HAND_SLIDEPAD_LIVE_MOUNT_SCHEMA);
+  for (const name of Object.keys(adapters)) assert.strictEqual(normalized[name], adapters[name]);
+  assert.equal(normalizeBattleHiddenHandSlidePadIntegration(null), null);
+  assert.equal(normalizeBattleHiddenHandSlidePadIntegration({ ...adapters, addRoadJankenCardId: null }), null);
+});
+
+test('existing SlidePad mounts the merged Hidden Hand button bridge late without creating another runtime', async () => {
+  const source = readFileSync(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /from '\.\/battle-hidden-road-janken-slidepad-integration\.mjs'/);
+  assert.match(source, /hiddenHandIntegration = null/);
+  assert.match(source, /const initialHiddenHandIntegration = normalizeBattleHiddenHandSlidePadIntegration\(hiddenHandIntegration\)/);
+  assert.match(source, /if \(existing\?\.__gameroadRuntime\) \{[\s\S]*existingRuntime\.attachHiddenHandIntegration\?\.\(initialHiddenHandIntegration\);[\s\S]*return existingRuntime;/);
+  assert.match(source, /function attachHiddenHandIntegration\(nextIntegration\) \{[\s\S]*mountBattleHiddenRoadJankenSlidePadIntegration\(\{[\s\S]*slidePadHost: host,[\s\S]*addRoadJankenCardId: normalized\.addRoadJankenCardId/);
+  assert.match(source, /function render\(\) \{[\s\S]*bindHandInput\(\);\s*syncHiddenHandIntegration\(\);/);
+  assert.match(source, /attachHiddenHandIntegration,\n    hiddenHandConnected:[\s\S]*hiddenHandSnapshot:/);
+  assert.match(source, /hiddenHandLiveRuntime\?\.destroy\?\.\(\);[\s\S]*hiddenHandLiveIntegration = null;[\s\S]*rowRouletteRuntime\?\.destroy/);
+  assert.equal((source.match(/__gameroadRuntime = runtime/g) ?? []).length, 1,
+    'Hidden Hand must reuse the one existing SlidePad runtime');
+});
+
+// BATTLE_HIDDEN_HAND_SLIDEPAD_LIVE_MOUNT_R1_END
+
 // BATTLE_JANKEN_FOCUS_SLIDEPAD_LIVE_MOUNT_R1_BEGIN
 
 test('dedicated janken focus integration requires the existing surface and live-stack contract', () => {
@@ -775,7 +810,7 @@ test('address6 late Focus attachment preserves one runtime seam and cancel A the
   ).replace(/\r\n/g, '\n');
   assert.match(runtimeSource, /if \(existing\?\.__gameroadRuntime\) \{[\s\S]*existingRuntime\.attachFocusIntegration\?\.\(initialDedicatedFocus\);[\s\S]*return existingRuntime;/);
   assert.match(runtimeSource, /function attachFocusIntegration\(nextIntegration\) \{[\s\S]*if \(destroyed\) return false;[\s\S]*if \(!normalized\) return false;[\s\S]*if \(dedicatedFocus\) \{[\s\S]*dedicatedFocus\.liveInputStack === normalized\.liveInputStack;[\s\S]*assignment = null;[\s\S]*schedule\(\);[\s\S]*return true;/);
-  assert.match(runtimeSource, /cardFocusSnapshot:[^\n]+\n    attachFocusIntegration,\n    dedicatedFocusConnected:/);
+  assert.match(runtimeSource, /cardFocusSnapshot:[^\n]+\n[\s\S]*?    attachFocusIntegration,\n    dedicatedFocusConnected:/);
   assert.equal((runtimeSource.match(/__gameroadRuntime = runtime/g) ?? []).length, 1, 'late attach must reuse the existing SlidePad runtime rather than create another controller');
 
   const { createBattleJankenFocusLiveIntegration } = await import('../browser/battle-janken-focus-live-integration.mjs');

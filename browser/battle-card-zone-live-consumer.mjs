@@ -26,13 +26,13 @@ function hiddenReceipt(reason, model = null) {
   });
 }
 
-function renderedReceipt(model) {
+function renderedReceipt(model, snapshot) {
   return Object.freeze({
     ok: true,
     status: 'rendered',
     schema: BATTLE_CARD_ZONE_LIVE_CONSUMER_SCHEMA,
-    zoneId: model.zoneId,
-    generation: model.generation,
+    zoneId: snapshot.zoneId,
+    generation: snapshot.generation,
     countVisible: model.countVisible === true,
     recentVisible: model.recentVisible === true,
     listVisible: model.listVisible === true,
@@ -84,7 +84,7 @@ export function mountBattleCardZoneLiveConsumer({
     if (!model || model.visible !== true || model.entryVisible !== true) {
       return hiddenReceipt('AUTHORIZED_VIEWER_SAFE_SNAPSHOT_UNAVAILABLE', model);
     }
-    return renderedReceipt(model);
+    return renderedReceipt(model, snapshot);
   }
 
   return Object.freeze({

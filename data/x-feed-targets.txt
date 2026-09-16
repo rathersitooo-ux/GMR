@@ -1,0 +1,2 @@
+# 公開X投稿のURLを1行1件で追加する。
+# 例: https://x.com/example/status/1234567890

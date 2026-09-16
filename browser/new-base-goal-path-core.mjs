@@ -4,6 +4,8 @@ const PLAYER_COUNT = 4;
 const SHIELD_LINKED_LANES_PER_PLAYER = 3;
 const STRAIGHT_CARD_TARGET = 7;
 const MIN_HORIZONTAL_CELLS = PLAYER_COUNT * SHIELD_LINKED_LANES_PER_PLAYER;
+const SHARED_GOAL_ID = 'goal:shared';
+const ROUTE_GATE_COUNT = PLAYER_COUNT * SHIELD_LINKED_LANES_PER_PLAYER;
 
 function nonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
@@ -28,6 +30,10 @@ function deepFreeze(value) {
   return value;
 }
 
+function routeGateId(participantId, laneIndex) {
+  return `goal-gate:${participantId}:${laneIndex}`;
+}
+
 function normalizeLaneColumns(participantIds, horizontalCellCount, source) {
   if (!source || typeof source !== 'object' || Array.isArray(source)) return null;
 
@@ -43,8 +49,15 @@ function normalizeLaneColumns(participantIds, horizontalCellCount, source) {
     allColumns.push(...columns);
   }
 
-  if (new Set(allColumns).size !== MIN_HORIZONTAL_CELLS) return null;
+  if (new Set(allColumns).size !== ROUTE_GATE_COUNT) return null;
   return normalized;
+}
+
+function routeGateIdsByParticipant(participantIds) {
+  return Object.fromEntries(participantIds.map((participantId) => [
+    participantId,
+    Array.from({ length: SHIELD_LINKED_LANES_PER_PLAYER }, (_, laneIndex) => routeGateId(participantId, laneIndex)),
+  ]));
 }
 
 export function createNewBaseGoalPathLayout({
@@ -73,7 +86,14 @@ export function createNewBaseGoalPathLayout({
     shieldLinkedLanesPerPlayer: SHIELD_LINKED_LANES_PER_PLAYER,
     straightCardTarget: STRAIGHT_CARD_TARGET,
     shieldLinkedLaneColumnsByParticipant: laneColumns,
+
+    // Compatibility: these columns remain the twelve route attachment columns.
+    // They are not twelve independent GOAL entities.
     topRowGoalColumnIndices: Array.from({ length: horizontalCellCount }, (_, index) => index),
+    sharedGoalId: SHARED_GOAL_ID,
+    sharedGoalCount: 1,
+    routeGateCount: ROUTE_GATE_COUNT,
+    routeGateIdsByParticipant: routeGateIdsByParticipant(participants),
   });
 }
 
@@ -82,28 +102,23 @@ function validLayout(layout) {
   if (layout.schema !== GOAL_PATH_SCHEMA) return false;
   const participants = uniqueNonEmptyStrings(layout.participantIds, PLAYER_COUNT);
   if (!participants) return false;
-  if (!Number.isSafeInteger(layout.horizontalCellCount) || layout.horizontalCellCount < MIN_HORIZONTAL_CELLS) {
-    return false;
-  }
+  if (!Number.isSafeInteger(layout.horizontalCellCount) || layout.horizontalCellCount < MIN_HORIZONTAL_CELLS) return false;
   if (layout.minimumHorizontalCellCount !== MIN_HORIZONTAL_CELLS) return false;
   if (layout.shieldLinkedLanesPerPlayer !== SHIELD_LINKED_LANES_PER_PLAYER) return false;
   if (layout.straightCardTarget !== STRAIGHT_CARD_TARGET) return false;
-  if (!normalizeLaneColumns(participants, layout.horizontalCellCount, layout.shieldLinkedLaneColumnsByParticipant)) {
-    return false;
-  }
+  if (!normalizeLaneColumns(participants, layout.horizontalCellCount, layout.shieldLinkedLaneColumnsByParticipant)) return false;
   if (!Array.isArray(layout.topRowGoalColumnIndices)
       || layout.topRowGoalColumnIndices.length !== layout.horizontalCellCount
-      || layout.topRowGoalColumnIndices.some((value, index) => value !== index)) {
-    return false;
-  }
+      || layout.topRowGoalColumnIndices.some((value, index) => value !== index)) return false;
+  if (layout.sharedGoalId !== undefined && layout.sharedGoalId !== SHARED_GOAL_ID) return false;
+  if (layout.sharedGoalCount !== undefined && layout.sharedGoalCount !== 1) return false;
+  if (layout.routeGateCount !== undefined && layout.routeGateCount !== ROUTE_GATE_COUNT) return false;
   return true;
 }
 
 function normalizeStraightColumns(layout, straightCardIdsByColumn) {
   if (!Array.isArray(straightCardIdsByColumn)
-      || straightCardIdsByColumn.length !== layout.horizontalCellCount) {
-    return null;
-  }
+      || straightCardIdsByColumn.length !== layout.horizontalCellCount) return null;
 
   const normalized = [];
   for (const column of straightCardIdsByColumn) {
@@ -130,15 +145,19 @@ export function projectNewBaseGoalPathConnections(layout, { straightCardIdsByCol
   for (const participantId of layout.participantIds) {
     const laneColumns = layout.shieldLinkedLaneColumnsByParticipant[participantId];
     laneColumns.forEach((columnIndex, laneIndex) => {
-      const straightCardCount = straightColumns[columnIndex].length;
+      const straightCardIds = [...straightColumns[columnIndex]];
+      const straightCardCount = straightCardIds.length;
       const connectedToGoal = straightCardCount === STRAIGHT_CARD_TARGET;
       const laneState = deepFreeze({
         participantId,
         laneIndex,
         columnIndex,
         straightCardCount,
+        straightCardIds,
         connectedToGoal,
         goalRowColumnIndex: columnIndex,
+        routeGateId: routeGateId(participantId, laneIndex),
+        sharedGoalId: SHARED_GOAL_ID,
       });
       laneStates.push(laneState);
       if (connectedToGoal) connectedGoalPaths.push(laneState);
@@ -152,6 +171,9 @@ export function projectNewBaseGoalPathConnections(layout, { straightCardIdsByCol
     horizontalCellCount: layout.horizontalCellCount,
     minimumHorizontalCellCount: MIN_HORIZONTAL_CELLS,
     topRowGoalColumnIndices: [...layout.topRowGoalColumnIndices],
+    sharedGoalId: SHARED_GOAL_ID,
+    sharedGoalCount: 1,
+    routeGateCount: ROUTE_GATE_COUNT,
     laneStates,
     connectedGoalPaths,
   });
@@ -163,7 +185,11 @@ export const NEW_BASE_GOAL_PATH_CORE = Object.freeze({
   shieldLinkedLanesPerPlayer: SHIELD_LINKED_LANES_PER_PLAYER,
   straightCardTarget: STRAIGHT_CARD_TARGET,
   minimumHorizontalCellCount: MIN_HORIZONTAL_CELLS,
+  sharedGoalId: SHARED_GOAL_ID,
+  sharedGoalCount: 1,
+  routeGateCount: ROUTE_GATE_COUNT,
   topmostRowAllGoal: true,
+  topRowColumnsAreRouteAnchors: true,
   sevenStraightTerminalWin: false,
   sevenStraightEffect: 'CONNECT_PATH_TO_GOAL',
 });

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-TOPOLOGY-R2-20260916T1926-SOL-H3M7Q2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_BOARD_USER_TOPOLOGY_R2",
+  "acquireKey": "BATTLE-BOARD-TOPOLOGY-R2-20260916T1926-SOL-H3M7Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_TARGET_TESTS_AND_ACTIVE_LEASE_READBACK_20260916T2019JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_SURFACE_RUNTIME_AND_TEST_CONTRACT_INSPECTION_20260916",
+  "proceedToken": "PROCEED|BATTLE-BOARD-TOPOLOGY-R2-20260916T1926-SOL-H3M7Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-board-user-topology-r2|presentation-only|active-lease",
+  "authorizationBaseSha": "8f771e15664ed46581160d7d0fd07e83ee83d80a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_BOARD_USER_TOPOLOGY_R2",
+  "leaseAcquireKey": "BATTLE-BOARD-TOPOLOGY-R2-20260916T1926-SOL-H3M7Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 20:19 JST",
+  "leaseUntilJst": "2026-09-16 20:26 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main 8f771e15664ed46581160d7d0fd07e83ee83d80a; mutable browser/new-base-flanora-map-layout-core.mjs; browser/new-base-flanora-board-surface-runtime.mjs; tests/new-base-flanora-map-layout-core.test.mjs; tests/new-base-flanora-board-surface-runtime.test.mjs; own transient PRE_ACTION witness; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html and gameplay/rules/state donors.",
+  "solutionSignature": "BATTLE_BOARD_SHARED_FIELD_SHIELD_VERTICAL_CARD_ROAD_GOAL_PRESENTATION_R2",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_FLANORA_LAYOUT_SURFACE_AND_EXISTING_PROGRESSION_REUSE_20260916",
+  "solutionSearchEvidence": [
+    "Current Flanora map core already supplies four participants, twelve Shield-linked lanes and the 26-cell shared clearing topology.",
+    "Current surface runtime is presentation-only and can be adapted without creating a second gameplay authority.",
+    "Current progression presentation already suppresses latent future discrete nodes and exposes only BUILT stages.",
+    "Current user-fixed target requires shared field below Shield, vertical progression above Shield, and GOAL above the roads while preserving existing rules and identities."
+  ],
+  "scope": [
+    "browser/new-base-flanora-map-layout-core.mjs",
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-map-layout-core.test.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-flanora-map-layout-core.mjs",
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-map-layout-core.test.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs"
+  ]
+}

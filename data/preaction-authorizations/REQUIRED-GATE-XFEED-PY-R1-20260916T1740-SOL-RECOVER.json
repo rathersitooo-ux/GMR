@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "REQUIRED-GATE-XFEED-PY-R1-20260916T1740-SOL-RECOVER",
+  "taskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "workUnitKey": "REQUIRED_GATE_XFEED_PYTHON_CLASSIFICATION_R1",
+  "acquireKey": "REQUIRED-GATE-XFEED-PY-R1-20260916T1740-SOL-RECOVER",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1761_REQUIRED_GATE_UNCLASSIFIED_TOOLS_XFEED_PATH_FAILURE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_REQUIRED_GATE_EXACT_CLASSIFIER_PLUS_EXISTING_PREPUSH_MAPPING_TEST_PATTERN",
+  "proceedToken": "PROCEED|REQUIRED-GATE-XFEED-PY-R1-20260916T1740-SOL-RECOVER|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260916T1740JST",
+  "authorizationBaseSha": "8f771e15664ed46581160d7d0fd07e83ee83d80a",
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml",
+    "tests/prepush-required-gate.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "leaseWorkUnitKey": "REQUIRED_GATE_XFEED_PYTHON_CLASSIFICATION_R1",
+  "leaseAcquireKey": "REQUIRED-GATE-XFEED-PY-R1-20260916T1740-SOL-RECOVER",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 17:40 JST",
+  "leaseUntilJst": "2026-09-16 18:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
+  "leaseScope": [
+    ".github/workflows/gameroad-required-gate.yml",
+    "tests/prepush-required-gate.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main 8f771e15664ed46581160d7d0fd07e83ee83d80a; mutable .github/workflows/gameroad-required-gate.yml; tests/prepush-required-gate.test.mjs; own transient data/preaction-authorizations/REQUIRED-GATE-XFEED-PY-R1-20260916T1740-SOL-RECOVER.json; NEW branch sol/required-gate-xfeed-python-r1-20260916; own PR/check/merge/readback. READ_ONLY tools/x-feed/*; data/x_feed.json; all product/runtime/gameplay resources; unrelated WorkUnits.",
+  "solutionSignature": "exact-xfeed-path-classification-plus-offline-python-gate-r1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_REQUIRED_GATE_EXACT_PATH_CLASSIFICATION_AND_PREPUSH_MAPPING_TEST_REUSE",
+  "solutionSearchEvidence": [
+    "PR #1761 directly failed the Required Gate unclassified executable safety on the x-feed tools paths.",
+    "Current Required Gate still routes broad tools/* changes to unclassified unless an exact mapping consumes them.",
+    "Existing prepush-required-gate tests already validate exact Required Gate mapping without a second policy table.",
+    "The repair remains narrow: x-feed paths only, offline Python tests only, generic unclassified fail-close unchanged."
+  ]
+}

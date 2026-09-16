@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ACCESSIBILITY-MOTION-R1-20260916T2153-SOL-A25",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_REDUCED_MOTION_LOW_PERF_REGRESSION_R1",
+  "acquireKey": "BATTLE-ACCESSIBILITY-MOTION-R1-20260916T2153-SOL-A25",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "EXISTING_REDUCED_MOTION_LOW_PERF_PRESENTATION_CONTRACTS_20260916T2153JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FOCUSED_NODE_CROSS_REGRESSION_EXISTING_PURE_PRESENTATION_CORES",
+  "proceedToken": "PROCEED|BATTLE-ACCESSIBILITY-MOTION-R1-20260916T2153-SOL-A25|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-accessibility-motion|tests-only|active-lease",
+  "authorizationBaseSha": "9eb106d9406e0434c7d2e34d080f3185deab62ca",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_REDUCED_MOTION_LOW_PERF_REGRESSION_R1",
+  "leaseAcquireKey": "BATTLE-ACCESSIBILITY-MOTION-R1-20260916T2153-SOL-A25",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 21:53 JST",
+  "leaseUntilJst": "2026-09-16 22:53 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A28:L28",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR exact main 9eb106d9406e0434c7d2e34d080f3185deab62ca; mutable NEW tests/battle-accessibility-motion-contract.test.mjs; own transient data/preaction-authorizations/BATTLE-ACCESSIBILITY-MOTION-R1-20260916T2153-SOL-A25.json; own fresh branch/PR/check/merge/readback; own CURRENT lease/R24 event. READ_ONLY browser/battle-janken-order-motion-core.mjs; browser/battle-resolution-board-return-presentation-core.mjs; browser/battle-camera-control-core.mjs; browser/battle-card-release-flight-motion-core.mjs; browser/GAMEROAD.html; gameplay/rules/state; active WU17/WU19 and unrelated WorkUnits.",
+  "solutionSignature": "BATTLE_EXISTING_ACCESSIBILITY_PRESENTATION_CROSS_REGRESSION_R1",
+  "reuseDisposition": "ADOPT_AND_LOCK",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_JANKEN_ORDER_BOARD_RETURN_CAMERA_CARD_RELEASE_ACCESSIBILITY_SEMANTICS",
+  "solutionSearchEvidence": [
+    "battle-janken-order-motion-core already switches ReducedMotion/LowPerf to semantic-only actions while preserving processingOrder, card identity, invalidated slots, and final states.",
+    "battle-resolution-board-return-presentation-core already switches ReducedMotion/LowPerf to static_causal_trace while preserving cause, processing, accepted path, and committed Shield destination.",
+    "battle-camera-control-core stores ReducedMotion/LowPerformance flags without disabling manual pan/zoom/angle inspection or one-action return to the controlled character.",
+    "battle-card-release-flight-motion-core already suppresses spin/bend under ReducedMotion and retains the exact target plus a static destination cue; LowPerf shortens/simplifies motion while retaining start/target identity.",
+    "No new settings authority or product runtime is required; a cross-module regression is the smallest non-duplicative completion for WU25."
+  ],
+  "scope": [
+    "tests/battle-accessibility-motion-contract.test.mjs"
+  ],
+  "leaseScope": [
+    "tests/battle-accessibility-motion-contract.test.mjs"
+  ]
+}

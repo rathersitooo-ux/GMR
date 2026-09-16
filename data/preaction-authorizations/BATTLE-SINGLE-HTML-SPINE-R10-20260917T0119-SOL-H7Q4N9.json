@@ -1,0 +1,41 @@
+{
+    "schemaVersion":  "gameroad-preaction-v3",
+    "recordId":  "BATTLE-SINGLE-HTML-SPINE-R10-20260917T0119-SOL-H7Q4N9",
+    "taskId":  "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+    "workUnitKey":  "BATTLE_SINGLE_HTML_PLAYER_PATH_INTEGRATION_R1",
+    "acquireKey":  "BATTLE-SINGLE-HTML-SPINE-R10-20260917T0119-SOL-H7Q4N9",
+    "riskClass":  "MATERIAL_STANDARD",
+    "predictionStatus":  "PASS",
+    "predictionEvidenceId":  "FRESH_MAIN_HTML_BLOB_AND_CENTRAL_WORLD_AUTHORITY_20260917T0119JST",
+    "rehearsalStatus":  "N_A_ALT_ORACLE",
+    "rehearsalEvidenceId":  "R9_PREACTION_ONLY_PLUS_CURRENT_CENTRAL_WORLD_RUNTIME_CONTRACT",
+    "proceedToken":  "PROCEED|BATTLE-SINGLE-HTML-SPINE-R10-20260917T0119-SOL-H7Q4N9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-single-html-spine|presentation-convergence|active-lease",
+    "authorizationBaseSha":  "5cfcf66fc6a95c0ae3879bb422224ceb217e44f4",
+    "stateModelVersion":  "STATE_MODEL_V1",
+    "leaseAuthority":  "CURRENT_ACTIVE_LEASES",
+    "leaseState":  "ACTIVE",
+    "leaseTaskId":  "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+    "leaseWorkUnitKey":  "BATTLE_SINGLE_HTML_PLAYER_PATH_INTEGRATION_R1",
+    "leaseAcquireKey":  "BATTLE-SINGLE-HTML-SPINE-R10-20260917T0119-SOL-H7Q4N9",
+    "leaseSnapshotReadbackAtJst":  "2026-09-17 01:19 JST",
+    "leaseUntilJst":  "2026-09-17 02:19 JST",
+    "leaseSnapshotReadbackRef":  "CURRENT_ACTIVE_LEASES!A5:L5",
+    "leaseExactMutableResources":  "GitHub rathersitooo-ux/GMR exact current main 5cfcf66fc6a95c0ae3879bb422224ceb217e44f4; mutable browser/GAMEROAD.html only; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback; own CURRENT lease/R24 event. READ_ONLY active board R10 files, all component modules except imported/consumed, deploy/package/provenance, gameplay/rules/save/network, unrelated WorkUnits.",
+    "solutionSignature":  "BATTLE_SINGLE_HTML_STATIC_WORLD_TO_CENTRAL_PRESENTATION_R10",
+    "reuseDisposition":  "ADAPT",
+    "solutionSearchStatus":  "PASS",
+    "reuseDecisionEvidenceId":  "CURRENT_CENTRAL_WORLD_PRESENTATION_ALREADY_MOUNTED_WITH_LEGACY_INPUT_AUTHORITY_PRESERVED",
+    "solutionSearchEvidence":  [
+                                   "Current GAMEROAD.html mounts battle-new-base-board-live-presentation-composer and sets data-central-world-live=1 only after a successful presentation mount.",
+                                   "The central-world composer owns presentation only and explicitly owns no movement, legality, target, result or state-write authority.",
+                                   "Legacy renderBoard remains the current movement/reachability/path input authority; its topology is not equivalent to the central world 26-cell presentation, so this slice will not invent a remap.",
+                                   "The safe convergence is to suppress duplicate static legacy presentation only under successful central mount while preserving reachable/current/next/path decision overlays, route/range feedback, focus accessibility and fail-open legacy fallback.",
+                                   "Current main 5cfcf66 retains GAMEROAD.html blob 643ed5f94e9507098488e8b738a8e34e86d89aa2, so non-overlapping main advances did not change the owned product file."
+                               ],
+    "scope":  [
+                  "browser/GAMEROAD.html"
+              ],
+    "leaseScope":  [
+                       "browser/GAMEROAD.html"
+                   ]
+}

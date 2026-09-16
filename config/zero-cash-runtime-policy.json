@@ -1,6 +1,6 @@
 {
   "schema": "gameroad.zero-cash-runtime-policy.v1",
-  "policyVersion": "R4-20260827",
+  "policyVersion": "R5-20260916",
   "automationMode": "ZERO_TOUCH_FAIL_CLOSED",
   "cashSpendAllowed": false,
   "automaticPaidFallbackAllowed": false,
@@ -39,6 +39,21 @@
       "macos-26",
       "macos-26-intel"
     ],
+    "selfHostedRunnerEvidence": {
+      "githubActionsUsage": "FREE",
+      "machineCostBoundary": "EXTERNAL_TO_GITHUB_ACTIONS",
+      "lastVerified": "2026-09-16",
+      "maxAgeDays": 45,
+      "sources": [
+        "https://docs.github.com/en/actions/concepts/runners/self-hosted-runners",
+        "https://docs.github.com/en/actions/concepts/billing-and-usage"
+      ]
+    },
+    "allowedSelfHostedRunnerTuplesByWorkflow": {
+      ".github/workflows/gameroad-current-bridge.yml": [
+        "[self-hosted, Windows, X64]"
+      ]
+    },
     "maxArtifactRetentionDays": 14,
     "artifactStorageIncludedMB": 500,
     "actionsUsageScope": "REPOSITORY_DEVELOPMENT_TEST_DEPLOY_PUBLICATION_ONLY",
@@ -87,6 +102,7 @@
   "externalHolds": [
     "Cloudflare account must actually remain on Workers Free plan; repository files alone cannot prove account billing state.",
     "GitHub account must have no active paid-overage path or a zero-dollar Actions budget configured to stop usage; repository files alone cannot prove billing settings.",
+    "Self-hosted runner Actions usage is free, but hardware, electricity, operating-system maintenance and machine operation remain outside this repository guard.",
     "Domain registration, store fees, taxes, payment processing, legal review, hardware and electricity are outside this repository guard and require separate classification before literal whole-project cash cost can be called zero."
   ]
 }

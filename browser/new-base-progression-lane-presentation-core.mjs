@@ -5,7 +5,6 @@ const STAGE_COUNT = 7;
 
 export const NEW_BASE_PROGRESSION_STAGE_VISUAL_STATE = Object.freeze({
   BUILT: 'BUILT',
-  LATENT: 'LATENT',
 });
 
 function deepFreeze(value) {
@@ -17,10 +16,6 @@ function deepFreeze(value) {
 
 function nonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
-}
-
-function safeStageCount(value) {
-  return Number.isSafeInteger(value) && value >= 0 && value <= STAGE_COUNT;
 }
 
 function failClosed(reason) {
@@ -42,6 +37,7 @@ function failClosed(reason) {
     futureStageLooksOpen: false,
     futureStageActionable: false,
     futureStageTraversable: false,
+    futureStageNodeCount: 0,
   });
 }
 
@@ -49,25 +45,25 @@ function normalizeLane(lane) {
   if (!lane || typeof lane !== 'object' || Array.isArray(lane)) return null;
   if (!nonEmptyString(lane.participantId)) return null;
   if (!Number.isSafeInteger(lane.laneIndex) || lane.laneIndex < 0 || lane.laneIndex > 2) return null;
-  if (!safeStageCount(lane.straightCardCount)) return null;
-  if (typeof lane.connectedToGoal !== 'boolean') return null;
+  if (!nonEmptyString(lane.sharedGoalId)) return null;
+  if (!Array.isArray(lane.straightCardIds) || lane.straightCardIds.length > STAGE_COUNT) return null;
+  const cardIds = lane.straightCardIds.map((value) => (nonEmptyString(value) ? value.trim() : null));
+  if (cardIds.some((value) => value === null)) return null;
+  if (lane.straightCardCount !== cardIds.length) return null;
+  if (typeof lane.connectedToGoal !== 'boolean' || lane.connectedToGoal !== (cardIds.length === STAGE_COUNT)) return null;
 
   const participantId = lane.participantId.trim();
   const key = `${participantId}:${lane.laneIndex}`;
-  const stages = Array.from({ length: STAGE_COUNT }, (_, offset) => {
+  const placedCards = cardIds.map((cardId, offset) => {
     const stageIndex = offset + 1;
-    const built = stageIndex <= lane.straightCardCount;
     return {
       roadStepId: `road:${key}:${stageIndex}`,
       stageIndex,
-      visualState: built
-        ? NEW_BASE_PROGRESSION_STAGE_VISUAL_STATE.BUILT
-        : NEW_BASE_PROGRESSION_STAGE_VISUAL_STATE.LATENT,
-      established: built,
-      latent: !built,
-      visualCue: built ? 'ESTABLISHED_PROGRESS' : 'FUTURE_PROGRESS_NOT_OPEN',
-
-      // This presentation layer never grants interaction or movement rights.
+      cardId,
+      visualState: NEW_BASE_PROGRESSION_STAGE_VISUAL_STATE.BUILT,
+      established: true,
+      latent: false,
+      visualCue: 'PLACED_PHYSICAL_CARD',
       actionable: false,
       traversable: false,
       legalityAuthority: false,
@@ -79,29 +75,26 @@ function normalizeLane(lane) {
     key,
     participantId,
     laneIndex: lane.laneIndex,
-    straightCardCount: lane.straightCardCount,
+    sharedGoalId: lane.sharedGoalId.trim(),
+    straightCardCount: cardIds.length,
+    straightCardIds: cardIds,
     connectedToGoal: lane.connectedToGoal,
-    builtStageCount: lane.straightCardCount,
-    latentStageCount: STAGE_COUNT - lane.straightCardCount,
-    stages,
+    builtStageCount: cardIds.length,
+    latentStageCount: STAGE_COUNT - cardIds.length,
+    placedCards,
+    // Compatibility alias. It contains placed cards only; no future placeholder stages.
+    stages: placedCards,
+    futureStageNodeCount: 0,
     terminalWin: false,
   };
 }
 
 /**
- * Reuses the accepted GOAL-path presentation projection and gives its seven
- * upper progression positions a truthful visual-only state.
- *
- * A BUILT stage means only that the caller-authoritative straightCardCount
- * says that progress already exists at that position. A LATENT stage is a
- * future position and is intentionally never exposed as an open/traversable
- * cell. This layer does not choose a legal next position, count cards, open a
- * GOAL path, move a character, or decide a result.
+ * Projects only cards that physically exist in the caller-authoritative route.
+ * Missing future positions remain absent from the DOM and from this list.
  */
 export function projectNewBaseProgressionLanePresentation(goalPathPresentation) {
-  if (!isNewBaseGoalPathPresentation(goalPathPresentation)) {
-    return failClosed('GOAL_PATH_PRESENTATION_REQUIRED');
-  }
+  if (!isNewBaseGoalPathPresentation(goalPathPresentation)) return failClosed('GOAL_PATH_PRESENTATION_REQUIRED');
   if (goalPathPresentation.ok !== true) return failClosed('GOAL_PATH_PRESENTATION_NOT_OK');
   if (goalPathPresentation.terminalWin !== false) return failClosed('TERMINAL_WIN_FORBIDDEN');
   if (!Array.isArray(goalPathPresentation.lanePresentations) || goalPathPresentation.lanePresentations.length === 0) {
@@ -126,13 +119,12 @@ export function projectNewBaseProgressionLanePresentation(goalPathPresentation) 
     ok: true,
     reason: 'PROGRESSION_LANE_PRESENTATION_PROJECTED',
     sourceSchema: goalPathPresentation.schema,
+    sharedGoalId: goalPathPresentation.sharedGoalId ?? null,
     stageCount: STAGE_COUNT,
     lanePresentations,
     totalBuiltStageCount,
     totalLatentStageCount,
-
-    // Explicit boundary: these seven positions are presentation slots, not a
-    // second movement field or inferred legality surface.
+    futureStageNodeCount: 0,
     presentationOnly: true,
     gameplayAuthority: false,
     gameStateWrite: false,
@@ -171,12 +163,11 @@ export function isNewBaseProgressionLanePresentation(value) {
 export const NEW_BASE_PROGRESSION_LANE_PRESENTATION_CONTRACT = deepFreeze({
   schema: SCHEMA,
   source: 'EXISTING_NEW_BASE_GOAL_PATH_PRESENTATION',
-  straightCardCountAuthority: 'CALLER_VIA_EXISTING_GOAL_PATH_PRESENTATION',
+  cardIdentityAuthority: 'CALLER_VIA_STRAIGHT_CARD_IDS',
   connectedToGoalAuthority: 'CALLER_VIA_EXISTING_GOAL_PATH_PRESENTATION',
-  stageIdentitySource: 'EXISTING_FLANORA_SEVEN_ROAD_STEP_IDS',
   stageCount: STAGE_COUNT,
-  builtStageMeaning: 'ESTABLISHED_PROGRESS_ONLY',
-  latentStageMeaning: 'FUTURE_PROGRESS_NOT_OPEN',
+  placedCardMeaning: 'EXACT_EXISTING_PHYSICAL_CARD_ID',
+  futureStageNodeCount: 0,
   futureStageLooksOpen: false,
   futureStageActionable: false,
   futureStageTraversable: false,

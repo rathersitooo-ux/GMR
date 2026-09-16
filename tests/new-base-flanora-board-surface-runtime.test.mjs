@@ -67,7 +67,15 @@ function goalPathPresentationFor(runtime, countsByLaneKey = {}) {
   };
 }
 
-test('projects current board core into 12 Shield lanes, seven-step semantic tracks, left GOALs and 26 shared clearing cells', () => {
+function laneNode(runtime, participantSlot, laneIndex) {
+  return runtime.progressionGrid.children[participantSlot].children[laneIndex];
+}
+
+function roadNode(runtime, participantSlot, laneIndex) {
+  return laneNode(runtime, participantSlot, laneIndex).children[0];
+}
+
+test('projects current board core into 12 Shield lanes, seven-step semantic tracks, top GOAL endpoints and 26 shared clearing cells', () => {
   const model = createFlanoraBoardSurfaceModel(INPUT);
   assert.equal(model.lanes.length, 12);
   assert.equal(model.clearingCells.length, 26);
@@ -98,7 +106,7 @@ test('preserves same-column clearing entry and the four current start anchors', 
   });
 });
 
-test('mount exposes lanes and a continuous road without precreating future progression nodes', () => {
+test('mount composes top GOAL, four three-lane vertical clusters, Shields, then the shared movement field', () => {
   const documentLike = makeFakeDom();
   const host = documentLike.createElement('div');
   const runtime = mountFlanoraBoardSurface({ host, documentLike, layout: standardLayout() });
@@ -114,46 +122,56 @@ test('mount exposes lanes and a continuous road without precreating future progr
     performanceProfile: 'standard',
     movementAuthority: false,
   });
-  assert.equal(runtime.root.dataset.goalEdge, 'left');
-  assert.equal(runtime.root.dataset.roadEntryEdge, 'right');
-  assert.equal(runtime.root.dataset.progressionDirection, 'right-to-left');
-  assert.equal(runtime.root.dataset.centralWorldLayout, 'participant-groups-2x2');
+  assert.equal(runtime.root.dataset.goalEdge, 'top');
+  assert.equal(runtime.root.dataset.roadEntryEdge, 'bottom');
+  assert.equal(runtime.root.dataset.progressionDirection, 'bottom-to-top');
+  assert.equal(runtime.root.dataset.centralWorldLayout, 'shared-field-below-four-three-lane-clusters');
   assert.equal(runtime.root.dataset.futureDiscreteProgressionSlots, 'false');
-  assert.match(runtime.root.getAttribute('aria-label'), /成立済み進行だけ.*未成立位置は連続した道/);
-  assert.equal(runtime.upper.children.length, 12);
+  assert.match(runtime.root.getAttribute('aria-label'), /共有フィールド.*盾.*上側GOAL.*未成立位置は開放マスとして表示しない/);
+
+  assert.deepEqual(runtime.upper.children.map((node) => node.className), ['grFlanoraGoalBand', 'grFlanoraProgressionGrid']);
+  assert.deepEqual(runtime.goalBand.children.map((node) => node.className), ['grFlanoraGoalLabel', 'grFlanoraGoalEndpoints']);
+  assert.equal(runtime.goalBand.children[0].textContent, 'GOAL');
+  assert.equal(runtime.goalEndpoints.children.length, 12);
+  assert.equal(runtime.progressionGrid.children.length, 4);
   assert.deepEqual(
-    runtime.upper.children.map((node) => [node.dataset.participantSlot, node.style.gridColumn, node.style.gridRow]),
-    [
-      ['0','1','1'], ['0','1','2'], ['0','1','3'],
-      ['1','2','1'], ['1','2','2'], ['1','2','3'],
-      ['2','1','4'], ['2','1','5'], ['2','1','6'],
-      ['3','2','4'], ['3','2','5'], ['3','2','6'],
-    ],
+    runtime.progressionGrid.children.map((node) => [node.dataset.participantSlot, node.style.gridColumn, node.children.length]),
+    [['0','1',3], ['1','2',3], ['2','3',3], ['3','4',3]],
   );
-  assert.deepEqual(runtime.upper.children[0].children.map((node) => node.className), ['grFlanoraGoal','grFlanoraRoad','grFlanoraShield']);
-  const road = runtime.upper.children[0].children[1];
+  assert.deepEqual(laneNode(runtime, 0, 0).children.map((node) => node.className), ['grFlanoraRoad','grFlanoraShield']);
+
+  const road = roadNode(runtime, 0, 0);
   assert.equal(road.children.length, 0);
   assert.equal(road.dataset.progressionCapacity, '7');
   assert.equal(road.dataset.progressionBuiltCount, '0');
   assert.equal(road.dataset.futureDiscreteSlots, 'false');
-  assert.match(road.getAttribute('aria-label'), /成立済み 0\/7.*連続した道/);
+  assert.equal(road.dataset.connectedToGoal, 'false');
+  assert.match(road.getAttribute('aria-label'), /成立済み 0\/7.*未成立位置は開放マスとして表示しない/);
+  assert.equal(laneNode(runtime, 0, 0).children[1].textContent, '盾');
 
   const styleText = documentLike.head.children[0].textContent;
-  assert.match(styleText, /grid-template-rows:minmax\(0,1fr\) minmax\(64px,22%\)/);
-  assert.match(styleText, /\.grFlanoraUpper\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\);grid-template-rows:repeat\(6,minmax\(0,1fr\)\)/);
-  assert.match(styleText, /\.grFlanoraRoad\{[^}]*grid-template-columns:repeat\(7,minmax\(4px,1fr\)\)[^}]*direction:rtl/);
-  assert.match(styleText, /\.grFlanoraRoad::before\{[^}]*left:3%;right:3%;top:50%;height:2px/);
-  assert.match(styleText, /\.grFlanoraRoadStep\{[^}]*aspect-ratio:\.72/);
+  assert.match(styleText, /grid-template-rows:minmax\(0,62%\) minmax\(96px,38%\)/);
+  assert.match(styleText, /\.grFlanoraProgressionGrid\{[^}]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
+  assert.match(styleText, /\.grFlanoraParticipantCluster\{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(styleText, /\.grFlanoraRoad\{[^}]*display:flex;flex-direction:column-reverse/);
+  assert.match(styleText, /\.grFlanoraRoad::before\{[^}]*left:50%;top:1%;bottom:1%;width:2px/);
+  assert.match(styleText, /\.grFlanoraRoadStep\{[^}]*height:clamp\(12px,2\.55vh,23px\)/);
+  assert.doesNotMatch(styleText, /\.grFlanoraUpper\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.doesNotMatch(styleText, /\.grFlanoraRoad\{[^}]*direction:rtl/);
   assert.doesNotMatch(styleText, /data-progression-stage-state="UNRESOLVED"/);
   assert.doesNotMatch(styleText, /data-progression-stage-state="LATENT"/);
   assert.doesNotMatch(styleText, /border-style:dotted|border-style:dashed/);
-  assert.match(styleText, /@media\(max-height:420px\).*minmax\(52px,20%\)/);
-  assert.match(styleText, /@media\(max-width:540px\) and \(orientation:portrait\).*\.grFlanoraUpper\{grid-template-columns:minmax\(0,1fr\);grid-template-rows:repeat\(12,minmax\(0,1fr\)\)/);
+  assert.match(styleText, /@media\(max-height:420px\).*minmax\(0,60%\) minmax\(78px,40%\)/);
+  assert.match(styleText, /@media\(max-width:540px\) and \(orientation:portrait\).*\.grFlanoraProgressionGrid\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+
   assert.equal(runtime.resolveGoal('P1', 0).dataset.flanoraGoal, 'P1:0');
+  assert.equal(runtime.resolveGoal('P1', 0).dataset.connectedToGoal, 'false');
   assert.equal(runtime.resolveShield('P4', 2).dataset.clearingEntryCellId, 'clearing:top:11');
   assert.equal(runtime.resolveRoadStep('P2', 1, 7), null);
   assert.equal(runtime.resolveClearingCell('clearing:top:4').dataset.startParticipant, 'P2');
   assert.equal(runtime.resolveRoadStep('P2', 1, 8), null);
+  assert.equal(runtime.clearing.dataset.sharedMainField, 'true');
+  assert.equal(runtime.clearing.children.length, 26);
   assert.equal(runtime.gameplayAuthority, false);
   assert.equal(runtime.gameStateWrite, false);
   assert.equal(runtime.movementAuthority, false);
@@ -194,9 +212,12 @@ test('mount fails soft without a DOM host and contract denies a second board eng
   assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.optionalRuleGeometryIncluded, false);
   assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.futureDiscreteStageNodes, false);
   assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.unresolvedStageDefault, 'NO_DISCRETE_NODE_CONTINUOUS_TRACK_ONLY');
+  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.sharedGoalVisualCount, 1);
+  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.progressionDirection, 'BOTTOM_TO_TOP');
+  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.centralWorldLayout, 'SHARED_FIELD_BELOW_FOUR_THREE_LANE_CLUSTERS');
 });
 
-test('sync creates discrete nodes only for BUILT stages and leaves LATENT stages as continuous road', () => {
+test('sync creates card-shaped nodes only for BUILT stages and connects a completed seven-card lane to the top GOAL', () => {
   const documentLike = makeFakeDom();
   const host = documentLike.createElement('div');
   const runtime = mountFlanoraBoardSurface({ host, documentLike, layout: standardLayout() });
@@ -228,21 +249,27 @@ test('sync creates discrete nodes only for BUILT stages and leaves LATENT stages
   assert.equal(runtime.resolveRoadStep('P1', 0, 4), null);
   assert.equal(runtime.resolveRoadStep('P2', 1, 7).dataset.progressionStageState, 'BUILT');
   assert.equal(runtime.resolveRoadStep('P3', 2, 7), null);
-  assert.equal(runtime.upper.children[0].children[1].children.length, 3);
-  assert.equal(runtime.upper.children[4].children[1].children.length, 7);
-  assert.equal(runtime.upper.children[0].children[1].dataset.progressionLatentCount, '4');
-  assert.equal(runtime.upper.children[0].children[1].dataset.futureDiscreteSlots, 'false');
+  assert.equal(roadNode(runtime, 0, 0).children.length, 3);
+  assert.equal(roadNode(runtime, 1, 1).children.length, 7);
+  assert.equal(roadNode(runtime, 0, 0).dataset.progressionLatentCount, '4');
+  assert.equal(roadNode(runtime, 0, 0).dataset.futureDiscreteSlots, 'false');
+  assert.equal(roadNode(runtime, 0, 0).dataset.connectedToGoal, 'false');
+  assert.equal(roadNode(runtime, 1, 1).dataset.connectedToGoal, 'true');
+  assert.equal(runtime.resolveGoal('P2', 1).dataset.connectedToGoal, 'true');
 
   const reducedProgression = projectNewBaseProgressionLanePresentation(goalPathPresentationFor(runtime, {
     'P1:0': 1,
-    'P2:1': 7,
+    'P2:1': 6,
   }));
   const reduced = runtime.syncProgressionPresentation(reducedProgression);
   assert.equal(reduced.applied, true);
-  assert.equal(runtime.snapshot().visibleBuiltRoadStepCount, 8);
+  assert.equal(runtime.snapshot().visibleBuiltRoadStepCount, 7);
   assert.equal(runtime.resolveRoadStep('P1', 0, 1).dataset.progressionStageState, 'BUILT');
   assert.equal(runtime.resolveRoadStep('P1', 0, 2), null);
-  assert.equal(runtime.upper.children[0].children[1].children.length, 1);
+  assert.equal(roadNode(runtime, 0, 0).children.length, 1);
+  assert.equal(roadNode(runtime, 1, 1).children.length, 6);
+  assert.equal(roadNode(runtime, 1, 1).dataset.connectedToGoal, 'false');
+  assert.equal(runtime.resolveGoal('P2', 1).dataset.connectedToGoal, 'false');
 
   const beforeInvalid = runtime.snapshot().visibleBuiltRoadStepCount;
   const refused = runtime.syncProgressionPresentation(null);

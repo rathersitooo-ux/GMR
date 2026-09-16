@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-COSTUME-SAVE-ROLLBACK-R3-20260916T1656-SOL-RECOVER",
+  "taskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "workUnitKey": "PARTNER_COSTUME_SAVE_ROLLBACK_R3",
+  "acquireKey": "PARTNER-COSTUME-SAVE-ROLLBACK-R3-20260916T1656-SOL-RECOVER",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_67DD54A_ROLLBACK_PRESENT_WITH_FIRST_SAVE_ABSENCE_GAP",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1722_PREVIOUS_SNAPSHOT_ROLLBACK_TESTS_PLUS_CURRENT_MAIN_READBACK",
+  "proceedToken": "PROCEED|PARTNER-COSTUME-SAVE-ROLLBACK-R3-20260916T1656-SOL-RECOVER|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-costume-save-rollback-r3|current-main-clean-branch|active-lease",
+  "authorizationBaseSha": "67dd54ab5bf50f621e25df72d6540d8e7b1a5205",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "leaseWorkUnitKey": "PARTNER_COSTUME_SAVE_ROLLBACK_R3",
+  "leaseAcquireKey": "PARTNER-COSTUME-SAVE-ROLLBACK-R3-20260916T1656-SOL-RECOVER",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 16:56 JST",
+  "leaseUntilJst": "2026-09-16 17:56 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:N10",
+  "leaseExactMutableResources": "browser/partner-costume-durable-store.mjs; tests/partner-costume-durable-store.test.mjs; own transient data/preaction-authorizations/PARTNER-COSTUME-SAVE-ROLLBACK-R3-20260916T1656-SOL-RECOVER.json; own branch sol/partner-costume-save-rollback-r3-20260916/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; Partner ownership/entitlement/gameplay/save authority outside durable-string adapter; unrelated active WorkUnits.",
+  "solutionSignature": "PARTNER_COSTUME_VERIFIED_SAVE_ROLLBACK_PRESERVE_PREVIOUS_OR_ABSENT_STATE_R3",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_MAIN_EXISTING_DURABLE_ADAPTER_PLUS_PR1722_ROLLBACK_SEMANTICS",
+  "solutionSearchEvidence": [
+    "Current main already has the single durable-string adapter and previous-string rollback behavior from the earlier recovery path.",
+    "The remaining failure is local: a verification failure after the first save has no prior string to restore and currently leaves the mismatched write behind.",
+    "Caller-supplied removeItem can restore the prior absence without creating a second save authority; if unavailable, rollback must fail closed rather than claim preservation.",
+    "Gameplay, ownership, entitlement, production key, auth, transport and retry authority remain outside this adapter."
+  ],
+  "scope": [
+    "browser/partner-costume-durable-store.mjs",
+    "tests/partner-costume-durable-store.test.mjs",
+    "data/preaction-authorizations/PARTNER-COSTUME-SAVE-ROLLBACK-R3-20260916T1656-SOL-RECOVER.json"
+  ],
+  "leaseScope": [
+    "browser/partner-costume-durable-store.mjs",
+    "tests/partner-costume-durable-store.test.mjs",
+    "data/preaction-authorizations/PARTNER-COSTUME-SAVE-ROLLBACK-R3-20260916T1656-SOL-RECOVER.json"
+  ]
+}

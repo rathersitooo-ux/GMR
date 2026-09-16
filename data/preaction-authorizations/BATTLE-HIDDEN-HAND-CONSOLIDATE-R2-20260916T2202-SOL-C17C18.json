@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HIDDEN-HAND-CONSOLIDATE-R2-20260916T2202-SOL-C17C18",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_HIDDEN_HAND_RUNTIME_CONSOLIDATION_R2",
+  "acquireKey": "BATTLE-HIDDEN-HAND-CONSOLIDATE-R2-20260916T2202-SOL-C17C18",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_F766708_EXISTING_NEW_BASE_HIDDEN_HAND_RUNTIME_PLUS_CURRENT_LEASE_A5L5",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "DELETE_DUPLICATE_WU17_AND_COMPOSE_BUTTON_ON_EXISTING_NEW_BASE_RUNTIME",
+  "proceedToken": "PROCEED|BATTLE-HIDDEN-HAND-CONSOLIDATE-R2-20260916T2202-SOL-C17C18|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|hidden-hand-consolidation|existing-authority-reuse|active-lease",
+  "authorizationBaseSha": "f766708c94c249cbc8f96fb02d246f9bc6b67a26",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_HIDDEN_HAND_RUNTIME_CONSOLIDATION_R2",
+  "leaseAcquireKey": "BATTLE-HIDDEN-HAND-CONSOLIDATE-R2-20260916T2202-SOL-C17C18",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 22:02 JST",
+  "leaseUntilJst": "2026-09-16 23:02 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR exact main f766708c94c249cbc8f96fb02d246f9bc6b67a26; mutable browser/new-base-hidden-hand-runtime-core.mjs; tests/new-base-hidden-hand-runtime-core.test.mjs; DELETE browser/battle-hidden-hand-core.mjs; DELETE tests/battle-hidden-hand-core.test.mjs; NEW browser/battle-hidden-hand-add-button-runtime.mjs; NEW tests/battle-hidden-hand-add-button-runtime.test.mjs; own transient PRE_ACTION; own fresh R2 branch/PR/check/merge/readback; own CURRENT lease/R24 event. READ_ONLY browser/deck-hidden-hand-registration-core.mjs; browser/battle-janken-focus-runtime-surface.mjs; browser/battle-janken-slidepad-runtime-mount.mjs; browser/GAMEROAD.html; active WU19 subDeck files; gameplay/rules/save/network; unrelated active WorkUnits.",
+  "solutionSignature": "BATTLE_HIDDEN_HAND_SINGLE_AUTHORITY_PLUS_ADD_BUTTON_ADAPTER_V2",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "FRESH_BASE_ADVANCE_DISCOVERED_EXISTING_NEW_BASE_HIDDEN_HAND_RUNTIME_PR1795",
+  "solutionSearchEvidence": [
+    "Current browser/new-base-hidden-hand-runtime-core.mjs already owns registered reservedCardId identity and hiddenPrivilegeAvailable lifecycle.",
+    "Current tests/new-base-hidden-hand-runtime-core.test.mjs explicitly calls reservedCardId the exact registered physical-card identity and fixes non-consumption on staging/abandon/other-card commit plus one-time consumption on exact authoritative legal Road commit.",
+    "PR#1795 is current main and strengthens that existing authority; therefore the duplicate battle-hidden-hand-core added by PR#1794 must be removed instead of extended.",
+    "The add-button remains a presentation/membership adapter only: it reads projectNewBaseHiddenHandAddContext and delegates the same reservedCardId into caller-owned existing Road-janken membership without consuming privilege."
+  ],
+  "scope": [
+    "browser/battle-hidden-hand-core.mjs",
+    "tests/battle-hidden-hand-core.test.mjs",
+    "browser/battle-hidden-hand-add-button-runtime.mjs",
+    "tests/battle-hidden-hand-add-button-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-hidden-hand-core.mjs",
+    "tests/battle-hidden-hand-core.test.mjs",
+    "browser/battle-hidden-hand-add-button-runtime.mjs",
+    "tests/battle-hidden-hand-add-button-runtime.test.mjs"
+  ]
+}

@@ -13,30 +13,26 @@ function empty(){return Array.from({length:12},()=>[]);}
 function mounted(profile={}){const documentLike=fakeDom();const board=mountFlanoraBoardSurface({host:documentLike.createElement('div'),documentLike,layout:createFlanoraMapLayout(INPUT),...profile});return {documentLike,board};}
 
 test('mounts twelve physical route gates after card paths and before one shared GOAL',()=>{
-  const {documentLike,board}=mounted(); const cards=empty();
-  const gate=mountNewBaseGoalEntryGateCue({boardSurfaceRuntime:board,goalPathPresentation:presentation(cards),documentLike});
-  assert.equal(gate.mounted,true); assert.equal(gate.snapshot().laneGateCount,12); assert.equal(gate.snapshot().closedLaneCount,12);
-  assert.equal(gate.resolveLane('P1',0).gate.dataset.gateState,'CLOSED');
-  assert.equal(gate.resolveLane('P1',0).anchor.dataset.sharedGoalId,'goal:shared');
-  assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.gatePlacement,'AFTER_CARD_PATH_BEFORE_SHARED_GOAL');
+  const {documentLike,board}=mounted(); const gate=mountNewBaseGoalEntryGateCue({boardSurfaceRuntime:board,goalPathPresentation:presentation(empty()),documentLike});
+  assert.equal(gate.mounted,true); assert.equal(gate.snapshot().laneGateCount,12); assert.equal(gate.snapshot().closedLaneCount,12); assert.equal(gate.snapshot().visibleArrowCount,0);
+  assert.equal(gate.resolveLane('P1',0).gate.dataset.gateState,'CLOSED'); assert.equal(gate.resolveLane('P1',0).anchor.dataset.sharedGoalId,'goal:shared');
+  assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.gatePlacement,'AFTER_CARD_PATH_BEFORE_SHARED_GOAL'); assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.visibleArrowCount,0);
 });
 
-test('seven cards shatter the blocker and reveal the open translucent portal without declaring victory',()=>{
-  const {documentLike,board}=mounted(); const cards=empty();
-  const gate=mountNewBaseGoalEntryGateCue({boardSurfaceRuntime:board,goalPathPresentation:presentation(cards),documentLike,participantColors:{P1:'#d9c16b'}});
+test('seven cards shatter blocker and reveal translucent portal; legacy arrow contract remains detached',()=>{
+  const {documentLike,board}=mounted(); const cards=empty(); const gate=mountNewBaseGoalEntryGateCue({boardSurfaceRuntime:board,goalPathPresentation:presentation(cards),documentLike,participantColors:{P1:'#d9c16b'}});
   cards[0]=['A','B','C','D','E','F','G']; const next=presentation(cards); assert.equal(next.terminalWin,false);
-  const result=gate.syncGoalPathPresentation(next); assert.equal(result.ok,true); assert.equal(result.openLaneCount,1); assert.equal(result.shatterTransitionCount,1);
+  const result=gate.syncGoalPathPresentation(next); assert.equal(result.ok,true); assert.equal(result.openLaneCount,1); assert.equal(result.shatterTransitionCount,1); assert.equal(result.activeArrowCount,1); assert.equal(result.visibleArrowCount,0);
   const lane=gate.resolveLane('P1',0); assert.equal(lane.gate.dataset.gateState,'OPEN'); assert.equal(lane.gate.dataset.gateShatter,'1'); assert.equal(lane.guide.dataset.goalPathOpen,'1');
-  assert.match(documentLike.head.children.map(x=>x.textContent).join('\n'),/grRouteGoalGateMembrane/);
-  assert.match(documentLike.head.children.map(x=>x.textContent).join('\n'),/grRouteGateShatter/);
+  assert.equal(lane.entryCellId,'clearing:top:0'); assert.equal(lane.arrowStack.children.length,3); assert.equal(lane.arrowStack.parentNode,null); assert.equal(lane.arrowStack.dataset.visualDomMounted,'false');
+  const css=documentLike.head.children.map(x=>x.textContent).join('\n'); assert.match(css,/grRouteGoalGateMembrane/); assert.match(css,/grRouteGateShatter/);
 });
 
-test('repeated open sync is idempotent and reduced motion keeps the same open/closed meaning',()=>{
+test('repeated open sync is idempotent and reduced motion preserves old API without visible arrows',()=>{
   const {documentLike,board}=mounted({reducedMotion:true}); const cards=empty(); const gate=mountNewBaseGoalEntryGateCue({boardSurfaceRuntime:board,goalPathPresentation:presentation(cards),documentLike,reducedMotion:true});
-  cards[3]=['1','2','3','4','5','6','7']; const open=presentation(cards);
-  gate.syncGoalPathPresentation(open); const second=gate.syncGoalPathPresentation(open);
-  assert.equal(second.openLaneCount,1); assert.equal(second.shatterTransitionCount,1); assert.equal(gate.resolveLane('P2',0).gate.dataset.gateState,'OPEN'); assert.equal(gate.resolveLane('P2',0).gate.dataset.gateShatter,'0');
-  assert.equal(second.animationMode,'STATIC_STATE_SWAP');
+  cards[3]=['1','2','3','4','5','6','7']; const open=presentation(cards); gate.syncGoalPathPresentation(open); const second=gate.syncGoalPathPresentation(open);
+  const lane=gate.resolveLane('P2',0); assert.equal(second.openLaneCount,1); assert.equal(second.shatterTransitionCount,1); assert.equal(lane.gate.dataset.gateState,'OPEN'); assert.equal(lane.gate.dataset.gateShatter,'0');
+  assert.equal(second.animationMode,'STATIC_UPWARD_ARROW'); assert.equal(second.visibleAnimationMode,'STATIC_STATE_SWAP'); assert.equal(lane.arrowStack.dataset.reducedMotion,'true'); assert.equal(lane.arrowStack.parentNode,null);
 });
 
 test('fails soft when shared-goal board/presentation contract is absent',()=>{

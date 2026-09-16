@@ -2,6 +2,13 @@ const RESOURCE_HUD_SCHEMA = 'gameroad.battle-critical-resource-hud.v1';
 const RESOURCE_HUD_ATTR = 'data-battle-critical-resource-hud';
 const STYLE_ID = 'gameroad-battle-critical-resource-hud-style';
 const UNRESOLVED = '—';
+const BATTLE_SHELL_VISUAL_ORDER = Object.freeze([
+  'BOARD_WORLD',
+  'CURRENT_ACTION',
+  'HAND_JANKEN',
+  'PUBLIC_4P',
+  'RESOURCE_DETAIL'
+]);
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -128,13 +135,66 @@ function addStyle(document) {
   const style = createNode(document, 'style');
   style.id = STYLE_ID;
   style.textContent = `
-[${RESOURCE_HUD_ATTR}="1"]{display:flex;align-items:stretch;gap:4px;min-width:0;pointer-events:none}
-[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell{display:grid;grid-template-columns:auto;align-content:center;gap:1px;min-width:42px;padding:3px 6px;border:1px solid rgba(225,244,215,.18);border-radius:8px;background:rgba(3,20,17,.64);color:inherit;text-shadow:inherit}
-[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell small{font-size:9px;font-weight:900;line-height:1;letter-spacing:.06em;opacity:.76;white-space:nowrap}
-[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceValue{font-size:15px;font-weight:1000;line-height:1.05}
-[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceDelta{font-size:8px;font-weight:800;line-height:1.05;opacity:.72;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:82px}
-[${RESOURCE_HUD_ATTR}="1"] [data-resolved="false"] .grBattleResourceValue{opacity:.54}
-@media(max-height:420px),(max-width:720px){[${RESOURCE_HUD_ATTR}="1"]{gap:2px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell{min-width:36px;padding:2px 4px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell small{font-size:8px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceValue{font-size:13px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceDelta{font-size:7px;max-width:58px}}
+[${RESOURCE_HUD_ATTR}="1"]{display:flex;align-items:stretch;gap:3px;min-width:0;pointer-events:none;opacity:.72}
+[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell{display:grid;grid-template-columns:auto;align-content:center;gap:1px;min-width:36px;padding:2px 4px;border:1px solid rgba(225,244,215,.13);border-radius:7px;background:rgba(3,20,17,.44);color:inherit;text-shadow:inherit;box-shadow:none}
+[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell small{font-size:8px;font-weight:900;line-height:1;letter-spacing:.04em;opacity:.58;white-space:nowrap}
+[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceValue{font-size:13px;font-weight:1000;line-height:1.05}
+[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceDelta{font-size:7px;font-weight:800;line-height:1.05;opacity:.62;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:64px}
+[${RESOURCE_HUD_ATTR}="1"] [data-resolved="false"] .grBattleResourceValue{opacity:.46}
+
+/* Late presentation-only Battle shell hierarchy. The live board remains caller-owned and visually primary. */
+[data-gr-battle-screen="1"] .grBattleScreenTop{height:clamp(34px,6.2vh,50px);gap:clamp(3px,.65vw,7px);padding:clamp(3px,.5vh,5px) clamp(6px,1vw,10px);background:linear-gradient(180deg,rgba(4,10,11,.48),rgba(4,10,11,.08) 78%,rgba(4,10,11,0));text-shadow:0 1px 7px rgba(0,0,0,.58)}
+[data-gr-battle-screen="1"] .grBattleHudSettings{width:clamp(26px,3.4vw,34px);height:clamp(26px,3.4vw,34px);border-color:rgba(235,247,238,.34);background:rgba(8,28,25,.56);box-shadow:0 2px 8px rgba(0,0,0,.18)}
+[data-gr-battle-screen="1"] .grBattleHudMetric{min-width:clamp(38px,5.4vw,58px);padding:2px 4px;border-color:rgba(225,244,215,.12);background:rgba(3,20,17,.42)}
+[data-gr-battle-screen="1"] .grBattleHudMetric small{font-size:clamp(7px,.58vw,9px);opacity:.52}
+[data-gr-battle-screen="1"] .grBattleHudMetric b{font-size:clamp(11px,1.05vw,14px)}
+[data-gr-battle-screen="1"] .grBattleHudCenter{gap:clamp(3px,.45vw,6px);opacity:.72}
+[data-gr-battle-screen="1"] .grBattleHudChain{gap:2px;opacity:.62}
+[data-gr-battle-screen="1"] .grBattleHudPlayedCard{width:clamp(22px,3vw,32px);height:clamp(28px,4vw,40px);border-radius:5px;font-size:clamp(7px,.64vw,9px)}
+[data-gr-battle-screen="1"] .grBattleHudLoad{width:clamp(38px,5vw,50px);height:clamp(32px,4.6vw,44px);border-color:rgba(255,233,158,.48);box-shadow:0 3px 10px rgba(0,0,0,.16)}
+[data-gr-battle-screen="1"] .grBattleHudLoad small{font-size:clamp(7px,.58vw,9px);opacity:.58}
+[data-gr-battle-screen="1"] .grBattleHudLoad b{font-size:clamp(11px,1.2vw,15px)}
+[data-gr-battle-screen="1"] [data-battle-current-action]{z-index:10;top:clamp(44px,7.5vh,64px);max-width:min(52vw,460px);padding:4px 9px;background:rgba(4,28,24,.74);box-shadow:0 4px 12px rgba(0,0,0,.18);font-size:clamp(10px,.92vw,13px)}
+[data-gr-battle-screen="1"] [data-battle-causal-trace]{z-index:7;top:clamp(80px,12vh,106px);width:min(52vw,520px);gap:3px;opacity:.76}
+[data-gr-battle-screen="1"] [data-battle-causal-trace] .grBattleCausalTraceStage{padding:3px 5px;border-color:rgba(245,248,225,.24);background:rgba(4,28,24,.54);box-shadow:0 3px 9px rgba(0,0,0,.14);font-size:clamp(8px,.7vw,10px);opacity:.82}
+[data-gr-battle-screen="1"] [data-battle-screen-causal-grid]{z-index:5;top:clamp(74px,11vh,92px);right:clamp(6px,1vw,10px);left:56%;height:clamp(48px,8vh,64px);gap:3px;opacity:.72}
+[data-gr-battle-screen="1"] [data-battle-screen-lane]{gap:2px;padding:3px 4px;border-color:rgba(219,241,207,.12);background:linear-gradient(180deg,rgba(19,56,49,.40),rgba(6,25,24,.28));box-shadow:0 2px 7px rgba(2,20,17,.10)}
+[data-gr-battle-screen="1"] .grBattleLaneIdentity b{font-size:clamp(10px,.9vw,12px)}
+[data-gr-battle-screen="1"] .grBattleLaneIdentity small{font-size:clamp(8px,.68vw,10px);opacity:.58}
+[data-gr-battle-screen="1"] .grBattleLanePublicCard{width:clamp(22px,3vw,30px);height:clamp(30px,4vw,40px);opacity:.86}
+[data-gr-battle-screen="1"] [data-battle-shield-lane-rail]{gap:2px;margin-top:2px;opacity:.62}
+[data-gr-battle-screen="1"] .grBattleLaneRole{padding:3px 5px;font-size:clamp(8px,.68vw,10px);opacity:.68}
+[data-gr-battle-screen="1"] .grBattleLaneAfterstate{gap:2px;font-size:clamp(8px,.72vw,10px);opacity:.58}
+[data-gr-battle-screen="1"] .grBattleLaneAfterstate span{padding:2px 3px;background:rgba(2,19,16,.38);border-color:rgba(225,244,215,.08)}
+[data-gr-battle-screen="1"] [data-battle-progress-guide]{z-index:3;width:min(22vw,180px);opacity:.26;font-size:clamp(8px,.7vw,10px)}
+[data-gr-battle-screen="1"] [data-battle-field-landmark]{z-index:1;opacity:.10;filter:none}
+
+@media(max-height:420px) and (orientation:landscape){
+  [data-gr-battle-screen="1"] .grBattleScreenTop{height:34px;padding:2px 5px;gap:3px}
+  [data-gr-battle-screen="1"] .grBattleHudSettings{width:26px;height:26px}
+  [data-gr-battle-screen="1"] .grBattleHudMetric{min-width:32px;padding:1px 3px}
+  [data-gr-battle-screen="1"] .grBattleHudMetric small{font-size:7px}
+  [data-gr-battle-screen="1"] .grBattleHudMetric b{font-size:11px}
+  [data-gr-battle-screen="1"] .grBattleHudPlayedCard{width:20px;height:27px}
+  [data-gr-battle-screen="1"] .grBattleHudLoad{width:36px;height:30px}
+  [data-gr-battle-screen="1"] [data-battle-current-action]{top:38px;left:50%;right:auto;transform:translateX(-50%);max-width:min(54vw,360px);padding:3px 7px;font-size:10px}
+  [data-gr-battle-screen="1"] [data-battle-causal-trace]{top:70px;left:6px;transform:none;width:48%;gap:2px}
+  [data-gr-battle-screen="1"] [data-battle-causal-trace] .grBattleCausalTraceStage{padding:2px 3px;font-size:7px}
+  [data-gr-battle-screen="1"] [data-battle-screen-causal-grid]{top:70px;left:54%;right:4px;height:42px;gap:2px;opacity:.64}
+  [data-gr-battle-screen="1"] [data-battle-screen-lane]{padding:2px 3px;border-radius:6px}
+  [data-gr-battle-screen="1"] .grBattleLaneIdentity b{font-size:9px}
+  [data-gr-battle-screen="1"] .grBattleLaneIdentity small{font-size:7px}
+  [data-gr-battle-screen="1"] .grBattleLanePublicCard{width:19px;height:26px;right:2px;top:2px}
+  [data-gr-battle-screen="1"] [data-battle-shield-lane-rail]{margin-top:1px;opacity:.48}
+  [data-gr-battle-screen="1"] [data-battle-progress-guide]{display:none!important}
+  [data-gr-battle-screen="1"] [data-battle-field-landmark]{opacity:.06}
+  [${RESOURCE_HUD_ATTR}="1"]{gap:1px;opacity:.58}
+  [${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell{min-width:28px;padding:1px 2px;border-radius:5px}
+  [${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell small{font-size:7px;opacity:.48}
+  [${RESOURCE_HUD_ATTR}="1"] .grBattleResourceValue{font-size:10px}
+  [${RESOURCE_HUD_ATTR}="1"] .grBattleResourceDelta{font-size:6px;max-width:42px}
+}
+@media(max-width:720px){[${RESOURCE_HUD_ATTR}="1"]{gap:2px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell{min-width:32px;padding:2px 3px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell small{font-size:7px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceValue{font-size:11px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceDelta{font-size:6px;max-width:50px}}
 @media(prefers-reduced-motion:reduce){[${RESOURCE_HUD_ATTR}="1"] *{transition:none!important;animation:none!important}}
 `;
   document.head?.appendChild(style);
@@ -165,6 +225,7 @@ export function mountBattleCriticalResourceHud(global = globalThis, options = {}
   root.setAttribute?.(RESOURCE_HUD_ATTR, '1');
   root.dataset.presentationOnly = 'true';
   root.dataset.authority = 'caller_authoritative_resource_snapshot_only';
+  root.dataset.visualPriority = 'resource_detail';
   root.setAttribute?.('aria-label', '対戦資源');
 
   const mana = createResourceCell(document, 'マナ', 'mana');
@@ -218,6 +279,7 @@ export function mountBattleCriticalResourceHud(global = globalThis, options = {}
     gameplayAuthority: false,
     gameStateWrite: false,
     resourceAuthority: 'CALLER_ONLY',
+    visualPriority: 'RESOURCE_DETAIL',
     root,
     manaCell: mana.cell,
     honeyCell: honey.cell,
@@ -245,5 +307,9 @@ export const BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME = deepFreeze({
   chipIdentityPublicityOwnedHere: false,
   resourceCalculationOwnedHere: false,
   resourceStoreOwnedHere: false,
-  productionHtmlMutationOwnedHere: false
+  productionHtmlMutationOwnedHere: false,
+  battleShellHierarchyStyleHook: 'LATE_PRESENTATION_ONLY',
+  battleShellVisualOrder: BATTLE_SHELL_VISUAL_ORDER,
+  constrainedLandscapeAcceptanceTarget: '667x375',
+  persistentRightRailOwnedHere: false
 });

@@ -9,11 +9,34 @@ on:
       - GAMEROAD Cloudflare Public Deploy
     types:
       - completed
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'browser/GAMEROAD.html'
+      - 'browser/*presentation*.mjs'
+      - 'browser/*runtime*.mjs'
+      - 'browser/*visual*.mjs'
+      - 'browser/assets/**'
+      - 'browser/*motion*.mjs'
+      - 'browser/new-base-*.mjs'
+      - 'browser/screen-navigation-core.mjs'
+      - 'tests/browser-full-interaction.spec.mjs'
+      - 'tests/browser-full-interaction-state-sequence.spec.mjs'
+      - 'playwright.full-interaction.config.mjs'
+      - '.github/workflows/browser-full-interaction.yml'
   push:
     branches:
       - main
     paths:
       - 'browser/GAMEROAD.html'
+      - 'browser/*presentation*.mjs'
+      - 'browser/*runtime*.mjs'
+      - 'browser/*visual*.mjs'
+      - 'browser/assets/**'
+      - 'browser/*motion*.mjs'
+      - 'browser/new-base-*.mjs'
+      - 'browser/screen-navigation-core.mjs'
       - 'tests/browser-full-interaction.spec.mjs'
       - 'tests/browser-full-interaction-state-sequence.spec.mjs'
       - 'playwright.full-interaction.config.mjs'

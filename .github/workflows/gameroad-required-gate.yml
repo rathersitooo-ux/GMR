@@ -387,6 +387,10 @@ jobs:
               tests/jit-evidence-compiler.test.mjs|\
               README.md|.gitignore|.gitattributes)
                 ;;
+              browser/assets/*)
+                browser=true
+                browser_full_interaction=true
+                ;;
               browser/*.mjs|tools/*.mjs)
                 rel="${path#*/}"
                 test_path="tests/${rel%.mjs}.test.mjs"

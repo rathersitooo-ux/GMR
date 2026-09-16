@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RUNTIME-SMOKE-POWER-ENERGY-PATH-R1-20260917T0254-SOL-H7Q4N6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_RUNTIME_SMOKE_POWER_ENERGY_ASSET_PATH_R1",
+  "acquireKey": "BATTLE-RUNTIME-SMOKE-POWER-ENERGY-PATH-R1-20260917T0254-SOL-H7Q4N6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1818_RUNTIME_SMOKE_404_REPRO_AND_MAIN_ASSET_TREE_20260917T0254JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "LOCAL_PLAYWRIGHT_RUNTIME_SMOKE_RED_PLUS_GIT_TREE_PATH_ORACLE",
+  "proceedToken": "PROCEED|BATTLE-RUNTIME-SMOKE-POWER-ENERGY-PATH-R1-20260917T0254-SOL-H7Q4N6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-runtime-smoke|asset-path|active-lease",
+  "authorizationBaseSha": "5cfcf66fc6a95c0ae3879bb422224ceb217e44f4",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_RUNTIME_SMOKE_POWER_ENERGY_ASSET_PATH_R1",
+  "leaseAcquireKey": "BATTLE-RUNTIME-SMOKE-POWER-ENERGY-PATH-R1-20260917T0254-SOL-H7Q4N6",
+  "leaseSnapshotReadbackAtJst": "2026-09-17 02:54 JST",
+  "leaseUntilJst": "2026-09-17 03:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A14:L14",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR exact current main 5cfcf66fc6a95c0ae3879bb422224ceb217e44f4; mutable browser/battle-janken-slidepad-runtime-mount.mjs only; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback; own CURRENT lease. READ_ONLY expired Hidden Hand donor branch/test, browser/GAMEROAD.html PR#1818, active board R11 files, deploy/package/provenance, gameplay/rules/save/network, unrelated WorkUnits.",
+  "solutionSignature": "BATTLE_POWER_ENERGY_DOCUMENT_RELATIVE_ASSET_PATH_REPAIR_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_RUNTIME_SMOKE_404_WITH_ROOT_ASSET_PRESENT_AND_BUILD_ROOT_PACKAGE",
+  "solutionSearchEvidence": [
+    "PR#1818 changes browser/GAMEROAD.html only; the failing SlidePad runtime file is identical to current main for the Power Energy URL.",
+    "Exact browser runtime smoke reproduces 404 /browser/assets/visual/battle-power-energy.jpg.",
+    "origin/main contains assets/visual/battle-power-energy.jpg as blob 9f3b1455a132e292d891983ad2126ee87c6e3051.",
+    "Cloudflare build already packages that source to public assets/visual/battle-power-energy.jpg.",
+    "The expired Hidden Hand donor branch keeps the same incorrect ./assets URL, so this repair must not overwrite or absorb its unrelated 127-line delta."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs"
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "OPS-AI-X-FREE-BRIDGE-R2-20260916T1716-SOL-RECOVER",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "WU_X_FREE_BRIDGE_R2",
+  "acquireKey": "OPS-AI-X-FREE-BRIDGE-R2-20260916T1716-SOL-RECOVER",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1761_PUBLIC_STATUS_ONLY_FIVE_NEW_FILES_NO_CREDENTIALS",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1761_FOCUSED_TESTS_5_PASS_PRODUCT_DONOR",
+  "proceedToken": "PROCEED|OPS-AI-X-FREE-BRIDGE-R2-20260916T1716-SOL-RECOVER|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|x-free-bridge-r2|current-main-clean-branch|active-lease",
+  "authorizationBaseSha": "8f771e15664ed46581160d7d0fd07e83ee83d80a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "WU_X_FREE_BRIDGE_R2",
+  "leaseAcquireKey": "OPS-AI-X-FREE-BRIDGE-R2-20260916T1716-SOL-RECOVER",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 17:16 JST",
+  "leaseUntilJst": "2026-09-16 18:16 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A25:L25",
+  "leaseExactMutableResources": "tools/x-feed/fetch_x_feed.py; tools/x-feed/targets.txt; tools/x-feed/test_fetch_x_feed.py; tools/x-feed/README.md; data/x_feed.json; data/preaction-authorizations/OPS-AI-X-FREE-BRIDGE-R2-20260916T1716-SOL-RECOVER.json; own branch sol/ops-ai-x-free-bridge-r2-20260916/PR/check/merge/readback. READ_ONLY current PC bridge R47 files; game/runtime assets; credentials/secrets; unrelated WorkUnits.",
+  "solutionSignature": "PUBLIC_X_STATUS_URL_TO_DURABLE_JSON_FREE_THIRD_PARTY_BRIDGE_R2",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "OLD_PR1761_EXPIRED_OWNER_PRODUCT_DONOR",
+  "solutionSearchEvidence": [
+    "PR #1761 contains only five additive bridge files and no existing product-file modifications.",
+    "The bridge accepts only public x.com/twitter.com status URLs and does not require X passwords, cookies, API keys, or bearer tokens.",
+    "FxTwitter is an explicit third-party dependency; fetch failures remain failures and do not authorize private/deleted/restricted-content bypass.",
+    "Current active PC CURRENT bridge work uses different mutable resources, so this is a non-conflicting strict subset recovery."
+  ],
+  "scope": [
+    "tools/x-feed/fetch_x_feed.py",
+    "tools/x-feed/targets.txt",
+    "tools/x-feed/test_fetch_x_feed.py",
+    "tools/x-feed/README.md",
+    "data/x_feed.json",
+    "data/preaction-authorizations/OPS-AI-X-FREE-BRIDGE-R2-20260916T1716-SOL-RECOVER.json"
+  ],
+  "leaseScope": [
+    "tools/x-feed/fetch_x_feed.py",
+    "tools/x-feed/targets.txt",
+    "tools/x-feed/test_fetch_x_feed.py",
+    "tools/x-feed/README.md",
+    "data/x_feed.json",
+    "data/preaction-authorizations/OPS-AI-X-FREE-BRIDGE-R2-20260916T1716-SOL-RECOVER.json"
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "OPS-AI-X-FREE-BRIDGE-R4-20260916T2135-SOL-RECOVER",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "WU-X-FREE-BRIDGE-R2_NODE_STANDARD",
+  "acquireKey": "OPS-AI-X-FREE-BRIDGE-R4-20260916T2135-SOL-RECOVER",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1761_ORPHAN_SEMANTICS_RECOVERABLE_WITHOUT_PRIVATE_X_AUTH",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R3_PREACTION_ONLY_PLUS_PR1761_OFFLINE_5_TESTS_AND_CURRENT_CONVENTIONAL_NODE_GATE",
+  "proceedToken": "PROCEED|OPS-AI-X-FREE-BRIDGE-R4-20260916T2135-SOL-RECOVER|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260916T2135JST",
+  "authorizationBaseSha": "acb55577d893e47abc89f75c71279a9b69ad8a68",
+  "scope": [
+    "tools/x-feed.mjs",
+    "tests/x-feed.test.mjs",
+    "docs/x-feed.md",
+    "data/x-feed-targets.txt",
+    "data/x_feed.json"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "WU-X-FREE-BRIDGE-R2_NODE_STANDARD",
+  "leaseAcquireKey": "OPS-AI-X-FREE-BRIDGE-R4-20260916T2135-SOL-RECOVER",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 21:35 JST",
+  "leaseUntilJst": "2026-09-16 22:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:N9",
+  "leaseScope": [
+    "tools/x-feed.mjs",
+    "tests/x-feed.test.mjs",
+    "docs/x-feed.md",
+    "data/x-feed-targets.txt",
+    "data/x_feed.json"
+  ],
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR exact main acb55577d893e47abc89f75c71279a9b69ad8a68; mutable NEW tools/x-feed.mjs; NEW tests/x-feed.test.mjs; NEW docs/x-feed.md; NEW data/x-feed-targets.txt; NEW data/x_feed.json; own transient data/preaction-authorizations/OPS-AI-X-FREE-BRIDGE-R4-20260916T2135-SOL-RECOVER.json; NEW branch sol/ops-ai-x-free-bridge-r4-20260916; own PR/check/merge/readback; own CURRENT lease/R24 event. READ_ONLY .github/workflows/gameroad-required-gate.yml; old PR#1761 and R3 donor branch; PC CURRENT bridge; all product/runtime/gameplay/Battle/Home/Shop resources; unrelated active WorkUnits.",
+  "solutionSignature": "public-x-status-fxtwitter-node22-conventional-gate-r4",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1761_PYTHON_DONOR_PLUS_R3_NODE_PREACTION_PLUS_CURRENT_CONVENTIONAL_GATE",
+  "solutionSearchEvidence": [
+    "PR #1761 preserves the bounded public-status URL parsing, FxTwitter normalization, no-auth constraints, output shape, and five offline tests.",
+    "R3 established the Node-standard adaptation plan but stopped after PRE_ACTION only.",
+    "Current Required Gate already supports tools/*.mjs with matching tests/*.test.mjs through the conventional Node lane.",
+    "Adapting implementation language and companion-file placement avoids weakening the generic unclassified executable safety gate."
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CARD-ZONE-LIVE-CONSUMER-R1-20260917T0045-SOL-N21",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CARD_ZONE_LIVE_CONSUMER_R1",
+  "acquireKey": "BATTLE-CARD-ZONE-LIVE-CONSUMER-R1-20260917T0045-SOL-N21",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_645A6C4B_AND_DISJOINT_WU21_COMPONENT_LEASE_20260917T0045JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_CARD_ZONE_CORE_RUNTIME_SURFACE_AND_TEST_CONTRACT",
+  "proceedToken": "PROCEED|BATTLE-CARD-ZONE-LIVE-CONSUMER-R1-20260917T0045-SOL-N21|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|card-zone-live-consumer|component-only|active-lease",
+  "authorizationBaseSha": "645a6c4b5d6ac1c0f1c77908c78defaf6404c413",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CARD_ZONE_LIVE_CONSUMER_R1",
+  "leaseAcquireKey": "BATTLE-CARD-ZONE-LIVE-CONSUMER-R1-20260917T0045-SOL-N21",
+  "leaseSnapshotReadbackAtJst": "2026-09-17 00:45 JST",
+  "leaseUntilJst": "2026-09-17 01:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A12:L12",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-card-zone-live-consumer-r1-20260917; browser/battle-card-zone-live-consumer.mjs; tests/battle-card-zone-live-consumer.test.mjs; own transient data/preaction-authorizations/BATTLE-CARD-ZONE-LIVE-CONSUMER-R1-20260917T0045-SOL-N21.json; own PR/check/merge/readback; own CURRENT lease/R24 event. browser/GAMEROAD.html, existing battle-card-zone-information core/runtime surface, self-deck files, gameplay/rules/save/network, deploy/package/provenance READ_ONLY.",
+  "solutionSignature": "BATTLE_CARD_ZONE_AUTHORIZED_SNAPSHOT_LIVE_CONSUMER_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_MAIN_EXISTING_CARD_ZONE_CORE_AND_RUNTIME_SURFACE_NO_LIVE_GRAVEYARD_FIELD",
+  "solutionSearchEvidence": [
+    "Current main already has projectBattleCardZoneInformation/requestBattleCardZoneDetail and a presentation-only runtime surface; this slice reuses them instead of creating a second zone UI or authority.",
+    "Current live player state exposes deck/hand/shields/chip/lanes but no established graveyard/discard field, so this slice must not infer or create gameplay graveyard state.",
+    "The consumer accepts only a caller-authorized viewer-safe card-zone snapshot and fails closed on missing, malformed, or unsafe input.",
+    "Existing WU27 owns browser/GAMEROAD.html through 01:13 JST; this component does not touch HTML and leaves live producer wiring to that owner.",
+    "Detail requests remain limited to exact cardIds already authorized by the existing projection/runtime surface."
+  ],
+  "scope": [
+    "browser/battle-card-zone-live-consumer.mjs",
+    "tests/battle-card-zone-live-consumer.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-card-zone-live-consumer.mjs",
+    "tests/battle-card-zone-live-consumer.test.mjs"
+  ]
+}

@@ -185,8 +185,6 @@ function createGate(documentLike, lane) {
   setAttr(gate, 'data-participant-id', lane.participantId);
   setAttr(gate, 'data-lane-index', lane.laneIndex);
   setAttr(gate, 'data-goal-path-open', '0');
-  setAttr(gate, 'data-closed-gate-material', 'hard-ice-bar');
-  setAttr(gate, 'data-open-gate-form', 'hoop-with-transparent-membrane');
   setAttr(gate, 'aria-hidden', 'true');
   gate.appendChild(createNode(documentLike, 'span', 'grGoalEntryBarrier'));
   gate.appendChild(createNode(documentLike, 'span', 'grGoalEntryHoop'));
@@ -354,8 +352,6 @@ export const NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT = deepFreeze({
   gateCount: 12,
   sharedGoalCount: 1,
   closedGateVisual: 'SOLID_LOCKED_BARRIER',
-  closedGateMaterial: 'HARD_ICE_BAR',
-  closedGateEmphasis: 'LOW_UNTIL_CONNECTED',
   openGateVisual: 'OPEN_HOOP_WITH_TRANSPARENT_MEMBRANE',
   standardOpeningTransition: 'BARRIER_SHATTER_TO_OPEN_HOOP',
   gatePlacement: 'EXACT_ROUTE_GATE_ANCHOR_BELOW_SHARED_GOAL',

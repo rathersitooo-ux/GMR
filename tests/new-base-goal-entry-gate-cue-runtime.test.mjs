@@ -240,6 +240,7 @@ test('invalid authority fails soft and destroy removes only runtime-owned nodes'
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.closedGateVisual, 'SOLID_LOCKED_BARRIER');
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.openGateVisual, 'OPEN_HOOP_WITH_TRANSPARENT_MEMBRANE');
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.closedGateMaterial, 'HARD_ICE_BAR');
+  assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.closedGateEmphasis, 'LOW_UNTIL_CONNECTED');
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.computesSevenCardCompletion, false);
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.computesMovementLegality, false);
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.computesResult, false);

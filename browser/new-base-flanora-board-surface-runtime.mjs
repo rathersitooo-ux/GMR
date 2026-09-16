@@ -8,8 +8,23 @@ const LANE_LABELS = Object.freeze(['L', 'C', 'R']);
 const ROAD_STEPS = Object.freeze([1, 2, 3, 4, 5, 6, 7]);
 const SHARED_GOAL_ID = 'goal:shared';
 const FIXED_TARGET_LANE_X_PCT = Object.freeze([7.1419, 13.6458, 20.2214, 31.0286, 37.7214, 44.4401, 55.3646, 61.9466, 68.6523, 79.5182, 86.1589, 92.7409]);
-const CLEARING_TOP_Y_PCT = Object.freeze([28, 23, 19, 15, 12, 10, 10, 12, 15, 19, 23, 28]);
-const CLEARING_BOTTOM_Y_PCT = Object.freeze([72, 77, 81, 85, 88, 90, 90, 88, 85, 81, 77, 72]);
+const TARGET_FIELD_NODES = Object.freeze([
+  ...FIXED_TARGET_LANE_X_PCT.map((x, index) => ({ id: `entry:${index}`, x, y: 7, kind: 'ENTRY' })),
+  ...[13,23,32,41,50,59,68,77,87].map((x,index)=>({id:`mid:${index}`,x,y:43,kind:'MID'})),
+  {id:'side:left',x:8.5,y:55,kind:'SIDE'}, {id:'left:upper',x:18.5,y:56,kind:'CLUSTER'},
+  {id:'left:mid-left',x:11,y:65,kind:'CLUSTER'}, {id:'left:mid-right',x:25.5,y:63,kind:'CLUSTER'}, {id:'left:center',x:18.5,y:74,kind:'CLUSTER'},
+  {id:'side:right',x:91.5,y:55,kind:'SIDE'}, {id:'right:upper',x:81.5,y:56,kind:'CLUSTER'},
+  {id:'right:mid-right',x:89,y:65,kind:'CLUSTER'}, {id:'right:mid-left',x:74.5,y:63,kind:'CLUSTER'}, {id:'right:center',x:81.5,y:74,kind:'CLUSTER'},
+  ...[13,22,30,41,50,59,70,79,88].map((x,index)=>({id:`bottom:${index}`,x,y:89,kind:'BOTTOM'})),
+]);
+const TARGET_FIELD_EDGES = Object.freeze([
+  ['entry:0','side:left'],['entry:1','mid:0'],['entry:2','mid:1'],['entry:3','mid:2'],['entry:4','mid:3'],['entry:5','mid:4'],['entry:6','mid:4'],['entry:7','mid:5'],['entry:8','mid:6'],['entry:9','mid:7'],['entry:10','mid:8'],['entry:11','side:right'],
+  ['mid:0','mid:1'],['mid:1','mid:2'],['mid:2','mid:3'],['mid:3','mid:4'],['mid:4','mid:5'],['mid:5','mid:6'],['mid:6','mid:7'],['mid:7','mid:8'],
+  ['side:left','mid:0'],['side:left','left:mid-left'],['mid:0','left:upper'],['mid:0','left:mid-left'],['mid:1','left:upper'],['mid:1','left:mid-right'],['left:mid-left','left:upper'],['left:mid-left','left:center'],['left:mid-left','bottom:0'],['left:mid-left','bottom:1'],['left:upper','left:center'],['left:upper','left:mid-right'],['left:center','left:mid-right'],['left:center','bottom:0'],['left:center','bottom:1'],['left:mid-right','bottom:1'],['left:mid-right','bottom:2'],
+  ['side:right','mid:8'],['side:right','right:mid-right'],['mid:8','right:upper'],['mid:8','right:mid-right'],['mid:7','right:upper'],['mid:7','right:mid-left'],['right:mid-right','right:upper'],['right:mid-right','right:center'],['right:mid-right','bottom:8'],['right:mid-right','bottom:7'],['right:upper','right:center'],['right:upper','right:mid-left'],['right:center','right:mid-left'],['right:center','bottom:8'],['right:center','bottom:7'],['right:mid-left','bottom:7'],['right:mid-left','bottom:6'],
+  ['bottom:0','bottom:1'],['bottom:1','bottom:2'],['bottom:2','bottom:3'],['bottom:3','bottom:4'],['bottom:4','bottom:5'],['bottom:5','bottom:6'],['bottom:6','bottom:7'],['bottom:7','bottom:8'],
+]);
+const SOURCE_BOTTOM_TARGET_NODE_IDS = Object.freeze(['left:mid-left','bottom:0','left:center','bottom:1','bottom:2','bottom:3','bottom:4','bottom:5','bottom:6','bottom:7','right:center','bottom:8']);
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -134,35 +149,74 @@ function setAttr(node, name, value) {
   }
 }
 
+function targetNodeIdForSourceCell(cell) {
+  if (!cell) return null;
+  if (cell.kind === 'CLEARING_TOP') return `entry:${cell.relativeColumn}`;
+  if (cell.kind === 'CLEARING_MIDDLE') return cell.columnIndex === 0 ? 'side:left' : 'side:right';
+  if (cell.kind === 'CLEARING_BOTTOM') return SOURCE_BOTTOM_TARGET_NODE_IDS[cell.relativeColumn] ?? null;
+  return null;
+}
+
+function positionFieldEdge(node, from, to) {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  node.style.left = `${from.x}%`;
+  node.style.top = `${from.y}%`;
+  node.style.width = `${Math.hypot(dx, dy)}%`;
+  node.style.transform = `rotate(${Math.atan2(dy, dx) * 180 / Math.PI}deg)`;
+}
+
 function ensureStyle(documentLike) {
   if (!documentLike?.head || typeof documentLike.createElement !== 'function') return;
   if (documentLike.getElementById?.(STYLE_ID)) return;
   const style = createNode(documentLike, 'style');
   style.id = STYLE_ID;
   style.textContent = `
-[data-new-base-flanora-board-surface="1"]{position:relative;display:block;width:100%;height:100%;min-width:0;min-height:0;box-sizing:border-box;isolation:isolate;overflow:hidden;background:radial-gradient(ellipse at 50% 49%,rgba(43,102,69,.12),transparent 67%)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{position:absolute;inset:0;min-width:0;min-height:0;overflow:visible}
-[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal{position:absolute;z-index:8;left:50%;top:1.4%;transform:translateX(-50%);display:grid;place-items:center;width:clamp(82px,11.5vw,142px);height:clamp(30px,5.7vh,48px);border:2px solid rgba(255,230,139,.88);border-radius:50% 50% 44% 44%/62% 62% 38% 38%;background:radial-gradient(ellipse at 50% 58%,rgba(255,237,168,.13),rgba(73,61,28,.58) 62%,rgba(24,46,35,.92));box-shadow:0 0 22px rgba(255,223,113,.18),inset 0 0 14px rgba(255,244,198,.09);font-size:clamp(10px,1.18vw,16px);font-weight:1000;letter-spacing:.12em;color:#fff1ad;pointer-events:none}
+[data-new-base-flanora-board-surface="1"]{position:relative;display:block;width:100%;height:100%;min-width:0;min-height:0;box-sizing:border-box;isolation:isolate;overflow:hidden;background:linear-gradient(180deg,rgba(5,27,39,.34) 0 22%,rgba(7,47,38,.09) 48%,rgba(7,34,24,.26) 100%),radial-gradient(ellipse at 50% 62%,rgba(49,118,75,.22),transparent 65%)}
+[data-new-base-flanora-board-surface="1"]::before{content:"";position:absolute;z-index:0;left:50%;top:3%;width:clamp(86px,13.5vw,176px);height:59%;transform:translateX(-50%);clip-path:polygon(34% 0,66% 0,77% 36%,68% 78%,61% 100%,38% 100%,31% 79%,24% 38%);background:linear-gradient(90deg,rgba(194,244,250,.10),rgba(222,251,255,.58) 28%,rgba(237,253,255,.82) 48%,rgba(125,226,237,.52) 70%,rgba(183,240,236,.10)),linear-gradient(180deg,rgba(225,251,255,.82),rgba(104,219,232,.54) 40%,rgba(166,239,222,.20) 80%,transparent);filter:drop-shadow(0 0 13px rgba(112,228,238,.20));opacity:.82;pointer-events:none}
+[data-new-base-flanora-board-surface="1"]::after{content:"";position:absolute;z-index:0;left:-4%;right:-4%;bottom:-6%;height:48%;background:radial-gradient(ellipse at 7% 92%,rgba(8,54,34,.78) 0 22%,transparent 23%),radial-gradient(ellipse at 24% 99%,rgba(11,68,41,.58) 0 24%,transparent 25%),radial-gradient(ellipse at 76% 99%,rgba(11,68,41,.58) 0 24%,transparent 25%),radial-gradient(ellipse at 94% 92%,rgba(8,54,34,.78) 0 22%,transparent 23%);pointer-events:none}
+[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{position:absolute;z-index:2;inset:0;min-width:0;min-height:0;overflow:visible}
+[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal{position:absolute;z-index:8;left:50%;top:1.4%;transform:translateX(-50%);display:grid;place-items:center;width:clamp(68px,9.4vw,112px);height:clamp(26px,4.8vh,38px);border:1px solid rgba(255,230,139,.76);border-radius:50% 50% 44% 44%/62% 62% 38% 38%;background:radial-gradient(ellipse at 50% 58%,rgba(255,237,168,.10),rgba(73,61,28,.46) 62%,rgba(24,46,35,.84));box-shadow:0 0 15px rgba(255,223,113,.13),inset 0 0 10px rgba(255,244,198,.07);font-size:clamp(9px,1vw,13px);font-weight:1000;letter-spacing:.12em;color:#fff1ad;pointer-events:none}
 [data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal[data-connected-route-count]:not([data-connected-route-count="0"]){box-shadow:0 0 34px rgba(255,221,102,.38),inset 0 0 18px rgba(255,244,198,.14)}
 [data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateLayer{position:absolute;z-index:7;left:0;right:0;top:13.8%;height:6.6%;min-width:0;min-height:0;pointer-events:none}
 [data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateAnchor{position:absolute;top:0;bottom:0;width:clamp(28px,5vw,58px);transform:translateX(-50%);min-width:0;min-height:0;overflow:visible}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateAnchor::before{content:"";position:absolute;left:50%;top:-43px;bottom:-6px;width:1px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(255,234,166,.09),rgba(226,241,218,.23));opacity:.34}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateAnchor[data-connected-to-goal="true"]::before{width:2px;opacity:.9;background:linear-gradient(180deg,rgba(255,239,180,.92),rgba(226,241,218,.48));box-shadow:0 0 7px rgba(255,226,137,.34)}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateAnchor::before{content:"";position:absolute;left:50%;top:-38px;bottom:-4px;width:1px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(255,234,166,.08),rgba(226,241,218,.16));opacity:.06}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateAnchor[data-connected-to-goal="true"]::before{width:2px;opacity:.78;background:linear-gradient(180deg,rgba(255,239,180,.84),rgba(226,241,218,.42));box-shadow:0 0 6px rgba(255,226,137,.26)}
 [data-new-base-flanora-board-surface="1"] .grFlanoraProgressionGrid{position:absolute;z-index:4;left:0;right:0;top:21.5%;bottom:34.5%;min-width:0;min-height:0}
 [data-new-base-flanora-board-surface="1"] .grFlanoraParticipantCluster{display:contents}
-[data-new-base-flanora-board-surface="1"] .grFlanoraLane{position:absolute;top:0;bottom:0;width:clamp(28px,5.15vw,58px);transform:translateX(-50%);display:grid;grid-template-rows:minmax(0,1fr) auto;gap:clamp(2px,.45vh,5px);min-width:0;min-height:0;align-items:stretch;justify-items:center}
+[data-new-base-flanora-board-surface="1"] .grFlanoraLane{position:absolute;top:0;bottom:0;width:clamp(24px,4.4vw,46px);transform:translateX(-50%);display:grid;grid-template-rows:minmax(0,1fr) auto;gap:clamp(2px,.4vh,4px);min-width:0;min-height:0;align-items:stretch;justify-items:center}
 [data-new-base-flanora-board-surface="1"] .grFlanoraRoad{position:relative;display:flex;flex-direction:column-reverse;align-items:center;justify-content:flex-start;gap:clamp(1px,.22vh,3px);width:100%;height:100%;min-width:0;min-height:0;padding:1px 0;box-sizing:border-box}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoad::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(255,229,139,.23),rgba(226,241,218,.13));opacity:.58}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{position:relative;z-index:2;display:grid;place-items:center;width:min(91%,clamp(22px,4.25vw,44px));aspect-ratio:1.48;border:1px solid rgba(238,247,230,.83);border-radius:3px;background:linear-gradient(150deg,rgba(238,245,226,.96),rgba(87,128,98,.94));box-shadow:0 2px 5px rgba(0,0,0,.25);overflow:hidden;pointer-events:none}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoad::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(255,229,139,.20),rgba(226,241,218,.10));opacity:.16}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoad[data-progression-built-count]:not([data-progression-built-count="0"])::before{opacity:.30}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoad[data-connected-to-goal="true"]::before{width:2px;opacity:.64;box-shadow:0 0 5px rgba(255,226,137,.20)}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{position:relative;z-index:2;display:grid;place-items:center;width:min(90%,clamp(20px,3.75vw,38px));aspect-ratio:1.48;border:1px solid rgba(238,247,230,.80);border-radius:3px;background:linear-gradient(150deg,rgba(238,245,226,.96),rgba(87,128,98,.94));box-shadow:0 2px 5px rgba(0,0,0,.25);overflow:hidden;pointer-events:none}
 [data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep[data-card-identity-resolved="true"]{border-color:rgba(255,239,177,.9);background:linear-gradient(150deg,rgba(252,245,216,.98),rgba(69,117,90,.96));box-shadow:0 2px 6px rgba(0,0,0,.30),0 0 7px rgba(255,225,132,.12)}
 [data-new-base-flanora-board-surface="1"] .grFlanoraRoadCardLabel{display:block;width:94%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font-size:clamp(5px,.48vw,8px);font-weight:850;color:#18392e;text-shadow:none}
-[data-new-base-flanora-board-surface="1"] .grFlanoraShield{position:relative;z-index:3;display:grid;place-items:center;width:min(90%,clamp(27px,4.65vw,48px));min-height:clamp(16px,2.7vh,24px);border:1px solid rgba(188,229,241,.7);border-radius:8px 8px 12px 12px;background:linear-gradient(180deg,rgba(38,84,95,.88),rgba(18,56,66,.94));font-size:clamp(7px,.72vw,10px);font-weight:950;color:#e8f8ff;box-shadow:0 3px 7px rgba(0,0,0,.2)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{position:absolute;z-index:2;left:3.2%;right:3.2%;top:63.5%;bottom:3.2%;min-width:0;min-height:0;border-radius:50% 48% 50% 46%/44% 48% 46% 42%;background:radial-gradient(ellipse at 50% 52%,rgba(76,128,84,.13),rgba(25,70,53,.035) 67%,transparent 72%)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraClearing::before{content:"";position:absolute;inset:7% 1.8%;border:1px solid rgba(211,232,206,.18);border-radius:50%;box-shadow:inset 0 0 18px rgba(44,96,64,.09),0 0 14px rgba(255,230,154,.025);pointer-events:none}
-[data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell{position:absolute;transform:translate(-50%,-50%);width:clamp(12px,2.15vw,24px);height:clamp(12px,2.15vw,24px);border:1px solid rgba(238,247,232,.56);border-radius:50%;background:rgba(47,91,66,.72);box-shadow:0 2px 6px rgba(0,0,0,.20)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell[data-start-participant]{outline:2px solid rgba(255,224,134,.72);outline-offset:1px}
+[data-new-base-flanora-board-surface="1"] .grFlanoraShield{position:relative;z-index:3;display:grid;place-items:center;width:min(88%,clamp(22px,3.8vw,38px));min-height:clamp(14px,2.35vh,20px);border:1px solid rgba(188,229,241,.58);border-radius:7px 7px 10px 10px;background:linear-gradient(180deg,rgba(38,84,95,.76),rgba(18,56,66,.86));font-size:clamp(6px,.62vw,9px);font-weight:950;color:#e8f8ff;box-shadow:0 2px 5px rgba(0,0,0,.16)}
+[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{position:absolute;z-index:2;left:3.2%;right:3.2%;top:63.5%;bottom:3.2%;min-width:0;min-height:0;background:linear-gradient(180deg,rgba(115,190,157,.025),rgba(6,38,26,.11));overflow:visible}
+[data-new-base-flanora-board-surface="1"] .grFlanoraFieldBand{position:absolute;z-index:0;left:-1%;right:-1%;top:7%;height:clamp(8px,1.55vh,15px);transform:translateY(-50%);border:1px solid rgba(197,229,215,.22);background:repeating-linear-gradient(90deg,rgba(54,104,72,.24) 0 5.5%,rgba(207,229,207,.20) 5.5% 5.8%,rgba(54,104,72,.24) 5.8% 8.3%);box-shadow:0 2px 8px rgba(0,0,0,.12);pointer-events:none}
+[data-new-base-flanora-board-surface="1"] .grFlanoraFieldEdges{position:absolute;z-index:1;inset:0;pointer-events:none}
+[data-new-base-flanora-board-surface="1"] .grFlanoraFieldEdge{position:absolute;height:1px;transform-origin:0 50%;background:linear-gradient(90deg,rgba(203,230,211,.28),rgba(172,214,190,.18));box-shadow:0 0 3px rgba(175,225,199,.06)}
+[data-new-base-flanora-board-surface="1"] .grFlanoraFieldNodes{position:absolute;z-index:2;inset:0;pointer-events:none}
+[data-new-base-flanora-board-surface="1"] .grFlanoraFieldNode{position:absolute;transform:translate(-50%,-50%);width:clamp(8px,1.35vw,14px);height:clamp(8px,1.35vw,14px);border:1px solid rgba(230,244,233,.58);border-radius:50%;background:rgba(42,92,63,.76);box-shadow:0 1px 4px rgba(0,0,0,.18)}
+[data-new-base-flanora-board-surface="1"] .grFlanoraFieldNode[data-target-field-kind="ENTRY"]{width:clamp(10px,1.65vw,17px);height:clamp(10px,1.65vw,17px);border-color:rgba(210,237,224,.72);background:rgba(38,86,59,.84)}
+[data-new-base-flanora-board-surface="1"] .grFlanoraFieldNode[data-start-participant]{outline:2px solid rgba(255,224,134,.72);outline-offset:1px}
+[data-new-base-flanora-board-surface="1"] .grFlanoraFieldNode[data-flanora-authority-roles]{box-shadow:0 0 8px rgba(238,244,196,.28),0 1px 4px rgba(0,0,0,.2)}
+#battleMap[data-central-world-live="1"] #fieldCanvas{opacity:0!important}
+#battleMap[data-central-world-live="1"] #board{opacity:0!important}
+#battleMap[data-central-world-live="1"] #routeSvg{opacity:0!important}
+#battleMap[data-central-world-live="1"].decisionRoad #routeSvg{opacity:1!important}
+#battleMap[data-central-world-live="1"].decisionRoad #routeSvg .rangeSurface:not(.path){opacity:.12!important}
+#battleMap[data-central-world-live="1"].decisionRoad #routeSvg .rangeSurface.path{opacity:.38!important}
+#battleMap[data-central-world-live="1"].decisionRoad #routeLine{opacity:.55!important}
+#battleMap[data-central-world-live="1"] #boardPlayers [data-board-controlled-character]{width:18px!important;height:24px!important;opacity:.48!important;filter:none!important}
+#battleMap[data-central-world-live="1"] #boardPlayers [data-board-controlled-character] .grtc-image{opacity:.56!important;filter:none!important}
+#battleMap[data-central-world-live="1"] #battleAdvicePartnerStage{left:4px!important;bottom:92px!important;width:76px!important;height:102px!important;opacity:.70!important}
+#battleMap[data-central-world-live="1"] #battleAdvicePartnerStage .grtc-image{transform:scale(1)!important;filter:drop-shadow(0 5px 8px rgba(0,0,0,.25))!important}
+#battleMap[data-central-world-live="1"] #battleManaArtR8{--r8-size:66px!important;left:66px!important;bottom:96px!important;opacity:.82!important}
+#battleMap[data-central-world-live="1"] #battleRuntime{width:46px!important;height:58px!important}
 [data-new-base-flanora-board-surface="1"][data-performance-profile="reduced_motion"] *,[data-new-base-flanora-board-surface="1"][data-performance-profile="low_perf"] *{animation:none!important;transition:none!important;filter:none!important}
-@media(max-height:420px){[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal{width:72px;height:26px;font-size:8px}[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateLayer{top:14.5%;height:6%}[data-new-base-flanora-board-surface="1"] .grFlanoraProgressionGrid{top:22%;bottom:35%}[data-new-base-flanora-board-surface="1"] .grFlanoraLane{width:clamp(26px,5vw,42px)}[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{width:min(92%,34px)}[data-new-base-flanora-board-surface="1"] .grFlanoraShield{min-height:14px;font-size:6px}[data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell{width:clamp(10px,2vw,18px);height:clamp(10px,2vw,18px)}}
+@media(max-height:420px){[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal{width:64px;height:24px;font-size:8px}[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateLayer{top:14.5%;height:6%}[data-new-base-flanora-board-surface="1"] .grFlanoraProgressionGrid{top:22%;bottom:35%}[data-new-base-flanora-board-surface="1"] .grFlanoraLane{width:clamp(22px,4.4vw,36px)}[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{width:min(90%,30px)}[data-new-base-flanora-board-surface="1"] .grFlanoraShield{min-height:13px;font-size:6px}[data-new-base-flanora-board-surface="1"] .grFlanoraFieldNode{width:clamp(7px,1.2vw,12px);height:clamp(7px,1.2vw,12px)}#battleMap[data-central-world-live="1"] #battleAdvicePartnerStage{width:62px!important;height:82px!important;bottom:88px!important}#battleMap[data-central-world-live="1"] #battleManaArtR8{--r8-size:56px!important;left:58px!important;bottom:92px!important}#battleMap[data-central-world-live="1"] #boardPlayers [data-board-controlled-character]{width:16px!important;height:21px!important}}
 `;
   documentLike.head.appendChild(style);
 }
@@ -384,8 +438,15 @@ export function mountFlanoraBoardSurface({
   setAttr(root, 'data-central-world-layout', 'shared-field-shield-actual-card-road-route-gates-one-goal');
   setAttr(root, 'data-future-discrete-progression-slots', 'false');
   setAttr(root, 'data-visual-composition', 'fixed-target-asymmetric-world');
+  setAttr(root, 'data-initial-field-identity', 'FIELD-01_WATERFALL_FOREST');
+  setAttr(root, 'data-field-landmark', 'AIR_WATERFALL');
+  setAttr(root, 'data-field-terrain', 'FOREST_RIDGE_CLEARING');
   setAttr(root, 'data-table-grid-visual', 'false');
-  setAttr(root, 'data-clearing-track-shape', 'organic-single-loop');
+  setAttr(root, 'data-clearing-track-shape', 'fixed-user-target-network');
+  setAttr(root, 'data-shared-field-visual-topology', 'USER_FIXED_TARGET_NETWORK_R2');
+  setAttr(root, 'data-source-clearing-binding-count', model.clearingCells.length);
+  setAttr(root, 'data-visible-field-node-count', TARGET_FIELD_NODES.length);
+  setAttr(root, 'data-visible-field-edge-count', TARGET_FIELD_EDGES.length);
   setAttr(root, 'aria-label', '下側の共有フィールドから盾、実際に成立したカードの道、12経路ゲートを通って上中央の1つのGOALへつながる盤面');
 
   const upper = createNode(documentLike, 'div', 'grFlanoraUpper');
@@ -399,9 +460,10 @@ export function mountFlanoraBoardSurface({
   setAttr(routeGateLayer, 'data-route-gate-count', 12);
   const progressionGrid = createNode(documentLike, 'div', 'grFlanoraProgressionGrid');
   const clearing = createNode(documentLike, 'div', 'grFlanoraClearing');
-  setAttr(clearing, 'data-flanora-clearing-loop', 'horizontal-zero');
   setAttr(clearing, 'data-shared-main-field', 'true');
-  setAttr(clearing, 'aria-label', '4人が移動する共有フィールド');
+  setAttr(clearing, 'data-shared-field-visual-topology', 'USER_FIXED_TARGET_NETWORK_R2');
+  setAttr(clearing, 'data-source-binding-only', 'legacy-map-layout');
+  setAttr(clearing, 'aria-label', '4人が移動する共有フィールド。利用者指定の分岐ネットワーク形状');
 
   upper.appendChild(sharedGoal);
   upper.appendChild(routeGateLayer);
@@ -415,6 +477,13 @@ export function mountFlanoraBoardSurface({
   const roadStepMetaById = new Map();
   const roadStepsByKey = new Map();
   const clearingByCellId = new Map();
+  const fieldNodesById = new Map();
+  const fieldBand = createNode(documentLike, 'span', 'grFlanoraFieldBand');
+  const fieldEdges = createNode(documentLike, 'div', 'grFlanoraFieldEdges');
+  const fieldNodes = createNode(documentLike, 'div', 'grFlanoraFieldNodes');
+  clearing.appendChild(fieldBand);
+  clearing.appendChild(fieldEdges);
+  clearing.appendChild(fieldNodes);
   const participantClusters = new Map();
 
   for (const [participantSlot, participantId] of model.participantIds.entries()) {
@@ -469,25 +538,39 @@ export function mountFlanoraBoardSurface({
     roadsByLaneKey.set(lane.key, road);
   }
 
+  for (const target of TARGET_FIELD_NODES) {
+    const node = createNode(documentLike, 'span', 'grFlanoraFieldNode');
+    node.style.left = `${target.x}%`;
+    node.style.top = `${target.y}%`;
+    setAttr(node, 'data-target-field-node-id', target.id);
+    setAttr(node, 'data-target-field-kind', target.kind);
+    setAttr(node, 'data-world-x-pct', target.x);
+    setAttr(node, 'data-world-y-pct', target.y);
+    fieldNodes.appendChild(node);
+    fieldNodesById.set(target.id, node);
+  }
+
+  const targetById = new Map(TARGET_FIELD_NODES.map((target) => [target.id, target]));
+  for (const [fromId, toId] of TARGET_FIELD_EDGES) {
+    const from = targetById.get(fromId);
+    const to = targetById.get(toId);
+    if (!from || !to) throw new TypeError('FLANORA_TARGET_FIELD_EDGE_INVALID');
+    const edgeNode = createNode(documentLike, 'span', 'grFlanoraFieldEdge');
+    setAttr(edgeNode, 'data-target-field-edge', `${fromId}|${toId}`);
+    positionFieldEdge(edgeNode, from, to);
+    fieldEdges.appendChild(edgeNode);
+  }
+
   for (const cell of model.clearingCells) {
-    const cellNode = createNode(documentLike, 'span', 'grFlanoraClearingCell');
-    setAttr(cellNode, 'data-flanora-clearing-cell-id', cell.id);
+    const targetNodeId = targetNodeIdForSourceCell(cell);
+    const cellNode = targetNodeId ? fieldNodesById.get(targetNodeId) : null;
+    if (!cellNode) throw new TypeError(`FLANORA_SOURCE_CLEARING_ALIAS_UNRESOLVED:${cell.id}`);
+    setAttr(cellNode, 'data-source-clearing-cell-id', cell.id);
     setAttr(cellNode, 'data-clearing-kind', cell.kind);
-    const clearingX = FIXED_TARGET_LANE_X_PCT[cell.relativeColumn] ?? 50;
-    const clearingY = cell.kind === 'CLEARING_TOP'
-      ? CLEARING_TOP_Y_PCT[cell.relativeColumn]
-      : cell.kind === 'CLEARING_BOTTOM'
-        ? CLEARING_BOTTOM_Y_PCT[cell.relativeColumn]
-        : 50;
-    cellNode.style.left = `${clearingX}%`;
-    cellNode.style.top = `${clearingY}%`;
-    setAttr(cellNode, 'data-world-x-pct', clearingX);
-    setAttr(cellNode, 'data-world-y-pct', clearingY);
     if (cell.startParticipantIds.length) {
       setAttr(cellNode, 'data-start-participant', cell.startParticipantIds.join(' '));
       setAttr(cellNode, 'aria-label', `開始 ${cell.startParticipantIds.join('・')}`);
     }
-    clearing.appendChild(cellNode);
     clearingByCellId.set(cell.id, cellNode);
   }
 
@@ -556,7 +639,11 @@ export function mountFlanoraBoardSurface({
         roadStepCount: roadStepMetaById.size,
         visibleBuiltRoadStepCount: roadStepsByKey.size,
         resolvedPhysicalCardIdentityCount: [...roadStepsByKey.values()].filter((node) => node.dataset?.cardIdentityResolved === 'true').length,
+        sourceClearingBindingCount: clearingByCellId.size,
         clearingCellCount: clearingByCellId.size,
+        visibleSharedFieldNodeCount: fieldNodesById.size,
+        visibleSharedFieldEdgeCount: TARGET_FIELD_EDGES.length,
+        sharedFieldVisualTopology: 'USER_FIXED_TARGET_NETWORK_R2',
         clearingCycleCellIds: [...model.clearingCycleCellIds],
         performanceProfile: root.dataset?.performanceProfile ?? performanceProfile({ reducedMotion, lowPerf }),
         movementAuthority: false,
@@ -592,6 +679,15 @@ export const FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT = deepFreeze({
   futureDiscreteStageNodes: false,
   unresolvedStageDefault: 'NO_DISCRETE_NODE_GUIDE_ONLY',
   lanePlacement: 'FIXED_TARGET_NORMALIZED_X_WORLD_SPACE',
+  initialFieldIdentity: 'FIELD-01_WATERFALL_FOREST',
+  initialFieldLandmark: 'AIR_WATERFALL',
+  initialFieldTerrain: 'FOREST_RIDGE_CLEARING',
+  inactiveRouteGuideEmphasis: 'ATMOSPHERIC_ONLY',
+  externalBattleChromePolicy: 'BOARD_FIRST_COMPACT_NON_BOARD_VISUALS',
   tableGridVisual: false,
-  sharedFieldVisual: 'ORGANIC_SINGLE_LOOP',
+  sharedFieldVisual: 'FIXED_USER_TARGET_NETWORK',
+  sharedFieldVisualTopology: 'USER_FIXED_TARGET_NETWORK_R2',
+  visibleSharedFieldNodeCount: TARGET_FIELD_NODES.length,
+  visibleSharedFieldEdgeCount: TARGET_FIELD_EDGES.length,
+  sourceClearingBindingPolicy: 'LEGACY_IDS_ALIAS_TO_TARGET_PRESENTATION_NODES',
 });

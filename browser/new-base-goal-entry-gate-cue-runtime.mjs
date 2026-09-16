@@ -67,8 +67,8 @@ function ensureStyle(documentLike) {
   style.id = STYLE_ID;
   style.textContent = `
 [data-goal-entry-gate-cell="1"]{position:relative;isolation:isolate;overflow:visible!important}
-.grGoalEntryGate{position:absolute;z-index:8;left:50%;bottom:-2px;width:94%;height:clamp(18px,3.25vh,29px);transform:translateX(-50%);pointer-events:none;overflow:visible;--gameroad-goal-entry-cue-color:rgba(255,229,139,.9)}
-.grGoalEntryBarrier{position:absolute;left:1%;right:1%;bottom:1px;height:76%;border:1px solid rgba(236,250,255,.96);border-radius:2px;background:linear-gradient(165deg,transparent 0 16%,rgba(255,255,255,.42) 17% 20%,transparent 21% 44%,rgba(195,235,246,.36) 45% 49%,transparent 50%),linear-gradient(180deg,rgba(239,252,255,.98),rgba(154,205,220,.96) 48%,rgba(72,119,133,.98));clip-path:polygon(0 26%,7% 8%,26% 4%,34% 13%,52% 5%,64% 15%,83% 6%,100% 24%,97% 83%,78% 94%,62% 86%,46% 96%,29% 87%,11% 94%,2% 78%);box-shadow:0 3px 0 rgba(29,66,77,.34),0 0 10px rgba(201,243,255,.24),inset 0 0 0 1px rgba(255,255,255,.2),inset 0 -4px 8px rgba(44,90,103,.18);transform-origin:50% 80%;opacity:1}
+.grGoalEntryGate{position:absolute;z-index:8;left:50%;bottom:0;width:72%;height:clamp(14px,2.55vh,23px);transform:translateX(-50%);pointer-events:none;overflow:visible;--gameroad-goal-entry-cue-color:rgba(255,229,139,.9)}
+.grGoalEntryBarrier{position:absolute;left:5%;right:5%;bottom:2px;height:58%;border:1px solid rgba(226,247,252,.68);border-radius:2px;background:linear-gradient(165deg,transparent 0 16%,rgba(255,255,255,.28) 17% 20%,transparent 21% 44%,rgba(195,235,246,.22) 45% 49%,transparent 50%),linear-gradient(180deg,rgba(225,247,252,.72),rgba(126,181,197,.68) 48%,rgba(56,101,115,.76));clip-path:polygon(0 26%,7% 8%,26% 4%,34% 13%,52% 5%,64% 15%,83% 6%,100% 24%,97% 83%,78% 94%,62% 86%,46% 96%,29% 87%,11% 94%,2% 78%);box-shadow:0 2px 0 rgba(29,66,77,.24),0 0 6px rgba(201,243,255,.12),inset 0 0 0 1px rgba(255,255,255,.12);transform-origin:50% 80%;opacity:.62}
 .grGoalEntryBarrier::before,.grGoalEntryBarrier::after{content:"";position:absolute;width:1px;background:rgba(35,86,101,.66);box-shadow:0 0 2px rgba(255,255,255,.65)}
 .grGoalEntryBarrier::before{left:38%;top:4%;height:94%;transform:rotate(18deg)}
 .grGoalEntryBarrier::after{right:34%;top:8%;height:86%;transform:rotate(-21deg)}
@@ -355,6 +355,7 @@ export const NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT = deepFreeze({
   sharedGoalCount: 1,
   closedGateVisual: 'SOLID_LOCKED_BARRIER',
   closedGateMaterial: 'HARD_ICE_BAR',
+  closedGateEmphasis: 'LOW_UNTIL_CONNECTED',
   openGateVisual: 'OPEN_HOOP_WITH_TRANSPARENT_MEMBRANE',
   standardOpeningTransition: 'BARRIER_SHATTER_TO_OPEN_HOOP',
   gatePlacement: 'EXACT_ROUTE_GATE_ANCHOR_BELOW_SHARED_GOAL',

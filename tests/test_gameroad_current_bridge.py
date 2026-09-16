@@ -131,12 +131,15 @@ class CurrentBridgeTests(unittest.TestCase):
         title, body = bridge.build_executor_issue(packet())
         self.assertTrue(title.startswith("[EXECUTOR]"))
         self.assertIn(bridge.issue_marker(ACQUIRE), body)
-        self.assertIn('"acquireKey":"ACQ-PC-BRIDGE-1"', body)
+        self.assertIn('\"acquireKey\":\"ACQ-PC-BRIDGE-1\"', body)
         self.assertNotIn("GAMEROAD_GITHUB_TOKEN", body)
         self.assertNotIn("CURRENT_ACTIVE_LEASES!", body)
 
     def test_new_acquire_uses_first_blank_row_and_one_hour_window(self):
-        empty = lease_values(acquire="OTHER")
+        empty = lease_values(
+            acquire="OTHER",
+            scope="browser/unrelated.mjs; tests/unrelated.test.mjs",
+        )
         p, row, until = bridge.prepare_acquire(packet(), empty, "no prior key", NOW, MAIN)
         self.assertEqual(p["acquireKey"], ACQUIRE)
         self.assertEqual(row, 6)

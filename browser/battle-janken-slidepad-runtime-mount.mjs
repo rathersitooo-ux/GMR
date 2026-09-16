@@ -55,7 +55,7 @@ const HAND_AURA_ARM_PADDING_PX = 18;
 const HAND_AURA_RELEASE_DURATION_MS = 520;
 const SLOT_ROLL_DETENT_FEEDBACK_DURATION_MS = 110;
 const HAND_FOCUS_SNAP_MAX_PX = 28;
-const POWER_ENERGY_ASSET_URL = './assets/visual/battle-power-energy.jpg';
+const POWER_ENERGY_ASSET_URL = '../assets/visual/battle-power-energy.jpg';
 const POWER_ENERGY_ATTR = 'data-battle-power-energy';
 export const BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS = 'section[data-screen="battle"] #targetBox.on,section[data-screen="battle"] #targetBox.vfTargetProxyOn{z-index:60!important}';
 export const BATTLE_HAND_PLAYABLE_AFFORDANCE_SCHEMA = 'gameroad.battle-hand-playable-affordance.v1';

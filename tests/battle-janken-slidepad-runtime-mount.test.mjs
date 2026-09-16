@@ -73,7 +73,7 @@ test('dedicated Focus projection proactively replaces the legacy display snapsho
   const runtimeSource = readFileSync(
     new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
     'utf8',
-  );
+  ).replace(/\r\n/g, '\n');
   assert.match(runtimeSource, /const callerAssignment = model\.assignment\?\.assignmentMode[\s\S]*CURRENT_HAND3_POLICY[\s\S]*\? model\.assignment[\s\S]*: null/);
   assert.match(runtimeSource, /assignment = currentAssignment;\n      render\(\);/);
   assert.match(runtimeSource, /focusAssignmentSyncPending = true;[\s\S]*readDedicatedFocusContext\(\)\.finally/);
@@ -84,7 +84,7 @@ test('dedicated Focus never paints the legacy suit-bound mapping while current H
   const runtimeSource = readFileSync(
     new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
     'utf8',
-  );
+  ).replace(/\r\n/g, '\n');
   assert.match(runtimeSource, /const awaitingCurrentHand3 = dedicatedFocus[\s\S]*CURRENT_HAND3_POLICY/);
   assert.match(runtimeSource, /if \(awaitingCurrentHand3\) \{[\s\S]*node\.disabled = true;[\s\S]*node\.dataset\.cardId = '';[\s\S]*cardText\.textContent = '—';[\s\S]*readDedicatedFocusContext\(\)\.finally[\s\S]*return;/);
   assert.equal((runtimeSource.match(/readDedicatedFocusContext\(\)\.finally/g) ?? []).length, 1);
@@ -254,7 +254,7 @@ test('ordinary hand drag ghost stays above the pointer while preserving horizont
 
 test('ordinary hand drag integration keeps aura arming on the raw pointer rather than the lifted ghost', async () => {
   const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
   assert.match(source, /projectBattleHandDragGhostPosition\(\{[\s\S]*pointer: \{ x, y \}/);
   assert.match(source, /isBattleHandAuraLaunchArmed\(\{\s*pointer: \{ x, y \}/);
 });
@@ -292,7 +292,7 @@ test('target-confirm proxy is layered above the expanded SlidePad only during ta
 
 test('disabled expanded janken slots do not intercept ordinary hand hit-testing', async () => {
   const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
   assert.match(
     source,
     /\.grJankenSlidePadSlot:disabled\{[^}]*pointer-events:none[^}]*\}/,
@@ -379,7 +379,7 @@ test('Battle Slot Roll does not fabricate detent feedback when no detent was emi
 
 test('live Battle pointer adapter consumes shared detents instead of discarding them', async () => {
   const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
   assert.match(source, /const advanced = advanceBattleJankenSlotRollState\(slotRollState,[\s\S]*slotRollState = advanced\.state;/);
   assert.match(source, /projectBattleJankenSlotRollDetents\(slotNodes, advanced\.detents\);/);
   assert.equal(source.includes('advanceBattleJankenSlotRollState(slotRollState, {\n        deltaPx,\n        detentPx: slotRollDetentPx,\n      }).state;'), false,
@@ -389,7 +389,7 @@ test('live Battle pointer adapter consumes shared detents instead of discarding 
 
 test('portrait reserved janken fan keeps large thumb targets in the same radial family', async () => {
   const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
   assert.match(source, /\.grJankenSlidePadSlot\{position:absolute;right:4px;bottom:4px;width:86px;height:86px/);
   assert.match(source, /@media\(max-width:540px\) and \(orientation:portrait\)\{[^\n]*\.grJankenSlidePadSlot\{width:76px;height:76px/);
   assert.match(source, /orientation:portrait[^\n]*rock\{transform:translate\(-118px,2px\)[^\n]*scissors\{transform:translate\(-70px,-60px\)[^\n]*paper\{transform:translate\(-4px,-92px\)/);
@@ -397,7 +397,7 @@ test('portrait reserved janken fan keeps large thumb targets in the same radial 
 
 test('basic Battle does not mount or show the optional remaining-hand roulette by default', async () => {
   const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
   assert.match(source, /rouletteEnabled = false/);
   assert.match(source, /const rowRouletteRuntime = rouletteEnabled === true/);
   assert.match(source, /rowRouletteHost\.hidden = rouletteEnabled !== true;/);
@@ -406,7 +406,7 @@ test('basic Battle does not mount or show the optional remaining-hand roulette b
 
 test('remaining-hand row roulette live mount reuses the current playable projection and hand-card action', async () => {
   const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
   assert.match(source, /createBattlePlayableHandRowRouletteController/);
   assert.match(source, /getCandidateProjection: \(\) => currentPlayableHandAffordance\(root\)/);
   assert.match(source, /delegateHandCardAction: \(cardId\) => clickExistingHandCard\(root, cardId\)/);
@@ -416,7 +416,7 @@ test('remaining-hand row roulette live mount reuses the current playable project
 
 test('remaining-hand row roulette live placement stays left of the board beside the Partner region', async () => {
   const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
   assert.match(source, /data-battle-playable-hand-row-roulette-live/);
   assert.match(source, /left:var\(--gameroad-battle-partner-right-x/);
   assert.match(source, /bottom:var\(--gameroad-battle-partner-upper-y/);
@@ -425,7 +425,7 @@ test('remaining-hand row roulette live placement stays left of the board beside 
 
 test('remaining-hand row roulette bridge owns no draw refill Mana Honey score or result path', async () => {
   const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
   const start = source.indexOf('const rowRouletteController = createBattlePlayableHandRowRouletteController({');
   const end = source.indexOf('\n\n  let assignment = null;', start);
   assert.ok(start >= 0 && end > start);
@@ -437,7 +437,7 @@ test('remaining-hand row roulette bridge owns no draw refill Mana Honey score or
 
 test('short-landscape Battle controls keep the compact janken fan on the non-occluding right-edge anchor', async () => {
   const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
   assert.match(source, /@media\(max-height:430px\) and \(orientation:landscape\)\{[^\n]*\[\$\{HOST_ATTR\}=\"1\"\]\{width:208px;height:160px;right:7px;bottom:7px/);
   assert.match(source, /max-height:430px[^\n]*\.grJankenSlidePadHandle\{width:58px;height:58px\}/,
     'the primary bottom-right touch target stays at the existing short-landscape size');
@@ -447,7 +447,7 @@ test('short-landscape Battle controls keep the compact janken fan on the non-occ
 
 test('short-landscape remaining-hand roulette compacts beside Partner without changing its board-occlusion contract', async () => {
   const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
   assert.match(source, /max-height:430px[^\n]*BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR[^\n]*bottom:var\(--gameroad-battle-partner-upper-y,92px\);transform:scale\(\.72\)/);
   assert.match(source, /left:var\(--gameroad-battle-partner-right-x,clamp\(112px,14vw,174px\)\)/,
     'desktop placement remains anchored beside Partner rather than moving into the board');
@@ -455,7 +455,7 @@ test('short-landscape remaining-hand roulette compacts beside Partner without ch
 
 test('390x844 portrait keeps SlidePad and optional roulette in the right-thumb dock', async () => {
   const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
   assert.match(source, /BATTLE_PORTRAIT_390X844_R7B/);
   assert.match(source, /@media\(max-width:430px\) and \(orientation:portrait\)/);
   assert.match(source, /right:max\(12px,env\(safe-area-inset-right\)\)!important/);
@@ -490,7 +490,7 @@ test('dedicated janken focus integration requires the existing surface and live-
 
 test('configured dedicated focus blocks legacy direct hand-card commit and delegates exact packages to the existing surface', async () => {
   const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
   assert.match(source, /focusIntegration = null/);
   assert.match(source, /const initialDedicatedFocus = normalizeBattleJankenFocusIntegration\(focusIntegration\);/);
   assert.match(source, /let dedicatedFocus = initialDedicatedFocus;/);
@@ -504,7 +504,7 @@ test('configured dedicated focus blocks legacy direct hand-card commit and deleg
 
 test('dedicated focus commit keeps release flight presentation-only and invalidates on round or explicit sync failure', async () => {
   const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
   const acceptedStart = source.indexOf('onAccepted: (result, readyPackage) => {');
   const acceptedEnd = source.indexOf('\n        },\n      });', acceptedStart);
   assert.ok(acceptedStart >= 0 && acceptedEnd > acceptedStart);
@@ -571,7 +571,7 @@ test('card focus visual snap is bounded and preserves raw projection when unarme
 
 test('card focus live drag uses existing legality and raw pointer authority before commit', async () => {
   const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
   assert.match(source, /const legalCandidate = currentPlayableHandAffordance\(root\)\?\.candidateCardIds\?\.includes\?\.\(state\.cardId\) === true;/);
   assert.match(source, /const armed = legalCandidate && isBattleHandAuraLaunchArmed\(\{\s*pointer: \{ x, y \},\s*auraRect,/);
   assert.match(source, /const commit = !cancelled && moved && state\.armed && state\.legalCandidate === true && sourceStillOrdinary;/);
@@ -580,7 +580,7 @@ test('card focus live drag uses existing legality and raw pointer authority befo
 
 test('card focus has distinct focused, legal and staged presentation states with cleanup', async () => {
   const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
   assert.match(source, /data-card-focus="true"/);
   assert.match(source, /data-card-focus-legal="true"/);
   assert.match(source, /data-card-staged="true"/);
@@ -731,7 +731,7 @@ test('non-suit janken interaction chrome keeps hard-coded state color achromatic
   const runtimeSource = readFileSync(
     new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
     'utf8',
-  );
+  ).replace(/\r\n/g, '\n');
   const rgbTriplets = [...runtimeSource.matchAll(/rgba?\((\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})/g)]
     .map((match) => match.slice(1, 4).map(Number));
   assert.ok(rgbTriplets.length > 0);
@@ -759,7 +759,7 @@ test('non-suit janken interaction chrome keeps hard-coded state color achromatic
 
 test('ordinary hand focus enlarges the exact physical card face in place for local detail', async () => {
   const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
   assert.match(source, /#hand \.handCard\[data-card-focus="true"\]\{translate:0 -15px;scale:1\.38;/, 'local detail reuses the existing focused physical card instead of opening a second surface');
   assert.match(source, /#hand \.handCard\[data-card-focus="true"\]\[data-card-focus-legal="true"\]\{translate:0 -18px;scale:1\.44;/, 'legal focus may emphasize the same card further without changing identity or legality');
   assert.equal(source.includes('grBattleHandDetailDrawer'), false, 'address31 must not duplicate address37 shared drawer/detail');
@@ -772,7 +772,7 @@ test('address6 late Focus attachment preserves one runtime seam and cancel A the
   const runtimeSource = readFileSync(
     new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
     'utf8',
-  );
+  ).replace(/\r\n/g, '\n');
   assert.match(runtimeSource, /if \(existing\?\.__gameroadRuntime\) \{[\s\S]*existingRuntime\.attachFocusIntegration\?\.\(initialDedicatedFocus\);[\s\S]*return existingRuntime;/);
   assert.match(runtimeSource, /function attachFocusIntegration\(nextIntegration\) \{[\s\S]*if \(destroyed\) return false;[\s\S]*if \(!normalized\) return false;[\s\S]*if \(dedicatedFocus\) \{[\s\S]*dedicatedFocus\.liveInputStack === normalized\.liveInputStack;[\s\S]*assignment = null;[\s\S]*schedule\(\);[\s\S]*return true;/);
   assert.match(runtimeSource, /cardFocusSnapshot:[^\n]+\n    attachFocusIntegration,\n    dedicatedFocusConnected:/);
@@ -864,8 +864,8 @@ test('address6 late Focus attachment preserves one runtime seam and cancel A the
 // BATTLE_POWER_ENERGY_VISUAL_TARGET_R1_BEGIN
 test('Power Energy is distinct from SlidePad and owns ordinary-hand drag arming plus launch waypoint', async () => {
   const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
-  assert.match(source, /const POWER_ENERGY_ASSET_URL = '\.\/assets\/visual\/battle-power-energy\.jpg';/);
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
+  assert.match(source, /const POWER_ENERGY_ASSET_URL = '\.\.\/assets\/visual\/battle-power-energy\.jpg';/);
   assert.match(source, /powerEnergy\.className = 'grPowerEnergy';/);
   assert.match(source, /powerEnergy\.setAttribute\(POWER_ENERGY_ATTR, '1'\);/);
   assert.match(source, /handle\.setAttribute\('aria-label', 'じゃんけん SlidePad'\);/);
@@ -882,7 +882,7 @@ test('Power Energy uses the exact recovered web derivative and does not add a se
   const [{ readFile }, { createHash }] = await Promise.all([import('node:fs/promises'), import('node:crypto')]);
   const bytes = await readFile(new URL('../assets/visual/battle-power-energy.jpg', import.meta.url));
   assert.equal(createHash('sha256').update(bytes).digest('hex'), '314973a531dffced941f996dda9e45ffcf41526263feae00da558c1c918988c3');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
   assert.equal((source.match(/from '\.\/battle-card-release-flight-runtime-effect\.mjs';/g) ?? []).length, 1);
   assert.doesNotMatch(source, /createPowerEnergy(?:Controller|Engine|Store)/);
 });

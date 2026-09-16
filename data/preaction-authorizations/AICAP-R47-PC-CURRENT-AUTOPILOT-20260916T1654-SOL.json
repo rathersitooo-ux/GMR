@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "AICAP-R47-PC-CURRENT-AUTOPILOT-20260916T1654-SOL",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "NONCHAT_PC_CURRENT_EXECUTOR_ADOPT_LOOP_R46",
+  "acquireKey": "AICAP-R47-PC-CURRENT-AUTOPILOT-20260916T1654-SOL",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R47-fresh-current-main-plus-active-private-current-lease-readback",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R46-bridge-unit-success-required-gate-unclassified-only",
+  "proceedToken": "PROCEED|AICAP-R47-PC-CURRENT-AUTOPILOT-20260916T1654-SOL|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|fresh-current|bounded-pc-loop",
+  "authorizationBaseSha": "67dd54ab5bf50f621e25df72d6540d8e7b1a5205",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "NONCHAT_PC_CURRENT_EXECUTOR_ADOPT_LOOP_R46",
+  "leaseAcquireKey": "AICAP-R47-PC-CURRENT-AUTOPILOT-20260916T1654-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 16:54 JST",
+  "leaseUntilJst": "2026-09-16 17:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR current main 67dd54ab5bf50f621e25df72d6540d8e7b1a5205; mutable NEW branch sol/pc-current-autopilot-r47-20260916; mutable .github/workflows/gameroad-required-gate.yml; copy/adapt existing PR#1750 bridge files .github/workflows/gameroad-current-bridge.yml, tools/gameroad-current-bridge.py, tests/test_gameroad_current_bridge.py, docs/gameroad-current-bridge.md; mutable own transient PRE_ACTION witness; own PR/check/merge/readback. READ_ONLY existing Executor Bus/FREE_LOCAL_CODER implementation, private Drive CURRENT contents except own lease/event records, unrelated active WorkUnits.",
+  "scope": [
+    ".github/workflows/gameroad-current-bridge.yml",
+    "tools/gameroad-current-bridge.py",
+    "tests/test_gameroad_current_bridge.py",
+    "docs/gameroad-current-bridge.md",
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/gameroad-current-bridge.yml",
+    "tools/gameroad-current-bridge.py",
+    "tests/test_gameroad_current_bridge.py",
+    "docs/gameroad-current-bridge.md",
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "solutionSignature": "A trusted Windows supervisor fresh-reads private CURRENT, verifies one formally acquired packet, and reuses the existing Executor Bus/FREE_LOCAL_CODER lane without mirroring CURRENT into GitHub.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R47-reuse-R46-bridge-plus-current-required-gate",
+  "solutionSearchEvidence": [
+    "PR#1750 bridge implementation and successful focused bridge unit run",
+    "current .github/workflows/gameroad-executor-bus.yml existing candidate executor lane",
+    "current Required Gate PRE_ACTION and unclassified-path fail-closed controls"
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "SHOP-MANII-DISPLAY-R7-PREACTION-20260917T0047-SOL-P6N3Q8",
+  "taskId": "SHOP-SAFE-ECONOMY-INTEGRATION-001",
+  "workUnitKey": "SHOP_COSMETIC_MANII_DISPLAY_CONTRACT_R1",
+  "acquireKey": "SHOP-MANII-DISPLAY-R7-20260917T0047-SOL-P6N3Q8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_SHOP_MANII_INTERNAL_DISPLAY_GAP_20260917",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FOCUSED_NODE_TESTS_AFTER_FIRST_ONLY_PREACTION",
+  "proceedToken": "PROCEED|SHOP-MANII-DISPLAY-R7-PREACTION-20260917T0047-SOL-P6N3Q8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|shop|manii-display|active-lease",
+  "authorizationBaseSha": "645a6c4b5d6ac1c0f1c77908c78defaf6404c413",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHOP-SAFE-ECONOMY-INTEGRATION-001",
+  "leaseWorkUnitKey": "SHOP_COSMETIC_MANII_DISPLAY_CONTRACT_R1",
+  "leaseAcquireKey": "SHOP-MANII-DISPLAY-R7-20260917T0047-SOL-P6N3Q8",
+  "leaseSnapshotReadbackAtJst": "2026-09-17 00:47 JST",
+  "leaseUntilJst": "2026-09-17 01:47 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A13:L13",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR exact current main 645a6c4b5d6ac1c0f1c77908c78defaf6404c413; mutable browser/shop-transaction-presentation-adapter.mjs; tests/shop-transaction-presentation-adapter.test.mjs; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback; own CURRENT lease/R24 event.",
+  "solutionSignature": "SHOP_COSMETIC_MANII_DISPLAY_CONTRACT_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1808_R6B_TWO_LINE_DIFF_REAPPLIED_20260917",
+  "solutionSearchEvidence": [
+    "Current Shop projection already enforces internal MANII and legacy HONEY fail-closed.",
+    "Prior bounded branches prove the only product delta is display label plus focused assert.",
+    "Fresh main remains unchanged at authorization.",
+    "No price, ProductID, ownership, save, payment, Battle Honey, or normal Shop COIN semantics change."
+  ],
+  "scope": [
+    "browser/shop-transaction-presentation-adapter.mjs",
+    "tests/shop-transaction-presentation-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/shop-transaction-presentation-adapter.mjs",
+    "tests/shop-transaction-presentation-adapter.test.mjs"
+  ]
+}

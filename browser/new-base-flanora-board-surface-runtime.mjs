@@ -4,6 +4,7 @@ import { isNewBaseProgressionLanePresentation } from './new-base-progression-lan
 const RUNTIME_SCHEMA = 'gameroad.new-base-flanora-board-surface-runtime.v1';
 const LAYOUT_SCHEMA = 'GAMEROAD_FLANORA_MAP_LAYOUT_V1';
 const STYLE_ID = 'gameroad-new-base-flanora-board-surface-style';
+const SHARED_GOAL_ID = 'goal:shared';
 const LANE_LABELS = Object.freeze(['L', 'C', 'R']);
 const ROAD_STEPS = Object.freeze([1, 2, 3, 4, 5, 6, 7]);
 
@@ -18,24 +19,15 @@ function nonEmptyString(value) {
 }
 
 function requireLayout(layout) {
-  if (!layout || typeof layout !== 'object' || Array.isArray(layout)) {
-    throw new TypeError('FLANORA_LAYOUT_REQUIRED');
-  }
+  if (!layout || typeof layout !== 'object' || Array.isArray(layout)) throw new TypeError('FLANORA_LAYOUT_REQUIRED');
   if (layout.schema !== LAYOUT_SCHEMA) throw new TypeError('FLANORA_LAYOUT_SCHEMA_INVALID');
   if (layout.clearingOwnership !== 'SHARED') throw new TypeError('FLANORA_SHARED_CLEARING_REQUIRED');
-  if (layout.clearingLoopShape !== 'HORIZONTAL_ZERO') throw new TypeError('FLANORA_HORIZONTAL_ZERO_REQUIRED');
   if (layout.clearingConnectivity !== 'SINGLE_CLOSED_LOOP') throw new TypeError('FLANORA_CLOSED_LOOP_REQUIRED');
   if (layout.geometryIsMovementAuthority !== false) throw new TypeError('FLANORA_GEOMETRY_MUST_NOT_OWN_MOVEMENT');
   if (layout.optionalRuleGeometryIncluded !== false) throw new TypeError('FLANORA_OPTIONAL_RULE_GEOMETRY_FORBIDDEN');
-  if (!Array.isArray(layout.participantIds) || layout.participantIds.length !== 4) {
-    throw new TypeError('FLANORA_FOUR_PARTICIPANTS_REQUIRED');
-  }
-  if (!Array.isArray(layout.laneRootConnections) || layout.laneRootConnections.length !== 12) {
-    throw new TypeError('FLANORA_TWELVE_LANE_ROOTS_REQUIRED');
-  }
-  if (!Array.isArray(layout.clearingCells) || layout.clearingCells.length !== 26) {
-    throw new TypeError('FLANORA_TWENTY_SIX_CLEARING_CELLS_REQUIRED');
-  }
+  if (!Array.isArray(layout.participantIds) || layout.participantIds.length !== 4) throw new TypeError('FLANORA_FOUR_PARTICIPANTS_REQUIRED');
+  if (!Array.isArray(layout.laneRootConnections) || layout.laneRootConnections.length !== 12) throw new TypeError('FLANORA_TWELVE_LANE_ROOTS_REQUIRED');
+  if (!Array.isArray(layout.clearingCells) || layout.clearingCells.length !== 26) throw new TypeError('FLANORA_TWENTY_SIX_CLEARING_CELLS_REQUIRED');
   return layout;
 }
 
@@ -51,7 +43,7 @@ export function projectFlanoraBoardSurfaceModel(layoutValue) {
     throw new TypeError('FLANORA_TWELVE_COLUMN_SPAN_REQUIRED');
   }
 
-  const laneRoots = [...layout.laneRootConnections].sort((left, right) => left.columnIndex - right.columnIndex);
+  const laneRoots = [...layout.laneRootConnections].sort((a, b) => a.columnIndex - b.columnIndex);
   const lanes = laneRoots.map((root) => {
     if (!nonEmptyString(root.participantId) || !Number.isSafeInteger(root.laneIndex) || root.laneIndex < 0 || root.laneIndex > 2) {
       throw new TypeError('FLANORA_LANE_ROOT_IDENTITY_INVALID');
@@ -67,14 +59,11 @@ export function projectFlanoraBoardSurfaceModel(layoutValue) {
       laneLabel: LANE_LABELS[root.laneIndex],
       columnIndex: root.columnIndex,
       relativeColumn: root.columnIndex - minColumn,
-      goalId: `goal:${key}`,
+      goalId: SHARED_GOAL_ID,
+      gateAnchorId: `gate:${key}`,
       shieldId: `shield:${key}`,
       clearingEntryCellId: root.clearingEntryCellId,
-      roadSteps: ROAD_STEPS.map((roadIndex) => ({
-        id: `road:${key}:${roadIndex}`,
-        roadIndex,
-        rowIndex: layout.rowIndex?.[`ROAD_${roadIndex}`],
-      })),
+      roadSteps: ROAD_STEPS.map((roadIndex) => ({ id: `road:${key}:${roadIndex}`, roadIndex })),
     };
   });
 
@@ -106,12 +95,14 @@ export function projectFlanoraBoardSurfaceModel(layoutValue) {
     resultAuthority: false,
     sourceLayoutSchema: layout.schema,
     participantIds: [...layout.participantIds],
+    sharedGoalId: SHARED_GOAL_ID,
+    sharedGoalCount: 1,
     columnSpan: { minColumnIndex: minColumn, maxColumnIndex: maxColumn, columnCount: 12 },
     lanes,
     clearingCells,
     clearingCycleCellIds: [...layout.clearingCycleCellIds],
     optionalRuleGeometryIncluded: false,
-    upperProgressIsPrebuiltMovementField: layout.upperProgressIsPrebuiltMovementField === true,
+    upperProgressIsPrebuiltMovementField: false,
   });
 }
 
@@ -134,28 +125,35 @@ function setAttr(node, name, value) {
   }
 }
 
+function removeNode(node) {
+  if (!node) return;
+  node.remove?.();
+  if (node.parentNode && typeof node.parentNode.removeChild === 'function') node.parentNode.removeChild(node);
+}
+
 function ensureStyle(documentLike) {
-  if (!documentLike?.head || typeof documentLike.createElement !== 'function') return;
-  if (documentLike.getElementById?.(STYLE_ID)) return;
+  if (!documentLike?.head || typeof documentLike.createElement !== 'function' || documentLike.getElementById?.(STYLE_ID)) return;
   const style = createNode(documentLike, 'style');
   style.id = STYLE_ID;
   style.textContent = `
-[data-new-base-flanora-board-surface="1"]{position:relative;display:grid;grid-template-rows:minmax(0,1fr) minmax(64px,22%);gap:clamp(4px,.8vh,8px);width:100%;height:100%;min-width:0;min-height:0;box-sizing:border-box;padding:clamp(4px,.7vw,8px);isolation:isolate;overflow:hidden}
-[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr));column-gap:clamp(10px,1.4vw,18px);row-gap:clamp(3px,.5vh,6px);min-width:0;min-height:0;align-items:stretch}
-[data-new-base-flanora-board-surface="1"] .grFlanoraLane{display:grid;grid-template-columns:clamp(28px,4.6vw,42px) minmax(0,1fr) clamp(32px,5.4vw,48px);grid-template-rows:minmax(0,1fr);gap:clamp(3px,.55vw,7px);min-width:0;min-height:0;align-items:center;justify-items:stretch}
-[data-new-base-flanora-board-surface="1"] .grFlanoraGoal{display:grid;place-items:center;justify-self:start;width:clamp(24px,3.8vh,34px);height:clamp(24px,3.8vh,34px);border:1px solid rgba(255,235,154,.78);border-radius:50%;background:rgba(88,70,23,.78);font-size:clamp(7px,.7vw,10px);font-weight:900;line-height:1;color:#fff6c4;box-shadow:0 0 12px rgba(255,224,120,.16)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoad{position:relative;display:grid;grid-template-columns:repeat(7,minmax(4px,1fr));grid-template-rows:minmax(0,1fr);direction:rtl;gap:2px;width:100%;height:100%;min-width:0;min-height:0;align-items:center;justify-items:center}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoad::before{content:"";position:absolute;left:3%;right:3%;top:50%;height:2px;transform:translateY(-50%);border-radius:99px;background:linear-gradient(90deg,rgba(255,236,152,.48),rgba(231,244,229,.5) 26%,rgba(231,244,229,.26));box-shadow:0 0 7px rgba(229,244,220,.12)}
-/* Only authority-established progress becomes a discrete card-shaped object. Future stages remain the continuous road itself. */
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{position:relative;z-index:1;width:clamp(8px,1vw,13px);aspect-ratio:.72;border:1px solid rgba(239,248,232,.9);border-radius:2px;background:linear-gradient(145deg,rgba(236,246,228,.96),rgba(104,145,112,.95));box-shadow:0 2px 5px rgba(0,0,0,.28),0 0 7px rgba(224,241,218,.2);transform:translateY(-1px);pointer-events:none}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep::after{content:"";position:absolute;inset:2px;border:1px solid rgba(31,74,56,.42);border-radius:1px}
-[data-new-base-flanora-board-surface="1"] .grFlanoraShield{display:grid;place-items:center;justify-self:end;width:clamp(32px,5vw,44px);min-height:clamp(15px,2.4vh,23px);border:1px solid rgba(188,229,241,.78);border-radius:8px;background:rgba(26,68,83,.88);font-size:clamp(8px,.8vw,11px);font-weight:950;color:#e8f8ff}
-[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:clamp(3px,.5vw,7px);min-width:0;min-height:0;padding:clamp(2px,.4vw,5px)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell{place-self:center;width:clamp(15px,2.6vw,30px);height:clamp(15px,2.6vw,30px);border:1px solid rgba(238,247,232,.7);border-radius:50%;background:rgba(47,91,66,.88);box-shadow:0 2px 7px rgba(0,0,0,.22)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell[data-start-participant]{outline:2px solid rgba(255,224,134,.88);outline-offset:2px}
+[data-new-base-flanora-board-surface="1"]{position:relative;display:grid;grid-template-rows:minmax(0,72%) minmax(86px,28%);width:100%;height:100%;min-width:0;min-height:0;box-sizing:border-box;padding:clamp(4px,.8vw,9px);overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 50% 16%,rgba(245,231,177,.12),transparent 34%),linear-gradient(180deg,rgba(20,49,48,.34),rgba(17,42,30,.18))}
+[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{position:relative;min-width:0;min-height:0;overflow:visible}
+[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal{position:absolute;z-index:8;left:50%;top:1.5%;transform:translateX(-50%);display:grid;place-items:center;width:clamp(70px,11vw,124px);height:clamp(30px,6vh,54px);box-sizing:border-box;border:clamp(3px,.45vw,6px) solid rgba(243,211,125,.92);border-bottom-width:clamp(5px,.7vw,8px);border-radius:50% 50% 32% 32%/70% 70% 30% 30%;background:radial-gradient(ellipse,rgba(244,226,165,.18),rgba(42,76,66,.42) 58%,rgba(19,40,35,.82));box-shadow:0 0 20px rgba(248,219,129,.22),inset 0 0 14px rgba(255,246,202,.12);font-weight:950;font-size:clamp(9px,1.3vw,15px);letter-spacing:.08em;color:#fff0b5}
+[data-new-base-flanora-board-surface="1"] .grFlanoraLane{position:absolute;z-index:3;display:grid;grid-template-rows:clamp(19px,3.1vh,30px) minmax(0,1fr) clamp(18px,3vh,28px);align-items:stretch;justify-items:center;width:clamp(29px,5.5vw,64px);min-height:0;transform:translateX(-50%);pointer-events:none}
+[data-new-base-flanora-board-surface="1"] .grFlanoraGoalGuide{position:absolute;z-index:1;height:2px;transform-origin:0 50%;border-radius:999px;background:linear-gradient(90deg,rgba(231,224,178,.13),rgba(248,226,145,.24));opacity:.42;pointer-events:none;transition:opacity .22s ease,box-shadow .22s ease}
+[data-new-base-flanora-board-surface="1"] .grFlanoraGoalGuide[data-goal-path-open="1"]{opacity:.96;background:linear-gradient(90deg,rgba(243,226,160,.46),rgba(255,239,166,.92));box-shadow:0 0 8px rgba(255,230,141,.48)}
+[data-new-base-flanora-board-surface="1"] .grFlanoraGateAnchor{position:relative;z-index:7;width:clamp(22px,3.8vw,42px);height:100%;overflow:visible}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoad{position:relative;display:flex;flex-direction:column-reverse;justify-content:flex-start;align-items:center;gap:clamp(1px,.25vh,3px);width:100%;height:100%;min-height:0;padding:2px 0;box-sizing:border-box}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoad::before{content:"";position:absolute;left:50%;top:1%;bottom:1%;width:1px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(244,225,157,.24),rgba(228,238,217,.09));opacity:.55}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoadCard{position:relative;z-index:2;display:block;height:min(11.5%,clamp(12px,2.25vh,22px));aspect-ratio:1.42;border:1px solid rgba(247,244,220,.9);border-radius:3px;background:linear-gradient(135deg,rgba(242,237,211,.98),rgba(78,122,99,.96));box-shadow:0 2px 5px rgba(0,0,0,.28);box-sizing:border-box;overflow:hidden}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoadCard::after{content:"";position:absolute;inset:2px;border:1px solid rgba(31,67,54,.42);border-radius:2px}
+[data-new-base-flanora-board-surface="1"] .grFlanoraShield{display:grid;place-items:center;width:clamp(26px,4.8vw,54px);height:100%;box-sizing:border-box;border:2px solid rgba(184,225,235,.84);border-radius:42% 42% 52% 52%/34% 34% 66% 66%;background:linear-gradient(180deg,rgba(43,100,111,.92),rgba(22,61,70,.95));box-shadow:0 3px 7px rgba(0,0,0,.23);font-size:0}
+[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{position:relative;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:clamp(2px,.35vw,5px);min-width:0;min-height:0;padding:clamp(8px,1.4vh,14px) clamp(8px,1.2vw,16px);box-sizing:border-box}
+[data-new-base-flanora-board-surface="1"] .grFlanoraClearing::before{content:"";position:absolute;left:3%;right:3%;top:12%;bottom:12%;border:clamp(7px,1.25vw,15px) solid rgba(111,151,106,.2);border-radius:48% 52% 46% 54%/50% 45% 55% 50%;box-shadow:inset 0 0 0 1px rgba(213,233,194,.08),0 0 18px rgba(0,0,0,.08);pointer-events:none}
+[data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell{position:relative;z-index:2;place-self:center;width:clamp(10px,1.6vw,19px);height:clamp(10px,1.6vw,19px);border:1px solid rgba(221,239,211,.58);border-radius:44% 56% 48% 52%;background:radial-gradient(circle at 35% 30%,rgba(180,209,161,.88),rgba(52,92,61,.96));box-shadow:0 2px 5px rgba(0,0,0,.2)}
+[data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell[data-start-participant]{outline:2px solid rgba(248,218,129,.76);outline-offset:2px}
 [data-new-base-flanora-board-surface="1"][data-performance-profile="reduced_motion"] *,[data-new-base-flanora-board-surface="1"][data-performance-profile="low_perf"] *{animation:none!important;transition:none!important;filter:none!important}
-@media(max-height:420px){[data-new-base-flanora-board-surface="1"]{grid-template-rows:minmax(0,1fr) minmax(52px,20%);gap:3px;padding:3px}[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{column-gap:8px;row-gap:2px}[data-new-base-flanora-board-surface="1"] .grFlanoraLane{grid-template-columns:24px minmax(0,1fr) 28px;gap:2px}[data-new-base-flanora-board-surface="1"] .grFlanoraGoal{width:19px;height:19px;font-size:6px}[data-new-base-flanora-board-surface="1"] .grFlanoraShield{width:27px;min-height:15px;font-size:7px}[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{gap:2px;padding:1px}}
-@media(max-width:540px) and (orientation:portrait){[data-new-base-flanora-board-surface="1"]{grid-template-rows:minmax(0,1fr) minmax(110px,30%)}[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(12,minmax(0,1fr));column-gap:0;row-gap:clamp(2px,.35vh,4px)}[data-new-base-flanora-board-surface="1"] .grFlanoraLane{grid-column:1!important;grid-row:auto!important;grid-template-columns:28px minmax(0,1fr) 34px;gap:3px}[data-new-base-flanora-board-surface="1"] .grFlanoraGoal{width:24px;height:24px;font-size:7px}[data-new-base-flanora-board-surface="1"] .grFlanoraShield{width:32px}}
+@media(max-height:420px){[data-new-base-flanora-board-surface="1"]{grid-template-rows:minmax(0,73%) minmax(68px,27%);padding:3px}[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal{top:0;height:26px}[data-new-base-flanora-board-surface="1"] .grFlanoraLane{grid-template-rows:16px minmax(0,1fr) 16px}[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{padding:5px 8px}}
 `;
   documentLike.head.appendChild(style);
 }
@@ -167,118 +165,83 @@ function performanceProfile({ reducedMotion = false, lowPerf = false } = {}) {
 }
 
 function failProgression(reason) {
-  return deepFreeze({
-    applied: false,
-    reason,
-    builtStageCount: null,
-    latentStageCount: null,
-    presentationOnly: true,
-    gameplayAuthority: false,
-    movementAuthority: false,
-    legalityAuthority: false,
-    gameStateWrite: false,
-  });
+  return deepFreeze({ applied: false, reason, builtStageCount: null, latentStageCount: null, presentationOnly: true, gameplayAuthority: false, movementAuthority: false, legalityAuthority: false, gameStateWrite: false });
 }
 
-function writeBuiltProgressionStagePresentation(node, stageIndex) {
-  setAttr(node, 'data-progression-stage-state', 'BUILT');
-  setAttr(node, 'data-progression-established', 'true');
-  setAttr(node, 'data-progression-latent', 'false');
-  setAttr(node, 'data-progression-actionable', 'false');
-  setAttr(node, 'data-progression-traversable', 'false');
-  setAttr(node, 'data-progression-authority', 'presentation-only');
-  setAttr(node, 'aria-label', `進行済み ${stageIndex}/7`);
+function laneWorldPosition(relativeColumn) {
+  const x = 5.5 + (relativeColumn * (89 / 11));
+  const distanceFromCenter = Math.abs(x - 50);
+  const top = 15 + (distanceFromCenter * 0.15);
+  const height = 76 - top;
+  return { x, top, height };
 }
 
-function validateProgressionPresentation(presentation, roadsByLaneKey, roadStepMetaById) {
-  if (!isNewBaseProgressionLanePresentation(presentation) || presentation.ok !== true) {
-    return { ok: false, reason: 'PROGRESSION_PRESENTATION_REQUIRED' };
-  }
-  if (presentation.lanePresentations.length !== roadsByLaneKey.size) {
-    return { ok: false, reason: 'FULL_FLANORA_PROGRESSION_REQUIRED' };
-  }
+function guideGeometry(x, top) {
+  const goalX = 50;
+  const goalY = 7;
+  const dx = goalX - x;
+  const dy = goalY - top;
+  const length = Math.sqrt((dx * dx) + (dy * dy));
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+  return { length, angle };
+}
 
+function validateProgressionPresentation(presentation, roadsByLaneKey) {
+  if (!isNewBaseProgressionLanePresentation(presentation) || presentation.ok !== true) return { ok: false, reason: 'PROGRESSION_PRESENTATION_REQUIRED' };
+  if (presentation.lanePresentations.length !== roadsByLaneKey.size) return { ok: false, reason: 'FULL_FLANORA_PROGRESSION_REQUIRED' };
   const seenLaneKeys = new Set();
-  const seenRoadStepIds = new Set();
-  const builtAssignments = [];
-  const laneCounts = new Map();
-
+  const assignments = [];
   for (const lane of presentation.lanePresentations) {
     const road = roadsByLaneKey.get(lane?.key);
-    if (!road || seenLaneKeys.has(lane.key) || !Array.isArray(lane?.stages) || lane.stages.length !== ROAD_STEPS.length) {
-      return { ok: false, reason: 'PROGRESSION_STAGE_SET_INVALID' };
+    if (!road || seenLaneKeys.has(lane.key) || !Array.isArray(lane.placedCards) || lane.placedCards.length !== lane.straightCardCount) {
+      return { ok: false, reason: 'PROGRESSION_CARD_SET_INVALID' };
     }
     seenLaneKeys.add(lane.key);
-    let builtCount = 0;
-    let latentCount = 0;
-
-    for (const stage of lane.stages) {
-      const meta = roadStepMetaById.get(stage?.roadStepId);
-      const built = stage?.visualState === 'BUILT';
-      const latent = stage?.visualState === 'LATENT';
-      if (!meta || meta.laneKey !== lane.key || meta.roadIndex !== stage?.stageIndex
-          || seenRoadStepIds.has(stage?.roadStepId) || (!built && !latent)
-          || stage?.established !== built || stage?.latent !== latent
-          || stage?.actionable !== false || stage?.traversable !== false
-          || stage?.legalityAuthority !== false || stage?.movementAuthority !== false) {
-        return { ok: false, reason: 'PROGRESSION_STAGE_ASSIGNMENT_INVALID' };
+    const seenCardSteps = new Set();
+    lane.placedCards.forEach((card, offset) => {
+      if (!nonEmptyString(card?.cardId) || card?.stageIndex !== offset + 1 || card?.roadStepId !== `road:${lane.key}:${offset + 1}` || seenCardSteps.has(card.roadStepId)) {
+        assignments.push(null);
+        return;
       }
-      seenRoadStepIds.add(stage.roadStepId);
-      if (built) {
-        builtCount += 1;
-        builtAssignments.push({ road, meta });
-      } else {
-        latentCount += 1;
-      }
-    }
-    laneCounts.set(lane.key, { builtCount, latentCount });
+      seenCardSteps.add(card.roadStepId);
+      assignments.push({ road, laneKey: lane.key, stageIndex: card.stageIndex, roadStepId: card.roadStepId, cardId: card.cardId });
+    });
   }
-
-  if (seenLaneKeys.size !== roadsByLaneKey.size || seenRoadStepIds.size !== roadStepMetaById.size) {
-    return { ok: false, reason: 'FULL_FLANORA_PROGRESSION_REQUIRED' };
-  }
-  return { ok: true, builtAssignments, laneCounts };
+  if (assignments.some((item) => item === null) || seenLaneKeys.size !== roadsByLaneKey.size) return { ok: false, reason: 'PROGRESSION_CARD_ASSIGNMENT_INVALID' };
+  return { ok: true, assignments };
 }
 
-function syncProgressionLanePresentation({
-  presentation,
-  documentLike,
-  roadsByLaneKey,
-  roadStepMetaById,
-  roadStepsByKey,
-}) {
-  const validated = validateProgressionPresentation(presentation, roadsByLaneKey, roadStepMetaById);
+function syncProgressionLanePresentation({ presentation, documentLike, roadsByLaneKey, roadCardsByStepId }) {
+  const validated = validateProgressionPresentation(presentation, roadsByLaneKey);
   if (!validated.ok) return failProgression(validated.reason);
-
-  const nextBuiltIds = new Set(validated.builtAssignments.map(({ meta }) => meta.id));
-  for (const [roadStepId, node] of [...roadStepsByKey]) {
-    if (nextBuiltIds.has(roadStepId)) continue;
-    node.remove?.();
-    if (node.parentNode && typeof node.parentNode.removeChild === 'function') node.parentNode.removeChild(node);
-    roadStepsByKey.delete(roadStepId);
+  const wanted = new Set(validated.assignments.map((item) => item.roadStepId));
+  for (const [stepId, node] of [...roadCardsByStepId]) {
+    if (wanted.has(stepId)) continue;
+    removeNode(node);
+    roadCardsByStepId.delete(stepId);
   }
-
-  for (const { road, meta } of validated.builtAssignments) {
-    let node = roadStepsByKey.get(meta.id);
+  for (const item of validated.assignments) {
+    let node = roadCardsByStepId.get(item.roadStepId);
     if (!node) {
-      node = createNode(documentLike, 'span', 'grFlanoraRoadStep');
-      setAttr(node, 'data-flanora-road-step', meta.roadIndex);
-      setAttr(node, 'data-flanora-road-step-id', meta.id);
-      setAttr(node, 'data-row-index', meta.rowIndex);
-      road.appendChild(node);
-      roadStepsByKey.set(meta.id, node);
+      node = createNode(documentLike, 'span', 'grFlanoraRoadCard');
+      item.road.appendChild(node);
+      roadCardsByStepId.set(item.roadStepId, node);
     }
-    writeBuiltProgressionStagePresentation(node, meta.roadIndex);
+    setAttr(node, 'data-flanora-road-step-id', item.roadStepId);
+    setAttr(node, 'data-progression-stage-state', 'BUILT');
+    setAttr(node, 'data-progression-established', 'true');
+    setAttr(node, 'data-card-id', item.cardId);
+    setAttr(node, 'data-physical-card-identity', 'preserved');
+    setAttr(node, 'aria-label', `配置カード ${item.stageIndex}/7 ${item.cardId}`);
   }
-
-  for (const [key, road] of roadsByLaneKey) {
-    const counts = validated.laneCounts.get(key);
-    setAttr(road, 'data-progression-built-count', counts.builtCount);
-    setAttr(road, 'data-progression-latent-count', counts.latentCount);
+  for (const lane of presentation.lanePresentations) {
+    const road = roadsByLaneKey.get(lane.key);
+    setAttr(road, 'data-progression-built-count', lane.straightCardCount);
+    setAttr(road, 'data-progression-latent-count', 7 - lane.straightCardCount);
     setAttr(road, 'data-future-discrete-slots', 'false');
-    setAttr(road, 'aria-label', `成立済み ${counts.builtCount}/7。未成立位置は連続した道として表示`);
+    setAttr(road, 'data-card-lineage', 'physical-card-id');
+    setAttr(road, 'aria-label', `配置済み実カード ${lane.straightCardCount}/7`);
   }
-
   return deepFreeze({
     applied: true,
     reason: 'PROGRESSION_PRESENTATION_APPLIED',
@@ -292,27 +255,11 @@ function syncProgressionLanePresentation({
   });
 }
 
-export function mountFlanoraBoardSurface({
-  host,
-  documentLike = globalThis?.document,
-  layoutInput = null,
-  layout = null,
-  reducedMotion = false,
-  lowPerf = false,
-} = {}) {
+export function mountFlanoraBoardSurface({ host, documentLike = globalThis?.document, layoutInput = null, layout = null, reducedMotion = false, lowPerf = false } = {}) {
   if (!host || typeof host.appendChild !== 'function' || !documentLike || typeof documentLike.createElement !== 'function') {
-    return Object.freeze({
-      schema: RUNTIME_SCHEMA,
-      mounted: false,
-      presentationOnly: true,
-      gameplayAuthority: false,
-      reason: 'DOM_HOST_REQUIRED',
-    });
+    return Object.freeze({ schema: RUNTIME_SCHEMA, mounted: false, presentationOnly: true, gameplayAuthority: false, reason: 'DOM_HOST_REQUIRED' });
   }
-
-  const model = layout
-    ? projectFlanoraBoardSurfaceModel(layout)
-    : createFlanoraBoardSurfaceModel(layoutInput ?? {});
+  const model = layout ? projectFlanoraBoardSurfaceModel(layout) : createFlanoraBoardSurfaceModel(layoutInput ?? {});
   ensureStyle(documentLike);
 
   const root = createNode(documentLike, 'section', 'grFlanoraBoardSurface');
@@ -320,66 +267,72 @@ export function mountFlanoraBoardSurface({
   setAttr(root, 'data-performance-profile', performanceProfile({ reducedMotion, lowPerf }));
   setAttr(root, 'data-presentation-only', 'true');
   setAttr(root, 'data-gameplay-authority', 'false');
-  setAttr(root, 'data-goal-edge', 'left');
-  setAttr(root, 'data-road-entry-edge', 'right');
-  setAttr(root, 'data-progression-direction', 'right-to-left');
-  setAttr(root, 'data-central-world-layout', 'participant-groups-2x2');
+  setAttr(root, 'data-shared-goal-count', '1');
+  setAttr(root, 'data-world-flow', 'shared-field-shields-card-path-gates-shared-goal');
   setAttr(root, 'data-future-discrete-progression-slots', 'false');
-  setAttr(root, 'aria-label', '4人×各3レーン。GOAL左端、ROAD開始側右端。成立済み進行だけをカード状に表示し、未成立位置は連続した道で示す');
+  setAttr(root, 'aria-label', '共有フィールドからShield、配置済み実カードの道、Gateを通って共通GOALへ進む盤面');
 
   const upper = createNode(documentLike, 'div', 'grFlanoraUpper');
   const clearing = createNode(documentLike, 'div', 'grFlanoraClearing');
-  setAttr(clearing, 'data-flanora-clearing-loop', 'horizontal-zero');
+  setAttr(clearing, 'data-flanora-clearing-loop', 'single-closed-loop');
   root.appendChild(upper);
   root.appendChild(clearing);
 
-  const goalsByLaneKey = new Map();
+  const sharedGoal = createNode(documentLike, 'div', 'grFlanoraSharedGoal');
+  sharedGoal.textContent = 'GOAL';
+  setAttr(sharedGoal, 'data-flanora-shared-goal', model.sharedGoalId);
+  setAttr(sharedGoal, 'data-goal-id', model.sharedGoalId);
+  upper.appendChild(sharedGoal);
+
   const shieldsByLaneKey = new Map();
   const roadsByLaneKey = new Map();
-  const roadStepMetaById = new Map();
-  const roadStepsByKey = new Map();
+  const gateAnchorsByLaneKey = new Map();
+  const goalGuidesByLaneKey = new Map();
+  const roadCardsByStepId = new Map();
   const clearingByCellId = new Map();
 
   for (const lane of model.lanes) {
+    const pos = laneWorldPosition(lane.relativeColumn);
+    const guideGeo = guideGeometry(pos.x, pos.top);
+    const guide = createNode(documentLike, 'span', 'grFlanoraGoalGuide');
+    setAttr(guide, 'data-goal-guide-lane', lane.key);
+    setAttr(guide, 'data-goal-path-open', '0');
+    guide.style.left = `${pos.x}%`;
+    guide.style.top = `${pos.top}%`;
+    guide.style.width = `${guideGeo.length}%`;
+    guide.style.transform = `rotate(${guideGeo.angle}deg)`;
+    upper.appendChild(guide);
+    goalGuidesByLaneKey.set(lane.key, guide);
+
     const laneNode = createNode(documentLike, 'article', 'grFlanoraLane');
     setAttr(laneNode, 'data-flanora-lane-key', lane.key);
     setAttr(laneNode, 'data-participant-id', lane.participantId);
     setAttr(laneNode, 'data-lane-index', lane.laneIndex);
     setAttr(laneNode, 'data-lane-label', lane.laneLabel);
-    const participantSlot = model.participantIds.indexOf(lane.participantId);
-    if (participantSlot < 0) throw new TypeError('FLANORA_LANE_PARTICIPANT_REQUIRED');
-    const participantGroupColumn = (participantSlot % 2) + 1;
-    const participantGroupRow = Math.floor(participantSlot / 2) + 1;
-    setAttr(laneNode, 'data-participant-slot', participantSlot);
-    setAttr(laneNode, 'data-participant-group-column', participantGroupColumn);
-    setAttr(laneNode, 'data-participant-group-row', participantGroupRow);
-    laneNode.style.gridColumn = String(participantGroupColumn);
-    laneNode.style.gridRow = String(((participantGroupRow - 1) * 3) + lane.laneIndex + 1);
+    laneNode.style.left = `${pos.x}%`;
+    laneNode.style.top = `${pos.top}%`;
+    laneNode.style.height = `${pos.height}%`;
 
-    const goal = createNode(documentLike, 'span', 'grFlanoraGoal');
-    goal.textContent = 'GOAL';
-    setAttr(goal, 'data-flanora-goal', lane.key);
+    const gateAnchor = createNode(documentLike, 'span', 'grFlanoraGateAnchor');
+    setAttr(gateAnchor, 'data-flanora-gate-anchor', lane.key);
+    setAttr(gateAnchor, 'data-shared-goal-id', model.sharedGoalId);
     const road = createNode(documentLike, 'div', 'grFlanoraRoad');
     setAttr(road, 'data-flanora-road-track', lane.key);
-    setAttr(road, 'data-progression-capacity', ROAD_STEPS.length);
-    setAttr(road, 'data-progression-built-count', 0);
-    setAttr(road, 'data-progression-latent-count', ROAD_STEPS.length);
+    setAttr(road, 'data-progression-capacity', '7');
+    setAttr(road, 'data-progression-built-count', '0');
+    setAttr(road, 'data-progression-latent-count', '7');
     setAttr(road, 'data-future-discrete-slots', 'false');
-    setAttr(road, 'aria-label', '成立済み 0/7。未成立位置は連続した道として表示');
-    for (const step of lane.roadSteps) roadStepMetaById.set(step.id, { ...step, laneKey: lane.key });
-
     const shield = createNode(documentLike, 'span', 'grFlanoraShield');
-    shield.textContent = `S ${lane.laneLabel}`;
     setAttr(shield, 'data-flanora-shield', lane.key);
     setAttr(shield, 'data-clearing-entry-cell-id', lane.clearingEntryCellId);
 
-    laneNode.appendChild(goal);
+    laneNode.appendChild(gateAnchor);
     laneNode.appendChild(road);
     laneNode.appendChild(shield);
     upper.appendChild(laneNode);
-    goalsByLaneKey.set(lane.key, goal);
-    shieldsByLaneKey.set(lane.key, shield);
+    gateAnchorsByLaneKey.set(lane.key, gateAnchor);
     roadsByLaneKey.set(lane.key, road);
+    shieldsByLaneKey.set(lane.key, shield);
   }
 
   for (const cell of model.clearingCells) {
@@ -398,7 +351,6 @@ export function mountFlanoraBoardSurface({
 
   host.appendChild(root);
   let destroyed = false;
-
   function resolveLaneKey(participantId, laneIndex) {
     if (!nonEmptyString(participantId) || !Number.isSafeInteger(laneIndex)) return null;
     return laneKey(participantId, laneIndex);
@@ -415,30 +367,30 @@ export function mountFlanoraBoardSurface({
     root,
     upper,
     clearing,
-    resolveGoal(participantId, laneIndex) {
-      return goalsByLaneKey.get(resolveLaneKey(participantId, laneIndex)) ?? null;
-    },
-    resolveShield(participantId, laneIndex) {
-      return shieldsByLaneKey.get(resolveLaneKey(participantId, laneIndex)) ?? null;
-    },
+    sharedGoal,
+    resolveGoal() { return sharedGoal; },
+    resolveGateAnchor(participantId, laneIndex) { return gateAnchorsByLaneKey.get(resolveLaneKey(participantId, laneIndex)) ?? null; },
+    resolveGoalGuide(participantId, laneIndex) { return goalGuidesByLaneKey.get(resolveLaneKey(participantId, laneIndex)) ?? null; },
+    resolveShield(participantId, laneIndex) { return shieldsByLaneKey.get(resolveLaneKey(participantId, laneIndex)) ?? null; },
     resolveRoadStep(participantId, laneIndex, roadIndex) {
       if (!ROAD_STEPS.includes(roadIndex)) return null;
-      return roadStepsByKey.get(`road:${resolveLaneKey(participantId, laneIndex)}:${roadIndex}`) ?? null;
+      return roadCardsByStepId.get(`road:${resolveLaneKey(participantId, laneIndex)}:${roadIndex}`) ?? null;
     },
     syncProgressionPresentation(presentation) {
       if (destroyed) return failProgression('RUNTIME_DESTROYED');
-      return syncProgressionLanePresentation({ presentation, documentLike, roadsByLaneKey, roadStepMetaById, roadStepsByKey });
+      return syncProgressionLanePresentation({ presentation, documentLike, roadsByLaneKey, roadCardsByStepId });
     },
-    resolveClearingCell(cellId) {
-      return nonEmptyString(cellId) ? clearingByCellId.get(cellId) ?? null : null;
-    },
+    resolveClearingCell(cellId) { return nonEmptyString(cellId) ? clearingByCellId.get(cellId) ?? null : null; },
     snapshot() {
       return deepFreeze({
         laneCount: model.lanes.length,
-        goalCount: goalsByLaneKey.size,
+        goalCount: 1,
+        sharedGoalId: model.sharedGoalId,
+        gateAnchorCount: gateAnchorsByLaneKey.size,
         shieldCount: shieldsByLaneKey.size,
-        roadStepCount: roadStepMetaById.size,
-        visibleBuiltRoadStepCount: roadStepsByKey.size,
+        roadStepCount: model.lanes.length * ROAD_STEPS.length,
+        visibleBuiltRoadStepCount: roadCardsByStepId.size,
+        futureDiscreteStageNodeCount: 0,
         clearingCellCount: clearingByCellId.size,
         clearingCycleCellIds: [...model.clearingCycleCellIds],
         performanceProfile: root.dataset?.performanceProfile ?? performanceProfile({ reducedMotion, lowPerf }),
@@ -448,8 +400,7 @@ export function mountFlanoraBoardSurface({
     destroy() {
       if (destroyed) return false;
       destroyed = true;
-      root.remove?.();
-      if (root.parentNode && typeof root.parentNode.removeChild === 'function') root.parentNode.removeChild(root);
+      removeNode(root);
       return true;
     },
   };
@@ -467,13 +418,16 @@ export const FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT = deepFreeze({
   resultAuthority: false,
   secondBoardEngine: false,
   optionalRuleGeometryIncluded: false,
-  clearingShape: 'HORIZONTAL_ZERO',
+  clearingConnectivity: 'SINGLE_CLOSED_LOOP',
   clearingCellCount: 26,
   laneCount: 12,
   roadStepsPerLane: 7,
+  sharedGoalCount: 1,
+  routeGateAnchorCount: 12,
   progressionPresentationSource: 'EXISTING_NEW_BASE_PROGRESSION_LANE_PRESENTATION',
-  unresolvedStageDefault: 'NO_DISCRETE_NODE_CONTINUOUS_TRACK_ONLY',
+  unresolvedStageDefault: 'NO_DISCRETE_NODE',
   futureDiscreteStageNodes: false,
+  physicalCardIdentityPreserved: true,
   progressionSyncWritesGameState: false,
-  goalEndpointCount: 12,
+  goalEndpointCount: 1,
 });

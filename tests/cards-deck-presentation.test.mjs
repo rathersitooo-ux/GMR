@@ -117,6 +117,55 @@ test('live Deck add binding reuses inserted slot as the existing presentation la
   assert.equal(calls[0][1].insertedElement, target);
 });
 
+test('live Deck add binding forwards pre-mutation source geometry after synchronous rerender', () => {
+  const source = fakeElement(rect(0, 0, 0, 0));
+  const sourceRect = rect(18, 22, 96, 132);
+  const target = fakeElement();
+  target.dataset = { id: 'c8' };
+  const deck = fakeElement();
+  target.closest = () => deck;
+  const calls = [];
+  const doc = {
+    querySelectorAll(selector) {
+      return selector === '#deckSlots [data-id], #exDeckSlots [data-id]' ? [target] : [];
+    },
+    querySelector() { return deck; },
+  };
+  assert.equal(presentDeckAddSwipe({
+    doc,
+    presentation: { playSuccess(payload) { calls.push(payload); } },
+    result: { ok: true, action: 'deck-add' },
+    sourceElement: source,
+    sourceRect,
+    cardId: 'c8',
+  }), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].sourceElement, source);
+  assert.deepEqual(calls[0].sourceRect, sourceRect);
+});
+
+test('live Deck add binding lands on visible Deck tray when inserted Deck root is closed', () => {
+  const source = fakeElement();
+  const hiddenDeck = fakeElement(rect(0, 0, 0, 0));
+  const tray = fakeElement(rect(690, 300, 120, 48));
+  const inserted = fakeElement();
+  inserted.dataset = { id: 'c8' };
+  inserted.closest = () => hiddenDeck;
+  let targetSeen = null;
+  const doc = {
+    querySelectorAll: (selector) => selector === '#deckSlots [data-id], #exDeckSlots [data-id]' ? [inserted] : [],
+    querySelector: (selector) => selector === '#r4DeckTrayToggle' ? tray : hiddenDeck,
+  };
+  assert.equal(presentDeckAddSwipe({
+    doc,
+    presentation: { playSuccess(payload) { targetSeen = payload.targetElement; } },
+    result: { ok: true, action: 'deck-add' },
+    sourceElement: source,
+    cardId: 'c8',
+  }), true);
+  assert.equal(targetSeen, tray);
+});
+
 test('live Deck add binding rejects without fake landing and presentation failures stay non-fatal', () => {
   const source = fakeElement();
   const deck = fakeElement();
@@ -236,6 +285,45 @@ test('reduced controller emits commit then land and exposes SFX hooks without ow
   assert.deepEqual(order, ['sfx:commit', 'sfx:land']);
 });
 
+test('success controller uses preserved source geometry when live source rect is already zero', () => {
+  const doc = fakeDocument();
+  const source = fakeElement(rect(0, 0, 0, 0));
+  const sourceRect = rect(20, 30, 100, 140);
+  const target = fakeElement(rect(420, 80, 160, 220));
+  const controller = createDeckSwipePresentationController({
+    document: doc,
+    window: immediateWindow({ reduced: false }),
+    sfx: false,
+  });
+  const result = controller.playSuccess({ sourceElement: source, sourceRect, targetElement: target, cardId: 'c8' });
+  assert.equal(result.plan.source.left, 20);
+  assert.equal(result.plan.source.top, 30);
+  assert.equal(result.plan.source.width, 100);
+  assert.equal(result.plan.source.height, 140);
+  controller.dispose();
+});
+
+test('success controller falls back from a zero-sized legacy target to a visible Deck indicator', () => {
+  const doc = fakeDocument();
+  const visibleDeckIndicator = fakeElement(rect(680, 30, 28, 18));
+  doc.querySelector = (selector) => selector === '#r4DeckTotal' ? visibleDeckIndicator : null;
+  const controller = createDeckSwipePresentationController({
+    document: doc,
+    window: immediateWindow({ reduced: true }),
+    reducedMotion: true,
+    sfx: false,
+  });
+  const result = controller.playSuccess({
+    sourceElement: fakeElement(rect(20, 40, 80, 112)),
+    targetElement: fakeElement(rect(0, 0, 0, 0)),
+    cardId: 'c-visible-target',
+  });
+  assert.equal(result.plan.target.left, 680);
+  assert.equal(result.plan.target.top, 30);
+  assert.equal(result.plan.target.width, 28);
+  assert.equal(result.plan.target.height, 18);
+});
+
 test('reject controller emits reject only and never a land event', () => {
   const doc = fakeDocument();
   const hook = [];
@@ -247,6 +335,46 @@ test('reject controller emits reject only and never a land event', () => {
   controller.playReject({ sourceElement: fakeElement(), targetElement: fakeElement(), cardId: 'c9', reason: 'duplicate' });
   assert.deepEqual(doc.events.map((event) => event.type), ['gameroad:deck-swipe-reject']);
   assert.deepEqual(hook, ['duplicate']);
+});
+
+test('remove SFX fires once for one real deck membership disappearance despite duplicate mutation callbacks', async () => {
+  const doc = fakeDocument();
+  const roots = [fakeElement(), fakeElement()];
+  let liveCards = [{ dataset: { id: 'c-rem' } }];
+  let mutationCallback = null;
+  let commitCount = 0;
+  doc.querySelectorAll = (selector) => {
+    if (selector === '#deckSlots, #exDeckSlots') return roots;
+    if (selector === '#deckSlots [data-id], #exDeckSlots [data-id]') return liveCards;
+    return [];
+  };
+  class FakeMutationObserver {
+    constructor(callback) { mutationCallback = callback; }
+    observe() {}
+    disconnect() {}
+  }
+  const controller = createDeckSwipePresentationController({
+    document: doc,
+    window: { ...immediateWindow(), MutationObserver: FakeMutationObserver },
+    sfxPlayer: {
+      playCommit() { commitCount += 1; },
+      playLand() {},
+      playReject() {},
+      dispose() {},
+    },
+  });
+  assert.equal(typeof mutationCallback, 'function');
+  liveCards = [];
+  mutationCallback([]);
+  mutationCallback([]);
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.equal(commitCount, 1);
+  mutationCallback([]);
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.equal(commitCount, 1);
+  controller.dispose();
 });
 
 test('local SFX contract supplies distinct commit, land and reject cues without assets', () => {

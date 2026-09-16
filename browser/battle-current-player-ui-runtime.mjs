@@ -2,6 +2,7 @@ const SCHEMA = 'gameroad.battle-current-player-ui-runtime.v2';
 const STYLE_ID = 'gameroad-battle-current-player-ui-r3-style';
 const ROOT_ATTR = 'data-gr-current-player-ui';
 const ZONE_ATTR = 'data-gr-current-ui-zone';
+const ROOT_RUNTIME_REGISTRY = new WeakMap();
 
 const SELECTOR_CANDIDATES = Object.freeze({
   battleMap: Object.freeze(['#battleMap']),
@@ -193,7 +194,7 @@ function boolToken(value) {
   return value === true ? 'true' : value === false ? 'false' : null;
 }
 
-export function mountBattleCurrentPlayerUi(global = globalThis, options = {}) {
+function mountBattleCurrentPlayerUiOwned(global = globalThis, options = {}) {
   const document = requireDocument(global);
   const root = options.root ?? document.querySelector?.('section.screen.battle[data-screen="battle"]') ?? document.querySelector?.('.screen.battle');
   if (!root) throw new TypeError('BATTLE_CURRENT_PLAYER_UI_ROOT_REQUIRED');
@@ -294,6 +295,60 @@ export function mountBattleCurrentPlayerUi(global = globalThis, options = {}) {
 
   if (options.initialState) sync(options.initialState);
   return Object.freeze({ schema: SCHEMA, root, surfaces: Object.freeze({ ...surfaces }), sync, inspect, destroy, presentationOnly: true, gameplayAuthority: false, gameStateWrite: false });
+}
+
+function acquireBattleCurrentPlayerUiLease(entry, initialState = null) {
+  entry.refs += 1;
+  let released = false;
+  const owned = entry.runtime;
+  const lease = Object.freeze({
+    schema: owned.schema,
+    root: owned.root,
+    surfaces: owned.surfaces,
+    sync(snapshot = {}) {
+      if (released) throw new Error('BATTLE_CURRENT_PLAYER_UI_DESTROYED');
+      return owned.sync(snapshot);
+    },
+    inspect() {
+      return owned.inspect();
+    },
+    destroy() {
+      if (released) return false;
+      released = true;
+      entry.refs -= 1;
+      if (entry.refs === 0) {
+        ROOT_RUNTIME_REGISTRY.delete(owned.root);
+        owned.destroy();
+      }
+      return true;
+    },
+    presentationOnly: true,
+    gameplayAuthority: false,
+    gameStateWrite: false
+  });
+  if (initialState) {
+    try {
+      lease.sync(initialState);
+    } catch (error) {
+      lease.destroy();
+      throw error;
+    }
+  }
+  return lease;
+}
+
+export function mountBattleCurrentPlayerUi(global = globalThis, options = {}) {
+  const document = requireDocument(global);
+  const root = options.root ?? document.querySelector?.('section.screen.battle[data-screen="battle"]') ?? document.querySelector?.('.screen.battle');
+  if (!root) throw new TypeError('BATTLE_CURRENT_PLAYER_UI_ROOT_REQUIRED');
+
+  let entry = ROOT_RUNTIME_REGISTRY.get(root);
+  if (!entry) {
+    const runtime = mountBattleCurrentPlayerUiOwned(global, { ...options, root, initialState: null });
+    entry = { runtime, refs: 0 };
+    ROOT_RUNTIME_REGISTRY.set(root, entry);
+  }
+  return acquireBattleCurrentPlayerUiLease(entry, options.initialState ?? null);
 }
 
 export const BATTLE_CURRENT_PLAYER_UI_SELECTORS = SELECTOR_CANDIDATES;

@@ -323,4 +323,43 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.boardProtagonistPolicy, 'BOUND_EXI
   );
 }
 
+{
+  const { document, root } = fixture();
+  const first = mountBattleCurrentPlayerUi({ document }, { root });
+  const second = mountBattleCurrentPlayerUi({ document }, { root });
+
+  assert.notEqual(first, second);
+  assert.equal(document.head.children.length, 1);
+  assert.equal(root.getAttribute('data-gr-current-player-ui'), '1');
+
+  assert.equal(first.destroy(), true);
+  assert.equal(first.destroy(), false);
+  assert.equal(root.getAttribute('data-gr-current-player-ui'), '1');
+  assert.equal(document.head.children.length, 1);
+  assert.throws(() => first.sync({ focus: 'STALE_CALLER' }), /BATTLE_CURRENT_PLAYER_UI_DESTROYED/);
+
+  const synced = second.sync({ focus: 'PLAN_FOCUS' });
+  assert.equal(synced.mounted, true);
+  assert.equal(root.dataset.grFocus, 'PLAN_FOCUS');
+
+  assert.equal(second.destroy(), true);
+  assert.equal(root.getAttribute('data-gr-current-player-ui'), null);
+  assert.equal(document.head.children.length, 0);
+}
+
+{
+  const { document, root } = fixture();
+  const first = mountBattleCurrentPlayerUi({ document }, { root });
+  const second = mountBattleCurrentPlayerUi({ document }, { root });
+
+  assert.equal(second.destroy(), true);
+  assert.equal(root.getAttribute('data-gr-current-player-ui'), '1');
+  assert.equal(document.head.children.length, 1);
+  assert.equal(first.inspect().mounted, true);
+
+  assert.equal(first.destroy(), true);
+  assert.equal(root.getAttribute('data-gr-current-player-ui'), null);
+  assert.equal(document.head.children.length, 0);
+}
+
 console.log('battle-current-player-ui-runtime: live-consumer focused tests passed');

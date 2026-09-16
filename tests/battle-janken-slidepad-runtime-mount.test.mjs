@@ -495,7 +495,7 @@ test('existing SlidePad mounts the merged Hidden Hand button bridge late without
   assert.match(source, /if \(existing\?\.__gameroadRuntime\) \{[\s\S]*existingRuntime\.attachHiddenHandIntegration\?\.\(initialHiddenHandIntegration\);[\s\S]*return existingRuntime;/);
   assert.match(source, /function attachHiddenHandIntegration\(nextIntegration\) \{[\s\S]*mountBattleHiddenRoadJankenSlidePadIntegration\(\{[\s\S]*slidePadHost: host,[\s\S]*addRoadJankenCardId: normalized\.addRoadJankenCardId/);
   assert.match(source, /function render\(\) \{[\s\S]*bindHandInput\(\);\s*syncHiddenHandIntegration\(\);/);
-  assert.match(source, /attachHiddenHandIntegration,\n    hiddenHandConnected:[\s\S]*hiddenHandSnapshot:/);
+  assert.match(source, /attachHiddenHandIntegration,\r?\n    hiddenHandConnected:[\s\S]*hiddenHandSnapshot:/);
   assert.match(source, /hiddenHandLiveRuntime\?\.destroy\?\.\(\);[\s\S]*hiddenHandLiveIntegration = null;[\s\S]*rowRouletteRuntime\?\.destroy/);
   assert.equal((source.match(/__gameroadRuntime = runtime/g) ?? []).length, 1,
     'Hidden Hand must reuse the one existing SlidePad runtime');

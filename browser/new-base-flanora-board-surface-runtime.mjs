@@ -429,10 +429,6 @@ export function mountFlanoraBoardSurface({
   setAttr(root, 'data-progression-direction', 'bottom-to-top');
   setAttr(root, 'data-central-world-layout', 'shared-field-shield-actual-card-road-route-gates-one-goal');
   setAttr(root, 'data-future-discrete-progression-slots', 'false');
-  setAttr(root, 'data-visual-composition', 'fixed-target-asymmetric-world');
-  setAttr(root, 'data-source-clearing-binding-count', model.clearingCells.length);
-  setAttr(root, 'data-visible-field-node-count', model.clearingCells.length);
-  setAttr(root, 'data-visible-field-edge-count', model.clearingCycleCellIds.length);
   setAttr(root, 'aria-label', '下側の共有フィールドから盾、実際に成立したカードの道、12経路ゲートを通って上中央の1つのGOALへつながる盤面');
 
   const upper = createNode(documentLike, 'div', 'grFlanoraUpper');
@@ -447,7 +443,6 @@ export function mountFlanoraBoardSurface({
   const progressionGrid = createNode(documentLike, 'div', 'grFlanoraProgressionGrid');
   const clearing = createNode(documentLike, 'div', 'grFlanoraClearing');
   setAttr(clearing, 'data-shared-main-field', 'true');
-  setAttr(clearing, 'data-source-binding-only', 'legacy-map-layout');
   setAttr(clearing, 'aria-label', '4人が移動する共有フィールド。利用者指定の分岐ネットワーク形状');
 
   upper.appendChild(sharedGoal);
@@ -487,7 +482,6 @@ export function mountFlanoraBoardSurface({
     setAttr(routeGate, 'data-shared-goal-id', SHARED_GOAL_ID);
     setAttr(routeGate, 'data-connected-to-goal', 'false');
     routeGate.style.left = `${FIXED_TARGET_LANE_X_PCT[lane.relativeColumn]}%`;
-    setAttr(routeGate, 'data-fixed-target-lane-x-pct', FIXED_TARGET_LANE_X_PCT[lane.relativeColumn]);
     routeGateLayer.appendChild(routeGate);
     routeGatesByLaneKey.set(lane.key, routeGate);
 
@@ -497,7 +491,6 @@ export function mountFlanoraBoardSurface({
     setAttr(laneNode, 'data-lane-index', lane.laneIndex);
     setAttr(laneNode, 'data-lane-label', lane.laneLabel);
     laneNode.style.left = `${FIXED_TARGET_LANE_X_PCT[lane.relativeColumn]}%`;
-    setAttr(laneNode, 'data-fixed-target-lane-x-pct', FIXED_TARGET_LANE_X_PCT[lane.relativeColumn]);
 
     const road = createNode(documentLike, 'div', 'grFlanoraRoad');
     setAttr(road, 'data-flanora-road-track', lane.key);
@@ -531,8 +524,6 @@ export function mountFlanoraBoardSurface({
     setAttr(cellNode, 'data-source-clearing-cell-id', cell.id);
     setAttr(cellNode, 'data-target-field-kind', position.kind);
     setAttr(cellNode, 'data-clearing-kind', cell.kind);
-    setAttr(cellNode, 'data-world-x-pct', position.x);
-    setAttr(cellNode, 'data-world-y-pct', position.y);
     if (cell.startParticipantIds.length) {
       setAttr(cellNode, 'data-start-participant', cell.startParticipantIds.join(' '));
       setAttr(cellNode, 'aria-label', `?? ${cell.startParticipantIds.join('?')}`);
@@ -659,5 +650,4 @@ export const FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT = deepFreeze({
   unresolvedStageDefault: 'NO_DISCRETE_NODE_GUIDE_ONLY',
   visibleSharedFieldNodeCount: 26,
   visibleSharedFieldEdgeCount: 26,
-  sourceClearingBindingPolicy: 'ONE_SOURCE_CELL_TO_ONE_VISIBLE_PRESENTATION_NODE',
 });

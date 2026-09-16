@@ -22,22 +22,24 @@ function makeFakeDom() {
           setProperty(name, value) { styleValues[name] = String(value); },
           getPropertyValue(name) { return styleValues[name] ?? ''; },
         },
-        appendChild(child) {
-          child.parentNode = this;
-          this.children.push(child);
-          if (child.id) byId.set(child.id, child);
-          return child;
+        appendChild(child) { child.parentNode = this; this.children.push(child); if (child.id) byId.set(child.id, child); return child; },
+        removeChild(child) { this.children = this.children.filter((item) => item !== child); child.parentNode = null; return child; },
+        remove() { if (this.parentNode) this.parentNode.removeChild(this); },
+        setAttribute(name, value) {
+          attrs.set(name, String(value));
+          if (name.startsWith('data-')) {
+            const key = name.slice(5).replace(/-([a-z])/g, (_, char) => char.toUpperCase());
+            this.dataset[key] = String(value);
+          }
         },
-        removeChild(child) {
-          this.children = this.children.filter((item) => item !== child);
-          child.parentNode = null;
-          return child;
-        },
-        remove() {
-          if (this.parentNode) this.parentNode.removeChild(this);
-        },
-        setAttribute(name, value) { attrs.set(name, String(value)); },
         getAttribute(name) { return attrs.get(name) ?? null; },
+        removeAttribute(name) {
+          attrs.delete(name);
+          if (name.startsWith('data-')) {
+            const key = name.slice(5).replace(/-([a-z])/g, (_, char) => char.toUpperCase());
+            delete this.dataset[key];
+          }
+        },
       };
       Object.defineProperty(node, 'id', {
         get() { return this._id ?? ''; },
@@ -52,18 +54,17 @@ function makeFakeDom() {
 }
 
 function makeBoardSurface(documentLike) {
-  const shields = new Map();
-  const cells = new Map();
+  const routeGates = new Map();
+  const sharedGoal = documentLike.createElement('div');
+  sharedGoal.dataset.flanoraSharedGoal = 'goal:shared';
   const participants = ['P1', 'P2', 'P3', 'P4'];
-  for (let participant = 0; participant < participants.length; participant += 1) {
+  for (const participantId of participants) {
     for (let laneIndex = 0; laneIndex < 3; laneIndex += 1) {
-      const column = (participant * 3) + laneIndex;
-      const key = `${participants[participant]}:${laneIndex}`;
-      const shield = documentLike.createElement('span');
-      shield.dataset.clearingEntryCellId = `clearing:top:${column}`;
-      const cell = documentLike.createElement('span');
-      cells.set(`clearing:top:${column}`, cell);
-      shields.set(key, shield);
+      const key = `${participantId}:${laneIndex}`;
+      const anchor = documentLike.createElement('span');
+      anchor.dataset.flanoraRouteGate = `goal-gate:${key}`;
+      anchor.dataset.sharedGoalId = 'goal:shared';
+      routeGates.set(key, anchor);
     }
   }
   return {
@@ -72,9 +73,11 @@ function makeBoardSurface(documentLike) {
     gameplayAuthority: false,
     gameStateWrite: false,
     movementAuthority: false,
-    resolveShield(participantId, laneIndex) { return shields.get(`${participantId}:${laneIndex}`) ?? null; },
-    resolveClearingCell(cellId) { return cells.get(cellId) ?? null; },
-    cells,
+    resolveSharedGoal() { return sharedGoal; },
+    resolveRouteGate(participantId, laneIndex) { return routeGates.get(`${participantId}:${laneIndex}`) ?? null; },
+    resolveGoal(participantId, laneIndex) { return routeGates.get(`${participantId}:${laneIndex}`) ?? null; },
+    routeGates,
+    sharedGoal,
   };
 }
 
@@ -88,6 +91,8 @@ function makeGoalPresentation(openKeys = []) {
         key,
         participantId: `P${participant}`,
         laneIndex,
+        routeGateId: `goal-gate:${key}`,
+        sharedGoalId: 'goal:shared',
         connectedToGoal: open.has(key),
       });
     }
@@ -95,6 +100,9 @@ function makeGoalPresentation(openKeys = []) {
   return {
     ok: true,
     terminalWin: false,
+    sharedGoalId: 'goal:shared',
+    sharedGoalCount: 1,
+    routeGateCount: 12,
     lanePresentations,
     presentationOnly: true,
     gameplayAuthority: false,
@@ -107,117 +115,89 @@ function makeGoalPresentation(openKeys = []) {
 
 const COLORS = Object.freeze({ P1: '#e84b4b', P2: '#4b8de8', P3: '#e8c94b', P4: '#62c66c' });
 
-test('mounts persistent gates and activates arrows only for authoritative OPEN lanes', () => {
+test('mounts twelve persistent locked barriers at route anchors before one shared GOAL', () => {
   const documentLike = makeFakeDom();
   const board = makeBoardSurface(documentLike);
-  const runtime = mountNewBaseGoalEntryGateCue({
-    boardSurfaceRuntime: board,
-    goalPathPresentation: makeGoalPresentation(['P2:1']),
-    participantColors: COLORS,
-    documentLike,
-  });
-
+  const runtime = mountNewBaseGoalEntryGateCue({ boardSurfaceRuntime: board, goalPathPresentation: makeGoalPresentation(), participantColors: COLORS, documentLike });
   assert.equal(runtime.mounted, true);
   assert.equal(runtime.snapshot().laneGateCount, 12);
-  assert.equal(runtime.snapshot().openLaneCount, 1);
-  assert.equal(runtime.snapshot().activeArrowCount, 1);
-  assert.deepEqual(runtime.snapshot().activeArrowEntryCellIds, ['clearing:top:4']);
-  assert.equal(runtime.resolveLane('P2', 1).gate.dataset.goalPathOpen, '1');
-  assert.equal(runtime.resolveLane('P2', 0).arrowStack, null);
+  assert.equal(runtime.snapshot().sharedGoalCount, 1);
+  assert.equal(runtime.snapshot().openLaneCount, 0);
+  assert.equal(runtime.snapshot().lockedBarrierCount, 12);
+  assert.equal(runtime.snapshot().openHoopCount, 0);
+  assert.equal(runtime.snapshot().activeArrowCount, 0);
+  assert.equal(board.routeGates.get('P1:0').children.length, 1);
+  assert.equal(runtime.resolveLane('P1', 0).gate.dataset.goalPathOpen, '0');
+  assert.equal(board.sharedGoal.dataset.flanoraSharedGoal, 'goal:shared');
 });
 
-test('reacts to CLOSED -> OPEN at the seventh-card boundary without remounting the gate', () => {
+test('closed to open changes only the authoritative route from solid barrier to open hoop', () => {
   const documentLike = makeFakeDom();
   const board = makeBoardSurface(documentLike);
-  const runtime = mountNewBaseGoalEntryGateCue({
-    boardSurfaceRuntime: board,
-    goalPathPresentation: makeGoalPresentation(),
-    participantColors: COLORS,
-    documentLike,
-  });
-
+  const runtime = mountNewBaseGoalEntryGateCue({ boardSurfaceRuntime: board, goalPathPresentation: makeGoalPresentation(), participantColors: COLORS, documentLike });
   const gateBefore = runtime.resolveLane('P1', 1).gate;
-  assert.equal(runtime.resolveLane('P1', 1).arrowStack, null);
-
   const result = runtime.syncGoalPathPresentation(makeGoalPresentation(['P1:1']));
   assert.equal(result.ok, true);
-  assert.equal(result.reason, 'GOAL_ENTRY_CUES_SYNCED');
+  assert.equal(result.openLaneCount, 1);
+  assert.equal(result.lockedBarrierCount, 11);
+  assert.equal(result.openHoopCount, 1);
   assert.equal(runtime.resolveLane('P1', 1).gate, gateBefore);
-  assert.equal(runtime.resolveLane('P1', 1).gate.dataset.goalPathOpen, '1');
+  assert.equal(gateBefore.dataset.goalPathOpen, '1');
+  assert.equal(gateBefore.dataset.gateTransition, 'shatter_to_open');
   assert.equal(runtime.resolveLane('P1', 1).arrowStack.children.length, 3);
-  assert.deepEqual(runtime.snapshot().activeArrowEntryCellIds, ['clearing:top:1']);
+  assert.deepEqual(runtime.snapshot().activeRouteGateIds, ['goal-gate:P1:1']);
+  assert.equal(board.sharedGoal.dataset.connectedRouteCount, '1');
+  assert.equal(board.routeGates.get('P1:1').dataset.connectedToGoal, 'true');
+  assert.equal(board.routeGates.get('P1:0').dataset.connectedToGoal, 'false');
 });
 
-test('repeated OPEN sync is idempotent and does not duplicate arrow nodes', () => {
+test('repeated open sync is idempotent and does not duplicate gate or arrow nodes', () => {
   const documentLike = makeFakeDom();
   const board = makeBoardSurface(documentLike);
-  const runtime = mountNewBaseGoalEntryGateCue({
-    boardSurfaceRuntime: board,
-    goalPathPresentation: makeGoalPresentation(),
-    participantColors: COLORS,
-    documentLike,
-  });
-
+  const runtime = mountNewBaseGoalEntryGateCue({ boardSurfaceRuntime: board, goalPathPresentation: makeGoalPresentation(), participantColors: COLORS, documentLike });
   runtime.syncGoalPathPresentation(makeGoalPresentation(['P3:2']));
+  const gateBefore = runtime.resolveLane('P3', 2).gate;
   const arrowBefore = runtime.resolveLane('P3', 2).arrowStack;
-  const cell = board.cells.get('clearing:top:8');
-  assert.equal(cell.children.length, 2);
-
+  const anchor = board.routeGates.get('P3:2');
+  assert.equal(anchor.children.length, 2);
   runtime.syncGoalPathPresentation(makeGoalPresentation(['P3:2']));
+  assert.equal(runtime.resolveLane('P3', 2).gate, gateBefore);
   assert.equal(runtime.resolveLane('P3', 2).arrowStack, arrowBefore);
-  assert.equal(cell.children.length, 2);
+  assert.equal(anchor.children.length, 2);
+  assert.equal(runtime.resolveLane('P3', 2).gate.dataset.gateTransition, undefined);
   assert.equal(runtime.snapshot().activeArrowCount, 1);
 });
 
-test('OPEN -> CLOSED removes only the arrow while keeping the persistent boundary gate', () => {
+test('open to closed removes the open cue and restores the same persistent barrier gate', () => {
   const documentLike = makeFakeDom();
   const board = makeBoardSurface(documentLike);
-  const runtime = mountNewBaseGoalEntryGateCue({
-    boardSurfaceRuntime: board,
-    goalPathPresentation: makeGoalPresentation(['P4:0']),
-    participantColors: COLORS,
-    documentLike,
-  });
-
+  const runtime = mountNewBaseGoalEntryGateCue({ boardSurfaceRuntime: board, goalPathPresentation: makeGoalPresentation(['P4:0']), participantColors: COLORS, documentLike });
   const gateBefore = runtime.resolveLane('P4', 0).gate;
   runtime.syncGoalPathPresentation(makeGoalPresentation());
   assert.equal(runtime.resolveLane('P4', 0).gate, gateBefore);
-  assert.equal(runtime.resolveLane('P4', 0).gate.dataset.goalPathOpen, '0');
+  assert.equal(gateBefore.dataset.goalPathOpen, '0');
   assert.equal(runtime.resolveLane('P4', 0).arrowStack, null);
-  assert.equal(board.cells.get('clearing:top:9').children.length, 1);
+  assert.equal(board.routeGates.get('P4:0').children.length, 1);
+  assert.equal(board.sharedGoal.dataset.connectedRouteCount, '0');
 });
 
-test('an OPEN lane with missing color stays unresolved, then becomes visible when caller color authority arrives', () => {
+test('open lane without participant color remains open but does not invent an arrow color', () => {
   const documentLike = makeFakeDom();
   const board = makeBoardSurface(documentLike);
-  const runtime = mountNewBaseGoalEntryGateCue({
-    boardSurfaceRuntime: board,
-    goalPathPresentation: makeGoalPresentation(['P4:2']),
-    participantColors: { P1: COLORS.P1 },
-    documentLike,
-  });
-
+  const runtime = mountNewBaseGoalEntryGateCue({ boardSurfaceRuntime: board, goalPathPresentation: makeGoalPresentation(['P4:2']), participantColors: { P1: COLORS.P1 }, documentLike });
+  assert.equal(runtime.resolveLane('P4', 2).gate.dataset.goalPathOpen, '1');
   assert.equal(runtime.resolveLane('P4', 2).arrowStack, null);
   assert.deepEqual(runtime.snapshot().unresolvedOpenLaneKeys, ['P4:2']);
-
-  const result = runtime.syncGoalPathPresentation(makeGoalPresentation(['P4:2']), {
-    participantColors: COLORS,
-  });
+  const result = runtime.syncGoalPathPresentation(makeGoalPresentation(['P4:2']), { participantColors: COLORS });
   assert.equal(result.ok, true);
   assert.equal(runtime.resolveLane('P4', 2).arrowStack.style.getPropertyValue('--gameroad-goal-entry-cue-color'), COLORS.P4);
   assert.deepEqual(runtime.snapshot().unresolvedOpenLaneKeys, []);
 });
 
-test('rejects a mismatched lane set before mutating current visible state', () => {
+test('mismatched lane set fails before mutating current visible gate state', () => {
   const documentLike = makeFakeDom();
   const board = makeBoardSurface(documentLike);
-  const runtime = mountNewBaseGoalEntryGateCue({
-    boardSurfaceRuntime: board,
-    goalPathPresentation: makeGoalPresentation(['P2:0']),
-    participantColors: COLORS,
-    documentLike,
-  });
-
+  const runtime = mountNewBaseGoalEntryGateCue({ boardSurfaceRuntime: board, goalPathPresentation: makeGoalPresentation(['P2:0']), participantColors: COLORS, documentLike });
   const before = runtime.snapshot();
   const invalid = makeGoalPresentation(['P1:0']);
   invalid.lanePresentations = invalid.lanePresentations.slice(0, 11);
@@ -226,49 +206,37 @@ test('rejects a mismatched lane set before mutating current visible state', () =
   assert.deepEqual(runtime.snapshot(), before);
 });
 
-test('Reduced Motion and LowPerf preserve static upward-entry meaning across stateful sync', () => {
+test('reduced motion and low perf preserve static gate state without shatter animation', () => {
   for (const options of [{ reducedMotion: true }, { lowPerf: true }]) {
     const documentLike = makeFakeDom();
     const board = makeBoardSurface(documentLike);
-    const runtime = mountNewBaseGoalEntryGateCue({
-      boardSurfaceRuntime: board,
-      goalPathPresentation: makeGoalPresentation(),
-      participantColors: COLORS,
-      documentLike,
-      ...options,
-    });
+    const runtime = mountNewBaseGoalEntryGateCue({ boardSurfaceRuntime: board, goalPathPresentation: makeGoalPresentation(), participantColors: COLORS, documentLike, ...options });
     runtime.syncGoalPathPresentation(makeGoalPresentation(['P1:0']));
     assert.equal(runtime.snapshot().activeArrowCount, 1);
-    assert.equal(runtime.snapshot().animationMode, 'STATIC_UPWARD_ARROW');
+    assert.equal(runtime.snapshot().animationMode, 'STATIC_GATE_STATE');
+    assert.equal(runtime.resolveLane('P1', 0).gate.dataset.goalPathOpen, '1');
+    assert.equal(runtime.resolveLane('P1', 0).gate.dataset.gateTransition, undefined);
     assert.equal(runtime.resolveLane('P1', 0).arrowStack.children[0].textContent, '↑');
   }
 });
 
-test('fails soft on invalid authority and destroy removes current owned nodes after updates', () => {
+test('invalid authority fails soft and destroy removes only runtime-owned nodes', () => {
   const documentLike = makeFakeDom();
   const board = makeBoardSurface(documentLike);
-  const invalid = mountNewBaseGoalEntryGateCue({
-    boardSurfaceRuntime: { ...board, movementAuthority: true },
-    goalPathPresentation: makeGoalPresentation(['P1:0']),
-    participantColors: COLORS,
-    documentLike,
-  });
+  const invalid = mountNewBaseGoalEntryGateCue({ boardSurfaceRuntime: { ...board, movementAuthority: true }, goalPathPresentation: makeGoalPresentation(['P1:0']), participantColors: COLORS, documentLike });
   assert.equal(invalid.mounted, false);
   assert.equal(invalid.reason, 'BOARD_SURFACE_RUNTIME_INVALID');
 
-  const runtime = mountNewBaseGoalEntryGateCue({
-    boardSurfaceRuntime: board,
-    goalPathPresentation: makeGoalPresentation(),
-    participantColors: COLORS,
-    documentLike,
-  });
+  const runtime = mountNewBaseGoalEntryGateCue({ boardSurfaceRuntime: board, goalPathPresentation: makeGoalPresentation(), participantColors: COLORS, documentLike });
   runtime.syncGoalPathPresentation(makeGoalPresentation(['P1:0', 'P2:1']));
   assert.equal(runtime.destroy(), true);
   assert.equal(runtime.destroy(), false);
-  assert.equal(board.cells.get('clearing:top:0').children.length, 0);
-  assert.equal(board.cells.get('clearing:top:4').children.length, 0);
-  assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.statefulGoalPathSync, true);
-  assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.repeatedSyncIdempotent, true);
+  assert.equal(board.routeGates.get('P1:0').children.length, 0);
+  assert.equal(board.routeGates.get('P2:1').children.length, 0);
+  assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.gateCount, 12);
+  assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.sharedGoalCount, 1);
+  assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.closedGateVisual, 'SOLID_LOCKED_BARRIER');
+  assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.openGateVisual, 'OPEN_HOOP_WITH_TRANSPARENT_MEMBRANE');
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.computesSevenCardCompletion, false);
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.computesMovementLegality, false);
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.computesResult, false);

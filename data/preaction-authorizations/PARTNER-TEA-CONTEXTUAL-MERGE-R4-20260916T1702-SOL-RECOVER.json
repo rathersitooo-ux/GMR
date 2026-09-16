@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-TEA-CONTEXTUAL-MERGE-R4-20260916T1702-SOL-RECOVER",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "PARTNER_TEA_CONTEXTUAL_ENTRY_MERGE_R1",
+  "acquireKey": "PARTNER-TEA-CONTEXTUAL-MERGE-R4-20260916T1702-SOL-RECOVER",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R3_VALIDATED_TWO_FILE_DIFF_AND_FRESH_R4_OWNER_20260916T1702JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R3_REQUIRED_GATE_RUN35071519045_SUCCESS",
+  "proceedToken": "PROCEED|PARTNER-TEA-CONTEXTUAL-MERGE-R4-20260916T1702-SOL-RECOVER|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-tea-contextual-entry|r3-validated-replay|active-lease",
+  "authorizationBaseSha": "67dd54ab5bf50f621e25df72d6540d8e7b1a5205",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "PARTNER_TEA_CONTEXTUAL_ENTRY_MERGE_R1",
+  "leaseAcquireKey": "PARTNER-TEA-CONTEXTUAL-MERGE-R4-20260916T1702-SOL-RECOVER",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 17:02 JST",
+  "leaseUntilJst": "2026-09-16 18:02 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main; mutable browser/partner-tea-runtime-mount.mjs; tests/partner-tea-runtime-mount.test.mjs; own transient PRE_ACTION witness; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; deploy/cloudflare/*; Partner relationship/reward/save/gameplay/canon; unrelated active WorkUnits.",
+  "solutionSignature": "PARTNER_TEA_EXISTING_QUICK_CHOICE_CONTEXTUAL_ENTRY_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R3_VALIDATED_PRODUCT_HEAD_4D9E39C1",
+  "solutionSearchEvidence": [
+    "R3 final product diff contains only browser/partner-tea-runtime-mount.mjs and tests/partner-tea-runtime-mount.test.mjs.",
+    "R3 Required Gate run 35071519045 passed PRE_ACTION, conventional Node tests, public package provenance and all required checks.",
+    "R3 was not merged only because the current lease snapshot no longer contained its AcquireKey at the pre-merge ownership fence.",
+    "R4 reuses the same validated behavior without adding a standalone Tea view/session or changing relationship/reward/save/gameplay/canon authority."
+  ],
+  "scope": [
+    "browser/partner-tea-runtime-mount.mjs",
+    "tests/partner-tea-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-tea-runtime-mount.mjs",
+    "tests/partner-tea-runtime-mount.test.mjs"
+  ]
+}

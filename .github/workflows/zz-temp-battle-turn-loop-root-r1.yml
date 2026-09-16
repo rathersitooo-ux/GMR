@@ -1,0 +1,73 @@
+name: TEMP Battle turn-loop root R1
+
+on:
+  push:
+    branches:
+      - fix/battle-new-base-turn-loop-root-r1
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate PRE_ACTION
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=957e92ac9fb3744d996fd90d5abe626d3d21d1e0
+          git diff --name-only "$BASE" HEAD > /tmp/changed.txt
+          cat /tmp/changed.txt
+          node tools/preaction-authorization-validator.mjs --base "$BASE" --head "$(git rev-parse HEAD)" --changed /tmp/changed.txt
+      - name: Diagnose live Battle seams
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          const path = 'browser/GAMEROAD.html';
+          const s = fs.readFileSync(path, 'utf8');
+          console.log('HTML_SHA256=' + crypto.createHash('sha256').update(s).digest('hex'));
+          const needles = [
+            'function commitPlans',
+            'function resolveBattle',
+            'function checkWin',
+            "state.phase='target'",
+            'confirmTarget',
+            'targetBox',
+            'dedicatedBattlePhase',
+            'battlePhaseSurface',
+            'opponentId',
+            'shieldLane',
+            'jankenHand',
+            'publicCards',
+            'battleId',
+            'roadId',
+            'foundation.length>=7',
+            'endMatch()'
+          ];
+          for (const needle of needles) {
+            let count = 0, from = 0, first = -1;
+            while ((from = s.indexOf(needle, from)) !== -1) {
+              if (first < 0) first = from;
+              count++;
+              from += Math.max(1, needle.length);
+            }
+            console.log(`COUNT ${JSON.stringify(needle)} ${count}`);
+            if (first >= 0) {
+              const a = Math.max(0, first - 1800);
+              const b = Math.min(s.length, first + needle.length + 3600);
+              console.log(`SNIP ${JSON.stringify(needle)} START=${a} END=${b}`);
+              console.log(s.slice(a,b));
+              console.log('END_SNIP');
+            }
+          }
+          NODE

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-TEA-CONTEXTUAL-MERGE-R3-20260916T1653-SOL-RECOVER",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "PARTNER_TEA_CONTEXTUAL_ENTRY_MERGE_R1",
+  "acquireKey": "PARTNER-TEA-CONTEXTUAL-MERGE-R3-20260916T1653-SOL-RECOVER",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_TARGET_FILES_UNCHANGED_SINCE_PR1720_BASE_20260916T1653JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1720_TWO_FILE_REVIEWED_DELTA_PLUS_FRESH_MAIN_RUNTIME_V1_READBACK",
+  "proceedToken": "PROCEED|PARTNER-TEA-CONTEXTUAL-MERGE-R3-20260916T1653-SOL-RECOVER|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-tea-contextual-entry|two-file-rebuild|active-lease",
+  "authorizationBaseSha": "67dd54ab5bf50f621e25df72d6540d8e7b1a5205",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "PARTNER_TEA_CONTEXTUAL_ENTRY_MERGE_R1",
+  "leaseAcquireKey": "PARTNER-TEA-CONTEXTUAL-MERGE-R3-20260916T1653-SOL-RECOVER",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 16:53 JST",
+  "leaseUntilJst": "2026-09-16 17:53 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main; mutable browser/partner-tea-runtime-mount.mjs; tests/partner-tea-runtime-mount.test.mjs; own transient PRE_ACTION witness; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; deploy/cloudflare/*; Partner relationship/reward/save/gameplay/canon; unrelated active WorkUnits.",
+  "solutionSignature": "PARTNER_TEA_EXISTING_QUICK_CHOICE_CONTEXTUAL_ENTRY_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1720_REVIEWED_TWO_FILE_DELTA_AND_CURRENT_MAIN_GAP",
+  "solutionSearchEvidence": [
+    "Current main partner-tea runtime is still v1 and does not expose OPEN_TEA from the Partner hub.",
+    "PR#1720 already contains the bounded intended behavior: show Tea only when the existing inline Tea quick-choice exists, close the hub, and focus that existing control.",
+    "Current main is 39 commits ahead of PR#1720 base, but neither target file changed on main in that interval, so the reviewed two-file delta can be replayed without importing stale unrelated history.",
+    "No standalone Tea view/session, second relationship/reward/save/gameplay/canon authority, or browser/GAMEROAD.html mutation is permitted in this WorkUnit."
+  ],
+  "scope": [
+    "browser/partner-tea-runtime-mount.mjs",
+    "tests/partner-tea-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-tea-runtime-mount.mjs",
+    "tests/partner-tea-runtime-mount.test.mjs"
+  ]
+}

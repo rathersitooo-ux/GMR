@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HIDDEN-HAND-IDENTITY-R3-20260916T1652-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_HIDDEN_HAND_IDENTITY_PIPELINE_R3",
+  "acquireKey": "BATTLE-HIDDEN-HAND-IDENTITY-R3-20260916T1652-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_67DD54A_MATCH_START_SNAPSHOT_PLUS_MERGED_GOLD_BUTTON",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1743_PRODUCT_TESTS_PASSED_REQUIRED_GATE_FIXTURE_FAILURE_ONLY",
+  "proceedToken": "PROCEED|BATTLE-HIDDEN-HAND-IDENTITY-R3-20260916T1652-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|hidden-hand-identity-pipeline-r3|current-main-clean-branch|active-lease",
+  "authorizationBaseSha": "67dd54ab5bf50f621e25df72d6540d8e7b1a5205",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_HIDDEN_HAND_IDENTITY_PIPELINE_R3",
+  "leaseAcquireKey": "BATTLE-HIDDEN-HAND-IDENTITY-R3-20260916T1652-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 16:52 JST",
+  "leaseUntilJst": "2026-09-16 17:52 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:N9",
+  "leaseExactMutableResources": "browser/deck-save-ack-core.mjs; tests/deck-save-ack-core.test.mjs; browser/new-base-hidden-hand-runtime-core.mjs; tests/new-base-hidden-hand-runtime-core.test.mjs; deploy/cloudflare/tests/build.test.mjs exact deck-save-ack blob fixture if required; own transient data/preaction-authorizations/BATTLE-HIDDEN-HAND-IDENTITY-R3-20260916T1652-SOL.json; own branch sol/battle-hidden-identity-r3-20260916-1652/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html while BATTLE-GRAVEYARD-LIVE-R1 owns it until 17:05 JST; battle-hidden-road-janken-add-control.mjs; battle-janken-slidepad-runtime-mount.mjs.",
+  "solutionSignature": "HIDDEN_HAND_IDENTITY_EXISTING_MATCH_START_SNAPSHOT_PIPELINE_R3",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_MATCH_START_SNAPSHOT_PLUS_MERGED_GOLD_BUTTON_PLUS_PRIOR_R1_R2_TEST_EVIDENCE",
+  "solutionSearchEvidence": [
+    "Current Browser already creates one immutable deckStartSnapshot through createDeckMatchStartSnapshot and retains it on state.match.",
+    "Merged gold-button adapter consumes reservedCardId through an injected existing Road-stage callback and must not choose the card or consume privilege on press.",
+    "Prior R1/R2 product tests established the intended identity-only behavior; the clean successor ports that behavior onto exact current main instead of mutating stale branches.",
+    "No hidden card is auto-selected and no fourth-hand matchup, second store, extra Road, Mana change, or combat authority is introduced."
+  ],
+  "scope": [
+    "browser/deck-save-ack-core.mjs",
+    "tests/deck-save-ack-core.test.mjs",
+    "browser/new-base-hidden-hand-runtime-core.mjs",
+    "tests/new-base-hidden-hand-runtime-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/BATTLE-HIDDEN-HAND-IDENTITY-R3-20260916T1652-SOL.json"
+  ],
+  "leaseScope": [
+    "browser/deck-save-ack-core.mjs",
+    "tests/deck-save-ack-core.test.mjs",
+    "browser/new-base-hidden-hand-runtime-core.mjs",
+    "tests/new-base-hidden-hand-runtime-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/BATTLE-HIDDEN-HAND-IDENTITY-R3-20260916T1652-SOL.json"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-FOUR-PLAYER-PUBLIC-R1-PREACTION-20260916T2336-SOL-A08",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FOUR_PLAYER_PUBLIC_ORGANIZATION_R1",
+  "acquireKey": "BATTLE-FOUR-PLAYER-PUBLIC-R1-20260916T2336-SOL-A08",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_VIEWER_ROLE_GATE_AND_RUNTIME_ACTUAL_20260916",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FOCUSED_NODE_TESTS_AFTER_FIRST_ONLY_PREACTION",
+  "proceedToken": "PROCEED|BATTLE-FOUR-PLAYER-PUBLIC-R1-PREACTION-20260916T2336-SOL-A08|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|four-player-public|viewer-role|active-lease",
+  "authorizationBaseSha": "5e92728a40de9a89b8648cca2104ac3df23cd3fa",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_FOUR_PLAYER_PUBLIC_ORGANIZATION_R1",
+  "leaseAcquireKey": "BATTLE-FOUR-PLAYER-PUBLIC-R1-20260916T2336-SOL-A08",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 23:36 JST",
+  "leaseUntilJst": "2026-09-17 00:36 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A29:L29",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR exact current main 5e92728a40de9a89b8648cca2104ac3df23cd3fa; mutable browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback; own CURRENT lease/R24 event. READ_ONLY browser/GAMEROAD.html (active WU27); new-base board/world files; battle-subdeck supply files; battle-janken-order-motion test; gameplay/rules/save/network; unrelated WorkUnits.",
+  "solutionSignature": "BATTLE_FOUR_PLAYER_PUBLIC_VIEWER_ROLE_PRESENTATION_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_BATTLE_SCREEN_RUNTIME_VIEWER_ROLE_GAP_20260916",
+  "solutionSearchEvidence": [
+    "Current battle-screen-runtime-mount already owns the four authoritative participant public summary surfaces and must remain the single presentation consumer.",
+    "Current battle-screen-presentation-core carries four participant identities but no viewer identity, so self must never be inferred from participant order or label.",
+    "Current visual semantic relation gate requires viewer self not to be fabricated as a duplicate peer entity while preserving the same authoritative participant/state.",
+    "The minimal durable delta is caller-explicit viewerParticipantId presentation classification on the existing four lanes, with fail-closed neutral behavior when absent or unknown.",
+    "No gameplay, privacy expansion, card identity, topology, HTML integration, or fifth participant surface is required."
+  ],
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

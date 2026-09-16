@@ -206,14 +206,16 @@ test('Partner Hub plan composes the current Shell without inventing conversation
   assert.equal(plan.saveMutationAllowed, false);
   assert.equal(plan.gameplayMutationAllowed, false);
   assert.equal(plan.canonMutationAllowed, false);
-  assert.deepEqual(plan.allowedActions, ['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'BACK_HUB']);
+  assert.equal(plan.teaPresentation, 'existing_inline_quick_choice');
+  assert.equal(plan.teaCreatesStandaloneView, false);
+  assert.deepEqual(plan.allowedActions, ['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'OPEN_TEA', 'BACK_HUB']);
   assert.equal(Object.isFrozen(plan), true);
 });
 
-test('Partner Hub dispatcher exposes only detail, conversation and return-to-hub actions', () => {
-  assert.deepEqual(PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS, ['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'BACK_HUB']);
+test('Partner Hub dispatcher exposes detail, conversation, contextual Tea and return-to-hub actions', () => {
+  assert.deepEqual(PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS, ['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'OPEN_TEA', 'BACK_HUB']);
   for (const action of PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS) assert.equal(partnerConversationHubCanDispatch(action), true);
-  for (const action of ['OPEN_LIST', 'OPEN_COSTUME', 'OPEN_FORMATION', 'OPEN_STRATEGY', 'OPEN_DIALOGUE_FEEDBACK', 'OPEN_TEA']) {
+  for (const action of ['OPEN_LIST', 'OPEN_COSTUME', 'OPEN_FORMATION', 'OPEN_STRATEGY', 'OPEN_DIALOGUE_FEEDBACK']) {
     assert.equal(partnerConversationHubCanDispatch(action), false);
   }
   assert.equal(createPartnerConversationHubInput().activePartnerId, 'partner.saasuna');
@@ -260,7 +262,7 @@ test('live conversation projection adds one Partner trigger without replacing th
   assert.equal(fixture.surface.querySelectorAll('[data-partner-hub-trigger="1"]').length, 1);
 });
 
-test('Partner trigger opens the existing Shell hub with approved idle line and no dead unsupported actions', () => {
+test('Partner trigger exposes contextual Tea only when the existing Tea surface is mounted', () => {
   const fixture = teaFixture();
   projectPartnerTeaQuickChoices({ document: fixture.document });
   const trigger = fixture.surface.querySelector('[data-partner-hub-trigger="1"]');
@@ -281,14 +283,24 @@ test('Partner trigger opens the existing Shell hub with approved idle line and n
   const actions = nodes
     .filter((node) => node.dataset?.partnerShellAction)
     .map((node) => node.dataset.partnerShellAction);
-  assert.deepEqual(actions, ['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION']);
+  assert.deepEqual(actions, ['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'OPEN_TEA']);
   assert.equal(actions.includes('OPEN_COSTUME'), false);
   assert.equal(actions.includes('OPEN_LIST'), false);
   assert.equal(fixture.input.value, '下書き');
+
+  const overlayOnly = teaFixture();
+  projectPartnerConversationHubOverlay({ document: overlayOnly.document });
+  const overlayOnlyTrigger = overlayOnly.surface.querySelector('[data-partner-hub-trigger="1"]');
+  const overlayOnlySurface = overlayOnly.surface.querySelector('[data-partner-hub-overlay="1"]');
+  overlayOnlyTrigger.click();
+  const overlayOnlyActions = allNodes(overlayOnlySurface)
+    .filter((node) => node.dataset?.partnerShellAction)
+    .map((node) => node.dataset.partnerShellAction);
+  assert.deepEqual(overlayOnlyActions, ['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION']);
 });
 
-test('Partner Shell detail and conversation actions stay inside the current conversation surface', () => {
-  const fixture = teaFixture();
+test('Partner Shell detail, conversation and Tea actions stay inside the current conversation surface', () => {
+  const fixture = teaFixture({ draft: '残す下書き' });
   projectPartnerTeaQuickChoices({ document: fixture.document });
   const trigger = fixture.surface.querySelector('[data-partner-hub-trigger="1"]');
   const overlay = fixture.surface.querySelector('[data-partner-hub-overlay="1"]');
@@ -302,6 +314,15 @@ test('Partner Shell detail and conversation actions stay inside the current conv
   back.click();
   assert.ok(allNodes(overlay).some((node) => node.dataset?.partnerShellView === 'hub'));
 
+  const tea = allNodes(overlay).find((node) => node.dataset?.partnerShellAction === 'OPEN_TEA');
+  const firstTeaChoice = fixture.form.insertedBefore.children[1];
+  tea.click();
+  assert.equal(overlay.hidden, true);
+  assert.equal(firstTeaChoice.focused, true);
+  assert.equal(fixture.input.value, '残す下書き');
+  assert.deepEqual(fixture.form.submittedValues, []);
+
+  trigger.click();
   const talk = allNodes(overlay).find((node) => node.dataset?.partnerShellAction === 'OPEN_CONVERSATION');
   talk.click();
   assert.equal(overlay.hidden, true);
@@ -429,8 +450,9 @@ test('runtime observes future surfaces and disabled-state changes and fails clos
   }
   const global = { document: fixture.document, MutationObserver: FakeObserver };
   const runtime = mountPartnerTeaQuickChoiceRuntime(global);
-  assert.equal(runtime.version, 'gameroad.partner-tea-quick-choice-runtime.v1');
+  assert.equal(runtime.version, 'gameroad.partner-tea-quick-choice-runtime.v2');
   assert.equal(runtime.partnerHubPlan.directConversationDefault, true);
+  assert.equal(runtime.partnerHubPlan.teaCreatesStandaloneView, false);
   assert.equal(typeof observerCallback, 'function');
   assert.deepEqual(observedOptions, {
     childList: true,

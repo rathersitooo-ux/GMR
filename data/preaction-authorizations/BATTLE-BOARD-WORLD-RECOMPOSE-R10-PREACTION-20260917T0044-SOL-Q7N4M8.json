@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-WORLD-RECOMPOSE-R10-PREACTION-20260917T0044-SOL-Q7N4M8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_NEW_BOARD_WORLD_RECOMPOSITION_R1",
+  "acquireKey": "BATTLE-BOARD-WORLD-RECOMPOSE-R10-20260917T0021-SOL-Q7N4M8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_667X375_ACTUAL_PLUS_FIXED_1536X864_TARGET_DIRECT_COMPARISON_20260917",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_SURFACE_GATE_RUNTIME_DIRECT_READ_PLUS_POST_PREACTION_FOCUSED_NODE_AND_PLAYWRIGHT_ACTUAL",
+  "proceedToken": "PROCEED|BATTLE-BOARD-WORLD-RECOMPOSE-R10-PREACTION-20260917T0044-SOL-Q7N4M8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|board-world-recompose|fixed-target|active-lease",
+  "authorizationBaseSha": "645a6c4b5d6ac1c0f1c77908c78defaf6404c413",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_NEW_BOARD_WORLD_RECOMPOSITION_R1",
+  "leaseAcquireKey": "BATTLE-BOARD-WORLD-RECOMPOSE-R10-20260917T0021-SOL-Q7N4M8",
+  "leaseSnapshotReadbackAtJst": "2026-09-17 00:44 JST",
+  "leaseUntilJst": "2026-09-17 01:21 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR exact current main 37d84540c6a7c0926d818b00690ba727bd1f5b8d; mutable browser/new-base-flanora-board-surface-runtime.mjs; tests/new-base-flanora-board-surface-runtime.test.mjs; browser/new-base-goal-entry-gate-cue-runtime.mjs; tests/new-base-goal-entry-gate-cue-runtime.test.mjs; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback; own CURRENT lease/R24 event. READ_ONLY browser/GAMEROAD.html (active WU27); battle-new-base-board-live-presentation-composer.mjs + test; battle-screen runtime; gameplay/rules/save/network; deploy/package/provenance; unrelated WorkUnits.",
+  "solutionSignature": "BATTLE_FIXED_TARGET_WORLD_RECOMPOSITION_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_SURFACE_IS_ALREADY_LIVE_PRESENTATION_AUTHORITY_AND_EQUAL_GRID_VISUAL_IS_THE_REPRODUCED_GAP_20260917",
+  "solutionSearchEvidence": [
+    "Current new-base-flanora-board-surface-runtime is already the live presentation surface; replacing it with a second board engine is forbidden.",
+    "Fresh main advanced from the lease base only in battle-screen-runtime and Cards files; all four owned board/gate files are unchanged across that advance.",
+    "Fresh 667x375 Battle actual reproduces the equal-grid/table reading and generic circular clearing nodes that conflict with the immutable user TARGET shape.",
+    "The existing progression consumer already renders only established BUILT physical card identities and keeps future stages logical-only; that lineage must be preserved.",
+    "The existing gate cue already owns closed to shatter to open-hoop state projection, so this slice refines its world shape without changing gameplay, state, movement, legality, result, or HTML authority."
+  ],
+  "scope": [
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs",
+    "browser/new-base-goal-entry-gate-cue-runtime.mjs",
+    "tests/new-base-goal-entry-gate-cue-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs",
+    "browser/new-base-goal-entry-gate-cue-runtime.mjs",
+    "tests/new-base-goal-entry-gate-cue-runtime.test.mjs"
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-TURN-LOOP-ROOT-R1-20260916T1157-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_NEW_BASE_TURN_LOOP_ROOT_R1",
+  "acquireKey": "BATTLE-TURN-LOOP-ROOT-R1-20260916T1157-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_CURRENT_MAIN_LEASE_AND_FOUR_LEGACY_SEAMS_20260916T1157JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "BOUNDED_PATCHER_MERGED_PLUS_EXISTING_NEW_BASE_AUTHORITIES_INSPECTED",
+  "proceedToken": "PROCEED|BATTLE-TURN-LOOP-ROOT-R1-20260916T1157-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-turn-loop-root|html-bounded-patch|active-lease",
+  "authorizationBaseSha": "957e92ac9fb3744d996fd90d5abe626d3d21d1e0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_NEW_BASE_TURN_LOOP_ROOT_R1",
+  "leaseAcquireKey": "BATTLE-TURN-LOOP-ROOT-R1-20260916T1157-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 11:57 JST",
+  "leaseUntilJst": "2026-09-16 12:57 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch fix/battle-new-base-turn-loop-root-r1 from exact main 957e92ac9fb3744d996fd90d5abe626d3d21d1e0; browser/GAMEROAD.html; NEW tests/battle-new-base-turn-loop-root-integration.test.mjs; transient data/patch-specs/battle-turn-loop-root-r1.json; transient .github/workflows/zz-temp-battle-turn-loop-root-r1.yml; own transient data/preaction-authorizations/BATTLE-TURN-LOOP-ROOT-R1-20260916T1157-SOL.json only. Existing Battle/New Base rule modules READ_ONLY reuse; unrelated active WorkUnits READ_ONLY.",
+  "solutionSignature": "BATTLE_NEW_BASE_EXISTING_AUTHORITIES_LIVE_HTML_ROOT_HANDOFF_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_COMPOUND_ORDER_GOAL_SEVEN_GATE_AUTHORITIES_PLUS_MAIN_BOUNDED_PATCHER",
+  "solutionSearchEvidence": [
+    "Current main still contains the legacy post-commit target phase, team-sum resolver, dedicated Battle takeover surface, and straight-seven immediate endMatch path.",
+    "Existing compound attack package core accepts caller-authoritative card, path, opponent, and Shield lane and does not invent target semantics.",
+    "Existing printed-number processing-order authority delegates to the current first-win-lock triad resolver and fails closed on unresolved equal printed numbers.",
+    "Existing New Base seven-card gate and GOAL result authorities keep straight seven non-terminal and make only authoritative GOAL_REACHED terminal.",
+    "The shared bounded patcher is merged on main and will be used with exact source hash and exact-anchor count guards; no whole-file connector replacement is authorized.",
+    "If the live HTML does not expose complete authoritative inputs required by the existing adapters, this WorkUnit fails closed rather than inventing mappings or Battle semantics."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-new-base-turn-loop-root-integration.test.mjs",
+    "data/patch-specs/battle-turn-loop-root-r1.json",
+    ".github/workflows/zz-temp-battle-turn-loop-root-r1.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-new-base-turn-loop-root-integration.test.mjs",
+    "data/patch-specs/battle-turn-loop-root-r1.json",
+    ".github/workflows/zz-temp-battle-turn-loop-root-r1.yml"
+  ]
+}

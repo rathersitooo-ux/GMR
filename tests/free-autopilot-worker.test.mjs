@@ -18,26 +18,19 @@ function packet(overrides = {}) {
     workUnitKey: 'WU-1',
     acquireKey: 'ACQ-1',
     baseRef: 'a'.repeat(40),
-    executorClass: 'FREE_LOCAL_CODER',
-    exactInputs: ['fresh CURRENT task row', 'fresh active lease readback'],
     exactMutableResources: ['browser/example.mjs', 'tests/example.test.mjs'],
-    readOnlyResources: ['browser/read-only.mjs'],
     doNotChange: ['browser/other.mjs'],
-    fixedAssumptions: ['Sol already resolved the product decision.'],
-    procedure: ['Read exact inputs.', 'Patch only declared mutable paths.', 'Run focused tests.'],
-    noInferenceBoundary: ['Do not invent rules, priorities, owners, or missing values.'],
+    procedure: ['Read supplied files.', 'Apply the bounded change.', 'Run the focused test.'],
     userEndState: 'Fix the bounded example.',
     realOutputTarget: 'A minimal tested candidate patch.',
     acceptance: ['Focused test passes.', 'No unrelated files change.'],
-    stopConditions: ['Stop on stale base, ambiguity, missing context, or scope mismatch.'],
-    returnPayload: ['status', 'evidence', 'unresolved', 'producedRefs', 'nextAction'],
-    resumeCondition: 'Return a draft candidate PR.',
+    resumeCondition: 'Return a draft PR candidate.',
     executorCapabilityHint: 'FREE_LOCAL_CODER',
     ...overrides,
   };
 }
 
-test('accepts explicitly opted-in bounded procedure-first queue packet', () => {
+test('accepts explicitly opted-in bounded queue packet with procedure', () => {
   const result = validateFreePacket(packet());
   assert.equal(result.ok, true);
   assert.deepEqual(result.packet.exactMutableResources, ['browser/example.mjs', 'tests/example.test.mjs']);
@@ -49,14 +42,10 @@ test('rejects packets without free local coder opt-in', () => {
   assert.match(result.reason, /opt_in/);
 });
 
-test('rejects direct free-coder packets missing procedure-first closure', () => {
-  for (const key of ['executorClass', 'exactInputs', 'fixedAssumptions', 'procedure', 'noInferenceBoundary', 'stopConditions', 'returnPayload']) {
-    const input = packet();
-    delete input[key];
-    const result = validateFreePacket(input);
-    assert.equal(result.ok, false, key);
-    assert.match(result.reason, /procedure_first_required/, key);
-  }
+test('rejects free local coder packets without a procedure', () => {
+  const result = validateFreePacket(packet({ procedure: [] }));
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, 'procedure_required');
 });
 
 test('rejects control-plane and traversal mutation', () => {
@@ -80,22 +69,19 @@ test('parses normal executor bus issue body', () => {
   assert.equal(result.packet.acquireKey, 'ACQ-1');
 });
 
-test('buildPrompt includes Sol-decided procedure, boundaries, stop rules and bounded context', () => {
+test('buildPrompt includes ordered procedure and bounded context', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'free-autopilot-'));
   fs.mkdirSync(path.join(root, 'browser'));
   fs.mkdirSync(path.join(root, 'tests'));
   fs.writeFileSync(path.join(root, 'browser/example.mjs'), 'export const value = 1;\n');
   fs.writeFileSync(path.join(root, 'tests/example.test.mjs'), 'test placeholder\n');
   const prompt = buildPrompt(packet(), root);
-  assert.match(prompt, /EXECUTOR_CLASS: FREE_LOCAL_CODER/);
   assert.match(prompt, /ORDERED_PROCEDURE:/);
-  assert.match(prompt, /Patch only declared mutable paths/);
-  assert.match(prompt, /NO_INFERENCE_BOUNDARY:/);
-  assert.match(prompt, /STOP_FAIL_CLOSE:/);
-  assert.match(prompt, /RETURN_PAYLOAD_REQUIREMENTS:/);
+  assert.match(prompt, /Apply the bounded change/);
+  assert.match(prompt, /executor, not a planner/);
   assert.match(prompt, /browser\/example\.mjs/);
   assert.match(prompt, /export const value = 1/);
-  assert.match(prompt, /executor, not a planner/);
+  assert.match(prompt, /Output exactly one unified git diff/);
 });
 
 test('truncates oversized file context before model prompt', () => {

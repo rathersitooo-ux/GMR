@@ -1,14 +1,12 @@
 # GAMEROAD Executor Bus
 
-This is a transport/execution layer, not a second task system, specification authority, planner, or product-completion oracle.
+This is a transport layer, not a second task system, specification authority, or product-completion oracle.
 
 ## Purpose
 
 Use GitHub Issues as a durable queue when ChatGPT HEAD and an external executor cannot talk through a direct native transport. GitHub Actions validates the packet identity and stores normalized queue/result artifacts. The executor never receives authority merely because a packet was accepted: current Drive CURRENT, current Task/owner/lease, exact mutable resources, current repository state, and acceptance evidence remain authoritative.
 
 The bus does **not** execute arbitrary commands from an issue. `command`, `shell`, `script`, credential, token, password, and secret fields are rejected. Queue/result acceptance is transport acceptance only.
-
-Every executable queue is **procedure-first**. Sol/HEAD must finish the reasoning work before dispatch: executor choice, exact inputs, fixed assumptions, ordered procedure, no-inference boundaries, acceptance, stop/fail-close conditions, and return payload requirements are part of the packet. GitHub/Free Local Coder executes that packet; it does not choose the task, invent specification, reprioritize work, resolve semantic ambiguity, or declare product completion.
 
 ## Queue packet
 
@@ -23,28 +21,21 @@ Create an issue whose title begins with `[EXECUTOR]` and whose body contains exa
   "workUnitKey": "CURRENT-WORKUNIT",
   "acquireKey": "CURRENT-ACQUIRE-KEY",
   "baseRef": "CURRENT-BASE-REF-OR-SHA",
-  "executorClass": "GITHUB_AUTOMATION or FREE_LOCAL_CODER",
-  "exactInputs": ["fresh CURRENT/task/actual input used by this bounded unit"],
   "exactMutableResources": ["exact/path/or/resource"],
-  "readOnlyResources": ["context that may be read but never changed"],
   "doNotChange": ["explicit/non-target"],
-  "fixedAssumptions": ["decision already closed by Sol/HEAD"],
   "procedure": ["ordered step 1", "ordered step 2"],
-  "noInferenceBoundary": ["decision or value the executor must not invent"],
   "userEndState": "What the user actually wants at the end.",
   "realOutputTarget": "The concrete artifact/state to return.",
   "acceptance": ["observable acceptance condition"],
-  "stopConditions": ["stale/ambiguous/out-of-scope condition that must stop execution"],
-  "returnPayload": ["status", "evidence", "unresolved", "producedRefs", "nextAction"],
   "resumeCondition": "Where HEAD resumes after return or block.",
   "executorCapabilityHint": "Optional capability hint; not authority"
 }
 ```
 ```
 
-`exactMutableResources` may not overlap `readOnlyResources` or `doNotChange`. The procedure-first fields are required and fail closed when absent. The workflow serializes events per issue, validates fail-closed, uploads a normalized queue artifact, and writes `BUS_PACKET_ACCEPTED` or `BUS_PACKET_REJECTED` to the issue.
+The workflow serializes events per issue, validates fail-closed, uploads a normalized queue artifact, and writes `BUS_PACKET_ACCEPTED` or `BUS_PACKET_REJECTED` to the issue.
 
-For `FREE_LOCAL_CODER`, the normalized procedure-first fields are copied into the model prompt. The model is explicitly an executor rather than a planner; ambiguity, missing context, stale inputs, no-inference boundary hits, and stop conditions must block instead of being guessed through.
+`procedure` is optional for generic bus packets. It is required when `executorCapabilityHint` opts into `FREE_LOCAL_CODER`; that lane executes the supplied ordered steps rather than planning the task, and blocks instead of inventing missing product or routing decisions.
 
 ## Result packet
 

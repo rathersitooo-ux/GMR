@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NONBATTLE-CARDS-HIERARCHY-R3-20260916T1708-SOL-RECOVER",
+  "taskId": "COLLECTION-CROSSDOMAIN-EXPERIENCE-001",
+  "workUnitKey": "NONBATTLE_INFO_HIERARCHY_CARDS_FINDABILITY_INTEGRATION_R1",
+  "acquireKey": "NONBATTLE-CARDS-HIERARCHY-R3-20260916T1708-SOL-RECOVER",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1758_ONE_FILE_DONOR_PLUS_FRESH_MAIN_NONOVERLAP_CHECK",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1758_PREACTION_STATIC_PROVENANCE_PASS_AND_ONE_FILE_DIFF",
+  "proceedToken": "PROCEED|NONBATTLE-CARDS-HIERARCHY-R3-20260916T1708-SOL-RECOVER|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot|expired-recovery",
+  "authorizationBaseSha": "67dd54ab5bf50f621e25df72d6540d8e7b1a5205",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTION-CROSSDOMAIN-EXPERIENCE-001",
+  "leaseWorkUnitKey": "NONBATTLE_INFO_HIERARCHY_CARDS_FINDABILITY_INTEGRATION_R1",
+  "leaseAcquireKey": "NONBATTLE-CARDS-HIERARCHY-R3-20260916T1708-SOL-RECOVER",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 17:08 JST",
+  "leaseUntilJst": "2026-09-16 18:08 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:L9",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR current main 67dd54ab5bf50f621e25df72d6540d8e7b1a5205; mutable browser/cards-deck-presentation.mjs; own transient data/preaction-authorizations/NONBATTLE-CARDS-HIERARCHY-R3-20260916T1708-SOL-RECOVER.json; NEW branch sol/nonbattle-cards-info-hierarchy-r3-recover-20260916; own PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; Home; Shop; save/economy/network; PR#1758 donor; unrelated active WorkUnits.",
+  "scope": [
+    "browser/cards-deck-presentation.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs"
+  ]
+}

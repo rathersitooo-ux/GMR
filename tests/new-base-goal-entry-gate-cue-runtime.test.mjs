@@ -128,6 +128,8 @@ test('mounts twelve persistent locked barriers at route anchors before one share
   assert.equal(runtime.snapshot().activeArrowCount, 0);
   assert.equal(board.routeGates.get('P1:0').children.length, 1);
   assert.equal(runtime.resolveLane('P1', 0).gate.dataset.goalPathOpen, '0');
+  assert.equal(runtime.resolveLane('P1', 0).gate.dataset.closedGateMaterial, 'hard-ice-bar');
+  assert.equal(runtime.resolveLane('P1', 0).gate.dataset.openGateForm, 'hoop-with-transparent-membrane');
   assert.equal(board.sharedGoal.dataset.flanoraSharedGoal, 'goal:shared');
 });
 
@@ -237,6 +239,8 @@ test('invalid authority fails soft and destroy removes only runtime-owned nodes'
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.sharedGoalCount, 1);
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.closedGateVisual, 'SOLID_LOCKED_BARRIER');
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.openGateVisual, 'OPEN_HOOP_WITH_TRANSPARENT_MEMBRANE');
+  assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.closedGateMaterial, 'HARD_ICE_BAR');
+  assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.closedGateEmphasis, 'LOW_UNTIL_CONNECTED');
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.computesSevenCardCompletion, false);
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.computesMovementLegality, false);
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.computesResult, false);

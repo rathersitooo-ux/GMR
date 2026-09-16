@@ -67,19 +67,22 @@ function ensureStyle(documentLike) {
   style.id = STYLE_ID;
   style.textContent = `
 [data-goal-entry-gate-cell="1"]{position:relative;isolation:isolate;overflow:visible!important}
-.grGoalEntryGate{position:absolute;z-index:8;left:50%;bottom:-1px;width:86%;height:clamp(15px,2.7vh,24px);transform:translateX(-50%);pointer-events:none;overflow:visible;--gameroad-goal-entry-cue-color:rgba(255,229,139,.9)}
-.grGoalEntryBarrier{position:absolute;left:5%;right:5%;bottom:0;height:72%;border:1px solid rgba(235,243,238,.75);border-radius:3px;background:linear-gradient(180deg,rgba(220,232,226,.92),rgba(63,86,77,.95));box-shadow:0 2px 5px rgba(0,0,0,.30),inset 0 0 0 1px rgba(255,255,255,.08);transform-origin:50% 80%;opacity:1}
-.grGoalEntryBarrier::before,.grGoalEntryBarrier::after{content:"";position:absolute;top:8%;bottom:8%;width:1px;background:rgba(29,53,46,.45);transform:rotate(15deg)}
-.grGoalEntryBarrier::before{left:35%}.grGoalEntryBarrier::after{right:34%;transform:rotate(-18deg)}
-.grGoalEntryHoop{position:absolute;left:8%;right:8%;top:-2px;bottom:-2px;border:2px solid color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 68%,white);border-radius:50% 50% 42% 42%/60% 60% 40% 40%;background:color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 8%,transparent);box-shadow:0 0 10px color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 36%,transparent),inset 0 0 8px color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 14%,transparent);opacity:0;transform:scale(.82)}
-.grGoalEntryMembrane{position:absolute;left:17%;right:17%;top:18%;bottom:10%;border-radius:50%;background:radial-gradient(ellipse at center,color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 12%,transparent),transparent 70%);opacity:0}
-.grGoalEntryGate[data-goal-path-open="1"] .grGoalEntryBarrier{opacity:0;transform:scale(.55) rotate(3deg)}
+.grGoalEntryGate{position:absolute;z-index:8;left:50%;bottom:0;width:72%;height:clamp(14px,2.55vh,23px);transform:translateX(-50%);pointer-events:none;overflow:visible;--gameroad-goal-entry-cue-color:rgba(255,229,139,.9)}
+.grGoalEntryBarrier{position:absolute;left:5%;right:5%;bottom:2px;height:58%;border:1px solid rgba(226,247,252,.68);border-radius:2px;background:linear-gradient(165deg,transparent 0 16%,rgba(255,255,255,.28) 17% 20%,transparent 21% 44%,rgba(195,235,246,.22) 45% 49%,transparent 50%),linear-gradient(180deg,rgba(225,247,252,.72),rgba(126,181,197,.68) 48%,rgba(56,101,115,.76));clip-path:polygon(0 26%,7% 8%,26% 4%,34% 13%,52% 5%,64% 15%,83% 6%,100% 24%,97% 83%,78% 94%,62% 86%,46% 96%,29% 87%,11% 94%,2% 78%);box-shadow:0 2px 0 rgba(29,66,77,.24),0 0 6px rgba(201,243,255,.12),inset 0 0 0 1px rgba(255,255,255,.12);transform-origin:50% 80%;opacity:.62}
+.grGoalEntryBarrier::before,.grGoalEntryBarrier::after{content:"";position:absolute;width:1px;background:rgba(35,86,101,.66);box-shadow:0 0 2px rgba(255,255,255,.65)}
+.grGoalEntryBarrier::before{left:38%;top:4%;height:94%;transform:rotate(18deg)}
+.grGoalEntryBarrier::after{right:34%;top:8%;height:86%;transform:rotate(-21deg)}
+.grGoalEntryHoop{position:absolute;left:10%;right:10%;top:-4px;bottom:-4px;border:2px solid color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 72%,white);border-radius:50%;background:transparent;box-shadow:0 0 12px color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 40%,transparent),inset 0 0 9px color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 16%,transparent);opacity:0;transform:scale(.74)}
+.grGoalEntryMembrane{position:absolute;left:20%;right:20%;top:16%;bottom:12%;border-radius:50%;border:1px solid color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 22%,transparent);background:radial-gradient(ellipse at 45% 38%,rgba(255,255,255,.08),color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 10%,transparent) 42%,transparent 74%);backdrop-filter:blur(.2px);opacity:0;transform:scale(.82)}
+.grGoalEntryGate[data-goal-path-open="1"] .grGoalEntryBarrier{opacity:0;transform:scale(.45) rotate(8deg)}
 .grGoalEntryGate[data-goal-path-open="1"] .grGoalEntryHoop,.grGoalEntryGate[data-goal-path-open="1"] .grGoalEntryMembrane{opacity:1;transform:scale(1)}
-.grGoalEntryGate[data-gate-transition="shatter_to_open"] .grGoalEntryBarrier{animation:grGoalGateShatter .42s cubic-bezier(.2,.7,.25,1) both}
-.grGoalEntryGate[data-gate-transition="shatter_to_open"] .grGoalEntryHoop{animation:grGoalGateOpen .34s .12s ease-out both}
-@keyframes grGoalGateShatter{0%{opacity:1;transform:scale(1)}45%{opacity:.92;transform:scale(1.06) rotate(-2deg);filter:brightness(1.6)}100%{opacity:0;transform:scale(.52) rotate(8deg)}}
-@keyframes grGoalGateOpen{0%{opacity:0;transform:scale(.72)}100%{opacity:1;transform:scale(1)}}
-.grGoalEntryArrowStack{position:absolute;z-index:9;left:50%;top:-16px;transform:translateX(-50%);display:flex;flex-direction:column-reverse;align-items:center;gap:0;color:var(--gameroad-goal-entry-cue-color);text-shadow:0 0 5px color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 60%,transparent);opacity:.9}
+.grGoalEntryGate[data-gate-transition="shatter_to_open"] .grGoalEntryBarrier{animation:grGoalGateShatter .46s cubic-bezier(.2,.72,.2,1) both}
+.grGoalEntryGate[data-gate-transition="shatter_to_open"] .grGoalEntryHoop{animation:grGoalGateOpen .34s .13s ease-out both}
+.grGoalEntryGate[data-gate-transition="shatter_to_open"] .grGoalEntryMembrane{animation:grGoalGateMembrane .3s .18s ease-out both}
+@keyframes grGoalGateShatter{0%{opacity:1;transform:scale(1)}32%{opacity:1;transform:scale(1.07) rotate(-2deg);filter:brightness(1.75)}62%{opacity:.62;transform:scale(.86) rotate(4deg)}100%{opacity:0;transform:scale(.42) rotate(11deg)}}
+@keyframes grGoalGateOpen{0%{opacity:0;transform:scale(.7)}100%{opacity:1;transform:scale(1)}}
+@keyframes grGoalGateMembrane{0%{opacity:0;transform:scale(.78)}100%{opacity:1;transform:scale(1)}}
+.grGoalEntryArrowStack{position:absolute;z-index:9;left:50%;top:-17px;transform:translateX(-50%);display:flex;flex-direction:column-reverse;align-items:center;gap:0;color:var(--gameroad-goal-entry-cue-color);text-shadow:0 0 5px color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 60%,transparent);opacity:.88}
 .grGoalEntryArrow{display:block;font-size:clamp(8px,1.2vw,13px);font-weight:950;line-height:.65;animation:grGoalEntryArrowRise 1.2s ease-in-out infinite}
 .grGoalEntryArrow:nth-child(2){animation-delay:.24s}.grGoalEntryArrow:nth-child(3){animation-delay:.48s}
 @keyframes grGoalEntryArrowRise{0%,100%{transform:translateY(3px);opacity:.25}45%{transform:translateY(-2px);opacity:1}}
@@ -182,6 +185,8 @@ function createGate(documentLike, lane) {
   setAttr(gate, 'data-participant-id', lane.participantId);
   setAttr(gate, 'data-lane-index', lane.laneIndex);
   setAttr(gate, 'data-goal-path-open', '0');
+  setAttr(gate, 'data-closed-gate-material', 'hard-ice-bar');
+  setAttr(gate, 'data-open-gate-form', 'hoop-with-transparent-membrane');
   setAttr(gate, 'aria-hidden', 'true');
   gate.appendChild(createNode(documentLike, 'span', 'grGoalEntryBarrier'));
   gate.appendChild(createNode(documentLike, 'span', 'grGoalEntryHoop'));
@@ -349,6 +354,8 @@ export const NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT = deepFreeze({
   gateCount: 12,
   sharedGoalCount: 1,
   closedGateVisual: 'SOLID_LOCKED_BARRIER',
+  closedGateMaterial: 'HARD_ICE_BAR',
+  closedGateEmphasis: 'LOW_UNTIL_CONNECTED',
   openGateVisual: 'OPEN_HOOP_WITH_TRANSPARENT_MEMBRANE',
   standardOpeningTransition: 'BARRIER_SHATTER_TO_OPEN_HOOP',
   gatePlacement: 'EXACT_ROUTE_GATE_ANCHOR_BELOW_SHARED_GOAL',

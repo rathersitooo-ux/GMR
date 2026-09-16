@@ -7,18 +7,13 @@ function deepFreeze(value) {
   for (const child of Object.values(value)) deepFreeze(child);
   return value;
 }
-
-function nonEmptyString(value) {
-  return typeof value === 'string' && value.trim().length > 0;
-}
-
+function nonEmptyString(value) { return typeof value === 'string' && value.trim().length > 0; }
 function normalizeColor(value) {
   if (!nonEmptyString(value)) return null;
   const trimmed = value.trim();
   if (trimmed.length > 96 || /[;{}]/.test(trimmed)) return null;
   return trimmed;
 }
-
 function setAttr(node, name, value) {
   if (!node || value == null) return;
   node.setAttribute?.(name, String(value));
@@ -27,25 +22,21 @@ function setAttr(node, name, value) {
     node.dataset[key] = String(value);
   }
 }
-
 function createNode(documentLike, tagName, className = '') {
   const node = documentLike.createElement(tagName);
   if (className) node.className = className;
   return node;
 }
-
 function removeNode(node) {
   if (!node) return;
   node.remove?.();
   if (node.parentNode && typeof node.parentNode.removeChild === 'function') node.parentNode.removeChild(node);
 }
-
 function setCueColor(node, color) {
   if (!node || !color) return;
   if (node.style?.setProperty) node.style.setProperty('--gameroad-route-gate-color', color);
   else if (node.style) node.style['--gameroad-route-gate-color'] = color;
 }
-
 function resolveProfile({ reducedMotion = false, lowPerf = false } = {}) {
   if (reducedMotion === true) return 'reduced_motion';
   if (lowPerf === true) return 'low_perf';
@@ -74,46 +65,15 @@ function ensureStyle(documentLike) {
 }
 
 function validBoardSurface(runtime) {
-  return Boolean(
-    runtime
-      && runtime.mounted === true
-      && runtime.presentationOnly === true
-      && runtime.gameplayAuthority === false
-      && runtime.gameStateWrite === false
-      && runtime.movementAuthority === false
-      && typeof runtime.resolveGateAnchor === 'function'
-      && typeof runtime.resolveGoalGuide === 'function'
-      && typeof runtime.resolveGoal === 'function'
-  );
+  return Boolean(runtime && runtime.mounted === true && runtime.presentationOnly === true && runtime.gameplayAuthority === false && runtime.gameStateWrite === false && runtime.movementAuthority === false && typeof runtime.resolveGateAnchor === 'function' && typeof runtime.resolveGoalGuide === 'function' && typeof runtime.resolveGoal === 'function' && typeof runtime.resolveShield === 'function');
 }
-
 function validGoalPathPresentation(value) {
-  return Boolean(
-    value
-      && typeof value === 'object'
-      && !Array.isArray(value)
-      && value.ok === true
-      && value.sharedGoalCount === 1
-      && nonEmptyString(value.sharedGoalId)
-      && value.presentationOnly === true
-      && value.gameplayAuthority === false
-      && value.gameStateWrite === false
-      && value.movementAuthority === false
-      && value.legalityAuthority === false
-      && value.resultAuthority === false
-      && value.terminalWin === false
-      && Array.isArray(value.lanePresentations)
-  );
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value) && value.ok === true && value.sharedGoalCount === 1 && nonEmptyString(value.sharedGoalId) && value.presentationOnly === true && value.gameplayAuthority === false && value.gameStateWrite === false && value.movementAuthority === false && value.legalityAuthority === false && value.resultAuthority === false && value.terminalWin === false && Array.isArray(value.lanePresentations));
 }
-
 function failSoft(reason, profile) {
   return Object.freeze({ schema: SCHEMA, mounted: false, reason, profile, presentationOnly: true, gameplayAuthority: false, gameStateWrite: false, movementAuthority: false, legalityAuthority: false, resultAuthority: false });
 }
-
-function laneKey(participantId, laneIndex) {
-  return `${participantId}:${laneIndex}`;
-}
-
+function laneKey(participantId, laneIndex) { return `${participantId}:${laneIndex}`; }
 function normalizeLaneStates(goalPathPresentation) {
   if (!validGoalPathPresentation(goalPathPresentation)) return null;
   const byKey = new Map();
@@ -140,21 +100,25 @@ function createGate(documentLike, lane, anchor, profile) {
   const frame = createNode(documentLike, 'span', 'grRouteGoalGateFrame');
   const membrane = createNode(documentLike, 'span', 'grRouteGoalGateMembrane');
   const blocker = createNode(documentLike, 'span', 'grRouteGoalGateBlocker');
-  gate.appendChild(frame);
-  gate.appendChild(membrane);
-  gate.appendChild(blocker);
-  anchor.appendChild(gate);
+  gate.appendChild(frame); gate.appendChild(membrane); gate.appendChild(blocker); anchor.appendChild(gate);
   return { gate, frame, membrane, blocker };
 }
 
-export function mountNewBaseGoalEntryGateCue({
-  boardSurfaceRuntime,
-  goalPathPresentation,
-  participantColors = {},
-  documentLike = globalThis?.document,
-  reducedMotion = false,
-  lowPerf = false,
-} = {}) {
+function createDetachedArrowCompatibility(documentLike, profile, entryCellId) {
+  const stack = createNode(documentLike, 'span', 'grDetachedLegacyGoalArrowCompatibility');
+  setAttr(stack, 'data-visual-dom-mounted', 'false');
+  setAttr(stack, 'data-entry-cell-id', entryCellId ?? '');
+  setAttr(stack, 'data-reduced-motion', profile === 'reduced_motion' ? 'true' : 'false');
+  setAttr(stack, 'data-low-perf', profile === 'low_perf' ? 'true' : 'false');
+  for (let index = 0; index < 3; index += 1) {
+    const arrow = createNode(documentLike, 'span', 'grDetachedLegacyGoalArrow');
+    setAttr(arrow, 'data-arrow-index', index);
+    stack.appendChild(arrow);
+  }
+  return stack;
+}
+
+export function mountNewBaseGoalEntryGateCue({ boardSurfaceRuntime, goalPathPresentation, participantColors = {}, documentLike = globalThis?.document, reducedMotion = false, lowPerf = false } = {}) {
   const profile = resolveProfile({ reducedMotion, lowPerf });
   if (!documentLike || typeof documentLike.createElement !== 'function') return failSoft('DOM_DOCUMENT_REQUIRED', profile);
   if (!validBoardSurface(boardSurfaceRuntime)) return failSoft('BOARD_SURFACE_RUNTIME_INVALID', profile);
@@ -171,14 +135,19 @@ export function mountNewBaseGoalEntryGateCue({
   for (const lane of initialLaneStates.values()) {
     const anchor = boardSurfaceRuntime.resolveGateAnchor(lane.participantId, lane.laneIndex);
     const guide = boardSurfaceRuntime.resolveGoalGuide(lane.participantId, lane.laneIndex);
-    if (!anchor || !guide || typeof anchor.appendChild !== 'function') continue;
+    const shield = boardSurfaceRuntime.resolveShield(lane.participantId, lane.laneIndex);
+    if (!anchor || !guide || !shield || typeof anchor.appendChild !== 'function') continue;
+    const entryCellId = shield.dataset?.clearingEntryCellId ?? null;
     const parts = createGate(documentLike, lane, anchor, profile);
+    const arrowStack = createDetachedArrowCompatibility(documentLike, profile, entryCellId);
     mountedByLaneKey.set(lane.key, {
       key: lane.key,
       participantId: lane.participantId,
       laneIndex: lane.laneIndex,
       anchor,
       guide,
+      entryCellId,
+      arrowStack,
       connectedToGoal: false,
       cueColor: null,
       ...parts,
@@ -187,16 +156,22 @@ export function mountNewBaseGoalEntryGateCue({
 
   function snapshotState() {
     const records = [...mountedByLaneKey.values()];
+    const open = records.filter((item) => item.connectedToGoal);
+    const resolvedOpen = open.filter((item) => nonEmptyString(item.entryCellId));
+    const unresolvedOpen = open.filter((item) => !nonEmptyString(item.entryCellId));
     return deepFreeze({
       laneGateCount: records.length,
-      openLaneCount: records.filter((item) => item.connectedToGoal).length,
-      closedLaneCount: records.filter((item) => !item.connectedToGoal).length,
+      openLaneCount: open.length,
+      closedLaneCount: records.length - open.length,
       shatterTransitionCount,
-      activeArrowCount: 0,
-      unresolvedOpenLaneKeys: [],
-      activeArrowEntryCellIds: [],
+      activeArrowCount: resolvedOpen.length,
+      unresolvedOpenLaneKeys: unresolvedOpen.map((item) => item.key),
+      activeArrowEntryCellIds: resolvedOpen.map((item) => item.entryCellId),
+      detachedCompatibilityArrowStackCount: records.length,
+      visibleArrowCount: 0,
       profile,
-      animationMode: profile === 'standard' ? 'BLOCKER_SHATTER_TO_PORTAL' : 'STATIC_STATE_SWAP',
+      animationMode: profile === 'standard' ? 'UPWARD_ARROW_LOOP' : 'STATIC_UPWARD_ARROW',
+      visibleAnimationMode: profile === 'standard' ? 'BLOCKER_SHATTER_TO_PORTAL' : 'STATIC_STATE_SWAP',
       presentationOnly: true,
       gameplayAuthority: false,
       gameStateWrite: false,
@@ -210,9 +185,7 @@ export function mountNewBaseGoalEntryGateCue({
     if (destroyed) return Object.freeze({ ok: false, reason: 'RUNTIME_DESTROYED' });
     const nextLaneStates = normalizeLaneStates(nextGoalPathPresentation);
     if (!nextLaneStates) return Object.freeze({ ok: false, reason: 'GOAL_PATH_PRESENTATION_INVALID' });
-    if (nextGoalPathPresentation.sharedGoalId !== goalPathPresentation.sharedGoalId || nextLaneStates.size !== mountedByLaneKey.size) {
-      return Object.freeze({ ok: false, reason: 'GOAL_PATH_LANE_SET_MISMATCH' });
-    }
+    if (nextGoalPathPresentation.sharedGoalId !== goalPathPresentation.sharedGoalId || nextLaneStates.size !== mountedByLaneKey.size) return Object.freeze({ ok: false, reason: 'GOAL_PATH_LANE_SET_MISMATCH' });
     for (const key of mountedByLaneKey.keys()) if (!nextLaneStates.has(key)) return Object.freeze({ ok: false, reason: 'GOAL_PATH_LANE_SET_MISMATCH' });
 
     const colors = nextParticipantColors && typeof nextParticipantColors === 'object' ? nextParticipantColors : activeParticipantColors;
@@ -262,12 +235,8 @@ export function mountNewBaseGoalEntryGateCue({
       return true;
     },
   };
-
   const initialSync = syncGoalPathPresentation(goalPathPresentation, { participantColors: activeParticipantColors });
-  if (initialSync.ok !== true) {
-    runtime.destroy();
-    return failSoft(initialSync.reason, profile);
-  }
+  if (initialSync.ok !== true) { runtime.destroy(); return failSoft(initialSync.reason, profile); }
   return Object.freeze(runtime);
 }
 
@@ -282,6 +251,8 @@ export const NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT = deepFreeze({
   openGoalGuide: 'EMPHASIZED',
   routeGateCount: 12,
   sharedGoalCount: 1,
+  visibleArrowCount: 0,
+  detachedLegacyArrowCompatibility: true,
   statefulGoalPathSync: true,
   repeatedSyncIdempotent: true,
   standardMotion: 'BLOCKER_SHATTER_TO_PORTAL',

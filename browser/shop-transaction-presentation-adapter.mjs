@@ -141,6 +141,7 @@ function validateApprovedFanArtShopItem(raw) {
       acquisition:Object.freeze({
         productId: acquisition.productId.trim(),
         currency: 'MANII',
+        currencyDisplayName: 'マニィ',
         price: acquisition.price,
       }),
       actions:Object.freeze(['VIEW', 'ACQUIRE']),

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ACCESSIBILITY-MOTION-R3-20260916T2341-SOL-A25-V3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_REDUCED_MOTION_LOW_PERF_REGRESSION_R3",
+  "acquireKey": "BATTLE-ACCESSIBILITY-MOTION-R3-20260916T2341-SOL-A25",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "WU25-R3-CROSS-MODULE-SEMANTIC-PARITY-PREDICTION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "WU25-R3-EXISTING-CORE-CONTRACTS-AND-FOCUSED-NODE-TEST-ORACLE",
+  "proceedToken": "PROCEED|BATTLE-ACCESSIBILITY-MOTION-R3-20260916T2341-SOL-A25-V3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|test-only-regression|lease-snapshot",
+  "authorizationBaseSha": "5e92728a40de9a89b8648cca2104ac3df23cd3fa",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_REDUCED_MOTION_LOW_PERF_REGRESSION_R3",
+  "leaseAcquireKey": "BATTLE-ACCESSIBILITY-MOTION-R3-20260916T2341-SOL-A25",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 23:41 JST",
+  "leaseUntilJst": "2026-09-17 00:41 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A27:L27",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR exact main 5e92728a40de9a89b8648cca2104ac3df23cd3fa; tests/battle-janken-order-motion-core.test.mjs; own transient data/preaction-authorizations/BATTLE-ACCESSIBILITY-MOTION-R3-20260916T2341-SOL-A25-V3.json; own fresh branch/PR/check/merge/readback; CURRENT_ACTIVE_LEASES own AcquireKey row; R24 own event records",
+  "scope": [
+    "tests/battle-janken-order-motion-core.test.mjs"
+  ],
+  "leaseScope": [
+    "tests/battle-janken-order-motion-core.test.mjs"
+  ]
+}

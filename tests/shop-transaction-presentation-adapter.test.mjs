@@ -119,6 +119,7 @@ test('formal approved work projects only public Shop data and view/acquire actio
   assert.equal(out.items.length, 1);
   assert.deepEqual(out.items[0].actions, ['VIEW','ACQUIRE']);
   assert.equal(out.items[0].acquisition.currency, 'MANII');
+  assert.equal(out.items[0].acquisition.currencyDisplayName, 'マニィ');
   assert.equal(Object.hasOwn(out.items[0], 'creatorUserId'), false);
   assert.equal(Object.hasOwn(out.items[0], 'submissionRecordId'), false);
   assert.equal(Object.hasOwn(out.items[0], 'approvalRecordId'), false);

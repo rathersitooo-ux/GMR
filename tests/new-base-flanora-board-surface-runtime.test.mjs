@@ -111,6 +111,10 @@ test('mount is world-first: one top-center GOAL, twelve route anchors, four x th
   assert.match(styleText,/#battleMap\[data-central-world-live="1"\]\.decisionRoad #routeSvg\{opacity:1!important\}/);
   assert.match(styleText,/\.decisionRoad #routeSvg \.rangeSurface:not\(\.path\)\{opacity:\.12!important\}/);
   assert.match(styleText,/\.decisionRoad #routeLine\{opacity:\.55!important\}/);
+  assert.ok(styleText.includes('@media(max-width:540px) and (orientation:portrait){'));
+  assert.ok(styleText.includes('[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal{top:19.5%;width:70px;height:28px}'));
+  assert.ok(styleText.includes('[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateLayer{top:29%;height:5.5%}'));
+  assert.ok(styleText.includes('[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{top:49%;bottom:29%}'));
   assert.equal(runtime.routeGateLayer.children[0].style.left,'7.1419%');
   assert.equal(runtime.progressionGrid.children[0].children[0].style.left,'7.1419%');
   assert.equal(runtime.resolveClearingCell('clearing:top:0').style.top,'0%');

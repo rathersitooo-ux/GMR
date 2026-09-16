@@ -123,7 +123,7 @@ assert.equal(resolveViewerLocalPlayedCardArt(document, 'C2'), null);
 const root = document.createElement('main');
 root.setAttribute('data-gr-battle-screen-root', '');
 document.body.appendChild(root);
-const runtime = mountBattleScreenExternalSurface({ document }, { root });
+const runtime = mountBattleScreenExternalSurface({ document }, { root, viewerParticipantId: 'P1' });
 
 assert.equal(runtime.presentationOnly, true);
 assert.equal(runtime.gameplayAuthority, false);
@@ -196,6 +196,8 @@ assert.ok(runtimeStyle.textContent.includes('[data-battle-screen-causal-grid]::b
 assert.ok(runtimeStyle.textContent.includes('clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)'));
 assert.ok(runtimeStyle.textContent.includes('[data-gr-battle-screen="1"] [data-battle-screen-causal-grid]::before{content:"";display:none;'));
 assert.ok(runtimeStyle.textContent.includes('[data-battle-screen-causal-grid] > [data-battle-screen-lane]{left:0!important;top:0!important}'));
+assert.ok(runtimeStyle.textContent.includes('[data-viewer-role=\"self\"]{border-color:transparent'));
+assert.ok(runtimeStyle.textContent.includes('.grBattleLaneViewerRole'));
 assert.ok(runtimeStyle.textContent.includes('@media(max-height:470px) and (orientation:landscape)'));
 assert.ok(runtimeStyle.textContent.includes('@media(max-height:420px){[data-gr-battle-screen="1"] [data-battle-screen-causal-grid]{top:78px;bottom:auto;height:72px;left:36%;right:4px;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr)}'));
 assert.ok(runtimeStyle.textContent.includes('.battle .royalUsageStrip{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;width:151px!important;gap:2px!important}'));
@@ -334,7 +336,20 @@ assert.notEqual(runtime.hud.loadCard.dataset.cardId, 'C7');
 
 assert.equal(BATTLE_SCREEN_RUNTIME.loadCardLiveProjectionSource, 'EXISTING_FOCUS_DOM_EXACT_PHYSICAL_CARD_ID_ACCEPTED_ONLY');
 assert.equal(BATTLE_SCREEN_RUNTIME.loadCardFocusDomMutation, false);
+assert.equal(BATTLE_SCREEN_RUNTIME.viewerRoleAuthority, 'CALLER_EXPLICIT_PARTICIPANT_ID_ONLY_NO_ORDER_INFERENCE');
+assert.equal(BATTLE_SCREEN_RUNTIME.viewerRoleFallback, 'NEUTRAL_PUBLIC_SUMMARIES');
+assert.equal(BATTLE_SCREEN_RUNTIME.viewerSelfPresentation, 'SAME_AUTHORITATIVE_PARTICIPANT_NO_DUPLICATE_PEER_ENTITY');
 
+const neutralRoot = document.createElement('main');
+document.body.appendChild(neutralRoot);
+const neutralRuntime = mountBattleScreenExternalSurface({ document }, { root: neutralRoot });
+const neutralIdle = createBattleScreenModel({ participants });
+neutralRuntime.render(neutralIdle);
+assert.deepEqual(neutralRuntime.laneSurfaces.map(node => node.dataset.viewerRole), ['neutral', 'neutral', 'neutral', 'neutral']);
+assert.equal(neutralRuntime.grid.dataset.viewerRoleResolution, 'not-provided');
+assert.equal(neutralRuntime.grid.dataset.viewerParticipantId, undefined);
+assert.deepEqual(neutralRuntime.laneSurfaces.map(node => node.children[0].children[0].hidden), [true, true, true, true]);
+neutralRuntime.destroy();
 
 const idle = createBattleScreenModel({ participants });
 runtime.render(idle);
@@ -348,6 +363,11 @@ assert.equal(runtime.currentActionCue.dataset.phase, 'plan');
 assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, undefined);
 assert.equal(runtime.planSlot.hidden, false);
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['idle', 'idle', 'idle', 'idle']);
+assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.viewerRole), ['self', 'peer', 'peer', 'peer']);
+assert.equal(runtime.grid.dataset.viewerRoleResolution, 'caller-explicit');
+assert.equal(runtime.grid.dataset.viewerParticipantId, 'P1');
+assert.equal(runtime.laneSurfaces[0].getAttribute('aria-label'), 'A-1（自分）');
+assert.equal(runtime.laneSurfaces[0].children[0].children[0].textContent, '自分');
 const roleSurfaces = runtime.laneSurfaces.map(node => node.children[1]);
 assert.deepEqual(roleSurfaces.map(node => node.hidden), [true, true, true, true]);
 assert.deepEqual(roleSurfaces.map(node => node.textContent), ['', '', '', '']);
@@ -376,6 +396,8 @@ assert.deepEqual(runtime.publicCardSurfaces.map(node => node.hidden), [false, fa
 assert.deepEqual(runtime.publicCardSurfaces.map(node => node.dataset.playerId), ['P1', 'P2', 'P3', 'P4']);
 assert.deepEqual(runtime.publicCardSurfaces.map(node => node.dataset.cardId), ['C1', 'C2', 'C3', 'C4']);
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.publicCardVisible), ['true', 'true', 'true', 'true']);
+assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.viewerRole), ['self', 'peer', 'peer', 'peer']);
+assert.equal(runtime.publicCardSurfaces[0].hidden, false);
 assert.equal(runtime.publicCardSurfaces[0].dataset.artSource, 'viewer_local');
 assert.equal(runtime.publicCardSurfaces[0].children[0].tagName, 'IMG');
 assert.equal(runtime.publicCardSurfaces[0].children[0].src, 'blob:gameroad-local-c1');

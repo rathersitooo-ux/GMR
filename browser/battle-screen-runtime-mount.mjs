@@ -145,6 +145,9 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="source"]{transform:translateY(-1.4%);border-color:rgba(165,230,213,.58);background:linear-gradient(180deg,rgba(35,90,72,.82),rgba(6,31,26,.62))}
 [${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="target"]{border-color:rgba(246,198,145,.58);background:linear-gradient(180deg,rgba(105,67,38,.74),rgba(31,32,20,.62))}
 [${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="winner"]{transform:translateY(-2.2%);border-color:rgba(255,232,145,.72);background:linear-gradient(180deg,rgba(111,91,35,.78),rgba(27,38,23,.58));box-shadow:0 0 28px rgba(237,202,102,.18),0 10px 22px rgba(2,20,17,.20),inset 0 0 0 1px rgba(255,245,196,.10)}
+[${SHELL_ATTR}="1"] [${LANE_ATTR}][data-viewer-role="self"]{border-color:transparent;background:linear-gradient(180deg,rgba(15,46,41,.28),rgba(5,25,23,.12));box-shadow:none}
+[${SHELL_ATTR}="1"] .grBattleLaneViewerRole{display:none;align-items:center;width:max-content;margin-bottom:2px;padding:1px 5px;border-radius:999px;border:1px solid rgba(244,246,224,.32);background:rgba(4,24,22,.58);font-size:9px;font-weight:900;letter-spacing:.08em;line-height:1.35}
+[${SHELL_ATTR}="1"] [${LANE_ATTR}][data-viewer-role="self"] .grBattleLaneViewerRole{display:inline-flex}
 [${SHELL_ATTR}="1"] .grBattleLaneIdentity{min-width:0}.grBattleLaneIdentity b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(13px,1.25vw,16px);letter-spacing:.04em}.grBattleLaneIdentity small{display:block;margin-top:2px;opacity:.72;font-size:clamp(11px,.9vw,13px)}
 [${SHELL_ATTR}="1"] [${LANE_ATTR}][data-public-card-visible="true"] .grBattleLaneIdentity{padding-right:clamp(30px,4.8vw,46px)}
 [${SHELL_ATTR}="1"] .grBattleLanePublicCard{position:absolute;z-index:3;right:5px;top:5px;width:clamp(28px,4.1vw,42px);height:clamp(38px,5.6vw,56px);display:block;overflow:hidden;border-radius:6px;border:1px solid rgba(255,236,167,.72);background:linear-gradient(160deg,rgba(242,246,220,.96),rgba(70,103,88,.94) 48%,rgba(13,42,37,.98));box-shadow:0 5px 12px rgba(0,0,0,.30),0 0 0 1px rgba(255,255,255,.08);pointer-events:none}
@@ -238,10 +241,15 @@ function createLane(document, participantIndex) {
   const lane = createNode(document, 'article', 'grBattleLane');
   lane.setAttribute?.(LANE_ATTR, String(participantIndex + 1));
   lane.dataset.role = 'idle';
+  lane.dataset.viewerRole = 'neutral';
   const identity = createNode(document, 'div', 'grBattleLaneIdentity');
+  const viewerRole = createNode(document, 'span', 'grBattleLaneViewerRole', '自分');
+  viewerRole.hidden = true;
+  viewerRole.setAttribute?.('aria-hidden', 'true');
   const name = createNode(document, 'b');
   const team = createNode(document, 'small');
   const shieldRail = createShieldRail(document);
+  identity.appendChild(viewerRole);
   identity.appendChild(name);
   identity.appendChild(team);
   identity.appendChild(shieldRail);
@@ -257,7 +265,18 @@ function createLane(document, participantIndex) {
   lane.appendChild(role);
   lane.appendChild(afterstate);
   lane.appendChild(publicCard);
-  return { lane, name, team, shieldRail, role, afterstate, publicCard };
+  return { lane, viewerRole, name, team, shieldRail, role, afterstate, publicCard };
+}
+
+function normalizeViewerParticipantId(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function resolveViewerParticipantId(model, requestedViewerParticipantId) {
+  const requested = normalizeViewerParticipantId(requestedViewerParticipantId);
+  if (!requested) return Object.freeze({ requested: null, resolved: null, status: 'not-provided' });
+  const resolved = Array.isArray(model?.lanes) && model.lanes.some(lane => lane?.id === requested) ? requested : null;
+  return Object.freeze({ requested, resolved, status: resolved ? 'caller-explicit' : 'explicit-id-not-in-model' });
 }
 
 function readBattleFieldId(...nodes) {
@@ -841,6 +860,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   visualHost.appendChild(grid);
   const lanes = Array.from({ length: 4 }, (_, index) => createLane(document, index));
   for (const lane of lanes) grid.appendChild(lane.lane);
+  const defaultViewerParticipantId = normalizeViewerParticipantId(options.viewerParticipantId);
 
   const resolutionAnchor = ensureAnchor(document, phaseSurface, providedResolution, 'battleResolution', 'div');
   const resolutionSurface = resolutionAnchor.node;
@@ -995,7 +1015,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   }
   syncLoadCardFocusDom();
 
-  function render(model, hudSnapshot = null) {
+  function render(model, hudSnapshot = null, presentationContext = null) {
     if (destroyed) throw new Error('BATTLE_SCREEN_RUNTIME_DESTROYED');
 
     // Rejected/stale input must not leave the previous accepted return highlighted.
@@ -1018,6 +1038,12 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     const audit = auditBattleScreenModel(model);
     if (!audit.ok) throw new TypeError(`BATTLE_SCREEN_MODEL_REJECTED:${audit.defects.join(',')}`);
     if (hudSnapshot !== null) renderHud(hudSnapshot);
+
+    const hasViewerOverride = presentationContext && typeof presentationContext === 'object' && !Array.isArray(presentationContext)
+      && Object.prototype.hasOwnProperty.call(presentationContext, 'viewerParticipantId');
+    const viewer = resolveViewerParticipantId(model, hasViewerOverride ? presentationContext.viewerParticipantId : defaultViewerParticipantId);
+    setData(grid, 'viewerRoleResolution', viewer.status);
+    setData(grid, 'viewerParticipantId', viewer.resolved);
 
     const boardReturn = model.boardReturn ?? null;
     setData(shell, 'mode', model.screenMode);
@@ -1048,9 +1074,16 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     for (let index = 0; index < lanes.length; index += 1) {
       const view = lanes[index];
       const lane = model.lanes[index];
+      const viewerRole = viewer.resolved ? (lane.id === viewer.resolved ? 'self' : 'peer') : 'neutral';
       view.lane.dataset.participantId = lane.id;
       view.lane.dataset.role = lane.role;
+      view.lane.dataset.viewerRole = viewerRole;
+      view.lane.setAttribute?.('aria-label', viewerRole === 'self' ? `${lane.label}（自分）` : lane.label);
+      view.viewerRole.hidden = viewerRole !== 'self';
+      view.viewerRole.textContent = viewerRole === 'self' ? '自分' : '';
+      view.viewerRole.setAttribute?.('aria-hidden', viewerRole === 'self' ? 'false' : 'true');
       view.shieldRail.dataset.participantId = lane.id;
+      view.shieldRail.dataset.viewerRole = viewerRole;
       setData(view.shieldRail, 'boardReturnParticipant', boardReturn?.opponentId === lane.id ? 'true' : null);
       view.shieldRail.setAttribute?.('aria-label', `${lane.label}: Shield L/C/R と対応ROAD`);
       for (const link of view.shieldRail.children ?? []) {
@@ -1150,6 +1183,9 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   boardReturnAuthority: 'MODEL_ONLY_EXACT_OPPONENT_PLUS_SHIELD_LANE',
   shieldSlots: SHIELD_SLOTS,
   laneCount: 4,
+  viewerRoleAuthority: 'CALLER_EXPLICIT_PARTICIPANT_ID_ONLY_NO_ORDER_INFERENCE',
+  viewerRoleFallback: 'NEUTRAL_PUBLIC_SUMMARIES',
+  viewerSelfPresentation: 'SAME_AUTHORITATIVE_PARTICIPANT_NO_DUPLICATE_PEER_ENTITY',
   productionHtmlMutationOwnedHere: false,
   formalArtOwnedHere: false
 });

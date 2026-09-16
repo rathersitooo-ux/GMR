@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-INVALIDATED-RETURN-R2-20260916T1254-SOL-RECOVER",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_INVALIDATED_RETURN_BOUNDARY_R1",
+  "acquireKey": "BATTLE-JANKEN-INVALIDATED-RETURN-R2-20260916T1254-SOL-RECOVER",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "STALE_WORK_R1_EXPIRED_WITHOUT_TERMINAL_AND_DEFAULT_BRANCH_HAS_NO_INVALIDATED_RETURN_BOUNDARY",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PURE_FAIL_CLOSED_BOUNDARY_ONLY_NEW_MODULE_AND_TEST_NO_SHARED_OWNER_MUTATION",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-INVALIDATED-RETURN-R2-20260916T1254-SOL-RECOVER|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|janken-invalidated-return|pure-boundary|active-lease",
+  "authorizationBaseSha": "957e92ac9fb3744d996fd90d5abe626d3d21d1e0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_INVALIDATED_RETURN_BOUNDARY_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-INVALIDATED-RETURN-R2-20260916T1254-SOL-RECOVER",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 12:54 JST",
+  "leaseUntilJst": "2026-09-16 13:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
+  "leaseExactMutableResources": "NEW browser/battle-janken-invalidated-return-boundary.mjs; NEW tests/battle-janken-invalidated-return-boundary.test.mjs; own transient data/preaction-authorizations/BATTLE-JANKEN-INVALIDATED-RETURN-R2-20260916T1254-SOL-RECOVER.json; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; triad-resolver-core.mjs; battle-new-base-live-consumer-adapter.mjs; compound package core; gameplay movement/target/Shield/save/network/economy/assets; all unrelated active WorkUnits.",
+  "solutionSignature": "JANKEN_INVALIDATED_SAME_PHYSICAL_CARD_RETURN_TO_HAND_BOUNDARY_V1",
+  "reuseDisposition": "BUILD",
+  "buildResidualReason": "No existing default-branch boundary returns the exact already-selected physical card after authoritative INVALIDATED resolution while preserving resolver, movement, turn-order and shared HTML ownership; this new pure fail-closed boundary is the remaining gap.",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "NO_EXISTING_DEFAULT_BRANCH_BOUNDARY_AND_EXISTING_RESOLVER_REMAINS_AUTHORITATIVE_READ_ONLY",
+  "solutionSearchEvidence": [
+    "The stale R1 lease expired without a terminal event and named exactly two new mutable product files.",
+    "Default-branch search found no existing battle-janken-invalidated-return-boundary implementation to reuse.",
+    "The authoritative janken resolver remains read-only; this WorkUnit only consumes its already-resolved outcome.",
+    "INVALIDATED may return only the caller-supplied same physical cardId to the same player hand after comparison.",
+    "Movement rollback, target selection, turn ordering, resolver logic, shared HTML integration, save/network/economy and unrelated gameplay state are outside scope.",
+    "All behavior must fail closed on malformed lineage, mismatched player/card identity, non-INVALIDATED outcome, or duplicate return attempt."
+  ],
+  "scope": [
+    "browser/battle-janken-invalidated-return-boundary.mjs",
+    "tests/battle-janken-invalidated-return-boundary.test.mjs",
+    "data/preaction-authorizations/BATTLE-JANKEN-INVALIDATED-RETURN-R2-20260916T1254-SOL-RECOVER.json"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-invalidated-return-boundary.mjs",
+    "tests/battle-janken-invalidated-return-boundary.test.mjs",
+    "data/preaction-authorizations/BATTLE-JANKEN-INVALIDATED-RETURN-R2-20260916T1254-SOL-RECOVER.json"
+  ]
+}

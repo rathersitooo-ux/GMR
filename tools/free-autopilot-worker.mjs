@@ -55,6 +55,12 @@ export function validateFreePacket(packet) {
         throw new Error(`control_plane_mutation_forbidden:${item}`);
       }
     }
+    for (const key of ['exactInputs', 'fixedAssumptions', 'procedure', 'noInferenceBoundary', 'stopConditions', 'returnPayload']) {
+      if (!Array.isArray(packet[key]) || packet[key].length === 0) throw new Error(`procedure_first_required:${key}`);
+    }
+    if (typeof packet.executorClass !== 'string' || !packet.executorClass.trim()) {
+      throw new Error('procedure_first_required:executorClass');
+    }
     return { ok: true, packet: { ...packet, exactMutableResources: mutablePaths } };
   } catch (error) {
     return fail(error.message);
@@ -81,6 +87,14 @@ function readContextFile(root, relativePath) {
   return `===== ${relativePath} =====\n${clipped}\n`;
 }
 
+function numbered(items) {
+  return items.map((item, index) => `${index + 1}. ${item}`).join('\n');
+}
+
+function bulleted(items) {
+  return items.length ? `- ${items.join('\n- ')}` : '(none listed)';
+}
+
 export function buildPrompt(packet, root = process.cwd()) {
   const checked = validateFreePacket(packet);
   if (!checked.ok) throw new Error(checked.reason);
@@ -96,9 +110,8 @@ export function buildPrompt(packet, root = process.cwd()) {
     }
     context += part;
   }
-  const acceptance = safePacket.acceptance.map((item, index) => `${index + 1}. ${item}`).join('\n');
-  const immutable = safePacket.doNotChange.length ? safePacket.doNotChange.join('\n- ') : '(none listed)';
-  return `<|im_start|>system\nYou are GAMEROAD Free Local Coder. Produce a minimal code patch only. Never change product rules unless explicitly required. Never add paid APIs, credentials, telemetry, network exfiltration, new task systems, or hidden fallback behavior. You have no authority to merge. Output exactly one unified git diff and no prose. Touch only the explicitly mutable paths. If the request cannot be solved safely from the provided files, output FREE_AUTOPILOT_BLOCKED and a short reason instead of a patch.<|im_end|>\n<|im_start|>user\nTASK_ID: ${safePacket.taskId}\nWORK_UNIT: ${safePacket.workUnitKey}\nBASE_SHA: ${safePacket.baseRef}\nUSER_END_STATE:\n${safePacket.userEndState}\n\nREAL_OUTPUT_TARGET:\n${safePacket.realOutputTarget}\n\nACCEPTANCE:\n${acceptance}\n\nMUTABLE_PATHS:\n- ${safePacket.exactMutableResources.join('\n- ')}\n\nDO_NOT_CHANGE:\n- ${immutable}\n\nCURRENT_FILE_CONTEXT:\n${context}\n\nReturn only a unified git diff beginning with diff --git. Do not use markdown fences.<|im_end|>\n<|im_start|>assistant\n`;
+  const immutable = [...safePacket.readOnlyResources, ...safePacket.doNotChange];
+  return `<|im_start|>system\nYou are GAMEROAD Free Local Coder. You are an executor, not a planner. Sol has already made the design and routing decisions. Follow the supplied ordered procedure exactly. Do not infer missing product rules, priorities, owners, targets, or acceptance criteria. Produce a minimal code patch only. Never add paid APIs, credentials, telemetry, network exfiltration, new task systems, or hidden fallback behavior. You have no authority to merge. Output exactly one unified git diff and no prose. Touch only the explicitly mutable paths. If any stop condition, ambiguity, stale input, missing required context, or no-inference boundary is reached, output FREE_AUTOPILOT_BLOCKED and a short reason instead of a patch.<|im_end|>\n<|im_start|>user\nTASK_ID: ${safePacket.taskId}\nWORK_UNIT: ${safePacket.workUnitKey}\nBASE_SHA: ${safePacket.baseRef}\nEXECUTOR_CLASS: ${safePacket.executorClass}\n\nEXACT_INPUTS:\n${bulleted(safePacket.exactInputs)}\n\nFIXED_ASSUMPTIONS:\n${numbered(safePacket.fixedAssumptions)}\n\nORDERED_PROCEDURE:\n${numbered(safePacket.procedure)}\n\nNO_INFERENCE_BOUNDARY:\n${bulleted(safePacket.noInferenceBoundary)}\n\nUSER_END_STATE:\n${safePacket.userEndState}\n\nREAL_OUTPUT_TARGET:\n${safePacket.realOutputTarget}\n\nACCEPTANCE:\n${numbered(safePacket.acceptance)}\n\nSTOP_FAIL_CLOSE:\n${bulleted(safePacket.stopConditions)}\n\nRETURN_PAYLOAD_REQUIREMENTS:\n${bulleted(safePacket.returnPayload)}\n\nMUTABLE_PATHS:\n${bulleted(safePacket.exactMutableResources)}\n\nREAD_ONLY_AND_DO_NOT_CHANGE:\n${bulleted(immutable)}\n\nCURRENT_FILE_CONTEXT:\n${context}\n\nReturn only a unified git diff beginning with diff --git. Do not use markdown fences.<|im_end|>\n<|im_start|>assistant\n`;
 }
 
 export function extractUnifiedDiff(text) {

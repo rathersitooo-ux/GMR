@@ -1,0 +1,41 @@
+{
+    "schemaVersion":  "gameroad-preaction-v3",
+    "recordId":  "UIFEEDBACK-BATTLE-INVALID-LIVE-R2-20260917T0629-SOL-N6Q4M8",
+    "taskId":  "UI-STATE-FEEDBACK-RUNTIME-001",
+    "workUnitKey":  "BATTLE_INVALID_ACTION_FEEDBACK_LIVE_CONSUMER_R2",
+    "acquireKey":  "UIFEEDBACK-BATTLE-INVALID-LIVE-R2-20260917T0629-SOL-N6Q4M8",
+    "riskClass":  "MATERIAL_STANDARD",
+    "predictionStatus":  "PASS",
+    "predictionEvidenceId":  "FRESH_CURRENT_MAIN_C80D_AND_EVENT_FIRST_LEASE_A16L16_20260917T0629JST",
+    "rehearsalStatus":  "PASS",
+    "rehearsalEvidenceId":  "R1_PRODUCT_PLUS_EXISTING_CLASSIFIED_ADAPTER_TEST_REUSE",
+    "proceedToken":  "PROCEED|UIFEEDBACK-BATTLE-INVALID-LIVE-R2-20260917T0629-SOL-N6Q4M8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-adapter-test|live-consumer|same-pr-rebuild",
+    "authorizationBaseSha":  "c80dbb02ab0f422096c1b0b0a0650fddc8a91e2d",
+    "stateModelVersion":  "STATE_MODEL_V1",
+    "leaseAuthority":  "CURRENT_ACTIVE_LEASES",
+    "leaseState":  "ACTIVE",
+    "leaseTaskId":  "UI-STATE-FEEDBACK-RUNTIME-001",
+    "leaseWorkUnitKey":  "BATTLE_INVALID_ACTION_FEEDBACK_LIVE_CONSUMER_R2",
+    "leaseAcquireKey":  "UIFEEDBACK-BATTLE-INVALID-LIVE-R2-20260917T0629-SOL-N6Q4M8",
+    "leaseSnapshotReadbackAtJst":  "2026-09-17 06:29 JST",
+    "leaseUntilJst":  "2026-09-17 07:29 JST",
+    "leaseSnapshotReadbackRef":  "CURRENT_ACTIVE_LEASES!A16:L16",
+    "leaseExactMutableResources":  "browser/GAMEROAD.html; tests/battle-invalid-action-feedback-live-adapter.test.mjs; branch/ref sol/battle-invalid-action-feedback-live-r1-20260917; PR#1835; own transient PRE_ACTION witness/check/merge/readback",
+    "solutionSignature":  "BATTLE_INVALID_ACTION_EXISTING_ADAPTER_LIVE_CONSUMER_V2_CLASSIFIED_TEST_REUSE",
+    "reuseDisposition":  "COMPOSE",
+    "solutionSearchStatus":  "PASS",
+    "reuseDecisionEvidenceId":  "R1_REQUIRED_GATE_UNCLASSIFIED_STANDALONE_TEST_AND_R24_CLASSIFIED_TEST_PRECEDENT",
+    "solutionSearchEvidence":  [
+                                   "R1 product consumer is bounded and already passed focused/static/PRE_ACTION checks before final path classification.",
+                                   "Existing battle-invalid-action-feedback-live-adapter.test.mjs is conventionally paired with its browser module and can carry consumer regression without a new CI classification rule.",
+                                   "No legality, reason, target, SFX, haptic, gameplay, save, or network authority is added."
+                               ],
+    "scope":  [
+                  "browser/GAMEROAD.html",
+                  "tests/battle-invalid-action-feedback-live-adapter.test.mjs"
+              ],
+    "leaseScope":  [
+                       "browser/GAMEROAD.html",
+                       "tests/battle-invalid-action-feedback-live-adapter.test.mjs"
+                   ]
+}

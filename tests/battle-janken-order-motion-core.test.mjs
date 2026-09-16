@@ -6,6 +6,14 @@ import {
   auditBattleJankenOrderMotion,
   buildBattleJankenOrderMotion
 } from '../browser/battle-janken-order-motion-core.mjs';
+import { projectBattleResolutionBoardReturn } from '../browser/battle-resolution-board-return-presentation-core.mjs';
+import {
+  BATTLE_CAMERA_COMMANDS,
+  BATTLE_CAMERA_MODES,
+  applyBattleCameraCommand,
+  createBattleCameraControlState,
+} from '../browser/battle-camera-control-core.mjs';
+import { projectBattleCardReleaseFlightMotion } from '../browser/battle-card-release-flight-motion-core.mjs';
 
 const PUBLIC_CARDS = [
   { playerId: 'p4', cardId: 'c4', displayNumber: 3, hand: 'gamma' },
@@ -39,6 +47,23 @@ const RESOLUTION = {
       invalidated: []
     }
   ]
+};
+
+const BOARD_RETURN = {
+  eventId: 'settle-r3-25',
+  source: 'accepted_public_compound_attack_package',
+  visualIntent: 'resolution_to_committed_shield',
+  effectMutationClaimed: false,
+  cardId: 'c1',
+  jankenHand: 'alpha',
+  path: ['road-7', 'junction-2', 'shield-p3-r'],
+  direction: 'upper-right',
+  roadId: 'road-7',
+  battleId: 'battle-r3-25',
+  opponentId: 'p3',
+  shieldLane: 'R',
+  shieldRef: 'shield-p3-r',
+  destinationKey: 'p3:R',
 };
 
 function makeChain() {
@@ -93,6 +118,109 @@ test('reduced-motion and low-perf keep the same semantic order without travel mo
     assert.equal(motion.steps[0].slots.find((slot) => slot.playerId === 'p2').action, 'invalidated-stay-skip');
     assert.equal(JSON.stringify(motion).includes('current-pop'), false);
     assert.equal(JSON.stringify(motion).includes('processed-retreat'), false);
+  }
+});
+
+test('reduced-motion and low-perf preserve cross-module card lineage, invalidation, route and Shield destination', () => {
+  const chain = makeChain();
+  const orderChain = {
+    processingOrder: chain.processingOrder,
+    processedOrder: chain.processedOrder,
+    finalSlots: chain.finalSlots,
+  };
+  const releaseStart = { x: 612, y: 332 };
+  const releaseTarget = { x: 386, y: 168 };
+
+  const variants = [
+    { name: 'reducedMotion', orderFlags: { reducedMotion: true }, returnFlags: { reducedMotion: true }, releaseFlags: { reducedMotion: true } },
+    { name: 'lowPerf', orderFlags: { lowPerf: true }, returnFlags: { lowPerf: true }, releaseFlags: { lowPerf: true } },
+  ];
+
+  for (const variant of variants) {
+    const orderMotion = buildBattleJankenOrderMotion({ chain, ...variant.orderFlags });
+    const boardReturn = projectBattleResolutionBoardReturn({
+      boardReturn: BOARD_RETURN,
+      orderChain,
+      ...variant.returnFlags,
+    });
+    const release = projectBattleCardReleaseFlightMotion({
+      start: releaseStart,
+      target: releaseTarget,
+      role: 'top',
+      ...variant.releaseFlags,
+    });
+
+    assert.deepEqual(orderMotion.processingOrder, ['p1', 'p2', 'p3', 'p4'], `${variant.name}: processing order`);
+    assert.deepEqual(orderMotion.subjects.map((subject) => subject.cardId), ['c1', 'c2', 'c3', 'c4'], `${variant.name}: card identity`);
+    assert.equal(orderMotion.finalSettle.find((slot) => slot.playerId === 'p2').sourceFinalState, 'invalidated', `${variant.name}: invalidated state`);
+
+    assert.equal(boardReturn.sourceCard.cardId, 'c1', `${variant.name}: causal source card`);
+    assert.deepEqual(boardReturn.processing.processingOrder, orderMotion.processingOrder, `${variant.name}: processing order joins board return`);
+    assert.equal(boardReturn.processing.finalSlots.find((slot) => slot.playerId === 'p2').visualState, 'invalidated', `${variant.name}: invalidated survives causal return`);
+    assert.deepEqual(boardReturn.acceptedPath, BOARD_RETURN.path, `${variant.name}: accepted route`);
+    assert.deepEqual(boardReturn.destination, {
+      opponentId: 'p3',
+      shieldLane: 'R',
+      shieldRef: 'shield-p3-r',
+      destinationKey: 'p3:R',
+    }, `${variant.name}: exact Shield destination`);
+    assert.equal(boardReturn.motion.mode, 'static_causal_trace', `${variant.name}: presentation motion suppressed only`);
+
+    assert.ok(release, `${variant.name}: release projection exists`);
+    assert.deepEqual(release.start, releaseStart, `${variant.name}: release source geometry`);
+    assert.deepEqual(release.target, releaseTarget, `${variant.name}: exact release destination geometry`);
+    assert.equal(release.destinationCue.x, releaseTarget.x, `${variant.name}: destination cue x`);
+    assert.equal(release.destinationCue.y, releaseTarget.y, `${variant.name}: destination cue y`);
+  }
+});
+
+test('reduced-motion and low-performance camera keep manual pan/zoom/angle and one-action controlled return', () => {
+  const variants = [
+    { name: 'reducedMotion', reducedMotion: true, lowPerformance: false },
+    { name: 'lowPerformance', reducedMotion: false, lowPerformance: true },
+  ];
+
+  for (const variant of variants) {
+    let state = createBattleCameraControlState({
+      controlledCharacterId: 'P1-character',
+      controlledWorldPoint: { x: 120, y: 80 },
+      followZoom: 1.25,
+      followAngle: 12,
+      limits: {
+        x: { min: -400, max: 400 },
+        y: { min: -300, max: 300 },
+        zoom: { min: 0.7, max: 2.4 },
+        angle: { min: -35, max: 35 },
+      },
+      reducedMotion: variant.reducedMotion,
+      lowPerformance: variant.lowPerformance,
+    });
+
+    assert.equal(state.manualInspectionAvailable, true, `${variant.name}: manual inspection remains available`);
+    assert.equal(state.oneActionReturnAvailable, true, `${variant.name}: one-action return remains available`);
+    assert.equal(state.reducedMotion, variant.reducedMotion);
+    assert.equal(state.lowPerformance, variant.lowPerformance);
+
+    state = applyBattleCameraCommand(state, { type: BATTLE_CAMERA_COMMANDS.BEGIN_MANUAL_INSPECT }).state;
+    assert.equal(state.mode, BATTLE_CAMERA_MODES.MANUAL_INSPECT, `${variant.name}: manual mode`);
+
+    state = applyBattleCameraCommand(state, { type: BATTLE_CAMERA_COMMANDS.PAN, dx: 55, dy: -30 }).state;
+    assert.deepEqual(state.center, { x: 175, y: 50 }, `${variant.name}: pan`);
+
+    state = applyBattleCameraCommand(state, { type: BATTLE_CAMERA_COMMANDS.SET_ZOOM, zoom: 1.8 }).state;
+    assert.equal(state.zoom, 1.8, `${variant.name}: zoom`);
+
+    state = applyBattleCameraCommand(state, { type: BATTLE_CAMERA_COMMANDS.SET_ANGLE, angle: -18 }).state;
+    assert.equal(state.angle, -18, `${variant.name}: angle`);
+
+    const returned = applyBattleCameraCommand(state, { type: BATTLE_CAMERA_COMMANDS.RETURN_TO_CONTROLLED });
+    assert.equal(returned.ok, true);
+    assert.equal(returned.reason, 'RETURNED_TO_CONTROLLED_CHARACTER');
+    assert.equal(returned.state.mode, BATTLE_CAMERA_MODES.FOLLOW_CONTROLLED, `${variant.name}: follow restored`);
+    assert.deepEqual(returned.state.center, { x: 120, y: 80 }, `${variant.name}: controlled center restored`);
+    assert.equal(returned.state.zoom, 1.25, `${variant.name}: follow zoom restored`);
+    assert.equal(returned.state.angle, 12, `${variant.name}: follow angle restored`);
+    assert.equal(returned.state.gameStateWrite, false);
   }
 });
 

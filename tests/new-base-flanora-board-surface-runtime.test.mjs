@@ -88,7 +88,7 @@ test('mount is world-first: one top-center GOAL, twelve route anchors, four x th
   assert.match(styleText,/\.grFlanoraSharedGoal\{[^}]*top:11\.5%/);
   assert.match(styleText,/\.grFlanoraRouteGateLayer\{[^}]*position:absolute[^}]*top:20%/);
   assert.match(styleText,/\.grFlanoraProgressionGrid\{[^}]*top:27%/);
-  assert.match(styleText,/\.grFlanoraFieldEdge\{[^}]*rgba\(203,230,211,\.08\)[^}]*box-shadow:none/);
+  assert.match(styleText,/\.grFlanoraFieldEdge\{[^}]*rgba\(203,230,211,\.28\)[^}]*box-shadow:none/);
   assert.doesNotMatch(styleText,/\.grFlanoraRouteGateLayer\{[^}]*repeat\(12/);
   assert.match(styleText,/\.grFlanoraProgressionGrid\{[^}]*position:absolute/);
   assert.match(styleText,/\.grFlanoraParticipantCluster\{[^}]*display:contents/);
@@ -113,8 +113,8 @@ test('mount is world-first: one top-center GOAL, twelve route anchors, four x th
   assert.match(styleText,/\.decisionRoad #routeLine\{opacity:\.55!important\}/);
   assert.equal(runtime.routeGateLayer.children[0].style.left,'7.1419%');
   assert.equal(runtime.progressionGrid.children[0].children[0].style.left,'7.1419%');
-  assert.equal(runtime.resolveClearingCell('clearing:top:0').style.top,'7%');
-  assert.equal(runtime.resolveClearingCell('clearing:bottom:5').style.top,'89%');
+  assert.equal(runtime.resolveClearingCell('clearing:top:0').style.top,'0%');
+  assert.equal(runtime.resolveClearingCell('clearing:bottom:5').style.top,'85.3%');
   assert.equal(runtime.clearing.querySelectorAll?.('[data-source-clearing-cell-id]')?.length ?? snap.visibleSharedFieldNodeCount,26);
   assert.doesNotMatch(styleText,/grFlanoraGoal\{/);
   assert.doesNotMatch(styleText,/grid-template-columns:repeat\(7/);

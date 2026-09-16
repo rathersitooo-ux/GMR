@@ -9,9 +9,9 @@ const ROAD_STEPS = Object.freeze([1, 2, 3, 4, 5, 6, 7]);
 const SHARED_GOAL_ID = 'goal:shared';
 const FIXED_TARGET_LANE_X_PCT = Object.freeze([7.1419, 13.6458, 20.2214, 31.0286, 37.7214, 44.4401, 55.3646, 61.9466, 68.6523, 79.5182, 86.1589, 92.7409]);
 const TARGET_BOTTOM_CELL_POSITIONS = Object.freeze([
-  { x: 11, y: 65 }, { x: 13, y: 89 }, { x: 18.5, y: 74 }, { x: 22, y: 89 },
-  { x: 30, y: 89 }, { x: 41, y: 89 }, { x: 50, y: 89 }, { x: 59, y: 89 },
-  { x: 70, y: 89 }, { x: 79, y: 89 }, { x: 81.5, y: 74 }, { x: 88, y: 89 },
+  { x: 12.10, y: 60.1 }, { x: 19.34, y: 71.3 }, { x: 12.98, y: 85.3 }, { x: 22.53, y: 85.3 },
+  { x: 30.20, y: 85.3 }, { x: 40.50, y: 85.3 }, { x: 49.87, y: 85.3 }, { x: 59.18, y: 85.3 },
+  { x: 69.50, y: 85.3 }, { x: 77.27, y: 85.3 }, { x: 80.42, y: 71.3 }, { x: 87.75, y: 60.1 },
 ]);
 
 function deepFreeze(value) {
@@ -141,11 +141,11 @@ function fieldPositionForSourceCell(cell) {
   if (!cell) return null;
   if (cell.kind === 'CLEARING_TOP') {
     const x = FIXED_TARGET_LANE_X_PCT[cell.relativeColumn];
-    return Number.isFinite(x) ? { x, y: 7, kind: 'ENTRY' } : null;
+    return Number.isFinite(x) ? { x, y: 0, kind: 'ENTRY' } : null;
   }
   if (cell.kind === 'CLEARING_MIDDLE') {
-    if (cell.relativeColumn === 0) return { x: 8.5, y: 55, kind: 'SIDE' };
-    if (cell.relativeColumn === 11) return { x: 91.5, y: 55, kind: 'SIDE' };
+    if (cell.relativeColumn === 0) return { x: 9.44, y: 48.5, kind: 'SIDE' };
+    if (cell.relativeColumn === 11) return { x: 90.46, y: 48.5, kind: 'SIDE' };
     return null;
   }
   if (cell.kind === 'CLEARING_BOTTOM') {
@@ -191,9 +191,9 @@ function ensureStyle(documentLike) {
 [data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep[data-card-identity-resolved="true"]{border-color:rgba(255,239,177,.9);background:linear-gradient(150deg,rgba(252,245,216,.98),rgba(69,117,90,.96));box-shadow:0 2px 6px rgba(0,0,0,.30),0 0 7px rgba(255,225,132,.12)}
 [data-new-base-flanora-board-surface="1"] .grFlanoraRoadCardLabel{display:block;width:94%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font-size:clamp(5px,.48vw,8px);font-weight:850;color:#18392e;text-shadow:none}
 [data-new-base-flanora-board-surface="1"] .grFlanoraShield{position:relative;z-index:3;display:grid;place-items:center;width:min(88%,clamp(22px,3.8vw,38px));min-height:clamp(14px,2.35vh,20px);border:1px solid rgba(188,229,241,.58);border-radius:7px 7px 10px 10px;background:linear-gradient(180deg,rgba(38,84,95,.76),rgba(18,56,66,.86));font-size:clamp(6px,.62vw,9px);font-weight:950;color:#e8f8ff;box-shadow:0 2px 5px rgba(0,0,0,.16)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{position:absolute;z-index:2;left:3.2%;right:3.2%;top:63.5%;bottom:3.2%;min-width:0;min-height:0;background:linear-gradient(180deg,rgba(115,190,157,.025),rgba(6,38,26,.11));overflow:visible}
+[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{position:absolute;z-index:2;left:0;right:0;top:62.5%;bottom:3.2%;min-width:0;min-height:0;background:linear-gradient(180deg,rgba(115,190,157,.025),rgba(6,38,26,.11));overflow:visible}
 [data-new-base-flanora-board-surface="1"] .grFlanoraFieldEdges{position:absolute;z-index:1;inset:0;pointer-events:none}
-[data-new-base-flanora-board-surface="1"] .grFlanoraFieldEdge{position:absolute;height:1px;transform-origin:0 50%;background:linear-gradient(90deg,rgba(203,230,211,.08),rgba(172,214,190,.035));box-shadow:none;opacity:.72}
+[data-new-base-flanora-board-surface="1"] .grFlanoraFieldEdge{position:absolute;height:1px;transform-origin:0 50%;background:linear-gradient(90deg,rgba(203,230,211,.28),rgba(172,214,190,.12));box-shadow:none;opacity:.72}
 [data-new-base-flanora-board-surface="1"] .grFlanoraFieldNodes{position:absolute;z-index:2;inset:0;pointer-events:none}
 [data-new-base-flanora-board-surface="1"] .grFlanoraFieldNode{position:absolute;transform:translate(-50%,-50%);width:clamp(8px,1.35vw,14px);height:clamp(8px,1.35vw,14px);border:1px solid rgba(230,244,233,.34);border-radius:50%;background:rgba(42,92,63,.58);box-shadow:none}
 [data-new-base-flanora-board-surface="1"] .grFlanoraFieldNode[data-target-field-kind="ENTRY"]{width:clamp(10px,1.65vw,17px);height:clamp(10px,1.65vw,17px);border-color:rgba(210,237,224,.58);background:rgba(38,86,59,.76)}

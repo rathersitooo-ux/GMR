@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CURRENT-UI-RECOVERY-R3-20260916T1258-SOL",
+  "taskId": "BROWSER-BATTLE-VISUAL-AOI-REBASE-001",
+  "workUnitKey": "BATTLE_CURRENT_PLAYER_UI_SHARED_MOUNT_PREACTION_R1",
+  "acquireKey": "BATTLE-CURRENT-UI-RECOVERY-R3-20260916T1258-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R2_REQUIRED_GATE_DIAGNOSIS_PLUS_EXISTING_CONVENTIONAL_TEST_CURRENT_MAIN",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_MAIN_SOURCE_BLOB_STILL_EXACT_OLD_MERGE_BASE_AND_EXISTING_TEST_CAN_HOST_REFCOUNT_REGRESSION",
+  "proceedToken": "PROCEED|BATTLE-CURRENT-UI-RECOVERY-R3-20260916T1258-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|shared-current-player-ui-mount-r3|existing-conventional-test|active-lease",
+  "authorizationBaseSha": "ec05e3d261e950e65758e9fa0f5fdde86e175a83",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-VISUAL-AOI-REBASE-001",
+  "leaseWorkUnitKey": "BATTLE_CURRENT_PLAYER_UI_SHARED_MOUNT_PREACTION_R1",
+  "leaseAcquireKey": "BATTLE-CURRENT-UI-RECOVERY-R3-20260916T1258-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 12:58 JST",
+  "leaseUntilJst": "2026-09-16 13:58 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main ec05e3d261e950e65758e9fa0f5fdde86e175a83; mutable browser/battle-current-player-ui-runtime.mjs; tests/battle-current-player-ui-runtime.test.mjs; exact transient data/preaction-authorizations/BATTLE-CURRENT-UI-RECOVERY-R3-20260916T1258-SOL.json; own clean branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; old PR#1732; closed diagnostic PR#1751; Battle gameplay/rules/state/save/economy/network; unrelated active WorkUnits.",
+  "solutionSignature": "BATTLE_CURRENT_PLAYER_UI_ROOT_SHARED_REFCOUNT_LEASE_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "OLD_PR1732_PRODUCT_PATCH_PLUS_CURRENT_EXISTING_CONVENTIONAL_TEST",
+  "solutionSearchEvidence": [
+    "Old PR#1732 product source patch is still directly reusable because current main source blob remained identical to its merge-base source blob.",
+    "R2 proved standalone lifecycle test is unclassified by the current Required Gate; current main already owns tests/battle-current-player-ui-runtime.test.mjs as the conventional pair.",
+    "R3 therefore preserves the product semantics and adapts only the regression placement into the existing conventional test without touching browser/GAMEROAD.html or gameplay authority."
+  ],
+  "scope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs"
+  ]
+}

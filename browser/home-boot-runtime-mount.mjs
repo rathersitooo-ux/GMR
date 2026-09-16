@@ -49,6 +49,8 @@ function guardRouteControl(control) {
   const ariaDisabled = control.getAttribute('aria-disabled');
   if (disabled || ariaDisabled === 'true') return false;
 
+  // Keep the control physically clickable so an early human/pointer attempt resolves immediately;
+  // block only its activation until the existing screen-transition authority is actually ready.
   const blocker = (event) => blockGuardedActivation(event);
   control.setAttribute(NAV_GUARD_ATTR, 'true');
   control.setAttribute(NAV_PREV_ARIA_ATTR, ariaDisabled === null ? NAV_PREV_ARIA_MISSING : ariaDisabled);

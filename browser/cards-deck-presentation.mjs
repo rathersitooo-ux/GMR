@@ -475,7 +475,7 @@ export function isNeutralizedDeckEditorSwipe(intent) {
   return intent?.action === 'none' && intent?.consumed === true;
 }
 
-export function presentDeckAddSwipe({ doc, presentation, result, sourceElement, cardId }) {
+export function presentDeckAddSwipe({ doc, presentation, result, sourceElement, sourceRect = null, cardId }) {
   if (result?.action !== 'deck-add' || !sourceElement) return false;
   try {
     if (!result.ok) {
@@ -488,12 +488,18 @@ export function presentDeckAddSwipe({ doc, presentation, result, sourceElement, 
       return typeof presentation?.playReject === 'function';
     }
     const insertedElement = byCardId(doc, '#deckSlots [data-id], #exDeckSlots [data-id]', cardId);
-    const targetElement = insertedElement?.closest?.('#deckSlots, #exDeckSlots')
+    const deckRoot = insertedElement?.closest?.('#deckSlots, #exDeckSlots')
       ?? insertedElement?.parentElement
       ?? doc?.querySelector?.('#deckSlots, #exDeckSlots');
+    const candidates = [doc?.querySelector?.('#r4DeckTotal'), doc?.querySelector?.('#deckCount'), doc?.querySelector?.('#r4DeckTrayToggle'), deckRoot].filter(Boolean);
+    const targetElement = candidates.find((element) => {
+      const rect = element?.getBoundingClientRect?.();
+      return rect?.width > 0 && rect?.height > 0;
+    }) ?? deckRoot;
     if (!targetElement) return false;
     presentation?.playSuccess?.({
       sourceElement,
+      sourceRect,
       targetElement,
       insertedElement,
       cardId,
@@ -585,6 +591,7 @@ export function installDeckStorageLiveMount({
       startX: Number(event.clientX),
       startY: Number(event.clientY),
       card,
+      wasInDeck: readLiveDeck(doc).includes(String(card.dataset?.id ?? '')),
     };
   };
 
@@ -601,10 +608,24 @@ export function installDeckStorageLiveMount({
       deltaY: dy,
       thresholdPx: 56,
     });
+    const committedByExistingAuthority = current.surface === 'collection'
+      && current.wasInDeck !== true
+      && readLiveDeck(doc).includes(current.cardId);
+    if (committedByExistingAuthority) {
+      const result = Object.freeze({ ok: true, action: 'deck-add', reason: 'existing-authority-already-committed' });
+      discovery.recordSuccessfulSwipe({ surface: current.surface, result });
+      renderDiscoveryHints();
+      suppressClick = { cardId: current.cardId, until: now() + 450 };
+      mounted?.render?.();
+      return;
+    }
     if (isNeutralizedDeckEditorSwipe(intent)) {
       suppressClick = { cardId: current.cardId, until: now() + 450 };
       return;
     }
+    const sourceRect = current.surface === 'collection' && current.card?.getBoundingClientRect
+      ? current.card.getBoundingClientRect()
+      : null;
     const result = controller.applySwipe({
       surface: current.surface,
       cardId: current.cardId,
@@ -617,6 +638,7 @@ export function installDeckStorageLiveMount({
       presentation,
       result,
       sourceElement: current.card,
+      sourceRect,
       cardId: current.cardId,
     });
     if (!result?.ok) return;

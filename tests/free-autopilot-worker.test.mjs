@@ -20,6 +20,7 @@ function packet(overrides = {}) {
     baseRef: 'a'.repeat(40),
     exactMutableResources: ['browser/example.mjs', 'tests/example.test.mjs'],
     doNotChange: ['browser/other.mjs'],
+    procedure: ['Read supplied files.', 'Apply the bounded change.', 'Run the focused test.'],
     userEndState: 'Fix the bounded example.',
     realOutputTarget: 'A minimal tested candidate patch.',
     acceptance: ['Focused test passes.', 'No unrelated files change.'],
@@ -29,7 +30,7 @@ function packet(overrides = {}) {
   };
 }
 
-test('accepts explicitly opted-in bounded queue packet', () => {
+test('accepts explicitly opted-in bounded queue packet with procedure', () => {
   const result = validateFreePacket(packet());
   assert.equal(result.ok, true);
   assert.deepEqual(result.packet.exactMutableResources, ['browser/example.mjs', 'tests/example.test.mjs']);
@@ -39,6 +40,12 @@ test('rejects packets without free local coder opt-in', () => {
   const result = validateFreePacket(packet({ executorCapabilityHint: '' }));
   assert.equal(result.ok, false);
   assert.match(result.reason, /opt_in/);
+});
+
+test('rejects free local coder packets without a procedure', () => {
+  const result = validateFreePacket(packet({ procedure: [] }));
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, 'procedure_required');
 });
 
 test('rejects control-plane and traversal mutation', () => {
@@ -62,13 +69,16 @@ test('parses normal executor bus issue body', () => {
   assert.equal(result.packet.acquireKey, 'ACQ-1');
 });
 
-test('buildPrompt includes bounded context', () => {
+test('buildPrompt includes ordered procedure and bounded context', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'free-autopilot-'));
   fs.mkdirSync(path.join(root, 'browser'));
   fs.mkdirSync(path.join(root, 'tests'));
   fs.writeFileSync(path.join(root, 'browser/example.mjs'), 'export const value = 1;\n');
   fs.writeFileSync(path.join(root, 'tests/example.test.mjs'), 'test placeholder\n');
   const prompt = buildPrompt(packet(), root);
+  assert.match(prompt, /ORDERED_PROCEDURE:/);
+  assert.match(prompt, /Apply the bounded change/);
+  assert.match(prompt, /executor, not a planner/);
   assert.match(prompt, /browser\/example\.mjs/);
   assert.match(prompt, /export const value = 1/);
   assert.match(prompt, /Output exactly one unified git diff/);

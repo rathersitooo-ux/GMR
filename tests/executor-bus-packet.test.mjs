@@ -49,10 +49,17 @@ test('parses one executor-bus fenced JSON payload', () => {
   assert.equal(parsed.value.acquireKey, 'ACQ-1');
 });
 
-test('accepts bounded queue packet', () => {
+test('accepts bounded queue packet without procedure for backward compatibility', () => {
   const checked = normalizeQueuePacket(queue());
   assert.equal(checked.ok, true);
   assert.deepEqual(checked.packet.exactMutableResources, ['path/a']);
+  assert.deepEqual(checked.packet.procedure, []);
+});
+
+test('preserves an optional ordered procedure', () => {
+  const checked = normalizeQueuePacket(queue({ procedure: ['Read input.', 'Apply patch.', 'Run check.'] }));
+  assert.equal(checked.ok, true);
+  assert.deepEqual(checked.packet.procedure, ['Read input.', 'Apply patch.', 'Run check.']);
 });
 
 test('rejects queue packet without mutable resources', () => {

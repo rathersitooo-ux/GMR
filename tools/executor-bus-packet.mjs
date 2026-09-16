@@ -72,6 +72,7 @@ export function normalizeQueuePacket(input) {
       baseRef: cleanString(input.baseRef, 'baseRef', { max: 160 }),
       exactMutableResources: cleanList(input.exactMutableResources, 'exactMutableResources', { required: true }),
       doNotChange: cleanList(input.doNotChange ?? [], 'doNotChange'),
+      procedure: cleanList(input.procedure ?? [], 'procedure'),
       userEndState: cleanString(input.userEndState, 'userEndState'),
       realOutputTarget: cleanString(input.realOutputTarget, 'realOutputTarget'),
       acceptance: cleanList(input.acceptance, 'acceptance', { required: true }),

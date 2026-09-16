@@ -55,6 +55,9 @@ export function validateFreePacket(packet) {
         throw new Error(`control_plane_mutation_forbidden:${item}`);
       }
     }
+    if (!Array.isArray(packet.procedure) || packet.procedure.length === 0) {
+      throw new Error('procedure_required');
+    }
     return { ok: true, packet: { ...packet, exactMutableResources: mutablePaths } };
   } catch (error) {
     return fail(error.message);
@@ -97,8 +100,9 @@ export function buildPrompt(packet, root = process.cwd()) {
     context += part;
   }
   const acceptance = safePacket.acceptance.map((item, index) => `${index + 1}. ${item}`).join('\n');
+  const procedure = safePacket.procedure.map((item, index) => `${index + 1}. ${item}`).join('\n');
   const immutable = safePacket.doNotChange.length ? safePacket.doNotChange.join('\n- ') : '(none listed)';
-  return `<|im_start|>system\nYou are GAMEROAD Free Local Coder. Produce a minimal code patch only. Never change product rules unless explicitly required. Never add paid APIs, credentials, telemetry, network exfiltration, new task systems, or hidden fallback behavior. You have no authority to merge. Output exactly one unified git diff and no prose. Touch only the explicitly mutable paths. If the request cannot be solved safely from the provided files, output FREE_AUTOPILOT_BLOCKED and a short reason instead of a patch.<|im_end|>\n<|im_start|>user\nTASK_ID: ${safePacket.taskId}\nWORK_UNIT: ${safePacket.workUnitKey}\nBASE_SHA: ${safePacket.baseRef}\nUSER_END_STATE:\n${safePacket.userEndState}\n\nREAL_OUTPUT_TARGET:\n${safePacket.realOutputTarget}\n\nACCEPTANCE:\n${acceptance}\n\nMUTABLE_PATHS:\n- ${safePacket.exactMutableResources.join('\n- ')}\n\nDO_NOT_CHANGE:\n- ${immutable}\n\nCURRENT_FILE_CONTEXT:\n${context}\n\nReturn only a unified git diff beginning with diff --git. Do not use markdown fences.<|im_end|>\n<|im_start|>assistant\n`;
+  return `<|im_start|>system\nYou are GAMEROAD Free Local Coder. You are an executor, not a planner. Follow the supplied ordered procedure. Do not invent product rules, priorities, owners, targets, or acceptance criteria. Produce a minimal code patch only. Never add paid APIs, credentials, telemetry, network exfiltration, new task systems, or hidden fallback behavior. You have no authority to merge. Output exactly one unified git diff and no prose. Touch only the explicitly mutable paths. If the request or procedure cannot be solved safely from the provided files, output FREE_AUTOPILOT_BLOCKED and a short reason instead of a patch.<|im_end|>\n<|im_start|>user\nTASK_ID: ${safePacket.taskId}\nWORK_UNIT: ${safePacket.workUnitKey}\nBASE_SHA: ${safePacket.baseRef}\nUSER_END_STATE:\n${safePacket.userEndState}\n\nREAL_OUTPUT_TARGET:\n${safePacket.realOutputTarget}\n\nORDERED_PROCEDURE:\n${procedure}\n\nACCEPTANCE:\n${acceptance}\n\nMUTABLE_PATHS:\n- ${safePacket.exactMutableResources.join('\n- ')}\n\nDO_NOT_CHANGE:\n- ${immutable}\n\nCURRENT_FILE_CONTEXT:\n${context}\n\nReturn only a unified git diff beginning with diff --git. Do not use markdown fences.<|im_end|>\n<|im_start|>assistant\n`;
 }
 
 export function extractUnifiedDiff(text) {

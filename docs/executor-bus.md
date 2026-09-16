@@ -23,6 +23,7 @@ Create an issue whose title begins with `[EXECUTOR]` and whose body contains exa
   "baseRef": "CURRENT-BASE-REF-OR-SHA",
   "exactMutableResources": ["exact/path/or/resource"],
   "doNotChange": ["explicit/non-target"],
+  "procedure": ["ordered step 1", "ordered step 2"],
   "userEndState": "What the user actually wants at the end.",
   "realOutputTarget": "The concrete artifact/state to return.",
   "acceptance": ["observable acceptance condition"],
@@ -33,6 +34,8 @@ Create an issue whose title begins with `[EXECUTOR]` and whose body contains exa
 ```
 
 The workflow serializes events per issue, validates fail-closed, uploads a normalized queue artifact, and writes `BUS_PACKET_ACCEPTED` or `BUS_PACKET_REJECTED` to the issue.
+
+`procedure` is optional for generic bus packets. It is required when `executorCapabilityHint` opts into `FREE_LOCAL_CODER`; that lane executes the supplied ordered steps rather than planning the task, and blocks instead of inventing missing product or routing decisions.
 
 ## Result packet
 

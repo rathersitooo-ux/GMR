@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-GRAVEYARD-SURFACE-R3-20260916T1256-SOL-RECOVER",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_GRAVEYARD_INFORMATION_PLAYER_SURFACE_R2",
+  "acquireKey": "BATTLE-GRAVEYARD-SURFACE-R3-20260916T1256-SOL-RECOVER",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R2-ISOLATED-PRODUCT-DIFF-PLUS-FRESH-MAIN-COMPATIBILITY-READBACK",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING-VIEWER-SAFE-CORE-PLUS-R2-EIGHT-FOCUSED-TESTS",
+  "proceedToken": "PROCEED|BATTLE-GRAVEYARD-SURFACE-R3-20260916T1256-SOL-RECOVER|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|clean-r2-recovery|lease-snapshot-A12-L12",
+  "authorizationBaseSha": "ec05e3d261e950e65758e9fa0f5fdde86e175a83",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_GRAVEYARD_INFORMATION_PLAYER_SURFACE_R2",
+  "leaseAcquireKey": "BATTLE-GRAVEYARD-SURFACE-R3-20260916T1256-SOL-RECOVER",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 12:56 JST",
+  "leaseUntilJst": "2026-09-16 13:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A12:L12",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-graveyard-runtime-surface-r3-20260916 ONLY: browser/battle-card-zone-information-runtime-surface.mjs; tests/battle-card-zone-information-runtime-surface.test.mjs; own transient data/preaction-authorizations/BATTLE-GRAVEYARD-SURFACE-R3-20260916T1256-SOL-RECOVER.json; own PR/check/merge/readback. browser/GAMEROAD.html, battle-screen-runtime-mount.mjs/test, existing battle-card-zone-information-core.mjs, gameplay/rules/zone transitions/replay/save/network/card-detail renderer are READ_ONLY.",
+  "scope": [
+    "browser/battle-card-zone-information-runtime-surface.mjs",
+    "tests/battle-card-zone-information-runtime-surface.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-card-zone-information-runtime-surface.mjs",
+    "tests/battle-card-zone-information-runtime-surface.test.mjs"
+  ],
+  "solutionSignature": "Recover the already-gated R2 isolated presentation surface on exact current main, reusing the unchanged viewer-safe battle card-zone projection as the sole permission authority and adding no storage, gameplay, card metadata, or second detail state.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT-MAIN-CORE-UNCHANGED-PLUS-PR1702-TWO-FILE-DONOR",
+  "solutionSearchEvidence": [
+    "Fresh current main ec05e3d261e950e65758e9fa0f5fdde86e175a83 retains battle-card-zone-information-core.mjs with the same explicit viewerSafe and permission boundaries used by R2",
+    "Compare from old R2 base 061c899df9df59d3b798034f097dbe9951946c6d to current main shows no change to battle-card-zone-information-core.mjs and no main copy of either R2 target file",
+    "Old PR #1702 is open/draft but mergeable=false after 38 intervening commits; clean exact-main recovery is safer than forcing the stale branch",
+    "Current battle-screen runtime and HTML are read-only in this WorkUnit, so this recovery cannot preempt the active Battle root owner or claim live mount acceptance"
+  ]
+}

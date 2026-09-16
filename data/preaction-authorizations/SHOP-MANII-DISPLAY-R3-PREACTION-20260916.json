@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "SHOP-MANII-DISPLAY-R3-PREACTION-20260916",
+  "taskId": "SHOP-SAFE-ECONOMY-INTEGRATION-001",
+  "workUnitKey": "SHOP_COSMETIC_MANII_DISPLAY_CONTRACT_R1",
+  "acquireKey": "SHOP-MANII-DISPLAY-R3-20260916T1653-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "SHOP_MANII_DISPLAY_DIFF_REVIEW_20260916",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT_ORACLE_SHOP_MANII_DISPLAY_20260916T1729JST",
+  "proceedToken": "PROCEED|SHOP-MANII-DISPLAY-R3-PREACTION-20260916|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|MANII_DISPLAY_ONLY",
+  "authorizationBaseSha": "8f771e15664ed46581160d7d0fd07e83ee83d80a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHOP-SAFE-ECONOMY-INTEGRATION-001",
+  "leaseWorkUnitKey": "SHOP_COSMETIC_MANII_DISPLAY_CONTRACT_R1",
+  "leaseAcquireKey": "SHOP-MANII-DISPLAY-R3-20260916T1653-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 17:32 JST",
+  "leaseUntilJst": "2026-09-16 17:53 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main; mutable browser/shop-transaction-presentation-adapter.mjs; tests/shop-transaction-presentation-adapter.test.mjs; own transient PRE_ACTION witness; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; Battle resources/Honey; normal Shop COIN semantics; prices/ProductIDs/ownership/save/payment; unrelated WorkUnits.",
+  "scope": [
+    "browser/shop-transaction-presentation-adapter.mjs",
+    "tests/shop-transaction-presentation-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/shop-transaction-presentation-adapter.mjs",
+    "tests/shop-transaction-presentation-adapter.test.mjs"
+  ]
+}

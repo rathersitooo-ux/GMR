@@ -70,16 +70,25 @@ export function normalizeQueuePacket(input) {
       workUnitKey: cleanString(input.workUnitKey, 'workUnitKey', { max: 240 }),
       acquireKey: cleanString(input.acquireKey, 'acquireKey', { max: 300 }),
       baseRef: cleanString(input.baseRef, 'baseRef', { max: 160 }),
+      executorClass: cleanString(input.executorClass, 'executorClass', { max: 120 }),
+      exactInputs: cleanList(input.exactInputs, 'exactInputs', { required: true }),
       exactMutableResources: cleanList(input.exactMutableResources, 'exactMutableResources', { required: true }),
+      readOnlyResources: cleanList(input.readOnlyResources ?? [], 'readOnlyResources'),
       doNotChange: cleanList(input.doNotChange ?? [], 'doNotChange'),
+      fixedAssumptions: cleanList(input.fixedAssumptions, 'fixedAssumptions', { required: true }),
+      procedure: cleanList(input.procedure, 'procedure', { required: true }),
+      noInferenceBoundary: cleanList(input.noInferenceBoundary, 'noInferenceBoundary', { required: true }),
       userEndState: cleanString(input.userEndState, 'userEndState'),
       realOutputTarget: cleanString(input.realOutputTarget, 'realOutputTarget'),
       acceptance: cleanList(input.acceptance, 'acceptance', { required: true }),
+      stopConditions: cleanList(input.stopConditions, 'stopConditions', { required: true }),
+      returnPayload: cleanList(input.returnPayload, 'returnPayload', { required: true }),
       resumeCondition: cleanString(input.resumeCondition, 'resumeCondition'),
       executorCapabilityHint: cleanString(input.executorCapabilityHint ?? '', 'executorCapabilityHint', { max: 500, optional: true }),
     };
-    const overlap = packet.exactMutableResources.filter((item) => packet.doNotChange.includes(item));
-    if (overlap.length) throw new Error(`mutable_do_not_change_overlap:${overlap.join(',')}`);
+    const immutable = new Set([...packet.doNotChange, ...packet.readOnlyResources]);
+    const overlap = packet.exactMutableResources.filter((item) => immutable.has(item));
+    if (overlap.length) throw new Error(`mutable_immutable_overlap:${overlap.join(',')}`);
     return { ok: true, packet };
   } catch (error) {
     return fail(error.message);

@@ -1,0 +1,23 @@
+{
+  "schema": "gameroad.preaction-authorization.v1",
+  "acquireKey": "BATTLE-ACCESSIBILITY-MOTION-R3-20260916T2341-SOL-A25",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_REDUCED_MOTION_LOW_PERF_REGRESSION_R3",
+  "authorizedAtJst": "2026-09-16 23:41 JST",
+  "leaseUntilJst": "2026-09-17 00:41 JST",
+  "baseMain": "5e92728a40de9a89b8648cca2104ac3df23cd3fa",
+  "mutableResources": [
+    "tests/battle-janken-order-motion-core.test.mjs",
+    "data/preaction-authorizations/BATTLE-ACCESSIBILITY-MOTION-R3-20260916T2341-SOL-A25.json"
+  ],
+  "readOnlyResources": [
+    "browser/battle-janken-order-motion-core.mjs",
+    "browser/battle-resolution-board-return-presentation-core.mjs",
+    "browser/battle-camera-control-core.mjs",
+    "browser/battle-card-release-flight-motion-core.mjs",
+    "browser/GAMEROAD.html",
+    "gameplay/rules/state"
+  ],
+  "intent": "Regression-only recovery of expired WorkUnit25. Prove ReducedMotion/LowPerf semantic parity across janken processing order/card identity/invalidated state, accepted route and Shield destination, manual camera inspection plus one-action return, and card release destination geometry. Product modules remain read-only.",
+  "leaseReadback": "CURRENT_ACTIVE_LEASES!A27:N27 PASS"
+}

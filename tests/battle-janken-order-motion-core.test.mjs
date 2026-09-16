@@ -87,10 +87,12 @@ test('reduced-motion and low-perf keep the same semantic order without travel mo
   for (const motion of [reduced, lowPerf]) {
     assert.equal(motion.motionMode, 'semantic-only');
     assert.deepEqual(motion.processingOrder, chain.processingOrder);
+    assert.deepEqual(motion.subjects.map((subject) => subject.cardId), ['c1', 'c2', 'c3', 'c4']);
     assert.deepEqual(motion.finalSettle.map((slot) => slot.sourceFinalState), chain.finalSlots.map((slot) => slot.visualState));
     assert.equal(motion.steps[0].slots.find((slot) => slot.playerId === 'p1').action, 'current-emphasis');
     assert.equal(motion.steps[1].slots.find((slot) => slot.playerId === 'p1').action, 'processed-settled');
     assert.equal(motion.steps[0].slots.find((slot) => slot.playerId === 'p2').action, 'invalidated-stay-skip');
+    assert.equal(motion.sequenceBuild[0].action, 'link-visible-static');
     assert.equal(JSON.stringify(motion).includes('current-pop'), false);
     assert.equal(JSON.stringify(motion).includes('processed-retreat'), false);
   }
@@ -160,4 +162,132 @@ test('declares a presentation-only motion boundary and freezes the projected mod
   assert.equal(BATTLE_JANKEN_ORDER_MOTION.gameplayOwnedHere, false);
   assert.equal(BATTLE_JANKEN_ORDER_MOTION.physicalTimingOwnedHere, false);
   assert.equal(BATTLE_JANKEN_ORDER_MOTION.invalidatedCardsRemainInOrderSlot, true);
+});
+
+test('ReducedMotion/LowPerf keep accepted route and committed Shield destination as a static causal trace', async () => {
+  const {
+    auditBattleResolutionBoardReturnProjection,
+    projectBattleResolutionBoardReturn,
+  } = await import('../browser/battle-resolution-board-return-presentation-core.mjs');
+
+  const base = {
+    boardReturn: {
+      source: 'accepted_public_compound_attack_package',
+      visualIntent: 'resolution_to_committed_shield',
+      effectMutationClaimed: false,
+      eventId: 'EV-25',
+      cardId: 'c1',
+      jankenHand: 'PAPER',
+      opponentId: 'p3',
+      shieldLane: 'R',
+      shieldRef: 'p3-shield-r',
+      destinationKey: 'p3:R',
+      path: [{ cellId: 'road-8' }, { cellId: 'road-9' }],
+      direction: 'FORWARD',
+      roadId: 'road-r',
+      battleId: 'battle-25',
+    },
+    orderChain: {
+      processingOrder: ['p1', 'p2'],
+      processedOrder: ['p1'],
+      finalSlots: [
+        { playerId: 'p1', cardId: 'c1', displayNumber: 9, hand: 'PAPER', visualState: 'resolved-win' },
+        { playerId: 'p2', cardId: 'c2', displayNumber: 1, hand: 'ROCK', visualState: 'invalidated' },
+      ],
+    },
+  };
+
+  for (const options of [{ reducedMotion: true }, { lowPerf: true }]) {
+    const projection = projectBattleResolutionBoardReturn({ ...base, ...options });
+    assert.equal(projection.motion.mode, 'static_causal_trace');
+    assert.equal(projection.motion.animateAcceptedPath, false);
+    assert.equal(projection.motion.animateProcessingCollapse, false);
+    assert.equal(projection.motion.destinationSettlePulse, false);
+    assert.equal(projection.motion.preserveStageOrder, true);
+    assert.deepEqual(projection.sourceCard, { cardId: 'c1', jankenHand: 'PAPER' });
+    assert.deepEqual(projection.acceptedPath, [{ cellId: 'road-8' }, { cellId: 'road-9' }]);
+    assert.deepEqual(projection.processing.processingOrder, ['p1', 'p2']);
+    assert.equal(projection.destination.destinationKey, 'p3:R');
+    assert.equal(projection.destination.shieldRef, 'p3-shield-r');
+    assert.deepEqual(projection.stages.map((stage) => stage.kind), [
+      'cause', 'processing', 'accepted_resolution', 'return_path', 'destination'
+    ]);
+    assert.deepEqual(auditBattleResolutionBoardReturnProjection(projection), { ok: true, defects: [] });
+  }
+});
+
+test('ReducedMotion/LowPerf camera keeps manual inspect inputs and one-action controlled return', async () => {
+  const {
+    BATTLE_CAMERA_COMMANDS,
+    BATTLE_CAMERA_MODES,
+    applyBattleCameraCommand,
+    createBattleCameraControlState,
+  } = await import('../browser/battle-camera-control-core.mjs');
+
+  let state = createBattleCameraControlState({
+    controlledCharacterId: 'p1',
+    controlledWorldPoint: { x: 40, y: 30 },
+    followZoom: 1,
+    followAngle: 0,
+    limits: {
+      x: { min: 0, max: 100 },
+      y: { min: 0, max: 100 },
+      zoom: { min: 0.5, max: 2 },
+      angle: { min: -45, max: 45 },
+    },
+    reducedMotion: true,
+    lowPerformance: true,
+  });
+
+  assert.equal(state.reducedMotion, true);
+  assert.equal(state.lowPerformance, true);
+  assert.equal(state.manualInspectionAvailable, true);
+  assert.equal(state.oneActionReturnAvailable, true);
+  assert.equal(state.screenSpaceUiAffected, false);
+
+  state = applyBattleCameraCommand(state, { type: BATTLE_CAMERA_COMMANDS.BEGIN_MANUAL_INSPECT }).state;
+  assert.equal(state.mode, BATTLE_CAMERA_MODES.MANUAL_INSPECT);
+  state = applyBattleCameraCommand(state, { type: BATTLE_CAMERA_COMMANDS.PAN, dx: 15, dy: -10 }).state;
+  state = applyBattleCameraCommand(state, { type: BATTLE_CAMERA_COMMANDS.SET_ZOOM, zoom: 1.6 }).state;
+  state = applyBattleCameraCommand(state, { type: BATTLE_CAMERA_COMMANDS.SET_ANGLE, angle: 25 }).state;
+  assert.deepEqual(state.center, { x: 55, y: 20 });
+  assert.equal(state.zoom, 1.6);
+  assert.equal(state.angle, 25);
+
+  const returned = applyBattleCameraCommand(state, { type: BATTLE_CAMERA_COMMANDS.RETURN_TO_CONTROLLED });
+  assert.equal(returned.ok, true);
+  assert.equal(returned.reason, 'RETURNED_TO_CONTROLLED_CHARACTER');
+  assert.equal(returned.state.mode, BATTLE_CAMERA_MODES.FOLLOW_CONTROLLED);
+  assert.deepEqual(returned.state.center, { x: 40, y: 30 });
+  assert.equal(returned.state.zoom, 1);
+  assert.equal(returned.state.angle, 0);
+});
+
+test('ReducedMotion/LowPerf card release keeps exact destination identity while simplifying movement', async () => {
+  const {
+    BATTLE_CARD_RELEASE_FLIGHT_LOW_PERF_MAX_DURATION_MS,
+    BATTLE_CARD_RELEASE_FLIGHT_MODE,
+    projectBattleCardReleaseFlightMotion,
+  } = await import('../browser/battle-card-release-flight-motion-core.mjs');
+
+  const start = { x: 12, y: 34 };
+  const target = { x: 212, y: 134 };
+  const reduced = projectBattleCardReleaseFlightMotion({ start, target, role: 'top', reducedMotion: true });
+  assert.equal(reduced.mode, BATTLE_CARD_RELEASE_FLIGHT_MODE.REDUCED);
+  assert.deepEqual(reduced.start, start);
+  assert.deepEqual(reduced.target, target);
+  assert.equal(reduced.spinDeg, 0);
+  assert.equal(reduced.bendPx, 0);
+  assert.deepEqual(reduced.destinationCue, { kind: 'DESTINATION_PULSE', x: 212, y: 134 });
+
+  const lowPerf = projectBattleCardReleaseFlightMotion({ start, target, role: 'bottom', lowPerf: true, durationMs: 999 });
+  assert.equal(lowPerf.mode, BATTLE_CARD_RELEASE_FLIGHT_MODE.FULL);
+  assert.equal(lowPerf.lowPerf, true);
+  assert.deepEqual(lowPerf.start, start);
+  assert.deepEqual(lowPerf.target, target);
+  assert.equal(lowPerf.spinDeg, 0);
+  assert.equal(lowPerf.bendPx, 0);
+  assert.equal(lowPerf.durationMs, BATTLE_CARD_RELEASE_FLIGHT_LOW_PERF_MAX_DURATION_MS);
+  assert.equal(lowPerf.frames.at(-1).x, target.x - start.x);
+  assert.equal(lowPerf.frames.at(-1).y, target.y - start.y);
 });

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HIDDEN-HAND-ADD-BUTTON-R1-20260916T2156-SOL-C18",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_HIDDEN_HAND_ADD_BUTTON_R1",
+  "acquireKey": "BATTLE-HIDDEN-HAND-ADD-BUTTON-R1-20260916T2156-SOL-C18",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ROW1374_HIDDEN_HAND_BUTTON_CANON_PLUS_LEASE_A5N5_MAIN_30735F62",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "MERGED_HIDDEN_HAND_CORE_PLUS_EXISTING_JANKEN_RUNTIME_COMPONENT_PATTERN",
+  "proceedToken": "PROCEED|BATTLE-HIDDEN-HAND-ADD-BUTTON-R1-20260916T2156-SOL-C18|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|hidden-hand-add-button|component-only|active-lease",
+  "authorizationBaseSha": "30735f62819972070ea1b52623d8eb339fba7c66",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_HIDDEN_HAND_ADD_BUTTON_R1",
+  "leaseAcquireKey": "BATTLE-HIDDEN-HAND-ADD-BUTTON-R1-20260916T2156-SOL-C18",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 21:56 JST",
+  "leaseUntilJst": "2026-09-16 22:56 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR exact main 30735f62819972070ea1b52623d8eb339fba7c66; mutable NEW browser/battle-hidden-hand-add-button-runtime.mjs; NEW tests/battle-hidden-hand-add-button-runtime.test.mjs; own transient data/preaction-authorizations/BATTLE-HIDDEN-HAND-ADD-BUTTON-R1-20260916T2156-SOL-C18.json; own fresh branch/PR/check/merge/readback; own CURRENT lease/R24 event. READ_ONLY browser/battle-hidden-hand-core.mjs; browser/battle-janken-focus-runtime-surface.mjs; browser/battle-janken-slidepad-runtime-mount.mjs; browser/GAMEROAD.html; active WU19 subDeck files; gameplay/rules/save/network; unrelated active WorkUnits.",
+  "solutionSignature": "BATTLE_HIDDEN_HAND_ADD_SAME_RESERVED_ROAD_BUTTON_RUNTIME_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_BUTTON_CANON_PLUS_MERGED_HIDDEN_HAND_CORE_AND_EXISTING_JANKEN_RUNTIME_SURFACE_20260916T2156",
+  "solutionSearchEvidence": [
+    "Current row1374 fixes the button enable predicate, same-physical-card add semantics, disabled behavior, no duplicate, no privilege consumption, and no second hand store/engine.",
+    "Merged battle-hidden-hand-core.mjs is the semantic source for reservation/privilege/physical identity and must be reused rather than duplicated.",
+    "Existing battle-janken-focus-runtime-surface.mjs demonstrates caller-owned DOM/runtime component composition; this WorkUnit does not mutate that shared runtime.",
+    "Repository search found no existing Hidden Hand add-button component or formal gummy-gold/lemon palette token to reuse; exact color values therefore remain theme-supplied rather than invented."
+  ],
+  "scope": [
+    "browser/battle-hidden-hand-add-button-runtime.mjs",
+    "tests/battle-hidden-hand-add-button-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-hidden-hand-add-button-runtime.mjs",
+    "tests/battle-hidden-hand-add-button-runtime.test.mjs"
+  ]
+}

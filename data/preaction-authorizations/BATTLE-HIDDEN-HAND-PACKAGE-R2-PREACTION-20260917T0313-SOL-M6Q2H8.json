@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HIDDEN-HAND-PACKAGE-R2-PREACTION-20260917T0313-SOL-M6Q2H8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_HIDDEN_HAND_PUBLIC_PACKAGE_RECOVERY_R2",
+  "acquireKey": "BATTLE-HIDDEN-HAND-PACKAGE-R2-20260917T0311-SOL-M6Q2H8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1817_PUBLIC_PACKAGE_DEPENDENCY_CLOSURE_FAILURE_20260917",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1817_REQUIRED_GATE_35121794421_PUBLIC_PACKAGE_PROVENANCE_FAILURE_PLUS_EXACT_IMPORT_CHAIN_INSPECTION",
+  "proceedToken": "PROCEED|BATTLE-HIDDEN-HAND-PACKAGE-R2-PREACTION-20260917T0313-SOL-M6Q2H8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle|hidden-hand-public-package|active-lease",
+  "authorizationBaseSha": "5cfcf66fc6a95c0ae3879bb422224ceb217e44f4",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_HIDDEN_HAND_PUBLIC_PACKAGE_RECOVERY_R2",
+  "leaseAcquireKey": "BATTLE-HIDDEN-HAND-PACKAGE-R2-20260917T0311-SOL-M6Q2H8",
+  "leaseSnapshotReadbackAtJst": "2026-09-17 03:12 JST",
+  "leaseUntilJst": "2026-09-17 04:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A27:L27",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR exact current main 5cfcf66fc6a95c0ae3879bb422224ceb217e44f4; mutable deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs only; own transient PRE_ACTION witness/branch/PR/check/merge/readback; own CURRENT lease/R24 event. READ_ONLY PR#1817 browser runtime/test donor, browser/GAMEROAD.html PR#1818, active power-energy path R1 runtime, active board R11 files, gameplay/rules/save/network, unrelated WorkUnits.",
+  "solutionSignature": "BATTLE_HIDDEN_HAND_PUBLIC_PACKAGE_DEPENDENCY_CLOSURE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_CLOUDFLARE_PACKAGE_ARTIFACT_LIST_AND_RECURSIVE_DEPENDENCY_VERIFIER_REUSED",
+  "solutionSearchEvidence": [
+    "PR#1817 adds a static import from the already-packaged battle-janken-slidepad-runtime-mount.mjs to battle-hidden-road-janken-slidepad-integration.mjs.",
+    "That integration imports battle-hidden-hand-add-button-runtime.mjs, which imports new-base-hidden-hand-runtime-core.mjs.",
+    "Current deploy/cloudflare/scripts/build.mjs does not package those three existing modules, so the recursive public dependency closure fails.",
+    "Repair is limited to the existing package manifest/copy list and its package test; Hidden Hand, janken, Road, gameplay, save, HTML, and runtime semantics remain unchanged."
+  ],
+  "scope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

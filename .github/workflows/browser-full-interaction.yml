@@ -18,6 +18,9 @@ on:
       - 'tests/browser-full-interaction-state-sequence.spec.mjs'
       - 'playwright.full-interaction.config.mjs'
       - '.github/workflows/browser-full-interaction.yml'
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -30,23 +33,60 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Classify PR Browser Full Interaction need
+        id: classify
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          run_bfi=true
+          if [[ "${EVENT_NAME}" == "pull_request" ]]; then
+            run_bfi=false
+            git diff --name-only "${BASE_SHA}" "${HEAD_SHA}" > /tmp/gameroad-bfi-changed.txt
+            echo "PR changed paths:"
+            cat /tmp/gameroad-bfi-changed.txt
+            while IFS= read -r path; do
+              case "${path}" in
+                browser/GAMEROAD.html|\
+                tests/browser-full-interaction.spec.mjs|\
+                tests/browser-full-interaction-state-sequence.spec.mjs|\
+                playwright.full-interaction.config.mjs)
+                  run_bfi=true
+                  break
+                  ;;
+                *) ;;
+              esac
+            done < /tmp/gameroad-bfi-changed.txt
+          fi
+          echo "run_bfi=${run_bfi}" >> "$GITHUB_OUTPUT"
+          echo "Browser Full Interaction heavy run=${run_bfi}"
 
       - name: Set up Node
+        if: ${{ steps.classify.outputs.run_bfi == 'true' }}
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
       - name: Install Playwright test runner
+        if: ${{ steps.classify.outputs.run_bfi == 'true' }}
         run: npm install --no-save --no-package-lock @playwright/test@1.62.0
 
       - name: Install Chromium and OS dependencies
+        if: ${{ steps.classify.outputs.run_bfi == 'true' }}
         run: npx playwright install --with-deps chromium
 
       - name: Run GAMEROAD full interaction evidence R1
+        if: ${{ steps.classify.outputs.run_bfi == 'true' }}
         run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
 
       - name: Upload interaction evidence
-        if: ${{ !cancelled() }}
+        if: ${{ steps.classify.outputs.run_bfi == 'true' && !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: browser-full-interaction-${{ github.run_id }}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PLAYGLOBAL-SUPERVISION-FRESHNESS-R1-20260917T0345-SOL-Q4N8M3",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "PLAYGLOBAL_STALE_EVIDENCE_FANIN_GATE_R1",
+  "acquireKey": "PLAYGLOBAL-SUPERVISION-FRESHNESS-R1-20260917T0345-SOL-Q4N8M3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_3593C27_AND_OWNER_FREE_GLOBAL_GATE_20260917T0345JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_BFI_PLUS_AUTO_MERGE_FRESH_BASE_INVALIDATION_REUSE",
+  "proceedToken": "PROCEED|PLAYGLOBAL-SUPERVISION-FRESHNESS-R1-20260917T0345-SOL-Q4N8M3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|playglobal-evidence-freshness|ci-supervision|active-lease",
+  "authorizationBaseSha": "3593c27bfd1e65196189ecb151f235098fc405fe",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "PLAYGLOBAL_STALE_EVIDENCE_FANIN_GATE_R1",
+  "leaseAcquireKey": "PLAYGLOBAL-SUPERVISION-FRESHNESS-R1-20260917T0345-SOL-Q4N8M3",
+  "leaseSnapshotReadbackAtJst": "2026-09-17 03:45 JST",
+  "leaseUntilJst": "2026-09-17 04:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A27:L27",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR exact fresh current main; mutable .github/workflows/browser-full-interaction.yml; .github/workflows/required-gate-auto-merge.yml; .github/workflows/gameroad-required-gate.yml; own transient PRE_ACTION witness/branch/PR/check/merge/readback; own CURRENT lease/R24 event if durable checkpoint needed. READ_ONLY browser/GAMEROAD.html; tests/browser-full-interaction.spec.mjs (active Battle owner); all gameplay/rules/save/economy/network/product modules; unrelated WorkUnits.",
+  "solutionSignature": "EXISTING_BROWSER_FULL_INTERACTION_EXACT_HEAD_FRESH_BASE_FANIN_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "ROW2_EXISTING_OWNER_PLUS_CURRENT_BFI_AUTO_MERGE_ACTUAL",
+  "solutionSearchEvidence": [
+    "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001 is the existing whole-player-path review owner and explicitly forbids creating a second UI audit framework or ledger.",
+    "Browser Full Interaction Evidence already exercises the player journey but currently has no pull_request trigger, while auto-merge queries pull_request BFI runs for exact heads.",
+    "Required Gate auto-merge already invalidates evidence when the PR base advances and requests an update-branch, so fresh-base recomposition can be reused instead of building a second composed-build system.",
+    "Current active product WorkUnits own Battle HTML, Battle board, Cards, Shop and Partner files; this WorkUnit changes only CI supervision workflows and does not steal product resources.",
+    "Image generation is forbidden and not used."
+  ],
+  "scope": [
+    ".github/workflows/browser-full-interaction.yml",
+    ".github/workflows/required-gate-auto-merge.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/browser-full-interaction.yml",
+    ".github/workflows/required-gate-auto-merge.yml"
+  ]
+}

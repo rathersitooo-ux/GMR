@@ -115,18 +115,15 @@ test('mounts the existing Flanora surface and persistent Shield-entry gates with
   assert.equal(runtime.snapshot().gateCue.activeArrowCount, 0);
   assert.equal(runtime.snapshot().progressionBuiltStageCount, 0);
   assert.equal(runtime.snapshot().progressionLatentStageCount, 84);
-  assert.deepEqual(roadState(runtime, 'P1', 0, 1), {
-    state: 'LATENT',
-    established: 'false',
-    latent: 'true',
-    actionable: 'false',
-    traversable: 'false',
-  });
-  assert.equal(runtime.resolveGateCueLane('P2', 1).entryCellId, 'clearing:top:4');
+  assert.equal(runtime.boardSurfaceRuntime.resolveRoadStep('P1', 0, 1), null);
+  const p2CenterGate = runtime.resolveGateCueLane('P2', 1);
+  assert.equal(p2CenterGate.anchor, runtime.boardSurfaceRuntime.resolveRouteGate('P2', 1));
+  assert.equal(p2CenterGate.anchor.getAttribute('data-flanora-route-gate'), 'goal-gate:P2:1');
+  assert.equal(p2CenterGate.anchor.getAttribute('data-shared-goal-id'), 'goal:shared');
   assert.equal(runtime.resolveGateCueLane('P2', 1).arrowStack, null);
 });
 
-test('1..6 established cards become BUILT while the future stages stay LATENT and GOAL remains closed', () => {
+test('1..6 established cards become BUILT while future stages stay logical-only and GOAL remains closed', () => {
   const { runtime } = mount();
   for (const count of [1, 3, 6]) {
     const snapshot = withStraight(emptyStraights(), 4, count, `P2-C-${count}`);
@@ -136,13 +133,16 @@ test('1..6 established cards become BUILT while the future stages stay LATENT an
     assert.equal(result.progressionBuiltStageCount, count);
     assert.equal(result.progressionLatentStageCount, 84 - count);
     for (let roadIndex = 1; roadIndex <= 7; roadIndex += 1) {
-      const expected = roadIndex <= count ? 'BUILT' : 'LATENT';
-      const state = roadState(runtime, 'P2', 1, roadIndex);
-      assert.equal(state.state, expected);
-      assert.equal(state.established, expected === 'BUILT' ? 'true' : 'false');
-      assert.equal(state.latent, expected === 'LATENT' ? 'true' : 'false');
-      assert.equal(state.actionable, 'false');
-      assert.equal(state.traversable, 'false');
+      if (roadIndex <= count) {
+        const state = roadState(runtime, 'P2', 1, roadIndex);
+        assert.equal(state.state, 'BUILT');
+        assert.equal(state.established, 'true');
+        assert.equal(state.latent, 'false');
+        assert.equal(state.actionable, 'false');
+        assert.equal(state.traversable, 'false');
+      } else {
+        assert.equal(runtime.boardSurfaceRuntime.resolveRoadStep('P2', 1, roadIndex), null);
+      }
     }
     assert.equal(runtime.resolveGateCueLane('P2', 1).arrowStack, null);
   }
@@ -163,7 +163,9 @@ test('the seventh authoritative card builds the final stage, opens only the exac
   assert.equal(roadState(runtime, 'P2', 1, 7).state, 'BUILT');
   assert.equal(runtime.snapshot().gateCue.activeArrowCount, 1);
   const opened = runtime.resolveGateCueLane('P2', 1);
-  assert.equal(opened.entryCellId, 'clearing:top:4');
+  assert.equal(opened.anchor, runtime.boardSurfaceRuntime.resolveRouteGate('P2', 1));
+  assert.equal(opened.anchor.getAttribute('data-flanora-route-gate'), 'goal-gate:P2:1');
+  assert.equal(opened.anchor.getAttribute('data-shared-goal-id'), 'goal:shared');
   assert.equal(opened.arrowStack.children.length, 3);
   assert.equal(opened.arrowStack.children.every((node) => node.textContent === '↑'), true);
   assert.equal(opened.arrowStack.style.getPropertyValue('--gameroad-goal-entry-cue-color'), COLORS.P2);
@@ -266,7 +268,10 @@ test('normalizes the caller lane blocks once so Flanora, progression and GOAL-pa
   assert.equal(runtime.progressionPresentation().lanePresentations[0].key, 'P1:0');
   assert.equal(runtime.progressionPresentation().lanePresentations[0].builtStageCount, 7);
   assert.equal(roadState(runtime, 'P1', 0, 7).state, 'BUILT');
-  assert.equal(runtime.resolveGateCueLane('P1', 0).entryCellId, 'clearing:top:0');
+  const p1LeftGate = runtime.resolveGateCueLane('P1', 0);
+  assert.equal(p1LeftGate.anchor, runtime.boardSurfaceRuntime.resolveRouteGate('P1', 0));
+  assert.equal(p1LeftGate.anchor.getAttribute('data-flanora-route-gate'), 'goal-gate:P1:0');
+  assert.equal(p1LeftGate.anchor.getAttribute('data-shared-goal-id'), 'goal:shared');
   assert.equal(runtime.resolveGateCueLane('P1', 1).arrowStack, null);
 });
 
@@ -281,7 +286,7 @@ test('Reduced Motion keeps the same OPEN/progression meaning with static cue and
   assert.equal(runtime.snapshot().progressionLatentStageCount, 77);
   assert.equal(roadState(runtime, 'P1', 0, 7).state, 'BUILT');
   assert.equal(runtime.snapshot().gateCue.activeArrowCount, 1);
-  assert.equal(runtime.snapshot().gateCue.animationMode, 'STATIC_UPWARD_ARROW');
+  assert.equal(runtime.snapshot().gateCue.animationMode, 'STATIC_GATE_STATE');
   assert.equal(runtime.snapshot().gateCue.profile, 'reduced_motion');
   assert.equal(runtime.destroy(), true);
   assert.equal(runtime.destroy(), false);

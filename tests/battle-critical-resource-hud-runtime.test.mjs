@@ -153,6 +153,8 @@ test('mounts a compact caller-owned HUD and updates without resource calculation
   assert.equal(host.children.length, 1);
   assert.equal(runtime.root.dataset.presentationOnly, 'true');
   assert.equal(runtime.root.dataset.authority, 'caller_authoritative_resource_snapshot_only');
+  assert.equal(runtime.root.dataset.visualPriority, 'resource_detail');
+  assert.equal(runtime.visualPriority, 'resource_detail');
   assert.equal(runtime.manaCell.children[1].textContent, '7/10');
   assert.equal(runtime.honeyCell.children[1].textContent, '7');
   assert.equal(runtime.chipCell.children[1].textContent, '3');
@@ -186,6 +188,30 @@ test('mounts a compact caller-owned HUD and updates without resource calculation
   assert.equal(runtime.root.dataset.paymentResolved, 'true');
   assert.match(runtime.root.getAttribute('aria-label'), /支払い 戦闘札6、支払6、マナ4、ハニー2/);
   assert.equal(runtime.gameStateWrite, false);
+});
+
+test('installs WU07 short-landscape hierarchy without taking gameplay authority', () => {
+  const global = makeGlobal();
+  const host = new FakeNode('div');
+  mountBattleCriticalResourceHud(global, { host, snapshot: { manaCurrent: 3, manaMax: 8, honey: 2, chipCount: 1 } });
+  const style = global.document.head.children.find(node => node.id === 'gameroad-battle-critical-resource-hud-style');
+  assert.ok(style);
+  assert.match(style.textContent, /max-height:420px\) and \(orientation:landscape/);
+  assert.match(style.textContent, /data-battle-screen-causal-grid/);
+  assert.match(style.textContent, /data-battle-current-action/);
+  assert.match(style.textContent, /data-battle-screen-lane/);
+  assert.match(style.textContent, /top:103px!important/);
+  assert.match(style.textContent, /opacity:\.66/);
+  assert.deepEqual(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.visualHierarchyContract, [
+    'board_world',
+    'current_action',
+    'hand_janken',
+    'four_player_public',
+    'resource_detail',
+  ]);
+  assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.primaryShortLandscapeTarget, '667x375');
+  assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.gameStateWrite, false);
+  assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.resourceAuthority, 'CALLER_ONLY');
 });
 
 test('does not expose physical Mana or Chip card identities or create a resource authority', () => {

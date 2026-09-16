@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 3,
+  "mode": "PRE_ACTION",
+  "acquireKey": "PARTNER-TEA-CONTEXTUAL-MERGE-R2-20260916T1308-SOL-RECOVER",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "PARTNER_TEA_CONTEXTUAL_ENTRY_MERGE_R1",
+  "owner": "ChatGPT / GPT-5.6 Sol / expired-work recovery",
+  "leaseSnapshotSheet": "CURRENT_ACTIVE_LEASES",
+  "leaseSnapshotReadbackRef": "A27:L27",
+  "leaseSnapshotReadbackAcquireKey": "PARTNER-TEA-CONTEXTUAL-MERGE-R2-20260916T1308-SOL-RECOVER",
+  "leaseUntilJst": "2026-09-16 14:08 JST",
+  "authorizationBaseSha": "9ce8b756c905861547b575b13721a7e053a8f7c4",
+  "currencyEvidence": {
+    "currentChainReadbackId": "GAMEROAD_Drive総合目次・記録ルーティング_CURRENT/14CYoFblBecfUqrnFKfdWayHsi8cnAbsrfFzNxZ0OvkY",
+    "currentAliasReadbackId": "GAMEROAD_現役運用規約_CURRENT/1za9b6DOzyLaNZQfWVAJFmAxTetraYrHnkpJ33vEkBwE",
+    "currentAuthorityReadbackId": "CURRENT_ACTIVE_LEASES!A27:L27 ACTIVE PASS at 2026-09-16 13:08 JST",
+    "currentActualReadbackId": "GitHub main 9ce8b756c905861547b575b13721a7e053a8f7c4 plus current partner-tea source/test compared with released PR#1720 head 4532c73d4985c18dda86a6d765f6ca1797c02736"
+  },
+  "predictionEvidence": {
+    "status": "PASS",
+    "artifactId": "PR1720 exact two-file semantic diff inspection",
+    "summary": "Current main lacks OPEN_TEA contextual hub action. Recovered delta only exposes Tea when the existing #partnerTeaQuickChoiceBar surface exists, closes the hub, focuses that existing surface, preserves draft/form state, and creates no standalone Tea view or session."
+  },
+  "rehearsalEvidence": {
+    "status": "PASS",
+    "artifactId": "static-exact-blob-rehearsal/4532c73d4985c18dda86a6d765f6ca1797c02736",
+    "summary": "Exact old PR source/test blobs were inspected against current main and remain a bounded two-file product delta. Old PR remains mergeable, but its queued Required Gate is not treated as success; a fresh successor PR must earn current terminal-success CI."
+  },
+  "rollbackPlan": "Before main merge, rollback is closing the successor PR and deleting its branch; main remains untouched. After merge, any proven regression follows current rollback authority rather than mutating Partner save/canon or shared HTML ad hoc.",
+  "successEvidencePlanned": "Fresh successor PR exact-head GAMEROAD Required Gate SUCCESS, mergeable readback, expected-head squash merge, current-main source/test readback proving contextual existing-surface Tea behavior, then R23 TERMINAL/RELEASED and exact lease removal hit0.",
+  "stopConditions": [
+    "lease lost, expired, or no longer ACTIVE/PASS",
+    "another ACTIVE owner claims either mutable source/test file",
+    "current main changes either source/test file unexpectedly before merge",
+    "fresh Required Gate is not terminal SUCCESS",
+    "successor PR is not mergeable or exact head changes unexpectedly"
+  ],
+  "scope": {
+    "mutableResources": [
+      "browser/partner-tea-runtime-mount.mjs",
+      "tests/partner-tea-runtime-mount.test.mjs",
+      "data/preaction-authorizations/PARTNER-TEA-CONTEXTUAL-MERGE-R2-20260916T1308-SOL-RECOVER.json",
+      "own successor branch/PR/check/merge/readback"
+    ],
+    "readOnlyResources": [
+      "browser/GAMEROAD.html",
+      "Partner relationship/reward/save/gameplay/canon authority",
+      ".github/workflows/*",
+      "unrelated ACTIVE WorkUnits"
+    ]
+  },
+  "plannedMutationSummary": "Recover PARTNER_TEA_CONTEXTUAL_ENTRY_MERGE_R1 on a clean successor branch from current main: record this PRE_ACTION first, then apply only the previously inspected exact source/test blobs so Partner hub Tea routes into the existing inline quick-choice surface without creating a standalone Tea flow."
+}

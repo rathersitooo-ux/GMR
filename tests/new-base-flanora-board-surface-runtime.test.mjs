@@ -68,11 +68,6 @@ test('mount is world-first: one top-center GOAL, twelve route anchors, four x th
   assert.equal(runtime.root.dataset.centralWorldLayout,'shared-field-shield-actual-card-road-route-gates-one-goal');
   assert.equal(runtime.root.dataset.futureDiscreteProgressionSlots,'false');
   assert.equal(runtime.root.dataset.visualComposition,'fixed-target-asymmetric-world');
-  assert.equal(runtime.root.dataset.initialFieldIdentity,'FIELD-01_WATERFALL_FOREST');
-  assert.equal(runtime.root.dataset.fieldLandmark,'AIR_WATERFALL');
-  assert.equal(runtime.root.dataset.fieldTerrain,'FOREST_RIDGE_CLEARING');
-  assert.equal(runtime.root.dataset.tableGridVisual,'false');
-  assert.equal(runtime.root.dataset.clearingTrackShape,'source-bound-target-inspired-loop');
   assert.equal(snap.visibleSharedFieldNodeCount,26); assert.equal(snap.visibleSharedFieldEdgeCount,26); assert.equal(snap.sourceClearingBindingCount,26);
   assert.match(runtime.root.getAttribute('aria-label'),/共有フィールド.*盾.*カード.*12経路ゲート.*1つのGOAL/);
   assert.deepEqual(runtime.upper.children.map(node=>node.className),['grFlanoraSharedGoal','grFlanoraRouteGateLayer','grFlanoraProgressionGrid']);
@@ -176,13 +171,6 @@ test('contract denies a second board engine and fixes one shared GOAL without fa
   assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.routeGateCount,12);
   assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.progressionDirection,'BOTTOM_TO_TOP');
   assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.futureDiscreteStageNodes,false);
-  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.lanePlacement,'FIXED_TARGET_NORMALIZED_X_WORLD_SPACE');
-  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.initialFieldIdentity,'FIELD-01_WATERFALL_FOREST');
-  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.initialFieldLandmark,'AIR_WATERFALL');
-  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.inactiveRouteGuideEmphasis,'ATMOSPHERIC_ONLY');
-  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.tableGridVisual,false);
-  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.sharedFieldVisual,'SOURCE_BOUND_TARGET_INSPIRED_WORLD');
-  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.sharedFieldVisualTopology,'SOURCE_BOUND_26_CELL_TARGET_INSPIRED_LOOP');
   assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.visibleSharedFieldNodeCount,26);
   assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.visibleSharedFieldEdgeCount,26);
 });

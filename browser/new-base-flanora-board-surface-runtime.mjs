@@ -430,12 +430,6 @@ export function mountFlanoraBoardSurface({
   setAttr(root, 'data-central-world-layout', 'shared-field-shield-actual-card-road-route-gates-one-goal');
   setAttr(root, 'data-future-discrete-progression-slots', 'false');
   setAttr(root, 'data-visual-composition', 'fixed-target-asymmetric-world');
-  setAttr(root, 'data-initial-field-identity', 'FIELD-01_WATERFALL_FOREST');
-  setAttr(root, 'data-field-landmark', 'AIR_WATERFALL');
-  setAttr(root, 'data-field-terrain', 'FOREST_RIDGE_CLEARING');
-  setAttr(root, 'data-table-grid-visual', 'false');
-  setAttr(root, 'data-clearing-track-shape', 'source-bound-target-inspired-loop');
-  setAttr(root, 'data-shared-field-visual-topology', 'SOURCE_BOUND_26_CELL_TARGET_INSPIRED_LOOP');
   setAttr(root, 'data-source-clearing-binding-count', model.clearingCells.length);
   setAttr(root, 'data-visible-field-node-count', model.clearingCells.length);
   setAttr(root, 'data-visible-field-edge-count', model.clearingCycleCellIds.length);
@@ -453,7 +447,6 @@ export function mountFlanoraBoardSurface({
   const progressionGrid = createNode(documentLike, 'div', 'grFlanoraProgressionGrid');
   const clearing = createNode(documentLike, 'div', 'grFlanoraClearing');
   setAttr(clearing, 'data-shared-main-field', 'true');
-  setAttr(clearing, 'data-shared-field-visual-topology', 'SOURCE_BOUND_26_CELL_TARGET_INSPIRED_LOOP');
   setAttr(clearing, 'data-source-binding-only', 'legacy-map-layout');
   setAttr(clearing, 'aria-label', '4人が移動する共有フィールド。利用者指定の分岐ネットワーク形状');
 
@@ -630,7 +623,6 @@ export function mountFlanoraBoardSurface({
         clearingCellCount: clearingByCellId.size,
         visibleSharedFieldNodeCount: fieldNodesById.size,
         visibleSharedFieldEdgeCount: model.clearingCycleCellIds.length,
-        sharedFieldVisualTopology: 'SOURCE_BOUND_26_CELL_TARGET_INSPIRED_LOOP',
         clearingCycleCellIds: [...model.clearingCycleCellIds],
         performanceProfile: root.dataset?.performanceProfile ?? performanceProfile({ reducedMotion, lowPerf }),
         movementAuthority: false,
@@ -665,14 +657,6 @@ export const FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT = deepFreeze({
   builtStageIdentity: 'CALLER_PHYSICAL_CARD_ID_WHEN_AVAILABLE',
   futureDiscreteStageNodes: false,
   unresolvedStageDefault: 'NO_DISCRETE_NODE_GUIDE_ONLY',
-  lanePlacement: 'FIXED_TARGET_NORMALIZED_X_WORLD_SPACE',
-  initialFieldIdentity: 'FIELD-01_WATERFALL_FOREST',
-  initialFieldLandmark: 'AIR_WATERFALL',
-  initialFieldTerrain: 'FOREST_RIDGE_CLEARING',
-  inactiveRouteGuideEmphasis: 'ATMOSPHERIC_ONLY',
-  tableGridVisual: false,
-  sharedFieldVisual: 'SOURCE_BOUND_TARGET_INSPIRED_WORLD',
-  sharedFieldVisualTopology: 'SOURCE_BOUND_26_CELL_TARGET_INSPIRED_LOOP',
   visibleSharedFieldNodeCount: 26,
   visibleSharedFieldEdgeCount: 26,
   sourceClearingBindingPolicy: 'ONE_SOURCE_CELL_TO_ONE_VISIBLE_PRESENTATION_NODE',

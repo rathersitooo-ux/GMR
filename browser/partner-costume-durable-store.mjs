@@ -17,6 +17,7 @@ function requireStore(store) {
   return {
     getItem: requireFunction(store.getItem, 'store.getItem').bind(store),
     setItem: requireFunction(store.setItem, 'store.setItem').bind(store),
+    removeItem: store.removeItem == null ? null : requireFunction(store.removeItem, 'store.removeItem').bind(store),
   };
 }
 
@@ -37,6 +38,11 @@ function requireText(value) {
   return value;
 }
 
+function requireRestorablePreviousRaw(value) {
+  if (value === null || value === undefined || typeof value === 'string') return value;
+  fail('durable store must return previous partner costume snapshot bytes as a string or absence');
+}
+
 function decode(value) {
   try {
     return JSON.parse(requireText(value));
@@ -48,11 +54,26 @@ function decode(value) {
 }
 
 async function restorePreviousRaw(io, key, previousRaw) {
-  if (typeof previousRaw !== 'string') return;
   try {
-    await io.setItem(key, previousRaw);
-    const rollbackReadback = requireText(await io.getItem(key));
-    if (rollbackReadback !== previousRaw) fail('durable store rollback readback does not match the previous partner costume snapshot');
+    const currentRaw = await io.getItem(key);
+
+    if (typeof previousRaw === 'string') {
+      if (currentRaw !== previousRaw) await io.setItem(key, previousRaw);
+      const rollbackReadback = requireText(await io.getItem(key));
+      if (rollbackReadback !== previousRaw) fail('durable store rollback readback does not match the previous partner costume snapshot');
+      return;
+    }
+
+    if (previousRaw === null || previousRaw === undefined) {
+      if (currentRaw === null || currentRaw === undefined) return;
+      if (typeof io.removeItem !== 'function') fail('durable store cannot restore previous absence without store.removeItem');
+      await io.removeItem(key);
+      const rollbackReadback = await io.getItem(key);
+      if (rollbackReadback !== null && rollbackReadback !== undefined) fail('durable store rollback readback does not restore previous partner costume snapshot absence');
+      return;
+    }
+
+    fail('durable store rollback received an unsupported previous partner costume snapshot value');
   } catch (error) {
     throw new TypeError(`durable store rollback failed after partner costume snapshot save failure: ${error?.message ?? String(error)}`);
   }
@@ -68,12 +89,11 @@ export function createPartnerCostumeDurableStore({ store, storageKey } = {}) {
 
   async function saveSnapshot(snapshot) {
     const encoded = encode(snapshot);
-    const previousRaw = await io.getItem(key);
-    await io.setItem(key, encoded);
+    const previousRaw = requireRestorablePreviousRaw(await io.getItem(key));
 
-    let readback;
     try {
-      readback = requireText(await io.getItem(key));
+      await io.setItem(key, encoded);
+      const readback = requireText(await io.getItem(key));
       if (readback !== encoded) fail('durable store readback does not match the written partner costume snapshot');
     } catch (error) {
       await restorePreviousRaw(io, key, previousRaw);

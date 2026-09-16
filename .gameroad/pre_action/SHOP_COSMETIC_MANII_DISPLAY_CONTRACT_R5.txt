@@ -1,0 +1,6 @@
+PRE_ACTION
+TaskID=SHOP-SAFE-ECONOMY-INTEGRATION-001
+WorkUnitKey=SHOP_COSMETIC_MANII_DISPLAY_CONTRACT_R1
+BaseSHA=14777a3d38c9da30a2765c203205db0414ae184b
+Scope=browser/shop-transaction-presentation-adapter.mjs;tests/shop-transaction-presentation-adapter.test.mjs
+Intent=Reapply only player-facing MANII display name マニィ on fresh main; preserve internal MANII and all economy/payment/save/ownership semantics.

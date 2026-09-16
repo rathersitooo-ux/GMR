@@ -1,4 +1,5 @@
 const SCHEMA = 'GAMEROAD_NEW_BASE_GOAL_PATH_PRESENTATION_V1';
+const STRAIGHT_CARD_TARGET = 7;
 
 export const NEW_BASE_GOAL_PATH_VISUAL_STATE = Object.freeze({
   CLOSED: 'CLOSED',
@@ -20,11 +21,20 @@ function safeNonNegativeInteger(value) {
   return Number.isSafeInteger(value) && value >= 0;
 }
 
+function normalizeCardIds(value) {
+  if (!Array.isArray(value) || value.length > STRAIGHT_CARD_TARGET) return null;
+  const cardIds = value.map((item) => (nonEmptyString(item) ? item.trim() : null));
+  if (cardIds.some((item) => item === null)) return null;
+  return cardIds;
+}
+
 function failClosed(reason) {
   return deepFreeze({
     schema: SCHEMA,
     ok: false,
     reason,
+    sharedGoalId: null,
+    sharedGoalCount: 0,
     lanePresentations: [],
     openGoalPathCount: 0,
     terminalWin: false,
@@ -37,15 +47,19 @@ function failClosed(reason) {
   });
 }
 
-function normalizeLaneState(lane) {
+function normalizeLaneState(lane, sharedGoalId) {
   if (!lane || typeof lane !== 'object' || Array.isArray(lane)) return null;
   if (!nonEmptyString(lane.participantId)) return null;
   if (!safeNonNegativeInteger(lane.laneIndex)) return null;
   if (!safeNonNegativeInteger(lane.columnIndex)) return null;
-  if (!safeNonNegativeInteger(lane.goalRowColumnIndex)) return null;
-  if (lane.goalRowColumnIndex !== lane.columnIndex) return null;
-  if (!safeNonNegativeInteger(lane.straightCardCount)) return null;
+  if (!safeNonNegativeInteger(lane.goalEntryColumnIndex)) return null;
+  if (lane.goalEntryColumnIndex !== lane.columnIndex) return null;
+  if (lane.sharedGoalId !== sharedGoalId) return null;
+  const straightCardIds = normalizeCardIds(lane.straightCardIds);
+  if (!straightCardIds) return null;
+  if (!safeNonNegativeInteger(lane.straightCardCount) || lane.straightCardCount !== straightCardIds.length) return null;
   if (typeof lane.connectedToGoal !== 'boolean') return null;
+  if (lane.connectedToGoal !== (straightCardIds.length === STRAIGHT_CARD_TARGET)) return null;
 
   const participantId = lane.participantId.trim();
   const visualState = lane.connectedToGoal
@@ -57,12 +71,16 @@ function normalizeLaneState(lane) {
     participantId,
     laneIndex: lane.laneIndex,
     columnIndex: lane.columnIndex,
-    goalRowColumnIndex: lane.goalRowColumnIndex,
-    straightCardCount: lane.straightCardCount,
+    goalEntryColumnIndex: lane.goalEntryColumnIndex,
+    goalRowColumnIndex: lane.goalEntryColumnIndex,
+    sharedGoalId,
+    straightCardIds,
+    straightCardCount: straightCardIds.length,
     connectedToGoal: lane.connectedToGoal,
     visualState,
-    roadConnectionCue: lane.connectedToGoal ? 'GOAL_LINK_ACTIVE' : 'GOAL_LINK_INACTIVE',
-    goalConnectionCue: lane.connectedToGoal ? 'CONNECTED' : 'NOT_CONNECTED',
+    gateVisualState: visualState,
+    roadConnectionCue: lane.connectedToGoal ? 'GOAL_LINK_ACTIVE' : 'GOAL_LINK_FAINT',
+    goalConnectionCue: lane.connectedToGoal ? 'CONNECTED' : 'FAINT_GUIDE_ONLY',
     emphasizeRoadToGoal: lane.connectedToGoal,
     emphasizeGoal: lane.connectedToGoal,
     terminalWin: false,
@@ -70,14 +88,10 @@ function normalizeLaneState(lane) {
 }
 
 /**
- * Projects the existing authoritative new-base GOAL-path projection into a
- * presentation-only lane plan.
- *
- * This layer deliberately does not count cards, decide whether a lane is
- * complete, decide movement legality, or decide match result. `connectedToGoal`
- * is caller-authoritative. Seven-straight semantics remain owned by
- * new-base-goal-path-core, while terminal victory remains owned by the existing
- * authoritative GOAL_REACHED result path.
+ * Presentation-only projection of the authoritative seven-card path state.
+ * One shared GOAL is exposed to the world. Each lane retains its own entry
+ * port and exact placed physical card ids. Seven cards only open the route;
+ * terminal victory still belongs to the existing GOAL_REACHED authority.
  */
 export function projectNewBaseGoalPathPresentation(goalPathProjection) {
   if (!goalPathProjection || typeof goalPathProjection !== 'object' || Array.isArray(goalPathProjection)) {
@@ -85,17 +99,19 @@ export function projectNewBaseGoalPathPresentation(goalPathProjection) {
   }
   if (goalPathProjection.ok !== true) return failClosed('GOAL_PATH_PROJECTION_NOT_OK');
   if (goalPathProjection.terminalWin !== false) return failClosed('SEVEN_STRAIGHT_TERMINAL_WIN_FORBIDDEN');
-  if (!safeNonNegativeInteger(goalPathProjection.horizontalCellCount)) {
-    return failClosed('HORIZONTAL_CELL_COUNT_INVALID');
+  if (!safeNonNegativeInteger(goalPathProjection.horizontalCellCount)) return failClosed('HORIZONTAL_CELL_COUNT_INVALID');
+  if (!nonEmptyString(goalPathProjection.sharedGoalId) || goalPathProjection.sharedGoalCount !== 1) {
+    return failClosed('ONE_SHARED_GOAL_REQUIRED');
   }
   if (!Array.isArray(goalPathProjection.laneStates) || goalPathProjection.laneStates.length === 0) {
     return failClosed('LANE_STATES_REQUIRED');
   }
 
+  const sharedGoalId = goalPathProjection.sharedGoalId.trim();
   const lanePresentations = [];
   const seenKeys = new Set();
   for (const lane of goalPathProjection.laneStates) {
-    const normalized = normalizeLaneState(lane);
+    const normalized = normalizeLaneState(lane, sharedGoalId);
     if (!normalized) return failClosed('LANE_STATE_INVALID');
     if (seenKeys.has(normalized.key)) return failClosed('LANE_IDENTITY_DUPLICATE');
     seenKeys.add(normalized.key);
@@ -113,11 +129,11 @@ export function projectNewBaseGoalPathPresentation(goalPathProjection) {
     reason: 'GOAL_PATH_PRESENTATION_PROJECTED',
     sourceReason: nonEmptyString(goalPathProjection.reason) ? goalPathProjection.reason.trim() : null,
     horizontalCellCount: goalPathProjection.horizontalCellCount,
+    sharedGoalId,
+    sharedGoalCount: 1,
     lanePresentations,
     openGoalPathCount,
     hasAnyOpenGoalPath: openGoalPathCount > 0,
-
-    // WU30 exposes only the path-open visual state. It cannot terminate a match.
     terminalWin: false,
     requiresAuthoritativeGoalReachedForResult: true,
     presentationOnly: true,
@@ -150,10 +166,13 @@ export function isNewBaseGoalPathPresentation(value) {
 export const NEW_BASE_GOAL_PATH_PRESENTATION_CONTRACT = deepFreeze({
   schema: SCHEMA,
   connectionAuthority: 'CALLER_GOAL_PATH_PROJECTION',
-  cardCountAuthority: 'EXISTING_NEW_BASE_GOAL_PATH_CORE',
+  cardIdentityAuthority: 'EXISTING_NEW_BASE_GOAL_PATH_CORE_STRAIGHT_CARD_IDS',
+  sharedGoalCount: 1,
+  routeEntryCount: 12,
   resultAuthority: 'EXISTING_AUTHORITATIVE_GOAL_REACHED_PATH',
   sevenStraightTerminalWin: false,
-  sevenStraightEffect: 'CONNECT_PATH_TO_GOAL',
+  sevenStraightEffect: 'OPEN_ROUTE_TO_SHARED_GOAL',
+  closedRouteGuide: 'FAINT_ONLY',
   computesStraightCompletion: false,
   computesMovementLegality: false,
   computesResult: false,

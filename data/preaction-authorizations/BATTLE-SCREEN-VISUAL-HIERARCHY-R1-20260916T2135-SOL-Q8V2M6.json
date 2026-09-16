@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SCREEN-VISUAL-HIERARCHY-R1-20260916T2135-SOL-Q8V2M6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_SCREEN_VISUAL_HIERARCHY_R1",
+  "acquireKey": "BATTLE-SCREEN-VISUAL-HIERARCHY-R1-20260916T2135-SOL-Q8V2M6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ACTIVE_LEASE_ROW27_AND_BATTLE_SCREEN_RUNTIME_READBACK_20260916T2140JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_BATTLE_SCREEN_PRESENTATION_ONLY_LAYER_AND_EXISTING_FOCUSED_TEST_IDENTIFIED",
+  "proceedToken": "PROCEED|BATTLE-SCREEN-VISUAL-HIERARCHY-R1-20260916T2135-SOL-Q8V2M6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-screen-visual-hierarchy-r1|presentation-only|active-lease",
+  "authorizationBaseSha": "acb55577d893e47abc89f75c71279a9b69ad8a68",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_SCREEN_VISUAL_HIERARCHY_R1",
+  "leaseAcquireKey": "BATTLE-SCREEN-VISUAL-HIERARCHY-R1-20260916T2135-SOL-Q8V2M6",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 21:40 JST",
+  "leaseUntilJst": "2026-09-16 22:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A27:L27",
+  "solutionSignature": "BATTLE_SCREEN_BOARD_FIRST_SINGLE_VISUAL_CENTER_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "Current battle-screen-runtime-mount already owns presentation-only HUD and action overlays without gameplay authority.",
+    "Current runtime visibly gives top metrics, played-card chain, causal trace and progress guide independent visual weight that can compete with the live board.",
+    "Existing focused test tests/battle-screen-runtime-mount.test.mjs is present and will run automatically when the conventional runtime module changes.",
+    "User-fixed hierarchy is board/world first, current action second, existing Hand/Janken next, four-player public context next, resources/details last; no persistent tall right rail."
+  ],
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs"
+  ],
+  "readOnlyContext": [
+    "browser/GAMEROAD.html",
+    "browser/new-base-flanora-map-layout-core.mjs",
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    "gameplay/rules/state"
+  ],
+  "forbiddenChanges": [
+    "gameplay semantics",
+    "physical card identity",
+    "board topology",
+    "SlidePad behavior",
+    "second Battle engine",
+    "new persistent right rail"
+  ]
+}

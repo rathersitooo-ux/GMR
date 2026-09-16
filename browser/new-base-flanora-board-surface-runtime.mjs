@@ -7,6 +7,9 @@ const STYLE_ID = 'gameroad-new-base-flanora-board-surface-style';
 const LANE_LABELS = Object.freeze(['L', 'C', 'R']);
 const ROAD_STEPS = Object.freeze([1, 2, 3, 4, 5, 6, 7]);
 const SHARED_GOAL_ID = 'goal:shared';
+const FIXED_TARGET_LANE_X_PCT = Object.freeze([7.1419, 13.6458, 20.2214, 31.0286, 37.7214, 44.4401, 55.3646, 61.9466, 68.6523, 79.5182, 86.1589, 92.7409]);
+const CLEARING_TOP_Y_PCT = Object.freeze([28, 23, 19, 15, 12, 10, 10, 12, 15, 19, 23, 28]);
+const CLEARING_BOTTOM_Y_PCT = Object.freeze([72, 77, 81, 85, 88, 90, 90, 88, 85, 81, 77, 72]);
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -137,31 +140,29 @@ function ensureStyle(documentLike) {
   const style = createNode(documentLike, 'style');
   style.id = STYLE_ID;
   style.textContent = `
-[data-new-base-flanora-board-surface="1"]{position:relative;display:grid;grid-template-rows:minmax(0,72%) minmax(72px,28%);gap:clamp(5px,.8vh,9px);width:100%;height:100%;min-width:0;min-height:0;box-sizing:border-box;padding:clamp(4px,.65vw,8px);isolation:isolate;overflow:hidden;background:radial-gradient(ellipse at 50% 43%,rgba(34,86,63,.16),transparent 63%)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{position:relative;display:grid;grid-template-rows:clamp(34px,7vh,58px) clamp(18px,3.2vh,28px) minmax(0,1fr);gap:clamp(2px,.45vh,5px);min-width:0;min-height:0;overflow:visible}
-[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal{position:relative;z-index:5;place-self:start center;display:grid;place-items:center;width:clamp(68px,10vw,126px);height:clamp(28px,5.2vh,44px);border:2px solid rgba(255,230,135,.86);border-radius:52% 52% 46% 46%/62% 62% 38% 38%;background:radial-gradient(ellipse at 50% 55%,rgba(255,234,151,.17),rgba(70,57,20,.70) 68%,rgba(28,36,23,.9));box-shadow:0 0 20px rgba(255,220,104,.2),inset 0 0 12px rgba(255,242,185,.12);font-size:clamp(10px,1.2vw,16px);font-weight:1000;letter-spacing:.12em;color:#fff1ad;pointer-events:none}
-[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal[data-connected-route-count]:not([data-connected-route-count="0"]){box-shadow:0 0 30px rgba(255,220,104,.42),inset 0 0 16px rgba(255,242,185,.18)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateLayer{position:relative;z-index:4;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));min-width:0;min-height:0;pointer-events:none}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateAnchor{position:relative;place-self:stretch center;width:72%;min-width:0;min-height:0;overflow:visible}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateAnchor::before{content:"";position:absolute;left:50%;top:-26px;bottom:-5px;width:1px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(255,230,142,.16),rgba(226,241,218,.28));opacity:.42}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateAnchor[data-connected-to-goal="true"]::before{width:2px;opacity:.92;background:linear-gradient(180deg,rgba(255,238,171,.92),rgba(226,241,218,.54));box-shadow:0 0 7px rgba(255,226,137,.36)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraProgressionGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(7px,1.3vw,18px);min-width:0;min-height:0;align-items:stretch}
-[data-new-base-flanora-board-surface="1"] .grFlanoraParticipantCluster{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(2px,.45vw,6px);min-width:0;min-height:0;align-items:stretch}
-[data-new-base-flanora-board-surface="1"] .grFlanoraParticipantCluster:nth-child(2){transform:translateY(clamp(2px,.45vh,5px))}
-[data-new-base-flanora-board-surface="1"] .grFlanoraParticipantCluster:nth-child(4){transform:translateY(clamp(3px,.65vh,7px))}
-[data-new-base-flanora-board-surface="1"] .grFlanoraLane{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:clamp(2px,.4vh,5px);min-width:0;min-height:0;align-items:stretch;justify-items:center}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoad{position:relative;display:flex;flex-direction:column-reverse;align-items:center;justify-content:flex-start;gap:clamp(1px,.24vh,3px);width:100%;height:100%;min-width:0;min-height:0;padding:2px 0;box-sizing:border-box}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoad::before{content:"";position:absolute;left:50%;top:2%;bottom:1%;width:1px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(255,229,139,.30),rgba(226,241,218,.18));opacity:.7}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{position:relative;z-index:2;display:grid;place-items:center;width:min(92%,clamp(22px,4.3vw,56px));aspect-ratio:1.48;border:1px solid rgba(238,247,230,.84);border-radius:3px;background:linear-gradient(150deg,rgba(238,245,226,.96),rgba(87,128,98,.94));box-shadow:0 2px 5px rgba(0,0,0,.25);overflow:hidden;pointer-events:none}
+[data-new-base-flanora-board-surface="1"]{position:relative;display:block;width:100%;height:100%;min-width:0;min-height:0;box-sizing:border-box;isolation:isolate;overflow:hidden;background:radial-gradient(ellipse at 50% 49%,rgba(43,102,69,.12),transparent 67%)}
+[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{position:absolute;inset:0;min-width:0;min-height:0;overflow:visible}
+[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal{position:absolute;z-index:8;left:50%;top:1.4%;transform:translateX(-50%);display:grid;place-items:center;width:clamp(82px,11.5vw,142px);height:clamp(30px,5.7vh,48px);border:2px solid rgba(255,230,139,.88);border-radius:50% 50% 44% 44%/62% 62% 38% 38%;background:radial-gradient(ellipse at 50% 58%,rgba(255,237,168,.13),rgba(73,61,28,.58) 62%,rgba(24,46,35,.92));box-shadow:0 0 22px rgba(255,223,113,.18),inset 0 0 14px rgba(255,244,198,.09);font-size:clamp(10px,1.18vw,16px);font-weight:1000;letter-spacing:.12em;color:#fff1ad;pointer-events:none}
+[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal[data-connected-route-count]:not([data-connected-route-count="0"]){box-shadow:0 0 34px rgba(255,221,102,.38),inset 0 0 18px rgba(255,244,198,.14)}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateLayer{position:absolute;z-index:7;left:0;right:0;top:13.8%;height:6.6%;min-width:0;min-height:0;pointer-events:none}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateAnchor{position:absolute;top:0;bottom:0;width:clamp(28px,5vw,58px);transform:translateX(-50%);min-width:0;min-height:0;overflow:visible}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateAnchor::before{content:"";position:absolute;left:50%;top:-43px;bottom:-6px;width:1px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(255,234,166,.09),rgba(226,241,218,.23));opacity:.34}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateAnchor[data-connected-to-goal="true"]::before{width:2px;opacity:.9;background:linear-gradient(180deg,rgba(255,239,180,.92),rgba(226,241,218,.48));box-shadow:0 0 7px rgba(255,226,137,.34)}
+[data-new-base-flanora-board-surface="1"] .grFlanoraProgressionGrid{position:absolute;z-index:4;left:0;right:0;top:21.5%;bottom:34.5%;min-width:0;min-height:0}
+[data-new-base-flanora-board-surface="1"] .grFlanoraParticipantCluster{display:contents}
+[data-new-base-flanora-board-surface="1"] .grFlanoraLane{position:absolute;top:0;bottom:0;width:clamp(28px,5.15vw,58px);transform:translateX(-50%);display:grid;grid-template-rows:minmax(0,1fr) auto;gap:clamp(2px,.45vh,5px);min-width:0;min-height:0;align-items:stretch;justify-items:center}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoad{position:relative;display:flex;flex-direction:column-reverse;align-items:center;justify-content:flex-start;gap:clamp(1px,.22vh,3px);width:100%;height:100%;min-width:0;min-height:0;padding:1px 0;box-sizing:border-box}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoad::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(255,229,139,.23),rgba(226,241,218,.13));opacity:.58}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{position:relative;z-index:2;display:grid;place-items:center;width:min(91%,clamp(22px,4.25vw,44px));aspect-ratio:1.48;border:1px solid rgba(238,247,230,.83);border-radius:3px;background:linear-gradient(150deg,rgba(238,245,226,.96),rgba(87,128,98,.94));box-shadow:0 2px 5px rgba(0,0,0,.25);overflow:hidden;pointer-events:none}
 [data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep[data-card-identity-resolved="true"]{border-color:rgba(255,239,177,.9);background:linear-gradient(150deg,rgba(252,245,216,.98),rgba(69,117,90,.96));box-shadow:0 2px 6px rgba(0,0,0,.30),0 0 7px rgba(255,225,132,.12)}
 [data-new-base-flanora-board-surface="1"] .grFlanoraRoadCardLabel{display:block;width:94%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font-size:clamp(5px,.48vw,8px);font-weight:850;color:#18392e;text-shadow:none}
-[data-new-base-flanora-board-surface="1"] .grFlanoraShield{position:relative;z-index:2;display:grid;place-items:center;width:min(90%,clamp(26px,4.7vw,48px));min-height:clamp(15px,2.5vh,23px);border:1px solid rgba(188,229,241,.76);border-radius:8px 8px 11px 11px;background:linear-gradient(180deg,rgba(38,84,95,.90),rgba(18,56,66,.92));font-size:clamp(7px,.72vw,10px);font-weight:950;color:#e8f8ff;box-shadow:0 3px 7px rgba(0,0,0,.2)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{position:relative;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:clamp(2px,.42vw,6px);min-width:0;min-height:0;padding:clamp(2px,.35vw,4px);border-radius:50% 46% 48% 44%/18% 22% 20% 17%;background:radial-gradient(ellipse at center,rgba(70,116,74,.18),rgba(26,74,56,.05) 72%,transparent)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell{place-self:center;width:clamp(13px,2.3vw,26px);height:clamp(13px,2.3vw,26px);border:1px solid rgba(238,247,232,.58);border-radius:50%;background:rgba(47,91,66,.72);box-shadow:0 2px 6px rgba(0,0,0,.20)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell[data-start-participant]{outline:2px solid rgba(255,224,134,.74);outline-offset:1px}
+[data-new-base-flanora-board-surface="1"] .grFlanoraShield{position:relative;z-index:3;display:grid;place-items:center;width:min(90%,clamp(27px,4.65vw,48px));min-height:clamp(16px,2.7vh,24px);border:1px solid rgba(188,229,241,.7);border-radius:8px 8px 12px 12px;background:linear-gradient(180deg,rgba(38,84,95,.88),rgba(18,56,66,.94));font-size:clamp(7px,.72vw,10px);font-weight:950;color:#e8f8ff;box-shadow:0 3px 7px rgba(0,0,0,.2)}
+[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{position:absolute;z-index:2;left:3.2%;right:3.2%;top:63.5%;bottom:3.2%;min-width:0;min-height:0;border-radius:50% 48% 50% 46%/44% 48% 46% 42%;background:radial-gradient(ellipse at 50% 52%,rgba(76,128,84,.13),rgba(25,70,53,.035) 67%,transparent 72%)}
+[data-new-base-flanora-board-surface="1"] .grFlanoraClearing::before{content:"";position:absolute;inset:7% 1.8%;border:1px solid rgba(211,232,206,.18);border-radius:50%;box-shadow:inset 0 0 18px rgba(44,96,64,.09),0 0 14px rgba(255,230,154,.025);pointer-events:none}
+[data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell{position:absolute;transform:translate(-50%,-50%);width:clamp(12px,2.15vw,24px);height:clamp(12px,2.15vw,24px);border:1px solid rgba(238,247,232,.56);border-radius:50%;background:rgba(47,91,66,.72);box-shadow:0 2px 6px rgba(0,0,0,.20)}
+[data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell[data-start-participant]{outline:2px solid rgba(255,224,134,.72);outline-offset:1px}
 [data-new-base-flanora-board-surface="1"][data-performance-profile="reduced_motion"] *,[data-new-base-flanora-board-surface="1"][data-performance-profile="low_perf"] *{animation:none!important;transition:none!important;filter:none!important}
-@media(max-height:420px){[data-new-base-flanora-board-surface="1"]{grid-template-rows:minmax(0,75%) minmax(58px,25%);gap:2px;padding:3px}[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{grid-template-rows:28px 14px minmax(0,1fr);gap:1px}[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal{width:68px;height:24px;font-size:8px}[data-new-base-flanora-board-surface="1"] .grFlanoraProgressionGrid{gap:5px}[data-new-base-flanora-board-surface="1"] .grFlanoraParticipantCluster{gap:2px}[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{width:min(94%,38px)}[data-new-base-flanora-board-surface="1"] .grFlanoraShield{min-height:13px;font-size:6px}[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{gap:1px;padding:1px}}
-@media(max-width:540px) and (orientation:portrait){[data-new-base-flanora-board-surface="1"]{grid-template-rows:minmax(0,70%) minmax(120px,30%)}[data-new-base-flanora-board-surface="1"] .grFlanoraProgressionGrid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:5px}[data-new-base-flanora-board-surface="1"] .grFlanoraParticipantCluster:nth-child(2),[data-new-base-flanora-board-surface="1"] .grFlanoraParticipantCluster:nth-child(4){transform:none}[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{width:min(90%,38px)}}
+@media(max-height:420px){[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal{width:72px;height:26px;font-size:8px}[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateLayer{top:14.5%;height:6%}[data-new-base-flanora-board-surface="1"] .grFlanoraProgressionGrid{top:22%;bottom:35%}[data-new-base-flanora-board-surface="1"] .grFlanoraLane{width:clamp(26px,5vw,42px)}[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{width:min(92%,34px)}[data-new-base-flanora-board-surface="1"] .grFlanoraShield{min-height:14px;font-size:6px}[data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell{width:clamp(10px,2vw,18px);height:clamp(10px,2vw,18px)}}
 `;
   documentLike.head.appendChild(style);
 }
@@ -382,6 +383,9 @@ export function mountFlanoraBoardSurface({
   setAttr(root, 'data-progression-direction', 'bottom-to-top');
   setAttr(root, 'data-central-world-layout', 'shared-field-shield-actual-card-road-route-gates-one-goal');
   setAttr(root, 'data-future-discrete-progression-slots', 'false');
+  setAttr(root, 'data-visual-composition', 'fixed-target-asymmetric-world');
+  setAttr(root, 'data-table-grid-visual', 'false');
+  setAttr(root, 'data-clearing-track-shape', 'organic-single-loop');
   setAttr(root, 'aria-label', '下側の共有フィールドから盾、実際に成立したカードの道、12経路ゲートを通って上中央の1つのGOALへつながる盤面');
 
   const upper = createNode(documentLike, 'div', 'grFlanoraUpper');
@@ -430,7 +434,8 @@ export function mountFlanoraBoardSurface({
     setAttr(routeGate, 'data-flanora-route-gate', lane.routeGateId);
     setAttr(routeGate, 'data-shared-goal-id', SHARED_GOAL_ID);
     setAttr(routeGate, 'data-connected-to-goal', 'false');
-    routeGate.style.gridColumn = String(lane.relativeColumn + 1);
+    routeGate.style.left = `${FIXED_TARGET_LANE_X_PCT[lane.relativeColumn]}%`;
+    setAttr(routeGate, 'data-fixed-target-lane-x-pct', FIXED_TARGET_LANE_X_PCT[lane.relativeColumn]);
     routeGateLayer.appendChild(routeGate);
     routeGatesByLaneKey.set(lane.key, routeGate);
 
@@ -439,7 +444,8 @@ export function mountFlanoraBoardSurface({
     setAttr(laneNode, 'data-participant-id', lane.participantId);
     setAttr(laneNode, 'data-lane-index', lane.laneIndex);
     setAttr(laneNode, 'data-lane-label', lane.laneLabel);
-    laneNode.style.gridColumn = String(lane.laneIndex + 1);
+    laneNode.style.left = `${FIXED_TARGET_LANE_X_PCT[lane.relativeColumn]}%`;
+    setAttr(laneNode, 'data-fixed-target-lane-x-pct', FIXED_TARGET_LANE_X_PCT[lane.relativeColumn]);
 
     const road = createNode(documentLike, 'div', 'grFlanoraRoad');
     setAttr(road, 'data-flanora-road-track', lane.key);
@@ -467,8 +473,16 @@ export function mountFlanoraBoardSurface({
     const cellNode = createNode(documentLike, 'span', 'grFlanoraClearingCell');
     setAttr(cellNode, 'data-flanora-clearing-cell-id', cell.id);
     setAttr(cellNode, 'data-clearing-kind', cell.kind);
-    cellNode.style.gridColumn = String(cell.relativeColumn + 1);
-    cellNode.style.gridRow = String(cell.clearingRow + 1);
+    const clearingX = FIXED_TARGET_LANE_X_PCT[cell.relativeColumn] ?? 50;
+    const clearingY = cell.kind === 'CLEARING_TOP'
+      ? CLEARING_TOP_Y_PCT[cell.relativeColumn]
+      : cell.kind === 'CLEARING_BOTTOM'
+        ? CLEARING_BOTTOM_Y_PCT[cell.relativeColumn]
+        : 50;
+    cellNode.style.left = `${clearingX}%`;
+    cellNode.style.top = `${clearingY}%`;
+    setAttr(cellNode, 'data-world-x-pct', clearingX);
+    setAttr(cellNode, 'data-world-y-pct', clearingY);
     if (cell.startParticipantIds.length) {
       setAttr(cellNode, 'data-start-participant', cell.startParticipantIds.join(' '));
       setAttr(cellNode, 'aria-label', `開始 ${cell.startParticipantIds.join('・')}`);
@@ -577,4 +591,7 @@ export const FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT = deepFreeze({
   builtStageIdentity: 'CALLER_PHYSICAL_CARD_ID_WHEN_AVAILABLE',
   futureDiscreteStageNodes: false,
   unresolvedStageDefault: 'NO_DISCRETE_NODE_GUIDE_ONLY',
+  lanePlacement: 'FIXED_TARGET_NORMALIZED_X_WORLD_SPACE',
+  tableGridVisual: false,
+  sharedFieldVisual: 'ORGANIC_SINGLE_LOOP',
 });

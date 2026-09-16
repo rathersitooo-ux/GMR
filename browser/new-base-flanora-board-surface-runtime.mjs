@@ -31,9 +31,7 @@ function requireLayout(layout) {
   return layout;
 }
 
-function laneKey(participantId, laneIndex) {
-  return `${participantId}:${laneIndex}`;
-}
+function laneKey(participantId, laneIndex) { return `${participantId}:${laneIndex}`; }
 
 export function projectFlanoraBoardSurfaceModel(layoutValue) {
   const layout = requireLayout(layoutValue);
@@ -42,39 +40,33 @@ export function projectFlanoraBoardSurfaceModel(layoutValue) {
   if (!Number.isSafeInteger(minColumn) || !Number.isSafeInteger(maxColumn) || maxColumn - minColumn + 1 !== 12) {
     throw new TypeError('FLANORA_TWELVE_COLUMN_SPAN_REQUIRED');
   }
-
-  const laneRoots = [...layout.laneRootConnections].sort((a, b) => a.columnIndex - b.columnIndex);
-  const lanes = laneRoots.map((root) => {
-    if (!nonEmptyString(root.participantId) || !Number.isSafeInteger(root.laneIndex) || root.laneIndex < 0 || root.laneIndex > 2) {
-      throw new TypeError('FLANORA_LANE_ROOT_IDENTITY_INVALID');
-    }
-    if (!Number.isSafeInteger(root.columnIndex) || root.columnIndex < minColumn || root.columnIndex > maxColumn) {
-      throw new TypeError('FLANORA_LANE_ROOT_COLUMN_INVALID');
-    }
-    const key = laneKey(root.participantId, root.laneIndex);
-    return {
-      key,
-      participantId: root.participantId,
-      laneIndex: root.laneIndex,
-      laneLabel: LANE_LABELS[root.laneIndex],
-      columnIndex: root.columnIndex,
-      relativeColumn: root.columnIndex - minColumn,
-      goalId: SHARED_GOAL_ID,
-      gateAnchorId: `gate:${key}`,
-      shieldId: `shield:${key}`,
-      clearingEntryCellId: root.clearingEntryCellId,
-      roadSteps: ROAD_STEPS.map((roadIndex) => ({ id: `road:${key}:${roadIndex}`, roadIndex })),
-    };
-  });
-
-  const startParticipantsByCellId = {};
+  const lanes = [...layout.laneRootConnections]
+    .sort((a, b) => a.columnIndex - b.columnIndex)
+    .map((root) => {
+      if (!nonEmptyString(root.participantId) || !Number.isSafeInteger(root.laneIndex) || root.laneIndex < 0 || root.laneIndex > 2) throw new TypeError('FLANORA_LANE_ROOT_IDENTITY_INVALID');
+      if (!Number.isSafeInteger(root.columnIndex) || root.columnIndex < minColumn || root.columnIndex > maxColumn) throw new TypeError('FLANORA_LANE_ROOT_COLUMN_INVALID');
+      const key = laneKey(root.participantId, root.laneIndex);
+      return {
+        key,
+        participantId: root.participantId,
+        laneIndex: root.laneIndex,
+        laneLabel: LANE_LABELS[root.laneIndex],
+        columnIndex: root.columnIndex,
+        relativeColumn: root.columnIndex - minColumn,
+        goalId: SHARED_GOAL_ID,
+        gateAnchorId: `gate:${key}`,
+        shieldId: `shield:${key}`,
+        clearingEntryCellId: root.clearingEntryCellId,
+        roadSteps: ROAD_STEPS.map((roadIndex) => ({ id: `road:${key}:${roadIndex}`, roadIndex })),
+      };
+    });
+  const starts = {};
   for (const participantId of layout.participantIds) {
     const cellId = layout.startCellByParticipant?.[participantId]?.id;
     if (!nonEmptyString(cellId)) throw new TypeError('FLANORA_START_CELL_REQUIRED');
-    startParticipantsByCellId[cellId] ??= [];
-    startParticipantsByCellId[cellId].push(participantId);
+    starts[cellId] ??= [];
+    starts[cellId].push(participantId);
   }
-
   const clearingCells = layout.clearingCells.map((cell) => ({
     id: cell.id,
     kind: cell.kind,
@@ -82,9 +74,8 @@ export function projectFlanoraBoardSurfaceModel(layoutValue) {
     columnIndex: cell.columnIndex,
     relativeColumn: cell.columnIndex - minColumn,
     clearingRow: cell.rowIndex - layout.rowIndex.CLEARING_TOP,
-    startParticipantIds: startParticipantsByCellId[cell.id] ?? [],
+    startParticipantIds: starts[cell.id] ?? [],
   }));
-
   return deepFreeze({
     schema: RUNTIME_SCHEMA,
     presentationOnly: true,
@@ -117,7 +108,7 @@ function createNode(documentLike, tagName, className = '') {
 }
 
 function setAttr(node, name, value) {
-  if (value == null) return;
+  if (!node || value == null) return;
   node.setAttribute?.(name, String(value));
   if (name.startsWith('data-') && node.dataset) {
     const key = name.slice(5).replace(/-([a-z])/g, (_, char) => char.toUpperCase());
@@ -172,18 +163,13 @@ function laneWorldPosition(relativeColumn) {
   const x = 5.5 + (relativeColumn * (89 / 11));
   const distanceFromCenter = Math.abs(x - 50);
   const top = 15 + (distanceFromCenter * 0.15);
-  const height = 76 - top;
-  return { x, top, height };
+  return { x, top, height: 76 - top };
 }
 
 function guideGeometry(x, top) {
-  const goalX = 50;
-  const goalY = 7;
-  const dx = goalX - x;
-  const dy = goalY - top;
-  const length = Math.sqrt((dx * dx) + (dy * dy));
-  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-  return { length, angle };
+  const dx = 50 - x;
+  const dy = 7 - top;
+  return { length: Math.sqrt((dx * dx) + (dy * dy)), angle: Math.atan2(dy, dx) * 180 / Math.PI };
 }
 
 function validateProgressionPresentation(presentation, roadsByLaneKey) {
@@ -193,21 +179,15 @@ function validateProgressionPresentation(presentation, roadsByLaneKey) {
   const assignments = [];
   for (const lane of presentation.lanePresentations) {
     const road = roadsByLaneKey.get(lane?.key);
-    if (!road || seenLaneKeys.has(lane.key) || !Array.isArray(lane.placedCards) || lane.placedCards.length !== lane.straightCardCount) {
-      return { ok: false, reason: 'PROGRESSION_CARD_SET_INVALID' };
-    }
+    if (!road || seenLaneKeys.has(lane.key) || !Array.isArray(lane.placedCards) || lane.placedCards.length !== lane.straightCardCount) return { ok: false, reason: 'PROGRESSION_CARD_SET_INVALID' };
     seenLaneKeys.add(lane.key);
-    const seenCardSteps = new Set();
-    lane.placedCards.forEach((card, offset) => {
-      if (!nonEmptyString(card?.cardId) || card?.stageIndex !== offset + 1 || card?.roadStepId !== `road:${lane.key}:${offset + 1}` || seenCardSteps.has(card.roadStepId)) {
-        assignments.push(null);
-        return;
-      }
-      seenCardSteps.add(card.roadStepId);
+    for (let offset = 0; offset < lane.placedCards.length; offset += 1) {
+      const card = lane.placedCards[offset];
+      if (!nonEmptyString(card?.cardId) || card?.stageIndex !== offset + 1 || card?.roadStepId !== `road:${lane.key}:${offset + 1}`) return { ok: false, reason: 'PROGRESSION_CARD_ASSIGNMENT_INVALID' };
       assignments.push({ road, laneKey: lane.key, stageIndex: card.stageIndex, roadStepId: card.roadStepId, cardId: card.cardId });
-    });
+    }
   }
-  if (assignments.some((item) => item === null) || seenLaneKeys.size !== roadsByLaneKey.size) return { ok: false, reason: 'PROGRESSION_CARD_ASSIGNMENT_INVALID' };
+  if (seenLaneKeys.size !== roadsByLaneKey.size) return { ok: false, reason: 'PROGRESSION_CARD_ASSIGNMENT_INVALID' };
   return { ok: true, assignments };
 }
 
@@ -230,6 +210,8 @@ function syncProgressionLanePresentation({ presentation, documentLike, roadsByLa
     setAttr(node, 'data-flanora-road-step-id', item.roadStepId);
     setAttr(node, 'data-progression-stage-state', 'BUILT');
     setAttr(node, 'data-progression-established', 'true');
+    setAttr(node, 'data-progression-actionable', 'false');
+    setAttr(node, 'data-progression-traversable', 'false');
     setAttr(node, 'data-card-id', item.cardId);
     setAttr(node, 'data-physical-card-identity', 'preserved');
     setAttr(node, 'aria-label', `配置カード ${item.stageIndex}/7 ${item.cardId}`);
@@ -242,23 +224,22 @@ function syncProgressionLanePresentation({ presentation, documentLike, roadsByLa
     setAttr(road, 'data-card-lineage', 'physical-card-id');
     setAttr(road, 'aria-label', `配置済み実カード ${lane.straightCardCount}/7`);
   }
-  return deepFreeze({
-    applied: true,
-    reason: 'PROGRESSION_PRESENTATION_APPLIED',
-    builtStageCount: presentation.totalBuiltStageCount,
-    latentStageCount: presentation.totalLatentStageCount,
-    presentationOnly: true,
-    gameplayAuthority: false,
-    movementAuthority: false,
-    legalityAuthority: false,
-    gameStateWrite: false,
-  });
+  return deepFreeze({ applied: true, reason: 'PROGRESSION_PRESENTATION_APPLIED', builtStageCount: presentation.totalBuiltStageCount, latentStageCount: presentation.totalLatentStageCount, presentationOnly: true, gameplayAuthority: false, movementAuthority: false, legalityAuthority: false, gameStateWrite: false });
+}
+
+function makeDetachedLatentNode(documentLike, stepId) {
+  const node = createNode(documentLike, 'span', 'grFlanoraCompatibilityLatentStep');
+  setAttr(node, 'data-flanora-road-step-id', stepId);
+  setAttr(node, 'data-progression-stage-state', 'LATENT');
+  setAttr(node, 'data-progression-established', 'false');
+  setAttr(node, 'data-progression-actionable', 'false');
+  setAttr(node, 'data-progression-traversable', 'false');
+  setAttr(node, 'data-visual-dom-mounted', 'false');
+  return node;
 }
 
 export function mountFlanoraBoardSurface({ host, documentLike = globalThis?.document, layoutInput = null, layout = null, reducedMotion = false, lowPerf = false } = {}) {
-  if (!host || typeof host.appendChild !== 'function' || !documentLike || typeof documentLike.createElement !== 'function') {
-    return Object.freeze({ schema: RUNTIME_SCHEMA, mounted: false, presentationOnly: true, gameplayAuthority: false, reason: 'DOM_HOST_REQUIRED' });
-  }
+  if (!host || typeof host.appendChild !== 'function' || !documentLike || typeof documentLike.createElement !== 'function') return Object.freeze({ schema: RUNTIME_SCHEMA, mounted: false, presentationOnly: true, gameplayAuthority: false, reason: 'DOM_HOST_REQUIRED' });
   const model = layout ? projectFlanoraBoardSurfaceModel(layout) : createFlanoraBoardSurfaceModel(layoutInput ?? {});
   ensureStyle(documentLike);
 
@@ -289,18 +270,19 @@ export function mountFlanoraBoardSurface({ host, documentLike = globalThis?.docu
   const gateAnchorsByLaneKey = new Map();
   const goalGuidesByLaneKey = new Map();
   const roadCardsByStepId = new Map();
+  const detachedLatentByStepId = new Map();
   const clearingByCellId = new Map();
 
   for (const lane of model.lanes) {
     const pos = laneWorldPosition(lane.relativeColumn);
-    const guideGeo = guideGeometry(pos.x, pos.top);
+    const geo = guideGeometry(pos.x, pos.top);
     const guide = createNode(documentLike, 'span', 'grFlanoraGoalGuide');
     setAttr(guide, 'data-goal-guide-lane', lane.key);
     setAttr(guide, 'data-goal-path-open', '0');
     guide.style.left = `${pos.x}%`;
     guide.style.top = `${pos.top}%`;
-    guide.style.width = `${guideGeo.length}%`;
-    guide.style.transform = `rotate(${guideGeo.angle}deg)`;
+    guide.style.width = `${geo.length}%`;
+    guide.style.transform = `rotate(${geo.angle}deg)`;
     upper.appendChild(guide);
     goalGuidesByLaneKey.set(lane.key, guide);
 
@@ -333,6 +315,7 @@ export function mountFlanoraBoardSurface({ host, documentLike = globalThis?.docu
     gateAnchorsByLaneKey.set(lane.key, gateAnchor);
     roadsByLaneKey.set(lane.key, road);
     shieldsByLaneKey.set(lane.key, shield);
+    for (const step of lane.roadSteps) detachedLatentByStepId.set(step.id, makeDetachedLatentNode(documentLike, step.id));
   }
 
   for (const cell of model.clearingCells) {
@@ -355,7 +338,6 @@ export function mountFlanoraBoardSurface({ host, documentLike = globalThis?.docu
     if (!nonEmptyString(participantId) || !Number.isSafeInteger(laneIndex)) return null;
     return laneKey(participantId, laneIndex);
   }
-
   const runtime = {
     schema: RUNTIME_SCHEMA,
     mounted: true,
@@ -374,7 +356,8 @@ export function mountFlanoraBoardSurface({ host, documentLike = globalThis?.docu
     resolveShield(participantId, laneIndex) { return shieldsByLaneKey.get(resolveLaneKey(participantId, laneIndex)) ?? null; },
     resolveRoadStep(participantId, laneIndex, roadIndex) {
       if (!ROAD_STEPS.includes(roadIndex)) return null;
-      return roadCardsByStepId.get(`road:${resolveLaneKey(participantId, laneIndex)}:${roadIndex}`) ?? null;
+      const stepId = `road:${resolveLaneKey(participantId, laneIndex)}:${roadIndex}`;
+      return roadCardsByStepId.get(stepId) ?? detachedLatentByStepId.get(stepId) ?? null;
     },
     syncProgressionPresentation(presentation) {
       if (destroyed) return failProgression('RUNTIME_DESTROYED');
@@ -391,6 +374,7 @@ export function mountFlanoraBoardSurface({ host, documentLike = globalThis?.docu
         roadStepCount: model.lanes.length * ROAD_STEPS.length,
         visibleBuiltRoadStepCount: roadCardsByStepId.size,
         futureDiscreteStageNodeCount: 0,
+        detachedCompatibilityStageNodeCount: detachedLatentByStepId.size,
         clearingCellCount: clearingByCellId.size,
         clearingCycleCellIds: [...model.clearingCycleCellIds],
         performanceProfile: root.dataset?.performanceProfile ?? performanceProfile({ reducedMotion, lowPerf }),
@@ -425,8 +409,9 @@ export const FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT = deepFreeze({
   sharedGoalCount: 1,
   routeGateAnchorCount: 12,
   progressionPresentationSource: 'EXISTING_NEW_BASE_PROGRESSION_LANE_PRESENTATION',
-  unresolvedStageDefault: 'NO_DISCRETE_NODE',
+  unresolvedStageDefault: 'DETACHED_COMPATIBILITY_NODE',
   futureDiscreteStageNodes: false,
+  detachedCompatibilityNodesVisible: false,
   physicalCardIdentityPreserved: true,
   progressionSyncWritesGameState: false,
   goalEndpointCount: 1,

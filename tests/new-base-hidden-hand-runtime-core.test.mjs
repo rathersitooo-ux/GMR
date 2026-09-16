@@ -51,6 +51,37 @@ test('button press or staging alone cannot consume hidden privilege', () => {
   assert.equal(result.runtime.hiddenPrivilegeAvailable, true);
 });
 
+test('abandoning hidden selection for another card leaves the reserved card reusable until its own commit', () => {
+  const runtime = createNewBaseHiddenHandRuntime(registrationSnapshot());
+
+  const stagedOnly = consumeNewBaseHiddenHandPrivilege(runtime, {
+    cardId: 'HT_2',
+    authoritativeLegalRoadCommit: false,
+  });
+  assert.equal(stagedOnly.accepted, false);
+  assert.strictEqual(stagedOnly.runtime, runtime);
+  assert.equal(stagedOnly.runtime.hiddenPrivilegeAvailable, true);
+
+  const otherCardCommit = consumeNewBaseHiddenHandPrivilege(stagedOnly.runtime, {
+    cardId: 'DI_3',
+    authoritativeLegalRoadCommit: true,
+  });
+  assert.equal(otherCardCommit.accepted, false);
+  assert.equal(otherCardCommit.reason, 'reserved-card-mismatch');
+  assert.strictEqual(otherCardCommit.runtime, runtime);
+  assert.deepEqual(projectNewBaseHiddenHandAddContext(otherCardCommit.runtime), {
+    reservedCardId: 'HT_2',
+    hiddenPrivilegeAvailable: true,
+  });
+
+  const laterHiddenCommit = consumeNewBaseHiddenHandPrivilege(otherCardCommit.runtime, {
+    cardId: 'HT_2',
+    authoritativeLegalRoadCommit: true,
+  });
+  assert.equal(laterHiddenCommit.accepted, true);
+  assert.equal(laterHiddenCommit.runtime.hiddenPrivilegeAvailable, false);
+});
+
 test('wrong physical card cannot consume the registered card privilege', () => {
   const runtime = createNewBaseHiddenHandRuntime(registrationSnapshot());
   const result = consumeNewBaseHiddenHandPrivilege(runtime, {

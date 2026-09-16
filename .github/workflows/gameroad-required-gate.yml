@@ -371,7 +371,11 @@ jobs:
               tools/luna-sol-codex-browser-bridge.mjs|\
               tools/luna-sol-codex-browser-bridge-runner.mjs|\
               tests/luna-sol-codex-browser-bridge.test.mjs|\
-              tests/luna-sol-codex-browser-bridge-local-queue-gate.test.mjs)
+              tests/luna-sol-codex-browser-bridge-local-queue-gate.test.mjs|\
+              .github/workflows/gameroad-current-bridge.yml|\
+              tools/gameroad-current-bridge.py|\
+              tests/test_gameroad_current_bridge.py|\
+              docs/gameroad-current-bridge.md)
                 executor_bus=true
                 ;;
               .github/workflows/gameroad-required-gate.yml|\
@@ -543,6 +547,9 @@ jobs:
             if [[ -f tests/luna-sol-codex-browser-bridge-local-queue-gate.test.mjs ]]; then
               node --test tests/luna-sol-codex-browser-bridge-local-queue-gate.test.mjs
             fi
+          fi
+          if grep -Eq '^(\.github/workflows/gameroad-current-bridge\.yml|tools/gameroad-current-bridge\.py|tests/test_gameroad_current_bridge\.py|docs/gameroad-current-bridge\.md)$' /tmp/gameroad-changed.txt; then
+            python3 -m unittest tests/test_gameroad_current_bridge.py -v
           fi
 
       - name: Run JIT evidence compiler tests when changed

@@ -153,6 +153,7 @@ test('mounts a compact caller-owned HUD and updates without resource calculation
   assert.equal(host.children.length, 1);
   assert.equal(runtime.root.dataset.presentationOnly, 'true');
   assert.equal(runtime.root.dataset.authority, 'caller_authoritative_resource_snapshot_only');
+  assert.equal(runtime.root.dataset.visualPriority, 'resource_detail');
   assert.equal(runtime.manaCell.children[1].textContent, '7/10');
   assert.equal(runtime.honeyCell.children[1].textContent, '7');
   assert.equal(runtime.chipCell.children[1].textContent, '3');
@@ -185,6 +186,36 @@ test('mounts a compact caller-owned HUD and updates without resource calculation
   assert.equal(runtime.root.dataset.chipResolved, 'true');
   assert.equal(runtime.root.dataset.paymentResolved, 'true');
   assert.match(runtime.root.getAttribute('aria-label'), /支払い 戦闘札6、支払6、マナ4、ハニー2/);
+  assert.equal(runtime.gameStateWrite, false);
+});
+
+test('installs a late Battle-shell visual hierarchy while remaining presentation-only', () => {
+  const global = makeGlobal();
+  const host = new FakeNode('div');
+  const runtime = mountBattleCriticalResourceHud(global, {
+    host,
+    snapshot: { manaCurrent: 7, manaMax: 10, honey: 4, chipCount: 2 }
+  });
+  const style = global.document.head.children.find(node => node.id === 'gameroad-battle-critical-resource-hud-style');
+
+  assert.ok(style);
+  assert.match(style.textContent, /\[data-gr-battle-screen="1"\] \.grBattleScreenTop/);
+  assert.match(style.textContent, /\[data-gr-battle-screen="1"\] \[data-battle-current-action\]/);
+  assert.match(style.textContent, /\[data-gr-battle-screen="1"\] \[data-battle-screen-causal-grid\]/);
+  assert.match(style.textContent, /\[data-gr-battle-screen="1"\] \[data-battle-progress-guide\]\{display:none!important\}/);
+  assert.match(style.textContent, /@media\(max-height:420px\) and \(orientation:landscape\)/);
+  assert.deepEqual(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.battleShellVisualOrder, [
+    'BOARD_WORLD',
+    'CURRENT_ACTION',
+    'HAND_JANKEN',
+    'PUBLIC_4P',
+    'RESOURCE_DETAIL'
+  ]);
+  assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.battleShellHierarchyStyleHook, 'LATE_PRESENTATION_ONLY');
+  assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.constrainedLandscapeAcceptanceTarget, '667x375');
+  assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.persistentRightRailOwnedHere, false);
+  assert.equal(runtime.visualPriority, 'RESOURCE_DETAIL');
+  assert.equal(runtime.presentationOnly, true);
   assert.equal(runtime.gameStateWrite, false);
 });
 

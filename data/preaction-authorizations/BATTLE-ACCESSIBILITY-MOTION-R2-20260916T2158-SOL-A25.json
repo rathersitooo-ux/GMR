@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ACCESSIBILITY-MOTION-R2-20260916T2158-SOL-A25",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_REDUCED_MOTION_LOW_PERF_REGRESSION_R2",
+  "acquireKey": "BATTLE-ACCESSIBILITY-MOTION-R2-20260916T2158-SOL-A25",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "EXISTING_REDUCED_MOTION_LOW_PERF_PRESENTATION_CONTRACTS_20260916T2158JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_CONVENTIONAL_BATTLE_JANKEN_ORDER_MOTION_TEST_LANE",
+  "proceedToken": "PROCEED|BATTLE-ACCESSIBILITY-MOTION-R2-20260916T2158-SOL-A25|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-accessibility-motion|regression-only|active-lease",
+  "authorizationBaseSha": "f766708c94c249cbc8f96fb02d246f9bc6b67a26",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_REDUCED_MOTION_LOW_PERF_REGRESSION_R2",
+  "leaseAcquireKey": "BATTLE-ACCESSIBILITY-MOTION-R2-20260916T2158-SOL-A25",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 21:58 JST",
+  "leaseUntilJst": "2026-09-16 22:58 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A28:L28",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR exact main f766708c94c249cbc8f96fb02d246f9bc6b67a26; mutable tests/battle-janken-order-motion-core.test.mjs; own transient data/preaction-authorizations/BATTLE-ACCESSIBILITY-MOTION-R2-20260916T2158-SOL-A25.json; own fresh branch/PR/check/merge/readback; own CURRENT lease/R24 event. READ_ONLY browser/battle-janken-order-motion-core.mjs; browser/battle-resolution-board-return-presentation-core.mjs; browser/battle-camera-control-core.mjs; browser/battle-card-release-flight-motion-core.mjs; browser/GAMEROAD.html; gameplay/rules/state; active WU17/WU19 and unrelated WorkUnits.",
+  "solutionSignature": "BATTLE_EXISTING_ACCESSIBILITY_PRESENTATION_CROSS_REGRESSION_R2",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_CLASSIFIED_JANKEN_ORDER_MOTION_TEST_AS_REGRESSION_HOST",
+  "solutionSearchEvidence": [
+    "Existing janken order motion already has ReducedMotion/LowPerf semantic-only behavior and a conventionally classified test file.",
+    "Existing board-return, camera, and card-release presentation cores already expose ReducedMotion/LowPerf semantics without gameplay authority.",
+    "Appending cross-module assertions to the existing classified test avoids a second settings authority, a second Battle engine, and an unclassified standalone test path."
+  ],
+  "scope": [
+    "tests/battle-janken-order-motion-core.test.mjs"
+  ],
+  "leaseScope": [
+    "tests/battle-janken-order-motion-core.test.mjs"
+  ]
+}

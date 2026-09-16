@@ -231,3 +231,143 @@ test('contract keeps all timing, retry, control, legality and game-state authori
   assert.equal(BATTLE_RECOVERY_LIVE_ADAPTER_CONTRACT.computesResult, false);
   assert.equal(BATTLE_RECOVERY_LIVE_ADAPTER_CONTRACT.writesGameState, false);
 });
+
+function authoritativeJankenContext(roundId = 'ROUND-7') {
+  const slots = Object.freeze([
+    Object.freeze({ jankenHand: 'ROCK', cardId: 'CARD-R' }),
+    Object.freeze({ jankenHand: 'SCISSORS', cardId: 'CARD-S' }),
+    Object.freeze({ jankenHand: 'PAPER', cardId: 'CARD-P' }),
+  ]);
+  const assignment = Object.freeze({ roundId, slots });
+  const packages = Object.freeze([
+    Object.freeze({ jankenHand: 'ROCK', cardId: 'CARD-R' }),
+    Object.freeze({ jankenHand: 'SCISSORS', cardId: 'CARD-S' }),
+    Object.freeze({ jankenHand: 'PAPER', cardId: 'CARD-P' }),
+  ]);
+  return Object.freeze({
+    schema: 'gameroad.battle-janken-focus-authority-context.v1',
+    generationId: roundId,
+    assignment,
+    packages,
+  });
+}
+
+test('reconnect recovery preserves the exact authoritative Hand3 snapshot and packages while clearing local focus', async () => {
+  const {
+    BATTLE_JANKEN_RECOVERY_TRIGGER,
+    projectBattleJankenRecoveryContinuity,
+  } = await import('../browser/battle-recovery-live-adapter.mjs');
+  const authoritativeContext = authoritativeJankenContext();
+  const localFocusState = Object.freeze({
+    generationId: 'ROUND-7',
+    focusedHand: 'ROCK',
+    focusedPackage: authoritativeContext.packages[0],
+  });
+  const localStagedPackage = authoritativeContext.packages[0];
+
+  const recovered = projectBattleJankenRecoveryContinuity({
+    recoveryTrigger: BATTLE_JANKEN_RECOVERY_TRIGGER.RECONNECT_RESTORED,
+    authoritativeContext,
+    localFocusState,
+    localStagedPackage,
+  });
+
+  assert.equal(recovered.ok, true);
+  assert.strictEqual(recovered.authoritativeContext, authoritativeContext);
+  assert.strictEqual(recovered.assignment, authoritativeContext.assignment);
+  assert.strictEqual(recovered.packages, authoritativeContext.packages);
+  assert.deepEqual(recovered.packages.map((pkg) => pkg.cardId), ['CARD-R', 'CARD-S', 'CARD-P']);
+  assert.equal(recovered.localFocusState, null);
+  assert.equal(recovered.localStagedPackage, null);
+  assert.equal(recovered.clearedLocalFocus, true);
+  assert.equal(recovered.clearedStagedPackage, true);
+  assert.equal(recovered.generationMismatch, false);
+  assert.equal(recovered.handAssignmentReroll, false);
+  assert.equal(recovered.compoundPackageRecompute, false);
+  assert.equal(recovered.legalityRecompute, false);
+  assert.equal(recovered.routeRecompute, false);
+  assert.equal(recovered.committedRollback, false);
+  assert.equal(recovered.gameStateWrite, false);
+});
+
+test('stale input recovery drops an old-generation local focus without changing current authority', async () => {
+  const {
+    BATTLE_JANKEN_RECOVERY_TRIGGER,
+    projectBattleJankenRecoveryContinuity,
+  } = await import('../browser/battle-recovery-live-adapter.mjs');
+  const authoritativeContext = authoritativeJankenContext('ROUND-8');
+  const oldLocalPackage = Object.freeze({ jankenHand: 'PAPER', cardId: 'OLD-CARD' });
+
+  const recovered = projectBattleJankenRecoveryContinuity({
+    recoveryTrigger: BATTLE_JANKEN_RECOVERY_TRIGGER.STALE_INPUT_REJECTED,
+    authoritativeContext,
+    localFocusState: Object.freeze({
+      generationId: 'ROUND-7',
+      focusedHand: 'PAPER',
+      focusedPackage: oldLocalPackage,
+    }),
+    localStagedPackage: oldLocalPackage,
+  });
+
+  assert.equal(recovered.ok, true);
+  assert.equal(recovered.previousGenerationId, 'ROUND-7');
+  assert.equal(recovered.generationId, 'ROUND-8');
+  assert.equal(recovered.generationMismatch, true);
+  assert.strictEqual(recovered.assignment, authoritativeContext.assignment);
+  assert.strictEqual(recovered.packages, authoritativeContext.packages);
+  assert.equal(recovered.localFocusState, null);
+  assert.equal(recovered.localStagedPackage, null);
+});
+
+test('explicit version mismatch clears same-generation local staging and never infers a reroll', async () => {
+  const {
+    BATTLE_JANKEN_RECOVERY_TRIGGER,
+    projectBattleJankenRecoveryContinuity,
+  } = await import('../browser/battle-recovery-live-adapter.mjs');
+  const authoritativeContext = authoritativeJankenContext('ROUND-9');
+
+  const recovered = projectBattleJankenRecoveryContinuity({
+    recoveryTrigger: BATTLE_JANKEN_RECOVERY_TRIGGER.VERSION_MISMATCH,
+    authoritativeContext,
+    localFocusState: Object.freeze({ generationId: 'ROUND-9', focusedHand: 'SCISSORS' }),
+    localStagedPackage: authoritativeContext.packages[1],
+  });
+
+  assert.equal(recovered.ok, true);
+  assert.equal(recovered.generationMismatch, false);
+  assert.equal(recovered.clearedLocalFocus, true);
+  assert.equal(recovered.clearedStagedPackage, true);
+  assert.strictEqual(recovered.assignment, authoritativeContext.assignment);
+  assert.equal(recovered.handAssignmentReroll, false);
+  assert.equal(BATTLE_RECOVERY_LIVE_ADAPTER_CONTRACT.jankenRecoveryRerollsHand3, false);
+  assert.equal(BATTLE_RECOVERY_LIVE_ADAPTER_CONTRACT.jankenRecoveryRecomputesCompoundPackage, false);
+  assert.equal(BATTLE_RECOVERY_LIVE_ADAPTER_CONTRACT.jankenRecoveryRollsBackCommittedAction, false);
+});
+
+test('recovery continuity fails closed when package identity disagrees with the authoritative Hand3 assignment', async () => {
+  const {
+    BATTLE_JANKEN_RECOVERY_TRIGGER,
+    projectBattleJankenRecoveryContinuity,
+  } = await import('../browser/battle-recovery-live-adapter.mjs');
+  const good = authoritativeJankenContext('ROUND-10');
+  const badPackages = Object.freeze([
+    good.packages[0],
+    good.packages[1],
+    Object.freeze({ jankenHand: 'PAPER', cardId: 'NOT-THE-ASSIGNED-CARD' }),
+  ]);
+  const badContext = Object.freeze({ ...good, packages: badPackages });
+
+  const recovered = projectBattleJankenRecoveryContinuity({
+    recoveryTrigger: BATTLE_JANKEN_RECOVERY_TRIGGER.RECONNECT_RESTORED,
+    authoritativeContext: badContext,
+    localFocusState: Object.freeze({ generationId: 'ROUND-OLD', focusedHand: 'PAPER' }),
+  });
+
+  assert.equal(recovered.ok, false);
+  assert.equal(recovered.reason, 'AUTHORITATIVE_JANKEN_CONTEXT_INVALID');
+  assert.equal(recovered.assignment, null);
+  assert.equal(recovered.packages, null);
+  assert.equal(recovered.localFocusState, null);
+  assert.equal(recovered.handAssignmentReroll, false);
+  assert.equal(recovered.committedRollback, false);
+});

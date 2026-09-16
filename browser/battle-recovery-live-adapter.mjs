@@ -9,9 +9,20 @@ import {
   isBattleRecoveryPresentation,
   projectBattleRecoveryPresentation,
 } from './battle-recovery-presentation-core.mjs';
+import {
+  BATTLE_JANKEN_FOCUS_AUTHORITY_CONTEXT_SCHEMA,
+} from './battle-janken-focus-authority-context.mjs';
 
 export const BATTLE_RECOVERY_LIVE_ADAPTER_SCHEMA =
   'gameroad.battle-recovery-live-adapter.v1';
+export const BATTLE_JANKEN_RECOVERY_CONTINUITY_SCHEMA =
+  'gameroad.battle-janken-recovery-continuity.v1';
+
+export const BATTLE_JANKEN_RECOVERY_TRIGGER = Object.freeze({
+  RECONNECT_RESTORED: 'RECONNECT_RESTORED',
+  STALE_INPUT_REJECTED: 'STALE_INPUT_REJECTED',
+  VERSION_MISMATCH: 'VERSION_MISMATCH',
+});
 
 const VALID_LOCAL_STAGES = new Set(Object.values(BATTLE_RECOVERY_LOCAL_STAGE));
 const VALID_ENVELOPE_MODES = new Set([
@@ -19,6 +30,8 @@ const VALID_ENVELOPE_MODES = new Set([
   BATTLE_2V2_CONTROL_MODES.TEMPORARY_PARTNER,
   BATTLE_2V2_CONTROL_MODES.PERMANENT_PARTNER,
 ]);
+const VALID_JANKEN_RECOVERY_TRIGGERS = new Set(Object.values(BATTLE_JANKEN_RECOVERY_TRIGGER));
+const JANKEN_HAND_ORDER = Object.freeze(['ROCK', 'SCISSORS', 'PAPER']);
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -217,6 +230,132 @@ export function syncBattleRecoveryRuntimeFrom2v2Authority(runtime, input = {}) {
   });
 }
 
+function jankenContinuityFailure(reason) {
+  return deepFreeze({
+    schema: BATTLE_JANKEN_RECOVERY_CONTINUITY_SCHEMA,
+    ok: false,
+    reason,
+    recoveryTrigger: null,
+    generationId: null,
+    authoritativeContext: null,
+    assignment: null,
+    packages: null,
+    localFocusState: null,
+    localStagedPackage: null,
+    clearedLocalFocus: false,
+    clearedStagedPackage: false,
+    previousGenerationId: null,
+    generationMismatch: false,
+    handAssignmentReroll: false,
+    compoundPackageRecompute: false,
+    legalityRecompute: false,
+    routeRecompute: false,
+    committedRollback: false,
+    gameplayAuthority: false,
+    gameStateWrite: false,
+  });
+}
+
+function validAuthoritativeJankenContext(context) {
+  if (!context || typeof context !== 'object' || Array.isArray(context)) return false;
+  if (context.schema !== BATTLE_JANKEN_FOCUS_AUTHORITY_CONTEXT_SCHEMA) return false;
+  if (!canonicalIdentity(context.generationId)) return false;
+  if (!Object.isFrozen(context)) return false;
+  if (!context.assignment || typeof context.assignment !== 'object' || Array.isArray(context.assignment)) return false;
+  if (!Object.isFrozen(context.assignment)) return false;
+  if (context.assignment.roundId !== context.generationId) return false;
+  if (!Array.isArray(context.assignment.slots) || context.assignment.slots.length !== JANKEN_HAND_ORDER.length) return false;
+  if (!Array.isArray(context.packages) || context.packages.length !== JANKEN_HAND_ORDER.length) return false;
+  if (!Object.isFrozen(context.packages)) return false;
+
+  const assignmentByHand = new Map();
+  for (const slot of context.assignment.slots) {
+    if (!slot || typeof slot !== 'object' || Array.isArray(slot)) return false;
+    if (!JANKEN_HAND_ORDER.includes(slot.jankenHand) || assignmentByHand.has(slot.jankenHand)) return false;
+    if (!canonicalIdentity(slot.cardId)) return false;
+    assignmentByHand.set(slot.jankenHand, slot.cardId);
+  }
+  if (!JANKEN_HAND_ORDER.every((hand) => assignmentByHand.has(hand))) return false;
+
+  const packageHands = new Set();
+  for (const pkg of context.packages) {
+    if (!pkg || typeof pkg !== 'object' || Array.isArray(pkg)) return false;
+    if (!JANKEN_HAND_ORDER.includes(pkg.jankenHand) || packageHands.has(pkg.jankenHand)) return false;
+    if (!canonicalIdentity(pkg.cardId) || assignmentByHand.get(pkg.jankenHand) !== pkg.cardId) return false;
+    packageHands.add(pkg.jankenHand);
+  }
+  return JANKEN_HAND_ORDER.every((hand) => packageHands.has(hand));
+}
+
+/**
+ * Project the local JANKEN recovery boundary from one already-authoritative
+ * Focus context. This function deliberately does not call syncRoundStart(), an
+ * assignment policy, a candidate reader, or a commit path. The exact immutable
+ * Hand3 assignment and compound packages are returned by reference; only stale
+ * client-local focus/staging is discarded.
+ *
+ * recoveryTrigger is caller-explicit because reconnect/version authority lives
+ * outside this adapter. All triggers clear local focus/package, including a
+ * restored reconnect in the same generation: a reconnect must re-project from
+ * authority rather than resurrect client-local staging.
+ */
+export function projectBattleJankenRecoveryContinuity(input = {}) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return jankenContinuityFailure('INPUT_INVALID');
+  }
+
+  const {
+    recoveryTrigger,
+    authoritativeContext,
+    localFocusState = null,
+    localStagedPackage = null,
+  } = input;
+
+  if (!VALID_JANKEN_RECOVERY_TRIGGERS.has(recoveryTrigger)) {
+    return jankenContinuityFailure('RECOVERY_TRIGGER_INVALID');
+  }
+  if (!validAuthoritativeJankenContext(authoritativeContext)) {
+    return jankenContinuityFailure('AUTHORITATIVE_JANKEN_CONTEXT_INVALID');
+  }
+  if (localFocusState !== null
+    && (!localFocusState || typeof localFocusState !== 'object' || Array.isArray(localFocusState))) {
+    return jankenContinuityFailure('LOCAL_FOCUS_STATE_INVALID');
+  }
+  if (localStagedPackage !== null
+    && (!localStagedPackage || typeof localStagedPackage !== 'object' || Array.isArray(localStagedPackage))) {
+    return jankenContinuityFailure('LOCAL_STAGED_PACKAGE_INVALID');
+  }
+
+  const previousGenerationId = canonicalIdentity(localFocusState?.generationId)
+    ? localFocusState.generationId
+    : null;
+
+  return deepFreeze({
+    schema: BATTLE_JANKEN_RECOVERY_CONTINUITY_SCHEMA,
+    ok: true,
+    reason: 'OK',
+    recoveryTrigger,
+    generationId: authoritativeContext.generationId,
+    authoritativeContext,
+    assignment: authoritativeContext.assignment,
+    packages: authoritativeContext.packages,
+    localFocusState: null,
+    localStagedPackage: null,
+    clearedLocalFocus: localFocusState !== null,
+    clearedStagedPackage: localStagedPackage !== null,
+    previousGenerationId,
+    generationMismatch: previousGenerationId !== null
+      && previousGenerationId !== authoritativeContext.generationId,
+    handAssignmentReroll: false,
+    compoundPackageRecompute: false,
+    legalityRecompute: false,
+    routeRecompute: false,
+    committedRollback: false,
+    gameplayAuthority: false,
+    gameStateWrite: false,
+  });
+}
+
 export const BATTLE_RECOVERY_LIVE_ADAPTER_CONTRACT = deepFreeze({
   schema: BATTLE_RECOVERY_LIVE_ADAPTER_SCHEMA,
   reconnectStateAuthority: 'EXISTING_BATTLE_2V2_RECONNECT_CORE',
@@ -237,4 +376,13 @@ export const BATTLE_RECOVERY_LIVE_ADAPTER_CONTRACT = deepFreeze({
   computesResult: false,
   writesGameState: false,
   runtimeSurfaceAuthority: 'CALLER_OWNED_EXISTING_RUNTIME_ONLY',
+  jankenRecoveryContextSource: 'EXISTING_BATTLE_JANKEN_FOCUS_AUTHORITY_CONTEXT',
+  jankenRecoveryTriggerAuthority: 'CALLER_EXPLICIT_ONLY',
+  jankenRecoveryPreservesAuthoritativeAssignmentByReference: true,
+  jankenRecoveryPreservesAuthoritativePackagesByReference: true,
+  jankenRecoveryClearsLocalFocus: true,
+  jankenRecoveryClearsLocalStagedPackage: true,
+  jankenRecoveryRerollsHand3: false,
+  jankenRecoveryRecomputesCompoundPackage: false,
+  jankenRecoveryRollsBackCommittedAction: false,
 });

@@ -116,11 +116,45 @@ jobs:
           if github_policy.get('billingGuardVerification') != 'EXTERNAL_BUDGET_OR_NO_PAYMENT_METHOD_READ_REQUIRED':
               error('GITHUB_BILLING_GUARD_WEAK', str(github_policy.get('billingGuardVerification')))
 
+          self_hosted_evidence = github_policy.get('selfHostedRunnerEvidence') or {}
+          if self_hosted_evidence.get('githubActionsUsage') != 'FREE':
+              error('SELF_HOSTED_ACTIONS_USAGE_NOT_FREE', str(self_hosted_evidence.get('githubActionsUsage')))
+          if self_hosted_evidence.get('machineCostBoundary') != 'EXTERNAL_TO_GITHUB_ACTIONS':
+              error('SELF_HOSTED_MACHINE_COST_BOUNDARY_INVALID', str(self_hosted_evidence.get('machineCostBoundary')))
+          try:
+              self_hosted_verified = dt.date.fromisoformat(self_hosted_evidence['lastVerified'])
+              self_hosted_max_age = int(self_hosted_evidence['maxAgeDays'])
+              if (dt.date.today() - self_hosted_verified).days > self_hosted_max_age:
+                  error('SELF_HOSTED_EVIDENCE_STALE', f'self-hosted evidence older than {self_hosted_max_age} days')
+          except Exception as exc:
+              error('SELF_HOSTED_EVIDENCE_DATE_INVALID', str(exc))
+          self_hosted_sources = '\n'.join(self_hosted_evidence.get('sources') or [])
+          for source in (
+              'docs.github.com/en/actions/concepts/runners/self-hosted-runners',
+              'docs.github.com/en/actions/concepts/billing-and-usage',
+          ):
+              if source not in self_hosted_sources:
+                  error('SELF_HOSTED_PRIMARY_SOURCE_MISSING', source)
+
           for required in policy.get('currentRequiredFiles') or []:
               if not (root / required).exists():
                   error('REQUIRED_CURRENT_FILE_MISSING', required, required)
 
           allowed_runners = set(github_policy.get('allowedStandardRunnerLabels') or [])
+          allowed_self_hosted_by_workflow = github_policy.get('allowedSelfHostedRunnerTuplesByWorkflow') or {}
+          if not isinstance(allowed_self_hosted_by_workflow, dict):
+              error('SELF_HOSTED_ALLOWLIST_INVALID', 'allowedSelfHostedRunnerTuplesByWorkflow must be an object')
+              allowed_self_hosted_by_workflow = {}
+          normalized_self_hosted = {}
+          for workflow_name, runners in allowed_self_hosted_by_workflow.items():
+              if not isinstance(workflow_name, str) or not workflow_name.startswith('.github/workflows/') or not workflow_name.endswith(('.yml', '.yaml')):
+                  error('SELF_HOSTED_WORKFLOW_SCOPE_INVALID', str(workflow_name))
+                  continue
+              if not isinstance(runners, list) or not runners or any(not isinstance(runner, str) or not runner for runner in runners):
+                  error('SELF_HOSTED_RUNNER_TUPLES_INVALID', str(workflow_name))
+                  continue
+              normalized_self_hosted[workflow_name] = set(runners)
+
           max_retention = int(github_policy.get('maxArtifactRetentionDays') or 14)
           # Split credential markers so this scanner never matches its own source text.
           paid_tokens = (
@@ -142,7 +176,11 @@ jobs:
                   runner = raw.strip().strip('\'\"')
                   if dynamic_expression_marker in runner:
                       error('DYNAMIC_RUNNER_UNVERIFIED', runner, name)
-                  elif runner not in allowed_runners:
+                  elif runner in allowed_runners:
+                      pass
+                  elif runner in normalized_self_hosted.get(name, set()):
+                      pass
+                  else:
                       error('NON_FREE_OR_UNKNOWN_RUNNER', runner, name)
               lines = text.splitlines()
               for index, line in enumerate(lines):
@@ -187,6 +225,8 @@ jobs:
 
           hold('CLOUDFLARE_ACCOUNT_PLAN_EXTERNAL', 'Verify the live Cloudflare account remains on Workers Free before claiming literal zero cash.')
           hold('GITHUB_ACTIONS_BILLING_GUARD_EXTERNAL', 'Verify no paid-overage path or a zero-dollar Actions budget that stops usage before claiming literal zero cash.')
+          if normalized_self_hosted:
+              hold('SELF_HOSTED_MACHINE_COST_EXTERNAL', 'Self-hosted runner Actions usage is free, but machine hardware, electricity and maintenance remain outside this repository guard.')
 
           report = {
               'schema': 'gameroad.zero-cash-audit.v1',

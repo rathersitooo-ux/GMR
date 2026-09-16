@@ -68,6 +68,7 @@ jobs:
               browser/*presentation*.mjs|\
               browser/*runtime*.mjs|\
               browser/*visual*.mjs|\
+              browser/assets/*|\
               browser/*motion*.mjs|\
               browser/new-base-*.mjs|\
               browser/screen-navigation-core.mjs|\

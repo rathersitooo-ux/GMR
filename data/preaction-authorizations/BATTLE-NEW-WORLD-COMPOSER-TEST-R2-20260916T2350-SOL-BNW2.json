@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-NEW-WORLD-COMPOSER-TEST-R2-20260916T2350-SOL-BNW2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_NEW_BOARD_WORLD_RECOMPOSITION_R1",
+  "acquireKey": "BATTLE-NEW-WORLD-COMPOSER-TEST-R2-20260916T2350-SOL-BNW2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "DIRECT_CONSUMER_STALE_EXPECTATION_ONLY_PRODUCT_RUNTIME_UNCHANGED_FOCUSED_43_OF_43_PASS_20260916",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOCAL_EXACT_MAIN_REBASE_FOCUSED_COMPOSER_PLUS_FIVE_BOARD_SUITES_43_OF_43_PASS",
+  "proceedToken": "PROCEED|BATTLE-NEW-WORLD-COMPOSER-TEST-R2-20260916T2350-SOL-BNW2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|direct-consumer-test-repair|shared-goal-presentation|active-lease",
+  "authorizationBaseSha": "14777a3d38c9da30a2765c203205db0414ae184b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_NEW_BOARD_WORLD_RECOMPOSITION_R1",
+  "leaseAcquireKey": "BATTLE-NEW-WORLD-COMPOSER-TEST-R2-20260916T2350-SOL-BNW2",
+  "leaseSnapshotReadbackAtJst": "2026-09-16 23:56 JST",
+  "leaseUntilJst": "2026-09-17 00:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A28:L28",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR exact main 14777a3d38c9da30a2765c203205db0414ae184b; mutable tests/battle-new-base-board-live-presentation-composer.test.mjs; own branch/PR/check/readback. READ_ONLY browser/battle-new-base-board-live-presentation-composer.mjs; browser/new-base-flanora-board-surface-runtime.mjs; browser/new-base-goal-entry-gate-cue-runtime.mjs; new-base goal/progression cores; browser/GAMEROAD.html; unrelated active WorkUnits.",
+  "scope": [
+    "tests/battle-new-base-board-live-presentation-composer.test.mjs"
+  ],
+  "leaseScope": [
+    "tests/battle-new-base-board-live-presentation-composer.test.mjs"
+  ]
+}

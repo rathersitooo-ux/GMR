@@ -18,14 +18,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate PRE_ACTION
+      - name: Validate PRE_ACTION witness
         shell: bash
         run: |
           set -euo pipefail
           BASE=957e92ac9fb3744d996fd90d5abe626d3d21d1e0
-          git diff --name-only "$BASE" HEAD > /tmp/changed.txt
-          cat /tmp/changed.txt
-          node tools/preaction-authorization-validator.mjs --base "$BASE" --head "$(git rev-parse HEAD)" --changed /tmp/changed.txt
+          MANIFEST=data/preaction-authorizations/BATTLE-TURN-LOOP-ROOT-R1-20260916T1157-SOL.json
+          FIRST=$(git rev-list --reverse "$BASE"..HEAD | head -1)
+          test -n "$FIRST"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          test "$(git diff-tree --no-commit-id --name-only -r "$FIRST")" = "$MANIFEST"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { validateManifest } from './tools/preaction-authorization-validator.mjs';
+          const path='data/preaction-authorizations/BATTLE-TURN-LOOP-ROOT-R1-20260916T1157-SOL.json';
+          const manifest=JSON.parse(fs.readFileSync(path,'utf8'));
+          const result=validateManifest(manifest,path,{nowMs:Date.now()});
+          console.log('PREACTION_WITNESS=' + JSON.stringify(result));
+          if(!result.ok) process.exit(1);
+          NODE
       - name: Diagnose live Battle seams
         shell: bash
         run: |

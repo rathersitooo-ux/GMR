@@ -37,15 +37,13 @@ function createNode(documentLike, tagName, className = '') {
 function removeNode(node) {
   if (!node) return;
   node.remove?.();
-  if (node.parentNode && typeof node.parentNode.removeChild === 'function') {
-    node.parentNode.removeChild(node);
-  }
+  if (node.parentNode && typeof node.parentNode.removeChild === 'function') node.parentNode.removeChild(node);
 }
 
 function setCueColor(node, color) {
   if (!node || !color) return;
-  if (node.style?.setProperty) node.style.setProperty('--gameroad-goal-entry-cue-color', color);
-  else if (node.style) node.style['--gameroad-goal-entry-cue-color'] = color;
+  if (node.style?.setProperty) node.style.setProperty('--gameroad-route-gate-color', color);
+  else if (node.style) node.style['--gameroad-route-gate-color'] = color;
 }
 
 function resolveProfile({ reducedMotion = false, lowPerf = false } = {}) {
@@ -55,28 +53,22 @@ function resolveProfile({ reducedMotion = false, lowPerf = false } = {}) {
 }
 
 function ensureStyle(documentLike) {
-  if (!documentLike?.head || typeof documentLike.createElement !== 'function') return;
-  if (documentLike.getElementById?.(STYLE_ID)) return;
+  if (!documentLike?.head || typeof documentLike.createElement !== 'function' || documentLike.getElementById?.(STYLE_ID)) return;
   const style = createNode(documentLike, 'style');
   style.id = STYLE_ID;
   style.textContent = `
-[data-goal-entry-gate-cell="1"]{position:relative;isolation:isolate;overflow:visible!important}
-.grGoalEntryGate{position:absolute;z-index:5;left:50%;top:-42%;width:82%;height:72%;transform:translateX(-50%) perspective(120px) rotateX(-52deg);transform-origin:50% 100%;pointer-events:none;filter:drop-shadow(0 3px 3px rgba(0,0,0,.3))}
-.grGoalEntryGatePost,.grGoalEntryGateLintel{position:absolute;display:block;border:1px solid rgba(239,247,242,.72);background:linear-gradient(180deg,rgba(238,247,241,.74),rgba(50,78,70,.8));box-sizing:border-box}
-.grGoalEntryGatePost{bottom:0;width:17%;height:74%;border-radius:4px 4px 2px 2px}
-.grGoalEntryGatePost[data-gate-side="left"]{left:4%}
-.grGoalEntryGatePost[data-gate-side="right"]{right:4%}
-.grGoalEntryGateLintel{left:4%;right:4%;top:0;height:24%;border-radius:6px 6px 3px 3px}
-.grGoalEntryGate[data-goal-path-open="1"] .grGoalEntryGatePost,.grGoalEntryGate[data-goal-path-open="1"] .grGoalEntryGateLintel{box-shadow:0 0 7px color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 46%,transparent);border-color:color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 74%,white)}
-.grGoalEntryArrowStack{position:absolute;z-index:7;left:50%;bottom:7%;width:74%;height:122%;transform:translateX(-50%);pointer-events:none;overflow:visible;color:var(--gameroad-goal-entry-cue-color);text-shadow:0 0 6px color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 65%,transparent)}
-.grGoalEntryArrow{position:absolute;left:50%;bottom:0;display:block;font-size:clamp(13px,2.3vw,25px);font-weight:950;line-height:1;transform:translate(-50%,0);opacity:0;animation:grGoalEntryArrowRise 1.35s cubic-bezier(.18,.72,.26,1) infinite}
-.grGoalEntryArrow:nth-child(2){animation-delay:.34s}.grGoalEntryArrow:nth-child(3){animation-delay:.68s}
-@keyframes grGoalEntryArrowRise{0%{transform:translate(-50%,10px) scale(.86);opacity:0}18%{opacity:.96}72%{opacity:.82}100%{transform:translate(-50%,-34px) scale(1.03);opacity:0}}
-[data-goal-entry-cue-profile="reduced_motion"] .grGoalEntryArrow,[data-goal-entry-cue-profile="low_perf"] .grGoalEntryArrow{animation:none!important;filter:none!important;text-shadow:none!important}
-[data-goal-entry-cue-profile="reduced_motion"] .grGoalEntryArrowStack,[data-goal-entry-cue-profile="low_perf"] .grGoalEntryArrowStack{height:auto;bottom:18%;display:grid;place-items:center}
-[data-goal-entry-cue-profile="reduced_motion"] .grGoalEntryArrow,[data-goal-entry-cue-profile="low_perf"] .grGoalEntryArrow{position:static;display:none;opacity:1;transform:none;font-size:clamp(16px,2.8vw,27px)}
-[data-goal-entry-cue-profile="reduced_motion"] .grGoalEntryArrow:first-child,[data-goal-entry-cue-profile="low_perf"] .grGoalEntryArrow:first-child{display:block}
-[data-goal-entry-cue-profile="low_perf"] .grGoalEntryGate{filter:none}
+.grRouteGoalGate{--gameroad-route-gate-color:#e5d087;position:absolute;z-index:9;left:50%;top:50%;width:clamp(24px,3.9vw,46px);height:clamp(17px,2.8vw,34px);transform:translate(-50%,-50%);pointer-events:none;box-sizing:border-box}
+.grRouteGoalGateFrame{position:absolute;inset:0;border:clamp(2px,.3vw,4px) solid color-mix(in srgb,var(--gameroad-route-gate-color) 68%,#d8c99a);border-radius:50%;background:rgba(22,39,35,.18);box-shadow:0 2px 5px rgba(0,0,0,.3),inset 0 0 5px rgba(255,255,255,.08);transition:box-shadow .2s ease,border-color .2s ease}
+.grRouteGoalGateBlocker{position:absolute;z-index:3;left:-4%;right:-4%;top:10%;bottom:10%;border:1px solid rgba(86,37,35,.96);border-radius:22% 18% 23% 17%;background:linear-gradient(125deg,#6b2f35 0%,#8a3a3f 28%,#5b252d 62%,#7a3338 100%);box-shadow:inset 0 0 0 2px rgba(229,178,149,.08),inset 5px -4px 9px rgba(33,9,15,.28),0 3px 6px rgba(0,0,0,.34);transform:scale(1.03);transform-origin:center;opacity:1}
+.grRouteGoalGateBlocker::before,.grRouteGoalGateBlocker::after{content:"";position:absolute;background:rgba(42,14,20,.32);border-radius:99px;transform:rotate(-18deg)}
+.grRouteGoalGateBlocker::before{left:17%;top:12%;width:2px;height:72%}.grRouteGoalGateBlocker::after{right:24%;top:8%;width:2px;height:78%;transform:rotate(23deg)}
+.grRouteGoalGateMembrane{position:absolute;z-index:2;inset:12%;border-radius:50%;background:radial-gradient(ellipse at 45% 42%,rgba(235,251,247,.22),rgba(147,211,201,.1) 52%,rgba(100,174,164,.04));box-shadow:inset 0 0 8px color-mix(in srgb,var(--gameroad-route-gate-color) 28%,transparent);opacity:0;transform:scale(.72);transition:opacity .22s ease,transform .22s ease}
+.grRouteGoalGate[data-gate-state="OPEN"] .grRouteGoalGateFrame{border-color:color-mix(in srgb,var(--gameroad-route-gate-color) 78%,white);box-shadow:0 0 10px color-mix(in srgb,var(--gameroad-route-gate-color) 52%,transparent),inset 0 0 7px rgba(255,255,255,.16)}
+.grRouteGoalGate[data-gate-state="OPEN"] .grRouteGoalGateBlocker{opacity:0;transform:scale(1.7);pointer-events:none}
+.grRouteGoalGate[data-gate-state="OPEN"] .grRouteGoalGateMembrane{opacity:1;transform:scale(1)}
+.grRouteGoalGate[data-gate-shatter="1"] .grRouteGoalGateBlocker{animation:grRouteGateShatter .44s cubic-bezier(.2,.72,.28,1) both}
+@keyframes grRouteGateShatter{0%{opacity:1;transform:scale(1.03) rotate(0)}38%{opacity:1;transform:scale(1.13) rotate(-3deg);filter:brightness(1.5)}100%{opacity:0;transform:scale(1.75) rotate(8deg);filter:brightness(1.8)}}
+[data-goal-entry-cue-profile="reduced_motion"] .grRouteGoalGate *,[data-goal-entry-cue-profile="low_perf"] .grRouteGoalGate *{animation:none!important;transition:none!important;filter:none!important}
 `;
   documentLike.head.appendChild(style);
 }
@@ -89,8 +81,9 @@ function validBoardSurface(runtime) {
       && runtime.gameplayAuthority === false
       && runtime.gameStateWrite === false
       && runtime.movementAuthority === false
-      && typeof runtime.resolveShield === 'function'
-      && typeof runtime.resolveClearingCell === 'function'
+      && typeof runtime.resolveGateAnchor === 'function'
+      && typeof runtime.resolveGoalGuide === 'function'
+      && typeof runtime.resolveGoal === 'function'
   );
 }
 
@@ -100,6 +93,8 @@ function validGoalPathPresentation(value) {
       && typeof value === 'object'
       && !Array.isArray(value)
       && value.ok === true
+      && value.sharedGoalCount === 1
+      && nonEmptyString(value.sharedGoalId)
       && value.presentationOnly === true
       && value.gameplayAuthority === false
       && value.gameStateWrite === false
@@ -112,18 +107,7 @@ function validGoalPathPresentation(value) {
 }
 
 function failSoft(reason, profile) {
-  return Object.freeze({
-    schema: SCHEMA,
-    mounted: false,
-    reason,
-    profile,
-    presentationOnly: true,
-    gameplayAuthority: false,
-    gameStateWrite: false,
-    movementAuthority: false,
-    legalityAuthority: false,
-    resultAuthority: false,
-  });
+  return Object.freeze({ schema: SCHEMA, mounted: false, reason, profile, presentationOnly: true, gameplayAuthority: false, gameStateWrite: false, movementAuthority: false, legalityAuthority: false, resultAuthority: false });
 }
 
 function laneKey(participantId, laneIndex) {
@@ -137,31 +121,30 @@ function normalizeLaneStates(goalPathPresentation) {
     if (!lane || !nonEmptyString(lane.participantId) || !Number.isSafeInteger(lane.laneIndex)) return null;
     const participantId = lane.participantId.trim();
     const key = nonEmptyString(lane.key) ? lane.key.trim() : laneKey(participantId, lane.laneIndex);
-    if (key !== laneKey(participantId, lane.laneIndex) || byKey.has(key)) return null;
-    byKey.set(key, {
-      key,
-      participantId,
-      laneIndex: lane.laneIndex,
-      connectedToGoal: lane.connectedToGoal === true,
-    });
+    if (key !== laneKey(participantId, lane.laneIndex) || byKey.has(key) || lane.sharedGoalId !== goalPathPresentation.sharedGoalId) return null;
+    byKey.set(key, { key, participantId, laneIndex: lane.laneIndex, connectedToGoal: lane.connectedToGoal === true });
   }
   return byKey;
 }
 
-function createArrowStack(documentLike, key, entryCellId, cueColor) {
-  const arrowStack = createNode(documentLike, 'span', 'grGoalEntryArrowStack');
-  setAttr(arrowStack, 'data-goal-entry-arrow-stack', key);
-  setAttr(arrowStack, 'data-clearing-entry-cell-id', entryCellId);
-  setAttr(arrowStack, 'data-cue-color-authority', 'caller-participant-color');
-  setAttr(arrowStack, 'aria-label', '上方向へ進める入口');
-  setCueColor(arrowStack, cueColor);
-  for (let index = 0; index < 3; index += 1) {
-    const arrow = createNode(documentLike, 'span', 'grGoalEntryArrow');
-    arrow.textContent = '↑';
-    setAttr(arrow, 'aria-hidden', 'true');
-    arrowStack.appendChild(arrow);
-  }
-  return arrowStack;
+function createGate(documentLike, lane, anchor, profile) {
+  setAttr(anchor, 'data-goal-entry-cue-profile', profile);
+  const gate = createNode(documentLike, 'span', 'grRouteGoalGate');
+  setAttr(gate, 'data-goal-entry-gate', lane.key);
+  setAttr(gate, 'data-participant-id', lane.participantId);
+  setAttr(gate, 'data-lane-index', lane.laneIndex);
+  setAttr(gate, 'data-gate-state', 'CLOSED');
+  setAttr(gate, 'data-goal-path-open', '0');
+  setAttr(gate, 'data-gate-shatter', '0');
+  setAttr(gate, 'aria-label', '閉鎖中のGOALゲート');
+  const frame = createNode(documentLike, 'span', 'grRouteGoalGateFrame');
+  const membrane = createNode(documentLike, 'span', 'grRouteGoalGateMembrane');
+  const blocker = createNode(documentLike, 'span', 'grRouteGoalGateBlocker');
+  gate.appendChild(frame);
+  gate.appendChild(membrane);
+  gate.appendChild(blocker);
+  anchor.appendChild(gate);
+  return { gate, frame, membrane, blocker };
 }
 
 export function mountNewBaseGoalEntryGateCue({
@@ -173,66 +156,32 @@ export function mountNewBaseGoalEntryGateCue({
   lowPerf = false,
 } = {}) {
   const profile = resolveProfile({ reducedMotion, lowPerf });
-  if (!documentLike || typeof documentLike.createElement !== 'function') {
-    return failSoft('DOM_DOCUMENT_REQUIRED', profile);
-  }
-  if (!validBoardSurface(boardSurfaceRuntime)) {
-    return failSoft('BOARD_SURFACE_RUNTIME_INVALID', profile);
-  }
+  if (!documentLike || typeof documentLike.createElement !== 'function') return failSoft('DOM_DOCUMENT_REQUIRED', profile);
+  if (!validBoardSurface(boardSurfaceRuntime)) return failSoft('BOARD_SURFACE_RUNTIME_INVALID', profile);
   const initialLaneStates = normalizeLaneStates(goalPathPresentation);
-  if (!initialLaneStates) {
-    return failSoft('GOAL_PATH_PRESENTATION_INVALID', profile);
-  }
+  if (!initialLaneStates) return failSoft('GOAL_PATH_PRESENTATION_INVALID', profile);
+  if (boardSurfaceRuntime.resolveGoal()?.dataset?.goalId !== goalPathPresentation.sharedGoalId) return failSoft('SHARED_GOAL_MISMATCH', profile);
 
   ensureStyle(documentLike);
   const mountedByLaneKey = new Map();
-  let unresolvedOpenLaneKeys = new Set();
-  let activeParticipantColors = participantColors && typeof participantColors === 'object'
-    ? participantColors
-    : {};
+  let activeParticipantColors = participantColors && typeof participantColors === 'object' ? participantColors : {};
   let destroyed = false;
+  let shatterTransitionCount = 0;
 
   for (const lane of initialLaneStates.values()) {
-    const shieldNode = boardSurfaceRuntime.resolveShield(lane.participantId, lane.laneIndex);
-    const entryCellId = shieldNode?.dataset?.clearingEntryCellId
-      ?? shieldNode?.getAttribute?.('data-clearing-entry-cell-id')
-      ?? null;
-    const entryCell = nonEmptyString(entryCellId)
-      ? boardSurfaceRuntime.resolveClearingCell(entryCellId)
-      : null;
-    if (!shieldNode || !entryCell || typeof entryCell.appendChild !== 'function') continue;
-
-    setAttr(entryCell, 'data-goal-entry-gate-cell', '1');
-    setAttr(entryCell, 'data-goal-entry-cue-profile', profile);
-
-    const gate = createNode(documentLike, 'span', 'grGoalEntryGate');
-    setAttr(gate, 'data-goal-entry-gate', lane.key);
-    setAttr(gate, 'data-participant-id', lane.participantId);
-    setAttr(gate, 'data-lane-index', lane.laneIndex);
-    setAttr(gate, 'data-clearing-entry-cell-id', entryCellId);
-    setAttr(gate, 'data-goal-path-open', '0');
-    setAttr(gate, 'aria-hidden', 'true');
-
-    const leftPost = createNode(documentLike, 'span', 'grGoalEntryGatePost');
-    const rightPost = createNode(documentLike, 'span', 'grGoalEntryGatePost');
-    const lintel = createNode(documentLike, 'span', 'grGoalEntryGateLintel');
-    setAttr(leftPost, 'data-gate-side', 'left');
-    setAttr(rightPost, 'data-gate-side', 'right');
-    gate.appendChild(leftPost);
-    gate.appendChild(rightPost);
-    gate.appendChild(lintel);
-    entryCell.appendChild(gate);
-
+    const anchor = boardSurfaceRuntime.resolveGateAnchor(lane.participantId, lane.laneIndex);
+    const guide = boardSurfaceRuntime.resolveGoalGuide(lane.participantId, lane.laneIndex);
+    if (!anchor || !guide || typeof anchor.appendChild !== 'function') continue;
+    const parts = createGate(documentLike, lane, anchor, profile);
     mountedByLaneKey.set(lane.key, {
       key: lane.key,
       participantId: lane.participantId,
       laneIndex: lane.laneIndex,
-      entryCellId,
-      entryCell,
+      anchor,
+      guide,
       connectedToGoal: false,
       cueColor: null,
-      gate,
-      arrowStack: null,
+      ...parts,
     });
   }
 
@@ -241,11 +190,13 @@ export function mountNewBaseGoalEntryGateCue({
     return deepFreeze({
       laneGateCount: records.length,
       openLaneCount: records.filter((item) => item.connectedToGoal).length,
-      activeArrowCount: records.filter((item) => item.arrowStack !== null).length,
-      unresolvedOpenLaneKeys: [...unresolvedOpenLaneKeys],
-      activeArrowEntryCellIds: records.filter((item) => item.arrowStack !== null).map((item) => item.entryCellId),
+      closedLaneCount: records.filter((item) => !item.connectedToGoal).length,
+      shatterTransitionCount,
+      activeArrowCount: 0,
+      unresolvedOpenLaneKeys: [],
+      activeArrowEntryCellIds: [],
       profile,
-      animationMode: profile === 'standard' ? 'UPWARD_SCROLL_FADE' : 'STATIC_UPWARD_ARROW',
+      animationMode: profile === 'standard' ? 'BLOCKER_SHATTER_TO_PORTAL' : 'STATIC_STATE_SWAP',
       presentationOnly: true,
       gameplayAuthority: false,
       gameStateWrite: false,
@@ -259,57 +210,33 @@ export function mountNewBaseGoalEntryGateCue({
     if (destroyed) return Object.freeze({ ok: false, reason: 'RUNTIME_DESTROYED' });
     const nextLaneStates = normalizeLaneStates(nextGoalPathPresentation);
     if (!nextLaneStates) return Object.freeze({ ok: false, reason: 'GOAL_PATH_PRESENTATION_INVALID' });
-    if (nextLaneStates.size !== mountedByLaneKey.size) {
+    if (nextGoalPathPresentation.sharedGoalId !== goalPathPresentation.sharedGoalId || nextLaneStates.size !== mountedByLaneKey.size) {
       return Object.freeze({ ok: false, reason: 'GOAL_PATH_LANE_SET_MISMATCH' });
     }
-    for (const key of mountedByLaneKey.keys()) {
-      if (!nextLaneStates.has(key)) return Object.freeze({ ok: false, reason: 'GOAL_PATH_LANE_SET_MISMATCH' });
-    }
+    for (const key of mountedByLaneKey.keys()) if (!nextLaneStates.has(key)) return Object.freeze({ ok: false, reason: 'GOAL_PATH_LANE_SET_MISMATCH' });
 
-    const colors = nextParticipantColors && typeof nextParticipantColors === 'object'
-      ? nextParticipantColors
-      : activeParticipantColors;
-    const desired = [];
+    const colors = nextParticipantColors && typeof nextParticipantColors === 'object' ? nextParticipantColors : activeParticipantColors;
     for (const [key, record] of mountedByLaneKey.entries()) {
       const lane = nextLaneStates.get(key);
-      desired.push({
-        record,
-        connectedToGoal: lane.connectedToGoal === true,
-        cueColor: normalizeColor(colors?.[record.participantId]),
-      });
-    }
-
-    const nextUnresolved = new Set();
-    for (const item of desired) {
-      const { record, connectedToGoal, cueColor } = item;
-      record.connectedToGoal = connectedToGoal;
+      const nextOpen = lane.connectedToGoal === true;
+      const wasOpen = record.connectedToGoal;
+      const cueColor = normalizeColor(colors?.[record.participantId]);
+      record.connectedToGoal = nextOpen;
       record.cueColor = cueColor;
-      setAttr(record.gate, 'data-goal-path-open', connectedToGoal ? '1' : '0');
-
-      if (connectedToGoal && cueColor) {
-        setCueColor(record.gate, cueColor);
-        if (!record.arrowStack) {
-          record.arrowStack = createArrowStack(documentLike, record.key, record.entryCellId, cueColor);
-          record.entryCell.appendChild(record.arrowStack);
-        } else {
-          setCueColor(record.arrowStack, cueColor);
-        }
-      } else {
-        if (record.arrowStack) {
-          removeNode(record.arrowStack);
-          record.arrowStack = null;
-        }
-        if (connectedToGoal && !cueColor) nextUnresolved.add(record.key);
+      if (cueColor) setCueColor(record.gate, cueColor);
+      setAttr(record.gate, 'data-gate-state', nextOpen ? 'OPEN' : 'CLOSED');
+      setAttr(record.gate, 'data-goal-path-open', nextOpen ? '1' : '0');
+      setAttr(record.guide, 'data-goal-path-open', nextOpen ? '1' : '0');
+      setAttr(record.gate, 'aria-label', nextOpen ? '解放済みのGOALゲート' : '閉鎖中のGOALゲート');
+      if (!wasOpen && nextOpen) {
+        shatterTransitionCount += 1;
+        setAttr(record.gate, 'data-gate-shatter', profile === 'standard' ? '1' : '0');
+      } else if (!nextOpen) {
+        setAttr(record.gate, 'data-gate-shatter', '0');
       }
     }
-
     activeParticipantColors = colors;
-    unresolvedOpenLaneKeys = nextUnresolved;
-    return deepFreeze({
-      ok: true,
-      reason: 'GOAL_ENTRY_CUES_SYNCED',
-      ...snapshotState(),
-    });
+    return deepFreeze({ ok: true, reason: 'GOAL_ENTRY_GATES_SYNCED', ...snapshotState() });
   }
 
   const runtime = {
@@ -327,17 +254,11 @@ export function mountNewBaseGoalEntryGateCue({
       return mountedByLaneKey.get(laneKey(participantId.trim(), laneIndex)) ?? null;
     },
     syncGoalPathPresentation,
-    snapshot() {
-      return snapshotState();
-    },
+    snapshot() { return snapshotState(); },
     destroy() {
       if (destroyed) return false;
       destroyed = true;
-      for (const record of [...mountedByLaneKey.values()].reverse()) {
-        removeNode(record.arrowStack);
-        record.arrowStack = null;
-        removeNode(record.gate);
-      }
+      for (const record of [...mountedByLaneKey.values()].reverse()) removeNode(record.gate);
       return true;
     },
   };
@@ -347,24 +268,25 @@ export function mountNewBaseGoalEntryGateCue({
     runtime.destroy();
     return failSoft(initialSync.reason, profile);
   }
-
   return Object.freeze(runtime);
 }
 
 export const NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT = deepFreeze({
   schema: SCHEMA,
-  gateMeaning: 'SHARED_FIELD_TO_SHIELD_PROGRESS_BOUNDARY',
-  gateVisibility: 'PERSISTENT_WORLD_SPACE_AFFORDANCE',
-  activeArrowAuthority: 'CALLER_GOAL_PATH_PRESENTATION_CONNECTED_TO_GOAL',
-  activeArrowPlacement: 'EXACT_LANE_CLEARING_ENTRY_CELL_ID',
-  activeArrowColorAuthority: 'CALLER_PARTICIPANT_COLOR',
-  closedLaneArrowVisible: false,
-  multipleOpenLanesSupported: true,
+  gateMeaning: 'SEVEN_CARD_ROUTE_TO_SHARED_GOAL_BOUNDARY',
+  gatePlacement: 'AFTER_CARD_PATH_BEFORE_SHARED_GOAL',
+  closedAppearance: 'SOLID_OPAQUE_HARD_BLOCKER',
+  openingAppearance: 'BLOCKER_SHATTERS',
+  openAppearance: 'RING_FRAME_WITH_TRANSLUCENT_MEMBRANE',
+  preOpenGoalGuide: 'FAINT',
+  openGoalGuide: 'EMPHASIZED',
+  routeGateCount: 12,
+  sharedGoalCount: 1,
   statefulGoalPathSync: true,
   repeatedSyncIdempotent: true,
-  standardMotion: 'UPWARD_SCROLL_FADE',
-  reducedMotion: 'STATIC_UPWARD_ARROW',
-  lowPerf: 'STATIC_UPWARD_ARROW',
+  standardMotion: 'BLOCKER_SHATTER_TO_PORTAL',
+  reducedMotion: 'STATIC_STATE_SWAP',
+  lowPerf: 'STATIC_STATE_SWAP',
   computesSevenCardCompletion: false,
   computesMovementLegality: false,
   computesResult: false,

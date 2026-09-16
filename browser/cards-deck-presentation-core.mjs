@@ -7,7 +7,7 @@ const EVENT_NAMES = Object.freeze({
 export const DECK_SWIPE_PRESENTATION_EVENTS = EVENT_NAMES;
 
 export const DECK_SWIPE_SFX_CUES = Object.freeze({
-  commit: Object.freeze({ kind: 'noise', durationSec: 0.085, gain: 0.14, filterStartHz: 880, filterEndHz: 2400 }),
+  commit: Object.freeze({ kind: 'noise', durationSec: 0.072, gain: 0.17, filterStartHz: 1450, filterEndHz: 5200 }),
   land: Object.freeze({ kind: 'tone', durationSec: 0.075, gain: 0.12, wave: 'triangle', startHz: 760, endHz: 1180 }),
   reject: Object.freeze({ kind: 'tone', durationSec: 0.09, gain: 0.08, wave: 'sine', startHz: 190, endHz: 135 }),
 });
@@ -214,9 +214,17 @@ export function installDeckSwipePresentationStyles(doc, { styleId = 'gameroad-de
   const style = doc.createElement('style');
   style.id = styleId;
   style.textContent = `
-.gr-deck-swipe-layer{position:fixed;inset:0;z-index:9999;pointer-events:none;overflow:hidden;contain:layout style paint}
+.gr-deck-swipe-layer{position:fixed;inset:0;z-index:var(--gameroad-cards-transfer-z,120);pointer-events:none;overflow:hidden;contain:layout style paint}
 .gr-deck-swipe-flight-card{position:fixed!important;margin:0!important;pointer-events:none!important;transform-origin:center center;will-change:transform,opacity,filter;filter:drop-shadow(0 12px 14px rgba(0,0,0,.28)) brightness(1.05)}
-.gr-deck-swipe-streak{position:fixed;left:var(--gr-streak-left);top:var(--gr-streak-top);width:72px;height:3px;border-radius:999px;transform-origin:right center;transform:translateX(-72px) rotate(var(--gr-streak-angle));opacity:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18) 28%,rgba(255,239,176,.92));filter:drop-shadow(0 0 5px rgba(255,224,139,.55));will-change:transform,opacity}
+.gr-deck-swipe-streak{position:fixed;left:var(--gr-streak-left);top:var(--gr-streak-top);width:88px;height:3px;border-radius:999px;transform-origin:right center;transform:translateX(-88px) rotate(var(--gr-streak-angle));opacity:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2) 24%,rgba(255,239,176,.96));filter:drop-shadow(0 0 6px rgba(255,224,139,.62));will-change:transform,opacity}
+.gr-deck-swipe-streak::before,.gr-deck-swipe-streak::after{content:"";position:absolute;right:0;border-radius:999px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),rgba(255,239,176,.72));pointer-events:none}
+.gr-deck-swipe-streak::before{top:-6px;width:62px;height:2px;opacity:.78}
+.gr-deck-swipe-streak::after{top:7px;width:48px;height:2px;opacity:.58}
+.gr-deck-remove-ghost-layer{z-index:var(--gameroad-cards-transfer-z,120)!important}
+.gr-deck-remove-ghost-streak{width:88px!important;height:3px!important;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2) 24%,rgba(255,239,176,.96))!important;filter:drop-shadow(0 0 6px rgba(255,224,139,.62))!important}
+.gr-deck-remove-ghost-streak::before,.gr-deck-remove-ghost-streak::after{content:"";position:absolute;right:0;border-radius:999px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),rgba(255,239,176,.72));pointer-events:none}
+.gr-deck-remove-ghost-streak::before{top:-6px;width:62px;height:2px;opacity:.78}
+.gr-deck-remove-ghost-streak::after{top:7px;width:48px;height:2px;opacity:.58}
 .gr-deck-swipe-source-armed{transform:scale(1.02);filter:brightness(1.05);transition:transform 70ms ease-out,filter 70ms ease-out}
 .gr-deck-swipe-target-hit{animation:grDeckSwipeTargetHit 260ms cubic-bezier(.2,.9,.25,1)}
 .gr-deck-swipe-count-hit{animation:grDeckSwipeCountHit 280ms cubic-bezier(.18,1.4,.25,1)}
@@ -364,6 +372,43 @@ export function createDeckSwipePresentationController({
   installDeckSwipePresentationStyles(doc);
   const localSfx = sfx === false ? null : (sfxPlayer ?? createDeckSwipeSfxPlayer({ window: win, enabled: sfxEnabled, volume: sfxVolume }));
 
+  const deckMutationObserver = (() => {
+    const Observer = win?.MutationObserver ?? globalThis.MutationObserver;
+    if (!localSfx || typeof Observer !== 'function' || !doc?.querySelectorAll) return null;
+    const roots = [...doc.querySelectorAll('#deckSlots, #exDeckSlots')];
+    if (!roots.length) return null;
+
+    const observer = new Observer((records) => {
+      const removedIds = new Set();
+      const collect = (node) => {
+        if (!node || node.nodeType !== 1) return;
+        const ownId = node.dataset?.id ?? node.getAttribute?.('data-id');
+        if (ownId) removedIds.add(String(ownId));
+        for (const child of [...(node.querySelectorAll?.('[data-id]') ?? [])]) {
+          const id = child.dataset?.id ?? child.getAttribute?.('data-id');
+          if (id) removedIds.add(String(id));
+        }
+      };
+      for (const record of records) {
+        for (const node of [...(record.removedNodes ?? [])]) collect(node);
+      }
+      if (!removedIds.size) return;
+
+      Promise.resolve().then(() => {
+        const liveIds = new Set(
+          [...doc.querySelectorAll('#deckSlots [data-id], #exDeckSlots [data-id]')]
+            .map((node) => String(node.dataset?.id ?? ''))
+            .filter(Boolean),
+        );
+        if ([...removedIds].some((id) => !liveIds.has(id))) {
+          try { localSfx.playCommit?.(); } catch {}
+        }
+      });
+    });
+    for (const root of roots) observer.observe(root, { childList: true, subtree: true });
+    return observer;
+  })();
+
   const setTimer = (fn, ms) => {
     let id;
     let firedSynchronously = false;
@@ -483,7 +528,7 @@ export function createDeckSwipePresentationController({
     layers.clear();
   }
 
-  const dispose = () => { cancelAll(); try { localSfx?.dispose?.(); } catch {} };
+  const dispose = () => { deckMutationObserver?.disconnect?.(); cancelAll(); try { localSfx?.dispose?.(); } catch {} };
 
   return Object.freeze({ playSuccess, playReject, cancelAll, dispose, config: cfg, sfxPlayer: localSfx });
 }

@@ -1,0 +1,47 @@
+﻿{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-WORLD-RECOMPOSE-R13-PREACTION-20260917T0416-SOL-Q7N4M9",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_NEW_BOARD_WORLD_RECOMPOSITION_R13",
+  "acquireKey": "BATTLE-BOARD-WORLD-RECOMPOSE-R13-20260917T0415-SOL-Q7N4M9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R12_REAL_SCREEN_PLUS_R13_FIXED_TARGET_DECLUTTER_PLAN_20260917",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R12_667_844_1280_REAL_SCREEN_FOCUSED_24_AND_INPUT_PROBE",
+  "proceedToken": "PROCEED|BATTLE-BOARD-WORLD-RECOMPOSE-R13-PREACTION-20260917T0416-SOL-Q7N4M9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|field01-waterfall|board-declutter|active-lease",
+  "authorizationBaseSha": "9848b0c9c8b591bd5eaafe8273a0fce679ce70bf",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_NEW_BOARD_WORLD_RECOMPOSITION_R13",
+  "leaseAcquireKey": "BATTLE-BOARD-WORLD-RECOMPOSE-R13-20260917T0415-SOL-Q7N4M9",
+  "leaseSnapshotReadbackAtJst": "2026-09-17 04:15 JST",
+  "leaseUntilJst": "2026-09-17 05:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR exact current main 9848b0c9c8b591bd5eaafe8273a0fce679ce70bf; mutable browser/new-base-flanora-board-surface-runtime.mjs; tests/new-base-flanora-board-surface-runtime.test.mjs; browser/new-base-goal-entry-gate-cue-runtime.mjs; tests/new-base-goal-entry-gate-cue-runtime.test.mjs; own transient PRE_ACTION witness; own fresh R13 branch/PR/check/readback; own CURRENT lease event. READ_ONLY browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs and deploy/cloudflare/tests/build.test.mjs; live composer; gameplay/rules/save/network; unrelated WorkUnits.",
+  "solutionSignature": "BATTLE_FIELD01_WATERFALL_FIXED_TARGET_VISUAL_ACCEPTANCE_R13",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R12_SURFACE_ALREADY_LIVE_AND_INPUT_AUTHORITY_PRESERVED_BY_INVISIBLE_LEGACY_HITBOXES",
+  "solutionSearchEvidence": [
+    "R12 real Battle proved the new surface is live while old fieldCanvas and board visuals can be suppressed without removing legacy input hitboxes.",
+    "R12 road-selection probe changed endpoint C:0:0 to C:-1:-1 with board opacity zero, proving visual authority and input authority can remain separated.",
+    "R12 844x390 screenshot still shows excessive shared-field cross-lines and top-center GOAL collision pressure; R13 reduces visual noise without changing topology or gameplay semantics.",
+    "FIELD-01 remains a GAMEROAD waterfall and forest identity built from native presentation styling; the Mushiking waterfall file remains reference-only and is not copied into product assets.",
+    "Cloudflare package provenance is a separate currently-owned resource and remains read-only in R13."
+  ],
+  "scope": [
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs",
+    "browser/new-base-goal-entry-gate-cue-runtime.mjs",
+    "tests/new-base-goal-entry-gate-cue-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs",
+    "browser/new-base-goal-entry-gate-cue-runtime.mjs",
+    "tests/new-base-goal-entry-gate-cue-runtime.test.mjs"
+  ]
+}

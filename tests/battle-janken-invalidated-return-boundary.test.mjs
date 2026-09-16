@@ -1,83 +1,175 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  BATTLE_JANKEN_INVALIDATED_RETURN_CONTRACT,
-  projectInvalidatedJankenReturnToHand,
+  BATTLE_JANKEN_INVALIDATED_RETURN_SCHEMA,
+  createBattleJankenInvalidatedReturnBoundary,
+  projectBattleJankenInvalidatedReturn,
 } from '../browser/battle-janken-invalidated-return-boundary.mjs';
 
-test('returns only resolver-invalidated reservations to the same player hand', () => {
-  const result = projectInvalidatedJankenReturnToHand({
-    resolverResult: { invalidated: ['P2', 'P4'] },
-    reservations: [
-      { playerId: 'P1', physicalCardId: 'p1-card-7' },
-      { playerId: 'P2', physicalCardId: 'p2-card-2' },
-      { playerId: 'P3', physicalCardId: 'p3-card-4' },
-      { playerId: 'P4', physicalCardId: 'p4-card-9' },
-    ],
-    hands: [
-      { playerId: 'P1', physicalCardIds: ['p1-a'] },
-      { playerId: 'P2', physicalCardIds: ['p2-a'] },
-      { playerId: 'P3', physicalCardIds: [] },
-      { playerId: 'P4', physicalCardIds: ['p4-a', 'p4-b'] },
-    ],
+function readyContext(overrides = {}) {
+  return {
+    resolverResult: {
+      processingOrder: ['p1', 'p2', 'p3', 'p4'],
+      invalidated: ['p2'],
+    },
+    selection: { playerId: 'p2', cardId: 'physical-card-22' },
+    handCardIds: ['hand-a', 'hand-b'],
+    returnedCardIds: [],
+    ...overrides,
+  };
+}
+
+test('projection permits only the exact same physical card of an authoritatively invalidated player', () => {
+  const result = projectBattleJankenInvalidatedReturn({
+    ...readyContext(),
+    request: { playerId: 'p2', cardId: 'physical-card-22' },
   });
 
-  assert.deepEqual(result.returns, [
-    { playerId: 'P2', physicalCardId: 'p2-card-2', fromZone: 'JANKEN_RESERVED', toZone: 'HAND', reason: 'INVALIDATED_COMPARISON_RESOLVED' },
-    { playerId: 'P4', physicalCardId: 'p4-card-9', fromZone: 'JANKEN_RESERVED', toZone: 'HAND', reason: 'INVALIDATED_COMPARISON_RESOLVED' },
-  ]);
-  assert.deepEqual(result.nextHands, [
-    { playerId: 'P1', physicalCardIds: ['p1-a'] },
-    { playerId: 'P2', physicalCardIds: ['p2-a', 'p2-card-2'] },
-    { playerId: 'P3', physicalCardIds: [] },
-    { playerId: 'P4', physicalCardIds: ['p4-a', 'p4-b', 'p4-card-9'] },
-  ]);
+  assert.equal(result.schema, BATTLE_JANKEN_INVALIDATED_RETURN_SCHEMA);
+  assert.equal(result.ok, true);
+  assert.equal(result.eligible, true);
+  assert.equal(result.returned, false);
+  assert.equal(result.playerId, 'p2');
+  assert.equal(result.cardId, 'physical-card-22');
+  assert.equal(result.action, 'RETURN_SAME_PHYSICAL_CARD_TO_HAND');
+  assert.equal(result.samePhysicalCard, true);
   assert.equal(result.movementRollback, false);
-  assert.equal(result.resolverOwnedHere, false);
-  assert.equal(result.gameStateWrite, false);
+  assert.equal(result.resolverWrite, false);
+  assert.equal(result.turnOrderWrite, false);
+  assert.equal(Object.isFrozen(result), true);
+  assert.equal(Object.isFrozen(result.invalidatedPlayerIds), true);
 });
 
-test('no invalidated cards is a no-op projection', () => {
-  const hands = [{ playerId: 'P1', physicalCardIds: ['p1-a'] }];
-  const result = projectInvalidatedJankenReturnToHand({
-    resolverResult: { invalidated: [] },
-    reservations: [{ playerId: 'P1', physicalCardId: 'p1-r' }],
-    hands,
+test('projection fails closed when resolver did not invalidate the exact player', () => {
+  const result = projectBattleJankenInvalidatedReturn({
+    ...readyContext({ resolverResult: { invalidated: ['p3'] } }),
+    request: { playerId: 'p2', cardId: 'physical-card-22' },
   });
-  assert.deepEqual(result.returns, []);
-  assert.deepEqual(result.nextHands, hands);
+
+  assert.equal(result.ok, false);
+  assert.equal(result.eligible, false);
+  assert.equal(result.reason, 'PLAYER_NOT_INVALIDATED');
+  assert.equal(result.returned, false);
 });
 
-test('fails closed when invalidated player physical-card lineage is missing', () => {
-  assert.throws(() => projectInvalidatedJankenReturnToHand({
-    resolverResult: { invalidated: ['P2'] },
-    reservations: [{ playerId: 'P1', physicalCardId: 'p1-r' }],
-    hands: [{ playerId: 'P2', physicalCardIds: [] }],
-  }), /INVALIDATED_PLAYER_RESERVATION_REQUIRED/);
+test('projection rejects mismatched player/card lineage and malformed resolver evidence', () => {
+  const wrongCard = projectBattleJankenInvalidatedReturn({
+    ...readyContext(),
+    request: { playerId: 'p2', cardId: 'different-physical-card' },
+  });
+  assert.equal(wrongCard.reason, 'SELECTION_LINEAGE_MISMATCH');
+
+  const wrongPlayer = projectBattleJankenInvalidatedReturn({
+    ...readyContext(),
+    request: { playerId: 'p3', cardId: 'physical-card-22' },
+  });
+  assert.equal(wrongPlayer.reason, 'SELECTION_LINEAGE_MISMATCH');
+
+  const malformed = projectBattleJankenInvalidatedReturn({
+    ...readyContext({ resolverResult: { invalidated: ['p2', 'p2'] } }),
+    request: { playerId: 'p2', cardId: 'physical-card-22' },
+  });
+  assert.equal(malformed.reason, 'INVALID_RESOLVER_RESULT');
 });
 
-test('fails closed instead of duplicating a reserved physical card already in hand', () => {
-  assert.throws(() => projectInvalidatedJankenReturnToHand({
-    resolverResult: { invalidated: ['P2'] },
-    reservations: [{ playerId: 'P2', physicalCardId: 'p2-r' }],
-    hands: [{ playerId: 'P2', physicalCardIds: ['p2-r'] }],
-  }), /RESERVED_PHYSICAL_CARD_ALREADY_IN_HAND/);
+test('projection never duplicates a card already in hand or already returned', () => {
+  const inHand = projectBattleJankenInvalidatedReturn({
+    ...readyContext({ handCardIds: ['hand-a', 'physical-card-22'] }),
+    request: { playerId: 'p2', cardId: 'physical-card-22' },
+  });
+  assert.equal(inHand.reason, 'CARD_ALREADY_IN_HAND');
+
+  const priorReturn = projectBattleJankenInvalidatedReturn({
+    ...readyContext({ returnedCardIds: ['physical-card-22'] }),
+    request: { playerId: 'p2', cardId: 'physical-card-22' },
+  });
+  assert.equal(priorReturn.reason, 'CARD_ALREADY_RETURNED');
 });
 
-test('rejects duplicate physical-card reservation ownership', () => {
-  assert.throws(() => projectInvalidatedJankenReturnToHand({
-    resolverResult: { invalidated: [] },
-    reservations: [
-      { playerId: 'P1', physicalCardId: 'same-card' },
-      { playerId: 'P2', physicalCardId: 'same-card' },
-    ],
-    hands: [],
-  }), /DUPLICATE_RESERVED_PHYSICAL_CARD_ID/);
+test('executor delegates the exact identity to existing hand authority once', async () => {
+  const delegated = [];
+  const boundary = createBattleJankenInvalidatedReturnBoundary({
+    readContext: async () => readyContext(),
+    returnCardToHand: async (payload) => {
+      delegated.push(payload);
+      return true;
+    },
+  });
+
+  const request = { playerId: 'p2', cardId: 'physical-card-22' };
+  const first = await boundary.returnInvalidated(request);
+  assert.equal(first.ok, true);
+  assert.equal(first.returned, true);
+  assert.equal(first.reason, 'RETURNED_BY_EXISTING_HAND_AUTHORITY');
+  assert.equal(first.movementRollback, false);
+  assert.equal(delegated.length, 1);
+  assert.deepEqual(delegated[0], {
+    schema: BATTLE_JANKEN_INVALIDATED_RETURN_SCHEMA,
+    playerId: 'p2',
+    cardId: 'physical-card-22',
+    reason: 'JANKEN_INVALIDATED',
+    samePhysicalCard: true,
+    movementRollback: false,
+  });
+  assert.equal(Object.isFrozen(delegated[0]), true);
+
+  const second = await boundary.returnInvalidated(request);
+  assert.equal(second.ok, false);
+  assert.equal(second.reason, 'BOUNDARY_ALREADY_RETURNED');
+  assert.equal(delegated.length, 1);
 });
 
-test('contract keeps comparison state transient and never owns movement rollback', () => {
-  assert.equal(BATTLE_JANKEN_INVALIDATED_RETURN_CONTRACT.invalidatedState, 'TRANSIENT_COMPARISON_RESULT_ONLY');
-  assert.equal(BATTLE_JANKEN_INVALIDATED_RETURN_CONTRACT.defaultDisposition, 'RETURN_SAME_PHYSICAL_CARD_TO_HAND_AFTER_COMPARISON');
-  assert.equal(BATTLE_JANKEN_INVALIDATED_RETURN_CONTRACT.movementRollback, false);
-  assert.equal(BATTLE_JANKEN_INVALIDATED_RETURN_CONTRACT.gameStateWrite, false);
+test('executor blocks concurrent duplicate return while the first exact card is in flight', async () => {
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  let delegateCalls = 0;
+  const boundary = createBattleJankenInvalidatedReturnBoundary({
+    readContext: async () => readyContext(),
+    returnCardToHand: async () => {
+      delegateCalls += 1;
+      await gate;
+      return true;
+    },
+  });
+
+  const request = { playerId: 'p2', cardId: 'physical-card-22' };
+  const firstPromise = boundary.returnInvalidated(request);
+  await Promise.resolve();
+  const second = await boundary.returnInvalidated(request);
+  assert.equal(second.ok, false);
+  assert.equal(second.reason, 'RETURN_IN_FLIGHT');
+
+  release();
+  const first = await firstPromise;
+  assert.equal(first.ok, true);
+  assert.equal(delegateCalls, 1);
+});
+
+test('authority read errors and hand-authority rejection fail closed without manufacturing a return', async () => {
+  const readFailure = createBattleJankenInvalidatedReturnBoundary({
+    readContext: async () => { throw new Error('authority unavailable'); },
+    returnCardToHand: async () => true,
+  });
+  const readResult = await readFailure.returnInvalidated({
+    playerId: 'p2',
+    cardId: 'physical-card-22',
+  });
+  assert.equal(readResult.reason, 'AUTHORITY_READ_ERROR');
+  assert.equal(readResult.returned, false);
+
+  let calls = 0;
+  const rejected = createBattleJankenInvalidatedReturnBoundary({
+    readContext: async () => readyContext(),
+    returnCardToHand: async () => {
+      calls += 1;
+      return false;
+    },
+  });
+  const rejectedResult = await rejected.returnInvalidated({
+    playerId: 'p2',
+    cardId: 'physical-card-22',
+  });
+  assert.equal(rejectedResult.reason, 'RETURN_AUTHORITY_REJECTED');
+  assert.equal(rejectedResult.returned, false);
+  assert.equal(calls, 1);
 });

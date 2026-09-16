@@ -1,128 +1,204 @@
-const SCHEMA = 'gameroad.battle-janken-invalidated-return-boundary.v1';
+export const BATTLE_JANKEN_INVALIDATED_RETURN_SCHEMA = 'gameroad.battle-janken-invalidated-return-boundary.v1';
 
-function requiredString(value, field) {
-  if (typeof value !== 'string' || value.trim() !== value || value.length === 0) {
-    throw new TypeError(`${field}_NON_EMPTY_CANONICAL_STRING_REQUIRED`);
-  }
+function deepFreeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  Object.freeze(value);
+  for (const child of Object.values(value)) deepFreeze(child);
   return value;
 }
 
-function requiredArray(value, field) {
-  if (!Array.isArray(value)) throw new TypeError(`${field}_ARRAY_REQUIRED`);
+function canonicalId(value) {
+  if (typeof value !== 'string' || value.length === 0 || value.trim() !== value) return null;
   return value;
 }
 
-function freezeArray(values) {
-  return Object.freeze([...values]);
+function canonicalIdentity(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const playerId = canonicalId(value.playerId);
+  const cardId = canonicalId(value.cardId);
+  return playerId && cardId ? Object.freeze({ playerId, cardId }) : null;
 }
 
-function indexHands(hands) {
-  const byPlayer = new Map();
-  for (const [index, entry] of requiredArray(hands, 'HANDS').entries()) {
-    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
-      throw new TypeError(`HANDS_${index}_OBJECT_REQUIRED`);
-    }
-    const playerId = requiredString(entry.playerId, `HANDS_${index}_PLAYER_ID`);
-    if (byPlayer.has(playerId)) throw new TypeError('DUPLICATE_HAND_PLAYER_ID');
-    const physicalCardIds = requiredArray(entry.physicalCardIds, `HANDS_${index}_PHYSICAL_CARD_IDS`)
-      .map((cardId, cardIndex) => requiredString(cardId, `HANDS_${index}_PHYSICAL_CARD_IDS_${cardIndex}`));
-    if (new Set(physicalCardIds).size !== physicalCardIds.length) {
-      throw new TypeError('DUPLICATE_PHYSICAL_CARD_IN_HAND');
-    }
-    byPlayer.set(playerId, physicalCardIds);
+function canonicalDistinctIds(value) {
+  if (!Array.isArray(value)) return null;
+  const ids = [];
+  const seen = new Set();
+  for (const candidate of value) {
+    const id = canonicalId(candidate);
+    if (!id || seen.has(id)) return null;
+    seen.add(id);
+    ids.push(id);
   }
-  return byPlayer;
+  return Object.freeze(ids);
 }
 
-function indexReservations(reservations) {
-  const byPlayer = new Map();
-  const physicalOwners = new Map();
-  for (const [index, entry] of requiredArray(reservations, 'RESERVATIONS').entries()) {
-    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
-      throw new TypeError(`RESERVATIONS_${index}_OBJECT_REQUIRED`);
-    }
-    const playerId = requiredString(entry.playerId, `RESERVATIONS_${index}_PLAYER_ID`);
-    const physicalCardId = requiredString(entry.physicalCardId, `RESERVATIONS_${index}_PHYSICAL_CARD_ID`);
-    if (byPlayer.has(playerId)) throw new TypeError('DUPLICATE_RESERVATION_PLAYER_ID');
-    if (physicalOwners.has(physicalCardId)) throw new TypeError('DUPLICATE_RESERVED_PHYSICAL_CARD_ID');
-    byPlayer.set(playerId, physicalCardId);
-    physicalOwners.set(physicalCardId, playerId);
-  }
-  return byPlayer;
-}
-
-function invalidatedPlayerIds(resolverResult) {
-  if (!resolverResult || typeof resolverResult !== 'object' || Array.isArray(resolverResult)) {
-    throw new TypeError('RESOLVER_RESULT_OBJECT_REQUIRED');
-  }
-  const ids = requiredArray(resolverResult.invalidated, 'RESOLVER_INVALIDATED')
-    .map((playerId, index) => requiredString(playerId, `RESOLVER_INVALIDATED_${index}`));
-  if (new Set(ids).size !== ids.length) throw new TypeError('DUPLICATE_INVALIDATED_PLAYER_ID');
-  return ids;
-}
-
-/**
- * Projects the current user-fixed post-comparison disposition for INVALIDATED
- * janken cards without owning the triad resolver or authoritative game-state write.
- *
- * The caller supplies the exact physical-card reservation lineage. INVALIDATED
- * is transient: after comparison the same physical card returns from the
- * janken-reserved zone to that player's hand. Already-authoritative movement is
- * deliberately outside this projection and is never rolled back here.
- */
-export function projectInvalidatedJankenReturnToHand({
-  resolverResult,
-  reservations,
-  hands,
-} = {}) {
-  const invalidated = invalidatedPlayerIds(resolverResult);
-  const reservationByPlayer = indexReservations(reservations);
-  const handByPlayer = indexHands(hands);
-
-  const nextHandByPlayer = new Map();
-  for (const [playerId, cards] of handByPlayer.entries()) nextHandByPlayer.set(playerId, [...cards]);
-
-  const returns = [];
-  for (const playerId of invalidated) {
-    if (!handByPlayer.has(playerId)) throw new TypeError('INVALIDATED_PLAYER_HAND_REQUIRED');
-    const physicalCardId = reservationByPlayer.get(playerId);
-    if (!physicalCardId) throw new TypeError('INVALIDATED_PLAYER_RESERVATION_REQUIRED');
-    const nextHand = nextHandByPlayer.get(playerId);
-    if (nextHand.includes(physicalCardId)) {
-      throw new TypeError('RESERVED_PHYSICAL_CARD_ALREADY_IN_HAND');
-    }
-    nextHand.push(physicalCardId);
-    returns.push(Object.freeze({
-      playerId,
-      physicalCardId,
-      fromZone: 'JANKEN_RESERVED',
-      toZone: 'HAND',
-      reason: 'INVALIDATED_COMPARISON_RESOLVED',
-    }));
-  }
-
-  const nextHands = hands.map((entry) => Object.freeze({
-    playerId: entry.playerId,
-    physicalCardIds: freezeArray(nextHandByPlayer.get(entry.playerId)),
-  }));
-
-  return Object.freeze({
-    schema: SCHEMA,
-    invalidatedState: 'TRANSIENT_COMPARISON_RESULT_ONLY',
-    returns: freezeArray(returns),
-    nextHands: freezeArray(nextHands),
+function baseResult({ playerId = null, cardId = null, reason }) {
+  return {
+    schema: BATTLE_JANKEN_INVALIDATED_RETURN_SCHEMA,
+    playerId,
+    cardId,
+    reason,
+    samePhysicalCard: cardId !== null,
     movementRollback: false,
-    resolverOwnedHere: false,
-    gameStateWrite: false,
+    resolverWrite: false,
+    turnOrderWrite: false,
+  };
+}
+
+function denied(reason, identity = null) {
+  return deepFreeze({
+    ...baseResult({
+      playerId: identity?.playerId ?? null,
+      cardId: identity?.cardId ?? null,
+      reason,
+    }),
+    ok: false,
+    eligible: false,
+    returned: false,
   });
 }
 
-export const BATTLE_JANKEN_INVALIDATED_RETURN_CONTRACT = Object.freeze({
-  schema: SCHEMA,
-  invalidatedState: 'TRANSIENT_COMPARISON_RESULT_ONLY',
-  defaultDisposition: 'RETURN_SAME_PHYSICAL_CARD_TO_HAND_AFTER_COMPARISON',
-  physicalCardLineageAuthority: 'CALLER',
-  resolverAuthority: 'EXISTING_TRIAD_RESOLVER',
-  movementRollback: false,
-  gameStateWrite: false,
-});
+/**
+ * Projects whether one exact physical janken card may return to one exact
+ * player's hand after the authoritative processing-order resolver has already
+ * invalidated that player.
+ *
+ * This boundary deliberately does not resolve janken, invent card identity,
+ * roll back board movement, select targets, or mutate hand/game state. The
+ * caller must supply both the exact selection lineage and the resolver result.
+ */
+export function projectBattleJankenInvalidatedReturn({
+  resolverResult,
+  request,
+  selection,
+  handCardIds = [],
+  returnedCardIds = [],
+} = {}) {
+  const identity = canonicalIdentity(request);
+  if (!identity) return denied('INVALID_RETURN_IDENTITY');
+
+  const lineage = canonicalIdentity(selection);
+  if (!lineage) return denied('INVALID_SELECTION_LINEAGE', identity);
+  if (lineage.playerId !== identity.playerId || lineage.cardId !== identity.cardId) {
+    return denied('SELECTION_LINEAGE_MISMATCH', identity);
+  }
+
+  if (!resolverResult || typeof resolverResult !== 'object' || Array.isArray(resolverResult)) {
+    return denied('INVALID_RESOLVER_RESULT', identity);
+  }
+  const invalidatedPlayerIds = canonicalDistinctIds(resolverResult.invalidated);
+  if (!invalidatedPlayerIds) return denied('INVALID_RESOLVER_RESULT', identity);
+  if (!invalidatedPlayerIds.includes(identity.playerId)) {
+    return denied('PLAYER_NOT_INVALIDATED', identity);
+  }
+
+  const currentHandCardIds = canonicalDistinctIds(handCardIds);
+  if (!currentHandCardIds) return denied('INVALID_HAND_MEMBERSHIP', identity);
+  const priorReturnedCardIds = canonicalDistinctIds(returnedCardIds);
+  if (!priorReturnedCardIds) return denied('INVALID_RETURN_HISTORY', identity);
+
+  if (currentHandCardIds.includes(identity.cardId)) {
+    return denied('CARD_ALREADY_IN_HAND', identity);
+  }
+  if (priorReturnedCardIds.includes(identity.cardId)) {
+    return denied('CARD_ALREADY_RETURNED', identity);
+  }
+
+  return deepFreeze({
+    ...baseResult({
+      playerId: identity.playerId,
+      cardId: identity.cardId,
+      reason: 'AUTHORITATIVE_INVALIDATED_RETURN_ALLOWED',
+    }),
+    ok: true,
+    eligible: true,
+    returned: false,
+    action: 'RETURN_SAME_PHYSICAL_CARD_TO_HAND',
+    invalidatedPlayerIds,
+  });
+}
+
+/**
+ * Creates a thin fail-closed executor around the pure projection above.
+ * `returnCardToHand` is the existing caller-owned hand authority. A successful
+ * physical card identity is delegated at most once for the lifetime of this
+ * boundary instance, even when caller readback is temporarily stale.
+ */
+export function createBattleJankenInvalidatedReturnBoundary({
+  readContext,
+  returnCardToHand,
+} = {}) {
+  if (typeof readContext !== 'function') throw new TypeError('readContext must be a function');
+  if (typeof returnCardToHand !== 'function') throw new TypeError('returnCardToHand must be a function');
+
+  const completedKeys = new Set();
+  const inFlightKeys = new Set();
+
+  async function returnInvalidated(request) {
+    const identity = canonicalIdentity(request);
+    if (!identity) return denied('INVALID_RETURN_IDENTITY');
+    const key = `${identity.playerId}\u0000${identity.cardId}`;
+
+    if (completedKeys.has(key)) return denied('BOUNDARY_ALREADY_RETURNED', identity);
+    if (inFlightKeys.has(key)) return denied('RETURN_IN_FLIGHT', identity);
+    inFlightKeys.add(key);
+
+    try {
+      let context;
+      try {
+        context = await readContext(Object.freeze({ ...identity }));
+      } catch {
+        return denied('AUTHORITY_READ_ERROR', identity);
+      }
+      if (!context || typeof context !== 'object' || Array.isArray(context)) {
+        return denied('INVALID_AUTHORITY_CONTEXT', identity);
+      }
+
+      const projection = projectBattleJankenInvalidatedReturn({
+        resolverResult: context.resolverResult,
+        request: identity,
+        selection: context.selection,
+        handCardIds: context.handCardIds,
+        returnedCardIds: context.returnedCardIds,
+      });
+      if (!projection.eligible) return projection;
+
+      const delegation = deepFreeze({
+        schema: BATTLE_JANKEN_INVALIDATED_RETURN_SCHEMA,
+        playerId: identity.playerId,
+        cardId: identity.cardId,
+        reason: 'JANKEN_INVALIDATED',
+        samePhysicalCard: true,
+        movementRollback: false,
+      });
+
+      let accepted;
+      try {
+        accepted = await returnCardToHand(delegation);
+      } catch {
+        return denied('RETURN_AUTHORITY_ERROR', identity);
+      }
+      if (accepted !== true) return denied('RETURN_AUTHORITY_REJECTED', identity);
+
+      completedKeys.add(key);
+      return deepFreeze({
+        ...baseResult({
+          playerId: identity.playerId,
+          cardId: identity.cardId,
+          reason: 'RETURNED_BY_EXISTING_HAND_AUTHORITY',
+        }),
+        ok: true,
+        eligible: true,
+        returned: true,
+        action: 'RETURN_SAME_PHYSICAL_CARD_TO_HAND',
+      });
+    } finally {
+      inFlightKeys.delete(key);
+    }
+  }
+
+  return Object.freeze({
+    schema: BATTLE_JANKEN_INVALIDATED_RETURN_SCHEMA,
+    returnInvalidated,
+  });
+}

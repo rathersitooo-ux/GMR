@@ -21,9 +21,9 @@ import { mountStudyRunFromCurrentBrowser } from './study-run-runtime-mount.mjs';
 const HOME_ROUTE_SELECTOR = 'section[data-screen="home"] .homePadChoice[data-home-target]';
 const NAV_GUARD_ATTR = 'data-home-nav-readiness-guard';
 const NAV_PREV_ARIA_ATTR = 'data-home-nav-readiness-prev-aria-disabled';
-const NAV_PREV_DISABLED_ATTR = 'data-home-nav-readiness-prev-disabled';
 const NAV_PREV_ARIA_MISSING = '__missing__';
 const NAV_READINESS_POLL_MS = 50;
+const guardedRouteActivationBlockers = new Map();
 
 export function isHomeNavigationAuthorityReady(globalScope = globalThis) {
   const runtime = globalScope && globalScope.__GAMEROAD_SCREEN_TRANSITION__;
@@ -35,6 +35,12 @@ function readRouteControls(root) {
   return Array.from(root.querySelectorAll(HOME_ROUTE_SELECTOR));
 }
 
+function blockGuardedActivation(event) {
+  event?.preventDefault?.();
+  event?.stopImmediatePropagation?.();
+  event?.stopPropagation?.();
+}
+
 function guardRouteControl(control) {
   if (!control || typeof control.getAttribute !== 'function' || typeof control.setAttribute !== 'function') return false;
   if (control.getAttribute(NAV_GUARD_ATTR) === 'true') return false;
@@ -43,11 +49,12 @@ function guardRouteControl(control) {
   const ariaDisabled = control.getAttribute('aria-disabled');
   if (disabled || ariaDisabled === 'true') return false;
 
+  const blocker = (event) => blockGuardedActivation(event);
   control.setAttribute(NAV_GUARD_ATTR, 'true');
-  control.setAttribute(NAV_PREV_DISABLED_ATTR, disabled ? 'true' : 'false');
   control.setAttribute(NAV_PREV_ARIA_ATTR, ariaDisabled === null ? NAV_PREV_ARIA_MISSING : ariaDisabled);
-  if ('disabled' in control) control.disabled = true;
   control.setAttribute('aria-disabled', 'true');
+  control.addEventListener?.('click', blocker, true);
+  guardedRouteActivationBlockers.set(control, blocker);
   return true;
 }
 
@@ -55,16 +62,19 @@ function restoreRouteControl(control) {
   if (!control || typeof control.getAttribute !== 'function' || typeof control.removeAttribute !== 'function') return false;
   if (control.getAttribute(NAV_GUARD_ATTR) !== 'true') return false;
 
-  const wasDisabled = control.getAttribute(NAV_PREV_DISABLED_ATTR) === 'true';
+  const blocker = guardedRouteActivationBlockers.get(control);
+  if (blocker) {
+    control.removeEventListener?.('click', blocker, true);
+    guardedRouteActivationBlockers.delete(control);
+  }
+
   const previousAria = control.getAttribute(NAV_PREV_ARIA_ATTR);
-  if ('disabled' in control) control.disabled = wasDisabled;
   if (previousAria === NAV_PREV_ARIA_MISSING || previousAria === null) {
     control.removeAttribute('aria-disabled');
   } else {
     control.setAttribute('aria-disabled', previousAria);
   }
   control.removeAttribute(NAV_GUARD_ATTR);
-  control.removeAttribute(NAV_PREV_DISABLED_ATTR);
   control.removeAttribute(NAV_PREV_ARIA_ATTR);
   return true;
 }

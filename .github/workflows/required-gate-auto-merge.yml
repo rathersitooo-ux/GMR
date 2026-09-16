@@ -65,6 +65,12 @@ jobs:
           while IFS= read -r path; do
             case "${path}" in
               browser/GAMEROAD.html|\
+              browser/*presentation*.mjs|\
+              browser/*runtime*.mjs|\
+              browser/*visual*.mjs|\
+              browser/*motion*.mjs|\
+              browser/new-base-*.mjs|\
+              browser/screen-navigation-core.mjs|\
               tests/browser-full-interaction.spec.mjs|\
               tests/browser-full-interaction-state-sequence.spec.mjs|\
               playwright.full-interaction.config.mjs|\

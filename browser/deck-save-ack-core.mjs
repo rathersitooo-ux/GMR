@@ -191,6 +191,19 @@ export function timeoutDeckSave(state, { requestId } = {}) {
   return decision(next, 'timed_out', 'SAVE_TIMEOUT');
 }
 
+function projectOptionalHiddenHandRegistration(savedDeck, mainCardIds) {
+  if (!Object.prototype.hasOwnProperty.call(savedDeck, 'hiddenHandCardIds')) return null;
+  const ids = savedDeck.hiddenHandCardIds;
+  if (!Array.isArray(ids) || ids.length !== 1 || !nonEmptyString(ids[0])) {
+    throw new TypeError('MATCH_START_HIDDEN_HAND_REGISTRATION_INVALID');
+  }
+  const cardId = ids[0].trim();
+  if (!mainCardIds.includes(cardId)) {
+    throw new TypeError('MATCH_START_HIDDEN_HAND_CARD_NOT_IN_MAIN_DECK');
+  }
+  return [cardId];
+}
+
 export function createDeckMatchStartSnapshot(selection, { validateDeck } = {}) {
   if (!selection || typeof selection !== 'object' || Array.isArray(selection)) {
     throw new TypeError('MATCH_START_SELECTION_REQUIRED');
@@ -211,6 +224,7 @@ export function createDeckMatchStartSnapshot(selection, { validateDeck } = {}) {
     const reason = validation?.reason ?? validation?.errors?.[0] ?? 'INVALID_DECK';
     throw new Error(`MATCH_START_DECK_INVALID:${reason}`);
   }
+  const hiddenHandCardIds = projectOptionalHiddenHandRegistration(savedDeck, deck.main);
 
   requireNonEmptyString(selection.setupMode, 'match_start_setup_mode');
   requireNonEmptyString(selection.setupContent, 'match_start_setup_content');
@@ -223,6 +237,7 @@ export function createDeckMatchStartSnapshot(selection, { validateDeck } = {}) {
     deck: {
       main: deck.main,
       ex: deck.ex,
+      ...(hiddenHandCardIds ? { hiddenHandCardIds } : {}),
       ruleId: rule.id ?? null,
       ruleRevision: rule.revision ?? null,
     },

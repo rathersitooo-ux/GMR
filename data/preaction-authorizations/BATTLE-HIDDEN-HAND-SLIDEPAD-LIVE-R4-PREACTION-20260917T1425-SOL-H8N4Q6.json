@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HIDDEN-HAND-SLIDEPAD-LIVE-R4-PREACTION-20260917T1425-SOL-H8N4Q6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_HIDDEN_HAND_SLIDEPAD_LIVE_R4",
+  "acquireKey": "BATTLE-HIDDEN-HAND-SLIDEPAD-LIVE-R4-20260917T1425-SOL-H8N4Q6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R3_RUNTIME_53_OF_53_PLUS_EXACT_PACKAGE_FAILURE_DIAGNOSIS_20260917",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1829_R3_PREACTION_AND_CONVENTIONAL_TESTS_PASS_PACKAGE_ONLY_BLOCKER",
+  "proceedToken": "PROCEED|BATTLE-HIDDEN-HAND-SLIDEPAD-LIVE-R4-PREACTION-20260917T1425-SOL-H8N4Q6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-slidepad|package-closure|active-lease",
+  "authorizationBaseSha": "c80dbb02ab0f422096c1b0b0a0650fddc8a91e2d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_HIDDEN_HAND_SLIDEPAD_LIVE_R4",
+  "leaseAcquireKey": "BATTLE-HIDDEN-HAND-SLIDEPAD-LIVE-R4-20260917T1425-SOL-H8N4Q6",
+  "leaseSnapshotReadbackAtJst": "2026-09-17 14:25 JST",
+  "leaseUntilJst": "2026-09-17 15:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:N5",
+  "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; own transient PRE_ACTION witness; fresh R4 branch/PR/check/merge/readback",
+  "solutionSignature": "BATTLE_HIDDEN_HAND_EXISTING_SLIDEPAD_PLUS_PUBLIC_DEPENDENCY_CLOSURE_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R3_PROVED_RUNTIME_SEMANTICS_AND_IDENTIFIED_SINGLE_MISSING_STATIC_DEPENDENCY",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

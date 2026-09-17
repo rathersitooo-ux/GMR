@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-WORLD-VISUAL-GRAPH-R2-20260918T0553",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_BOARD_WORLD_VISUAL_GRAPH_RECOVERY_R1",
+  "acquireKey": "BATTLE-BOARD-WORLD-VISUAL-GRAPH-R1-20260918T0544-SOL-Q7N4V1",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_LOCK_BATTLE_BOARD_TOPOLOGY_R4_DIRECT_VISUAL_GRAPH_BOUNDARY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "STATIC_GRAPH_EXACT_NODE_EDGE_INVARIANTS_AND_NO_GAMEPLAY_AUTHORITY",
+  "proceedToken": "PROCEED|BATTLE-BOARD-WORLD-VISUAL-GRAPH-R2-20260918T0553|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|user-lock|lease-snapshot",
+  "authorizationBaseSha": "0020797f5bf64888ac80f8cba15f0f56dc96126f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_BOARD_WORLD_VISUAL_GRAPH_RECOVERY_R1",
+  "leaseAcquireKey": "BATTLE-BOARD-WORLD-VISUAL-GRAPH-R1-20260918T0544-SOL-Q7N4V1",
+  "leaseSnapshotReadbackAtJst": "2026-09-18 05:53 JST",
+  "leaseUntilJst": "2026-09-18 06:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "browser/new-base-battle-board-visual-graph.mjs; tests/new-base-battle-board-visual-graph.test.mjs; browser/new-base-flanora-board-surface-runtime.mjs; tests/new-base-flanora-board-surface-runtime.test.mjs; own branch/PR/check/merge/readback; own CURRENT lease. browser/GAMEROAD.html remains READ_ONLY until separately leased.",
+  "scope": [
+    "browser/new-base-battle-board-visual-graph.mjs",
+    "tests/new-base-battle-board-visual-graph.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-battle-board-visual-graph.mjs",
+    "tests/new-base-battle-board-visual-graph.test.mjs"
+  ],
+  "solutionSignature": "Directly encode the user-provided Battle board visual topology as bounded presentation-only world/field graph data without creating a second gameplay authority.",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "FRESH_MAIN_EXISTING_BOARD_MODELS_LACK_USER_VISUAL_GRAPH_TOPOLOGY",
+  "solutionSearchEvidence": [
+    "repo:browser/new-base-flanora-board-surface-runtime.mjs",
+    "repo:browser/new-base-flanora-map-layout-core.mjs",
+    "current:USER_LOCK_BATTLE_BOARD_TOPOLOGY_R4"
+  ],
+  "buildResidualReason": "Existing main preserves upper 4x3x7 semantics and old presentation layouts but does not encode the complete user-supplied lower shared-field circular-node/adjacency graph or its direct image-space coordinates."
+}

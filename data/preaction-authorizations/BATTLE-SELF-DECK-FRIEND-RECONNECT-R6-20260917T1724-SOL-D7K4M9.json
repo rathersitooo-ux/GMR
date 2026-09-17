@@ -1,0 +1,41 @@
+{
+    "schemaVersion":  "gameroad-preaction-v3",
+    "recordId":  "BATTLE-SELF-DECK-FRIEND-RECONNECT-R6-20260917T1724-SOL-D7K4M9",
+    "taskId":  "BATTLE-SELF-REMAINING-DECK-INSPECT-001",
+    "workUnitKey":  "BATTLE_SELF_DECK_FRIEND_RECONNECT_R6",
+    "acquireKey":  "BATTLE-SELF-DECK-FRIEND-RECONNECT-R6-20260917T1724-SOL-D7K4M9",
+    "riskClass":  "MATERIAL_STANDARD",
+    "predictionStatus":  "PASS",
+    "predictionEvidenceId":  "FRESH_MAIN_SELF_DECK_FRIEND_PROJECTION_EXACT_GAP_20260917T1735JST",
+    "rehearsalStatus":  "PASS",
+    "rehearsalEvidenceId":  "UNCOMMITTED_EXACT_TWO_FILE_PATCH_NODE_TEST_9_OF_9_PASS",
+    "proceedToken":  "PROCEED|BATTLE-SELF-DECK-FRIEND-RECONNECT-R6-20260917T1724-SOL-D7K4M9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|viewer-self-deck-reconnect|html-test|active-lease",
+    "authorizationBaseSha":  "be188d7bb098ea0addb5f667f41b4b81859d9668",
+    "stateModelVersion":  "STATE_MODEL_V1",
+    "leaseAuthority":  "CURRENT_ACTIVE_LEASES",
+    "leaseState":  "ACTIVE",
+    "leaseTaskId":  "BATTLE-SELF-REMAINING-DECK-INSPECT-001",
+    "leaseWorkUnitKey":  "BATTLE_SELF_DECK_FRIEND_RECONNECT_R6",
+    "leaseAcquireKey":  "BATTLE-SELF-DECK-FRIEND-RECONNECT-R6-20260917T1724-SOL-D7K4M9",
+    "leaseSnapshotReadbackAtJst":  "2026-09-17 17:35 JST",
+    "leaseUntilJst":  "2026-09-17 18:24 JST",
+    "leaseSnapshotReadbackRef":  "CURRENT_ACTIVE_LEASES!A13:L13",
+    "leaseExactMutableResources":  "GitHub rathersitooo-ux/GMR exact current main be188d7bb098ea0addb5f667f41b4b81859d9668; browser/GAMEROAD.html; tests/battle-self-deck-live-consumer.test.mjs; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback. READ_ONLY battle-self-deck-inspect-core.mjs; battle-self-deck-live-consumer.mjs; battle-self-deck-owner-knowledge-adapter.mjs; tests/browser-full-interaction.spec.mjs; gameplay/rules/save/network; unrelated WorkUnits.",
+    "solutionSignature":  "BATTLE_SELF_DECK_VIEWER_SELF_FRIEND_PROJECTION_ADAPT_V1",
+    "reuseDisposition":  "ADAPT",
+    "solutionSearchStatus":  "PASS",
+    "reuseDecisionEvidenceId":  "EXISTING_PUBLICPLAYER_PLUS_EXISTING_OWNER_SAFE_CONSUMER",
+    "solutionSearchEvidence":  [
+                                   "Existing friend-room publicPlayer projection is the only snapshot producer used by project(viewer).",
+                                   "Existing battle-self-deck live consumer already renders owner-only count/composition and must remain unchanged.",
+                                   "The bounded repair changes only viewer-self deck projection while preserving opponent __HIDDEN__ redaction."
+                               ],
+    "scope":  [
+                  "browser/GAMEROAD.html",
+                  "tests/battle-self-deck-live-consumer.test.mjs"
+              ],
+    "leaseScope":  [
+                       "browser/GAMEROAD.html",
+                       "tests/battle-self-deck-live-consumer.test.mjs"
+                   ]
+}

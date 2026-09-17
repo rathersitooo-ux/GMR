@@ -7,6 +7,15 @@ const STYLE_ID = 'gameroad-new-base-flanora-board-surface-style';
 const LANE_LABELS = Object.freeze(['L', 'C', 'R']);
 const ROAD_STEPS = Object.freeze([1, 2, 3, 4, 5, 6, 7]);
 const SHARED_GOAL_ID = 'goal:shared';
+const FIXED_TARGET_LANE_X_PCT = Object.freeze([7.1419, 13.6458, 20.2214, 31.0286, 37.7214, 44.4401, 55.3646, 61.9466, 68.6523, 79.5182, 86.1589, 92.7409]);
+const GOAL_BRANCH_START_X_PCT = Object.freeze([45.2, 46.1, 47.0, 47.9, 48.8, 49.7, 50.3, 51.2, 52.1, 53.0, 53.9, 54.8]);
+const GOAL_BRANCH_START_Y_PCT = 17.2;
+const GOAL_BRANCH_END_Y_PCT = 27.0;
+const TARGET_BOTTOM_CELL_POSITIONS = Object.freeze([
+  { x: 12.10, y: 60.1 }, { x: 19.34, y: 71.3 }, { x: 12.98, y: 85.3 }, { x: 22.53, y: 85.3 },
+  { x: 30.20, y: 85.3 }, { x: 40.50, y: 85.3 }, { x: 49.87, y: 85.3 }, { x: 59.18, y: 85.3 },
+  { x: 69.50, y: 85.3 }, { x: 77.27, y: 85.3 }, { x: 80.42, y: 71.3 }, { x: 87.75, y: 60.1 },
+]);
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -104,6 +113,8 @@ export function projectFlanoraBoardSurfaceModel(layoutValue) {
     sharedGoalId: SHARED_GOAL_ID,
     sharedGoalCount: 1,
     routeGateCount: 12,
+  goalBranchCount: 12,
+  goalBranchVisual: 'TWELVE_DISTINCT_LINE_ELEMENTS_NO_SHARED_TRUNK',
     lanes,
     clearingCells,
     clearingCycleCellIds: [...layout.clearingCycleCellIds],
@@ -122,6 +133,15 @@ function createNode(documentLike, tagName, className = '') {
   return node;
 }
 
+function createSvgNode(documentLike, tagName, className = '') {
+  const node = typeof documentLike.createElementNS === 'function'
+    ? documentLike.createElementNS('http://www.w3.org/2000/svg', tagName)
+    : createNode(documentLike, tagName);
+  if (className) node.setAttribute?.('class', className);
+  if (className && !node.className) node.className = className;
+  return node;
+}
+
 function setAttr(node, name, value) {
   if (value == null) return;
   node.setAttribute?.(name, String(value));
@@ -131,37 +151,57 @@ function setAttr(node, name, value) {
   }
 }
 
+function fieldPositionForSourceCell(cell) {
+  if (!cell) return null;
+  if (cell.kind === 'CLEARING_TOP') {
+    const x = FIXED_TARGET_LANE_X_PCT[cell.relativeColumn];
+    return Number.isFinite(x) ? { x, y: 0, kind: 'ENTRY' } : null;
+  }
+  if (cell.kind === 'CLEARING_MIDDLE') {
+    if (cell.relativeColumn === 0) return { x: 9.44, y: 48.5, kind: 'SIDE' };
+    if (cell.relativeColumn === 11) return { x: 90.46, y: 48.5, kind: 'SIDE' };
+    return null;
+  }
+  if (cell.kind === 'CLEARING_BOTTOM') {
+    const point = TARGET_BOTTOM_CELL_POSITIONS[cell.relativeColumn];
+    return point ? { ...point, kind: 'BOTTOM' } : null;
+  }
+  return null;
+}
+
 function ensureStyle(documentLike) {
   if (!documentLike?.head || typeof documentLike.createElement !== 'function') return;
   if (documentLike.getElementById?.(STYLE_ID)) return;
   const style = createNode(documentLike, 'style');
   style.id = STYLE_ID;
   style.textContent = `
-[data-new-base-flanora-board-surface="1"]{position:relative;display:grid;grid-template-rows:minmax(0,72%) minmax(72px,28%);gap:clamp(5px,.8vh,9px);width:100%;height:100%;min-width:0;min-height:0;box-sizing:border-box;padding:clamp(4px,.65vw,8px);isolation:isolate;overflow:hidden;background:radial-gradient(ellipse at 50% 43%,rgba(34,86,63,.16),transparent 63%)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{position:relative;display:grid;grid-template-rows:clamp(34px,7vh,58px) clamp(18px,3.2vh,28px) minmax(0,1fr);gap:clamp(2px,.45vh,5px);min-width:0;min-height:0;overflow:visible}
-[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal{position:relative;z-index:5;place-self:start center;display:grid;place-items:center;width:clamp(68px,10vw,126px);height:clamp(28px,5.2vh,44px);border:2px solid rgba(255,230,135,.86);border-radius:52% 52% 46% 46%/62% 62% 38% 38%;background:radial-gradient(ellipse at 50% 55%,rgba(255,234,151,.17),rgba(70,57,20,.70) 68%,rgba(28,36,23,.9));box-shadow:0 0 20px rgba(255,220,104,.2),inset 0 0 12px rgba(255,242,185,.12);font-size:clamp(10px,1.2vw,16px);font-weight:1000;letter-spacing:.12em;color:#fff1ad;pointer-events:none}
-[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal[data-connected-route-count]:not([data-connected-route-count="0"]){box-shadow:0 0 30px rgba(255,220,104,.42),inset 0 0 16px rgba(255,242,185,.18)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateLayer{position:relative;z-index:4;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));min-width:0;min-height:0;pointer-events:none}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateAnchor{position:relative;place-self:stretch center;width:72%;min-width:0;min-height:0;overflow:visible}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateAnchor::before{content:"";position:absolute;left:50%;top:-26px;bottom:-5px;width:1px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(255,230,142,.16),rgba(226,241,218,.28));opacity:.42}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateAnchor[data-connected-to-goal="true"]::before{width:2px;opacity:.92;background:linear-gradient(180deg,rgba(255,238,171,.92),rgba(226,241,218,.54));box-shadow:0 0 7px rgba(255,226,137,.36)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraProgressionGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(7px,1.3vw,18px);min-width:0;min-height:0;align-items:stretch}
-[data-new-base-flanora-board-surface="1"] .grFlanoraParticipantCluster{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(2px,.45vw,6px);min-width:0;min-height:0;align-items:stretch}
-[data-new-base-flanora-board-surface="1"] .grFlanoraParticipantCluster:nth-child(2){transform:translateY(clamp(2px,.45vh,5px))}
-[data-new-base-flanora-board-surface="1"] .grFlanoraParticipantCluster:nth-child(4){transform:translateY(clamp(3px,.65vh,7px))}
-[data-new-base-flanora-board-surface="1"] .grFlanoraLane{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:clamp(2px,.4vh,5px);min-width:0;min-height:0;align-items:stretch;justify-items:center}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoad{position:relative;display:flex;flex-direction:column-reverse;align-items:center;justify-content:flex-start;gap:clamp(1px,.24vh,3px);width:100%;height:100%;min-width:0;min-height:0;padding:2px 0;box-sizing:border-box}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoad::before{content:"";position:absolute;left:50%;top:2%;bottom:1%;width:1px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(255,229,139,.30),rgba(226,241,218,.18));opacity:.7}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{position:relative;z-index:2;display:grid;place-items:center;width:min(92%,clamp(22px,4.3vw,56px));aspect-ratio:1.48;border:1px solid rgba(238,247,230,.84);border-radius:3px;background:linear-gradient(150deg,rgba(238,245,226,.96),rgba(87,128,98,.94));box-shadow:0 2px 5px rgba(0,0,0,.25);overflow:hidden;pointer-events:none}
+[data-new-base-flanora-board-surface="1"]{position:relative;display:block;width:100%;height:100%;min-width:0;min-height:0;box-sizing:border-box;isolation:isolate;overflow:hidden;background:transparent;pointer-events:none}
+[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{position:absolute;z-index:2;inset:0;min-width:0;min-height:0;overflow:visible}
+[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal{position:absolute;z-index:8;left:50%;top:11.5%;transform:translateX(-50%);display:grid;place-items:center;width:clamp(68px,9.4vw,112px);height:clamp(26px,4.8vh,38px);border:1px solid rgba(255,230,139,.76);border-radius:50% 50% 44% 44%/62% 62% 38% 38%;background:radial-gradient(ellipse at 50% 58%,rgba(255,237,168,.10),rgba(73,61,28,.46) 62%,rgba(24,46,35,.84));box-shadow:0 0 15px rgba(255,223,113,.13),inset 0 0 10px rgba(255,244,198,.07);font-size:clamp(9px,1vw,13px);font-weight:1000;letter-spacing:.12em;color:#fff1ad;pointer-events:none}
+[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal[data-connected-route-count]:not([data-connected-route-count="0"]){box-shadow:0 0 34px rgba(255,221,102,.38),inset 0 0 18px rgba(255,244,198,.14)}
+[data-new-base-flanora-board-surface="1"] .grFlanoraGoalBranches{position:absolute;z-index:6;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+[data-new-base-flanora-board-surface="1"] .grFlanoraGoalBranch{fill:none;stroke:rgba(232,242,218,.46);stroke-width:1;vector-effect:non-scaling-stroke;opacity:.72}
+[data-new-base-flanora-board-surface="1"] .grFlanoraGoalBranch[data-connected-to-goal="true"]{stroke:rgba(255,238,169,.94);stroke-width:2;opacity:1;filter:drop-shadow(0 0 3px rgba(255,226,137,.34))}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateLayer{position:absolute;z-index:7;left:0;right:0;top:59%;height:6.2%;min-width:0;min-height:0;pointer-events:none}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateAnchor{position:absolute;top:0;bottom:0;width:clamp(28px,5vw,58px);transform:translateX(-50%);min-width:0;min-height:0;overflow:visible}
+[data-new-base-flanora-board-surface="1"] .grFlanoraProgressionGrid{position:absolute;z-index:4;left:0;right:0;top:27%;bottom:34.5%;min-width:0;min-height:0}
+[data-new-base-flanora-board-surface="1"] .grFlanoraParticipantCluster{display:contents}
+[data-new-base-flanora-board-surface="1"] .grFlanoraLane{position:absolute;top:0;bottom:0;width:clamp(24px,4.4vw,46px);transform:translateX(-50%);display:grid;grid-template-rows:minmax(0,1fr) auto;gap:clamp(2px,.4vh,4px);min-width:0;min-height:0;align-items:stretch;justify-items:center}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoad{position:relative;display:flex;flex-direction:column-reverse;align-items:center;justify-content:flex-start;gap:clamp(1px,.22vh,3px);width:100%;height:100%;min-width:0;min-height:0;padding:1px 0;box-sizing:border-box}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoad::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(255,229,139,.20),rgba(226,241,218,.10));opacity:.24}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoad[data-progression-built-count]:not([data-progression-built-count="0"])::before{opacity:.46}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoad[data-connected-to-goal="true"]::before{width:2px;opacity:.82;box-shadow:0 0 5px rgba(255,226,137,.20)}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{position:relative;z-index:2;display:grid;place-items:center;width:min(90%,clamp(20px,3.75vw,38px));aspect-ratio:1.48;border:1px solid rgba(238,247,230,.80);border-radius:3px;background:linear-gradient(150deg,rgba(238,245,226,.96),rgba(87,128,98,.94));box-shadow:0 2px 5px rgba(0,0,0,.25);overflow:hidden;pointer-events:none}
 [data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep[data-card-identity-resolved="true"]{border-color:rgba(255,239,177,.9);background:linear-gradient(150deg,rgba(252,245,216,.98),rgba(69,117,90,.96));box-shadow:0 2px 6px rgba(0,0,0,.30),0 0 7px rgba(255,225,132,.12)}
 [data-new-base-flanora-board-surface="1"] .grFlanoraRoadCardLabel{display:block;width:94%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;font-size:clamp(5px,.48vw,8px);font-weight:850;color:#18392e;text-shadow:none}
-[data-new-base-flanora-board-surface="1"] .grFlanoraShield{position:relative;z-index:2;display:grid;place-items:center;width:min(90%,clamp(26px,4.7vw,48px));min-height:clamp(15px,2.5vh,23px);border:1px solid rgba(188,229,241,.76);border-radius:8px 8px 11px 11px;background:linear-gradient(180deg,rgba(38,84,95,.90),rgba(18,56,66,.92));font-size:clamp(7px,.72vw,10px);font-weight:950;color:#e8f8ff;box-shadow:0 3px 7px rgba(0,0,0,.2)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{position:relative;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:clamp(2px,.42vw,6px);min-width:0;min-height:0;padding:clamp(2px,.35vw,4px);border-radius:50% 46% 48% 44%/18% 22% 20% 17%;background:radial-gradient(ellipse at center,rgba(70,116,74,.18),rgba(26,74,56,.05) 72%,transparent)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell{place-self:center;width:clamp(13px,2.3vw,26px);height:clamp(13px,2.3vw,26px);border:1px solid rgba(238,247,232,.58);border-radius:50%;background:rgba(47,91,66,.72);box-shadow:0 2px 6px rgba(0,0,0,.20)}
-[data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell[data-start-participant]{outline:2px solid rgba(255,224,134,.74);outline-offset:1px}
+[data-new-base-flanora-board-surface="1"] .grFlanoraShield{position:relative;z-index:3;display:grid;place-items:center;width:min(88%,clamp(22px,3.8vw,38px));min-height:clamp(14px,2.35vh,20px);border:1px solid rgba(188,229,241,.58);border-radius:7px 7px 10px 10px;background:linear-gradient(180deg,rgba(38,84,95,.76),rgba(18,56,66,.86));font-size:clamp(6px,.62vw,9px);font-weight:950;color:#e8f8ff;box-shadow:0 2px 5px rgba(0,0,0,.16)}
+[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{position:absolute;z-index:0;left:0;right:0;top:62.5%;bottom:3.2%;min-width:0;min-height:0;background:transparent;pointer-events:none}
+[data-new-base-flanora-board-surface="1"] .grFlanoraFieldNodes{position:absolute;z-index:0;inset:0;pointer-events:none;opacity:0}
+[data-new-base-flanora-board-surface="1"] .grFlanoraFieldNode{position:absolute;transform:translate(-50%,-50%);width:1px;height:1px;opacity:0;pointer-events:none}
+#battleMap[data-central-world-live="1"].decisionRoad #routeLine{opacity:.55!important}
 [data-new-base-flanora-board-surface="1"][data-performance-profile="reduced_motion"] *,[data-new-base-flanora-board-surface="1"][data-performance-profile="low_perf"] *{animation:none!important;transition:none!important;filter:none!important}
-@media(max-height:420px){[data-new-base-flanora-board-surface="1"]{grid-template-rows:minmax(0,75%) minmax(58px,25%);gap:2px;padding:3px}[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{grid-template-rows:28px 14px minmax(0,1fr);gap:1px}[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal{width:68px;height:24px;font-size:8px}[data-new-base-flanora-board-surface="1"] .grFlanoraProgressionGrid{gap:5px}[data-new-base-flanora-board-surface="1"] .grFlanoraParticipantCluster{gap:2px}[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{width:min(94%,38px)}[data-new-base-flanora-board-surface="1"] .grFlanoraShield{min-height:13px;font-size:6px}[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{gap:1px;padding:1px}}
-@media(max-width:540px) and (orientation:portrait){[data-new-base-flanora-board-surface="1"]{grid-template-rows:minmax(0,70%) minmax(120px,30%)}[data-new-base-flanora-board-surface="1"] .grFlanoraProgressionGrid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:5px}[data-new-base-flanora-board-surface="1"] .grFlanoraParticipantCluster:nth-child(2),[data-new-base-flanora-board-surface="1"] .grFlanoraParticipantCluster:nth-child(4){transform:none}[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{width:min(90%,38px)}}
+@media(max-height:420px){[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal{width:64px;height:24px;font-size:8px}[data-new-base-flanora-board-surface="1"] .grFlanoraRouteGateLayer{top:59%;height:6%}[data-new-base-flanora-board-surface="1"] .grFlanoraProgressionGrid{top:27.5%;bottom:35%}[data-new-base-flanora-board-surface="1"] .grFlanoraLane{width:clamp(22px,4.4vw,36px)}[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{width:min(90%,30px)}[data-new-base-flanora-board-surface="1"] .grFlanoraShield{min-height:13px;font-size:6px}[data-new-base-flanora-board-surface="1"] .grFlanoraFieldNode{width:clamp(7px,1.2vw,12px);height:clamp(7px,1.2vw,12px)}}
+@media(max-width:540px) and (orientation:portrait){[data-new-base-flanora-board-surface="1"] .grFlanoraSharedGoal{width:70px;height:28px}[data-new-base-flanora-board-surface="1"] .grFlanoraLane{width:clamp(20px,5.4vw,30px)}[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{width:min(86%,26px)}}
 `;
   documentLike.head.appendChild(style);
 }
@@ -275,6 +315,7 @@ function syncProgressionLanePresentation({
   documentLike,
   roadsByLaneKey,
   routeGatesByLaneKey,
+  goalBranchesByLaneKey,
   sharedGoal,
   roadStepMetaById,
   roadStepsByKey,
@@ -333,6 +374,8 @@ function syncProgressionLanePresentation({
     setAttr(road, 'aria-label', `成立済み ${counts.builtCount}/7。未成立位置はカード枠として表示しない`);
     const gate = routeGatesByLaneKey.get(key);
     if (gate) setAttr(gate, 'data-connected-to-goal', counts.connectedToGoal);
+    const branch = goalBranchesByLaneKey.get(key);
+    if (branch) setAttr(branch, 'data-connected-to-goal', counts.connectedToGoal);
   }
   setAttr(sharedGoal, 'data-connected-route-count', connectedRouteCount);
   setAttr(sharedGoal, 'data-terminal-result-authority', 'false');
@@ -386,6 +429,10 @@ export function mountFlanoraBoardSurface({
 
   const upper = createNode(documentLike, 'div', 'grFlanoraUpper');
   const sharedGoal = createNode(documentLike, 'div', 'grFlanoraSharedGoal');
+  const goalBranches = createSvgNode(documentLike, 'svg', 'grFlanoraGoalBranches');
+  setAttr(goalBranches, 'viewBox', '0 0 100 100');
+  setAttr(goalBranches, 'preserveAspectRatio', 'none');
+  setAttr(goalBranches, 'aria-hidden', 'true');
   sharedGoal.textContent = 'GOAL';
   setAttr(sharedGoal, 'data-flanora-shared-goal', SHARED_GOAL_ID);
   setAttr(sharedGoal, 'data-connected-route-count', 0);
@@ -395,22 +442,26 @@ export function mountFlanoraBoardSurface({
   setAttr(routeGateLayer, 'data-route-gate-count', 12);
   const progressionGrid = createNode(documentLike, 'div', 'grFlanoraProgressionGrid');
   const clearing = createNode(documentLike, 'div', 'grFlanoraClearing');
-  setAttr(clearing, 'data-flanora-clearing-loop', 'horizontal-zero');
   setAttr(clearing, 'data-shared-main-field', 'true');
-  setAttr(clearing, 'aria-label', '4人が移動する共有フィールド');
+  setAttr(clearing, 'aria-label', '4人が移動する共有フィールド。利用者指定の分岐ネットワーク形状');
 
+  upper.appendChild(goalBranches);
   upper.appendChild(sharedGoal);
   upper.appendChild(routeGateLayer);
   upper.appendChild(progressionGrid);
   root.appendChild(upper);
   root.appendChild(clearing);
 
+  const goalBranchesByLaneKey = new Map();
   const routeGatesByLaneKey = new Map();
   const shieldsByLaneKey = new Map();
   const roadsByLaneKey = new Map();
   const roadStepMetaById = new Map();
   const roadStepsByKey = new Map();
   const clearingByCellId = new Map();
+  const fieldNodesById = new Map();
+  const fieldNodes = createNode(documentLike, 'div', 'grFlanoraFieldNodes');
+  clearing.appendChild(fieldNodes);
   const participantClusters = new Map();
 
   for (const [participantSlot, participantId] of model.participantIds.entries()) {
@@ -425,12 +476,23 @@ export function mountFlanoraBoardSurface({
     const cluster = participantClusters.get(lane.participantId);
     if (!cluster) throw new TypeError('FLANORA_LANE_PARTICIPANT_REQUIRED');
 
+    const goalBranch = createSvgNode(documentLike, 'line', 'grFlanoraGoalBranch');
+    setAttr(goalBranch, 'data-goal-branch-lane-key', lane.key);
+    setAttr(goalBranch, 'data-shared-goal-id', SHARED_GOAL_ID);
+    setAttr(goalBranch, 'data-connected-to-goal', 'false');
+    setAttr(goalBranch, 'x1', GOAL_BRANCH_START_X_PCT[lane.relativeColumn]);
+    setAttr(goalBranch, 'y1', GOAL_BRANCH_START_Y_PCT);
+    setAttr(goalBranch, 'x2', FIXED_TARGET_LANE_X_PCT[lane.relativeColumn]);
+    setAttr(goalBranch, 'y2', GOAL_BRANCH_END_Y_PCT);
+    goalBranches.appendChild(goalBranch);
+    goalBranchesByLaneKey.set(lane.key, goalBranch);
+
     const routeGate = createNode(documentLike, 'span', 'grFlanoraRouteGateAnchor');
     setAttr(routeGate, 'data-flanora-goal', lane.key);
     setAttr(routeGate, 'data-flanora-route-gate', lane.routeGateId);
     setAttr(routeGate, 'data-shared-goal-id', SHARED_GOAL_ID);
     setAttr(routeGate, 'data-connected-to-goal', 'false');
-    routeGate.style.gridColumn = String(lane.relativeColumn + 1);
+    routeGate.style.left = `${FIXED_TARGET_LANE_X_PCT[lane.relativeColumn]}%`;
     routeGateLayer.appendChild(routeGate);
     routeGatesByLaneKey.set(lane.key, routeGate);
 
@@ -439,7 +501,7 @@ export function mountFlanoraBoardSurface({
     setAttr(laneNode, 'data-participant-id', lane.participantId);
     setAttr(laneNode, 'data-lane-index', lane.laneIndex);
     setAttr(laneNode, 'data-lane-label', lane.laneLabel);
-    laneNode.style.gridColumn = String(lane.laneIndex + 1);
+    laneNode.style.left = `${FIXED_TARGET_LANE_X_PCT[lane.relativeColumn]}%`;
 
     const road = createNode(documentLike, 'div', 'grFlanoraRoad');
     setAttr(road, 'data-flanora-road-track', lane.key);
@@ -463,17 +525,23 @@ export function mountFlanoraBoardSurface({
     roadsByLaneKey.set(lane.key, road);
   }
 
+  const fieldPositionByCellId = new Map();
   for (const cell of model.clearingCells) {
-    const cellNode = createNode(documentLike, 'span', 'grFlanoraClearingCell');
-    setAttr(cellNode, 'data-flanora-clearing-cell-id', cell.id);
+    const position = fieldPositionForSourceCell(cell);
+    if (!position) throw new TypeError(`FLANORA_SOURCE_CLEARING_POSITION_UNRESOLVED:${cell.id}`);
+    const cellNode = createNode(documentLike, 'span', 'grFlanoraFieldNode');
+    cellNode.style.left = `${position.x}%`;
+    cellNode.style.top = `${position.y}%`;
+    setAttr(cellNode, 'data-source-clearing-cell-id', cell.id);
+    setAttr(cellNode, 'data-target-field-kind', position.kind);
     setAttr(cellNode, 'data-clearing-kind', cell.kind);
-    cellNode.style.gridColumn = String(cell.relativeColumn + 1);
-    cellNode.style.gridRow = String(cell.clearingRow + 1);
     if (cell.startParticipantIds.length) {
       setAttr(cellNode, 'data-start-participant', cell.startParticipantIds.join(' '));
-      setAttr(cellNode, 'aria-label', `開始 ${cell.startParticipantIds.join('・')}`);
+      setAttr(cellNode, 'aria-label', `?? ${cell.startParticipantIds.join('?')}`);
     }
-    clearing.appendChild(cellNode);
+    fieldNodes.appendChild(cellNode);
+    fieldNodesById.set(cell.id, cellNode);
+    fieldPositionByCellId.set(cell.id, position);
     clearingByCellId.set(cell.id, cellNode);
   }
 
@@ -496,11 +564,15 @@ export function mountFlanoraBoardSurface({
     root,
     upper,
     sharedGoal,
+    goalBranches,
     routeGateLayer,
     progressionGrid,
     clearing,
     resolveSharedGoal() {
       return sharedGoal;
+    },
+    resolveGoalBranch(participantId, laneIndex) {
+      return goalBranchesByLaneKey.get(resolveLaneKey(participantId, laneIndex)) ?? null;
     },
     resolveRouteGate(participantId, laneIndex) {
       return routeGatesByLaneKey.get(resolveLaneKey(participantId, laneIndex)) ?? null;
@@ -524,6 +596,7 @@ export function mountFlanoraBoardSurface({
         documentLike,
         roadsByLaneKey,
         routeGatesByLaneKey,
+        goalBranchesByLaneKey,
         sharedGoal,
         roadStepMetaById,
         roadStepsByKey,
@@ -538,11 +611,15 @@ export function mountFlanoraBoardSurface({
         goalCount: 1,
         sharedGoalCount: 1,
         routeGateCount: routeGatesByLaneKey.size,
+        goalBranchCount: goalBranchesByLaneKey.size,
         shieldCount: shieldsByLaneKey.size,
         roadStepCount: roadStepMetaById.size,
         visibleBuiltRoadStepCount: roadStepsByKey.size,
         resolvedPhysicalCardIdentityCount: [...roadStepsByKey.values()].filter((node) => node.dataset?.cardIdentityResolved === 'true').length,
+        sourceClearingBindingCount: clearingByCellId.size,
         clearingCellCount: clearingByCellId.size,
+        visibleSharedFieldNodeCount: 0,
+        visibleSharedFieldEdgeCount: 0,
         clearingCycleCellIds: [...model.clearingCycleCellIds],
         performanceProfile: root.dataset?.performanceProfile ?? performanceProfile({ reducedMotion, lowPerf }),
         movementAuthority: false,
@@ -572,9 +649,15 @@ export const FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT = deepFreeze({
   optionalRuleGeometryIncluded: false,
   sharedGoalCount: 1,
   routeGateCount: 12,
+  goalBranchCount: 12,
+  goalBranchVisual: 'TWELVE_DISTINCT_LINE_ELEMENTS_NO_SHARED_TRUNK',
   sharedGoalPlacement: 'TOP_CENTER_WORLD_SPACE',
   progressionDirection: 'BOTTOM_TO_TOP',
   builtStageIdentity: 'CALLER_PHYSICAL_CARD_ID_WHEN_AVAILABLE',
   futureDiscreteStageNodes: false,
   unresolvedStageDefault: 'NO_DISCRETE_NODE_GUIDE_ONLY',
+  visibleSharedFieldNodeCount: 0,
+  visibleSharedFieldEdgeCount: 0,
+  duplicateLowerPresentationGraph: false,
+  sharedLowerFieldVisualAuthority: 'EXISTING_BATTLE_ACTUAL',
 });

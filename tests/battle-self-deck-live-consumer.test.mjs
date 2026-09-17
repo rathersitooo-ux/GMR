@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -289,4 +291,43 @@ test('published consumer contract remains explicit, owner-safe and authority-fre
   assert.equal(BATTLE_SELF_DECK_LIVE_CONSUMER.orderHidden, true);
   assert.equal(BATTLE_SELF_DECK_LIVE_CONSUMER.opponentDeckRead, false);
   assert.equal(BATTLE_SELF_DECK_LIVE_CONSUMER.gameStateWrite, false);
+});
+
+test('friend-room snapshot keeps viewer-self deck identities while redacting every opponent deck', () => {
+  const html = fs.readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
+  const source = html.match(/function publicPlayer\(p,viewer\)\{return\{[^\r\n]+\}\}/)?.[0];
+  assert.ok(source, 'publicPlayer projection must remain directly testable');
+
+  const context = {
+    FR: { planValues: {} },
+    clone: value => JSON.parse(JSON.stringify(value)),
+    publicRoyalUsed: () => false,
+    projected: null
+  };
+  vm.createContext(context);
+  vm.runInContext(`${source}; projected = publicPlayer;`, context);
+
+  const base = {
+    team: null,
+    position: 'A',
+    manaCurrent: 3,
+    manaMax: 10,
+    honey: 4,
+    chip: [],
+    lanes: { L: [], C: [], R: [] },
+    hand: [],
+    shields: { L: 'SL', C: 'SC', R: 'SR' },
+    plan: null,
+    nextCostReduction: 0,
+    battleBlockedRound: 0,
+    sourceDeckSize: 40
+  };
+  const own = context.projected({ ...base, id: 'P1', name: 'self', deck: ['SELF-A', 'SELF-B'] }, 'P1');
+  const opponent = context.projected({ ...base, id: 'P2', name: 'opponent', deck: ['OPP-A', 'OPP-B'] }, 'P1');
+
+  assert.deepEqual(Array.from(own.deck), ['SELF-A', 'SELF-B']);
+  assert.deepEqual(Array.from(opponent.deck), ['__HIDDEN__', '__HIDDEN__']);
+  assert.equal(JSON.stringify(opponent).includes('OPP-A'), false);
+  assert.equal(JSON.stringify(opponent).includes('OPP-B'), false);
+  assert.match(html, /function projectionToMatch\(pr\)\{const m=\{[^\r\n]*players:pr\.players\.map\(x=>clone\(x\)\)/);
 });

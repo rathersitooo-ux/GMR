@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-BATTLE-BOARD-PUBLIC-PROVENANCE-R8-20260918T0200",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_BOARD_WORLDSPACE_ARCHITECTURE_RECOVERY_R1",
+  "acquireKey": "BATTLE-BOARD-PUBLIC-PROVENANCE-R8-20260918T0200-SOL-P7V3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_LOCK_BATTLE_BOARD_TOPOLOGY_R4_PLUS_PR1842_PROVENANCE_FAILURE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "STATIC_CONTRACT_FOCUSED_NODE_TEST_AND_PUBLIC_PACKAGE_BLOB_ORACLE",
+  "proceedToken": "PROCEED|VWORK-BATTLE-BOARD-PUBLIC-PROVENANCE-R8-20260918T0200|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|same-chain-worldspace-plus-public-provenance",
+  "authorizationBaseSha": "15b52f05a7020cb691eb93f1b5390f089bb6933e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_BOARD_WORLDSPACE_ARCHITECTURE_RECOVERY_R1",
+  "leaseAcquireKey": "BATTLE-BOARD-PUBLIC-PROVENANCE-R8-20260918T0200-SOL-P7V3",
+  "leaseSnapshotReadbackAtJst": "2026-09-18 02:00 JST",
+  "leaseUntilJst": "2026-09-18 03:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A14:L14",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR base 15b52f05a7020cb691eb93f1b5390f089bb6933e; mutable browser/new-base-flanora-board-surface-runtime.mjs; tests/new-base-flanora-board-surface-runtime.test.mjs; deploy/cloudflare/tests/build.test.mjs; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback; own CURRENT lease/R24 event. READ_ONLY deploy/cloudflare/scripts/build.mjs; browser/GAMEROAD.html; browser/new-base-flanora-map-layout-core.mjs; gameplay/rules/save/network; fixed USER_LOCK_BATTLE_BOARD_TOPOLOGY_R4 visual actual; unrelated WorkUnits.",
+  "scope": [
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

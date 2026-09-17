@@ -3651,9 +3651,9 @@ body.lowPerf .battle .vfTargetChoice,body.lowPerf .battle .quickAwardBurst{box-s
 
 <style id="gameroad-r8-user-attached-mana-partner">
 /* R8 presentation-only: user-attached mana art + selected advice partner. Game state/rules are untouched. */
-#battleAdvicePartnerStage{position:absolute;left:-6%;bottom:var(--r8-dock-bottom,72px);z-index:7;width:clamp(190px,24vw,300px);height:min(46vh,330px);display:flex;align-items:flex-end;justify-content:flex-start;overflow:hidden;pointer-events:none;isolation:isolate}
+#battleAdvicePartnerStage{position:absolute;left:-2%;bottom:var(--r8-dock-bottom,72px);z-index:7;width:clamp(140px,16vw,220px);height:min(34vh,245px);display:flex;align-items:flex-end;justify-content:flex-start;overflow:hidden;pointer-events:none;isolation:isolate}
 #battleAdvicePartnerStage>.grtc-root{position:relative;width:100%;height:100%;display:flex;align-items:flex-end;justify-content:flex-start;overflow:visible;pointer-events:none}
-#battleAdvicePartnerStage .grtc-image{display:block;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;object-position:left bottom;transform:scale(1.08);transform-origin:36% 100%;filter:drop-shadow(0 16px 20px rgba(0,0,0,.36));pointer-events:none}
+#battleAdvicePartnerStage .grtc-image{display:block;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;object-position:left top;clip-path:inset(0 0 40% 0);transform:scale(1.12);transform-origin:36% 0%;filter:drop-shadow(0 16px 20px rgba(0,0,0,.36));pointer-events:none}
 #battleAdvicePartnerStage .grtc-source-blocked{visibility:hidden!important}
 #battleAdvicePartnerStage[data-visual-status="identity_recovery_required"],#battleAdvicePartnerStage[data-visual-status="blocked"]{visibility:hidden!important}
 #battleManaArtR8{--r8-size:160px;position:absolute;left:70px;bottom:var(--r8-mana-bottom,82px);z-index:9;width:var(--r8-size);height:var(--r8-size);pointer-events:none;isolation:isolate}
@@ -3673,20 +3673,20 @@ body.lowPerf .battle .vfTargetChoice,body.lowPerf .battle .quickAwardBurst{box-s
 #battleResourceDock .miniCount{margin-left:0}
 @media (orientation:landscape){.battleInfo.r10MockParity{grid-template-columns:clamp(180px,27vw,230px) clamp(128px,18vw,170px) minmax(300px,1fr)!important}.battleResourceDock{background:transparent!important;border-color:transparent!important;box-shadow:none!important}}
 @media (orientation:landscape) and (max-height:500px){
- #battleAdvicePartnerStage{left:-3%;bottom:-4px;width:150px;height:210px}
- #battleAdvicePartnerStage .grtc-image{transform:scale(1.05);transform-origin:38% 100%}
+ #battleAdvicePartnerStage{left:-1%;bottom:44px;width:118px;height:168px}
+ #battleAdvicePartnerStage .grtc-image{transform:scale(1.12);transform-origin:36% 0%}
  #battleManaArtR8{--r8-size:112px;left:82px;bottom:58px}.battleInfo.r10MockParity{grid-template-columns:190px 130px minmax(0,1fr)!important}
  #battleManaArtR8 .r8ManaNumber{font-size:32px}
 }
 @media (orientation:portrait) and (max-width:540px){
- #battleAdvicePartnerStage{left:-4%;bottom:145px;width:126px;height:205px}
- #battleAdvicePartnerStage .grtc-image{transform:scale(1.06);transform-origin:36% 100%}
+ #battleAdvicePartnerStage{left:-1%;bottom:145px;width:118px;height:180px}
+ #battleAdvicePartnerStage .grtc-image{transform:scale(1.12);transform-origin:36% 0%}
  #battleManaArtR8{--r8-size:110px;left:96px;bottom:158px}
  #battleManaArtR8 .r8ManaNumber{font-size:30px}
 }
 @media (orientation:portrait) and (max-width:360px){
- #battleAdvicePartnerStage{left:-5%;bottom:132px;width:112px;height:180px}
- #battleAdvicePartnerStage .grtc-image{transform:scale(1.05);transform-origin:36% 100%}
+ #battleAdvicePartnerStage{left:-1%;bottom:132px;width:108px;height:164px}
+ #battleAdvicePartnerStage .grtc-image{transform:scale(1.12);transform-origin:36% 0%}
  #battleManaArtR8{--r8-size:96px;left:82px;bottom:142px}
  #battleManaArtR8 .r8ManaNumber{font-size:27px}
 }

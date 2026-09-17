@@ -1,0 +1,40 @@
+{
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "UI_CARDS_INSPECTOR_MODAL_DISMISS_REGRESSION_R2",
+  "acquireKey": "UI-CARDS-INSPECTOR-DISMISS-REGRESSION-R2-20260918T0511-SOL-Q8N4V3",
+  "owner": "ChatGPT / GPT-5.6 Sol / current user delegated oldest-first expired-work continuation",
+  "leaseUntil": "2026-09-18 06:11 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "currentMain": "0020797f5bf64888ac80f8cba15f0f56dc96126f",
+  "mutableResources": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "readOnlyResources": [
+    "browser/GAMEROAD.html",
+    "gameplay/rules/save/network",
+    "unrelated WorkUnits"
+  ],
+  "plannedWrites": [
+    "Restore the proven PR #870 Cards inspector safe-dismiss contract inside the current Cards presentation runtime without replacing current presentation state.",
+    "Add focused regression coverage for outside/backdrop click, Escape, inside-panel non-dismiss, event consumption, teardown, and opener focus restoration."
+  ],
+  "preflightChecks": {
+    "currentAuthority": "PASS — current Task UI-STATE-FEEDBACK-RUNTIME-001 retains safe cancel/back semantics",
+    "oldSuccessor": "PASS — merged PR #870 implemented the exact safe-dismiss contract",
+    "currentRegression": "PASS — current main lacks installCardsInspectorDismissInteractions",
+    "ownerLease": "PASS — current Cards resources have no overlapping valid lease",
+    "scope": "PASS — GAMEROAD.html/gameplay/save/network remain read-only"
+  },
+  "reuseInvent": {
+    "reuseFrom": [
+      "merged PR #870 safe-dismiss behavior",
+      "current Cards existing close button/state",
+      "current module safeClosest helper",
+      "same-task safe-dismiss precedents PR #1309 and #1318"
+    ],
+    "invent": [
+      "focused regression harness adapted to the current tests only"
+    ]
+  }
+}

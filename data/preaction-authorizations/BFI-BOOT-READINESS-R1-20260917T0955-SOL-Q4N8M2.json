@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BFI-BOOT-READINESS-R1-20260917T0955-SOL-Q4N8M2",
+  "taskId": "BROWSER-FULL-INTERACTION-SCREENSHOT-REGRESSION-CI-001",
+  "workUnitKey": "BFI_BOOT_READINESS_R1",
+  "acquireKey": "BFI-BOOT-READINESS-R1-20260917T0955-SOL-Q4N8M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "MAIN_AND_PR1835_SAME_BFI_SETUP_FAILURE_CAUSAL_SCOPE_20260917T0953JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOCAL_MAIN_EXPLICIT_INIT_RACE_REPRO_AND_NETWORKIDLE_SETUP_PASS_20260917T0953JST",
+  "proceedToken": "PROCEED|BFI-BOOT-READINESS-R1-20260917T0955-SOL-Q4N8M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|bfi-boot-readiness|test-only|active-lease",
+  "authorizationBaseSha": "c80dbb02ab0f422096c1b0b0a0650fddc8a91e2d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-FULL-INTERACTION-SCREENSHOT-REGRESSION-CI-001",
+  "leaseWorkUnitKey": "BFI_BOOT_READINESS_R1",
+  "leaseAcquireKey": "BFI-BOOT-READINESS-R1-20260917T0955-SOL-Q4N8M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-17 09:55 JST",
+  "leaseUntilJst": "2026-09-17 10:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR exact current main c80dbb02ab0f422096c1b0b0a0650fddc8a91e2d; mutable tests/browser-full-interaction.spec.mjs; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback; own CURRENT lease/R24 event. READ_ONLY browser/GAMEROAD.html; screen-navigation-core.mjs; PR#1835; gameplay/rules/save/network.",
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "solutionSignature": "BFI_EXISTING_BOOT_HELPER_EXPLICIT_RUNTIME_READINESS_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_BFI_OWNER_AND_EXISTING_BOOTCURRENTBROWSER_HELPER",
+  "solutionSearchEvidence": [
+    "Current main and PR#1835 reproduce the same Home-to-Setup BFI failure before PR#1835 rejection feedback code is reached.",
+    "A fully initialized current-main Home setup click reaches Setup normally, so product navigation repair is not justified by this failure.",
+    "The existing bootCurrentBrowser helper currently treats visible Home markup as ready before GAMEROAD_SCREEN_TRANSITION and Home motion wiring are guaranteed initialized.",
+    "The existing Home motion runtime exposes data-motion-wired on #homePadCenter, so the harness can wait on semantic readiness without an arbitrary sleep or a second navigation authority."
+  ]
+}

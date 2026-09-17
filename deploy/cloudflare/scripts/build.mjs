@@ -92,6 +92,7 @@ const ARTIFACT_SPECS = Object.freeze([
   { source: 'browser/battle-hidden-road-janken-slidepad-integration.mjs', output: 'battle-hidden-road-janken-slidepad-integration.mjs', artifact: 'battle_hidden_road_janken_slidepad_integration', label: 'Battle Hidden Road janken SlidePad integration' },
   { source: 'browser/battle-hidden-hand-add-button-runtime.mjs', output: 'battle-hidden-hand-add-button-runtime.mjs', artifact: 'battle_hidden_hand_add_button_runtime', label: 'Battle Hidden Hand add-button runtime' },
   { source: 'browser/new-base-hidden-hand-runtime-core.mjs', output: 'new-base-hidden-hand-runtime-core.mjs', artifact: 'new_base_hidden_hand_runtime_core', label: 'New Base Hidden Hand runtime core' },
+  { source: 'browser/deck-hidden-hand-registration-core.mjs', output: 'deck-hidden-hand-registration-core.mjs', artifact: 'deck_hidden_hand_registration_core', label: 'Deck Hidden Hand registration core' },
   { source: 'assets/visual/battle-power-energy.jpg', output: 'assets/visual/battle-power-energy.jpg', artifact: 'battle_power_energy_visual', label: 'Battle Power Energy visual' },
   { source: 'browser/battle-card-release-flight-motion-core.mjs', output: 'battle-card-release-flight-motion-core.mjs', artifact: 'battle_card_release_flight_motion_core', label: 'Battle card release flight motion core' },
   { source: 'browser/battle-card-release-flight-runtime-effect.mjs', output: 'battle-card-release-flight-runtime-effect.mjs', artifact: 'battle_card_release_flight_runtime_effect', label: 'Battle card release flight runtime effect' },

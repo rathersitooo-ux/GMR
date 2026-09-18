@@ -13,6 +13,118 @@ const cardsDeckFindabilityInstallations = new WeakMap();
 const CARDS_FAVORITE_STORAGE_KEY = 'gameroad.cards.favorite.v1';
 const DECK_SWIPE_DISCOVERY_STORAGE_KEY = 'gameroad.cards.deckSwipeDiscovery.v1';
 
+const cardVoteUiRepairInstallations = new WeakMap();
+
+export function cardVoteLocalCount(snapshot = {}, cardId = snapshot?.cardId) {
+  const id = String(cardId ?? '').trim();
+  if (!id || !Array.isArray(snapshot?.history)) return 0;
+  return snapshot.history.reduce((count, entry) => (
+    String(entry?.cardId ?? '') === id ? count + 1 : count
+  ), 0);
+}
+
+export function projectCardVoteLocalUi(snapshot = {}) {
+  const cardId = String(snapshot?.cardId ?? '').trim() || null;
+  return Object.freeze({
+    source: snapshot?.source ?? null,
+    cardId,
+    localVoteCount: cardVoteLocalCount(snapshot, cardId),
+    freeUsed: snapshot?.freeUsed === true,
+    cardUsed: snapshot?.cardUsed === true,
+    canFreeVote: snapshot?.canFreeVote === true,
+    nonFreeResolved: snapshot?.nonFreeResolved === true,
+  });
+}
+
+export function installCardVoteUiRepair({
+  document: doc = globalThis.document,
+  global: runtimeGlobal = globalThis,
+  defer = (fn) => globalThis.setTimeout?.(fn, 0),
+} = {}) {
+  if (!doc?.addEventListener || !doc?.getElementById) {
+    return Object.freeze({ installed: false, project() { return false; }, close() { return false; }, destroy() { return false; } });
+  }
+  const existing = cardVoteUiRepairInstallations.get(doc);
+  if (existing) return existing;
+
+  let observer = null;
+  let destroyed = false;
+  const close = () => {
+    const pop = doc.getElementById('cardVotePopover');
+    const open = doc.getElementById('cardVoteOpen');
+    const wasOpen = pop?.classList?.contains?.('on') === true;
+    pop?.classList?.remove?.('on');
+    open?.setAttribute?.('aria-expanded', 'false');
+    return wasOpen;
+  };
+  const project = (cardId = null) => {
+    const api = runtimeGlobal?.GAMEROAD_CARD_VOTE;
+    if (typeof api?.snapshot !== 'function') return false;
+    let snapshot;
+    try { snapshot = api.snapshot(cardId ?? undefined); } catch { return false; }
+    if (snapshot?.source !== 'prototype_local') return false;
+    const state = projectCardVoteLocalUi(snapshot);
+    const small = doc.getElementById('cardVoteOpen')?.querySelector?.('small');
+    if (small) small.textContent = `この端末 ${state.localVoteCount}票`;
+    return true;
+  };
+  const scheduleProject = (cardId = null) => {
+    if (destroyed) return;
+    if (typeof defer === 'function') defer(() => { if (!destroyed) project(cardId); });
+    else queueMicrotask(() => { if (!destroyed) project(cardId); });
+  };
+  const onVote = (event) => scheduleProject(event?.detail?.cardId ?? null);
+  const onKeydown = (event) => { if (event?.key === 'Escape') close(); };
+  const onClick = (event) => {
+    const target = event?.target?.closest ? event.target : null;
+    if (!target) return;
+    const contextChanged = target.closest('#collectionGrid .slot,[data-go="cards"],#r4PreviewClose,#gachaFocusToCards');
+    if (contextChanged) {
+      close();
+      scheduleProject();
+      return;
+    }
+    const pop = doc.getElementById('cardVotePopover');
+    if (
+      pop?.classList?.contains?.('on')
+      && !target.closest('#cardVotePopover')
+      && !target.closest('#cardVoteOpen')
+    ) close();
+  };
+
+  doc.addEventListener('gameroad:card-vote-local', onVote);
+  doc.addEventListener('keydown', onKeydown);
+  doc.addEventListener('click', onClick);
+  const cards = doc.querySelector?.('.screen.cards');
+  const Observer = runtimeGlobal?.MutationObserver;
+  if (cards && typeof Observer === 'function') {
+    observer = new Observer(() => {
+      close();
+      scheduleProject();
+    });
+    observer.observe(cards, { attributes: true, attributeFilter: ['class', 'data-inspector'] });
+  }
+  scheduleProject();
+
+  const installation = Object.freeze({
+    installed: true,
+    project,
+    close,
+    destroy() {
+      if (destroyed) return false;
+      destroyed = true;
+      observer?.disconnect?.();
+      doc.removeEventListener?.('gameroad:card-vote-local', onVote);
+      doc.removeEventListener?.('keydown', onKeydown);
+      doc.removeEventListener?.('click', onClick);
+      cardVoteUiRepairInstallations.delete(doc);
+      return true;
+    },
+  });
+  cardVoteUiRepairInstallations.set(doc, installation);
+  return installation;
+}
+
 export const DECK_SWIPE_DISCOVERY_CONTRACT = Object.freeze({
   schema: 'gameroad.cards-deck-swipe-discovery.v1',
   storageKey: DECK_SWIPE_DISCOVERY_STORAGE_KEY,
@@ -1021,4 +1133,9 @@ function autoInstallFanart(doc, win) {
   if (doc?.readyState === 'loading') doc.addEventListener?.('DOMContentLoaded', install, { once: true }); else install();
 }
 
-if (typeof document !== 'undefined') autoInstallFanart(document, globalThis.window);
+if (typeof document !== 'undefined') {
+  autoInstallFanart(document, globalThis.window);
+  const installVoteUi = () => installCardVoteUiRepair({ document, global: globalThis });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installVoteUi, { once: true });
+  else installVoteUi();
+}

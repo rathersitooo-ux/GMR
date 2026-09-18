@@ -12,6 +12,7 @@ import {
   createDeckSwipeSfxPlayer,
   isNeutralizedDeckEditorSwipe,
   presentDeckAddSwipe,
+  installCardsInspectorDismissInteractions,
 } from '../browser/cards-deck-presentation.mjs';
 
 const rect = (left, top, width, height) => ({ left, top, width, height });
@@ -677,4 +678,121 @@ test('public Battle local-art projection wraps only the existing public renderer
   for (const forbidden of ['fetch(', 'XMLHttpRequest', 'WebSocket', 'localStorage', 'sessionStorage']) {
     assert.equal(slice.includes(forbidden), false, `forbidden transport/storage path: ${forbidden}`);
   }
+});
+
+function classList(...initial) {
+  const values = new Set(initial);
+  return {
+    contains(name) { return values.has(name); },
+    add(...names) { names.forEach((name) => values.add(name)); },
+    remove(...names) { names.forEach((name) => values.delete(name)); },
+  };
+}
+
+function makeHarness() {
+  const listeners = new Map();
+  const selected = {
+    focusCalls: 0,
+    focus() { this.focusCalls += 1; },
+  };
+  const inside = {};
+  const preview = {
+    contains(node) { return node === inside; },
+  };
+  const screen = {
+    dataset: { inspector: 'open' },
+    classList: classList('active'),
+    querySelector(selector) {
+      if (selector === '.cardPreview') return preview;
+      if (selector === '#collectionGrid [data-id].selected') return selected;
+      return null;
+    },
+  };
+  const doc = {
+    querySelector(selector) {
+      if (selector === 'section[data-screen="cards"]') return screen;
+      if (selector === 'section[data-screen="cards"] .cardPreview') return preview;
+      if (selector === 'section[data-screen="cards"] #collectionGrid [data-id].selected') return selected;
+      return null;
+    },
+    addEventListener(type, fn, capture) {
+      const key = `${type}:${capture === true}`;
+      const set = listeners.get(key) ?? new Set();
+      set.add(fn);
+      listeners.set(key, set);
+    },
+    removeEventListener(type, fn, capture) {
+      listeners.get(`${type}:${capture === true}`)?.delete(fn);
+    },
+  };
+  const dispatch = (type, init = {}) => {
+    const calls = { preventDefault: 0, stopPropagation: 0, stopImmediatePropagation: 0 };
+    const event = {
+      ...init,
+      preventDefault() { calls.preventDefault += 1; },
+      stopPropagation() { calls.stopPropagation += 1; },
+      stopImmediatePropagation() { calls.stopImmediatePropagation += 1; },
+    };
+    for (const fn of listeners.get(`${type}:true`) ?? []) fn(event);
+    return calls;
+  };
+  return { doc, screen, selected, inside, preview, dispatch, listeners };
+}
+
+test('outside click closes open Cards inspector, consumes input and restores selected-card focus', () => {
+  const h = makeHarness();
+  const controller = installCardsInspectorDismissInteractions({ document: h.doc });
+  const calls = h.dispatch('click', { target: {} });
+
+  assert.equal(h.screen.dataset.inspector, 'closed');
+  assert.deepEqual(calls, { preventDefault: 1, stopPropagation: 1, stopImmediatePropagation: 1 });
+  assert.equal(h.selected.focusCalls, 1);
+  controller.destroy();
+});
+
+test('click inside Cards preview stays open and is not consumed', () => {
+  const h = makeHarness();
+  const controller = installCardsInspectorDismissInteractions({ document: h.doc });
+  const calls = h.dispatch('click', { target: h.inside });
+
+  assert.equal(h.screen.dataset.inspector, 'open');
+  assert.deepEqual(calls, { preventDefault: 0, stopPropagation: 0, stopImmediatePropagation: 0 });
+  assert.equal(h.selected.focusCalls, 0);
+  controller.destroy();
+});
+
+test('Escape closes open Cards inspector, consumes input and restores focus', () => {
+  const h = makeHarness();
+  const controller = installCardsInspectorDismissInteractions({ document: h.doc });
+  const calls = h.dispatch('keydown', { key: 'Escape' });
+
+  assert.equal(h.screen.dataset.inspector, 'closed');
+  assert.deepEqual(calls, { preventDefault: 1, stopPropagation: 1, stopImmediatePropagation: 1 });
+  assert.equal(h.selected.focusCalls, 1);
+  controller.destroy();
+});
+
+test('non-Escape key does not dismiss Cards inspector', () => {
+  const h = makeHarness();
+  const controller = installCardsInspectorDismissInteractions({ document: h.doc });
+  const calls = h.dispatch('keydown', { key: 'Enter' });
+
+  assert.equal(h.screen.dataset.inspector, 'open');
+  assert.deepEqual(calls, { preventDefault: 0, stopPropagation: 0, stopImmediatePropagation: 0 });
+  assert.equal(h.selected.focusCalls, 0);
+  controller.destroy();
+});
+
+test('installation is idempotent and destroy removes capture listeners', () => {
+  const h = makeHarness();
+  const first = installCardsInspectorDismissInteractions({ document: h.doc });
+  const second = installCardsInspectorDismissInteractions({ document: h.doc });
+  assert.equal(first, second);
+
+  first.destroy();
+  h.screen.dataset.inspector = 'open';
+  const calls = h.dispatch('click', { target: {} });
+  assert.equal(h.screen.dataset.inspector, 'open');
+  assert.deepEqual(calls, { preventDefault: 0, stopPropagation: 0, stopImmediatePropagation: 0 });
+  assert.equal(h.selected.focusCalls, 0);
 });

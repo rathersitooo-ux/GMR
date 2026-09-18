@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PHASE-CINEMATIC-R2-20260919T0255-SOL-Q8N4V31",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PHASE_CINEMATIC_SURFACE_R2",
+  "acquireKey": "BATTLE-PHASE-CINEMATIC-R2-20260919T0255-SOL-Q8N4V31",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_USER_PHASE_SPLIT_AND_MAIN_RUNTIME_INSPECTION_20260919",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_EXACT_DIFF_REBUILT_AFTER_PREACTION_GATE_ONLY_FAILURE",
+  "proceedToken": "PROCEED|BATTLE-PHASE-CINEMATIC-R2-20260919T0255-SOL-Q8N4V31|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-phase-cinematic|existing-battle-screen|active-lease",
+  "authorizationBaseSha": "f584cd584ad318950ad78afea8e50e47b767ff4d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PHASE_CINEMATIC_SURFACE_R2",
+  "leaseAcquireKey": "BATTLE-PHASE-CINEMATIC-R2-20260919T0255-SOL-Q8N4V31",
+  "leaseSnapshotReadbackAtJst": "2026-09-19 02:55 JST",
+  "leaseUntilJst": "2026-09-19 03:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A14:L14",
+  "leaseExactMutableResources": "browser/battle-screen-presentation-core.mjs; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-presentation-core.test.mjs; tests/battle-screen-runtime-mount.test.mjs; own fresh branch/PR/check/merge/readback; own CURRENT lease",
+  "scope": [
+    "browser/battle-screen-presentation-core.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-presentation-core.test.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-presentation-core.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-presentation-core.test.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

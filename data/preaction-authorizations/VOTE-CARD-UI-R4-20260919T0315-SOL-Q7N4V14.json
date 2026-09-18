@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VOTE-CARD-UI-R4-20260919T0315-SOL-Q7N4V14",
+  "taskId": "VOTE-DAILY-CONSTRAINT-RUNTIME-HUMAN-ACCEPT-001",
+  "workUnitKey": "VOTE_CARD_UI_PER_CARD_COUNT_AND_DISMISS_R4",
+  "acquireKey": "VOTE-CARD-UI-R4-20260919T0315-SOL-Q7N4V14",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_HTML_VOTE_AUTHORITY_PLUS_PR1849_SAFE_DISMISS_DONOR",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_HTML_BLOB_4fb0115_AND_CARDS_PRESENTATION_TEST_SURFACE",
+  "proceedToken": "PROCEED|VOTE-CARD-UI-R4-20260919T0315-SOL-Q7N4V14|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT-VOTE-AUTHORITY|CARDS-PRESENTATION",
+  "authorizationBaseSha": "0fa8c129afe71a11378cefd80c94c0bbf3401417",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "VOTE-DAILY-CONSTRAINT-RUNTIME-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "VOTE_CARD_UI_PER_CARD_COUNT_AND_DISMISS_R4",
+  "leaseAcquireKey": "VOTE-CARD-UI-R4-20260919T0315-SOL-Q7N4V14",
+  "leaseSnapshotReadbackAtJst": "2026-09-19 03:16 JST",
+  "leaseUntilJst": "2026-09-19 04:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback; own CURRENT lease/R24 event",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "solutionSignature": "Reuse existing prototype_local GAMEROAD_CARD_VOTE authority; project selected-card local history count and add safe outside/Escape popover dismiss without changing vote rules or persistence.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_HTML_DIRECT_BLOB_PLUS_EXISTING_CARDS_SAFE_DISMISS_PATTERN",
+  "solutionSearchEvidence": [
+    "browser/GAMEROAD.html current blob exposes GAMEROAD_CARD_VOTE snapshot/vote/history/cardDays/freeUsed and nonFreeResolved=false",
+    "current vote popover lacks outside/Escape dismiss while successful vote already closes it",
+    "merged Cards inspector safe-dismiss pattern provides input-consume/focus-return precedent",
+    "existing tests/cards-deck-presentation.test.mjs is the approved Cards presentation regression surface"
+  ]
+}

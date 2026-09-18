@@ -13,6 +13,8 @@ import {
   isNeutralizedDeckEditorSwipe,
   presentDeckAddSwipe,
   installCardsInspectorDismissInteractions,
+  countCardsLocalVoteHistory,
+  installCardsVoteUiRepair,
 } from '../browser/cards-deck-presentation.mjs';
 
 const rect = (left, top, width, height) => ({ left, top, width, height });
@@ -796,3 +798,185 @@ test('installation is idempotent and destroy removes capture listeners', () => {
   assert.deepEqual(calls, { preventDefault: 0, stopPropagation: 0, stopImmediatePropagation: 0 });
   assert.equal(h.selected.focusCalls, 0);
 });
+
+function makeVoteUiHarness() {
+  const docListeners = new Map();
+  const winListeners = new Map();
+  let snapshot = {
+    cardId: 'A',
+    history: [
+      { cardId: 'A', day: '2026-09-17' },
+      { cardId: 'B', day: '2026-09-18' },
+      { cardId: 'A', day: '2026-09-19' },
+    ],
+  };
+  let countNode = null;
+  const inside = {};
+  const choices = {
+    before(node) {
+      countNode = node;
+      node.parentNode = popover;
+    },
+  };
+  const popover = {
+    classList: classList('cardVotePopover', 'on'),
+    contains(node) { return node === inside; },
+    querySelector(selector) {
+      if (selector === '[data-role="cards-vote-local-count"]') return countNode;
+      if (selector === '.cardVoteChoices') return choices;
+      return null;
+    },
+    appendChild(node) {
+      countNode = node;
+      node.parentNode = this;
+      return node;
+    },
+  };
+  const opener = {
+    attrs: { 'aria-expanded': 'true' },
+    focusCalls: 0,
+    contains(node) { return node === this; },
+    setAttribute(name, value) { this.attrs[name] = value; },
+    focus() { this.focusCalls += 1; },
+  };
+  const screen = { classList: classList('active') };
+  const doc = {
+    querySelector(selector) {
+      if (selector === 'section[data-screen="cards"]') return screen;
+      if (selector === '#cardVotePopover') return popover;
+      if (selector === '#cardVoteOpen') return opener;
+      return null;
+    },
+    getElementById(id) {
+      if (id === 'cardVotePopover') return popover;
+      if (id === 'cardVoteOpen') return opener;
+      return null;
+    },
+    createElement() {
+      return {
+        dataset: {},
+        className: '',
+        hidden: false,
+        textContent: '',
+        parentNode: null,
+        setAttribute() {},
+      };
+    },
+    addEventListener(type, fn, capture) {
+      const key = `${type}:${capture === true}`;
+      const set = docListeners.get(key) ?? new Set();
+      set.add(fn);
+      docListeners.set(key, set);
+    },
+    removeEventListener(type, fn, capture) {
+      docListeners.get(`${type}:${capture === true}`)?.delete(fn);
+    },
+  };
+  const win = {
+    GAMEROAD_CARD_VOTE: { snapshot: () => snapshot },
+    queueMicrotask(fn) { fn(); },
+    addEventListener(type, fn) {
+      const set = winListeners.get(type) ?? new Set();
+      set.add(fn);
+      winListeners.set(type, set);
+    },
+    removeEventListener(type, fn) {
+      winListeners.get(type)?.delete(fn);
+    },
+  };
+  const dispatchDoc = (type, init = {}) => {
+    let immediateStopped = false;
+    const calls = { preventDefault: 0, stopPropagation: 0, stopImmediatePropagation: 0 };
+    const event = {
+      ...init,
+      preventDefault() { calls.preventDefault += 1; },
+      stopPropagation() { calls.stopPropagation += 1; },
+      stopImmediatePropagation() {
+        calls.stopImmediatePropagation += 1;
+        immediateStopped = true;
+      },
+    };
+    for (const fn of docListeners.get(`${type}:true`) ?? []) {
+      fn(event);
+      if (immediateStopped) break;
+    }
+    if (!immediateStopped) {
+      for (const fn of docListeners.get(`${type}:false`) ?? []) {
+        fn(event);
+        if (immediateStopped) break;
+      }
+    }
+    return calls;
+  };
+  const dispatchWin = (type) => {
+    for (const fn of winListeners.get(type) ?? []) fn({ type });
+  };
+  return {
+    doc, win, popover, opener, inside,
+    countNode: () => countNode,
+    setSnapshot(value) { snapshot = value; },
+    dispatchDoc, dispatchWin,
+  };
+}
+
+test('per-card local vote history counts only the selected card', () => {
+  assert.equal(countCardsLocalVoteHistory({
+    cardId: 'A',
+    history: [{ cardId: 'A' }, { cardId: 'B' }, { cardId: 'A' }],
+  }), 2);
+  assert.equal(countCardsLocalVoteHistory({ cardId: '', history: [{ cardId: 'A' }] }), 0);
+});
+
+test('vote UI repair projects selected-card local history and refreshes from the existing vote event', () => {
+  const h = makeVoteUiHarness();
+  const controller = installCardsVoteUiRepair({ document: h.doc, window: h.win });
+  assert.equal(h.countNode()?.textContent, 'この端末のこのカード投票履歴 2票');
+
+  h.setSnapshot({
+    cardId: 'A',
+    history: [{ cardId: 'A' }, { cardId: 'B' }, { cardId: 'A' }, { cardId: 'A' }],
+  });
+  h.dispatchWin('gameroad:card-vote-local');
+  assert.equal(h.countNode()?.textContent, 'この端末のこのカード投票履歴 3票');
+  controller.destroy();
+});
+
+test('outside click closes only the open vote popover, consumes input and restores vote-opener focus', () => {
+  const h = makeVoteUiHarness();
+  const controller = installCardsVoteUiRepair({ document: h.doc, window: h.win });
+  const calls = h.dispatchDoc('click', { target: {} });
+
+  assert.equal(h.popover.classList.contains('on'), false);
+  assert.equal(h.opener.attrs['aria-expanded'], 'false');
+  assert.deepEqual(calls, { preventDefault: 1, stopPropagation: 1, stopImmediatePropagation: 1 });
+  assert.equal(h.opener.focusCalls, 1);
+  controller.destroy();
+});
+
+test('vote-popover inside/opener interaction stays live while Escape performs safe dismiss', () => {
+  const h = makeVoteUiHarness();
+  const controller = installCardsVoteUiRepair({ document: h.doc, window: h.win });
+
+  const insideCalls = h.dispatchDoc('click', { target: h.inside });
+  assert.equal(h.popover.classList.contains('on'), true);
+  assert.deepEqual(insideCalls, { preventDefault: 0, stopPropagation: 0, stopImmediatePropagation: 0 });
+
+  const openerCalls = h.dispatchDoc('click', { target: h.opener });
+  assert.equal(h.popover.classList.contains('on'), true);
+  assert.deepEqual(openerCalls, { preventDefault: 0, stopPropagation: 0, stopImmediatePropagation: 0 });
+
+  const escapeCalls = h.dispatchDoc('keydown', { key: 'Escape' });
+  assert.equal(h.popover.classList.contains('on'), false);
+  assert.deepEqual(escapeCalls, { preventDefault: 1, stopPropagation: 1, stopImmediatePropagation: 1 });
+  assert.equal(h.opener.focusCalls, 1);
+  controller.destroy();
+});
+
+test('vote safe-dismiss auto-installs before Cards inspector dismiss so the frontmost transient wins', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const vote = source.indexOf('installCardsVoteUiRepair({ document, window: globalThis.window })');
+  const inspector = source.indexOf('installCardsInspectorDismissInteractions({ document })');
+  assert.ok(vote >= 0 && inspector > vote);
+});
+

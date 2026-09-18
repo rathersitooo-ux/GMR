@@ -11,6 +11,7 @@ import {
 const deckStorageLiveInstallations = new WeakMap();
 const cardsDeckFindabilityInstallations = new WeakMap();
 const cardsInspectorDismissInstallations = new WeakMap();
+const cardsVoteUiRepairInstallations = new WeakMap();
 const CARDS_FAVORITE_STORAGE_KEY = 'gameroad.cards.favorite.v1';
 const DECK_SWIPE_DISCOVERY_STORAGE_KEY = 'gameroad.cards.deckSwipeDiscovery.v1';
 
@@ -732,6 +733,117 @@ export function installCardsInspectorDismissInteractions({ document: doc = globa
   return controller;
 }
 
+export function countCardsLocalVoteHistory(snapshot = {}, cardId = snapshot?.cardId) {
+  const id = String(cardId ?? '').trim();
+  if (!id) return 0;
+  const history = Array.isArray(snapshot?.history) ? snapshot.history : [];
+  return history.reduce((count, entry) => count + (String(entry?.cardId ?? '') === id ? 1 : 0), 0);
+}
+
+function resolveOpenCardsVotePopover(doc) {
+  const screen = cardsScreen(doc);
+  if (!screen || !screen.classList?.contains?.('active')) return null;
+  const popover = doc?.getElementById?.('cardVotePopover') ?? doc?.querySelector?.('#cardVotePopover');
+  const opener = doc?.getElementById?.('cardVoteOpen') ?? doc?.querySelector?.('#cardVoteOpen');
+  if (!popover || !opener || !popover.classList?.contains?.('on')) return null;
+  return { screen, popover, opener };
+}
+
+function restoreCardsVoteFocus(opener) {
+  try { opener?.focus?.({ preventScroll: true }); }
+  catch { try { opener?.focus?.(); } catch {} }
+}
+
+function dismissCardsVotePopover(event, resolved) {
+  consumeCardsInspectorDismissEvent(event);
+  resolved.popover.classList.remove('on');
+  resolved.opener.setAttribute?.('aria-expanded', 'false');
+  restoreCardsVoteFocus(resolved.opener);
+}
+
+function scheduleCardsVoteUiRefresh(win, refresh) {
+  const enqueue = win?.queueMicrotask ?? globalThis.queueMicrotask;
+  if (typeof enqueue === 'function') enqueue(refresh);
+  else refresh();
+}
+
+export function installCardsVoteUiRepair({
+  document: doc = globalThis.document,
+  window: win = globalThis.window,
+} = {}) {
+  if (!doc?.addEventListener || !doc?.removeEventListener || !doc?.querySelector) {
+    return Object.freeze({ render() { return 0; }, destroy() {} });
+  }
+  const existing = cardsVoteUiRepairInstallations.get(doc);
+  if (existing) return existing;
+
+  let destroyed = false;
+  const renderLocalCount = () => {
+    if (destroyed) return 0;
+    const authority = win?.GAMEROAD_CARD_VOTE;
+    if (typeof authority?.snapshot !== 'function') return 0;
+    let snapshot;
+    try { snapshot = authority.snapshot(); }
+    catch { return 0; }
+    const cardId = String(snapshot?.cardId ?? '').trim();
+    const popover = doc.getElementById?.('cardVotePopover') ?? doc.querySelector?.('#cardVotePopover');
+    if (!popover) return 0;
+    let countNode = popover.querySelector?.('[data-role="cards-vote-local-count"]') ?? null;
+    if (!countNode && doc.createElement) {
+      countNode = doc.createElement('div');
+      countNode.dataset.role = 'cards-vote-local-count';
+      countNode.className = 'cardVoteNote cardVoteLocalCount';
+      countNode.setAttribute?.('aria-live', 'polite');
+      const choices = popover.querySelector?.('.cardVoteChoices');
+      choices?.before?.(countNode);
+      if (!countNode.parentNode) popover.appendChild?.(countNode);
+    }
+    const count = countCardsLocalVoteHistory(snapshot, cardId);
+    if (countNode) {
+      countNode.hidden = !cardId;
+      countNode.textContent = cardId ? `この端末のこのカード投票履歴 ${count}票` : '';
+    }
+    return count;
+  };
+
+  const onKeyDown = (event) => {
+    if (event?.key !== 'Escape') return;
+    const resolved = resolveOpenCardsVotePopover(doc);
+    if (!resolved) return;
+    dismissCardsVotePopover(event, resolved);
+  };
+  const onClickCapture = (event) => {
+    const resolved = resolveOpenCardsVotePopover(doc);
+    if (!resolved) return;
+    const target = event?.target;
+    if (target && (resolved.popover.contains?.(target) || resolved.opener.contains?.(target) || target === resolved.opener)) return;
+    dismissCardsVotePopover(event, resolved);
+  };
+  const onClickRefresh = () => scheduleCardsVoteUiRefresh(win, renderLocalCount);
+  const onVote = () => renderLocalCount();
+
+  doc.addEventListener('keydown', onKeyDown, true);
+  doc.addEventListener('click', onClickCapture, true);
+  doc.addEventListener('click', onClickRefresh, false);
+  win?.addEventListener?.('gameroad:card-vote-local', onVote);
+  renderLocalCount();
+
+  const controller = Object.freeze({
+    render: renderLocalCount,
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      doc.removeEventListener('keydown', onKeyDown, true);
+      doc.removeEventListener('click', onClickCapture, true);
+      doc.removeEventListener('click', onClickRefresh, false);
+      win?.removeEventListener?.('gameroad:card-vote-local', onVote);
+      cardsVoteUiRepairInstallations.delete(doc);
+    },
+  });
+  cardsVoteUiRepairInstallations.set(doc, controller);
+  return controller;
+}
+
 function autoInstallDeckStorageLiveMount(doc, win) {
   const install = () => installDeckStorageLiveMount({ document: doc, window: win });
   if (doc?.readyState === 'loading') doc.addEventListener?.('DOMContentLoaded', install, { once: true });
@@ -747,6 +859,7 @@ function autoInstallCardsDeckFindability(doc, win) {
 if (typeof document !== 'undefined') {
   autoInstallDeckStorageLiveMount(document, globalThis.window);
   autoInstallCardsDeckFindability(document, globalThis.window);
+  installCardsVoteUiRepair({ document, window: globalThis.window });
   installCardsInspectorDismissInteractions({ document });
 }
 

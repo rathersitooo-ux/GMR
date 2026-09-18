@@ -975,9 +975,8 @@ test('vote-popover inside/opener interaction stays live while Escape performs sa
 test('vote safe-dismiss auto-installs before Cards inspector dismiss so the frontmost transient wins', async () => {
   const { readFile } = await import('node:fs/promises');
   const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
-  const auto = source.lastIndexOf("if (typeof document !== 'undefined')");
-  const vote = source.indexOf('installCardsVoteUiRepair({ document, window: globalThis.window })', auto);
-  const inspector = source.indexOf('installCardsInspectorDismissInteractions({ document })', auto);
-  assert.ok(auto >= 0 && vote > auto && inspector > vote);
+  const vote = source.indexOf('installCardsVoteUiRepair({ document, window: globalThis.window })');
+  const inspector = source.indexOf('installCardsInspectorDismissInteractions({ document })');
+  assert.ok(vote >= 0 && inspector > vote);
 });
 

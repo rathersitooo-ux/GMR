@@ -443,12 +443,16 @@ runtime.render(attack, {
   ]
 });
 assert.equal(runtime.phaseSurface.hidden, false);
-assert.equal(runtime.hud.root.hidden, false);
-assert.equal(runtime.currentActionCue.hidden, false);
-assert.equal(runtime.currentActionCue.textContent, '今：攻撃 A-1 → B-2');
-assert.equal(runtime.currentActionCue.dataset.phase, 'attack');
-assert.equal(runtime.currentActionCue.dataset.eventId, 'attack-1');
+assert.equal(runtime.shell.dataset.presentationMode, 'cinematic');
+assert.equal(runtime.phaseSurface.dataset.battlePhasePresentation, 'FULLSCREEN_ANIMATION');
+assert.equal(runtime.hud.root.hidden, true);
+assert.equal(runtime.currentActionCue.hidden, true);
+assert.equal(runtime.currentActionCue.textContent, '');
+assert.equal(runtime.currentActionCue.dataset.phase, undefined);
+assert.equal(runtime.currentActionCue.dataset.eventId, undefined);
 assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, undefined);
+assert.equal(runtime.progressGuide.hidden, true);
+assert.equal(runtime.fieldLandmark.hidden, true);
 assert.equal(runtime.planSlot.hidden, true);
 assert.equal(runtime.shell.dataset.mode, 'BATTLE_PHASE');
 assert.equal(runtime.shell.dataset.eventId, 'attack-1');

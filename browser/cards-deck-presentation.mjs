@@ -10,6 +10,7 @@ import {
 
 const deckStorageLiveInstallations = new WeakMap();
 const cardsDeckFindabilityInstallations = new WeakMap();
+const cardsInspectorDismissInstallations = new WeakMap();
 const CARDS_FAVORITE_STORAGE_KEY = 'gameroad.cards.favorite.v1';
 const DECK_SWIPE_DISCOVERY_STORAGE_KEY = 'gameroad.cards.deckSwipeDiscovery.v1';
 
@@ -664,6 +665,73 @@ export function installDeckStorageLiveMount({
   return installation;
 }
 
+function resolveOpenCardsInspector(doc) {
+  const screen = cardsScreen(doc);
+  if (!screen || !screen.classList?.contains?.('active') || screen.dataset?.inspector !== 'open') return null;
+  const preview = screen.querySelector?.('.cardPreview')
+    ?? doc?.querySelector?.('section[data-screen="cards"] .cardPreview');
+  if (!preview) return null;
+  return { screen, preview };
+}
+
+function restoreCardsInspectorFocus(doc, screen) {
+  const selected = screen?.querySelector?.('#collectionGrid [data-id].selected')
+    ?? doc?.querySelector?.('section[data-screen="cards"] #collectionGrid [data-id].selected');
+  try { selected?.focus?.({ preventScroll: true }); }
+  catch { try { selected?.focus?.(); } catch {} }
+}
+
+function consumeCardsInspectorDismissEvent(event) {
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  event?.stopImmediatePropagation?.();
+}
+
+export function installCardsInspectorDismissInteractions({ document: doc = globalThis.document } = {}) {
+  if (!doc?.addEventListener || !doc?.removeEventListener || !doc?.querySelector) {
+    return Object.freeze({ destroy() {} });
+  }
+  const existing = cardsInspectorDismissInstallations.get(doc);
+  if (existing) return existing;
+
+  const dismiss = (event, resolved) => {
+    consumeCardsInspectorDismissEvent(event);
+    resolved.screen.dataset.inspector = 'closed';
+    restoreCardsInspectorFocus(doc, resolved.screen);
+  };
+
+  const onKeyDown = (event) => {
+    if (event?.key !== 'Escape') return;
+    const resolved = resolveOpenCardsInspector(doc);
+    if (!resolved) return;
+    dismiss(event, resolved);
+  };
+
+  const onClickCapture = (event) => {
+    const resolved = resolveOpenCardsInspector(doc);
+    if (!resolved) return;
+    const target = event?.target;
+    if (target && resolved.preview.contains?.(target)) return;
+    dismiss(event, resolved);
+  };
+
+  doc.addEventListener('keydown', onKeyDown, true);
+  doc.addEventListener('click', onClickCapture, true);
+
+  let destroyed = false;
+  const controller = Object.freeze({
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      doc.removeEventListener('keydown', onKeyDown, true);
+      doc.removeEventListener('click', onClickCapture, true);
+      cardsInspectorDismissInstallations.delete(doc);
+    },
+  });
+  cardsInspectorDismissInstallations.set(doc, controller);
+  return controller;
+}
+
 function autoInstallDeckStorageLiveMount(doc, win) {
   const install = () => installDeckStorageLiveMount({ document: doc, window: win });
   if (doc?.readyState === 'loading') doc.addEventListener?.('DOMContentLoaded', install, { once: true });
@@ -679,6 +747,7 @@ function autoInstallCardsDeckFindability(doc, win) {
 if (typeof document !== 'undefined') {
   autoInstallDeckStorageLiveMount(document, globalThis.window);
   autoInstallCardsDeckFindability(document, globalThis.window);
+  installCardsInspectorDismissInteractions({ document });
 }
 
 const FANART_DB_NAME = 'gameroad_local_card_creator_v1';

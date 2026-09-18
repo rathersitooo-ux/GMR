@@ -12,6 +12,9 @@ import {
   createDeckSwipeSfxPlayer,
   isNeutralizedDeckEditorSwipe,
   presentDeckAddSwipe,
+  cardVoteLocalCount,
+  projectCardVoteLocalUi,
+  installCardVoteUiRepair,
 } from '../browser/cards-deck-presentation.mjs';
 
 const rect = (left, top, width, height) => ({ left, top, width, height });
@@ -677,4 +680,113 @@ test('public Battle local-art projection wraps only the existing public renderer
   for (const forbidden of ['fetch(', 'XMLHttpRequest', 'WebSocket', 'localStorage', 'sessionStorage']) {
     assert.equal(slice.includes(forbidden), false, `forbidden transport/storage path: ${forbidden}`);
   }
+});
+
+
+test('card vote UI projection counts only the selected card and does not invent non-free authority', () => {
+  const snapshot = {
+    source: 'prototype_local',
+    cardId: 'C1',
+    freeUsed: true,
+    cardUsed: true,
+    canFreeVote: false,
+    nonFreeResolved: false,
+    history: [
+      { cardId: 'C1', stance: 'for' },
+      { cardId: 'C2', stance: 'against' },
+      { cardId: 'C1', stance: 'against' },
+    ],
+  };
+  assert.equal(cardVoteLocalCount(snapshot, 'C1'), 2);
+  assert.equal(cardVoteLocalCount(snapshot, 'C2'), 1);
+  assert.equal(cardVoteLocalCount(snapshot, 'C3'), 0);
+  assert.deepEqual(projectCardVoteLocalUi(snapshot), {
+    source: 'prototype_local',
+    cardId: 'C1',
+    localVoteCount: 2,
+    freeUsed: true,
+    cardUsed: true,
+    canFreeVote: false,
+    nonFreeResolved: false,
+  });
+});
+
+test('card vote UI repair projects +1 for that card and dismisses the existing popover', () => {
+  const listeners = new Map();
+  const attrs = new Map();
+  const small = { textContent: '' };
+  const open = {
+    querySelector: (selector) => selector === 'small' ? small : null,
+    setAttribute: (name, value) => attrs.set(name, String(value)),
+  };
+  const classes = new Set();
+  const pop = {
+    classList: {
+      add: (name) => classes.add(name),
+      remove: (name) => classes.delete(name),
+      contains: (name) => classes.has(name),
+    },
+  };
+  const doc = {
+    addEventListener(type, fn) {
+      const list = listeners.get(type) ?? [];
+      list.push(fn);
+      listeners.set(type, list);
+    },
+    removeEventListener(type, fn) {
+      listeners.set(type, (listeners.get(type) ?? []).filter((candidate) => candidate !== fn));
+    },
+    getElementById(id) {
+      return id === 'cardVoteOpen' ? open : id === 'cardVotePopover' ? pop : null;
+    },
+    querySelector() { return null; },
+    emit(type, event = {}) {
+      for (const fn of listeners.get(type) ?? []) fn(event);
+    },
+  };
+  const history = [
+    { cardId: 'C1', stance: 'for' },
+    { cardId: 'C2', stance: 'against' },
+  ];
+  const runtimeGlobal = {
+    GAMEROAD_CARD_VOTE: {
+      snapshot(cardId) {
+        return {
+          source: 'prototype_local',
+          cardId: cardId ?? 'C1',
+          freeUsed: true,
+          cardUsed: true,
+          canFreeVote: false,
+          nonFreeResolved: false,
+          history: [...history],
+        };
+      },
+    },
+  };
+  const installation = installCardVoteUiRepair({
+    document: doc,
+    global: runtimeGlobal,
+    defer: (fn) => fn(),
+  });
+  assert.equal(installation.installed, true);
+  assert.equal(small.textContent, 'この端末 1票');
+
+  history.push({ cardId: 'C1', stance: 'against' });
+  doc.emit('gameroad:card-vote-local', { detail: { cardId: 'C1' } });
+  assert.equal(small.textContent, 'この端末 2票');
+
+  pop.classList.add('on');
+  attrs.set('aria-expanded', 'true');
+  doc.emit('click', { target: { closest: () => null } });
+  assert.equal(pop.classList.contains('on'), false);
+  assert.equal(attrs.get('aria-expanded'), 'false');
+
+  pop.classList.add('on');
+  doc.emit('keydown', { key: 'Escape' });
+  assert.equal(pop.classList.contains('on'), false);
+
+  pop.classList.add('on');
+  doc.emit('click', { target: { closest: (selector) => selector.includes('#collectionGrid') ? {} : null } });
+  assert.equal(pop.classList.contains('on'), false);
+  assert.equal(installation.destroy(), true);
 });

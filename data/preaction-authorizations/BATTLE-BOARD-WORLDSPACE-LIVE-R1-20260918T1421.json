@@ -1,0 +1,15 @@
+{
+  "schema": "gameroad.preaction-authorization.v3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_BOARD_WORLDSPACE_ARCHITECTURE_RECOVERY_R1",
+  "acquireKey": "BATTLE-BOARD-WORLDSPACE-LIVE-R1-20260918T1421-SOL",
+  "baseSha": "f584cd584ad318950ad78afea8e50e47b767ff4d",
+  "exactMutableResources": [
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "intent": "Connect the already-merged direct Battle board visual graph into the existing world-space board surface runtime without creating a second board engine or changing gameplay authority.",
+  "acceptance": "Existing USER_LOCK_BATTLE_BOARD_TOPOLOGY_R4 remains exact; world-space runtime exposes the shared lower field and 1 shared GOAL + 12 branches from the merged visual graph; focused tests and required gate pass; gameplay/rules/save/network unchanged.",
+  "imageGeneration": false
+}

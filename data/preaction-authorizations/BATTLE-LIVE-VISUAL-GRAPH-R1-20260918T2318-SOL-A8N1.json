@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-LIVE-VISUAL-GRAPH-R1-20260918T2318-SOL-A8N1",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_LIVE_VISUAL_GRAPH_RUNTIME_CONNECTION_R1",
+  "acquireKey": "BATTLE-LIVE-VISUAL-GRAPH-R1-20260918T2318-SOL-A8N1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_F584CD58_EXPIRED_PRIOR_BATTLE_LEASES_OWNER_FREE_20260918T2318JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOCAL_TRANSIENT_REHEARSAL_25_FOCUSED_NODE_PASS_PLUS_BROWSER_STATIC_PASS_NO_DURABLE_PRODUCT_MUTATION",
+  "proceedToken": "PROCEED|BATTLE-LIVE-VISUAL-GRAPH-R1-20260918T2318-SOL-A8N1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-live-visual-graph|world-field-renderer|active-lease",
+  "authorizationBaseSha": "f584cd584ad318950ad78afea8e50e47b767ff4d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_LIVE_VISUAL_GRAPH_RUNTIME_CONNECTION_R1",
+  "leaseAcquireKey": "BATTLE-LIVE-VISUAL-GRAPH-R1-20260918T2318-SOL-A8N1",
+  "leaseSnapshotReadbackAtJst": "2026-09-18 23:18 JST",
+  "leaseUntilJst": "2026-09-19 00:18 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base f584cd584ad318950ad78afea8e50e47b767ff4d fresh branch battle/live-visual-graph-a8n1; browser/battle-new-base-board-live-presentation-composer.mjs; browser/GAMEROAD.html; tests/battle-new-base-board-live-presentation-composer.test.mjs; own data/preaction-authorizations/BATTLE-LIVE-VISUAL-GRAPH-R1-20260918T2318-SOL-A8N1.json only. browser/new-base-battle-board-visual-graph.mjs READ_ONLY reuse. gameplay/rules/save/network and unrelated HTML surfaces READ_ONLY.",
+  "solutionSignature": "BATTLE_FIXED_VISUAL_GRAPH_TO_EXISTING_WORLD_FIELD_RENDERER_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "F584CD58_VISUAL_GRAPH_PLUS_EXISTING_LIVE_COMPOSER_AND_RENDERFIELD3D",
+  "solutionSearchEvidence": [
+    "Existing new-base-battle-board-visual-graph.mjs already owns the fixed shared GOAL / 12 lanes / seven structural cells / shared lower-field visual graph.",
+    "Existing battle-new-base-board-live-presentation-composer.mjs is already the mounted Battle presentation bridge.",
+    "Existing renderField3D is the live world-field renderer; this slice composes the existing graph into it instead of creating a second renderer or gameplay engine.",
+    "Transient rehearsal passed focused graph/composer/surface tests and browser static syntax before durable product mutation."
+  ],
+  "scope": [
+    "browser/battle-new-base-board-live-presentation-composer.mjs",
+    "browser/GAMEROAD.html",
+    "tests/battle-new-base-board-live-presentation-composer.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-new-base-board-live-presentation-composer.mjs",
+    "browser/GAMEROAD.html",
+    "tests/battle-new-base-board-live-presentation-composer.test.mjs"
+  ]
+}

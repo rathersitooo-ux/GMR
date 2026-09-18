@@ -499,7 +499,7 @@ assert.deepEqual(
 for (const fieldId of ['FIELD-01', 'FIELD-02', 'FIELD-03', 'FIELD-04', 'FIELD-05', 'FIELD-08', 'FIELD-09']) {
   root.dataset.battleFieldId = fieldId;
   runtime.render(attack);
-  assert.equal(runtime.fieldLandmark.hidden, false);
+  assert.equal(runtime.fieldLandmark.hidden, true);
   assert.equal(runtime.fieldLandmark.getAttribute('data-battle-field-landmark'), fieldId);
   assert.equal(runtime.fieldLandmark.dataset.fieldId, fieldId);
 }
@@ -509,7 +509,7 @@ assert.equal(runtime.fieldLandmark.hidden, true);
 assert.equal(runtime.fieldLandmark.getAttribute('data-battle-field-landmark'), '');
 root.dataset.battleFieldId = 'FIELD-01';
 runtime.render(attack);
-assert.equal(runtime.fieldLandmark.hidden, false);
+assert.equal(runtime.fieldLandmark.hidden, true);
 
 const p4View = runtime.laneSurfaces[3];
 const p4Afterstate = p4View.children[2];

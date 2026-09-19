@@ -4,7 +4,11 @@ import { readFileSync } from 'node:fs';
 import {
   BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA,
   BATTLE_JANKEN_FOCUS_LIVE_MOUNT_SCHEMA,
+  BATTLE_JANKEN_INPUT_MODE_SCHEMA,
+  BATTLE_JANKEN_INPUT_MODE,
   normalizeBattleJankenFocusIntegration,
+  normalizeBattleJankenInputMode,
+  projectBattleJankenInputModeOptions,
   BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS,
   advanceBattleJankenSlotRollState,
   buildBattleJankenSlidePadModel,
@@ -31,6 +35,36 @@ const hand = [
   { id: 'spade-a', suit: 'SP', label: 'Spade A' },
   { id: 'club-b', suit: 'CL', label: 'Club B' },
 ];
+
+test('prototype exposes exactly the three user-selectable janken input modes', () => {
+  assert.equal(BATTLE_JANKEN_INPUT_MODE_SCHEMA, 'gameroad.battle-janken-input-mode.v1');
+  assert.deepEqual(
+    projectBattleJankenInputModeOptions(BATTLE_JANKEN_INPUT_MODE.PLAIN),
+    [
+      { id: 'card_pull', label: 'カードを引く', shortLabel: 'カード', active: false },
+      { id: 'launcher', label: '発射板', shortLabel: '発射板', active: false },
+      { id: 'plain', label: 'そのまま', shortLabel: 'そのまま', active: true },
+    ],
+  );
+  assert.equal(normalizeBattleJankenInputMode('unknown'), BATTLE_JANKEN_INPUT_MODE.LAUNCHER);
+  assert.equal(normalizeBattleJankenInputMode('unknown', BATTLE_JANKEN_INPUT_MODE.CARD_PULL), BATTLE_JANKEN_INPUT_MODE.CARD_PULL);
+});
+
+test('three input modes share one existing card-action commit path', () => {
+  const source = readFileSync(
+    new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
+    'utf8',
+  ).replace(/\r\n/g, '\n');
+  assert.match(source, /grJankenInputModePicker/);
+  assert.match(source, /カードを引く/);
+  assert.match(source, /発射板/);
+  assert.match(source, /そのまま/);
+  assert.match(source, /inputMode === BATTLE_JANKEN_INPUT_MODE\.CARD_PULL/);
+  assert.match(source, /inputMode === BATTLE_JANKEN_INPUT_MODE\.LAUNCHER/);
+  assert.match(source, /function commitSelectedHand\(selectedHand\)/);
+  assert.match(source, /resolveBattleJankenSlotCardAction\(model, selectedHand, currentSourceHandIds\)/);
+  assert.match(source, /if \(cardId && clickExistingHandCard\(root, cardId\)\) playReleasedJankenCardFlight\(host, flight\);/);
+});
 
 
 test('current Hand3 snapshot projects the exact immutable three-card mapping without native-suit reassignment', () => {

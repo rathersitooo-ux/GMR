@@ -11,6 +11,110 @@ import {
 } from './battle-camera-input-router.mjs';
 
 const LIVE_SCHEMA = 'gameroad.battle-camera-live-runtime.v1';
+const DEDICATED_PHASE_CLASS = 'dedicatedBattlePhase';
+
+function styleSnapshot(node, property) {
+  const style = node?.style;
+  if (!style || typeof style.getPropertyValue !== 'function') return { value: '', priority: '' };
+  return {
+    value: style.getPropertyValue(property),
+    priority: typeof style.getPropertyPriority === 'function' ? style.getPropertyPriority(property) : '',
+  };
+}
+
+function restoreStyle(node, property, snapshot) {
+  const style = node?.style;
+  if (!style || typeof style.setProperty !== 'function') return;
+  if (snapshot?.value) style.setProperty(property, snapshot.value, snapshot.priority || '');
+  else if (typeof style.removeProperty === 'function') style.removeProperty(property);
+  else style.setProperty(property, '', '');
+}
+
+export function installDedicatedBattlePhaseWorldGuard(global = globalThis) {
+  const document = global?.document;
+  const root = document?.querySelector?.('section[data-screen="battle"]') ?? null;
+  const world = document?.getElementById?.('battleMap') ?? null;
+  const drawer = document?.getElementById?.('battleDrawer') ?? null;
+  if (!root || !world) return null;
+
+  let active = false;
+  let worldRestore = null;
+  let drawerRestore = null;
+
+  function captureNode(node) {
+    if (!node) return null;
+    return {
+      visibility: styleSnapshot(node, 'visibility'),
+      pointerEvents: styleSnapshot(node, 'pointer-events'),
+      ariaHidden: node.getAttribute?.('aria-hidden') ?? null,
+      inert: 'inert' in node ? node.inert === true : node.hasAttribute?.('inert') === true,
+    };
+  }
+
+  function setHidden(node) {
+    if (!node) return;
+    node.style?.setProperty?.('visibility', 'hidden', 'important');
+    node.style?.setProperty?.('pointer-events', 'none', 'important');
+    node.setAttribute?.('aria-hidden', 'true');
+    if ('inert' in node) node.inert = true;
+    else node.setAttribute?.('inert', '');
+  }
+
+  function restoreNode(node, snapshot) {
+    if (!node || !snapshot) return;
+    restoreStyle(node, 'visibility', snapshot.visibility);
+    restoreStyle(node, 'pointer-events', snapshot.pointerEvents);
+    if (snapshot.ariaHidden == null) node.removeAttribute?.('aria-hidden');
+    else node.setAttribute?.('aria-hidden', snapshot.ariaHidden);
+    if ('inert' in node) node.inert = snapshot.inert;
+    else if (snapshot.inert) node.setAttribute?.('inert', '');
+    else node.removeAttribute?.('inert');
+  }
+
+  function sync() {
+    const next = root.classList?.contains?.(DEDICATED_PHASE_CLASS) === true;
+    if (next === active) return active;
+    if (next) {
+      worldRestore = captureNode(world);
+      drawerRestore = captureNode(drawer);
+      if (world.contains?.(document.activeElement)) document.activeElement?.blur?.();
+      if (drawer?.contains?.(document.activeElement)) document.activeElement?.blur?.();
+      setHidden(world);
+      setHidden(drawer);
+    } else {
+      restoreNode(world, worldRestore);
+      restoreNode(drawer, drawerRestore);
+      worldRestore = null;
+      drawerRestore = null;
+    }
+    active = next;
+    return active;
+  }
+
+  const Observer = global?.MutationObserver;
+  const observer = typeof Observer === 'function' ? new Observer(sync) : null;
+  observer?.observe?.(root, { attributes: true, attributeFilter: ['class'] });
+  sync();
+
+  return Object.freeze({
+    schema: 'gameroad.battle-phase-live-world-guard.v1',
+    sync,
+    isActive: () => active,
+    destroy() {
+      observer?.disconnect?.();
+      if (active) {
+        restoreNode(world, worldRestore);
+        restoreNode(drawer, drawerRestore);
+        active = false;
+      }
+      return true;
+    },
+  });
+}
+
+if (globalThis?.document?.querySelector) {
+  installDedicatedBattlePhaseWorldGuard(globalThis);
+}
 
 function finiteNumber(value, name) {
   if (!Number.isFinite(value)) throw new TypeError(`${name} must be a finite number`);
@@ -350,6 +454,10 @@ export const BATTLE_CAMERA_LIVE_RUNTIME_CONTRACT = Object.freeze({
   oneActionReturn: true,
   controlledPointSyncWithoutManualViewSteal: true,
   screenSpaceUiAffected: false,
+  dedicatedBattlePhaseWorldGuard: true,
+  dedicatedBattlePhaseBoardHidden: true,
+  dedicatedBattlePhaseBoardInteractionDisabled: true,
+  dedicatedBattlePhaseDrawerHidden: true,
   worldObjectRelayout: false,
   gameplayAuthority: false,
   movementAuthority: false,

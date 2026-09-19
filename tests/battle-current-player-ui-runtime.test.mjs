@@ -154,7 +154,7 @@ function fixture() {
   return { document, root, nodes };
 }
 
-assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.schema, 'gameroad.battle-current-player-ui-runtime.v2');
+assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.schema, 'gameroad.battle-current-player-ui-runtime.v3');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.presentationOnly, true);
 assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.gameplayAuthority, false);
 assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.gameStateWrite, false);
@@ -170,6 +170,7 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.jankenSlidePad[0], '[data-battle
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.roulette[0], '[data-battle-playable-hand-row-roulette-live="1"]');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.supportEntry[0], '#detailsBtn');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.supportEntryPolicy, 'EXISTING_DETAILS_HISTORY_DECK_ENTRY_LOWER_LEFT');
+assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.attentionPolicy, 'ADVICE_WEAK_UNTIL_ACTIVE_WAITING_STRONG_ONLY_WHILE_WAITING_DETAILS_ON_DEMAND');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.boardProtagonistPolicy, 'BOUND_EXISTING_PARTNER_VISUAL_AND_MANA_ART_WITHOUT_RELOCATION_OR_STATE_WRITE');
 
 {
@@ -184,6 +185,8 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.boardProtagonistPolicy, 'BOUND_EXI
       decisionActive: false,
       jankenActive: true,
       rouletteEnabled: true,
+      adviceActive: false,
+      waitingForOthers: false,
       stale: false,
       reconnecting: false,
       reducedMotion: true,
@@ -242,7 +245,11 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.boardProtagonistPolicy, 'BOUND_EXI
     assert.doesNotMatch(rule, /(?:^|;)(?:left|right|top|bottom):/);
   }
   assert.match(styleText, /\[data-gr-current-ui-zone="support-entry"\]\{[^}]*left:var\(--gr-ui-edge\)!important[^}]*bottom:calc\(var\(--gr-ui-edge\) \+ 46px\)!important/);
-  assert.match(styleText, /\[data-gr-current-ui-zone="partner"\]\{[^}]*bottom:calc\(var\(--gr-ui-edge\) \+ 92px\)!important/);
+  assert.match(styleText, /\[data-gr-current-ui-zone="partner"\]\{[^}]*bottom:calc\(var\(--gr-ui-edge\) \+ 92px\)!important[^}]*opacity:\.22[^}]*pointer-events:none!important/);
+  assert.match(styleText, /data-gr-advice-active="true"[\s\S]*?\[data-gr-current-ui-zone="partner"\]\{opacity:1;pointer-events:auto!important\}/);
+  assert.match(styleText, /data-gr-waiting-for-others="true"[\s\S]*?#publicTurnHud\{opacity:1;filter:brightness\(1\.08\)\}/);
+  assert.match(styleText, /data-gr-waiting-for-others="true"[\s\S]*?\[data-gr-current-ui-zone="current-action"\]\{[^}]*border-color:/);
+  assert.match(styleText, /\[data-gr-current-ui-zone="details-on-demand"\]\[hidden\]\{display:none!important\}/);
   assert.match(styleText, /\[data-gr-current-ui-zone="partner-visual"\]\{width:clamp\(132px,15vw,190px\)!important;height:min\(34vh,245px\)!important\}/);
   assert.match(styleText, /\[data-gr-current-ui-zone="mana-art"\]\{--r8-size:clamp\(84px,8\.5vw,108px\)!important;width:var\(--r8-size\)!important;height:var\(--r8-size\)!important\}/);
   assert.match(styleText, /\.planBox\{[^}]*transform:none!important/);
@@ -280,15 +287,37 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.boardProtagonistPolicy, 'BOUND_EXI
   assert.equal(snapshot.collisions.supportEntryVsHand, false);
   assert.equal(snapshot.collisions.supportEntryVsResources, false);
   assert.equal(snapshot.collisions.supportEntryVsPartner, false);
+  assert.deepEqual(snapshot.attentionState, {
+    adviceActive: false,
+    waitingForOthers: false,
+    adviceDefaultWeak: true,
+    fourPlayerPublicDefaultWeak: true
+  });
   assert.equal(root.dataset.grRouletteEnabled, 'true');
+  assert.equal(root.dataset.grAdviceActive, 'false');
+  assert.equal(root.dataset.grWaitingForOthers, 'false');
   assert.equal(root.dataset.grReducedMotion, 'true');
   assert.equal(root.dataset.grLowPerf, 'true');
   assert.equal(root.dataset.grFocus, 'JANKEN_FOCUS');
 
-  runtime.sync({ stale: true, reconnecting: true, rouletteEnabled: false });
+  const attention = runtime.sync({
+    stale: true,
+    reconnecting: true,
+    rouletteEnabled: false,
+    adviceActive: true,
+    waitingForOthers: true
+  });
   assert.equal(root.dataset.grStale, 'true');
   assert.equal(root.dataset.grReconnecting, 'true');
   assert.equal(root.dataset.grRouletteEnabled, 'false');
+  assert.equal(root.dataset.grAdviceActive, 'true');
+  assert.equal(root.dataset.grWaitingForOthers, 'true');
+  assert.deepEqual(attention.attentionState, {
+    adviceActive: true,
+    waitingForOthers: true,
+    adviceDefaultWeak: false,
+    fourPlayerPublicDefaultWeak: false
+  });
 
   assert.equal(runtime.destroy(), true);
   assert.equal(runtime.destroy(), false);

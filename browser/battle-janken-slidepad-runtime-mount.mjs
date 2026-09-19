@@ -422,6 +422,14 @@ function addStyle(documentRef) {
 [${HOST_ATTR}="1"] .grJankenSlidePadSlot[data-pull-dragging="true"]{transform:translate(var(--gr-janken-pull-x,0px),var(--gr-janken-pull-y,0px)) scale(1.06)!important;filter:brightness(1.2);box-shadow:0 12px 30px rgba(6,6,6,.54),0 0 0 4px rgba(235,235,235,.28),0 0 28px rgba(220,220,220,.28);transition:none}
 [${HOST_ATTR}="1"] .grJankenSlidePadSlot[data-armed="true"]{filter:brightness(1.12);border-color:rgba(230,230,230,.98);box-shadow:0 10px 28px rgba(6,6,6,.5),0 0 0 4px rgba(185,185,185,.2),0 0 24px rgba(122,122,122,.26)}
 [${HOST_ATTR}="1"] .grJankenSlidePadSlot:disabled{filter:brightness(.68);background:linear-gradient(160deg,rgba(88,88,88,.84),rgba(44,44,44,.92));border-color:rgba(196,196,196,.42);color:rgba(231,231,231,.58);box-shadow:0 6px 16px rgba(6,6,6,.32);cursor:default;pointer-events:none}
+[${HOST_ATTR}="1"] .grJankenSlidePadSlot[data-physical-card-visible="true"]{border-color:transparent;background:transparent;box-shadow:none;padding:0}
+[${HOST_ATTR}="1"] .grJankenSlidePadSlot[data-physical-card-visible="true"]:disabled{background:transparent;border-color:transparent;box-shadow:none}
+[${HOST_ATTR}="1"] .grJankenSlidePadPhysicalCardHost{position:absolute;left:50%;top:50%;width:58px;height:78px;transform:translate(-50%,-50%);overflow:hidden;border-radius:8px;border:1px solid rgba(245,245,245,.84);background:rgba(28,28,28,.96);box-shadow:0 9px 22px rgba(6,6,6,.5);pointer-events:none;z-index:3}
+[${HOST_ATTR}="1"] .grJankenSlidePadPhysicalCard{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-width:0!important;max-width:none!important;margin:0!important;translate:none!important;scale:1!important;transform:none!important;pointer-events:none!important;box-sizing:border-box!important}
+[${HOST_ATTR}="1"] .grJankenSlidePadRoleBadge{position:absolute;right:1px;bottom:1px;z-index:6;max-width:78px;padding:3px 5px;border-radius:999px;border:1px solid rgba(255,255,255,.86);background:rgba(12,12,12,.9);box-shadow:0 3px 10px rgba(0,0,0,.48);color:#fff;font-size:9px;font-weight:950;line-height:1;letter-spacing:.03em;white-space:nowrap;pointer-events:none}
+[${HOST_ATTR}="1"] .grJankenSlidePadSlot[data-physical-card-visible="true"] .grJankenSlidePadSuit,[${HOST_ATTR}="1"] .grJankenSlidePadSlot[data-physical-card-visible="true"] .grJankenSlidePadCard,[${HOST_ATTR}="1"] .grJankenSlidePadSlot[data-physical-card-visible="true"] .grJankenSlidePadHand{visibility:hidden}
+[${HOST_ATTR}="1"] .grJankenSlidePadSlot[data-armed="true"][data-physical-card-visible="true"] .grJankenSlidePadPhysicalCardHost{border-color:#fff;box-shadow:0 10px 26px rgba(6,6,6,.54),0 0 0 3px rgba(255,255,255,.18),0 0 22px rgba(240,240,240,.24)}
+[${HOST_ATTR}="1"] .grJankenSlidePadSlot[data-armed="true"][data-physical-card-visible="true"] .grJankenSlidePadRoleBadge{background:rgba(242,242,242,.96);color:#111}
 [${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:32px;line-height:1;font-weight:900}
 [${HOST_ATTR}="1"] .grJankenSlidePadCard{font-size:9px;line-height:1.08;font-weight:850;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 [${HOST_ATTR}="1"] .grJankenSlidePadHand{font-size:9px;font-weight:900;letter-spacing:.08em;opacity:.72}
@@ -589,6 +597,8 @@ function restoreHandNode(node) {
   delete node.dataset.cardFocus;
   delete node.dataset.cardFocusLegal;
   delete node.dataset.cardStaged;
+  delete node.dataset.physicalCardId;
+  delete node.dataset.jankenRole;
   node.classList?.remove?.('grPlayableHandCandidate');
   node.querySelector?.('.grPlayableHandTriangle')?.remove?.();
   if (node.dataset.jankenReservedAriaOwned === '1') {
@@ -601,12 +611,20 @@ function syncHandZoneProjection(battleRoot, model) {
   const selected = new Set(Array.isArray(model?.assignment?.selectedJankenCardIds)
     ? model.assignment.selectedJankenCardIds
     : []);
+  const roleById = new Map((Array.isArray(model?.slots) ? model.slots : []).flatMap((slot) =>
+    slot?.occupied && slot?.cardId && SLOT_ORDER.includes(slot?.jankenHand)
+      ? [[slot.cardId, slot.jankenHand]]
+      : []));
   for (const node of handCardNodes(battleRoot)) {
     const id = node.dataset?.cardId?.trim?.() ?? '';
     const reserved = !!id && selected.has(id);
     if (reserved) {
       node.dataset.jankenReserved = 'true';
       node.dataset.handAuraDraggable = 'false';
+      node.dataset.physicalCardId = id;
+      const role = roleById.get(id) ?? null;
+      if (role) node.dataset.jankenRole = role;
+      else delete node.dataset.jankenRole;
       if (node.getAttribute?.('aria-hidden') !== 'true') {
         node.dataset.jankenReservedAriaOwned = '1';
         node.setAttribute?.('aria-hidden', 'true');
@@ -614,6 +632,8 @@ function syncHandZoneProjection(battleRoot, model) {
       continue;
     }
     delete node.dataset.jankenReserved;
+    delete node.dataset.physicalCardId;
+    delete node.dataset.jankenRole;
     if (node.dataset.jankenReservedAriaOwned === '1') {
       node.removeAttribute?.('aria-hidden');
       delete node.dataset.jankenReservedAriaOwned;
@@ -621,6 +641,61 @@ function syncHandZoneProjection(battleRoot, model) {
     const selectable = !node.disabled && node.getAttribute?.('aria-disabled') !== 'true';
     node.dataset.handAuraDraggable = selectable ? 'true' : 'false';
   }
+}
+
+function clearJankenSlotPhysicalCardPresentation(slotNode) {
+  if (!slotNode) return;
+  slotNode.querySelector?.('.grJankenSlidePadPhysicalCardHost')?.remove?.();
+  slotNode.querySelector?.('.grJankenSlidePadRoleBadge')?.remove?.();
+  if (slotNode.dataset) {
+    delete slotNode.dataset.physicalCardVisible;
+    delete slotNode.dataset.physicalCardId;
+    delete slotNode.dataset.jankenRole;
+  }
+}
+
+function syncJankenSlotPhysicalCardPresentation(battleRoot, slotNode, slot) {
+  clearJankenSlotPhysicalCardPresentation(slotNode);
+  const cardId = typeof slot?.cardId === 'string' ? slot.cardId.trim() : '';
+  if (!slot?.occupied || !cardId || !slotNode) return false;
+  const source = handCardNodes(battleRoot).find((node) => (node.dataset?.cardId ?? '') === cardId) ?? null;
+  if (!source || typeof source.cloneNode !== 'function') return false;
+
+  const clone = source.cloneNode(true);
+  clone.classList?.add?.('grJankenSlidePadPhysicalCard');
+  clone.removeAttribute?.('id');
+  clone.removeAttribute?.('aria-hidden');
+  clone.setAttribute?.('aria-hidden', 'true');
+  if (clone.dataset) {
+    clone.dataset.cardId = cardId;
+    clone.dataset.physicalCardId = cardId;
+    clone.dataset.jankenRole = slot.jankenHand;
+    delete clone.dataset.jankenReserved;
+    delete clone.dataset.jankenReservedAriaOwned;
+    delete clone.dataset.handAuraDraggable;
+    delete clone.dataset.handAuraDragging;
+    delete clone.dataset.cardFocus;
+    delete clone.dataset.cardFocusLegal;
+    delete clone.dataset.cardStaged;
+  }
+
+  const documentRef = battleRoot.ownerDocument ?? slotNode.ownerDocument ?? null;
+  const host = documentRef?.createElement?.('span');
+  const badge = documentRef?.createElement?.('span');
+  if (!host || !badge) return false;
+  host.className = 'grJankenSlidePadPhysicalCardHost';
+  host.dataset.physicalCardId = cardId;
+  host.appendChild(clone);
+  badge.className = 'grJankenSlidePadRoleBadge';
+  badge.dataset.jankenRole = slot.jankenHand;
+  badge.textContent = `${slot.symbol} ${slot.hand}`;
+  badge.setAttribute?.('aria-hidden', 'true');
+  slotNode.appendChild(host);
+  slotNode.appendChild(badge);
+  slotNode.dataset.physicalCardVisible = 'true';
+  slotNode.dataset.physicalCardId = cardId;
+  slotNode.dataset.jankenRole = slot.jankenHand;
+  return true;
 }
 
 function entropyIndex(globalRef, request) {
@@ -1718,6 +1793,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
         const node = slotNodes.get(jankenHand);
         const cardText = node?.querySelector?.('.grJankenSlidePadCard');
         if (!node) continue;
+        clearJankenSlotPhysicalCardPresentation(node);
         node.disabled = true;
         node.dataset.cardId = '';
         node.setAttribute('aria-label', `${SLOT_VIEW[jankenHand].symbol} ${SLOT_VIEW[jankenHand].hand} 読み込み中`);
@@ -1747,6 +1823,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
         ? `${slot.symbol} ${slot.hand} ${slot.cardLabel}`
         : `${slot.symbol} ${slot.hand} 空き`);
       cardText.textContent = slot.occupied ? slot.cardLabel : '空き';
+      syncJankenSlotPhysicalCardPresentation(root, node, slot);
       node.dataset.inputMode = inputMode;
       node.onclick = () => {
         if (suppressSlotClickHand === slot.jankenHand) {

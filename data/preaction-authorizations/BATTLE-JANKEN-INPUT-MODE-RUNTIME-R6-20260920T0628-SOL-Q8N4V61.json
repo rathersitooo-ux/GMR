@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-INPUT-MODE-RUNTIME-R6-20260920T0628-SOL-Q8N4V61",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_INPUT_MODE_RUNTIME_CONNECTION_R6",
+  "acquireKey": "BATTLE-JANKEN-INPUT-MODE-RUNTIME-R6-20260920T0628-SOL-Q8N4V61",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_835E250_SETTINGS_CORE_PRESENT_RUNTIME_PICKER_PRESENT_20260920T0629JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "STATIC_READBACK_BOUNDARY_RUNTIME_ONLY_NO_HTML_OVERLAP",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-INPUT-MODE-RUNTIME-R6-20260920T0628-SOL-Q8N4V61|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|settings-driven-janken-runtime|active-lease",
+  "authorizationBaseSha": "835e25093e400bc1d6d3e421484f824bfbf4a0f6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_INPUT_MODE_RUNTIME_CONNECTION_R6",
+  "leaseAcquireKey": "BATTLE-JANKEN-INPUT-MODE-RUNTIME-R6-20260920T0628-SOL-Q8N4V61",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 06:28 JST",
+  "leaseUntilJst": "2026-09-20 07:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A21:L21",
+  "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient data/preaction-authorizations/BATTLE-JANKEN-INPUT-MODE-RUNTIME-R6-20260920T0628-SOL-Q8N4V61.json cleanup-delete only; branch sol/battle-janken-input-mode-runtime-r6-20260920; PR/check/merge/readback; browser/battle-janken-input-mode-setting-core.mjs READ_ONLY dependency; browser/GAMEROAD.html READ_ONLY; own CURRENT lease/R24 event",
+  "solutionSignature": "BATTLE_JANKEN_INPUT_MODE_SETTINGS_DRIVEN_RUNTIME_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_RUNTIME_THREE_MODE_IMPLEMENTATION_PLUS_MERGED_PREFERENCE_CORE",
+  "solutionSearchEvidence": [
+    "Current SlidePad runtime already owns all three input behavior paths and one shared commit path.",
+    "Merged preference core PR#1901 already owns normalization/persistence and must be reused instead of adding a second setting store.",
+    "The remaining gap is presentation/runtime wiring: remove the in-Battle picker and initialize from persisted preference."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   BATTLE_CAMERA_LIVE_RUNTIME_CONTRACT,
+  installDedicatedBattlePhaseWorldGuard,
   mountBattleCameraLiveRuntime,
 } from '../browser/battle-camera-live-runtime.mjs';
 import { BATTLE_CAMERA_MODES } from '../browser/battle-camera-control-core.mjs';
@@ -229,4 +230,83 @@ test('mount fails closed when caller tries to omit numeric gesture calibration o
     gestureCalibration: CALIBRATION,
     isScreenUiTarget: () => false,
   }), /applyView callback is required/);
+});
+
+
+test('dedicated Battle Phase hides the board and drawer, then restores their previous presentation', () => {
+  class FakeStyle {
+    constructor() { this.values = new Map(); this.priorities = new Map(); }
+    getPropertyValue(name) { return this.values.get(name) ?? ''; }
+    getPropertyPriority(name) { return this.priorities.get(name) ?? ''; }
+    setProperty(name, value, priority = '') { this.values.set(name, value); this.priorities.set(name, priority); }
+    removeProperty(name) { this.values.delete(name); this.priorities.delete(name); }
+  }
+  class FakeNode {
+    constructor() {
+      this.style = new FakeStyle();
+      this.attributes = new Map();
+      this.classes = new Set();
+      this.inert = false;
+      this.focusChild = null;
+      this.classList = { contains: (name) => this.classes.has(name) };
+    }
+    setAttribute(name, value) { this.attributes.set(name, String(value)); }
+    getAttribute(name) { return this.attributes.has(name) ? this.attributes.get(name) : null; }
+    removeAttribute(name) { this.attributes.delete(name); }
+    hasAttribute(name) { return this.attributes.has(name); }
+    contains(node) { return node === this.focusChild; }
+  }
+
+  const root = new FakeNode();
+  const world = new FakeNode();
+  const drawer = new FakeNode();
+  world.style.setProperty('visibility', 'visible');
+  world.style.setProperty('pointer-events', 'auto');
+  drawer.style.setProperty('visibility', 'visible');
+  drawer.style.setProperty('pointer-events', 'auto');
+
+  let blurCount = 0;
+  const focus = { blur() { blurCount += 1; } };
+  world.focusChild = focus;
+  const document = {
+    activeElement: focus,
+    querySelector(selector) { return selector === 'section[data-screen="battle"]' ? root : null; },
+    getElementById(id) { return id === 'battleMap' ? world : id === 'battleDrawer' ? drawer : null; },
+  };
+
+  const guard = installDedicatedBattlePhaseWorldGuard({ document });
+  assert.ok(guard);
+  assert.equal(guard.isActive(), false);
+  assert.equal(world.style.getPropertyValue('visibility'), 'visible');
+
+  root.classes.add('dedicatedBattlePhase');
+  assert.equal(guard.sync(), true);
+  assert.equal(world.style.getPropertyValue('visibility'), 'hidden');
+  assert.equal(world.style.getPropertyPriority('visibility'), 'important');
+  assert.equal(world.style.getPropertyValue('pointer-events'), 'none');
+  assert.equal(world.getAttribute('aria-hidden'), 'true');
+  assert.equal(world.inert, true);
+  assert.equal(drawer.style.getPropertyValue('visibility'), 'hidden');
+  assert.equal(drawer.style.getPropertyValue('pointer-events'), 'none');
+  assert.equal(drawer.inert, true);
+  assert.equal(blurCount, 1);
+
+  root.classes.delete('dedicatedBattlePhase');
+  assert.equal(guard.sync(), false);
+  assert.equal(world.style.getPropertyValue('visibility'), 'visible');
+  assert.equal(world.style.getPropertyValue('pointer-events'), 'auto');
+  assert.equal(world.getAttribute('aria-hidden'), null);
+  assert.equal(world.inert, false);
+  assert.equal(drawer.style.getPropertyValue('visibility'), 'visible');
+  assert.equal(drawer.style.getPropertyValue('pointer-events'), 'auto');
+  assert.equal(drawer.inert, false);
+});
+
+test('live runtime contract declares the dedicated Battle Phase world guard without gameplay authority', () => {
+  assert.equal(BATTLE_CAMERA_LIVE_RUNTIME_CONTRACT.dedicatedBattlePhaseWorldGuard, true);
+  assert.equal(BATTLE_CAMERA_LIVE_RUNTIME_CONTRACT.dedicatedBattlePhaseBoardHidden, true);
+  assert.equal(BATTLE_CAMERA_LIVE_RUNTIME_CONTRACT.dedicatedBattlePhaseBoardInteractionDisabled, true);
+  assert.equal(BATTLE_CAMERA_LIVE_RUNTIME_CONTRACT.dedicatedBattlePhaseDrawerHidden, true);
+  assert.equal(BATTLE_CAMERA_LIVE_RUNTIME_CONTRACT.gameplayAuthority, false);
+  assert.equal(BATTLE_CAMERA_LIVE_RUNTIME_CONTRACT.gameStateWrite, false);
 });

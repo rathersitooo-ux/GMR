@@ -65,6 +65,20 @@ assert.equal(t.plans[3].transition, 'IMPACT_CARRY_RIGHT');
 assert.equal(t.plans[4].transition, 'MULTI_TARGET_SPREAD');
 assert.equal(t.plans[5].transition, 'PAIR_SWAP_RIGHT');
 assert.equal(t.plans[7].transition, 'FINISHER_GATHER');
+assert.equal(t.plans[1].stageHandoff.pairChange, 'ENTRY_PAIR');
+assert.deepEqual(t.plans[1].stageHandoff.incoming.map(x => x.actorId), ['P1','P2']);
+assert.equal(t.plans[2].stageHandoff.pairChange, 'KEEP_PAIR');
+assert.deepEqual(t.plans[2].stageHandoff.retained.map(x => x.actorId), ['P1','P2']);
+assert.equal(t.plans[3].stageHandoff.pairChange, 'REPLACE_ONE');
+assert.deepEqual(t.plans[3].stageHandoff.outgoing.map(x => [x.actorId,x.fromSide,x.movementIntent]), [['P2','right','EXIT_STAGE']]);
+assert.deepEqual(t.plans[3].stageHandoff.retained.map(x => [x.actorId,x.fromSide,x.toSide]), [['P1','left','left']]);
+assert.deepEqual(t.plans[3].stageHandoff.incoming.map(x => [x.actorId,x.toSide,x.movementIntent]), [['P3','right','ENTER_STAGE']]);
+assert.equal(t.plans[3].stageHandoff.timing.entersDuringPreviousRecovery, true);
+assert.ok(t.plans[3].stageHandoff.timing.recoveryOverlapMs > 0);
+assert.equal(t.plans[5].stageHandoff.pairChange, 'REPLACE_PAIR');
+assert.deepEqual(t.plans[5].stageHandoff.outgoing.map(x => x.actorId), ['P1','P2']);
+assert.deepEqual(t.plans[5].stageHandoff.incoming.map(x => x.actorId), ['P3','P4']);
+assert.equal(t.plans.every(p => p.stageHandoff.presentationOnly === true && p.stageHandoff.gameStateWrite === false && p.stageHandoff.targetWrite === false && p.stageHandoff.orderWrite === false), true);
 assert.deepEqual(t.plans[7].groupTargets, ['P1','P2','P3']);
 assert.ok(t.plans[7].emphasis.impact > t.plans[2].emphasis.impact);
 assert.ok(t.plans[3].emphasis.impact > t.plans[2].emphasis.impact);
@@ -164,7 +178,7 @@ assert.throws(() => createBattleStartLiveHandoff({generationId:'bad-title',prewa
 
 console.log(JSON.stringify({
   ok:true,
-  tests:63,
+  tests:77,
   timelineEnd:t.timelineEnd,
   reducedTimelineEnd:reduced.timelineEnd,
   transitions:t.plans.map(p=>[p.eventId,p.transition]),

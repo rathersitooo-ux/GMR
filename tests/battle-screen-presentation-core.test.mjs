@@ -375,6 +375,27 @@ const tampered = {
 };
 assert.deepEqual(auditBattleScreenModel(tampered).defects, ['CAUSAL_RETURN_DESTINATION']);
 
+const unknownScreenMode = auditBattleScreenModel({ ...planModel, screenMode: 'UNKNOWN' });
+assert.equal(unknownScreenMode.ok, false);
+assert.ok(unknownScreenMode.defects.includes('SCREEN_MODE'));
+
+const attackPretendingToBePlan = auditBattleScreenModel({ ...attack, screenMode: 'MATCH_PLAN' });
+assert.equal(attackPretendingToBePlan.ok, false);
+assert.ok(attackPretendingToBePlan.defects.includes('PHASE_MODE_COHERENCE'));
+assert.ok(attackPretendingToBePlan.defects.includes('PLAN_INPUT_POLICY'));
+
+const planPretendingToBeBattle = auditBattleScreenModel({ ...planModel, screenMode: 'BATTLE_PHASE' });
+assert.equal(planPretendingToBeBattle.ok, false);
+assert.ok(planPretendingToBeBattle.defects.includes('PHASE_MODE_COHERENCE'));
+assert.ok(planPretendingToBeBattle.defects.includes('BATTLE_INPUT_SCOPE'));
+
+const planWithBattleInputs = auditBattleScreenModel({
+  ...planModel,
+  battlePhaseInputPolicy: ['skip']
+});
+assert.equal(planWithBattleInputs.ok, false);
+assert.deepEqual(planWithBattleInputs.defects, ['PLAN_INPUT_POLICY']);
+
 assert.equal(BATTLE_SCREEN_PRESENTATION.authority, 'NONE_PRESENTATION_ONLY');
 assert.equal(BATTLE_SCREEN_PRESENTATION.laneCount, 4);
 assert.equal(BATTLE_SCREEN_PRESENTATION.planOwner, 'CALLER');

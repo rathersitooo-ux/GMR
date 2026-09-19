@@ -467,15 +467,20 @@ export function auditBattleScreenModel(model) {
     const causalRowPrefix = causal.processing ? 'causal-order:' : 'causal-return:';
     if (!targetLane?.afterstate?.some(row => row.id === `${causalRowPrefix}${causal.eventId}`)) defects.push('CAUSAL_RETURN_VISIBLE_ROW');
   }
+  const knownScreenMode = model?.screenMode === 'BATTLE_PHASE' || model?.screenMode === 'MATCH_PLAN';
+  if (!knownScreenMode) defects.push('SCREEN_MODE');
   if (model?.screenMode === 'BATTLE_PHASE') {
+    if (!PLAN_KINDS.has(model.phase)) defects.push('PHASE_MODE_COHERENCE');
     if (model.surfacePurpose !== 'CINEMATIC_RESOLUTION' || model.battlePhasePresentationMode !== 'FULLSCREEN_ANIMATION') defects.push('BATTLE_SURFACE_PURPOSE');
     if (model.normalPlanUiVisible !== false || model.normalHudVisibleDuringBattlePhase !== false) defects.push('BATTLE_NORMAL_UI_VISIBILITY');
     if (model.battlePhaseBoardInteractionAllowed !== false || model.boardInteractionOwnedByCaller !== false) defects.push('BATTLE_INPUT_SCOPE');
     if (!Array.isArray(model.battlePhaseInputPolicy) || model.battlePhaseInputPolicy.join('|') !== 'skip|public_info|accessibility') defects.push('BATTLE_INPUT_POLICY');
   }
   if (model?.screenMode === 'MATCH_PLAN') {
+    if (model.phase !== 'plan') defects.push('PHASE_MODE_COHERENCE');
     if (model.surfacePurpose !== 'INTERACTIVE_PLAN' || model.battlePhasePresentationMode !== null || model.normalPlanUiVisible !== true) defects.push('PLAN_SURFACE_PURPOSE');
     if (model.boardInteractionOwnedByCaller !== true) defects.push('PLAN_OWNER');
+    if (!Array.isArray(model.battlePhaseInputPolicy) || model.battlePhaseInputPolicy.length !== 0) defects.push('PLAN_INPUT_POLICY');
   }
   if (model?.motion !== 'allowed' && model?.motion !== 'static_only') defects.push('MOTION');
   return deepFreeze({ ok: defects.length === 0, defects });

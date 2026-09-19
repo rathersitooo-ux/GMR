@@ -115,19 +115,30 @@ test('accepted commit uses the already staged package and clears preview state',
   assert.equal(stack.status().previewReady, false);
 });
 
-test('explicit cancel delegates to the existing global precommit clear semantic', async () => {
+test('internal uncommitted-selection clear delegates to the existing global precommit clear semantic', async () => {
   const { calls, stack } = createHarness();
   await stack.focus('PAPER');
-  const cancelled = await stack.cancel();
+  const cleared = await stack.clearUncommittedSelection();
 
-  assert.equal(cancelled.ok, true);
-  assert.equal(cancelled.cleared, true);
+  assert.equal(cleared.ok, true);
+  assert.equal(cleared.cleared, true);
   assert.equal(calls.globalClears, 1);
   assert.equal(calls.previewClears, 1);
   assert.equal(stack.status().phase, 'IDLE');
 });
 
-test('rejected transport keeps the staged visible preview available for retry or cancel', async () => {
+test('legacy cancel is only a temporary compatibility alias for the same internal clear', async () => {
+  const { calls, stack } = createHarness();
+  await stack.focus('SCISSORS');
+  const cleared = await stack.cancel();
+
+  assert.equal(cleared.ok, true);
+  assert.equal(cleared.cleared, true);
+  assert.equal(calls.globalClears, 1);
+  assert.equal(stack.status().phase, 'IDLE');
+});
+
+test('rejected transport keeps the staged visible preview available for retry or internal clear', async () => {
   const { calls, stack } = createHarness({ commitAccepted: false });
   await stack.focus('ROCK');
   const committed = await stack.commit();

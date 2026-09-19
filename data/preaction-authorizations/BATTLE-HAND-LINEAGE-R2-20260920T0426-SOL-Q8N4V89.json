@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HAND-LINEAGE-R2-20260920T0426-SOL-Q8N4V89",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_HAND_PHYSICAL_CARD_LINEAGE_EXISTING_TEST_R2",
+  "acquireKey": "BATTLE-HAND-LINEAGE-R2-20260920T0426-SOL-Q8N4V89",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BATTLE-HAND-LINEAGE-EXISTING-CLASSIFIED-TEST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "LOAD-CARD-CHAIN-TEST-EXECUTED-BY-CONVENTIONAL-NODE-MAPPING",
+  "proceedToken": "PROCEED|BATTLE-HAND-LINEAGE-R2-20260920T0426-SOL-Q8N4V89|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "0dddca76a0c380f13530cf0f1952aaefef3c09c3",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_HAND_PHYSICAL_CARD_LINEAGE_EXISTING_TEST_R2",
+  "leaseAcquireKey": "BATTLE-HAND-LINEAGE-R2-20260920T0426-SOL-Q8N4V89",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 04:27 JST",
+  "leaseUntilJst": "2026-09-20 05:26 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A17:L17",
+  "leaseExactMutableResources": "tests/battle-load-card-chain-identity-core.test.mjs; data/preaction-authorizations/BATTLE-HAND-LINEAGE-R2-20260920T0426-SOL-Q8N4V89.json cleanup-delete only; own fresh branch/PR/check/merge/readback; own CURRENT lease/R24 event",
+  "scope": [
+    "tests/battle-load-card-chain-identity-core.test.mjs"
+  ],
+  "leaseScope": [
+    "tests/battle-load-card-chain-identity-core.test.mjs"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-LEGACY-CONFIRM-R1B-20260920T0426-SOL-Q8N4V02",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_LEGACY_POST_CARD_CONFIRMATION_REMOVAL_R1B",
+  "acquireKey": "BATTLE-LEGACY-CONFIRM-R1B-20260920T0426-SOL-Q8N4V02",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_SCOPE_BLOBS_AND_ACTIVE_LEASE_READBACK_20260920T0426JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_LOCAL_PRODUCT_AND_STATIC_CHECK_PASS_GATE_SCHEMA_ONLY_FAILURE",
+  "proceedToken": "PROCEED|BATTLE-LEGACY-CONFIRM-R1B-20260920T0426-SOL-Q8N4V02|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|legacy-post-card-confirmation-removal|html-static-check|active-lease",
+  "authorizationBaseSha": "0dddca76a0c380f13530cf0f1952aaefef3c09c3",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_LEGACY_POST_CARD_CONFIRMATION_REMOVAL_R1B",
+  "leaseAcquireKey": "BATTLE-LEGACY-CONFIRM-R1B-20260920T0426-SOL-Q8N4V02",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 04:26 JST",
+  "leaseUntilJst": "2026-09-20 05:26 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:N7",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; tests/browser-static-check.mjs; data/preaction-authorizations/BATTLE-LEGACY-CONFIRM-R1B-20260920T0426-SOL-Q8N4V02.json cleanup-delete only; own fresh branch/PR/check/merge/readback; own CURRENT lease",
+  "solutionSignature": "REMOVE_POST_CARD_PLAN_ACCEPTED_SUCCESS_CONFIRMATION_ONLY_V1",
+  "reuseDisposition": "NOT_APPLICABLE",
+  "solutionSearchStatus": "NOT_APPLICABLE",
+  "reuseDecisionEvidenceId": "EXISTING_INLINE_SUCCESS_CONFIRMATION_SURGICAL_DELETE",
+  "reuseNotApplicableReason": "This is a bounded deletion and assertion in existing files, not a new implementation path.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs"
+  ]
+}

@@ -261,9 +261,9 @@ test('rejected global precommit clear preserves visible preview and staged decis
   assert.equal(bridge.status().visiblePreviewReady, true);
 });
 
-test('contract keeps explicit global cancel separate from stale-focus local cleanup', () => {
+test('contract keeps global uncommitted-selection clear separate from stale-focus local cleanup', () => {
   assert.equal(BATTLE_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_CONTRACT.authority, 'NONE');
-  assert.equal(BATTLE_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_CONTRACT.explicitCancelPolicy, 'EXISTING_SHARED_GLOBAL_PRECOMMIT_CLEAR');
+  assert.equal(BATTLE_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_CONTRACT.uncommittedSelectionClearPolicy, 'EXISTING_SHARED_GLOBAL_PRECOMMIT_CLEAR');
   assert.equal(BATTLE_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_CONTRACT.staleFocusClearPolicy, 'COMPOUND_STAGE_ONLY');
   assert.equal(BATTLE_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_CONTRACT.globalClearRejectPolicy, 'KEEP_VISIBLE_PREVIEW_AND_STAGE');
   assert.equal(BATTLE_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_CONTRACT.authoritativeRollback, false);

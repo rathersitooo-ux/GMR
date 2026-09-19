@@ -7,6 +7,7 @@ import {
   goalBranchVisualStateForBuiltCount,
   projectBattleBoardVisualGraphToWorld,
 } from '../browser/new-base-battle-board-visual-graph.mjs';
+import { validateNewBaseBoardStructure } from '../tools/validate-new-base-board-structure.mjs';
 
 const EXPECTED_LOWER_NODE_KEYS = [
   'T0','T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11',
@@ -47,6 +48,12 @@ test('direct visual graph keeps one shared GOAL, 12 lanes, seven structural roun
   assert.equal(graph.gateConnections.length, 24);
   assert.equal(graph.lowerEdges.length, 71);
   assert.equal(graph.allVisualEdges.length, 179);
+});
+
+test('canonical visual-graph CI path runs the fail-closed NEW_BOARD_ONLY structure validator', () => {
+  const result = validateNewBaseBoardStructure(createBattleBoardVisualGraph());
+  assert.equal(result.ok, true, JSON.stringify(result.errors, null, 2));
+  assert.equal(result.reason, 'STRUCTURE_VALID');
 });
 
 test('the six-circle source discrepancy stays explicit instead of silently losing the USER_LOCK seventh position', () => {

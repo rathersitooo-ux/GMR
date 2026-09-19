@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PHYSICAL-CARD-LINEAGE-R1-20260920T0415-SOL-Q8N4V08",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PHYSICAL_CARD_LINEAGE_RUNTIME_R1",
+  "acquireKey": "BATTLE-PHYSICAL-CARD-LINEAGE-R1-20260920T0415-SOL-Q8N4V08",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_TARGET_BLOBS_AND_CURRENT_LEASE_READBACK_20260920T0415JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_PROTOTYPE_DIFF_SAME_TARGET_BLOBS_NO_MAIN_MUTATION",
+  "proceedToken": "PROCEED|BATTLE-PHYSICAL-CARD-LINEAGE-R1-20260920T0415-SOL-Q8N4V08|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|same-physical-card-lineage|runtime-test|active-lease",
+  "authorizationBaseSha": "cf43df2060ab00eb741d4c4bd5c923a1821dab8c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PHYSICAL_CARD_LINEAGE_RUNTIME_R1",
+  "leaseAcquireKey": "BATTLE-PHYSICAL-CARD-LINEAGE-R1-20260920T0415-SOL-Q8N4V08",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 04:15 JST",
+  "leaseUntilJst": "2026-09-20 05:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A19:L19",
+  "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; data/preaction-authorizations/BATTLE-PHYSICAL-CARD-LINEAGE-R1-20260920T0415-SOL-Q8N4V08.json cleanup-delete only; own fresh branch/PR/check/merge/readback; own CURRENT lease",
+  "solutionSignature": "BATTLE_EXISTING_CARDID_LINEAGE_RUNTIME_PROJECTION_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_HAND_RESERVATION_PLAN_CARDID_SEAMS_READBACK",
+  "solutionSearchEvidence": [
+    "The current SlidePad runtime already uses the ordinary hand DOM cardId as its physical identity input.",
+    "The current janken assignment already exposes sourceHandCardIds and selectedJankenCardIds without creating a second hand.",
+    "The current plan select surfaces already expose staged Road/Battle card ids, so the repair can join existing identities instead of adding a store."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

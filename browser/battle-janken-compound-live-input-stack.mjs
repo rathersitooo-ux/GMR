@@ -40,8 +40,8 @@ export function createBattleJankenCompoundLiveInputStack({
       return coordinator.focus(jankenHand);
     },
 
-    cancel() {
-      return coordinator.cancel();
+    clearUncommittedSelection() {
+      return coordinator.clearUncommittedSelection();
     },
 
     commit() {
@@ -84,7 +84,7 @@ export const BATTLE_JANKEN_COMPOUND_LIVE_INPUT_STACK_CONTRACT = frozen({
   focusPolicy: 'EXISTING_LATEST_FOCUS_COORDINATOR_ONLY',
   previewPolicy: 'EXISTING_EXACT_COMPOUND_PREVIEW_BRIDGE_ONLY',
   commitPolicy: 'LATEST_VISIBLE_PREVIEW_REQUIRED',
-  explicitCancelPolicy: 'EXISTING_SHARED_GLOBAL_PRECOMMIT_CLEAR_THROUGH_COORDINATOR',
+  uncommittedSelectionClearPolicy: 'EXISTING_SHARED_GLOBAL_PRECOMMIT_CLEAR_THROUGH_COORDINATOR',
   callerOwnsLiveConsumerLifecycle: true,
   callerOwnsPreviewRuntimeLifecycle: true,
   authoritativeRollback: false,

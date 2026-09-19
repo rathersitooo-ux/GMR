@@ -507,7 +507,7 @@ test('390x844 portrait keeps SlidePad and optional roulette in the right-thumb d
 test('dedicated janken focus integration requires the existing surface and live-stack contract', () => {
   const stack = {
     focus() {},
-    cancel() {},
+    clearUncommittedSelection() {},
     commit() {},
     status() {},
   };
@@ -802,7 +802,7 @@ test('ordinary hand focus enlarges the exact physical card face in place for loc
 });
 
 
-test('address6 late Focus attachment preserves one runtime seam and cancel A then reselect B commits only B', async () => {
+test('address6 late Focus attachment preserves one runtime seam and clear A then reselect B commits only B', async () => {
   const runtimeSource = readFileSync(
     new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
     'utf8',
@@ -875,8 +875,8 @@ test('address6 late Focus attachment preserves one runtime seam and cancel A the
 
   const selectedA = await integration.liveInputStack.focus('ROCK');
   assert.equal(selectedA.ok, true);
-  const cancelledA = await integration.liveInputStack.cancel();
-  assert.equal(cancelledA.ok, true);
+  const clearedA = await integration.liveInputStack.clearUncommittedSelection();
+  assert.equal(clearedA.ok, true);
   assert.equal(globalClears, 1);
   assert.equal(commits.length, 0);
 

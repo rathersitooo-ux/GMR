@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CINEMATIC-DUEL-R2-20260920T0429-SOL-Q8N4V91",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PHASE_CINEMATIC_ATTACKER_DEFENDER_PROXY_R2",
+  "acquireKey": "BATTLE-CINEMATIC-DUEL-R2-20260920T0429-SOL-Q8N4V91",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_USER_BATTLE_PHASE_FULL_ANIMATION_PLUS_R1B_PROVEN_DIFF_AND_UNCHANGED_TARGET_BLOBS",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1863_REQUIRED_GATE_SUCCESS_AND_EXACT_TWO_FILE_DIFF",
+  "proceedToken": "PROCEED|BATTLE-CINEMATIC-DUEL-R2-20260920T0429-SOL-Q8N4V91|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|cinematic-attacker-defender-proxy|fresh-main|active-lease",
+  "authorizationBaseSha": "0dddca76a0c380f13530cf0f1952aaefef3c09c3",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PHASE_CINEMATIC_ATTACKER_DEFENDER_PROXY_R2",
+  "leaseAcquireKey": "BATTLE-CINEMATIC-DUEL-R2-20260920T0429-SOL-Q8N4V91",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 04:29 JST",
+  "leaseUntilJst": "2026-09-20 05:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A18:L18",
+  "leaseExactMutableResources": "browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; data/preaction-authorizations/BATTLE-CINEMATIC-DUEL-R2-20260920T0429-SOL-Q8N4V91.json cleanup-delete only; own fresh branch/PR/check/merge/readback; own CURRENT lease",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

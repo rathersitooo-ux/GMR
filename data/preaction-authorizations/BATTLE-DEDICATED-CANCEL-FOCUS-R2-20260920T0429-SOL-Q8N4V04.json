@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-DEDICATED-CANCEL-FOCUS-R2-20260920T0429-SOL-Q8N4V04",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_DEDICATED_CANCEL_FOCUS_SURFACE_RETIRE_R2",
+  "acquireKey": "BATTLE-DEDICATED-CANCEL-FOCUS-R2-20260920T0429-SOL-Q8N4V04",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FOCUS_SURFACE_LEASE_FREE_BLOBS_MATCH_PR1884_20260920T0429JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOWER_STACK_LOCAL_REGRESSION_PLUS_EXISTING_FOCUS_TEST_BASELINE",
+  "proceedToken": "PROCEED|BATTLE-DEDICATED-CANCEL-FOCUS-R2-20260920T0429-SOL-Q8N4V04|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|focus-surface-cancel-retire|active-lease",
+  "authorizationBaseSha": "0dddca76a0c380f13530cf0f1952aaefef3c09c3",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_DEDICATED_CANCEL_FOCUS_SURFACE_RETIRE_R2",
+  "leaseAcquireKey": "BATTLE-DEDICATED-CANCEL-FOCUS-R2-20260920T0429-SOL-Q8N4V04",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 04:30 JST",
+  "leaseUntilJst": "2026-09-20 05:29 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A19:N19",
+  "solutionSignature": "BATTLE_FOCUS_SURFACE_INTERNAL_PRECOMMIT_CLEAR_NO_CANCEL_API_V1",
+  "reuseDisposition": "REUSE_LOWER_CLEAR_SEMANTIC",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "Current focus surface has no visible cancel control but still requires and exports a cancel programmatic API.",
+    "PR1884 lower stack provides clearUncommittedSelection with unchanged global precommit-clear behavior.",
+    "Automatic rejected-commit recovery still needs that internal clear; user-triggered cancel does not.",
+    "SlidePad runtime mount remains separately leased and is read-only in this slice."
+  ],
+  "scope": [
+    "browser/battle-janken-focus-runtime-surface.mjs",
+    "tests/battle-janken-focus-runtime-surface.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-focus-runtime-surface.mjs",
+    "tests/battle-janken-focus-runtime-surface.test.mjs"
+  ]
+}

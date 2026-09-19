@@ -352,6 +352,10 @@ export function createBattleScreenModel({
     secretProjectionAuthority: false,
     boardEffectCalculation: false,
     screenMode: inBattlePhase ? 'BATTLE_PHASE' : 'MATCH_PLAN',
+    surfacePurpose: inBattlePhase ? 'CINEMATIC_RESOLUTION' : 'INTERACTIVE_PLAN',
+    battlePhasePresentationMode: inBattlePhase ? 'FULLSCREEN_ANIMATION' : null,
+    normalPlanUiVisible: !inBattlePhase,
+    normalHudVisibleDuringBattlePhase: false,
     phase: inBattlePhase ? normalizedPlan.kind : 'plan',
     eventId: normalizedPlan?.eventId ?? null,
     transition: normalizedPlan?.transition ?? null,
@@ -464,10 +468,15 @@ export function auditBattleScreenModel(model) {
     if (!targetLane?.afterstate?.some(row => row.id === `${causalRowPrefix}${causal.eventId}`)) defects.push('CAUSAL_RETURN_VISIBLE_ROW');
   }
   if (model?.screenMode === 'BATTLE_PHASE') {
+    if (model.surfacePurpose !== 'CINEMATIC_RESOLUTION' || model.battlePhasePresentationMode !== 'FULLSCREEN_ANIMATION') defects.push('BATTLE_SURFACE_PURPOSE');
+    if (model.normalPlanUiVisible !== false || model.normalHudVisibleDuringBattlePhase !== false) defects.push('BATTLE_NORMAL_UI_VISIBILITY');
     if (model.battlePhaseBoardInteractionAllowed !== false || model.boardInteractionOwnedByCaller !== false) defects.push('BATTLE_INPUT_SCOPE');
     if (!Array.isArray(model.battlePhaseInputPolicy) || model.battlePhaseInputPolicy.join('|') !== 'skip|public_info|accessibility') defects.push('BATTLE_INPUT_POLICY');
   }
-  if (model?.screenMode === 'MATCH_PLAN' && model.boardInteractionOwnedByCaller !== true) defects.push('PLAN_OWNER');
+  if (model?.screenMode === 'MATCH_PLAN') {
+    if (model.surfacePurpose !== 'INTERACTIVE_PLAN' || model.battlePhasePresentationMode !== null || model.normalPlanUiVisible !== true) defects.push('PLAN_SURFACE_PURPOSE');
+    if (model.boardInteractionOwnedByCaller !== true) defects.push('PLAN_OWNER');
+  }
   if (model?.motion !== 'allowed' && model?.motion !== 'static_only') defects.push('MOTION');
   return deepFreeze({ ok: defects.length === 0, defects });
 }
@@ -480,6 +489,10 @@ export const BATTLE_SCREEN_PRESENTATION = deepFreeze({
   fourPublicCardSchema: FOUR_PUBLIC_CARD_SCHEMA,
   fourPublicCardAuthority: 'CALLER_AUTHORITATIVE_ACCEPTED_PUBLIC_CARDS_ONLY',
   planOwner: 'CALLER',
+  battlePhaseSurfacePurpose: 'CINEMATIC_RESOLUTION',
+  battlePhasePresentationMode: 'FULLSCREEN_ANIMATION',
+  battlePhaseNormalPlanUiVisible: false,
+  battlePhaseNormalHudVisible: false,
   battleEventAuthority: 'battle-conveyor-presentation-core accepted public events',
   compoundAttackPackageSchema: COMPOUND_ATTACK_SCHEMA,
   boardReturnAuthority: 'NORMALIZED_COMPOUND_ATTACK_PACKAGE_FROM_ACCEPTED_SETTLE_EVENT_ONLY',

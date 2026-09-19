@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-NORMAL-INFO-R1-20260920T0350-SOL-Q8N4V71",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_NORMAL_INFO_SURFACE_COMPOSITION_R1",
+  "acquireKey": "BATTLE-NORMAL-INFO-R1-20260920T0350-SOL-Q8N4V71",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BATTLE-NORMAL-INFO-R1-DISJOINT-PRESENTATION-ONLY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT-PLAYER-UI-FOCUSED-TEST-AND-PRESENTATION-ONLY-BOUNDARY",
+  "proceedToken": "PROCEED|BATTLE-NORMAL-INFO-R1-20260920T0350-SOL-Q8N4V71|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "3609b0d6f0285f5e9cb527f029e18cb1e43c700a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_NORMAL_INFO_SURFACE_COMPOSITION_R1",
+  "leaseAcquireKey": "BATTLE-NORMAL-INFO-R1-20260920T0350-SOL-Q8N4V71",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 03:50 JST",
+  "leaseUntilJst": "2026-09-20 04:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:L10",
+  "leaseExactMutableResources": "browser/battle-current-player-ui-runtime.mjs; tests/battle-current-player-ui-runtime.test.mjs; data/preaction-authorizations/BATTLE-NORMAL-INFO-R1-20260920T0350-SOL-Q8N4V71.json cleanup-delete only; own fresh branch/PR/check/merge/readback; own CURRENT lease/R24 event",
+  "scope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs"
+  ]
+}

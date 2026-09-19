@@ -1121,7 +1121,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     setData(phaseSurface, 'battlePhasePresentation', cinematicBattle ? 'FULLSCREEN_ANIMATION' : null);
     phaseSurface.hidden = !battle;
     setExternalBattleMapSuppressed(cinematicBattle);
-    hud.root.hidden = true;
+    hud.root.hidden = cinematicBattle || resultExit;
     writeCurrentActionCue(currentActionCue, resultExit || cinematicBattle ? null : model);
     writeCausalTrace(document, causalTrace, resultExit || cinematicBattle ? null : model);
     progressGuide.hidden = cinematicBattle || resultExit;

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-CARD-ROLE-R1-20260920T0419-SOL-Q8N4V53",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_CARD_ATTACHED_ROLE_PRESENTATION_R1",
+  "acquireKey": "BATTLE-JANKEN-CARD-ROLE-R1-20260920T0419-SOL-Q8N4V53",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BATTLE-JANKEN-CARD-ROLE-DISJOINT-PRESENTATION-ONLY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT-RPS-PHYSICAL-CARD-LINEAGE-GATE-PLUS-FOCUSED-TEST",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-CARD-ROLE-R1-20260920T0419-SOL-Q8N4V53|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "5716ef1ac89836900253d9a412acec9ed44c9c1a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_CARD_ATTACHED_ROLE_PRESENTATION_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-CARD-ROLE-R1-20260920T0419-SOL-Q8N4V53",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 04:20 JST",
+  "leaseUntilJst": "2026-09-20 05:19 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; data/preaction-authorizations/BATTLE-JANKEN-CARD-ROLE-R1-20260920T0419-SOL-Q8N4V53.json cleanup-delete only; own fresh branch/PR/check/merge/readback; own CURRENT lease",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

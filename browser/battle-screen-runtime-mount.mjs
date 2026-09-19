@@ -868,6 +868,29 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   phaseSurface.dataset.battleScreenBoardInteraction = 'forbidden';
   if (phaseAnchor.created) phaseSurface.hidden = true;
 
+  const externalBattleMap = document.getElementById?.('battleMap') ?? null;
+  const externalBattleMapStyle = externalBattleMap?.style
+    ? Object.freeze({
+      visibility: externalBattleMap.style.visibility ?? '',
+      pointerEvents: externalBattleMap.style.pointerEvents ?? ''
+    })
+    : null;
+  function setExternalBattleMapSuppressed(suppressed) {
+    if (!externalBattleMap?.style || !externalBattleMapStyle) return false;
+    if (suppressed) {
+      externalBattleMap.style.visibility = 'hidden';
+      externalBattleMap.style.pointerEvents = 'none';
+      externalBattleMap.setAttribute?.('aria-hidden', 'true');
+      setData(externalBattleMap, 'battlePhaseSuppressed', 'true');
+      return true;
+    }
+    externalBattleMap.style.visibility = externalBattleMapStyle.visibility;
+    externalBattleMap.style.pointerEvents = externalBattleMapStyle.pointerEvents;
+    externalBattleMap.removeAttribute?.('aria-hidden');
+    setData(externalBattleMap, 'battlePhaseSuppressed', null);
+    return false;
+  }
+
   const visualHost = adoptingExistingPhase ? shell : phaseSurface;
   const fieldLandmark = createFieldLandmark(document);
   visualHost.appendChild(fieldLandmark);
@@ -1097,6 +1120,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     setData(shell, 'presentationMode', cinematicBattle ? 'cinematic' : 'plan');
     setData(phaseSurface, 'battlePhasePresentation', cinematicBattle ? 'FULLSCREEN_ANIMATION' : null);
     phaseSurface.hidden = !battle;
+    setExternalBattleMapSuppressed(cinematicBattle);
     hud.root.hidden = true;
     writeCurrentActionCue(currentActionCue, resultExit || cinematicBattle ? null : model);
     writeCausalTrace(document, causalTrace, resultExit || cinematicBattle ? null : model);
@@ -1151,6 +1175,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     destroyed = true;
     try { focusObserver?.disconnect?.(); } catch {}
     currentPlayerUi?.destroy?.();
+    setExternalBattleMapSuppressed(false);
     if (fieldLandmark?.parentNode && typeof fieldLandmark.parentNode.removeChild === 'function') fieldLandmark.parentNode.removeChild(fieldLandmark);
     if (currentActionCue?.parentNode && typeof currentActionCue.parentNode.removeChild === 'function') currentActionCue.parentNode.removeChild(currentActionCue);
     if (causalTrace?.parentNode && typeof causalTrace.parentNode.removeChild === 'function') causalTrace.parentNode.removeChild(causalTrace);
@@ -1173,6 +1198,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     shell,
     planSlot,
     phaseSurface,
+    externalBattleMap,
     resolutionSurface,
     fieldLandmark,
     currentActionCue,
@@ -1216,6 +1242,7 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   battlePhasePresentationMode: 'FULLSCREEN_ANIMATION',
   battlePhaseNormalHudVisible: false,
   battlePhaseNormalPlanUiVisible: false,
+  battlePhaseBoardSurfacePolicy: 'HIDE_EXISTING_BATTLE_MAP_AND_DISABLE_POINTERS',
   battlePhaseAllowedInputs: Object.freeze(['skip', 'public_info', 'accessibility']),
   shieldLanePresentation: 'STRUCTURE_PLUS_EXACT_ACCEPTED_BOARD_RETURN_CUE_NO_SHIELD_STATE_INFERENCE',
   boardReturnAuthority: 'MODEL_ONLY_EXACT_OPPONENT_PLUS_SHIELD_LANE',

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PHASE-CINEMATIC-R5-20260919T2048-SOL-Q8N4V31",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PHASE_CINEMATIC_SURFACE_R2",
+  "acquireKey": "BATTLE-PHASE-CINEMATIC-R5-20260919T2048-SOL-Q8N4V31",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R4_GATE_FAILURE_IS_MANIFEST_RANGE_SHAPE_ONLY_AND_R4_SIX_FILE_DIFF_IS_SCOPED",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R4_FOCUSED_IMPLEMENTATION_REUSED_WITH_ONLY_PREACTION_RANGE_REF_CORRECTED",
+  "proceedToken": "PROCEED|BATTLE-PHASE-CINEMATIC-R5-20260919T2048-SOL-Q8N4V31|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-phase-cinematic-six-file-scope|fresh-main|active-lease",
+  "authorizationBaseSha": "c33fc875e0e49e144301d434bbef684fcd774797",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PHASE_CINEMATIC_SURFACE_R2",
+  "leaseAcquireKey": "BATTLE-PHASE-CINEMATIC-R5-20260919T2048-SOL-Q8N4V31",
+  "leaseSnapshotReadbackAtJst": "2026-09-19 20:48 JST",
+  "leaseUntilJst": "2026-09-19 21:48 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A14:L14",
+  "leaseExactMutableResources": "browser/battle-screen-presentation-core.mjs; browser/battle-screen-runtime-mount.mjs; browser/battle-board-visual-explanation-runtime-mount.mjs; tests/battle-screen-presentation-core.test.mjs; tests/battle-screen-runtime-mount.test.mjs; tests/battle-board-visual-explanation-runtime-mount.test.mjs; own fresh branch/PR/check/merge/readback; own CURRENT lease",
+  "scope": [
+    "browser/battle-screen-presentation-core.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "browser/battle-board-visual-explanation-runtime-mount.mjs",
+    "tests/battle-screen-presentation-core.test.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    "tests/battle-board-visual-explanation-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-presentation-core.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "browser/battle-board-visual-explanation-runtime-mount.mjs",
+    "tests/battle-screen-presentation-core.test.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    "tests/battle-board-visual-explanation-runtime-mount.test.mjs"
+  ]
+}

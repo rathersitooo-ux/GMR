@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CONVEYOR-SKIP-R1-20260920T0512-SOL-Q8N4V32",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CONVEYOR_SKIP_WIPE_CONVERGENCE_R1",
+  "acquireKey": "BATTLE-CONVEYOR-SKIP-R1-20260920T0512-SOL-Q8N4V32",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_TARGET_BLOBS_AND_CURRENT_LEASE_READBACK_20260920T0514JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_CONVEYOR_STAGE_HANDOFF_AND_ACCEPTED_TIMELINE_READBACK",
+  "proceedToken": "PROCEED|BATTLE-CONVEYOR-SKIP-R1-20260920T0512-SOL-Q8N4V32|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|conveyor-skip-wipe-convergence|core-test|active-lease",
+  "authorizationBaseSha": "49df37785dead2e3ea7943583e0668425b16149b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CONVEYOR_SKIP_WIPE_CONVERGENCE_R1",
+  "leaseAcquireKey": "BATTLE-CONVEYOR-SKIP-R1-20260920T0512-SOL-Q8N4V32",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 05:12 JST",
+  "leaseUntilJst": "2026-09-20 06:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A20:L20",
+  "leaseExactMutableResources": "browser/battle-conveyor-presentation-core.mjs; tests/battle-conveyor-presentation-core.test.mjs; data/preaction-authorizations/BATTLE-CONVEYOR-SKIP-R1-20260920T0512-SOL-Q8N4V32.json cleanup-delete only; own fresh branch/PR/check/merge/readback; own CURRENT lease",
+  "solutionSignature": "BATTLE_EXISTING_CONVEYOR_SKIP_WIPE_CONVERGENCE_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_STAGE_HANDOFF_CONVEYOR_ACCEPTED_EVENT_TIMELINE",
+  "solutionSearchEvidence": [
+    "The current conveyor core already derives outgoing, retained, and incoming stage members from accepted public events.",
+    "The current timeline already preserves accepted event identity/order and overlaps the next pair during previous recovery.",
+    "The uncovered gap is presentation playback control: skip/wipe must suppress only remaining visuals while converging to the same accepted event set and final accepted event, avoiding a second battle engine."
+  ],
+  "scope": [
+    "browser/battle-conveyor-presentation-core.mjs",
+    "tests/battle-conveyor-presentation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-conveyor-presentation-core.mjs",
+    "tests/battle-conveyor-presentation-core.test.mjs"
+  ]
+}

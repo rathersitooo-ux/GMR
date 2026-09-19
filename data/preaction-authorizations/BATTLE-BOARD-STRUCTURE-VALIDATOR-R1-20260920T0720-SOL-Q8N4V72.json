@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-STRUCTURE-VALIDATOR-R1-20260920T0720-SOL-Q8N4V72",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "NEW_BASE_BOARD_STRUCTURE_VALIDATOR_R1",
+  "acquireKey": "BATTLE-BOARD-STRUCTURE-VALIDATOR-R1-20260920T0720-SOL-Q8N4V72",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "ROW1374_BOARD_TOPOLOGY_CURRENT_R3+MAIN_F4AFB01+CURRENT_GRAPH_READBACK",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_NEW_BASE_GRAPH_FOCUSED_TESTS+STRUCTURAL_FAIL_CLOSED_DESIGN",
+  "proceedToken": "PROCEED|BATTLE-BOARD-STRUCTURE-VALIDATOR-R1-20260920T0720-SOL-Q8N4V72|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-topology|lease-snapshot",
+  "authorizationBaseSha": "f4afb01b4b2f1a3201b868e32e714bd3d4dd4053",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "NEW_BASE_BOARD_STRUCTURE_VALIDATOR_R1",
+  "leaseAcquireKey": "BATTLE-BOARD-STRUCTURE-VALIDATOR-R1-20260920T0720-SOL-Q8N4V72",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 07:20 JST",
+  "leaseUntilJst": "2026-09-20 08:19 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A23:L23",
+  "leaseExactMutableResources": "tools/validate-new-base-board-structure.mjs; tests/validate-new-base-board-structure.test.mjs; transient data/preaction-authorizations/BATTLE-BOARD-STRUCTURE-VALIDATOR-R1-20260920T0720-SOL-Q8N4V72.json cleanup-delete only; own fresh branch/PR/check/merge/readback; browser/new-base-battle-board-visual-graph.mjs READ_ONLY; browser/new-base-goal-path-core.mjs READ_ONLY; browser/battle-board-world-field-renderer.mjs READ_ONLY; browser/GAMEROAD.html READ_ONLY; gameplay/rules/save/network READ_ONLY",
+  "scope": [
+    "tools/validate-new-base-board-structure.mjs",
+    "tests/validate-new-base-board-structure.test.mjs"
+  ],
+  "leaseScope": [
+    "tools/validate-new-base-board-structure.mjs",
+    "tests/validate-new-base-board-structure.test.mjs"
+  ],
+  "solutionSignature": "Validate the CURRENT new-board presentation topology independently of runtime drawing so omissions, broken references, split lower-field structure, or old-board contamination fail before integration.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PARTYPLANNER64_VALIDATION_PATTERN+CURRENT_GMR_GRAPH_CONTRACT",
+  "solutionSearchEvidence": [
+    "external:PartyPlanner64/packages/lib/validation/validation.common.ts structural board checks",
+    "external:mariopartyrd/marioparty4 include/game/board/space.h explicit nodes+links",
+    "external:mariopartyrd/marioparty5 include/game/board/masu.h explicit links+flags",
+    "current:browser/new-base-battle-board-visual-graph.mjs",
+    "current:row1374 USER_DIRECT BOARD_TOPOLOGY_CURRENT_R3"
+  ]
+}

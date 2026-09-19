@@ -133,7 +133,7 @@ test('composes the merged components into the exact SlidePad focusIntegration sh
   assert.strictEqual(integration.mountSurface, mountSurface);
   assert.equal(typeof integration.readContext, 'function');
   assert.equal(typeof integration.liveInputStack.focus, 'function');
-  assert.equal(typeof integration.liveInputStack.cancel, 'function');
+  assert.equal(typeof integration.liveInputStack.clearUncommittedSelection, 'function');
   assert.equal(typeof integration.liveInputStack.commit, 'function');
   assert.equal(typeof integration.liveInputStack.status, 'function');
 
@@ -190,7 +190,7 @@ test('focus uses the same existing live stack and requires its visible preview b
   assert.equal(h.calls.commit, 1);
 });
 
-test('explicit cancel stays on the existing global precommit clear path and does not commit', async () => {
+test('internal uncommitted-selection clear stays on the existing global precommit clear path and does not commit', async () => {
   const h = createHarness();
   const integration = createIntegration(h);
 
@@ -198,9 +198,9 @@ test('explicit cancel stays on the existing global precommit clear path and does
   assert.equal(focused.ok, true);
   assert.equal(integration.liveInputStack.status().previewReady, true);
 
-  const cancelled = await integration.liveInputStack.cancel();
-  assert.equal(cancelled.ok, true);
-  assert.equal(cancelled.cleared, true);
+  const cleared = await integration.liveInputStack.clearUncommittedSelection();
+  assert.equal(cleared.ok, true);
+  assert.equal(cleared.cleared, true);
   assert.equal(h.calls.clearGlobal, 1);
   assert.equal(h.calls.commit, 0);
   assert.equal(integration.liveInputStack.status().previewReady, false);

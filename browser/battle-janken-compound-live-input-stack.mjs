@@ -44,13 +44,6 @@ export function createBattleJankenCompoundLiveInputStack({
       return coordinator.clearUncommittedSelection();
     },
 
-    // Temporary compatibility only for the still-active upper surface/mount.
-    // This alias is not a player-facing operation and is removed with their
-    // dedicated-cancel migration.
-    cancel() {
-      return coordinator.clearUncommittedSelection();
-    },
-
     commit() {
       return coordinator.commit();
     },
@@ -92,7 +85,6 @@ export const BATTLE_JANKEN_COMPOUND_LIVE_INPUT_STACK_CONTRACT = frozen({
   previewPolicy: 'EXISTING_EXACT_COMPOUND_PREVIEW_BRIDGE_ONLY',
   commitPolicy: 'LATEST_VISIBLE_PREVIEW_REQUIRED',
   uncommittedSelectionClearPolicy: 'EXISTING_SHARED_GLOBAL_PRECOMMIT_CLEAR_THROUGH_COORDINATOR',
-  legacyCancelCompatibilityAlias: true,
   callerOwnsLiveConsumerLifecycle: true,
   callerOwnsPreviewRuntimeLifecycle: true,
   authoritativeRollback: false,

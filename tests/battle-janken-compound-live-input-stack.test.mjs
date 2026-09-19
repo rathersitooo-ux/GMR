@@ -127,17 +127,6 @@ test('internal uncommitted-selection clear delegates to the existing global prec
   assert.equal(stack.status().phase, 'IDLE');
 });
 
-test('legacy cancel is only a temporary compatibility alias for the same internal clear', async () => {
-  const { calls, stack } = createHarness();
-  await stack.focus('SCISSORS');
-  const cleared = await stack.cancel();
-
-  assert.equal(cleared.ok, true);
-  assert.equal(cleared.cleared, true);
-  assert.equal(calls.globalClears, 1);
-  assert.equal(stack.status().phase, 'IDLE');
-});
-
 test('rejected transport keeps the staged visible preview available for retry or internal clear', async () => {
   const { calls, stack } = createHarness({ commitAccepted: false });
   await stack.focus('ROCK');

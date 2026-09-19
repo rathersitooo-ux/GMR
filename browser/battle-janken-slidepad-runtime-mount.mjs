@@ -53,7 +53,7 @@ export function normalizeBattleJankenFocusIntegration(value) {
   if (typeof value.mountSurface !== 'function' || typeof value.readContext !== 'function') return null;
   const liveInputStack = value.liveInputStack;
   if (!liveInputStack || typeof liveInputStack !== 'object') return null;
-  for (const name of ['focus', 'cancel', 'commit', 'status']) {
+  for (const name of ['focus', 'clearUncommittedSelection', 'commit', 'status']) {
     if (typeof liveInputStack[name] !== 'function') return null;
   }
   return Object.freeze({

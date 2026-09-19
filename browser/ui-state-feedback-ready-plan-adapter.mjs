@@ -670,7 +670,7 @@ export function bindBattleAutoHandSelector({ target } = {}) {
     button.setAttribute('aria-label', `オート札選択 ${BATTLE_AUTO_MODE_LABELS[mode]}`);
     button.title = mode === 'manual'
       ? 'AUTO: 手動。押すと左端→右端→最大→最小を切替'
-      : `AUTO: ${BATTLE_AUTO_MODE_LABELS[mode]}。札選択のみ自動。経路・対象・準備完了は手動`;
+      : `AUTO: ${BATTLE_AUTO_MODE_LABELS[mode]}。札が揃うと自動確定。経路は最後の札より先、対象は後で手動`;
   };
 
   const run = async () => {
@@ -742,16 +742,123 @@ export function bindBattleAutoHandSelector({ target } = {}) {
   });
 }
 
+export function bindBattlePlanAutoCommit({
+  target,
+  adapter,
+  operationTokenFactory,
+  enqueue = (fn) => (globalThis.queueMicrotask || ((task) => Promise.resolve().then(task)))(fn),
+} = {}) {
+  const document = target?.ownerDocument;
+  const road = document?.getElementById?.('roadSelect');
+  const battle = document?.getElementById?.('battleSelect');
+  if (!target || !road || !battle || typeof adapter?.dispatch !== 'function' || typeof operationTokenFactory !== 'function') return null;
+
+  const baselineHidden = Boolean(target.hidden);
+  const baselineDisplay = target.style?.getPropertyValue?.('display') || '';
+  const baselineDecisionState = target.dataset?.explicitDecisionRetired;
+  target.hidden = true;
+  target.setAttribute?.('aria-hidden', 'true');
+  target.setAttribute?.('tabindex', '-1');
+  target.style?.setProperty?.('display', 'none', 'important');
+  if (target.dataset) target.dataset.explicitDecisionRetired = '1';
+
+  let destroyed = false;
+  let queued = false;
+  let inFlight = false;
+
+  const readyFingerprint = () => {
+    const roadId = String(road.value || '');
+    const battleId = String(battle.value || '');
+    if (!roadId || !battleId || roadId === battleId) return '';
+    if (road.disabled === true || battle.disabled === true || target.disabled === true) return '';
+    return roadId + '|' + battleId;
+  };
+
+  const renderRetiredDecisionCue = () => {
+    const cue = document.getElementById?.('first10Cue');
+    if (!cue) return false;
+    const roadId = String(road.value || '');
+    const battleId = String(battle.value || '');
+    if (roadId && !battleId) cue.textContent = '必要なら先に人物をドラッグして経路を予約。最後にバトルカードを選ぶ';
+    else if (roadId && battleId && roadId !== battleId) cue.textContent = '必要札が揃ったため自動確定中';
+    return true;
+  };
+
+  const submit = () => {
+    queued = false;
+    if (destroyed || inFlight) return false;
+    if (!readyFingerprint()) return false;
+    inFlight = true;
+    try {
+      const legacy = typeof target.onclick === 'function' ? target.onclick() : undefined;
+      if (legacy !== undefined) {
+        Promise.resolve(legacy).finally(() => { inFlight = false; }).catch(() => {});
+        return legacy;
+      }
+      const out = adapter.dispatch({ type: 'KEY_ACTIVATE', operationTokenFactory });
+      inFlight = false;
+      return out;
+    } catch (error) {
+      inFlight = false;
+      throw error;
+    }
+  };
+
+  const scheduleSubmit = () => {
+    if (destroyed) return false;
+    renderRetiredDecisionCue();
+    if (queued) return false;
+    queued = true;
+    enqueue(() => {
+      try {
+        const result = submit();
+        if (result && typeof result.then === 'function') result.catch(() => {});
+      } catch (_) {
+        // Existing commit path owns player-facing failure feedback.
+      }
+    });
+    return true;
+  };
+
+  road.addEventListener?.('change', scheduleSubmit);
+  battle.addEventListener?.('change', scheduleSubmit);
+
+  const destroy = () => {
+    if (destroyed) return false;
+    destroyed = true;
+    road.removeEventListener?.('change', scheduleSubmit);
+    battle.removeEventListener?.('change', scheduleSubmit);
+    target.hidden = baselineHidden;
+    if (baselineDisplay) target.style?.setProperty?.('display', baselineDisplay);
+    else target.style?.removeProperty?.('display');
+    target.removeAttribute?.('aria-hidden');
+    target.removeAttribute?.('tabindex');
+    if (target.dataset) {
+      if (baselineDecisionState === undefined) delete target.dataset.explicitDecisionRetired;
+      else target.dataset.explicitDecisionRetired = baselineDecisionState;
+    }
+    return true;
+  };
+
+  return Object.freeze({ submit, scheduleSubmit, destroy });
+}
+
 const bindReadyPlanFeedbackControlBase = bindReadyPlanFeedbackControl;
 bindReadyPlanFeedbackControl = function bindReadyPlanFeedbackControlWithAuto(options = {}) {
   const binding = bindReadyPlanFeedbackControlBase(options);
   const auto = bindBattleAutoHandSelector({ target: options?.target });
-  if (!auto) return binding;
+  const autoCommit = bindBattlePlanAutoCommit({
+    target: options?.target,
+    adapter: options?.adapter,
+    operationTokenFactory: options?.operationTokenFactory,
+  });
+  if (!auto && !autoCommit) return binding;
   return Object.freeze({
     schema: binding.schema,
     acknowledge: binding.acknowledge,
     destroy() {
-      auto.destroy();
+      auto?.destroy();
+      autoCommit?.destroy();
       return binding.destroy();
     },
   });

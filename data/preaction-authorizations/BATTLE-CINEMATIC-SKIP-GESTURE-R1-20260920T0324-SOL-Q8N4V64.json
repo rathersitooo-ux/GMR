@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CINEMATIC-SKIP-GESTURE-R1-20260920T0324-SOL-Q8N4V64",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CINEMATIC_SKIP_WIPE_INTENT_CORE_R1",
+  "acquireKey": "BATTLE-CINEMATIC-SKIP-GESTURE-R1-20260920T0324-SOL-Q8N4V64",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MODEL_ALREADY_ALLOWS_SKIP_INPUT_AND_USER_EXPLICIT_REQUIRES_SKIP_PLUS_WIPE_WITH_RESULT_INVARIANCE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "NEW_PURE_PRESENTATION_INTENT_FILES_ONLY_NO_LIVE_RUNTIME_OR_GAMEPLAY_MUTATION",
+  "proceedToken": "PROCEED|BATTLE-CINEMATIC-SKIP-GESTURE-R1-20260920T0324-SOL-Q8N4V64|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-cinematic-skip-wipe-intent|fresh-main|active-lease",
+  "authorizationBaseSha": "900d0852ebc4f4f76212391892ba497358fa19a6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CINEMATIC_SKIP_WIPE_INTENT_CORE_R1",
+  "leaseAcquireKey": "BATTLE-CINEMATIC-SKIP-GESTURE-R1-20260920T0324-SOL-Q8N4V64",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 03:35 JST",
+  "leaseUntilJst": "2026-09-20 04:24 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A16:L16",
+  "leaseExactMutableResources": "browser/battle-cinematic-skip-intent-core.mjs; tests/battle-cinematic-skip-intent-core.test.mjs; data/preaction-authorizations/BATTLE-CINEMATIC-SKIP-GESTURE-R1-20260920T0324-SOL-Q8N4V64.json transient only; own fresh branch/PR/check/merge/readback; own CURRENT lease",
+  "scope": [
+    "browser/battle-cinematic-skip-intent-core.mjs",
+    "tests/battle-cinematic-skip-intent-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-cinematic-skip-intent-core.mjs",
+    "tests/battle-cinematic-skip-intent-core.test.mjs"
+  ],
+  "solutionSignature": "EXISTING_BATTLE_PHASE_SKIP_POLICY_TO_NORMALIZED_BUTTON_OR_WIPE_PRESENTATION_INTENT",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE_EXISTING_BATTLE_SKIP_POLICY_AND_PRESENTATION_ONLY_BOUNDARY_20260920",
+  "solutionSearchEvidence": [
+    "browser/battle-screen-runtime-mount.mjs@main exposes BATTLE_SCREEN_RUNTIME.battlePhaseAllowedInputs including skip and authority NONE",
+    "tests/battle-screen-presentation-core.test.mjs@main verifies Battle Phase input policy skip/public_info/accessibility with presentation-only accepted-event projection"
+  ]
+}

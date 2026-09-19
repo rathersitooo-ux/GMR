@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CINEMATIC-DUEL-CORE-R8C-20260920T0338-SOL-Q8N4V63",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CINEMATIC_DUEL_SEQUENCE_CORE_R8",
+  "acquireKey": "BATTLE-CINEMATIC-DUEL-CORE-R8C-20260920T0338-SOL-Q8N4V63",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_5F315_SKIP_CORE_PLUS_DISJOINT_LEASE_READBACK_20260920T0338JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXACT_PRIOR_BRANCH_LOGIC_EXECUTION_PASS_PLUS_CURRENT_CONVEYOR_CONTRACT",
+  "proceedToken": "PROCEED|BATTLE-CINEMATIC-DUEL-CORE-R8C-20260920T0338-SOL-Q8N4V63|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-cinematic-duel-sequence-core|new-files-only|active-lease",
+  "authorizationBaseSha": "5f315721a0f46c469dd526aee56deb48ebcc084e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CINEMATIC_DUEL_SEQUENCE_CORE_R8",
+  "leaseAcquireKey": "BATTLE-CINEMATIC-DUEL-CORE-R8C-20260920T0338-SOL-Q8N4V63",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 03:38 JST",
+  "leaseUntilJst": "2026-09-20 04:38 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "browser/battle-cinematic-duel-sequence-core.mjs; tests/battle-cinematic-duel-sequence-core.test.mjs; data/preaction-authorizations/BATTLE-CINEMATIC-DUEL-CORE-R8C-20260920T0338-SOL-Q8N4V63.json cleanup-delete only; own fresh branch/PR/check/merge/readback; own CURRENT lease/R24 event",
+  "solutionSignature": "BATTLE_CINEMATIC_DUEL_SEQUENCE_PRESENTATION_ONLY_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_BATTLE_CONVEYOR_SCREEN_ACTION_ORDER_AND_SKIP_CORE_ACTUAL",
+  "solutionSearchEvidence": [
+    "battle-conveyor-presentation-core already owns accepted attack/ability ordering, stages, transitions, and handoff timing; this core composes those outputs rather than creating a second Battle engine.",
+    "battle-screen-presentation/runtime already owns full-screen Battle Phase, four public cards, source/target roles, and board return; those active runtime files remain read-only because another current WorkUnit owns them.",
+    "battle-cinematic-skip-intent-core is now merged on current main and remains read-only; this WorkUnit does not duplicate skip/wipe semantics.",
+    "The exact previous implementation was executed against the current conveyor contract: attacker/defender/card lineage, multi-target reactions, phase boundary handoff, and wrong-owner rejection all passed.",
+    "The new core performs no order, target, winner, reaction, effect, or gameplay-state calculation."
+  ],
+  "scope": [
+    "browser/battle-cinematic-duel-sequence-core.mjs",
+    "tests/battle-cinematic-duel-sequence-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-cinematic-duel-sequence-core.mjs",
+    "tests/battle-cinematic-duel-sequence-core.test.mjs"
+  ]
+}

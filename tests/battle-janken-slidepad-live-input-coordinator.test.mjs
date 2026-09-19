@@ -145,7 +145,7 @@ test('focus superseded before its queued mutation never stages the stale hand', 
   });
   const coordinator = createBattleJankenSlidePadLiveInputCoordinator({ liveBridge: bridge });
 
-  const cancelling = coordinator.cancel();
+  const cancelling = coordinator.clearUncommittedSelection();
   const first = coordinator.focus('ROCK');
   const latest = coordinator.focus('PAPER');
   gate.resolve();
@@ -158,14 +158,14 @@ test('focus superseded before its queued mutation never stages the stale hand', 
   assert.deepEqual(calls, ['clear-precommit', 'stage:PAPER']);
 });
 
-test('explicit cancel during in-flight stage uses stale local cleanup then one global precommit clear', async () => {
+test('uncommitted selection clear during in-flight stage uses stale local cleanup then one global precommit clear', async () => {
   const stage = deferred();
   const { bridge, calls } = createFakeBridge({ stageImpl: () => stage.promise });
   const coordinator = createBattleJankenSlidePadLiveInputCoordinator({ liveBridge: bridge });
 
   const focusing = coordinator.focus('PAPER');
   await Promise.resolve();
-  const cancelling = coordinator.cancel();
+  const cancelling = coordinator.clearUncommittedSelection();
   stage.resolve(readyStage('PAPER'));
 
   const focusResult = await focusing;
@@ -179,7 +179,7 @@ test('explicit cancel during in-flight stage uses stale local cleanup then one g
   assert.deepEqual(calls, ['stage:PAPER', 'clear', 'clear-precommit']);
 });
 
-test('failed explicit global clear restores the current ready focus instead of half-clearing locally', async () => {
+test('failed uncommitted-selection clear restores the current ready focus instead of half-clearing locally', async () => {
   const { bridge, calls } = createFakeBridge({
     precommitClearImpl: async () => ({
       ok: false,
@@ -190,7 +190,7 @@ test('failed explicit global clear restores the current ready focus instead of h
   const coordinator = createBattleJankenSlidePadLiveInputCoordinator({ liveBridge: bridge });
 
   await coordinator.focus('ROCK');
-  const result = await coordinator.cancel();
+  const result = await coordinator.clearUncommittedSelection();
 
   assert.equal(result.ok, false);
   assert.equal(result.cleared, false);
@@ -235,7 +235,7 @@ test('commit without the latest visible preview fails closed and does not call t
   assert.deepEqual(calls, []);
 });
 
-test('focus and cancel are rejected while an authoritative commit is in flight', async () => {
+test('focus and uncommitted-selection clear are rejected while an authoritative commit is in flight', async () => {
   const commitGate = deferred();
   const { bridge, calls } = createFakeBridge({
     commitImpl: async () => commitGate.promise,
@@ -247,7 +247,7 @@ test('focus and cancel are rejected while an authoritative commit is in flight',
   await Promise.resolve();
 
   const focusDuringCommit = await coordinator.focus('PAPER');
-  const cancelDuringCommit = await coordinator.cancel();
+  const cancelDuringCommit = await coordinator.clearUncommittedSelection();
   assert.equal(focusDuringCommit.reason, 'COMMIT_IN_FLIGHT');
   assert.equal(cancelDuringCommit.reason, 'COMMIT_IN_FLIGHT');
   assert.equal(coordinator.status().desiredHand, 'ROCK');
@@ -258,7 +258,7 @@ test('focus and cancel are rejected while an authoritative commit is in flight',
   assert.deepEqual(calls, ['stage:ROCK', 'commit:ROCK']);
 });
 
-test('rejected commit preserves ready preview and explicit cancel then uses global precommit clear', async () => {
+test('rejected commit preserves ready preview and uncommitted selection clear then uses global precommit clear', async () => {
   const { bridge, calls } = createFakeBridge({
     commitImpl: async () => ({ ok: false, committed: false, reason: 'EXISTING_BATTLE_ACTION_REJECTED' }),
   });
@@ -273,7 +273,7 @@ test('rejected commit preserves ready preview and explicit cancel then uses glob
   assert.equal(coordinator.status().readyHand, 'PAPER');
   assert.deepEqual(calls, ['stage:PAPER', 'commit:PAPER']);
 
-  await coordinator.cancel();
+  await coordinator.clearUncommittedSelection();
   assert.equal(coordinator.status().phase, 'IDLE');
   assert.deepEqual(calls, ['stage:PAPER', 'commit:PAPER', 'clear-precommit']);
 });
@@ -306,11 +306,11 @@ test('destroy serializes a final compound-only clear and prevents later focus or
   assert.deepEqual(calls, ['stage:SCISSORS', 'clear']);
 });
 
-test('contract states global explicit cancel and local stale cleanup are separate', () => {
+test('contract states global uncommitted selection clear and local stale cleanup are separate', () => {
   assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.authority, 'NONE');
-  assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.explicitCancelPolicy, 'EXISTING_SHARED_GLOBAL_PRECOMMIT_CLEAR_THROUGH_BRIDGE');
+  assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.uncommittedSelectionClearPolicy, 'EXISTING_SHARED_GLOBAL_PRECOMMIT_CLEAR_THROUGH_BRIDGE');
   assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.staleFocusClearPolicy, 'COMPOUND_STAGE_ONLY');
-  assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.failedExplicitCancelPolicy, 'RESTORE_LOCAL_READY_STATE_IF_STILL_CURRENT');
+  assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.failedUncommittedSelectionClearPolicy, 'RESTORE_LOCAL_READY_STATE_IF_STILL_CURRENT');
   assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.asyncMutationPolicy, 'SERIAL_LATEST_FOCUS_WINS');
   assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.commitRequiresLatestVisiblePreview, true);
   assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.authoritativeRollback, false);

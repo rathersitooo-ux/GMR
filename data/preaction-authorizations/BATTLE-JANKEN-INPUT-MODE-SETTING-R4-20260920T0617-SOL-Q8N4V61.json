@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-INPUT-MODE-SETTING-R4-20260920T0617-SOL-Q8N4V61",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_INPUT_MODE_SETTING_PREFERENCE_R4",
+  "acquireKey": "BATTLE-JANKEN-INPUT-MODE-SETTING-R4-20260920T0617-SOL-Q8N4V61",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_B1A703_PREFERENCE_CORE_ISOLATED_20260920T0618JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "DONOR_R3_CORE_TEST_PROVEN_AND_ISOLATED",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-INPUT-MODE-SETTING-R4-20260920T0617-SOL-Q8N4V61|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|janken-input-mode-preference-core|active-lease",
+  "authorizationBaseSha": "b1a703b6babb0bded6e9d5901d1a882b89203c4b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_INPUT_MODE_SETTING_PREFERENCE_R4",
+  "leaseAcquireKey": "BATTLE-JANKEN-INPUT-MODE-SETTING-R4-20260920T0617-SOL-Q8N4V61",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 06:17 JST",
+  "leaseUntilJst": "2026-09-20 07:17 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A21:L21",
+  "leaseExactMutableResources": "browser/battle-janken-input-mode-setting-core.mjs; tests/battle-janken-input-mode-setting-core.test.mjs; transient data/preaction-authorizations/BATTLE-JANKEN-INPUT-MODE-SETTING-R4-20260920T0617-SOL-Q8N4V61.json cleanup-delete only; branch sol/battle-janken-input-mode-setting-r4-20260920; replacement PR/check/merge/readback; own CURRENT lease/R24 event",
+  "solutionSignature": "BATTLE_JANKEN_INPUT_MODE_SETTING_PREFERENCE_CORE_V1",
+  "reuseDisposition": "REUSE_PROVEN_DONOR",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R3_TWO_FILE_DONOR_EXACT_BLOBS",
+  "solutionSearchEvidence": [
+    "Existing 3 input-mode IDs are already authoritative and are not redefined.",
+    "Donor core/test are isolated new files and do not touch SlidePad runtime, GAMEROAD.html, gameplay, card identity, target, order, or result.",
+    "Fresh current main is b1a703b6babb0bded6e9d5901d1a882b89203c4b after 10こ merge."
+  ],
+  "scope": [
+    "browser/battle-janken-input-mode-setting-core.mjs",
+    "tests/battle-janken-input-mode-setting-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-input-mode-setting-core.mjs",
+    "tests/battle-janken-input-mode-setting-core.test.mjs"
+  ]
+}

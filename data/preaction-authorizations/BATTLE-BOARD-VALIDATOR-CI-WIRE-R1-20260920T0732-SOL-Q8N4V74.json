@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-VALIDATOR-CI-WIRE-R1-20260920T0732-SOL-Q8N4V74",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "NEW_BASE_BOARD_STRUCTURE_VALIDATOR_CI_WIRING_R1",
+  "acquireKey": "BATTLE-BOARD-VALIDATOR-CI-WIRE-R1-20260920T0732-SOL-Q8N4V74",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "MERGED_STRUCTURE_VALIDATOR+REQUIRED_GATE_CONVENTIONAL_PAIR_BEHAVIOR+PR1902_NONOVERLAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_GRAPH_TEST_ALREADY_RUNS_ON_VISUAL_GRAPH_CHANGES",
+  "proceedToken": "PROCEED|BATTLE-BOARD-VALIDATOR-CI-WIRE-R1-20260920T0732-SOL-Q8N4V74|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ci-wire|lease-snapshot",
+  "authorizationBaseSha": "c615ec2d05bee0f7a9123e8048256a050d62a59f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "NEW_BASE_BOARD_STRUCTURE_VALIDATOR_CI_WIRING_R1",
+  "leaseAcquireKey": "BATTLE-BOARD-VALIDATOR-CI-WIRE-R1-20260920T0732-SOL-Q8N4V74",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 07:32 JST",
+  "leaseUntilJst": "2026-09-20 08:31 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A23:L23",
+  "leaseExactMutableResources": "tests/new-base-battle-board-visual-graph.test.mjs; transient data/preaction-authorizations/BATTLE-BOARD-VALIDATOR-CI-WIRE-R1-20260920T0732-SOL-Q8N4V74.json cleanup-delete only; own fresh branch/PR/check/merge/readback; browser/new-base-battle-board-visual-graph.mjs READ_ONLY; tools/validate-new-base-board-structure.mjs READ_ONLY; browser/battle-board-world-field-renderer.mjs READ_ONLY; browser/GAMEROAD.html READ_ONLY; gameplay/rules/save/network READ_ONLY",
+  "scope": [
+    "tests/new-base-battle-board-visual-graph.test.mjs"
+  ],
+  "leaseScope": [
+    "tests/new-base-battle-board-visual-graph.test.mjs"
+  ],
+  "solutionSignature": "Connect the merged NEW_BOARD_ONLY structure validator to the canonical visual-graph conventional test so future graph edits cannot bypass the validator.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_CONVENTIONAL_GRAPH_TEST_IS_REQUIRED_GATE_ENTRYPOINT",
+  "solutionSearchEvidence": [
+    "current:.github/workflows/gameroad-required-gate.yml conventional module→counterpart test mapping",
+    "current:tests/new-base-battle-board-visual-graph.test.mjs",
+    "current:tools/validate-new-base-board-structure.mjs"
+  ]
+}

@@ -1232,6 +1232,20 @@ await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount
   });
   expect(staleProjection?.activeCount).toBe(0);
   await expect(battle.locator('[data-partner-advice-role="partner-recommendation"]')).toHaveCount(0);
+  const queuedAfterStale = await page.evaluate(async () => {
+    const board = window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__;
+    await new Promise((resolve) => queueMicrotask(resolve));
+    await board?.render?.();
+    return board?.snapshot?.() ?? null;
+  });
+  expect(queuedAfterStale?.activeCount, 'queued ready render cannot resurrect markers after stale state').toBe(0);
+  const delayedAfterStale = await page.evaluate(async () => {
+    const board = window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return board?.snapshot?.() ?? null;
+  });
+  expect(delayedAfterStale?.activeCount, 'delayed stale convergence keeps markers cleared').toBe(0);
+  await expect(battle.locator('[data-partner-advice-role="partner-recommendation"]')).toHaveCount(0);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await battle.locator('#partnerAdviceBtn').click();
   await expect.poll(async () => battle.locator('[data-partner-advice-role="partner-recommendation"]').count()).toBe(2);

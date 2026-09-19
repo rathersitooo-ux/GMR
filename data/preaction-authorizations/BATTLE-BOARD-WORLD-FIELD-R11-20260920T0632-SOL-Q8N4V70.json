@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-WORLD-FIELD-R11-20260920T0632-SOL-Q8N4V70",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_BOARD_WORLDSPACE_ARCHITECTURE_RECOVERY_R1",
+  "acquireKey": "BATTLE-BOARD-WORLD-FIELD-R11-20260920T0632-SOL-Q8N4V70",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1842_MERGED_ARCH_CORRECTION_PLUS_CURRENT_VISUAL_GRAPH_READBACK",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_MAIN_GRAPH_AND_SURFACE_RUNTIME_READBACK_20260920T0632JST",
+  "proceedToken": "PROCEED|BATTLE-BOARD-WORLD-FIELD-R11-20260920T0632-SOL-Q8N4V70|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|world-field-board-renderer|presentation-only|active-lease",
+  "authorizationBaseSha": "835e25093e400bc1d6d3e421484f824bfbf4a0f6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_BOARD_WORLDSPACE_ARCHITECTURE_RECOVERY_R1",
+  "leaseAcquireKey": "BATTLE-BOARD-WORLD-FIELD-R11-20260920T0632-SOL-Q8N4V70",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 06:32 JST",
+  "leaseUntilJst": "2026-09-20 07:32 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/new-base-battle-board-visual-graph.mjs; browser/battle-board-world-field-renderer.mjs; tests/new-base-battle-board-visual-graph.test.mjs; tests/battle-board-world-field-renderer.test.mjs; transient own PRE_ACTION manifest cleanup-delete only; own branch/PR/check/merge/readback. browser/GAMEROAD.html/gameplay/rules/save/network READ_ONLY.",
+  "solutionSignature": "BATTLE_BOARD_WORLD_FIELD_RENDERER_FROM_CANONICAL_VISUAL_GRAPH_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1842_PLUS_CURRENT_VISUAL_GRAPH_EXISTING_SOURCE",
+  "solutionSearchEvidence": [
+    "PR#1842 architecture correction is merged and explicitly resumes at existing world/field renderer integration.",
+    "Current new-base-battle-board-visual-graph.mjs already preserves shared GOAL, 12 upper lanes, Gate+Shield identities, lower round nodes and visual adjacency without gameplay authority.",
+    "Current Flanora board surface is presentation-only and explicitly marks screen-space topology false.",
+    "No current consumer of createBattleBoardVisualGraph was found on default-branch code search, so this slice adds the missing renderer rather than a second board engine."
+  ],
+  "scope": [
+    "browser/new-base-battle-board-visual-graph.mjs",
+    "browser/battle-board-world-field-renderer.mjs",
+    "tests/new-base-battle-board-visual-graph.test.mjs",
+    "tests/battle-board-world-field-renderer.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-battle-board-visual-graph.mjs",
+    "browser/battle-board-world-field-renderer.mjs",
+    "tests/new-base-battle-board-visual-graph.test.mjs",
+    "tests/battle-board-world-field-renderer.test.mjs"
+  ]
+}

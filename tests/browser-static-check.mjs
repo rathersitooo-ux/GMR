@@ -54,6 +54,7 @@ function collectHomeVisualShellErrors(html) {
 
 function collectStaticErrors(html) {
   const errors = [];
+  if (html.includes('PLAN_ACCEPTED')) errors.push('legacy post-card PLAN_ACCEPTED confirmation is present');
   if (!/<!doctype\s+html\b/i.test(html)) errors.push('missing HTML doctype');
 
   for (const marker of ['<<<<<<<', '=======', '>>>>>>>']) {

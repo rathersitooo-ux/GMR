@@ -197,7 +197,7 @@ test('missing catalog metadata preserves exact package cardId and never borrows 
   assert.doesNotMatch(html, /foreign\.webp/);
 });
 
-test('JANKEN_FOCUS exposes exactly one target-rail switch for each authoritative package and no free target', async () => {
+test('JANKEN_FOCUS exposes exactly one target-rail switch for each authoritative package and playing a ready card commits it immediately', async () => {
   const liveInputStack = createLiveStack();
   const { runtime } = mount({ liveInputStack });
   const html = runtime.host.innerHTML;
@@ -212,12 +212,13 @@ test('JANKEN_FOCUS exposes exactly one target-rail switch for each authoritative
   assert.match(html, /data-shield-lane="RIGHT"/);
   const result = await runtime.focus('PAPER');
   assert.equal(result.ok, true);
+  assert.equal(result.committed, true);
+  assert.equal(result.autoCommitted, true);
   assert.deepEqual(liveInputStack.calls.focus, ['PAPER']);
-  assert.equal(runtime.snapshot().presentation.focusedPackage.opponentId, 'opponent-paper-g1');
-  assert.equal(runtime.snapshot().presentation.focusedPackage.shieldLane, 'RIGHT');
-  assert.equal(runtime.snapshot().presentation.surface, 'LOAD_FOCUS');
+  assert.equal(liveInputStack.calls.commit, 1);
+  assert.equal(runtime.snapshot().accepted, true);
+  assert.equal(runtime.host.hidden, true);
 });
-
 test('JANKEN_FOCUS uses centered flower-bloom presentation with a reduced-motion static fallback', () => {
   const { documentRef, runtime } = mount();
   assert.match(runtime.host.innerHTML, /grJankenFocusPanel grJankenFocusBloomPanel/);
@@ -234,108 +235,102 @@ test('JANKEN_FOCUS uses centered flower-bloom presentation with a reduced-motion
   assert.match(style.textContent, /\.grJankenRoleBadge\{position:absolute;[^}]*z-index:3/);
 });
 
-test('focus preserves the same exact physical card art into enlarged LOAD_FOCUS', async () => {
+test('playing a focused physical card preserves the exact authoritative identity into the accepted auto-commit', async () => {
   const liveInputStack = createLiveStack();
   const artByCardId = exactArt();
-  const { runtime } = mount({ liveInputStack, artByCardId });
+  const accepted = [];
+  const { runtime } = mount({
+    liveInputStack,
+    artByCardId,
+    onAccepted(result, pkg) { accepted.push({ result, pkg }); },
+  });
   const focusHtml = runtime.host.innerHTML;
   assert.match(focusHtml, /src="https:\/\/assets\.example\/g1\/scissors\.webp"/);
   const result = await runtime.focus('SCISSORS');
   assert.deepEqual(liveInputStack.calls.focus, ['SCISSORS']);
-  assert.equal(liveInputStack.calls.commit, 0);
-  assert.equal(result.ok, true);
-  assert.equal(runtime.snapshot().presentation.surface, 'LOAD_FOCUS');
-  assert.equal(runtime.snapshot().presentation.focusedHand, 'SCISSORS');
-  assert.match(runtime.host.innerHTML, /ロード確認/);
-  assert.match(runtime.host.innerHTML, /data-physical-card-id="scissors-card-g1"/);
-  assert.match(runtime.host.innerHTML, /data-native-suit="HT"/);
-  assert.match(runtime.host.innerHTML, /data-printed-rank="Q"/);
-  assert.match(runtime.host.innerHTML, /data-card-art-status="BOUND"/);
-  assert.match(runtime.host.innerHTML, /src="https:\/\/assets\.example\/g1\/scissors\.webp"/);
-  assert.match(runtime.host.innerHTML, /data-janken-role="SCISSORS">✌ チョキ/);
-  assert.match(runtime.host.innerHTML, /opponent-scissors-g1/);
-  assert.match(runtime.host.innerHTML, /CENTER \/ shield-scissors-g1/);
+  assert.equal(liveInputStack.calls.commit, 1);
+  assert.equal(result.committed, true);
+  assert.equal(result.autoCommitted, true);
+  assert.equal(runtime.snapshot().accepted, true);
+  assert.equal(runtime.host.hidden, true);
+  assert.equal(accepted.length, 1);
+  assert.equal(accepted[0].pkg.cardId, 'scissors-card-g1');
+  assert.equal(accepted[0].pkg.jankenHand, 'SCISSORS');
+  assert.equal(accepted[0].pkg.opponentId, 'opponent-scissors-g1');
+  assert.equal(accepted[0].pkg.shieldLane, 'CENTER');
 });
-
-test('failed visible preview stays fail-closed in JANKEN_FOCUS and never exposes commit', async () => {
+test('failed visible preview stays fail-closed in JANKEN_FOCUS and never auto-commits', async () => {
   const liveInputStack = createLiveStack({ rejectFocus: true });
   const { runtime } = mount({ liveInputStack });
   const result = await runtime.focus('PAPER');
   assert.equal(result.ok, false);
   assert.equal(runtime.snapshot().presentation.surface, 'JANKEN_FOCUS');
   assert.equal(runtime.snapshot().presentation.previewReady, false);
-  assert.doesNotMatch(runtime.host.innerHTML, /このロードで決定/);
-  const commit = await runtime.commit();
-  assert.equal(commit.committed, false);
   assert.equal(liveInputStack.calls.commit, 0);
+  assert.doesNotMatch(runtime.host.innerHTML, /このロードで決定/);
+  assert.doesNotMatch(runtime.host.innerHTML, /data-gr-janken-focus-action="commit"/);
+  assert.doesNotMatch(runtime.host.innerHTML, /data-gr-janken-focus-action="cancel"/);
 });
-
-test('BOARD_PEEK round-trip preserves the exact focused package and returns to LOAD_FOCUS without restaging', async () => {
+test('BOARD_PEEK remains available before card play and returning does not stage or commit anything', async () => {
   const liveInputStack = createLiveStack();
   const { runtime } = mount({ liveInputStack, artByCardId: exactArt() });
-  await runtime.focus('ROCK');
-  const before = runtime.snapshot().presentation.focusedPackage;
   assert.equal(runtime.boardPeek(), true);
   assert.equal(runtime.snapshot().presentation.surface, 'BOARD_PEEK');
   assert.match(runtime.host.innerHTML, /じゃんけんに戻る/);
   assert.equal(runtime.returnFromBoardPeek(), true);
-  const after = runtime.snapshot().presentation.focusedPackage;
-  assert.equal(runtime.snapshot().presentation.surface, 'LOAD_FOCUS');
-  assert.equal(after, before);
-  assert.match(runtime.host.innerHTML, /src="https:\/\/assets\.example\/g1\/rock\.webp"/);
-  assert.deepEqual(liveInputStack.calls.focus, ['ROCK']);
+  assert.equal(runtime.snapshot().presentation.surface, 'JANKEN_FOCUS');
+  assert.deepEqual(liveInputStack.calls.focus, []);
+  assert.equal(liveInputStack.calls.commit, 0);
+  const committed = await runtime.focus('ROCK');
+  assert.equal(committed.committed, true);
+  assert.equal(liveInputStack.calls.commit, 1);
 });
-
-test('commit delegates exactly once; rejection keeps LOAD_FOCUS and accepted commit closes the surface', async () => {
+test('card play delegates commit exactly once; rejection clears precommit and a fresh card play can retry', async () => {
   const liveInputStack = createLiveStack({ rejectCommit: true });
   const accepted = [];
   const { runtime } = mount({ liveInputStack, onAccepted(result, pkg) { accepted.push({ result, pkg }); } });
-  await runtime.focus('PAPER');
-  const rejected = await runtime.commit();
+  const rejected = await runtime.focus('PAPER');
   assert.equal(rejected.committed, false);
+  assert.equal(rejected.autoCommitted, true);
   assert.equal(liveInputStack.calls.commit, 1);
-  assert.equal(runtime.snapshot().presentation.surface, 'LOAD_FOCUS');
+  assert.equal(liveInputStack.calls.cancel, 1);
+  assert.equal(runtime.snapshot().presentation.surface, 'JANKEN_FOCUS');
+  assert.equal(runtime.snapshot().accepted, false);
   assert.equal(runtime.host.hidden, false);
   assert.match(runtime.host.innerHTML, /TRANSPORT_REJECTED/);
+  assert.doesNotMatch(runtime.host.innerHTML, /このロードで決定/);
+  assert.doesNotMatch(runtime.host.innerHTML, />戻す</);
+
   liveInputStack.setRejectCommit(false);
-  const committed = await runtime.commit();
+  const committed = await runtime.focus('PAPER');
   assert.equal(committed.committed, true);
+  assert.equal(committed.autoCommitted, true);
   assert.equal(liveInputStack.calls.commit, 2);
   assert.equal(runtime.snapshot().accepted, true);
   assert.equal(runtime.host.hidden, true);
   assert.equal(accepted.length, 1);
   assert.equal(accepted[0].pkg.jankenHand, 'PAPER');
 });
-
-test('cancel delegates to the existing global precommit clear and returns to the three-choice focus', async () => {
-  const liveInputStack = createLiveStack();
-  const { runtime } = mount({ liveInputStack });
-  await runtime.focus('ROCK');
-  const result = await runtime.cancel();
-  assert.equal(result.cleared, true);
-  assert.equal(liveInputStack.calls.cancel, 1);
-  assert.equal(runtime.snapshot().presentation.surface, 'JANKEN_FOCUS');
-  assert.equal(runtime.snapshot().presentation.focusedHand, null);
-  assert.match(runtime.host.innerHTML, /グー/);
-  assert.match(runtime.host.innerHTML, /チョキ/);
-  assert.match(runtime.host.innerHTML, /パー/);
+test('no visible cancel control exists while the programmatic precommit clear API remains available', () => {
+  const { runtime } = mount();
+  assert.equal(typeof runtime.cancel, 'function');
+  assert.doesNotMatch(runtime.host.innerHTML, /data-gr-janken-focus-action="cancel"/);
+  assert.doesNotMatch(runtime.host.innerHTML, />戻す</);
 });
-
-test('authoritative sync invalidates local focus so a stale preview cannot commit through this surface', async () => {
+test('authoritative sync before card play replaces visible choices and only the fresh choice can auto-commit', async () => {
   const liveInputStack = createLiveStack();
   const { runtime } = mount({ liveInputStack });
-  await runtime.focus('ROCK');
   runtime.sync({ packages: authoritativePackages('g2'), generationId: 'g2' });
   assert.equal(runtime.snapshot().presentation.surface, 'JANKEN_FOCUS');
   assert.equal(runtime.snapshot().presentation.focusedHand, null);
   assert.match(runtime.host.innerHTML, /rock-card-g2/);
   assert.match(runtime.host.innerHTML, /data-opponent-id="opponent-rock-g2"/);
-  const result = await runtime.commit();
-  assert.equal(result.committed, false);
-  assert.equal(liveInputStack.calls.commit, 0);
+  const result = await runtime.focus('ROCK');
+  assert.equal(result.committed, true);
+  assert.equal(result.autoCommitted, true);
+  assert.equal(liveInputStack.calls.commit, 1);
 });
-
-test('surface contract stays presentation-only and exposes no rule or transport authority', () => {
+test('surface contract auto-commits card play without visible confirm/cancel controls and keeps authority delegated', () => {
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.authority, 'NONE');
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.authoritativeTargetRail, true);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.targetRailSource, 'EXISTING_THREE_COMPOUND_PACKAGES_ONLY');
@@ -347,8 +342,12 @@ test('surface contract stays presentation-only and exposes no rule or transport 
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.inventedCardIdentityAllowed, false);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.cardArtFallback, 'EXPLICIT_ART_UNAVAILABLE_NO_INVENTION');
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.openingSevenToRpsSelectionAuthority, false);
-  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.selectionCommitsImmediately, false);
+  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.selectionCommitsImmediately, true);
+  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.visibleCommitControl, false);
+  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.visibleCancelControl, false);
+  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.programmaticPrecommitClearPreserved, true);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.commitTransportDelegatedToExistingLiveStack, true);
+  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.cancelDelegatedToExistingLiveStack, true);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.computesTarget, false);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.computesLegality, false);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.computesRoute, false);
@@ -359,114 +358,20 @@ test('surface contract stays presentation-only and exposes no rule or transport 
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.mutatesJankenRuntime, false);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.mutatesPublicPackage, false);
 });
-
-function pointerActionTarget(action) {
-  const node = {
-    dataset: { grJankenFocusAction: action },
-    closest(selector) {
-      return selector === '[data-gr-janken-focus-action]' ? node : null;
-    },
-  };
-  return node;
-}
-
-function dispatch(runtime, type, event) {
-  const listener = runtime.host.listeners.get(type);
-  assert.equal(typeof listener, 'function', `listener ${type} must exist`);
-  listener(event);
-}
-
-test('pointer commit requires the same primary-left control with short travel', async () => {
-  const { liveInputStack, runtime } = mount();
-  await runtime.focus('ROCK');
-  const commitButton = pointerActionTarget('commit');
-  dispatch(runtime, 'pointerdown', { target: commitButton, pointerId: 1, isPrimary: true, button: 0, clientX: 100, clientY: 100 });
-  dispatch(runtime, 'pointermove', { target: commitButton, pointerId: 1, clientX: 105, clientY: 104 });
-  dispatch(runtime, 'pointerup', { target: commitButton, pointerId: 1, clientX: 106, clientY: 104 });
-  dispatch(runtime, 'click', { target: commitButton, detail: 1 });
-  await Promise.resolve();
-  assert.equal(liveInputStack.calls.commit, 1);
-});
-
-test('pointer travel beyond 12px disarms commit even if it returns before release', async () => {
-  const { liveInputStack, runtime } = mount();
-  await runtime.focus('ROCK');
-  const commitButton = pointerActionTarget('commit');
-  dispatch(runtime, 'pointerdown', { target: commitButton, pointerId: 2, isPrimary: true, button: 0, clientX: 0, clientY: 0 });
-  dispatch(runtime, 'pointermove', { target: commitButton, pointerId: 2, clientX: 20, clientY: 0 });
-  dispatch(runtime, 'pointerup', { target: commitButton, pointerId: 2, clientX: 0, clientY: 0 });
-  dispatch(runtime, 'click', { target: commitButton, detail: 1 });
-  await Promise.resolve();
-  assert.equal(liveInputStack.calls.commit, 0);
-});
-
-test('pointercancel disarms pointer-derived commit', async () => {
-  const { liveInputStack, runtime } = mount();
-  await runtime.focus('ROCK');
-  const commitButton = pointerActionTarget('commit');
-  dispatch(runtime, 'pointerdown', { target: commitButton, pointerId: 3, isPrimary: true, button: 0, clientX: 40, clientY: 40 });
-  dispatch(runtime, 'pointercancel', { target: commitButton, pointerId: 3, clientX: 40, clientY: 40 });
-  dispatch(runtime, 'click', { target: commitButton, detail: 1 });
-  await Promise.resolve();
-  assert.equal(liveInputStack.calls.commit, 0);
-});
-
-test('release on another control cannot authorize a later commit click', async () => {
-  const { liveInputStack, runtime } = mount();
-  await runtime.focus('ROCK');
-  const commitButton = pointerActionTarget('commit');
-  const cancelButton = pointerActionTarget('cancel');
-  dispatch(runtime, 'pointerdown', { target: commitButton, pointerId: 4, isPrimary: true, button: 0, clientX: 20, clientY: 20 });
-  dispatch(runtime, 'pointerup', { target: cancelButton, pointerId: 4, clientX: 22, clientY: 20 });
-  dispatch(runtime, 'click', { target: commitButton, detail: 1 });
-  await Promise.resolve();
-  assert.equal(liveInputStack.calls.commit, 0);
-});
-
-test('non-primary or non-left pointer cannot arm commit', async () => {
-  const { liveInputStack, runtime } = mount();
-  await runtime.focus('ROCK');
-  const commitButton = pointerActionTarget('commit');
-  dispatch(runtime, 'pointerdown', { target: commitButton, pointerId: 5, isPrimary: false, button: 0, clientX: 30, clientY: 30 });
-  dispatch(runtime, 'pointerup', { target: commitButton, pointerId: 5, clientX: 30, clientY: 30 });
-  dispatch(runtime, 'click', { target: commitButton, detail: 1 });
-  await Promise.resolve();
-  assert.equal(liveInputStack.calls.commit, 0);
-  dispatch(runtime, 'pointerdown', { target: commitButton, pointerId: 6, isPrimary: true, button: 2, clientX: 30, clientY: 30 });
-  dispatch(runtime, 'pointerup', { target: commitButton, pointerId: 6, clientX: 30, clientY: 30 });
-  dispatch(runtime, 'click', { target: commitButton, detail: 1 });
-  await Promise.resolve();
-  assert.equal(liveInputStack.calls.commit, 0);
-});
-
-test('keyboard-style detail zero click keeps the accessible commit path', async () => {
-  const { liveInputStack, runtime } = mount();
-  await runtime.focus('ROCK');
-  const commitButton = pointerActionTarget('commit');
-  dispatch(runtime, 'click', { target: commitButton, detail: 0 });
-  await Promise.resolve();
-  assert.equal(liveInputStack.calls.commit, 1);
-});
-
-test('authoritative sync clears a prior pointer arm before a new LOAD_FOCUS', async () => {
-  const { liveInputStack, runtime } = mount();
-  await runtime.focus('ROCK');
-  const commitButton = pointerActionTarget('commit');
-  dispatch(runtime, 'pointerdown', { target: commitButton, pointerId: 7, isPrimary: true, button: 0, clientX: 50, clientY: 50 });
-  dispatch(runtime, 'pointerup', { target: commitButton, pointerId: 7, clientX: 52, clientY: 50 });
-  runtime.sync();
-  await runtime.focus('ROCK');
-  dispatch(runtime, 'click', { target: commitButton, detail: 1 });
-  await Promise.resolve();
-  assert.equal(liveInputStack.calls.commit, 0);
-});
-
-test('destroy removes pointer and click listeners', () => {
+test('visible surface contains no confirm or cancel action after the interaction decision change', () => {
   const { runtime } = mount();
-  assert.equal(runtime.destroy(), true);
+  assert.doesNotMatch(runtime.host.innerHTML, /data-gr-janken-focus-action="commit"/);
+  assert.doesNotMatch(runtime.host.innerHTML, /data-gr-janken-focus-action="cancel"/);
+  assert.doesNotMatch(runtime.host.innerHTML, /このロードで決定/);
+});
+
+test('destroy removes the remaining click listener', () => {
+  const { runtime } = mount();
   assert.equal(runtime.host.listeners.has('pointerdown'), false);
   assert.equal(runtime.host.listeners.has('pointermove'), false);
   assert.equal(runtime.host.listeners.has('pointerup'), false);
   assert.equal(runtime.host.listeners.has('pointercancel'), false);
+  assert.equal(runtime.host.listeners.has('click'), true);
+  assert.equal(runtime.destroy(), true);
   assert.equal(runtime.host.listeners.has('click'), false);
 });

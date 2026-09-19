@@ -132,6 +132,35 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}="FIELD-08"]::after{left:16%;bottom:31%;width:72%;height:12%;border-radius:999px;background:rgba(139,111,74,.64);transform:rotate(-12deg)}
 [${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}="FIELD-09"]::before{left:2%;bottom:0;width:96%;height:66%;background:rgba(225,235,232,.72);clip-path:polygon(0 100%,0 62%,17% 48%,31% 59%,49% 27%,62% 48%,77% 21%,100% 51%,100% 100%)}
 [${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}="FIELD-09"]::after{left:48%;top:28%;width:28%;height:57%;border-left:4px solid rgba(96,111,100,.68);border-bottom:4px solid rgba(96,111,100,.58);transform:skewX(-24deg) rotate(-8deg);transform-origin:0 100%;box-shadow:-18px 9px 0 -15px rgba(96,111,100,.65)}
+
+#battlePhaseSurface[data-battle-phase-presentation="FULLSCREEN_ANIMATION"]{position:absolute!important;inset:0!important;z-index:40!important;overflow:hidden!important;background:radial-gradient(circle at 50% 44%,rgba(26,40,58,.96),rgba(5,8,14,.985) 58%,#020305 100%)!important;pointer-events:auto!important}
+#battlePhaseSurface[data-battle-phase-presentation="FULLSCREEN_ANIMATION"]>[${SHELL_ATTR}="1"]{position:absolute!important;inset:0!important;width:auto!important;height:auto!important;background:radial-gradient(circle at 50% 48%,rgba(36,55,76,.78),rgba(4,8,13,.86) 62%,rgba(0,0,0,.97) 100%)!important;perspective:1200px}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleScreenTop,
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${PROGRESS_GUIDE_ATTR}],
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${FIELD_LANDMARK_ATTR}],
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CAUSAL_TRACE_ATTR}]{display:none!important}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${GRID_ATTR}]{position:absolute!important;inset:8% 4% 8%!important;height:auto!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:clamp(10px,2.4vw,38px)!important;overflow:visible!important;perspective:1100px;pointer-events:none}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${LANE_ATTR}]{flex:0 1 clamp(118px,18vw,250px)!important;width:clamp(118px,18vw,250px)!important;height:74%!important;min-height:0!important;display:grid!important;place-items:center!important;overflow:visible!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;transform-origin:50% 60%;opacity:.72;transition:transform 240ms cubic-bezier(.2,.8,.2,1),opacity 180ms ease,filter 180ms ease}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleLaneIdentity{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:max-content;max-width:90%;text-align:center;opacity:.8}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleLaneIdentity small,
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleLaneViewerRole,
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${SHIELD_RAIL_ATTR}],
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleLaneRole,
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleLaneAfterstate{display:none!important}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleLanePublicCard{position:relative!important;inset:auto!important;right:auto!important;top:auto!important;width:clamp(98px,14vw,198px)!important;height:clamp(138px,20vw,278px)!important;border-radius:12px!important;box-shadow:0 24px 54px rgba(0,0,0,.48),0 0 0 1px rgba(255,255,255,.12)!important;transform-style:preserve-3d}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="reveal"] [${LANE_ATTR}]{animation:grBattleCinematicReveal 520ms cubic-bezier(.16,.78,.24,1) both}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="attack"] [${LANE_ATTR}][data-role="source"],
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="ability"] [${LANE_ATTR}][data-role="source"]{transform:translateZ(130px) scale(1.16);opacity:1;filter:brightness(1.13)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="attack"] [${LANE_ATTR}][data-role="target"],
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="ability"] [${LANE_ATTR}][data-role="target"]{transform:translateZ(36px) scale(1.03);opacity:.94}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="compare4"] [${LANE_ATTR}]{opacity:.96;transform:translateZ(50px)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="finisher"] [${LANE_ATTR}]:not([data-role="winner"]){transform:translateZ(-100px) scale(.82);opacity:.2;filter:brightness(.55)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="finisher"] [${LANE_ATTR}][data-role="winner"]{transform:translateZ(190px) scale(1.32);opacity:1;filter:brightness(1.22);z-index:5}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="settle"] [${LANE_ATTR}]{animation:grBattleCinematicSettle 420ms ease both}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] [${LANE_ATTR}]{animation:none!important;transition:none!important}
+@keyframes grBattleCinematicReveal{0%{opacity:0;transform:translateY(28px) translateZ(-180px) scale(.72)}65%{opacity:1;transform:translateY(-4px) translateZ(42px) scale(1.04)}100%{opacity:.92;transform:none}}
+@keyframes grBattleCinematicSettle{0%{opacity:1;transform:translateZ(40px)}100%{opacity:.38;transform:translateY(-10px) translateZ(-120px) scale(.86)}}
+
 @media(max-width:540px) and (orientation:portrait){[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}]{left:2px;top:82px;bottom:auto;width:72px;height:90px;opacity:.13}}
 @media(max-height:420px) and (orientation:landscape){[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}]{left:4px;bottom:4px;width:120px;height:76px;opacity:.16}}
 [${SHELL_ATTR}="1"] [${GRID_ATTR}]{position:absolute;z-index:4;top:clamp(96px,16vh,122px);right:clamp(8px,1.5vw,18px);bottom:auto;left:40%;height:clamp(86px,15vh,116px);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr);gap:clamp(4px,.7vw,8px);align-items:stretch;overflow:visible;pointer-events:none}
@@ -839,6 +868,29 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   phaseSurface.dataset.battleScreenBoardInteraction = 'forbidden';
   if (phaseAnchor.created) phaseSurface.hidden = true;
 
+  const externalBattleMap = document.getElementById?.('battleMap') ?? null;
+  const externalBattleMapStyle = externalBattleMap?.style
+    ? Object.freeze({
+      visibility: externalBattleMap.style.visibility ?? '',
+      pointerEvents: externalBattleMap.style.pointerEvents ?? ''
+    })
+    : null;
+  function setExternalBattleMapSuppressed(suppressed) {
+    if (!externalBattleMap?.style || !externalBattleMapStyle) return false;
+    if (suppressed) {
+      externalBattleMap.style.visibility = 'hidden';
+      externalBattleMap.style.pointerEvents = 'none';
+      externalBattleMap.setAttribute?.('aria-hidden', 'true');
+      setData(externalBattleMap, 'battlePhaseSuppressed', 'true');
+      return true;
+    }
+    externalBattleMap.style.visibility = externalBattleMapStyle.visibility;
+    externalBattleMap.style.pointerEvents = externalBattleMapStyle.pointerEvents;
+    externalBattleMap.removeAttribute?.('aria-hidden');
+    setData(externalBattleMap, 'battlePhaseSuppressed', null);
+    return false;
+  }
+
   const visualHost = adoptingExistingPhase ? shell : phaseSurface;
   const fieldLandmark = createFieldLandmark(document);
   visualHost.appendChild(fieldLandmark);
@@ -1063,13 +1115,19 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
 
     const battle = model.screenMode === 'BATTLE_PHASE';
     const resultExit = !battle && model.returnIntent === 'RESULT';
+    const cinematicBattle = battle && model.battlePhasePresentationMode === 'FULLSCREEN_ANIMATION';
     if (shellCreated) shell.hidden = resultExit;
+    setData(shell, 'presentationMode', cinematicBattle ? 'cinematic' : 'plan');
+    setData(phaseSurface, 'battlePhasePresentation', cinematicBattle ? 'FULLSCREEN_ANIMATION' : null);
     phaseSurface.hidden = !battle;
-    hud.root.hidden = !battle;
-    writeCurrentActionCue(currentActionCue, resultExit ? null : model);
-    writeCausalTrace(document, causalTrace, resultExit ? null : model);
+    setExternalBattleMapSuppressed(cinematicBattle);
+    hud.root.hidden = cinematicBattle || resultExit;
+    writeCurrentActionCue(currentActionCue, resultExit || cinematicBattle ? null : model);
+    writeCausalTrace(document, causalTrace, resultExit || cinematicBattle ? null : model);
+    progressGuide.hidden = cinematicBattle || resultExit;
     if (planSlot) planSlot.hidden = battle || resultExit;
     syncFieldLandmark(fieldLandmark, phaseSurface, shell, root);
+    if (cinematicBattle) fieldLandmark.hidden = true;
 
     for (let index = 0; index < lanes.length; index += 1) {
       const view = lanes[index];
@@ -1117,6 +1175,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     destroyed = true;
     try { focusObserver?.disconnect?.(); } catch {}
     currentPlayerUi?.destroy?.();
+    setExternalBattleMapSuppressed(false);
     if (fieldLandmark?.parentNode && typeof fieldLandmark.parentNode.removeChild === 'function') fieldLandmark.parentNode.removeChild(fieldLandmark);
     if (currentActionCue?.parentNode && typeof currentActionCue.parentNode.removeChild === 'function') currentActionCue.parentNode.removeChild(currentActionCue);
     if (causalTrace?.parentNode && typeof causalTrace.parentNode.removeChild === 'function') causalTrace.parentNode.removeChild(causalTrace);
@@ -1139,6 +1198,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     shell,
     planSlot,
     phaseSurface,
+    externalBattleMap,
     resolutionSurface,
     fieldLandmark,
     currentActionCue,
@@ -1179,6 +1239,11 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   existingAnchorPolicy: 'EXPLICIT_PHASE_GETS_RUNTIME_OVERLAY__ANCESTOR_NEVER_DECORATED',
   externalPhaseShellOwner: 'CALLER',
   planSurfaceOwner: 'CALLER',
+  battlePhasePresentationMode: 'FULLSCREEN_ANIMATION',
+  battlePhaseNormalHudVisible: false,
+  battlePhaseNormalPlanUiVisible: false,
+  battlePhaseBoardSurfacePolicy: 'HIDE_EXISTING_BATTLE_MAP_AND_DISABLE_POINTERS',
+  battlePhaseAllowedInputs: Object.freeze(['skip', 'public_info', 'accessibility']),
   shieldLanePresentation: 'STRUCTURE_PLUS_EXACT_ACCEPTED_BOARD_RETURN_CUE_NO_SHIELD_STATE_INFERENCE',
   boardReturnAuthority: 'MODEL_ONLY_EXACT_OPPONENT_PLUS_SHIELD_LANE',
   shieldSlots: SHIELD_SLOTS,

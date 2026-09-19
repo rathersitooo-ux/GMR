@@ -40,6 +40,9 @@ class FakeElement {
   setAttribute(name, value) {
     this.attributes.set(name, String(value));
   }
+  removeAttribute(name) {
+    this.attributes.delete(name);
+  }
   getAttribute(name) {
     return this.attributes.has(name) ? this.attributes.get(name) : null;
   }
@@ -120,6 +123,9 @@ assert.deepEqual(resolveViewerLocalPlayedCardArt(document, 'C1'), {
 });
 assert.equal(resolveViewerLocalPlayedCardArt(document, 'C2'), null);
 
+const battleMap = document.createElement('section');
+battleMap.id = 'battleMap';
+document.body.appendChild(battleMap);
 const root = document.createElement('main');
 root.setAttribute('data-gr-battle-screen-root', '');
 document.body.appendChild(root);
@@ -356,7 +362,7 @@ runtime.render(idle);
 assert.equal(runtime.shell.dataset.mode, 'MATCH_PLAN');
 assert.equal(runtime.shell.hidden, false);
 assert.equal(runtime.phaseSurface.hidden, true);
-assert.equal(runtime.hud.root.hidden, true);
+assert.equal(runtime.hud.root.hidden, false);
 assert.equal(runtime.currentActionCue.hidden, false);
 assert.equal(runtime.currentActionCue.textContent, '今：選択');
 assert.equal(runtime.currentActionCue.dataset.phase, 'plan');
@@ -443,12 +449,21 @@ runtime.render(attack, {
   ]
 });
 assert.equal(runtime.phaseSurface.hidden, false);
-assert.equal(runtime.hud.root.hidden, false);
-assert.equal(runtime.currentActionCue.hidden, false);
-assert.equal(runtime.currentActionCue.textContent, '今：攻撃 A-1 → B-2');
-assert.equal(runtime.currentActionCue.dataset.phase, 'attack');
-assert.equal(runtime.currentActionCue.dataset.eventId, 'attack-1');
+assert.equal(runtime.shell.dataset.presentationMode, 'cinematic');
+assert.equal(runtime.phaseSurface.dataset.battlePhasePresentation, 'FULLSCREEN_ANIMATION');
+assert.equal(runtime.externalBattleMap, battleMap);
+assert.equal(battleMap.style.visibility, 'hidden');
+assert.equal(battleMap.style.pointerEvents, 'none');
+assert.equal(battleMap.dataset.battlePhaseSuppressed, 'true');
+assert.equal(battleMap.getAttribute('aria-hidden'), 'true');
+assert.equal(runtime.hud.root.hidden, true);
+assert.equal(runtime.currentActionCue.hidden, true);
+assert.equal(runtime.currentActionCue.textContent, '');
+assert.equal(runtime.currentActionCue.dataset.phase, undefined);
+assert.equal(runtime.currentActionCue.dataset.eventId, undefined);
 assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, undefined);
+assert.equal(runtime.progressGuide.hidden, true);
+assert.equal(runtime.fieldLandmark.hidden, true);
 assert.equal(runtime.planSlot.hidden, true);
 assert.equal(runtime.shell.dataset.mode, 'BATTLE_PHASE');
 assert.equal(runtime.shell.dataset.eventId, 'attack-1');
@@ -495,7 +510,7 @@ assert.deepEqual(
 for (const fieldId of ['FIELD-01', 'FIELD-02', 'FIELD-03', 'FIELD-04', 'FIELD-05', 'FIELD-08', 'FIELD-09']) {
   root.dataset.battleFieldId = fieldId;
   runtime.render(attack);
-  assert.equal(runtime.fieldLandmark.hidden, false);
+  assert.equal(runtime.fieldLandmark.hidden, true);
   assert.equal(runtime.fieldLandmark.getAttribute('data-battle-field-landmark'), fieldId);
   assert.equal(runtime.fieldLandmark.dataset.fieldId, fieldId);
 }
@@ -505,7 +520,7 @@ assert.equal(runtime.fieldLandmark.hidden, true);
 assert.equal(runtime.fieldLandmark.getAttribute('data-battle-field-landmark'), '');
 root.dataset.battleFieldId = 'FIELD-01';
 runtime.render(attack);
-assert.equal(runtime.fieldLandmark.hidden, false);
+assert.equal(runtime.fieldLandmark.hidden, true);
 
 const p4View = runtime.laneSurfaces[3];
 const p4Afterstate = p4View.children[2];
@@ -538,12 +553,16 @@ const settlePlan = {
 };
 const settle = createBattleScreenModel({ participants, plan: settlePlan, returnIntent: 'MATCH_PLAN' });
 runtime.render(settle);
-assert.equal(runtime.currentActionCue.textContent, '今：盤面反映 C1（グー） → 解決 → B-1 / Shield R');
-assert.equal(runtime.currentActionCue.dataset.phase, 'settle');
-assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, 'P3:R');
-assert.equal(runtime.currentActionCue.dataset.causalTraceKey, 'settle-1:P3:R');
-assert.equal(runtime.currentActionCue.dataset.causalCardId, 'C1');
-assert.equal(runtime.currentActionCue.dataset.causalJanken, 'ROCK');
+assert.equal(runtime.shell.dataset.presentationMode, 'cinematic');
+assert.equal(runtime.phaseSurface.dataset.battlePhasePresentation, 'FULLSCREEN_ANIMATION');
+assert.equal(runtime.hud.root.hidden, true);
+assert.equal(runtime.currentActionCue.hidden, true);
+assert.equal(runtime.currentActionCue.textContent, '');
+assert.equal(runtime.currentActionCue.dataset.phase, undefined);
+assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, undefined);
+assert.equal(runtime.currentActionCue.dataset.causalTraceKey, undefined);
+assert.equal(runtime.currentActionCue.dataset.causalCardId, undefined);
+assert.equal(runtime.currentActionCue.dataset.causalJanken, undefined);
 assert.equal(runtime.shell.dataset.boardReturnDestination, 'P3:R');
 assert.equal(runtime.phaseSurface.dataset.battleBoardReturnDestination, 'P3:R');
 assert.equal(runtime.resolutionSurface.dataset.battleBoardReturnDestination, 'P3:R');
@@ -558,13 +577,10 @@ assert.equal(p3ShieldSlots[2].dataset.boardReturnEventId, 'settle-1');
 assert.equal(p3ShieldSlots[2].dataset.boardReturnDestination, 'P3:R');
 assert.equal(p3ShieldSlots[2].getAttribute('aria-label'), 'Shield R → ROAD R、解決結果の帰着先');
 assert.equal(runtime.shieldRails[3].children[2].dataset.boardReturnTarget, undefined);
-assert.equal(runtime.causalTrace.hidden, false);
-assert.equal(runtime.causalTrace.dataset.traceKey, 'settle-1:P3:R');
-assert.equal(runtime.causalTrace.dataset.motion, 'causal_return');
-assert.equal(runtime.causalTrace.dataset.stageCount, '4');
-assert.equal(runtime.causalTrace.dataset.preserveStageOrder, 'true');
-assert.deepEqual(runtime.causalTrace.children.map(node => node.dataset.kind), ['cause', 'accepted_resolution', 'return_path', 'destination']);
-assert.deepEqual(runtime.causalTrace.children.map(node => node.textContent), ['攻撃 C1（グー）', '結果確定', '盤面へ帰着', 'B-1 / Shield R']);
+assert.equal(runtime.causalTrace.hidden, true);
+assert.equal(runtime.causalTrace.children.length, 0);
+assert.equal(runtime.progressGuide.hidden, true);
+assert.equal(runtime.fieldLandmark.hidden, true);
 
 const acceptedActionOrder = projectBattleActionOrderChain({
   orderedCards: [
@@ -593,27 +609,24 @@ const orderedSettle = createBattleScreenModel({
   actionOrder: acceptedActionOrder
 });
 runtime.render(orderedSettle);
-assert.equal(runtime.causalTrace.hidden, false);
-assert.equal(runtime.causalTrace.dataset.stageCount, '5');
-assert.deepEqual(runtime.causalTrace.children.map(node => node.dataset.kind), ['cause', 'processing', 'accepted_resolution', 'return_path', 'destination']);
-assert.equal(runtime.causalTrace.children[1].textContent, '比較 A-2 → B-2 → A-1 → B-1');
-assert.deepEqual(runtime.causalTrace.children.map(node => node.dataset.stageIndex), ['1', '2', '3', '4', '5']);
-assert.deepEqual(runtime.causalTrace.children.map(node => node.style.animationDelay), ['0ms', '160ms', '320ms', '480ms', '640ms']);
+assert.equal(runtime.shell.dataset.presentationMode, 'cinematic');
+assert.equal(runtime.phaseSurface.dataset.battlePhasePresentation, 'FULLSCREEN_ANIMATION');
+assert.equal(runtime.causalTrace.hidden, true);
+assert.equal(runtime.causalTrace.children.length, 0);
 
 const reducedSettle = createBattleScreenModel({ participants, plan: settlePlan, returnIntent: 'MATCH_PLAN', reducedMotion: true, actionOrder: acceptedActionOrder });
 runtime.render(reducedSettle);
 assert.equal(runtime.shell.dataset.motion, 'static_only');
 assert.equal(runtime.shieldRails[2].children[2].dataset.boardReturnTarget, 'true');
-assert.equal(runtime.currentActionCue.textContent, '今：盤面反映 C1（グー） → 解決 → B-1 / Shield R');
-assert.equal(runtime.causalTrace.dataset.motion, 'static_causal_trace');
-assert.equal(runtime.causalTrace.dataset.stageCount, '5');
-assert.deepEqual(runtime.causalTrace.children.map(node => node.dataset.kind), ['cause', 'processing', 'accepted_resolution', 'return_path', 'destination']);
+assert.equal(runtime.currentActionCue.hidden, true);
+assert.equal(runtime.causalTrace.hidden, true);
+assert.equal(runtime.causalTrace.children.length, 0);
 
 const lowPerfSettle = createBattleScreenModel({ participants, plan: settlePlan, returnIntent: 'MATCH_PLAN', lowPerf: true });
 runtime.render(lowPerfSettle);
 assert.equal(runtime.shell.dataset.motion, 'static_only');
-assert.equal(runtime.currentActionCue.textContent, '今：盤面反映 C1（グー） → 解決 → B-1 / Shield R');
-assert.equal(runtime.currentActionCue.dataset.causalCardId, 'C1');
+assert.equal(runtime.currentActionCue.hidden, true);
+assert.equal(runtime.currentActionCue.dataset.causalCardId, undefined);
 
 const malformedReturn = { ...settle, boardReturn: { ...settle.boardReturn, shieldLane: 'X' } };
 assert.throws(() => runtime.render(malformedReturn), /BATTLE_SCREEN_MODEL_REJECTED/);
@@ -677,10 +690,10 @@ assert.equal(runtime.shell.dataset.motion, 'static_only');
 assert.equal(runtime.shell.dataset.returnIntent, 'RESULT');
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['idle', 'idle', 'idle', 'winner']);
 assert.equal(runtime.phaseSurface.dataset.battleScreenPhase, 'finisher');
-assert.equal(runtime.hud.root.hidden, false);
-assert.equal(runtime.currentActionCue.hidden, false);
-assert.equal(runtime.currentActionCue.textContent, '今：決着 B-2');
-assert.equal(runtime.currentActionCue.dataset.phase, 'finisher');
+assert.equal(runtime.hud.root.hidden, true);
+assert.equal(runtime.currentActionCue.hidden, true);
+assert.equal(runtime.currentActionCue.textContent, '');
+assert.equal(runtime.currentActionCue.dataset.phase, undefined);
 assert.deepEqual(roleSurfaces.map(node => node.hidden), [true, true, true, true]);
 assert.deepEqual(roleSurfaces.map(node => node.textContent), ['', '', '', '']);
 
@@ -694,9 +707,12 @@ assert.equal(runtime.planSlot.hidden, true);
 
 runtime.render(attack);
 assert.equal(runtime.shell.hidden, false);
+assert.equal(runtime.shell.dataset.presentationMode, 'cinematic');
 assert.equal(runtime.phaseSurface.hidden, false);
-assert.equal(runtime.hud.root.hidden, false);
-assert.equal(runtime.currentActionCue.textContent, '今：攻撃 A-1 → B-2');
+assert.equal(runtime.phaseSurface.dataset.battlePhasePresentation, 'FULLSCREEN_ANIMATION');
+assert.equal(runtime.hud.root.hidden, true);
+assert.equal(runtime.currentActionCue.hidden, true);
+assert.equal(runtime.currentActionCue.textContent, '');
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['source', 'idle', 'idle', 'target']);
 assert.deepEqual(roleSurfaces.map(node => node.hidden), [false, true, true, false]);
 assert.deepEqual(roleSurfaces.map(node => node.textContent), ['攻撃', '', '', '対象']);
@@ -714,6 +730,10 @@ assert.equal(currentActionCue.parentNode, null);
 assert.equal(causalTrace.parentNode, null);
 assert.equal(resourceHudRoot.parentNode, null);
 assert.equal(root.children.includes(runtime.shell), false);
+assert.equal(battleMap.style.visibility, '');
+assert.equal(battleMap.style.pointerEvents, '');
+assert.equal(battleMap.dataset.battlePhaseSuppressed, undefined);
+assert.equal(battleMap.getAttribute('aria-hidden'), null);
 assert.throws(() => runtime.render(idle), /RUNTIME_DESTROYED/);
 assert.throws(() => runtime.renderHud({ score: 1 }), /RUNTIME_DESTROYED/);
 
@@ -767,12 +787,15 @@ assert.equal(adopted.laneSurfaces.length, 4);
 assert.equal(adopted.hud.loadValue.textContent, 'パー');
 assert.equal(adopted.resourceHud.honeyCell.children[1].textContent, '0');
 assert.equal(adopted.resourceHud.chipCell.children[1].textContent, '0');
-assert.equal(adopted.currentActionCue.textContent, '今：攻撃 A-1 → B-2');
+assert.equal(adopted.shell.dataset.presentationMode, 'cinematic');
+assert.equal(existingPhase.dataset.battlePhasePresentation, 'FULLSCREEN_ANIMATION');
+assert.equal(adopted.hud.root.hidden, true);
+assert.equal(adopted.currentActionCue.hidden, true);
 adopted.render(settle);
 assert.equal(existingResolution.textContent, 'KEEP');
-assert.equal(adopted.currentActionCue.textContent, '今：盤面反映 C1（グー） → 解決 → B-1 / Shield R');
-assert.equal(adopted.causalTrace.hidden, false);
-assert.deepEqual(adopted.causalTrace.children.map(node => node.dataset.kind), ['cause', 'accepted_resolution', 'return_path', 'destination']);
+assert.equal(adopted.currentActionCue.hidden, true);
+assert.equal(adopted.causalTrace.hidden, true);
+assert.equal(adopted.causalTrace.children.length, 0);
 assert.equal(adopted.resolutionSurface.dataset.battleBoardReturnDestination, 'P3:R');
 assert.equal(adopted.shieldRails[2].children[2].dataset.boardReturnTarget, 'true');
 adopted.render(terminalResult);
@@ -816,6 +839,11 @@ assert.throws(
 assert.equal(BATTLE_SCREEN_RUNTIME.presentationOnly, true);
 assert.equal(BATTLE_SCREEN_RUNTIME.authority, 'NONE');
 assert.equal(BATTLE_SCREEN_RUNTIME.currentActionAuthority, 'ACCEPTED_PUBLIC_MODEL_ONLY');
+assert.equal(BATTLE_SCREEN_RUNTIME.battlePhasePresentationMode, 'FULLSCREEN_ANIMATION');
+assert.equal(BATTLE_SCREEN_RUNTIME.battlePhaseNormalHudVisible, false);
+assert.equal(BATTLE_SCREEN_RUNTIME.battlePhaseNormalPlanUiVisible, false);
+assert.equal(BATTLE_SCREEN_RUNTIME.battlePhaseBoardSurfacePolicy, 'HIDE_EXISTING_BATTLE_MAP_AND_DISABLE_POINTERS');
+assert.deepEqual(BATTLE_SCREEN_RUNTIME.battlePhaseAllowedInputs, ['skip', 'public_info', 'accessibility']);
 assert.equal(BATTLE_SCREEN_RUNTIME.causalTraceAuthority, 'MODEL_CAUSAL_RETURN_STAGES_ONLY_NO_RECALCULATION');
 assert.equal(BATTLE_SCREEN_RUNTIME.causalTraceStageOrder, 'MODEL_ORDER_ONLY');
 assert.equal(BATTLE_SCREEN_RUNTIME.shieldLanePresentation, 'STRUCTURE_PLUS_EXACT_ACCEPTED_BOARD_RETURN_CUE_NO_SHIELD_STATE_INFERENCE');
@@ -825,6 +853,9 @@ assert.equal(BATTLE_SCREEN_RUNTIME.productionHtmlMutationOwnedHere, false);
 const { readFile: readPortraitScreenSource } = await import('node:fs/promises');
 const portraitScreenSource = await readPortraitScreenSource(new URL('../browser/battle-screen-runtime-mount.mjs', import.meta.url), 'utf8');
 assert.match(portraitScreenSource, /BATTLE_PORTRAIT_390X844_R7B/);
+assert.match(portraitScreenSource, /data-battle-phase-presentation="FULLSCREEN_ANIMATION"/);
+assert.match(portraitScreenSource, /grBattleCinematicReveal/);
+assert.match(portraitScreenSource, /data-presentation-mode="cinematic"/);
 assert.match(portraitScreenSource, /@media\(max-width:430px\) and \(orientation:portrait\)/);
 assert.match(portraitScreenSource, /grBattleScreenTop\{height:56px!important/);
 assert.match(portraitScreenSource, /bottom:248px!important/);

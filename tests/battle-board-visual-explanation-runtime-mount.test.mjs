@@ -6,6 +6,7 @@ import {
   projectBattleCardPinchScale,
   installBattleCardPinchZoomRuntime,
   installPartnerAdvicePeripheralDisclosure,
+  installBattlePhaseBoardSuppressionRuntime,
   BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME,
 } from '../browser/battle-board-visual-explanation-runtime-mount.mjs';
 
@@ -93,6 +94,58 @@ function disclosureHarness() {
     setPlayerReplyOn(value) { playerReplyOn = value; },
     setTutorialVisible(value) { tutorialVisible = value; },
     get observerDisconnected() { return observerDisconnected; },
+  };
+}
+
+function battlePhaseSuppressionHarness() {
+  const attributes = new Map();
+  const styleValues = new Map();
+  const stylePriority = new Map();
+  let live = false;
+  let resolutionHidden = true;
+  let disconnected = false;
+
+  const battleMap = {
+    style: {
+      getPropertyValue(name) { return styleValues.get(name) ?? ''; },
+      getPropertyPriority(name) { return stylePriority.get(name) ?? ''; },
+      setProperty(name, value, priority = '') { styleValues.set(name, String(value)); stylePriority.set(name, String(priority)); },
+      removeProperty(name) { styleValues.delete(name); stylePriority.delete(name); },
+    },
+    setAttribute(name, value) { attributes.set(name, String(value)); },
+    removeAttribute(name) { attributes.delete(name); },
+    hasAttribute(name) { return attributes.has(name); },
+    getAttribute(name) { return attributes.has(name) ? attributes.get(name) : null; },
+  };
+  const resolution = {
+    get hidden() { return resolutionHidden; },
+    set hidden(value) { resolutionHidden = Boolean(value); },
+    classList: { contains(token) { return token === 'battlePhaseLive' && live; } },
+  };
+  const phaseSurface = { hidden: true };
+  class FakeMutationObserver {
+    constructor(callback) { this.callback = callback; }
+    observe() {}
+    disconnect() { disconnected = true; }
+  }
+  const document = {
+    getElementById(id) {
+      if (id === 'battleMap') return battleMap;
+      if (id === 'battleResolution') return resolution;
+      if (id === 'battlePhaseSurface') return phaseSurface;
+      return null;
+    },
+  };
+  return {
+    win: { document, MutationObserver: FakeMutationObserver },
+    battleMap,
+    attributes,
+    styleValues,
+    stylePriority,
+    resolution,
+    phaseSurface,
+    setLive(value) { live = Boolean(value); },
+    get disconnected() { return disconnected; },
   };
 }
 
@@ -253,11 +306,50 @@ test('Partner Advice starts compact, expands only on player request, and auto-ex
   assert.equal(h.observerDisconnected, true);
 });
 
+test('dedicated Battle Phase hides the real board and restores it when the phase ends', () => {
+  const h = battlePhaseSuppressionHarness();
+  const runtime = installBattlePhaseBoardSuppressionRuntime(h.win);
+  assert.ok(runtime);
+  assert.equal(runtime.snapshot().active, false);
+  assert.equal(h.styleValues.get('visibility'), undefined);
+  assert.equal(h.styleValues.get('pointer-events'), undefined);
+
+  h.setLive(true);
+  h.resolution.hidden = false;
+  h.phaseSurface.hidden = false;
+  assert.equal(runtime.sync().active, true);
+  assert.equal(h.styleValues.get('visibility'), 'hidden');
+  assert.equal(h.stylePriority.get('visibility'), 'important');
+  assert.equal(h.styleValues.get('pointer-events'), 'none');
+  assert.equal(h.stylePriority.get('pointer-events'), 'important');
+  assert.equal(h.attributes.get('aria-hidden'), 'true');
+  assert.equal(h.attributes.get('data-dedicated-battle-phase-suppressed'), 'true');
+
+  h.setLive(false);
+  h.resolution.hidden = true;
+  assert.equal(runtime.sync().active, false);
+  assert.equal(h.styleValues.get('visibility'), undefined);
+  assert.equal(h.styleValues.get('pointer-events'), undefined);
+  assert.equal(h.attributes.has('aria-hidden'), false);
+  assert.equal(h.attributes.has('data-dedicated-battle-phase-suppressed'), false);
+
+  h.setLive(true);
+  h.resolution.hidden = false;
+  runtime.sync();
+  assert.equal(runtime.destroy(), true);
+  assert.equal(h.styleValues.get('visibility'), undefined);
+  assert.equal(h.styleValues.get('pointer-events'), undefined);
+  assert.equal(h.disconnected, true);
+  assert.equal(runtime.destroy(), false);
+});
+
 test('runtime contract is presentation-only with no topology inference or auto execution', () => {
   assert.equal(BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME.presentationOnly, true);
   assert.equal(BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME.gameplayAuthority, false);
   assert.equal(BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME.topologyInference, false);
   assert.equal(BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME.automaticExecution, false);
+  assert.equal(BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME.dedicatedBattlePhaseBoardSuppression, true);
+  assert.equal(BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME.dedicatedBattlePhaseBoardSuppressionPolicy, 'HIDE_EXISTING_BATTLE_MAP_AND_DISABLE_POINTERS_WHILE_BATTLE_PHASE_LIVE');
   assert.equal(BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME.actualPositionSelector, '#board .node[data-pos]');
   assert.equal(BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME.cardPinchZoom, true);
   assert.equal(BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME.cardPinchSelector, '#hand .handCard[data-card-id]');

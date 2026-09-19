@@ -21,6 +21,7 @@ const SHIELD_RAIL_ATTR = 'data-battle-shield-lane-rail';
 const SHIELD_SLOT_ATTR = 'data-battle-shield-slot';
 const CINEMATIC_ORDER_ATTR = 'data-battle-cinematic-order';
 const CINEMATIC_DUEL_ATTR = 'data-battle-cinematic-duel';
+const CINEMATIC_DUEL_CHARACTER_ATTR = 'data-battle-cinematic-character';
 const SHIELD_SLOTS = Object.freeze(['L', 'C', 'R']);
 const BATTLE_FIELD_IDS = Object.freeze(['FIELD-01', 'FIELD-02', 'FIELD-03', 'FIELD-04', 'FIELD-05', 'FIELD-08', 'FIELD-09']);
 const PLAYER_ROLE_LABELS = Object.freeze({
@@ -172,7 +173,18 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFigure{position:relative;width:clamp(84px,14vw,168px);height:clamp(150px,34vh,310px);transform-origin:50% 100%;opacity:.96}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFigure::before{content:"";position:absolute;left:50%;top:3%;width:42%;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle at 40% 32%,rgba(255,255,255,.24),transparent 24%),linear-gradient(150deg,rgba(171,221,232,.95),rgba(37,76,91,.96) 58%,rgba(9,18,27,.98));box-shadow:0 0 0 2px rgba(238,250,255,.18),0 0 34px rgba(126,211,237,.2)}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFigure::after{content:"";position:absolute;left:50%;bottom:0;width:78%;height:72%;transform:translateX(-50%);border-radius:44% 44% 20% 20% / 28% 28% 12% 12%;background:linear-gradient(145deg,rgba(104,179,196,.96),rgba(31,72,87,.98) 46%,rgba(7,17,26,.99));clip-path:polygon(25% 0,75% 0,100% 36%,82% 48%,76% 100%,24% 100%,18% 48%,0 36%);box-shadow:inset 0 0 0 2px rgba(229,249,255,.12)}
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelSide[data-role="target"] .grBattleCinematicDuelFigure{filter:hue-rotate(154deg) saturate(.76) brightness(.93)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelSide[data-role="target"] .grBattleCinematicDuelFigure[data-visual-kind="css-proxy"]{filter:hue-rotate(154deg) saturate(.76) brightness(.93)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFigure[data-visual-kind="character-runtime"]::before,
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFigure[data-visual-kind="character-runtime"]::after{display:none!important}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelCharacterHost{position:absolute;inset:0;display:grid;place-items:end center;overflow:visible}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelCharacterHost[hidden]{display:none!important}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelCharacterHost>*{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelCharacterHost .grtc-image{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;object-position:50% 100%!important}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFx{position:relative;grid-column:2;align-self:center;justify-self:stretch;height:clamp(72px,18vh,150px);pointer-events:none;overflow:visible}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFx::before{content:"";position:absolute;left:-18%;top:50%;width:clamp(24px,4.8vw,66px);aspect-ratio:1.7;border:2px solid rgba(226,248,255,.72);border-radius:50%;background:radial-gradient(ellipse at 35% 48%,rgba(255,255,255,.82),rgba(173,226,239,.28) 42%,transparent 70%);box-shadow:0 0 18px rgba(185,236,249,.52),inset -8px 0 14px rgba(45,129,158,.32);transform:translateY(-50%) scaleX(.72);opacity:0;animation:grBattleCinematicCompressedShot 620ms cubic-bezier(.18,.78,.2,1) both}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFx::after{content:"";position:absolute;right:-9%;top:50%;width:clamp(22px,4vw,54px);height:2px;background:linear-gradient(90deg,transparent,rgba(239,252,255,.96),transparent);box-shadow:0 -10px 0 -1px rgba(217,246,255,.56),0 10px 0 -1px rgba(217,246,255,.48);opacity:0;transform:translateY(-50%) rotate(-8deg);animation:grBattleCinematicImpactLine 620ms ease-out both}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] .grBattleCinematicDuelFx::before,
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] .grBattleCinematicDuelFx::after{animation:none!important;opacity:.38!important}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelMeta{min-width:0;max-width:100%;padding:5px 10px;border:1px solid rgba(241,247,239,.28);border-radius:999px;background:rgba(3,10,15,.72);text-align:center;text-shadow:0 2px 8px rgba(0,0,0,.8)}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelMeta small{display:block;font-size:clamp(9px,.85vw,12px);font-weight:900;letter-spacing:.12em;opacity:.7}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelMeta b{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(12px,1.2vw,17px)}
@@ -183,6 +195,8 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] .grBattleCinematicDuelFigure{animation:none!important;transform:none!important}
 @keyframes grBattleCinematicDuelStrike{0%{transform:translateX(-10vw) scale(.92);opacity:.25}34%{transform:translateX(0) scale(1);opacity:1}58%{transform:translateX(14vw) rotate(3deg) scale(1.08);opacity:1}100%{transform:translateX(0) rotate(0) scale(1);opacity:.96}}
 @keyframes grBattleCinematicDuelHit{0%,48%{transform:translateX(8vw) scale(.96);opacity:.35}62%{transform:translateX(-2.4vw) rotate(-4deg) scale(.98);opacity:1;filter:brightness(1.35)}100%{transform:translateX(0) rotate(0) scale(1);opacity:.96;filter:none}}
+@keyframes grBattleCinematicCompressedShot{0%,24%{left:-18%;opacity:0;transform:translateY(-50%) scale(.45,.72)}34%{opacity:.92}68%{left:92%;opacity:1;transform:translateY(-50%) scale(1.08,.72)}78%,100%{left:108%;opacity:0;transform:translateY(-50%) scale(.62,.46)}}
+@keyframes grBattleCinematicImpactLine{0%,60%{opacity:0;transform:translateY(-50%) scaleX(.25) rotate(-8deg)}69%{opacity:1;transform:translateY(-50%) scaleX(1.35) rotate(-8deg)}82%,100%{opacity:0;transform:translateY(-50%) scaleX(.55) rotate(-8deg)}}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="reveal"] [${LANE_ATTR}]{animation:grBattleCinematicReveal 520ms cubic-bezier(.16,.78,.24,1) both}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="reveal"] [${LANE_ATTR}]:nth-child(2){animation-delay:60ms}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="reveal"] [${LANE_ATTR}]:nth-child(3){animation-delay:120ms}
@@ -591,6 +605,47 @@ function writePlayedCard(document, cardNode, card) {
   return art.source;
 }
 
+const cinematicDuelRuntimeState = new WeakMap();
+
+function exactCinematicCharacterId(global, document, participantId, context = {}) {
+  const mapped = context?.cinematicCharacterByParticipant?.[participantId];
+  if (typeof mapped === 'string' && mapped.trim()) return mapped.trim();
+
+  const markers = typeof document.querySelectorAll === 'function'
+    ? document.querySelectorAll('[data-board-controlled-character]')
+    : [];
+  for (const marker of markers ?? []) {
+    if (marker?.dataset?.participantId !== participantId) continue;
+    const characterId = marker?.dataset?.characterId;
+    if (typeof characterId === 'string' && characterId.trim()) return characterId.trim();
+  }
+
+  if (participantId === context?.viewerParticipantId) {
+    try {
+      const currentPlayer = global?.GAMEROAD_PARTNER_STATE?.player?.();
+      if (typeof currentPlayer?.id === 'string' && currentPlayer.id.trim()) return currentPlayer.id.trim();
+    } catch {}
+  }
+  return null;
+}
+
+function disposeCinematicDuelRuntime(global, scene) {
+  const active = cinematicDuelRuntimeState.get(scene);
+  if (!active) return;
+  if (typeof global?.clearTimeout === 'function') {
+    for (const timer of active.timers) {
+      try { global.clearTimeout(timer); } catch {}
+    }
+  }
+  const runtime = global?.GameRoadThreeCharRuntime;
+  if (typeof runtime?.unmount === 'function') {
+    for (const mount of active.mounts) {
+      try { runtime.unmount(mount); } catch {}
+    }
+  }
+  cinematicDuelRuntimeState.delete(scene);
+}
+
 function createCinematicDuel(document) {
   const scene = createNode(document, 'section', 'grBattleCinematicDuel');
   scene.setAttribute?.(CINEMATIC_DUEL_ATTR, '1');
@@ -605,22 +660,95 @@ function createCinematicDuelSide(document, role, lane) {
   const side = createNode(document, 'div', 'grBattleCinematicDuelSide');
   side.dataset.role = role;
   side.dataset.participantId = lane.id;
-  side.setAttribute?.('aria-label', `${role === 'source' ? '攻撃側' : '受け側'} ${lane.label}`);
+  side.setAttribute?.('aria-label', (role === 'source' ? '攻撃側 ' : '受け側 ') + lane.label);
   const figure = createNode(document, 'div', 'grBattleCinematicDuelFigure');
+  figure.dataset.visualKind = 'css-proxy';
   figure.setAttribute?.('aria-hidden', 'true');
+  const characterHost = createNode(document, 'div', 'grBattleCinematicDuelCharacterHost');
+  characterHost.setAttribute?.(CINEMATIC_DUEL_CHARACTER_ATTR, '');
+  characterHost.hidden = true;
+  figure.appendChild(characterHost);
   const meta = createNode(document, 'div', 'grBattleCinematicDuelMeta');
   meta.appendChild(createNode(document, 'small', '', role === 'source' ? '攻撃側' : '受け側'));
   meta.appendChild(createNode(document, 'b', '', lane.label));
   side.appendChild(figure);
   side.appendChild(meta);
-  return side;
+  return { side, figure, characterHost };
 }
 
-function writeCinematicDuel(document, scene, model) {
+function createCinematicDuelFx(document) {
+  const fx = createNode(document, 'div', 'grBattleCinematicDuelFx');
+  fx.dataset.layer = 'vfx';
+  fx.dataset.presentationOnly = 'true';
+  fx.dataset.vfxKind = 'provisional-neutral-compressed-shot';
+  fx.setAttribute?.('aria-hidden', 'true');
+  return fx;
+}
+
+function mountCinematicDuelCharacter(global, scene, view, characterId, role, motion) {
+  const runtime = global?.GameRoadThreeCharRuntime;
+  if (!characterId || typeof runtime?.mount !== 'function') return false;
+  const active = cinematicDuelRuntimeState.get(scene);
+  if (!active) return false;
+
+  let pending;
+  try {
+    pending = runtime.mount(view.characterHost, {
+      characterId,
+      state: 'idle',
+      assetMode: 'embedded',
+      performance: motion === 'static_only' ? 'low' : 'normal',
+      allowNetwork: false
+    });
+  } catch {
+    return false;
+  }
+
+  void Promise.resolve(pending).then((mount) => {
+    const current = cinematicDuelRuntimeState.get(scene);
+    if (!mount || current !== active) {
+      if (mount && typeof runtime.unmount === 'function') {
+        try { runtime.unmount(mount); } catch {}
+      }
+      return;
+    }
+    if (mount?.status === 'unknown-character') {
+      if (typeof runtime.unmount === 'function') {
+        try { runtime.unmount(mount); } catch {}
+      }
+      return;
+    }
+
+    active.mounts.push(mount);
+    view.figure.dataset.visualKind = 'character-runtime';
+    view.figure.dataset.characterId = characterId;
+    view.characterHost.hidden = false;
+
+    if (typeof runtime.setState !== 'function') return;
+    const performance = motion === 'static_only' ? 'low' : 'normal';
+    const facing = role === 'source' ? 'right' : 'left';
+    try { runtime.setState(mount, role === 'source' && motion !== 'static_only' ? 'attack' : 'idle', { facing, performance }); } catch {}
+
+    if (role === 'source' && motion !== 'static_only' && typeof global?.setTimeout === 'function') {
+      const timer = global.setTimeout(() => {
+        if (cinematicDuelRuntimeState.get(scene) !== active) return;
+        try { runtime.setState(mount, 'idle', { facing, performance }); } catch {}
+      }, 560);
+      active.timers.push(timer);
+    }
+  }).catch(() => {});
+  return true;
+}
+
+function writeCinematicDuel(global, document, scene, model, context = {}) {
+  disposeCinematicDuelRuntime(global, scene);
   clearChildren(scene);
   setData(scene, 'eventId', null);
   setData(scene, 'sourceId', null);
   setData(scene, 'targetId', null);
+  setData(scene, 'sourceCharacterId', null);
+  setData(scene, 'targetCharacterId', null);
+  setData(scene, 'vfx', null);
   setData(scene, 'handoff', null);
   const phase = model?.phase;
   const enabled = model?.battlePhasePresentationMode === 'FULLSCREEN_ANIMATION'
@@ -633,15 +761,30 @@ function writeCinematicDuel(document, scene, model) {
     scene.setAttribute?.('aria-hidden', 'true');
     return scene;
   }
+
   const source = sources[0];
   const target = targets[0];
-  scene.appendChild(createCinematicDuelSide(document, 'source', source));
-  scene.appendChild(createCinematicDuelSide(document, 'target', target));
+  const active = { mounts: [], timers: [] };
+  cinematicDuelRuntimeState.set(scene, active);
+  const sourceView = createCinematicDuelSide(document, 'source', source);
+  const targetView = createCinematicDuelSide(document, 'target', target);
+  const sourceCharacterId = exactCinematicCharacterId(global, document, source.id, context);
+  const targetCharacterId = exactCinematicCharacterId(global, document, target.id, context);
+
+  scene.appendChild(sourceView.side);
+  scene.appendChild(createCinematicDuelFx(document));
+  scene.appendChild(targetView.side);
+  mountCinematicDuelCharacter(global, scene, sourceView, sourceCharacterId, 'source', model.motion);
+  mountCinematicDuelCharacter(global, scene, targetView, targetCharacterId, 'target', model.motion);
+
   scene.hidden = false;
   scene.setAttribute?.('aria-hidden', 'false');
   setData(scene, 'eventId', model.eventId ?? null);
   setData(scene, 'sourceId', source.id);
   setData(scene, 'targetId', target.id);
+  setData(scene, 'sourceCharacterId', sourceCharacterId);
+  setData(scene, 'targetCharacterId', targetCharacterId);
+  setData(scene, 'vfx', 'provisional-neutral-compressed-shot');
   setData(scene, 'handoff', 'replace_previous_pair_on_render');
   return scene;
 }
@@ -1089,6 +1232,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   const lanes = Array.from({ length: 4 }, (_, index) => createLane(document, index));
   for (const lane of lanes) grid.appendChild(lane.lane);
   const defaultViewerParticipantId = normalizeViewerParticipantId(options.viewerParticipantId);
+  const defaultCinematicCharacterByParticipant = options.cinematicCharacterByParticipant ?? null;
 
   const resolutionAnchor = ensureAnchor(document, phaseSurface, providedResolution, 'battleResolution', 'div');
   const resolutionSurface = resolutionAnchor.node;
@@ -1250,7 +1394,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     writeCurrentActionCue(currentActionCue, null);
     writeCausalTrace(document, causalTrace, null);
     writeCinematicOrderRail(document, cinematicOrderRail, null);
-    writeCinematicDuel(document, cinematicDuel, null);
+    writeCinematicDuel(global, document, cinematicDuel, null);
     setData(shell, 'boardReturnDestination', null);
     setData(phaseSurface, 'battleBoardReturnDestination', null);
     setData(resolutionSurface, 'battleBoardReturnDestination', null);
@@ -1307,7 +1451,10 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     syncFieldLandmark(fieldLandmark, phaseSurface, shell, root);
     if (cinematicBattle) fieldLandmark.hidden = true;
     writeCinematicOrderRail(document, cinematicOrderRail, cinematicBattle ? model : null);
-    writeCinematicDuel(document, cinematicDuel, cinematicBattle ? model : null);
+    writeCinematicDuel(global, document, cinematicDuel, cinematicBattle ? model : null, {
+      viewerParticipantId: viewer.resolved,
+      cinematicCharacterByParticipant: presentationContext?.cinematicCharacterByParticipant ?? defaultCinematicCharacterByParticipant
+    });
     const finalStateByParticipant = new Map(
       (model?.causalReturn?.processing?.finalSlots ?? []).map(slot => [slot.playerId, slot.visualState])
     );
@@ -1365,6 +1512,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     if (causalTrace?.parentNode && typeof causalTrace.parentNode.removeChild === 'function') causalTrace.parentNode.removeChild(causalTrace);
     if (progressGuide?.parentNode && typeof progressGuide.parentNode.removeChild === 'function') progressGuide.parentNode.removeChild(progressGuide);
     if (cinematicOrderRail?.parentNode && typeof cinematicOrderRail.parentNode.removeChild === 'function') cinematicOrderRail.parentNode.removeChild(cinematicOrderRail);
+    disposeCinematicDuelRuntime(global, cinematicDuel);
     if (cinematicDuel?.parentNode && typeof cinematicDuel.parentNode.removeChild === 'function') cinematicDuel.parentNode.removeChild(cinematicDuel);
     if (grid?.parentNode && typeof grid.parentNode.removeChild === 'function') grid.parentNode.removeChild(grid);
     resourceHud.destroy();
@@ -1435,7 +1583,9 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   cinematicOrderAuthority: 'MODEL_CAUSAL_RETURN_PROCESSING_ORDER_ONLY_NO_SORT_OR_INFERENCE',
   cinematicOrderVisibleCardIdText: false,
   cinematicDuelAuthority: 'MODEL_LANE_ROLE_EXACT_ONE_SOURCE_EXACT_ONE_TARGET_ONLY_NO_INFERENCE',
-  cinematicDuelArt: 'CSS_PROXY_ONLY_NO_FORMAL_CHARACTER_ART',
+  cinematicDuelArt: 'EXISTING_CHARACTER_RUNTIME_EXACT_IDENTITY_WITH_CSS_PROXY_FAIL_VISIBLE_NO_NEW_ART',
+  cinematicDuelReaction: 'CLEAN_IDLE_CHARACTER_PLUS_WHOLE_FIGURE_RECOIL_NO_HIT_OR_DEFEATED_STATE',
+  cinematicDuelVfx: 'SEPARATE_PROVISIONAL_NEUTRAL_COMPRESSED_SHOT_NO_FORMAL_ART',
   cinematicDuelHandoff: 'RENDER_REPLACES_PREVIOUS_PAIR_NO_ORDER_INFERENCE',
   cinematicPhaseMotion: Object.freeze(['reveal', 'attack', 'ability', 'compare4', 'finisher', 'settle']),
   shieldLanePresentation: 'STRUCTURE_PLUS_EXACT_ACCEPTED_BOARD_RETURN_CUE_NO_SHIELD_STATE_INFERENCE',

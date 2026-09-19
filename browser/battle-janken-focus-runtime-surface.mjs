@@ -347,7 +347,7 @@ export function mountBattleJankenFocusRuntimeSurface({
   if (!documentRef?.createElement) throw new TypeError('documentRef.createElement is required');
   const root = requiredMountRoot(documentRef, mountRoot);
   const focusLive = requiredMethod(liveInputStack, 'focus', 'liveInputStack');
-  const cancelLive = requiredMethod(liveInputStack, 'cancel', 'liveInputStack');
+  const clearUncommittedSelectionLive = requiredMethod(liveInputStack, 'clearUncommittedSelection', 'liveInputStack');
   const commitLive = requiredMethod(liveInputStack, 'commit', 'liveInputStack');
   const liveStatus = requiredMethod(liveInputStack, 'status', 'liveInputStack');
   const cardIndex = buildCardCatalogIndex(cardCatalog);
@@ -474,7 +474,7 @@ export function mountBattleJankenFocusRuntimeSurface({
       if (!destroyed && !accepted) {
         let cleared;
         try {
-          cleared = await cancelLive();
+          cleared = await clearUncommittedSelectionLive();
         } catch {
           cleared = { ok: false, cleared: false, reason: 'PRECOMMIT_CLEAR_FAILED' };
         }
@@ -523,40 +523,6 @@ export function mountBattleJankenFocusRuntimeSurface({
     return true;
   }
 
-  async function cancel() {
-    if (destroyed || accepted || busy || presentation?.surface !== BATTLE_JANKEN_FOCUS_SURFACE.LOAD_FOCUS) {
-      return Object.freeze({ ok: false, cleared: false, reason: 'LOAD_FOCUS_REQUIRED' });
-    }
-    const version = ++interactionVersion;
-    const previous = presentation;
-    busy = true;
-    errorText = null;
-    render();
-    let result;
-    try {
-      result = await cancelLive();
-    } catch {
-      result = { ok: false, cleared: false, reason: 'PRECOMMIT_CLEAR_FAILED' };
-    }
-    if (destroyed || accepted || version !== interactionVersion) {
-      return Object.freeze({ ok: false, cleared: false, stale: true, reason: 'LOCAL_CANCEL_SUPERSEDED' });
-    }
-    busy = false;
-    if (result?.ok === true && result?.cleared === true) {
-      presentation = createBattleJankenFocusPresentation({
-        packages: sourcePackages,
-        generationId: sourceGenerationId,
-        reducedMotion,
-        lowPerf,
-      });
-      errorText = null;
-    } else {
-      presentation = previous;
-      errorText = result?.reason ?? '選択を戻せませんでした';
-    }
-    render();
-    return result;
-  }
 
   async function commit() {
     if (destroyed || accepted || busy
@@ -642,7 +608,6 @@ export function mountBattleJankenFocusRuntimeSurface({
     focus,
     boardPeek,
     returnFromBoardPeek,
-    cancel,
     commit,
     sync,
     snapshot,
@@ -681,7 +646,7 @@ export const BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT = Object.freeze({
   visibleCancelControl: false,
   programmaticPrecommitClearPreserved: true,
   commitTransportDelegatedToExistingLiveStack: true,
-  cancelDelegatedToExistingLiveStack: true,
+  uncommittedSelectionClearDelegatedToExistingLiveStack: true,
   acceptedCommitClosesSurface: true,
   rejectedCommitKeepsLoadFocus: true,
   computesTarget: false,

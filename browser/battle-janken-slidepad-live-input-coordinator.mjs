@@ -1,5 +1,3 @@
-[Reading 396 lines from start (total: 396 lines, 0 remaining)]
-
 export const BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_SCHEMA =
   'gameroad.battle-janken-slidepad-live-input-coordinator.v1';
 
@@ -396,5 +394,3 @@ export const BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT = Object.fre
   mutatesProductionHtml: false,
   mutatesJankenRuntime: false,
 });
-
-[executed on device: DESKTOP-ODSOHQD (01bf07a9-543b-4891-9550-4539d562ff6f)]

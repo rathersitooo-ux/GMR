@@ -1,5 +1,3 @@
-[Reading 230 lines from start (total: 230 lines, 0 remaining)]
-
 const BRIDGE_SCHEMA = 'gameroad.battle-compound-preview-live-consumer-bridge.v1';
 
 function requireObject(value, name) {
@@ -230,5 +228,3 @@ export const BATTLE_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_CONTRACT = Object.free
   mutatesJankenRuntime: false,
   mutatesBattleScreenRuntime: false,
 });
-
-[executed on device: DESKTOP-ODSOHQD (01bf07a9-543b-4891-9550-4539d562ff6f)]

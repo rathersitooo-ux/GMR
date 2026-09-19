@@ -85,8 +85,8 @@ function exactArt(generation = 'g1') {
   };
 }
 
-function createLiveStack({ rejectCommit = false, rejectCancel = false, rejectFocus = false } = {}) {
-  const calls = { focus: [], cancel: 0, commit: 0 };
+function createLiveStack({ rejectCommit = false, rejectClear = false, rejectFocus = false } = {}) {
+  const calls = { focus: [], clearUncommittedSelection: 0, commit: 0 };
   let readyHand = null;
   let previewReady = false;
   let nextRejectCommit = rejectCommit;
@@ -104,9 +104,9 @@ function createLiveStack({ rejectCommit = false, rejectCancel = false, rejectFoc
       previewReady = true;
       return { ok: true, staged: true, reason: 'LATEST_FOCUS_PREVIEW_READY', jankenHand: hand, preview: { active: true } };
     },
-    async cancel() {
-      calls.cancel += 1;
-      if (rejectCancel) return { ok: false, cleared: false, reason: 'PRECOMMIT_CLEAR_REJECTED' };
+    async clearUncommittedSelection() {
+      calls.clearUncommittedSelection += 1;
+      if (rejectClear) return { ok: false, cleared: false, reason: 'PRECOMMIT_CLEAR_REJECTED' };
       readyHand = null;
       previewReady = false;
       return { ok: true, cleared: true, reason: 'PRECOMMIT_SELECTION_CLEARED' };
@@ -317,7 +317,7 @@ test('card play delegates commit exactly once; rejection clears precommit and a 
   assert.equal(rejected.committed, false);
   assert.equal(rejected.autoCommitted, true);
   assert.equal(liveInputStack.calls.commit, 1);
-  assert.equal(liveInputStack.calls.cancel, 1);
+  assert.equal(liveInputStack.calls.clearUncommittedSelection, 1);
   assert.equal(runtime.snapshot().presentation.surface, 'JANKEN_FOCUS');
   assert.equal(runtime.snapshot().accepted, false);
   assert.equal(runtime.host.hidden, false);
@@ -335,9 +335,11 @@ test('card play delegates commit exactly once; rejection clears precommit and a 
   assert.equal(accepted.length, 1);
   assert.equal(accepted[0].pkg.jankenHand, 'PAPER');
 });
-test('no visible cancel control exists while the programmatic precommit clear API remains available', () => {
-  const { runtime } = mount();
-  assert.equal(typeof runtime.cancel, 'function');
+test('no dedicated cancel API or visible cancel control exists while internal precommit clear remains available', () => {
+  const liveInputStack = createLiveStack();
+  const { runtime } = mount({ liveInputStack });
+  assert.equal(typeof runtime.cancel, 'undefined');
+  assert.equal(typeof liveInputStack.clearUncommittedSelection, 'function');
   assert.doesNotMatch(runtime.host.innerHTML, /data-gr-janken-focus-action="cancel"/);
   assert.doesNotMatch(runtime.host.innerHTML, />戻す</);
 });
@@ -371,7 +373,7 @@ test('surface contract auto-commits card play without visible confirm/cancel con
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.visibleCancelControl, false);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.programmaticPrecommitClearPreserved, true);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.commitTransportDelegatedToExistingLiveStack, true);
-  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.cancelDelegatedToExistingLiveStack, true);
+  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.uncommittedSelectionClearDelegatedToExistingLiveStack, true);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.computesTarget, false);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.computesLegality, false);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.computesRoute, false);

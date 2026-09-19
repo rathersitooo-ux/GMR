@@ -1,5 +1,3 @@
-[Reading 109 lines from start (total: 109 lines, 0 remaining)]
-
 import {
   createBattleCompoundPreviewLiveConsumerBridge,
 } from './battle-compound-preview-live-consumer-bridge.mjs';
@@ -109,5 +107,3 @@ export const BATTLE_JANKEN_COMPOUND_LIVE_INPUT_STACK_CONTRACT = frozen({
   mutatesBattleScreenRuntime: false,
   mutatesPublicPackage: false,
 });
-
-[executed on device: DESKTOP-ODSOHQD (01bf07a9-543b-4891-9550-4539d562ff6f)]

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-INPUT-MODE-SETTING-R3-20260920T0512-SOL-Q8N4V61",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_INPUT_MODE_SETTING_PREFERENCE_R1",
+  "acquireKey": "BATTLE-JANKEN-INPUT-MODE-SETTING-R1-20260920T0422-SOL-Q8N4V61",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "EXISTING_THREE_MODE_IDS_REUSED_PREFERENCE_ONLY_NO_GAMEPLAY_WRITE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1885_FOCUSED_7_OF_7_PLUS_EXISTING_SLIDEPAD_53_OF_53",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-INPUT-MODE-SETTING-R3-20260920T0512-SOL-Q8N4V61|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot|reuse-adapt",
+  "authorizationBaseSha": "49df37785dead2e3ea7943583e0668425b16149b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_INPUT_MODE_SETTING_PREFERENCE_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-INPUT-MODE-SETTING-R1-20260920T0422-SOL-Q8N4V61",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 05:10 JST",
+  "leaseUntilJst": "2026-09-20 06:09 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A16:L16",
+  "leaseExactMutableResources": "browser/battle-janken-input-mode-setting-core.mjs; tests/battle-janken-input-mode-setting-core.test.mjs; own fresh branch/PR/check/merge/readback; own CURRENT lease/R24 event",
+  "scope": [
+    "browser/battle-janken-input-mode-setting-core.mjs",
+    "tests/battle-janken-input-mode-setting-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-input-mode-setting-core.mjs",
+    "tests/battle-janken-input-mode-setting-core.test.mjs"
+  ],
+  "solutionSignature": "Persist one selected existing janken input mode ID (card-pull / launcher / plain) without changing gameplay, card identity, targeting, order, or winner authority.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "reuse-decision:existing-three-mode-runtime-to-preference-core",
+  "solutionSearchEvidence": [
+    "repo:browser/battle-janken-slidepad-runtime-mount.mjs existing BATTLE_JANKEN_INPUT_MODE authority and normalization",
+    "repo:PR1885 focused preference-core 7/7 plus existing SlidePad regression 53/53",
+    "user:2026-09-20 all three janken methods must remain selectable by setting"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-WORLD-R2-20260920T0409-SOL-Q8N4V80",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_BOARD_WORLDSPACE_ARCHITECTURE_RECOVERY_R2",
+  "acquireKey": "BATTLE-BOARD-WORLD-R2-20260920T0409-SOL-Q8N4V80",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_USER_LOCK_SHARED_GOAL_12_LANES_GATE_SHIELD_PLUS_MAIN_STALE_26_LOOP_CONTRADICTION_20260920",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "BOUNDED_BOARD_MODEL_RUNTIME_TEST_ONLY_NO_GAMEPLAY_AUTHORITY_NO_SCREENSPACE_TOPOLOGY",
+  "proceedToken": "PROCEED|BATTLE-BOARD-WORLD-R2-20260920T0409-SOL-Q8N4V80|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|board-world-recovery|fresh-main|active-lease",
+  "authorizationBaseSha": "32cd7103c33340caf88caa610e4d1b3cc5e4ff64",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_BOARD_WORLDSPACE_ARCHITECTURE_RECOVERY_R2",
+  "leaseAcquireKey": "BATTLE-BOARD-WORLD-R2-20260920T0409-SOL-Q8N4V80",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 04:09 JST",
+  "leaseUntilJst": "2026-09-20 05:09 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "browser/new-base-flanora-map-layout-core.mjs; browser/new-base-flanora-board-surface-runtime.mjs; tests/new-base-flanora-map-layout-core.test.mjs; tests/new-base-flanora-board-surface-runtime.test.mjs; data/preaction-authorizations/BATTLE-BOARD-WORLD-R2-20260920T0409-SOL-Q8N4V80.json cleanup-delete only; own branch/PR/check/merge/readback",
+  "scope": [
+    "browser/new-base-flanora-map-layout-core.mjs",
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-map-layout-core.test.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-flanora-map-layout-core.mjs",
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-map-layout-core.test.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs"
+  ]
+}

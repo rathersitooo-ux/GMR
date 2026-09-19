@@ -1,3 +1,5 @@
+[Reading 109 lines from start (total: 109 lines, 0 remaining)]
+
 import {
   createBattleCompoundPreviewLiveConsumerBridge,
 } from './battle-compound-preview-live-consumer-bridge.mjs';
@@ -40,8 +42,15 @@ export function createBattleJankenCompoundLiveInputStack({
       return coordinator.focus(jankenHand);
     },
 
+    clearUncommittedSelection() {
+      return coordinator.clearUncommittedSelection();
+    },
+
+    // Temporary compatibility only for the still-active upper surface/mount.
+    // This alias is not a player-facing operation and is removed with their
+    // dedicated-cancel migration.
     cancel() {
-      return coordinator.cancel();
+      return coordinator.clearUncommittedSelection();
     },
 
     commit() {
@@ -84,7 +93,8 @@ export const BATTLE_JANKEN_COMPOUND_LIVE_INPUT_STACK_CONTRACT = frozen({
   focusPolicy: 'EXISTING_LATEST_FOCUS_COORDINATOR_ONLY',
   previewPolicy: 'EXISTING_EXACT_COMPOUND_PREVIEW_BRIDGE_ONLY',
   commitPolicy: 'LATEST_VISIBLE_PREVIEW_REQUIRED',
-  explicitCancelPolicy: 'EXISTING_SHARED_GLOBAL_PRECOMMIT_CLEAR_THROUGH_COORDINATOR',
+  uncommittedSelectionClearPolicy: 'EXISTING_SHARED_GLOBAL_PRECOMMIT_CLEAR_THROUGH_COORDINATOR',
+  legacyCancelCompatibilityAlias: true,
   callerOwnsLiveConsumerLifecycle: true,
   callerOwnsPreviewRuntimeLifecycle: true,
   authoritativeRollback: false,
@@ -99,3 +109,5 @@ export const BATTLE_JANKEN_COMPOUND_LIVE_INPUT_STACK_CONTRACT = frozen({
   mutatesBattleScreenRuntime: false,
   mutatesPublicPackage: false,
 });
+
+[executed on device: DESKTOP-ODSOHQD (01bf07a9-543b-4891-9550-4539d562ff6f)]

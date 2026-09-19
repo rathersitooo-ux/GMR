@@ -6,9 +6,12 @@ import {
   BATTLE_JANKEN_FOCUS_LIVE_MOUNT_SCHEMA,
   BATTLE_JANKEN_INPUT_MODE_SCHEMA,
   BATTLE_JANKEN_INPUT_MODE,
+  BATTLE_PHYSICAL_CARD_LINEAGE_SCHEMA,
+  BATTLE_PHYSICAL_CARD_LINEAGE_STATE,
   normalizeBattleJankenFocusIntegration,
   normalizeBattleJankenInputMode,
   projectBattleJankenInputModeOptions,
+  projectBattlePhysicalCardLineage,
   BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS,
   advanceBattleJankenSlotRollState,
   buildBattleJankenSlidePadModel,
@@ -101,6 +104,80 @@ test('current Hand3 snapshot projects the exact immutable three-card mapping wit
     ['PAPER', 'club-4'],
   ]);
   assert.deepEqual(first.ordinaryHandCardIds, []);
+});
+
+test('physical-card lineage keeps one identity while hand, janken reservation, plan stage and resolved flags change', () => {
+  const lineage = projectBattlePhysicalCardLineage({
+    sourceCardIds: ['card-a', 'card-b', 'card-c'],
+    currentHandCardIds: ['card-a', 'card-b', 'card-c'],
+    reservedCardIds: ['card-b'],
+    stagedCardIds: ['card-b', 'card-c'],
+    resolvedCardIds: ['card-a'],
+  });
+
+  assert.equal(lineage.schema, BATTLE_PHYSICAL_CARD_LINEAGE_SCHEMA);
+  assert.deepEqual(lineage.physicalCards.map((entry) => entry.cardId), ['card-a', 'card-b', 'card-c']);
+  assert.equal(new Set(lineage.physicalCards.map((entry) => entry.physicalCardId)).size, 3);
+  assert.deepEqual(
+    lineage.physicalCards.map((entry) => [entry.cardId, entry.state]),
+    [
+      ['card-a', BATTLE_PHYSICAL_CARD_LINEAGE_STATE.RESOLVED],
+      ['card-b', BATTLE_PHYSICAL_CARD_LINEAGE_STATE.PLAN_STAGED],
+      ['card-c', BATTLE_PHYSICAL_CARD_LINEAGE_STATE.PLAN_STAGED],
+    ],
+  );
+  const cardB = lineage.physicalCards.find((entry) => entry.cardId === 'card-b');
+  assert.equal(cardB.jankenReserved, true);
+  assert.equal(cardB.planStaged, true);
+  assert.equal(cardB.samePhysicalCardIdentity, true);
+  assert.equal(lineage.gameplayAuthority, false);
+  assert.equal(lineage.cardZoneAuthority, false);
+  assert.equal(lineage.gameStateWrite, false);
+});
+
+test('lineage deduplicates repeated surfaces instead of creating a second card entity', () => {
+  const lineage = projectBattlePhysicalCardLineage({
+    sourceCardIds: ['same', 'same'],
+    currentHandCardIds: ['same'],
+    reservedCardIds: ['same', 'same'],
+    stagedCardIds: ['same'],
+  });
+  assert.equal(lineage.physicalCards.length, 1);
+  assert.deepEqual(lineage.physicalCards[0], {
+    cardId: 'same',
+    physicalCardId: 'same',
+    state: BATTLE_PHYSICAL_CARD_LINEAGE_STATE.PLAN_STAGED,
+    inRoundSource: true,
+    inCurrentHand: true,
+    jankenReserved: true,
+    planStaged: true,
+    resolvedUsed: false,
+    samePhysicalCardIdentity: true,
+  });
+});
+
+test('slidepad model carries the same source card ids into reserved lineage without changing assignment', () => {
+  const model = buildBattleJankenSlidePadModel({ roundId: 'lineage-1', hand, pickDuplicateIndex: () => 1 });
+  assert.deepEqual(model.cardLineage.physicalCards.map((entry) => entry.cardId), hand.map((card) => card.id));
+  for (const cardId of model.assignment.selectedJankenCardIds) {
+    const entry = model.cardLineage.physicalCards.find((candidate) => candidate.cardId === cardId);
+    assert.equal(entry.jankenReserved, true);
+    assert.equal(entry.state, BATTLE_PHYSICAL_CARD_LINEAGE_STATE.JANKEN_RESERVED);
+  }
+  const ordinary = model.cardLineage.physicalCards.find((entry) => entry.cardId === 'club-a');
+  assert.equal(ordinary.state, BATTLE_PHYSICAL_CARD_LINEAGE_STATE.HAND_AVAILABLE);
+});
+
+test('live runtime exposes lineage from the existing hand and plan surfaces without a second card store', () => {
+  const runtimeSource = readFileSync(
+    new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
+    'utf8',
+  ).replace(/\r\n/g, '\n');
+  assert.match(runtimeSource, /const stagedCardIds = planProjection\(root\)\.selectedCardIds\.filter/);
+  assert.match(runtimeSource, /currentCardLineage = projectBattlePhysicalCardLineage\(/);
+  assert.match(runtimeSource, /syncHandZoneProjection\(root, model, currentCardLineage\)/);
+  assert.match(runtimeSource, /cardLineageSnapshot: \(\) => currentCardLineage/);
+  assert.match(runtimeSource, /node\.dataset\.cardLineageState = lineage\?\.state \?\? ''/);
 });
 
 test('dedicated Focus projection proactively replaces the legacy display snapshot with current Hand3 authority', () => {

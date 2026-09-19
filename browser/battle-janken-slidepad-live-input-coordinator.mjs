@@ -1,3 +1,5 @@
+[Reading 396 lines from start (total: 396 lines, 0 remaining)]
+
 export const BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_SCHEMA =
   'gameroad.battle-janken-slidepad-live-input-coordinator.v1';
 
@@ -42,9 +44,9 @@ function frozenResult(value) {
  * commit-capable after the user's thumb has moved elsewhere. This coordinator
  * serializes bridge mutations and accepts only the latest focus intent.
  *
- * Stale-focus cleanup remains compound-only. Explicit player cancel is routed
- * through the bridge's global precommit clear so card/target/selection clear as
- * one semantic without rolling back authoritative committed gameplay.
+ * Stale-focus cleanup remains compound-only. Uncommitted-selection cleanup is
+ * routed through the bridge's global precommit clear so card/target/selection
+ * clear as one semantic without rolling back authoritative committed gameplay.
  */
 export function createBattleJankenSlidePadLiveInputCoordinator({
   liveBridge,
@@ -94,7 +96,7 @@ export function createBattleJankenSlidePadLiveInputCoordinator({
     }
   }
 
-  function restoreCancelledLocalState({ version, hand, focus }) {
+  function restoreClearedLocalState({ version, hand, focus }) {
     if (destroyed || version !== intentVersion || desiredHand !== null) return false;
     desiredHand = hand;
     readyFocus = focus;
@@ -220,7 +222,7 @@ export function createBattleJankenSlidePadLiveInputCoordinator({
       });
     },
 
-    cancel() {
+    clearUncommittedSelection() {
       if (destroyed) {
         return Promise.resolve(frozenResult({ ok: false, cleared: false, reason: 'DESTROYED' }));
       }
@@ -240,7 +242,7 @@ export function createBattleJankenSlidePadLiveInputCoordinator({
         try {
           result = await clearPrecommitSelection();
         } catch {
-          restoreCancelledLocalState({
+          restoreClearedLocalState({
             version,
             hand: previousHand,
             focus: previousReadyFocus,
@@ -263,7 +265,7 @@ export function createBattleJankenSlidePadLiveInputCoordinator({
           });
         }
 
-        restoreCancelledLocalState({
+        restoreClearedLocalState({
           version,
           hand: previousHand,
           focus: previousReadyFocus,
@@ -335,7 +337,7 @@ export function createBattleJankenSlidePadLiveInputCoordinator({
 
           // The existing preview bridge intentionally keeps its visible preview
           // and stage on a rejected commit. Mirror that state so the caller can
-          // retry or explicitly cancel without inventing rollback semantics.
+          // retry after internal uncommitted-selection cleanup without inventing rollback semantics.
           phase = 'READY';
           return frozenResult({
             ok: false,
@@ -377,9 +379,9 @@ export const BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT = Object.fre
   focusSource: 'CALLER_SLIDEPAD_INPUT',
   stageAndPreview: 'EXISTING_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_ONLY',
   commitTransport: 'EXISTING_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_ONLY',
-  explicitCancelPolicy: 'EXISTING_SHARED_GLOBAL_PRECOMMIT_CLEAR_THROUGH_BRIDGE',
+  uncommittedSelectionClearPolicy: 'EXISTING_SHARED_GLOBAL_PRECOMMIT_CLEAR_THROUGH_BRIDGE',
   staleFocusClearPolicy: 'COMPOUND_STAGE_ONLY',
-  failedExplicitCancelPolicy: 'RESTORE_LOCAL_READY_STATE_IF_STILL_CURRENT',
+  failedUncommittedSelectionClearPolicy: 'RESTORE_LOCAL_READY_STATE_IF_STILL_CURRENT',
   asyncMutationPolicy: 'SERIAL_LATEST_FOCUS_WINS',
   staleFocusPolicy: 'CLEAR_BEFORE_NEXT_FOCUS_STAGE',
   commitRequiresLatestVisiblePreview: true,
@@ -394,3 +396,5 @@ export const BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT = Object.fre
   mutatesProductionHtml: false,
   mutatesJankenRuntime: false,
 });
+
+[executed on device: DESKTOP-ODSOHQD (01bf07a9-543b-4891-9550-4539d562ff6f)]

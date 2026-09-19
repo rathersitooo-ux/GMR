@@ -146,3 +146,115 @@ test('ke9 is presentation-only, frozen, and leaves caller data untouched', () =>
   assert.equal(BATTLE_LOAD_CARD_CHAIN_IDENTITY.gameStateWrite, false);
   assert.equal(BATTLE_LOAD_CARD_CHAIN_IDENTITY.opponentPrivateReservationRead, false);
 });
+
+test('08く keeps one physical card identity from hand source through janken reservation, focus, LOAD and accepted used-card history', async () => {
+  const {
+    buildBattleJankenSlidePadModel,
+    projectBattleLoadCardPreview,
+    resolveBattleJankenSlotCardAction,
+  } = await import('../browser/battle-janken-slidepad-runtime-mount.mjs');
+  const {
+    createRoundStartJankenSlotAssignment,
+    NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE,
+  } = await import('../browser/new-base-round-start-janken-slot-assignment-core.mjs');
+  const {
+    beginBattleJankenCommitPresentation,
+    createBattleJankenFocusPresentation,
+    enterBattleLoadFocus,
+    focusBattleJankenPackage,
+  } = await import('../browser/battle-janken-focus-presentation-core.mjs');
+
+  const hand = [
+    { id: 'CL-4', suit: 'CL', label: 'クラブ4' },
+    { id: 'DI-7', suit: 'DI', label: 'ダイヤ7' },
+    { id: 'SP-10', suit: 'SP', label: 'スペード10' },
+  ];
+  const assignment = createRoundStartJankenSlotAssignment({
+    roundId: 'battle-round:lineage-r2',
+    hand,
+    assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
+    assignedCardIdsByJankenHand: {
+      ROCK: 'CL-4',
+      SCISSORS: 'DI-7',
+      PAPER: 'SP-10',
+    },
+  });
+  const model = buildBattleJankenSlidePadModel({
+    roundId: assignment.roundId,
+    hand,
+    currentSnapshot: assignment,
+  });
+
+  const physicalCardId = 'SP-10';
+  assert.equal(hand.some((card) => card.id === physicalCardId), true);
+  assert.equal(assignment.sourceHandCardIds.includes(physicalCardId), true);
+  assert.equal(assignment.selectedJankenCardIds.includes(physicalCardId), true);
+  assert.equal(model.ordinaryHandCardIds.includes(physicalCardId), false);
+  assert.equal(model.slots.find((slot) => slot.jankenHand === 'PAPER')?.cardId, physicalCardId);
+  assert.equal(
+    resolveBattleJankenSlotCardAction(model, 'PAPER', assignment.sourceHandCardIds),
+    physicalCardId,
+  );
+
+  const loadPreview = projectBattleLoadCardPreview(model, 'PAPER');
+  assert.equal(loadPreview?.cardId, physicalCardId);
+
+  const packageFor = (jankenHand, cardId, opponentId, shieldLane) => Object.freeze({
+    jankenHand,
+    cardId,
+    path: ['P1', `road-${jankenHand.toLowerCase()}`, opponentId],
+    direction: jankenHand === 'ROCK' ? 'RIGHT' : jankenHand === 'PAPER' ? 'LEFT' : 'CENTER',
+    roadId: `road-${jankenHand.toLowerCase()}`,
+    battleId: 'battle-lineage-r2',
+    opponentId,
+    shieldLane,
+    shieldRef: `${opponentId}:${shieldLane}`,
+  });
+  const packages = [
+    packageFor('ROCK', 'CL-4', 'P2', 'LEFT'),
+    packageFor('SCISSORS', 'DI-7', 'P3', 'CENTER'),
+    packageFor('PAPER', physicalCardId, 'P4', 'RIGHT'),
+  ];
+  let focus = createBattleJankenFocusPresentation({
+    packages,
+    generationId: 'lineage-r2',
+  });
+  focus = focusBattleJankenPackage(focus, 'PAPER', { previewReady: true });
+  assert.equal(focus.focusedPackage?.cardId, physicalCardId);
+  assert.equal(focus.focusedPreview?.cardId, physicalCardId);
+
+  const loadFocus = enterBattleLoadFocus(focus);
+  assert.equal(loadFocus.focusedPackage?.cardId, physicalCardId);
+  const committing = beginBattleJankenCommitPresentation(loadFocus);
+  assert.equal(committing.focusedPackage?.cardId, physicalCardId);
+
+  const chain = projectBattleLoadCardChain({
+    viewerPlayerId: 'P1',
+    loadCard: { cardId: loadPreview.cardId, label: loadPreview.cardLabel },
+    loadJanken: 'paper',
+    replay: {
+      events: [resolution(1, 1, [{
+        id: 'P1',
+        cards: [{
+          cardId: physicalCardId,
+          label: loadPreview.cardLabel,
+          origin: 'active_submission',
+        }],
+      }])],
+    },
+  });
+
+  assert.equal(chain.load?.cardId, physicalCardId);
+  assert.deepEqual(chain.playedCards.map((card) => card.cardId), [physicalCardId]);
+  assert.equal(new Set([
+    physicalCardId,
+    model.slots.find((slot) => slot.jankenHand === 'PAPER')?.cardId,
+    loadPreview.cardId,
+    focus.focusedPackage?.cardId,
+    loadFocus.focusedPackage?.cardId,
+    committing.focusedPackage?.cardId,
+    chain.load?.cardId,
+    chain.playedCards[0]?.cardId,
+  ]).size, 1);
+});
+

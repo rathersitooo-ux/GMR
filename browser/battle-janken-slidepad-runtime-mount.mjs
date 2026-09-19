@@ -19,6 +19,34 @@ import {
 
 export const BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA = 'gameroad.battle-janken-slidepad-runtime.v1';
 export const BATTLE_JANKEN_FOCUS_LIVE_MOUNT_SCHEMA = 'gameroad.battle-janken-focus-live-mount.v1';
+export const BATTLE_JANKEN_INPUT_MODE_SCHEMA = 'gameroad.battle-janken-input-mode.v1';
+export const BATTLE_JANKEN_INPUT_MODE = Object.freeze({
+  CARD_PULL: 'card_pull',
+  LAUNCHER: 'launcher',
+  PLAIN: 'plain',
+});
+const BATTLE_JANKEN_INPUT_MODE_OPTIONS = Object.freeze([
+  Object.freeze({ id: BATTLE_JANKEN_INPUT_MODE.CARD_PULL, label: 'カードを引く', shortLabel: 'カード' }),
+  Object.freeze({ id: BATTLE_JANKEN_INPUT_MODE.LAUNCHER, label: '発射板', shortLabel: '発射板' }),
+  Object.freeze({ id: BATTLE_JANKEN_INPUT_MODE.PLAIN, label: 'そのまま', shortLabel: 'そのまま' }),
+]);
+
+export function normalizeBattleJankenInputMode(value, fallback = BATTLE_JANKEN_INPUT_MODE.LAUNCHER) {
+  const candidate = typeof value === 'string' ? value.trim() : '';
+  if (BATTLE_JANKEN_INPUT_MODE_OPTIONS.some((option) => option.id === candidate)) return candidate;
+  const safeFallback = typeof fallback === 'string' ? fallback.trim() : '';
+  return BATTLE_JANKEN_INPUT_MODE_OPTIONS.some((option) => option.id === safeFallback)
+    ? safeFallback
+    : BATTLE_JANKEN_INPUT_MODE.LAUNCHER;
+}
+
+export function projectBattleJankenInputModeOptions(activeMode) {
+  const active = normalizeBattleJankenInputMode(activeMode);
+  return deepFreeze(BATTLE_JANKEN_INPUT_MODE_OPTIONS.map((option) => ({
+    ...option,
+    active: option.id === active,
+  })));
+}
 
 export function normalizeBattleJankenFocusIntegration(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -378,6 +406,11 @@ function addStyle(documentRef) {
   style.textContent = `
 [${HOST_ATTR}="1"]{position:absolute;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:42;width:248px;height:196px;pointer-events:none;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;isolation:isolate}
 [${HOST_ATTR}="1"]::before{content:"";position:absolute;right:13px;bottom:10px;width:198px;height:160px;border:9px solid rgba(218,218,218,.20);border-left-color:rgba(218,218,218,.05);border-bottom-color:rgba(218,218,218,.08);border-radius:58% 52% 54% 50%;transform:rotate(-8deg);box-shadow:0 0 22px rgba(208,208,208,.12),inset 0 0 18px rgba(238,238,238,.06);pointer-events:none;z-index:0}
+[${HOST_ATTR}="1"] .grJankenInputModePicker{position:absolute;right:0;top:-35px;display:flex;align-items:center;gap:3px;padding:3px;border:1px solid rgba(228,228,228,.42);border-radius:10px;background:rgba(11,11,11,.82);box-shadow:0 6px 16px rgba(6,6,6,.34);backdrop-filter:blur(3px);pointer-events:auto;z-index:6}
+[${HOST_ATTR}="1"] .grJankenInputModeButton{min-height:24px;padding:3px 7px;border:1px solid rgba(230,230,230,.3);border-radius:7px;background:rgba(56,56,56,.82);color:#f8f8f8;font:800 9px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;white-space:nowrap;cursor:pointer;touch-action:manipulation}
+[${HOST_ATTR}="1"] .grJankenInputModeButton[aria-pressed="true"]{border-color:rgba(255,255,255,.92);background:linear-gradient(145deg,rgba(218,218,218,.94),rgba(94,94,94,.94));color:#111;box-shadow:0 0 0 2px rgba(255,255,255,.14),0 0 14px rgba(220,220,220,.18)}
+[${HOST_ATTR}="1"] .grJankenInputModeButton:focus-visible{outline:2px solid rgba(255,255,255,.95);outline-offset:2px}
+[${HOST_ATTR}="1"][data-input-mode="card_pull"] .grJankenSlidePadHandle,[${HOST_ATTR}="1"][data-input-mode="plain"] .grJankenSlidePadHandle{filter:brightness(.78);opacity:.7}
 [${HOST_ATTR}="1"] .grJankenSlidePadHandle{position:absolute;right:0;bottom:0;width:68px;height:68px;border-radius:50%;border:2px solid rgba(255,255,255,.82);background:radial-gradient(circle at 34% 26%,rgba(247,247,247,.98) 0 9%,rgba(191,191,191,.88) 10% 27%,rgba(84,84,84,.92) 50%,rgba(27,27,27,.98) 78%,rgba(11,11,11,1) 100%);box-shadow:0 10px 28px rgba(6,6,6,.54),0 0 20px rgba(182,182,182,.2),inset 0 0 0 4px rgba(239,239,239,.12);color:#fafafa;font-weight:900;font-size:10px;letter-spacing:.08em;pointer-events:auto;touch-action:none;transition:transform 80ms cubic-bezier(.2,.8,.2,1),filter 100ms ease,box-shadow 100ms ease;will-change:transform,filter,box-shadow}
 [${HOST_ATTR}="1"] .grPowerEnergy{position:absolute;right:-68px;bottom:-60px;width:105px;height:105px;border-radius:50%;overflow:hidden;pointer-events:none;z-index:0;opacity:.78;filter:brightness(.84);transform:scale(.92);transform-origin:50% 50%;transition:opacity 120ms ease,filter 120ms ease,transform 120ms cubic-bezier(.2,.8,.2,1)}
 [${HOST_ATTR}="1"] .grPowerEnergy img{position:absolute;width:155%;height:155%;left:50%;top:50%;transform:translate(-50%,-50%);object-fit:cover;mix-blend-mode:screen;user-select:none;-webkit-user-drag:none;pointer-events:none}
@@ -386,6 +419,7 @@ function addStyle(documentRef) {
 [${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-150px,-2px) rotate(-15deg)}
 [${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-96px,-66px) rotate(-4deg);transition-delay:35ms}
 [${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-14px,-96px) rotate(9deg);transition-delay:70ms}
+[${HOST_ATTR}="1"] .grJankenSlidePadSlot[data-pull-dragging="true"]{transform:translate(var(--gr-janken-pull-x,0px),var(--gr-janken-pull-y,0px)) scale(1.06)!important;filter:brightness(1.2);box-shadow:0 12px 30px rgba(6,6,6,.54),0 0 0 4px rgba(235,235,235,.28),0 0 28px rgba(220,220,220,.28);transition:none}
 [${HOST_ATTR}="1"] .grJankenSlidePadSlot[data-armed="true"]{filter:brightness(1.12);border-color:rgba(230,230,230,.98);box-shadow:0 10px 28px rgba(6,6,6,.5),0 0 0 4px rgba(185,185,185,.2),0 0 24px rgba(122,122,122,.26)}
 [${HOST_ATTR}="1"] .grJankenSlidePadSlot:disabled{filter:brightness(.68);background:linear-gradient(160deg,rgba(88,88,88,.84),rgba(44,44,44,.92));border-color:rgba(196,196,196,.42);color:rgba(231,231,231,.58);box-shadow:0 6px 16px rgba(6,6,6,.32);cursor:default;pointer-events:none}
 [${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:32px;line-height:1;font-weight:900}
@@ -883,6 +917,10 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   const root = battleRoot ?? documentRef?.querySelector?.('section[data-screen="battle"]');
   if (!documentRef || !root) return null;
   const initialDedicatedFocus = normalizeBattleJankenFocusIntegration(focusIntegration);
+  const initialInputMode = normalizeBattleJankenInputMode(
+    root.dataset?.battleJankenInputMode
+      ?? globalRef?.__GAMEROAD_BATTLE_JANKEN_INPUT_MODE__,
+  );
   const existing = root.querySelector?.(`[${HOST_ATTR}="1"]`);
   if (existing?.__gameroadRuntime) {
     const existingRuntime = existing.__gameroadRuntime;
@@ -895,9 +933,31 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   const host = documentRef.createElement('aside');
   host.setAttribute(HOST_ATTR, '1');
   host.dataset.expanded = 'false';
+  host.dataset.inputMode = initialInputMode;
   host.dataset.handAuraActive = 'false';
   host.dataset.handAuraArmed = 'false';
-  host.setAttribute('aria-label', 'じゃんけん SlidePad / Power Energy');
+  host.setAttribute('aria-label', 'じゃんけん入力方式 / SlidePad / Power Energy');
+  const modePicker = documentRef.createElement('div');
+  modePicker.className = 'grJankenInputModePicker';
+  modePicker.setAttribute('role', 'group');
+  modePicker.setAttribute('aria-label', 'じゃんけんの出し方');
+  const modeButtons = new Map();
+  for (const option of BATTLE_JANKEN_INPUT_MODE_OPTIONS) {
+    const button = documentRef.createElement('button');
+    button.type = 'button';
+    button.className = 'grJankenInputModeButton';
+    button.dataset.inputMode = option.id;
+    button.textContent = option.label;
+    button.setAttribute('aria-label', option.label);
+    button.addEventListener('click', (event) => {
+      event.preventDefault?.();
+      event.stopPropagation?.();
+      setInputMode(option.id);
+    });
+    modePicker.appendChild(button);
+    modeButtons.set(option.id, button);
+  }
+  host.appendChild(modePicker);
   const slotNodes = new Map();
   for (const hand of SLOT_ORDER) {
     const view = SLOT_VIEW[hand];
@@ -908,6 +968,10 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     button.dataset.armed = 'false';
     button.disabled = true;
     button.innerHTML = `<span class="grJankenSlidePadSuit">${view.symbol}</span><span class="grJankenSlidePadCard">空き</span><span class="grJankenSlidePadHand">${view.hand}</span>`;
+    button.addEventListener('pointerdown', beginSlotPull);
+    button.addEventListener('pointermove', updateSlotPull);
+    button.addEventListener('pointerup', (event) => finishSlotPull(event));
+    button.addEventListener('pointercancel', (event) => finishSlotPull(event, { cancelled: true }));
     host.appendChild(button);
     slotNodes.set(hand, button);
   }
@@ -977,6 +1041,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   let timer = null;
   let roundOpenTimer = null;
   let lastRoundId = null;
+  let inputMode = initialInputMode;
   let activePointerId = null;
   let dragOrigin = null;
   let dragMoved = false;
@@ -986,14 +1051,18 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   let slotRollLastX = 0;
   let slotRollDetentPx = 0;
   let handDrag = null;
+  let slotDrag = null;
   let boundHandRoot = null;
   let suppressNativeClickCardId = null;
   let allowAuraProgrammaticClick = false;
   let suppressClickTimer = null;
+  let suppressSlotClickHand = null;
+  let suppressSlotClickTimer = null;
   let focusedCardId = null;
   let focusSurfaceRuntime = null;
   let focusSurfaceVersion = 0;
   let focusAssignmentSyncPending = false;
+  setInputMode(initialInputMode);
 
   function closeDedicatedFocusSurface() {
     focusSurfaceVersion += 1;
@@ -1186,6 +1255,41 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     handle.setAttribute('aria-expanded', String(expanded));
   }
 
+  function setInputMode(nextMode) {
+    inputMode = normalizeBattleJankenInputMode(nextMode, inputMode);
+    host.dataset.inputMode = inputMode;
+    const active = projectBattleJankenInputModeOptions(inputMode);
+    for (const option of active) {
+      const button = modeButtons.get(option.id);
+      if (!button) continue;
+      button.setAttribute('aria-pressed', String(option.active));
+      button.dataset.active = String(option.active);
+    }
+    const currentOption = BATTLE_JANKEN_INPUT_MODE_OPTIONS.find((option) => option.id === inputMode);
+    handle.textContent = currentOption?.shortLabel ?? '発射板';
+    handle.setAttribute('aria-label', `じゃんけん ${currentOption?.label ?? '発射板'}入力`);
+    if (inputMode !== BATTLE_JANKEN_INPUT_MODE.LAUNCHER) {
+      clearBattleSlotRoll();
+      setArmed(null);
+    }
+    schedule();
+    return inputMode;
+  }
+
+  function commitSelectedHand(selectedHand) {
+    if (!selectedHand || !model) return false;
+    if (dedicatedFocus) {
+      const opening = openDedicatedFocusSurface();
+      void opening;
+      return true;
+    }
+    const currentSourceHandIds = readHand(globalRef, root).map((card) => card.id);
+    const cardId = resolveBattleJankenSlotCardAction(model, selectedHand, currentSourceHandIds);
+    const flight = cardId ? captureReleasedJankenCardFlight(globalRef, root, slotNodes, selectedHand) : null;
+    if (cardId && clickExistingHandCard(root, cardId)) playReleasedJankenCardFlight(host, flight);
+    return !!cardId;
+  }
+
   function setArmed(nextHand) {
     armedHand = nextHand ?? null;
     for (const [hand, node] of slotNodes) node.dataset.armed = String(hand === armedHand);
@@ -1223,6 +1327,84 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       if (!center || node?.disabled) return [];
       return [{ id: hand, ...center, selectable: true }];
     });
+  }
+
+  function clearSlotPullVisual(state) {
+    const node = state?.node;
+    if (!node) return;
+    node.dataset.pullDragging = 'false';
+    node.style?.removeProperty?.('--gr-janken-pull-x');
+    node.style?.removeProperty?.('--gr-janken-pull-y');
+  }
+
+  function scheduleSlotClickSuppression(hand) {
+    suppressSlotClickHand = hand ?? null;
+    if (suppressSlotClickTimer !== null) globalRef.clearTimeout?.(suppressSlotClickTimer);
+    suppressSlotClickTimer = globalRef.setTimeout?.(() => {
+      suppressSlotClickTimer = null;
+      suppressSlotClickHand = null;
+    }, 0) ?? null;
+  }
+
+  function beginSlotPull(event) {
+    if (inputMode !== BATTLE_JANKEN_INPUT_MODE.CARD_PULL || destroyed || slotDrag || activePointerId !== null) return;
+    const node = event?.currentTarget ?? event?.target?.closest?.(`[${SLOT_ATTR}]`);
+    const selectedHand = node?.getAttribute?.(SLOT_ATTR);
+    const pointerId = event?.pointerId;
+    const origin = elementCenter(node);
+    if (!node || !selectedHand || node.disabled || !Number.isFinite(pointerId) || !origin) return;
+    slotDrag = {
+      node,
+      hand: selectedHand,
+      pointerId,
+      origin,
+      moved: false,
+    };
+    node.dataset.pullDragging = 'true';
+    node.style.setProperty('--gr-janken-pull-x', '0px');
+    node.style.setProperty('--gr-janken-pull-y', '0px');
+    try { node.setPointerCapture?.(pointerId); } catch {}
+    event.preventDefault?.();
+    event.stopPropagation?.();
+  }
+
+  function updateSlotPull(event) {
+    const state = slotDrag;
+    if (!state || event?.pointerId !== state.pointerId) return false;
+    const x = Number(event.clientX);
+    const y = Number(event.clientY);
+    if (![x, y].every(Number.isFinite)) return false;
+    const dx = x - state.origin.x;
+    const dy = y - state.origin.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance >= GESTURE_DEAD_ZONE_PX) state.moved = true;
+    const limit = 74;
+    const scale = distance > limit ? limit / distance : 1;
+    state.node.style.setProperty('--gr-janken-pull-x', `${(dx * scale).toFixed(2)}px`);
+    state.node.style.setProperty('--gr-janken-pull-y', `${(dy * scale).toFixed(2)}px`);
+    event.preventDefault?.();
+    event.stopPropagation?.();
+    return state.moved;
+  }
+
+  function finishSlotPull(event, { cancelled = false } = {}) {
+    const state = slotDrag;
+    if (!state || event?.pointerId !== state.pointerId) return;
+    if (!cancelled) updateSlotPull(event);
+    const selectedHand = !cancelled && state.moved ? state.hand : null;
+    const pointerId = state.pointerId;
+    const moved = state.moved;
+    slotDrag = null;
+    clearSlotPullVisual(state);
+    try {
+      if (state.node.hasPointerCapture?.(pointerId)) state.node.releasePointerCapture?.(pointerId);
+    } catch {}
+    if (moved) {
+      scheduleSlotClickSuppression(state.hand);
+      event.preventDefault?.();
+      event.stopPropagation?.();
+    }
+    if (selectedHand) commitSelectedHand(selectedHand);
   }
 
   function updateGesture(event) {
@@ -1289,10 +1471,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       void openDedicatedFocusSurface();
       return;
     }
-    const currentSourceHandIds = readHand(globalRef, root).map((card) => card.id);
-    const cardId = resolveBattleJankenSlotCardAction(model, selectedHand, currentSourceHandIds);
-    const flight = cardId ? captureReleasedJankenCardFlight(globalRef, root, slotNodes, selectedHand) : null;
-    if (cardId && clickExistingHandCard(root, cardId)) playReleasedJankenCardFlight(host, flight);
+    commitSelectedHand(selectedHand);
   }
 
   function clearAuraHostState() {
@@ -1559,7 +1738,6 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     syncHandCardFocusPresentation();
     rowRouletteHost.hidden = rouletteEnabled !== true;
     rowRouletteRuntime?.refresh?.();
-    const currentSourceHandIds = hand.map((card) => card.id);
     for (const slot of model.slots) {
       const node = slotNodes.get(slot.jankenHand);
       const cardText = node.querySelector('.grJankenSlidePadCard');
@@ -1569,13 +1747,19 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
         ? `${slot.symbol} ${slot.hand} ${slot.cardLabel}`
         : `${slot.symbol} ${slot.hand} 空き`);
       cardText.textContent = slot.occupied ? slot.cardLabel : '空き';
+      node.dataset.inputMode = inputMode;
       node.onclick = () => {
+        if (suppressSlotClickHand === slot.jankenHand) {
+          suppressSlotClickHand = null;
+          return;
+        }
         if (dedicatedFocus) {
           void openDedicatedFocusSurface();
           return;
         }
-        const cardId = resolveBattleJankenSlotCardAction(model, slot.jankenHand, currentSourceHandIds);
-        if (cardId) clickExistingHandCard(root, cardId);
+        if (inputMode === BATTLE_JANKEN_INPUT_MODE.LAUNCHER) return;
+        if (inputMode === BATTLE_JANKEN_INPUT_MODE.CARD_PULL && slotDrag) return;
+        commitSelectedHand(slot.jankenHand);
       };
     }
     if (armedHand) renderLoadPreview(armedHand);
@@ -1589,7 +1773,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   }
 
   handle.addEventListener('pointerdown', (event) => {
-    if (activePointerId !== null || handDrag) return;
+    if (inputMode !== BATTLE_JANKEN_INPUT_MODE.LAUNCHER || activePointerId !== null || handDrag) return;
     const pointerId = event?.pointerId;
     if (!Number.isFinite(pointerId)) return;
     const center = elementCenter(handle);
@@ -1665,6 +1849,10 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     syncFocusSurface: () => syncDedicatedFocusSurface(),
     presentOrderMotion: (motion, metadata = {}) => destroyed ? false : presentBattleJankenOrderMotionToSlidePad(orderPresenterHost, motion, metadata),
     orderPresentationSnapshot: () => orderPresenterHost.__gameroadOrderPresentation ?? null,
+    inputMode: () => inputMode,
+    inputModeOptions: () => projectBattleJankenInputModeOptions(inputMode),
+    setInputMode,
+    modePicker,
     isExpanded: () => expanded,
     destroy() {
       if (destroyed) return false;
@@ -1672,8 +1860,19 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       if (timer !== null) globalRef.clearTimeout?.(timer);
       if (roundOpenTimer !== null) globalRef.clearTimeout?.(roundOpenTimer);
       if (suppressClickTimer !== null) globalRef.clearTimeout?.(suppressClickTimer);
+      if (suppressSlotClickTimer !== null) globalRef.clearTimeout?.(suppressSlotClickTimer);
       closeDedicatedFocusSurface();
       if (handDrag) cleanupHandDrag(handDrag);
+      if (slotDrag) {
+        const currentSlotDrag = slotDrag;
+        slotDrag = null;
+        clearSlotPullVisual(currentSlotDrag);
+        try {
+          if (currentSlotDrag.node?.hasPointerCapture?.(currentSlotDrag.pointerId)) {
+            currentSlotDrag.node.releasePointerCapture?.(currentSlotDrag.pointerId);
+          }
+        } catch {}
+      }
       if (boundHandRoot) {
         boundHandRoot.removeEventListener?.('pointerdown', beginHandDrag);
         boundHandRoot.removeEventListener?.('pointerover', handleHandPointerOver);

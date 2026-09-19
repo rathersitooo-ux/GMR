@@ -18,6 +18,7 @@ const PARTNER_ADVICE_MOTION_READY_ATTR = 'data-player-focus-motion-ready';
 const PARTNER_ADVICE_EXPAND_MS = 180;
 const PARTNER_ADVICE_COLLAPSE_MS = 140;
 const PARTNER_ADVICE_CONTENT_REVEAL_MS = 120;
+const BATTLE_PHASE_BOARD_SUPPRESSED_ATTR = 'data-dedicated-battle-phase-suppressed';
 
 function token(value) {
   if (typeof value !== 'string') return null;
@@ -385,6 +386,94 @@ export function installBattleCardPinchZoomRuntime(win = globalThis) {
   return control;
 }
 
+export function installBattlePhaseBoardSuppressionRuntime(win = globalThis) {
+  const doc = win?.document;
+  const battleMap = doc?.getElementById?.('battleMap');
+  const resolution = doc?.getElementById?.('battleResolution');
+  const phaseSurface = doc?.getElementById?.('battlePhaseSurface');
+  if (!doc || !battleMap?.style || !resolution || !phaseSurface) return null;
+
+  const prior = Object.freeze({
+    visibility: battleMap.style.getPropertyValue?.('visibility') ?? battleMap.style.visibility ?? '',
+    visibilityPriority: battleMap.style.getPropertyPriority?.('visibility') ?? '',
+    pointerEvents: battleMap.style.getPropertyValue?.('pointer-events') ?? battleMap.style.pointerEvents ?? '',
+    pointerEventsPriority: battleMap.style.getPropertyPriority?.('pointer-events') ?? '',
+    hadAriaHidden: battleMap.hasAttribute?.('aria-hidden') === true,
+    ariaHidden: battleMap.getAttribute?.('aria-hidden') ?? null,
+  });
+  let dead = false;
+  let active = false;
+
+  function setStyle(name, value, priority = '') {
+    if (typeof battleMap.style.setProperty === 'function') battleMap.style.setProperty(name, value, priority);
+    else if (name === 'visibility') battleMap.style.visibility = value;
+    else if (name === 'pointer-events') battleMap.style.pointerEvents = value;
+  }
+
+  function restoreStyle(name, value, priority = '') {
+    if (value) setStyle(name, value, priority);
+    else if (typeof battleMap.style.removeProperty === 'function') battleMap.style.removeProperty(name);
+    else if (name === 'visibility') battleMap.style.visibility = '';
+    else if (name === 'pointer-events') battleMap.style.pointerEvents = '';
+  }
+
+  function restoreAria() {
+    if (prior.hadAriaHidden) battleMap.setAttribute?.('aria-hidden', prior.ariaHidden ?? 'true');
+    else battleMap.removeAttribute?.('aria-hidden');
+  }
+
+  function phaseLive() {
+    return resolution.hidden !== true && resolution.classList?.contains?.('battlePhaseLive') === true;
+  }
+
+  function sync() {
+    if (dead) return Object.freeze({ active: false });
+    const next = phaseLive();
+    if (next) {
+      setStyle('visibility', 'hidden', 'important');
+      setStyle('pointer-events', 'none', 'important');
+      battleMap.setAttribute?.('aria-hidden', 'true');
+      battleMap.setAttribute?.(BATTLE_PHASE_BOARD_SUPPRESSED_ATTR, 'true');
+    } else if (active) {
+      restoreStyle('visibility', prior.visibility, prior.visibilityPriority);
+      restoreStyle('pointer-events', prior.pointerEvents, prior.pointerEventsPriority);
+      restoreAria();
+      battleMap.removeAttribute?.(BATTLE_PHASE_BOARD_SUPPRESSED_ATTR);
+    }
+    active = next;
+    return Object.freeze({ active });
+  }
+
+  const Observer = win?.MutationObserver;
+  const observer = typeof Observer === 'function' ? new Observer(() => queueMicrotask(sync)) : null;
+  observer?.observe?.(resolution, { attributes: true, attributeFilter: ['class', 'hidden'] });
+  observer?.observe?.(phaseSurface, { attributes: true, attributeFilter: ['hidden'], childList: true });
+  sync();
+
+  const control = Object.freeze({
+    sync,
+    snapshot: () => Object.freeze({ active }),
+    destroy() {
+      if (dead) return false;
+      dead = true;
+      observer?.disconnect?.();
+      if (active) {
+        restoreStyle('visibility', prior.visibility, prior.visibilityPriority);
+        restoreStyle('pointer-events', prior.pointerEvents, prior.pointerEventsPriority);
+        restoreAria();
+        battleMap.removeAttribute?.(BATTLE_PHASE_BOARD_SUPPRESSED_ATTR);
+      }
+      active = false;
+      if (win.__GAMEROAD_BATTLE_PHASE_BOARD_SUPPRESSION_RUNTIME__ === control) {
+        delete win.__GAMEROAD_BATTLE_PHASE_BOARD_SUPPRESSION_RUNTIME__;
+      }
+      return true;
+    },
+  });
+  win.__GAMEROAD_BATTLE_PHASE_BOARD_SUPPRESSION_RUNTIME__ = control;
+  return control;
+}
+
 export function installBattleBoardVisualExplanationRuntime(win = globalThis) {
   const doc = win?.document;
   const board = doc?.querySelector?.('#board');
@@ -415,6 +504,7 @@ function autoInstall(win = globalThis) {
   const doc = win?.document;
   if (!doc) return;
   const run = () => {
+    if (!win.__GAMEROAD_BATTLE_PHASE_BOARD_SUPPRESSION_RUNTIME__) installBattlePhaseBoardSuppressionRuntime(win);
     if (!win.__GAMEROAD_BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME__) installBattleBoardVisualExplanationRuntime(win);
     if (!win.__GAMEROAD_BATTLE_CARD_PINCH_ZOOM_RUNTIME__) installBattleCardPinchZoomRuntime(win);
   };
@@ -432,6 +522,8 @@ export const BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME = Object.freeze({
   gameplayAuthority: false,
   topologyInference: false,
   automaticExecution: false,
+  dedicatedBattlePhaseBoardSuppression: true,
+  dedicatedBattlePhaseBoardSuppressionPolicy: 'HIDE_EXISTING_BATTLE_MAP_AND_DISABLE_POINTERS_WHILE_BATTLE_PHASE_LIVE',
   cardPinchZoom: true,
   cardPinchSelector: HAND_CARD,
   cardPinchScaleRange: Object.freeze([PINCH_MIN_SCALE, PINCH_MAX_SCALE]),

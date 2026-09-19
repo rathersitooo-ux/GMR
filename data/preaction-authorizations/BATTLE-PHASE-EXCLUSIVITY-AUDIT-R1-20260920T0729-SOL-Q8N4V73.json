@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PHASE-EXCLUSIVITY-AUDIT-R1-20260920T0729-SOL-Q8N4V73",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PHASE_PRESENTATION_EXCLUSIVITY_AUDIT_R1",
+  "acquireKey": "BATTLE-PHASE-EXCLUSIVITY-AUDIT-R1-20260920T0729-SOL-Q8N4V73",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "EXISTING_BATTLE_SCREEN_AUDIT_GAP_UNKNOWN_MODE_AND_PHASE_COHERENCE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_MODEL_CONSTRUCTOR_POSITIVE+NEGATIVE_TAMPER_AUDIT",
+  "proceedToken": "PROCEED|BATTLE-PHASE-EXCLUSIVITY-AUDIT-R1-20260920T0729-SOL-Q8N4V73|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|phase-exclusivity|lease-snapshot",
+  "authorizationBaseSha": "d047e9c716f8e233a3a8c44e6712c9bb6771d7ff",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PHASE_PRESENTATION_EXCLUSIVITY_AUDIT_R1",
+  "leaseAcquireKey": "BATTLE-PHASE-EXCLUSIVITY-AUDIT-R1-20260920T0729-SOL-Q8N4V73",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 07:29 JST",
+  "leaseUntilJst": "2026-09-20 08:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A23:L23",
+  "leaseExactMutableResources": "browser/battle-screen-presentation-core.mjs; tests/battle-screen-presentation-core.test.mjs; transient data/preaction-authorizations/BATTLE-PHASE-EXCLUSIVITY-AUDIT-R1-20260920T0729-SOL-Q8N4V73.json cleanup-delete only; own fresh branch/PR/check/merge/readback; browser/battle-screen-runtime-mount.mjs READ_ONLY; browser/GAMEROAD.html READ_ONLY; battle-conveyor/gameplay/rules/save/network READ_ONLY",
+  "scope": [
+    "browser/battle-screen-presentation-core.mjs",
+    "tests/battle-screen-presentation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-presentation-core.mjs",
+    "tests/battle-screen-presentation-core.test.mjs"
+  ],
+  "solutionSignature": "Harden the existing Battle presentation audit so phase/screen ownership contradictions fail closed without adding another turn or state controller.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_BATTLE_SCREEN_PRESENTATION_CORE_IS_CURRENT_SINGLE_PRESENTATION_MODEL",
+  "solutionSearchEvidence": [
+    "current:browser/battle-screen-presentation-core.mjs createBattleScreenModel+auditBattleScreenModel",
+    "current:tests/battle-screen-presentation-core.test.mjs",
+    "external:state-machine phase exclusivity pattern used only as validation inspiration"
+  ]
+}

@@ -5,9 +5,11 @@ export const BATTLE_CARD_RELEASE_FLIGHT_MODE = Object.freeze({
   REDUCED: 'REDUCED',
 });
 
-export const BATTLE_CARD_RELEASE_FLIGHT_DEFAULT_DURATION_MS = 560;
-export const BATTLE_CARD_RELEASE_FLIGHT_LOW_PERF_MAX_DURATION_MS = 240;
-export const BATTLE_CARD_RELEASE_FLIGHT_SAMPLE_OFFSETS = Object.freeze([0, 0.12, 0.28, 0.46, 0.64, 0.82, 1]);
+export const BATTLE_CARD_RELEASE_FLIGHT_DEFAULT_DURATION_MS = 700;
+export const BATTLE_CARD_RELEASE_FLIGHT_LOW_PERF_MAX_DURATION_MS = 280;
+export const BATTLE_CARD_RELEASE_PROVISIONAL_CENTER_SCALE = 2;
+export const BATTLE_CARD_RELEASE_PROVISIONAL_HOLD_START = 0.78;
+export const BATTLE_CARD_RELEASE_FLIGHT_SAMPLE_OFFSETS = Object.freeze([0, 0.12, 0.28, 0.46, 0.64, BATTLE_CARD_RELEASE_PROVISIONAL_HOLD_START, 1]);
 
 const ROLE = Object.freeze({
   TOP: 'top',
@@ -84,19 +86,31 @@ function fullGeometry(start, target, role) {
   };
 }
 
+function provisionalCenterScale(offset) {
+  if (offset >= BATTLE_CARD_RELEASE_PROVISIONAL_HOLD_START) return BATTLE_CARD_RELEASE_PROVISIONAL_CENTER_SCALE;
+  const local = Math.max(0, Math.min(1, offset / BATTLE_CARD_RELEASE_PROVISIONAL_HOLD_START));
+  const dip = 1 - (0.16 * smoothDepth(local));
+  const arrival = Math.max(0, (local - 0.7) / 0.3);
+  return dip + ((BATTLE_CARD_RELEASE_PROVISIONAL_CENTER_SCALE - dip) * smoothDepth(arrival));
+}
+
 function projectFullFrames(geometry, offsets) {
   return offsets.map((offset) => {
-    const point = cubicPoint(geometry, offset);
-    const depth = smoothDepth(offset);
+    const holding = offset >= BATTLE_CARD_RELEASE_PROVISIONAL_HOLD_START;
+    const point = holding
+      ? { x: geometry.dx, y: geometry.dy }
+      : cubicPoint(geometry, offset / BATTLE_CARD_RELEASE_PROVISIONAL_HOLD_START);
+    const local = Math.max(0, Math.min(1, offset / BATTLE_CARD_RELEASE_PROVISIONAL_HOLD_START));
+    const depth = smoothDepth(local);
     return Object.freeze({
       offset,
       x: point.x,
       y: point.y,
-      rotationDeg: geometry.spinDeg * offset,
-      scale: 1 - (0.66 * depth),
-      opacity: 1 - (0.42 * depth),
-      blurPx: 0.7 * depth,
-      brightness: 1 - (0.12 * depth),
+      rotationDeg: holding ? geometry.spinDeg : geometry.spinDeg * local,
+      scale: provisionalCenterScale(offset),
+      opacity: 1,
+      blurPx: holding ? 0 : 0.42 * depth,
+      brightness: holding ? 1.08 : 1 - (0.06 * depth),
     });
   });
 }
@@ -104,26 +118,19 @@ function projectFullFrames(geometry, offsets) {
 function projectLowPerfFrames(start, target) {
   const dx = target.x - start.x;
   const dy = target.y - start.y;
-  return [0, 0.5, 1].map((offset) => {
-    const depth = smoothDepth(offset);
-    return Object.freeze({
-      offset,
-      x: dx * offset,
-      y: dy * offset,
-      rotationDeg: 0,
-      scale: 1 - (0.66 * depth),
-      opacity: 1 - (0.42 * depth),
-      blurPx: 0,
-      brightness: 1,
-    });
-  });
-}
-
-function projectReducedFrames() {
   return [
     Object.freeze({ offset: 0, x: 0, y: 0, rotationDeg: 0, scale: 1, opacity: 1, blurPx: 0, brightness: 1 }),
-    Object.freeze({ offset: 0.5, x: 0, y: 0, rotationDeg: 0, scale: 0.985, opacity: 0.86, blurPx: 0, brightness: 1 }),
-    Object.freeze({ offset: 1, x: 0, y: 0, rotationDeg: 0, scale: 0.97, opacity: 0.58, blurPx: 0, brightness: 1 }),
+    Object.freeze({ offset: BATTLE_CARD_RELEASE_PROVISIONAL_HOLD_START, x: dx, y: dy, rotationDeg: 0, scale: BATTLE_CARD_RELEASE_PROVISIONAL_CENTER_SCALE, opacity: 1, blurPx: 0, brightness: 1 }),
+    Object.freeze({ offset: 1, x: dx, y: dy, rotationDeg: 0, scale: BATTLE_CARD_RELEASE_PROVISIONAL_CENTER_SCALE, opacity: 1, blurPx: 0, brightness: 1 }),
+  ];
+}
+
+function projectReducedFrames(start, target) {
+  const dx = target.x - start.x;
+  const dy = target.y - start.y;
+  return [
+    Object.freeze({ offset: 0, x: dx, y: dy, rotationDeg: 0, scale: BATTLE_CARD_RELEASE_PROVISIONAL_CENTER_SCALE, opacity: 1, blurPx: 0, brightness: 1 }),
+    Object.freeze({ offset: 1, x: dx, y: dy, rotationDeg: 0, scale: BATTLE_CARD_RELEASE_PROVISIONAL_CENTER_SCALE, opacity: 1, blurPx: 0, brightness: 1 }),
   ];
 }
 
@@ -156,7 +163,7 @@ export function projectBattleCardReleaseFlightMotion({
       target: destination,
       spinDeg: 0,
       bendPx: 0,
-      frames: projectReducedFrames(),
+      frames: projectReducedFrames(source, destination),
       destinationCue: {
         kind: 'DESTINATION_PULSE',
         x: destination.x,

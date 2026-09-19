@@ -31,7 +31,6 @@ const SUIT_PRESENTATION = Object.freeze({
   DCG: Object.freeze(['◆', 'CARD']),
 });
 
-const POINTER_COMMIT_MAX_TRAVEL_PX = 12;
 
 function requiredMethod(owner, name, ownerName) {
   if (typeof owner?.[name] !== 'function') {
@@ -297,23 +296,18 @@ function renderJanken(state, { busy, errorText, cardIndex, resolveCardArt }) {
     </section>`;
 }
 
-function renderLoad(state, { busy, errorText, cardIndex, resolveCardArt }) {
+function renderLoad(state, { errorText, cardIndex, resolveCardArt }) {
   const preview = state.focusedPreview;
   return `
-    <section class="grJankenFocusPanel grJankenLoadPanel" role="dialog" aria-modal="false" aria-label="ロード確認">
+    <section class="grJankenFocusPanel grJankenLoadPanel" role="status" aria-label="ロード提出">
       <div class="grJankenFocusHeader">
-        <div><div class="grJankenFocusTitle">ロード確認</div><div class="grJankenFocusSub">${escapeHtml(HAND_LABEL[state.focusedHand] ?? state.focusedHand)}・ロックオン固定</div></div>
-        <button type="button" class="grJankenFocusAction" data-gr-janken-focus-action="peek" ${busy ? 'disabled' : ''}>盤面を見る</button>
+        <div><div class="grJankenFocusTitle">ロード提出</div><div class="grJankenFocusSub">${escapeHtml(HAND_LABEL[state.focusedHand] ?? state.focusedHand)}・カードを出した時点で意思表示済み</div></div>
       </div>
       <div class="grJankenLoadHero">
         ${physicalCardMarkup(preview?.cardId, cardIndex, { jankenHand: state.focusedHand, cardArt: resolveCardArt(preview?.cardId) })}
         <div class="grJankenLoadInfo">${lockRows(preview)}</div>
       </div>
       ${errorText ? `<div class="grJankenFocusError">${escapeHtml(errorText)}</div>` : ''}
-      <div class="grJankenFocusActions">
-        <button type="button" class="grJankenFocusAction" data-gr-janken-focus-action="cancel" ${busy ? 'disabled' : ''}>戻す</button>
-        <button type="button" class="grJankenFocusAction is-primary" data-gr-janken-focus-action="commit" ${busy ? 'disabled' : ''}>このロードで決定</button>
-      </div>
     </section>`;
 }
 
@@ -375,8 +369,6 @@ export function mountBattleJankenFocusRuntimeSurface({
   let destroyed = false;
   let errorText = null;
   let interactionVersion = 0;
-  let pointerCommitGesture = null;
-  let pointerCommitClickArm = null;
 
   function snapshot() {
     return Object.freeze({
@@ -464,7 +456,43 @@ export function mountBattleJankenFocusRuntimeSurface({
       presentation = enterBattleLoadFocus(presentation);
       errorText = null;
       render();
-      return Object.freeze({ ok: true, ready: true, reason: 'LOAD_FOCUS_READY', jankenHand });
+      const committed = await commit();
+      if (committed?.ok === true && committed?.committed === true) {
+        return Object.freeze({
+          ...committed,
+          ready: true,
+          autoCommitted: true,
+          reason: committed.reason ?? 'COMMITTED',
+          jankenHand,
+        });
+      }
+
+      if (!destroyed && !accepted) {
+        let cleared;
+        try {
+          cleared = await cancelLive();
+        } catch {
+          cleared = { ok: false, cleared: false, reason: 'PRECOMMIT_CLEAR_FAILED' };
+        }
+        presentation = createBattleJankenFocusPresentation({
+          packages: sourcePackages,
+          generationId: sourceGenerationId,
+          reducedMotion,
+          lowPerf,
+        });
+        errorText = cleared?.ok === true && cleared?.cleared === true
+          ? (committed?.reason ?? '提出できませんでした。カードをもう一度出してください')
+          : (cleared?.reason ?? committed?.reason ?? '提出状態を戻せませんでした');
+        render();
+      }
+      return Object.freeze({
+        ok: false,
+        ready: true,
+        committed: false,
+        autoCommitted: true,
+        reason: committed?.reason ?? 'COMMIT_FAILED',
+        jankenHand,
+      });
     }
     errorText = result?.reason ?? '攻撃先の表示を確認できませんでした';
     render();
@@ -572,8 +600,6 @@ export function mountBattleJankenFocusRuntimeSurface({
   } = {}) {
     if (destroyed) return snapshot();
     ++interactionVersion;
-    pointerCommitGesture = null;
-    pointerCommitClickArm = null;
     sourcePackages = nextPackages;
     sourceGenerationId = nextGenerationId;
     busy = false;
@@ -593,89 +619,15 @@ export function mountBattleJankenFocusRuntimeSurface({
     return event?.target?.closest?.('[data-gr-janken-focus-action]') ?? null;
   }
 
-  function pointerPoint(event) {
-    const x = Number(event?.clientX);
-    const y = Number(event?.clientY);
-    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
-    return { x, y };
-  }
-
-  function pointerTravelExceeded(event, gesture) {
-    const point = pointerPoint(event);
-    if (!point || !gesture) return true;
-    const dx = point.x - gesture.startX;
-    const dy = point.y - gesture.startY;
-    return ((dx * dx) + (dy * dy)) > (POINTER_COMMIT_MAX_TRAVEL_PX * POINTER_COMMIT_MAX_TRAVEL_PX);
-  }
-
-  function handlePointerDown(event) {
-    pointerCommitGesture = null;
-    pointerCommitClickArm = null;
-    const actionNode = actionNodeFromEvent(event);
-    if (actionNode?.dataset?.grJankenFocusAction !== 'commit') return;
-    if (event?.isPrimary === false) return;
-    if (Number.isFinite(event?.button) && event.button !== 0) return;
-    const point = pointerPoint(event);
-    if (event?.pointerId == null || !point) return;
-    pointerCommitGesture = {
-      pointerId: event.pointerId,
-      actionNode,
-      startX: point.x,
-      startY: point.y,
-      disarmed: false,
-    };
-  }
-
-  function handlePointerMove(event) {
-    const gesture = pointerCommitGesture;
-    if (!gesture || event?.pointerId !== gesture.pointerId || gesture.disarmed) return;
-    if (pointerTravelExceeded(event, gesture)) gesture.disarmed = true;
-  }
-
-  function handlePointerCancel(event) {
-    const gesture = pointerCommitGesture;
-    if (!gesture || event?.pointerId !== gesture.pointerId) return;
-    pointerCommitGesture = null;
-    pointerCommitClickArm = null;
-  }
-
-  function handlePointerUp(event) {
-    const gesture = pointerCommitGesture;
-    pointerCommitGesture = null;
-    pointerCommitClickArm = null;
-    if (!gesture || event?.pointerId !== gesture.pointerId || gesture.disarmed) return;
-    const actionNode = actionNodeFromEvent(event);
-    if (actionNode !== gesture.actionNode || actionNode?.dataset?.grJankenFocusAction !== 'commit') return;
-    if (pointerTravelExceeded(event, gesture)) return;
-    pointerCommitClickArm = actionNode;
-  }
-
   function handleClick(event) {
     const actionNode = actionNodeFromEvent(event);
     const action = actionNode?.dataset?.grJankenFocusAction;
-    if (!action) {
-      pointerCommitClickArm = null;
-      return;
-    }
-    if (action === 'commit') {
-      const detail = Number(event?.detail);
-      const pointerDerived = Number.isFinite(detail) && detail > 0;
-      const authorized = !pointerDerived || pointerCommitClickArm === actionNode;
-      pointerCommitClickArm = null;
-      if (authorized) void commit();
-      return;
-    }
-    pointerCommitClickArm = null;
+    if (!action) return;
     if (action === 'focus') void focus(actionNode.dataset.jankenHand);
     else if (action === 'peek') boardPeek();
     else if (action === 'return') returnFromBoardPeek();
-    else if (action === 'cancel') void cancel();
   }
 
-  host.addEventListener?.('pointerdown', handlePointerDown);
-  host.addEventListener?.('pointermove', handlePointerMove);
-  host.addEventListener?.('pointerup', handlePointerUp);
-  host.addEventListener?.('pointercancel', handlePointerCancel);
   host.addEventListener?.('click', handleClick);
   render();
 
@@ -695,12 +647,6 @@ export function mountBattleJankenFocusRuntimeSurface({
       ++interactionVersion;
       destroyed = true;
       busy = false;
-      pointerCommitGesture = null;
-      pointerCommitClickArm = null;
-      host.removeEventListener?.('pointerdown', handlePointerDown);
-      host.removeEventListener?.('pointermove', handlePointerMove);
-      host.removeEventListener?.('pointerup', handlePointerUp);
-      host.removeEventListener?.('pointercancel', handlePointerCancel);
       host.removeEventListener?.('click', handleClick);
       host.remove?.();
       return true;
@@ -726,7 +672,10 @@ export const BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT = Object.freeze({
   openingSevenToRpsSelectionAuthority: false,
   boardPeekPreservesExistingPresentationFocus: true,
   loadFocusRequiresExistingVisiblePreview: true,
-  selectionCommitsImmediately: false,
+  selectionCommitsImmediately: true,
+  visibleCommitControl: false,
+  visibleCancelControl: false,
+  programmaticPrecommitClearPreserved: true,
   commitTransportDelegatedToExistingLiveStack: true,
   cancelDelegatedToExistingLiveStack: true,
   acceptedCommitClosesSurface: true,

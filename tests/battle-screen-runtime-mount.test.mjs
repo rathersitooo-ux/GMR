@@ -120,6 +120,9 @@ assert.deepEqual(resolveViewerLocalPlayedCardArt(document, 'C1'), {
 });
 assert.equal(resolveViewerLocalPlayedCardArt(document, 'C2'), null);
 
+const battleMap = document.createElement('section');
+battleMap.id = 'battleMap';
+document.body.appendChild(battleMap);
 const root = document.createElement('main');
 root.setAttribute('data-gr-battle-screen-root', '');
 document.body.appendChild(root);
@@ -445,6 +448,11 @@ runtime.render(attack, {
 assert.equal(runtime.phaseSurface.hidden, false);
 assert.equal(runtime.shell.dataset.presentationMode, 'cinematic');
 assert.equal(runtime.phaseSurface.dataset.battlePhasePresentation, 'FULLSCREEN_ANIMATION');
+assert.equal(runtime.externalBattleMap, battleMap);
+assert.equal(battleMap.style.visibility, 'hidden');
+assert.equal(battleMap.style.pointerEvents, 'none');
+assert.equal(battleMap.dataset.battlePhaseSuppressed, 'true');
+assert.equal(battleMap.getAttribute('aria-hidden'), 'true');
 assert.equal(runtime.hud.root.hidden, true);
 assert.equal(runtime.currentActionCue.hidden, true);
 assert.equal(runtime.currentActionCue.textContent, '');
@@ -719,6 +727,10 @@ assert.equal(currentActionCue.parentNode, null);
 assert.equal(causalTrace.parentNode, null);
 assert.equal(resourceHudRoot.parentNode, null);
 assert.equal(root.children.includes(runtime.shell), false);
+assert.equal(battleMap.style.visibility, '');
+assert.equal(battleMap.style.pointerEvents, '');
+assert.equal(battleMap.dataset.battlePhaseSuppressed, undefined);
+assert.equal(battleMap.getAttribute('aria-hidden'), null);
 assert.throws(() => runtime.render(idle), /RUNTIME_DESTROYED/);
 assert.throws(() => runtime.renderHud({ score: 1 }), /RUNTIME_DESTROYED/);
 
@@ -827,6 +839,7 @@ assert.equal(BATTLE_SCREEN_RUNTIME.currentActionAuthority, 'ACCEPTED_PUBLIC_MODE
 assert.equal(BATTLE_SCREEN_RUNTIME.battlePhasePresentationMode, 'FULLSCREEN_ANIMATION');
 assert.equal(BATTLE_SCREEN_RUNTIME.battlePhaseNormalHudVisible, false);
 assert.equal(BATTLE_SCREEN_RUNTIME.battlePhaseNormalPlanUiVisible, false);
+assert.equal(BATTLE_SCREEN_RUNTIME.battlePhaseBoardSurfacePolicy, 'HIDE_EXISTING_BATTLE_MAP_AND_DISABLE_POINTERS');
 assert.deepEqual(BATTLE_SCREEN_RUNTIME.battlePhaseAllowedInputs, ['skip', 'public_info', 'accessibility']);
 assert.equal(BATTLE_SCREEN_RUNTIME.causalTraceAuthority, 'MODEL_CAUSAL_RETURN_STAGES_ONLY_NO_RECALCULATION');
 assert.equal(BATTLE_SCREEN_RUNTIME.causalTraceStageOrder, 'MODEL_ORDER_ONLY');

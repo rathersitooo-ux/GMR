@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PHASE-CINEMATIC-R7-20260920T0112-SOL-Q8N4V31",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PHASE_CINEMATIC_CARD_SEQUENCE_R7",
+  "acquireKey": "BATTLE-PHASE-CINEMATIC-R7-20260920T0112-SOL-Q8N4V31",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "MERGED_R6_DEDICATED_BATTLE_PHASE_MAIN_73B09A12_PLUS_CURRENT_RUNTIME_AND_ACTION_ORDER_PROJECTIONS_20260920",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "RUNTIME_SCOPE_BOUNDED_TO_PRESENTATION_ONLY_EXISTING_MODEL_DATA_NO_GAMEPLAY_WRITES",
+  "proceedToken": "PROCEED|BATTLE-PHASE-CINEMATIC-R7-20260920T0112-SOL-Q8N4V31|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-cinematic-card-sequence|fresh-main|active-lease",
+  "authorizationBaseSha": "73b09a12ef85de92250b986f776a8da22680444a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PHASE_CINEMATIC_CARD_SEQUENCE_R7",
+  "leaseAcquireKey": "BATTLE-PHASE-CINEMATIC-R7-20260920T0112-SOL-Q8N4V31",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 01:12 JST",
+  "leaseUntilJst": "2026-09-20 02:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A15:L15",
+  "leaseExactMutableResources": "browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; own fresh branch/PR/check/merge/readback; own CURRENT lease",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

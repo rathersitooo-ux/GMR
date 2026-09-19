@@ -123,6 +123,18 @@ test('mounts the existing Flanora surface and persistent Shield-entry gates with
   assert.equal(runtime.resolveGateCueLane('P2', 1).arrowStack, null);
 });
 
+test('exposes the fixed Battle visual graph as world-field geometry for the live field renderer', () => {
+  const { runtime } = mount();
+  const world = runtime.visualGraphWorld();
+  assert.equal(world.schema, 'gameroad.new-base-battle-board-world-projection.v1');
+  assert.equal(world.goalId, 'goal:shared');
+  assert.equal(world.gateIds.length, 12);
+  assert.equal(world.upperCellIds.length, 84);
+  assert.equal(world.lowerCellIds.length > 0, true);
+  assert.equal(world.edges.length > 12, true);
+  assert.equal(world.edges.every((edge) => edge.points.length >= 2), true);
+});
+
 test('1..6 established cards become BUILT while future stages stay logical-only and GOAL remains closed', () => {
   const { runtime } = mount();
   for (const count of [1, 3, 6]) {

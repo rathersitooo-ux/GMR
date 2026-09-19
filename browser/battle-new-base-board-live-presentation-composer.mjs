@@ -17,6 +17,10 @@ import {
 import {
   mountNewBaseGoalEntryGateCue,
 } from './new-base-goal-entry-gate-cue-runtime.mjs';
+import {
+  createBattleBoardVisualGraph,
+  projectBattleBoardVisualGraphToWorld,
+} from './new-base-battle-board-visual-graph.mjs';
 
 const SCHEMA = 'gameroad.battle-new-base-board-live-presentation-composer.v1';
 
@@ -95,6 +99,9 @@ export function mountBattleNewBaseBoardLivePresentation({
 
   const initialGoal = projectGoalPath(goalPathLayout, straightCardIdsByColumn);
   if (!initialGoal.ok) return fail(initialGoal.reason);
+
+  const visualGraph = createBattleBoardVisualGraph();
+  const visualGraphWorld = projectBattleBoardVisualGraphToWorld(visualGraph, { width: 20, depth: 11.25, y: 0.035 });
 
   let boardSurfaceRuntime;
   try {
@@ -236,6 +243,26 @@ export function mountBattleNewBaseBoardLivePresentation({
     },
     progressionPresentation() {
       return currentProgressionPresentation;
+    },
+    visualGraphWorld() {
+      const toWorld = (source) => ({
+        x: visualGraphWorld.centerX + (source.u - 0.5) * visualGraphWorld.width,
+        y: visualGraphWorld.y,
+        z: visualGraphWorld.centerZ + (source.v - 0.5) * visualGraphWorld.depth,
+      });
+      return deepFreeze({
+        schema: visualGraphWorld.schema,
+        nodes: visualGraphWorld.nodes,
+        edges: visualGraph.allVisualEdges.map((edge) => ({
+          id: edge.id,
+          region: edge.region,
+          points: [visualGraphWorld.nodes[edge.fromId], ...edge.waypoints.map(toWorld), visualGraphWorld.nodes[edge.toId]].filter(Boolean),
+        })),
+        goalId: visualGraph.goal.id,
+        gateIds: visualGraph.gates.map((gate) => gate.id),
+        upperCellIds: visualGraph.upperCells.map((cell) => cell.id),
+        lowerCellIds: visualGraph.lowerNodes.map((cell) => cell.id),
+      });
     },
     snapshot() {
       return snapshotState();

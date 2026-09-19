@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-INPUT-MODE-RUNTIME-R7-20260920T0636-SOL-Q8N4V61",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_INPUT_MODE_RUNTIME_CONNECTION_R7",
+  "acquireKey": "BATTLE-JANKEN-INPUT-MODE-RUNTIME-R7-20260920T0636-SOL-Q8N4V61",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_835E250_CIRCULAR_DEPENDENCY_BOUNDARY_CONFIRMED_20260920T0637JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R6_FAILED_ONLY_AT_MODULE_CYCLE_BEFORE_RUNTIME_TESTS",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-INPUT-MODE-RUNTIME-R7-20260920T0636-SOL-Q8N4V61|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|inject-mode-authority-and-connect-setting|active-lease",
+  "authorizationBaseSha": "835e25093e400bc1d6d3e421484f824bfbf4a0f6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_INPUT_MODE_RUNTIME_CONNECTION_R7",
+  "leaseAcquireKey": "BATTLE-JANKEN-INPUT-MODE-RUNTIME-R7-20260920T0636-SOL-Q8N4V61",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 06:36 JST",
+  "leaseUntilJst": "2026-09-20 07:36 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A21:L21",
+  "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; browser/battle-janken-input-mode-setting-core.mjs; tests/battle-janken-input-mode-setting-core.test.mjs; transient data/preaction-authorizations/BATTLE-JANKEN-INPUT-MODE-RUNTIME-R7-20260920T0636-SOL-Q8N4V61.json cleanup-delete only; branch sol/battle-janken-input-mode-runtime-r7-20260920; PR/check/merge/readback; browser/GAMEROAD.html READ_ONLY; own CURRENT lease/R24 event",
+  "solutionSignature": "BATTLE_JANKEN_INPUT_MODE_SETTINGS_DRIVEN_RUNTIME_V2",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R6_CYCLE_PROVES_INJECTED_AUTHORITY_IS_MINIMAL_ADAPTATION",
+  "solutionSearchEvidence": [
+    "Current SlidePad remains the sole mode authority for IDs, normalization and option projection.",
+    "Merged preference core is reused for persistence but its static import of SlidePad creates a circular module edge when connected back to runtime.",
+    "Injecting the existing SlidePad authority into the preference core removes the cycle without creating a second mode authority or new gameplay path."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    "browser/battle-janken-input-mode-setting-core.mjs",
+    "tests/battle-janken-input-mode-setting-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    "browser/battle-janken-input-mode-setting-core.mjs",
+    "tests/battle-janken-input-mode-setting-core.test.mjs"
+  ]
+}

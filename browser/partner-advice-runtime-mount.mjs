@@ -23,6 +23,11 @@ import {
   projectTutorialExperienceConversation,
   projectTutorialExperienceHelp,
 } from './tutorial-experience-profile-core.mjs';
+import {
+  ensureSaasunaBattleBustup,
+  ensureSaasunaBattleBustupStyle,
+  renderSaasunaBattleBustup,
+} from './partner-saasuna-bustup-visuals.mjs';
 
 const VERSION_KEYS = Object.freeze(['rulesVersion', 'cardVersion', 'stateVersion']);
 const PARTNER_STRATEGY_RULES = new Set(['left', 'right', 'max', 'min']);
@@ -1232,6 +1237,7 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
   const host = doc.getElementById('partnerDecisionBox');
   if (!host) return null;
   ensureBattleChatStyle(doc);
+  ensureSaasunaBattleBustupStyle(doc);
   ensureBattleQuick3Style(doc);
   ensureUnifiedPartnerSurfaceStyle(doc);
   let root = doc.getElementById(CHAT_ROOT_ID);
@@ -1278,6 +1284,7 @@ if (battleSurface) {
 } else {
   delete root.dataset.battleAdviceOverlay;
 }
+const saasunaBustup = ensureSaasunaBattleBustup(doc, battleSurface);
 
   let lastReceipt = null;
   let lastCharacterReaction = null;
@@ -1336,6 +1343,12 @@ if (battleSurface) {
       reactionActive,
     });
     const quickRoutesAvailable = win.__GAMEROAD_TEST__?.state?.screen === 'battle' && Boolean(current?.partnerId);
+    const bustupPresentation = renderSaasunaBattleBustup({
+      root, bustup: saasunaBustup, partnerId: current?.partnerId,
+      battleActive: win.__GAMEROAD_TEST__?.state?.screen === 'battle', reactionActive,
+      tutorialActive: tutorialStatus.active || tutorialExperienceStatus.active,
+      quickRouteId: quickRouteStatus.routeId, adviceActive: adviceSpeechActive,
+    });
     root.hidden = !projection.active && !tutorialStatus.available && !tutorialExperienceStatus.active && !reactionActive && !roleControlActive && !idleReadable.active && !quickRoutesAvailable;
     const roleControl = root.querySelector('.partnerAdviceRoleControl');
     if (roleControl) roleControl.hidden = !roleControlActive;
@@ -1422,7 +1435,7 @@ if (battleSurface) {
       tutorialButton.setAttribute('aria-pressed', tutorialStatus.active ? 'true' : 'false');
       tutorialButton.textContent = tutorialStatus.active ? '説明を閉じる' : '操作を再確認';
     }
-    return Object.freeze({ projection, tutorial: tutorialStatus, idleReadable, characterReaction: lastCharacterReaction, advicePartnerId: current?.partnerId || null, roster });
+    return Object.freeze({ projection, tutorial: tutorialStatus, idleReadable, characterReaction: lastCharacterReaction, bustup: bustupPresentation, advicePartnerId: current?.partnerId || null, roster });
   };
 
   const quickRoutesElement = root.querySelector('.partnerAdviceQuickRoutes');

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  bindBattlePlanAutoCommit,
   bindReadyPlanFeedbackControl,
   createReadyPlanFeedbackAdapter,
 } from '../browser/ui-state-feedback-ready-plan-adapter.mjs';
@@ -158,6 +159,20 @@ class FakeDocument {
   }
   createElement(tag){ return {tagName:String(tag).toUpperCase(),id:'',textContent:''}; }
   getElementById(id){ return this.nodes.get(id) || null; }
+}
+
+class FakeSelect {
+  constructor(value=''){
+    this.value=value;
+    this.disabled=false;
+    this.listeners=new Map();
+  }
+  addEventListener(type,handler){
+    const set=this.listeners.get(type) || new Set();
+    set.add(handler); this.listeners.set(type,set);
+  }
+  removeEventListener(type,handler){ this.listeners.get(type)?.delete(handler); }
+  emit(type,event={}){ for (const handler of this.listeners.get(type) || []) handler(event); }
 }
 
 class FakeTarget {
@@ -476,4 +491,104 @@ test('destroy restores pre-existing inline paint and removes material ownership 
   assert.equal(target.style.boxShadow,'0 1px 2px black');
   assert.equal(target.dataset.gmrMaterialPhase,undefined);
   assert.equal(target.dataset.gmrMaterial,undefined);
+});
+
+
+function makeAutoCommitHarness({roadValue='ROAD_A',battleValue='',legacyClick=null}={}){
+  const document=new FakeDocument();
+  const target=new FakeTarget(document);
+  target.disabled=false;
+  target.onclick=legacyClick;
+  const road=new FakeSelect(roadValue);
+  const battle=new FakeSelect(battleValue);
+  document.nodes.set('roadSelect',road);
+  document.nodes.set('battleSelect',battle);
+  const {adapter,calls}=make();
+  let tokenCounter=0;
+  const binding=bindBattlePlanAutoCommit({
+    target,
+    adapter,
+    operationTokenFactory:()=>`auto-${++tokenCounter}`,
+    enqueue:(fn)=>fn(),
+  });
+  return {document,target,road,battle,adapter,calls,binding,get tokenCounter(){return tokenCounter;}};
+}
+
+test('explicit decision control is hidden and last required card auto-commits through canonical adapter',()=>{
+  const h=makeAutoCommitHarness();
+  assert.ok(h.binding);
+  assert.equal(h.target.hidden,true);
+  assert.equal(h.target.dataset.explicitDecisionRetired,'1');
+  assert.equal(h.target.style.getPropertyValue('display'),'none');
+
+  h.road.emit('change');
+  assert.equal(h.calls.length,0);
+  assert.equal(h.tokenCounter,0);
+
+  h.battle.value='BATTLE_B';
+  h.battle.emit('change');
+  assert.deepEqual(h.calls,[{type:'commit',operationToken:'auto-1',source:'keyboard'}]);
+  assert.equal(h.adapter.getFeedback().feedback,'pending');
+
+  h.battle.emit('change');
+  assert.equal(h.calls.length,1);
+  assert.equal(h.tokenCounter,1);
+});
+
+test('auto-commit rejects incomplete or same-card plan before allocating a token',()=>{
+  const incomplete=makeAutoCommitHarness({roadValue:'ROAD_A',battleValue:''});
+  incomplete.battle.emit('change');
+  assert.equal(incomplete.calls.length,0);
+  assert.equal(incomplete.tokenCounter,0);
+
+  const same=makeAutoCommitHarness({roadValue:'SAME',battleValue:'SAME'});
+  same.battle.emit('change');
+  assert.equal(same.calls.length,0);
+  assert.equal(same.tokenCounter,0);
+});
+
+test('friend-room legacy submit route wins over canonical local adapter commit',async()=>{
+  let friendCalls=0;
+  const h=makeAutoCommitHarness({
+    roadValue:'ROAD_A',
+    battleValue:'BATTLE_B',
+    legacyClick:()=>{friendCalls+=1; return Promise.resolve(true);},
+  });
+  h.battle.emit('change');
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.equal(friendCalls,1);
+  assert.equal(h.calls.length,0);
+  assert.equal(h.tokenCounter,0);
+});
+
+test('failed canonical auto-commit can retry the same completed plan and destroy restores visibility',()=>{
+  const h=makeAutoCommitHarness({roadValue:'ROAD_A',battleValue:'BATTLE_B'});
+  h.battle.emit('change');
+  assert.equal(h.calls.length,1);
+  h.adapter.dispatch({type:'ACK_FAILED',token:'auto-1',reason:'server_reject'});
+  h.battle.emit('change');
+  assert.equal(h.calls.length,2);
+  assert.equal(h.calls[1].operationToken,'auto-2');
+
+  assert.equal(h.binding.destroy(),true);
+  assert.equal(h.target.hidden,false);
+  assert.equal(h.target.style.getPropertyValue('display'),'');
+  assert.equal(h.target.dataset.explicitDecisionRetired,undefined);
+  h.adapter.dispatch({type:'ACK_FAILED',token:'auto-2',reason:'server_reject'});
+  h.battle.emit('change');
+  assert.equal(h.calls.length,2);
+});
+
+
+test('retired decision cue tells player to move before choosing the last card',()=>{
+  const h=makeAutoCommitHarness();
+  const cue={textContent:''};
+  h.document.nodes.set('first10Cue',cue);
+  h.road.emit('change');
+  assert.equal(cue.textContent,'必要なら先に人物をドラッグして経路を予約。最後にバトルカードを選ぶ');
+  h.battle.value='BATTLE_B';
+  h.battle.emit('change');
+  assert.equal(cue.textContent,'必要札が揃ったため自動確定中');
+  assert.equal(h.calls.length,1);
 });

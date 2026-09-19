@@ -24,6 +24,10 @@ assert.equal(planModel.targetCalculation, false);
 assert.equal(planModel.secretProjectionAuthority, false);
 assert.equal(planModel.boardEffectCalculation, false);
 assert.equal(planModel.screenMode, 'MATCH_PLAN');
+assert.equal(planModel.surfacePurpose, 'INTERACTIVE_PLAN');
+assert.equal(planModel.battlePhasePresentationMode, null);
+assert.equal(planModel.normalPlanUiVisible, true);
+assert.equal(planModel.normalHudVisibleDuringBattlePhase, false);
 assert.equal(planModel.boardInteractionOwnedByCaller, true);
 assert.equal(planModel.battlePhaseBoardInteractionAllowed, false);
 assert.equal(planModel.fourLaneCausalStructure, true);
@@ -76,6 +80,10 @@ assert.equal(timeline.models.every(model => auditBattleScreenModel(model).ok), t
 
 const attack = timeline.models.find(model => model.eventId === 'a1');
 assert.equal(attack.screenMode, 'BATTLE_PHASE');
+assert.equal(attack.surfacePurpose, 'CINEMATIC_RESOLUTION');
+assert.equal(attack.battlePhasePresentationMode, 'FULLSCREEN_ANIMATION');
+assert.equal(attack.normalPlanUiVisible, false);
+assert.equal(attack.normalHudVisibleDuringBattlePhase, false);
 assert.equal(attack.phase, 'attack');
 assert.equal(attack.boardInteractionOwnedByCaller, false);
 assert.deepEqual(attack.battlePhaseInputPolicy, ['skip', 'public_info', 'accessibility']);
@@ -370,6 +378,10 @@ assert.deepEqual(auditBattleScreenModel(tampered).defects, ['CAUSAL_RETURN_DESTI
 assert.equal(BATTLE_SCREEN_PRESENTATION.authority, 'NONE_PRESENTATION_ONLY');
 assert.equal(BATTLE_SCREEN_PRESENTATION.laneCount, 4);
 assert.equal(BATTLE_SCREEN_PRESENTATION.planOwner, 'CALLER');
+assert.equal(BATTLE_SCREEN_PRESENTATION.battlePhaseSurfacePurpose, 'CINEMATIC_RESOLUTION');
+assert.equal(BATTLE_SCREEN_PRESENTATION.battlePhasePresentationMode, 'FULLSCREEN_ANIMATION');
+assert.equal(BATTLE_SCREEN_PRESENTATION.battlePhaseNormalPlanUiVisible, false);
+assert.equal(BATTLE_SCREEN_PRESENTATION.battlePhaseNormalHudVisible, false);
 assert.equal(BATTLE_SCREEN_PRESENTATION.compoundAttackPackageSchema, COMPOUND_SCHEMA);
 assert.equal(BATTLE_SCREEN_PRESENTATION.boardReturnAuthority, 'NORMALIZED_COMPOUND_ATTACK_PACKAGE_FROM_ACCEPTED_SETTLE_EVENT_ONLY');
 assert.equal(BATTLE_SCREEN_PRESENTATION.boardReturnEffectPolicy, 'NO_EFFECT_INFERENCE_OR_GAME_STATE_WRITE');

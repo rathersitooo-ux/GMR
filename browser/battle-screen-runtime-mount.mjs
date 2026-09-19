@@ -19,6 +19,7 @@ const PROGRESS_GUIDE_ATTR = 'data-battle-progress-guide';
 const FIELD_LANDMARK_ATTR = 'data-battle-field-landmark';
 const SHIELD_RAIL_ATTR = 'data-battle-shield-lane-rail';
 const SHIELD_SLOT_ATTR = 'data-battle-shield-slot';
+const CINEMATIC_ORDER_ATTR = 'data-battle-cinematic-order';
 const SHIELD_SLOTS = Object.freeze(['L', 'C', 'R']);
 const BATTLE_FIELD_IDS = Object.freeze(['FIELD-01', 'FIELD-02', 'FIELD-03', 'FIELD-04', 'FIELD-05', 'FIELD-08', 'FIELD-09']);
 const PLAYER_ROLE_LABELS = Object.freeze({
@@ -147,18 +148,47 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${SHIELD_RAIL_ATTR}],
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleLaneRole,
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleLaneAfterstate{display:none!important}
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleLanePublicCard{position:relative!important;inset:auto!important;right:auto!important;top:auto!important;width:clamp(98px,14vw,198px)!important;height:clamp(138px,20vw,278px)!important;border-radius:12px!important;box-shadow:0 24px 54px rgba(0,0,0,.48),0 0 0 1px rgba(255,255,255,.12)!important;transform-style:preserve-3d}
+
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleLanePublicCard{position:relative!important;inset:auto!important;right:auto!important;top:auto!important;width:clamp(98px,14vw,198px)!important;height:clamp(138px,20vw,278px)!important;border-radius:12px!important;box-shadow:0 24px 54px rgba(0,0,0,.48),0 0 0 1px rgba(255,255,255,.12)!important;transform-style:preserve-3d;overflow:hidden;background:linear-gradient(155deg,rgba(244,244,238,.16),rgba(15,20,27,.92) 36%,rgba(5,7,11,.98))}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleLanePublicCardFallback{position:absolute;inset:0;display:block;color:transparent!important;font-size:0!important;background:radial-gradient(circle at 34% 24%,rgba(255,255,255,.14),transparent 30%),linear-gradient(145deg,rgba(93,112,130,.58),rgba(18,24,31,.96) 52%,rgba(5,8,12,.98))}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleLanePublicCardNumber{position:absolute;left:7%;top:5%;z-index:2;font-size:clamp(22px,3.4vw,48px);font-weight:1000;line-height:1;text-shadow:0 4px 16px rgba(0,0,0,.82)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleLanePublicCardHand{position:absolute;right:6%;bottom:5%;z-index:2;font-size:clamp(13px,1.6vw,21px);font-weight:1000;text-shadow:0 3px 12px rgba(0,0,0,.82)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_ORDER_ATTR}]{position:absolute;z-index:14;top:clamp(8px,2.7vh,22px);left:50%;transform:translateX(-50%);width:min(66vw,720px);height:clamp(54px,11vh,96px);display:flex;align-items:flex-start;justify-content:center;gap:clamp(4px,.9vw,10px);pointer-events:none;perspective:900px}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_ORDER_ATTR}][hidden]{display:none!important}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicOrderCard{position:relative;flex:0 0 auto;width:clamp(38px,5.3vw,68px);height:clamp(52px,7.4vw,92px);border-radius:8px;border:1px solid rgba(245,247,240,.34);overflow:hidden;background:linear-gradient(155deg,rgba(238,242,244,.14),rgba(18,24,31,.94) 40%,rgba(4,7,10,.99));box-shadow:0 10px 24px rgba(0,0,0,.42);transform-style:preserve-3d;transition:opacity 180ms ease,filter 180ms ease,box-shadow 180ms ease}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicOrderCardArt{display:block;width:100%;height:100%;object-fit:cover}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicOrderCardFallback{position:absolute;inset:0;background:radial-gradient(circle at 34% 24%,rgba(255,255,255,.13),transparent 28%),linear-gradient(145deg,rgba(94,113,132,.58),rgba(16,22,30,.98) 58%,rgba(4,7,10,.99))}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicOrderCardNumber{position:absolute;left:7%;top:6%;z-index:2;font-size:clamp(15px,2vw,25px);font-weight:1000;line-height:1;text-shadow:0 3px 10px rgba(0,0,0,.84)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicOrderCardHand{position:absolute;right:6%;bottom:6%;z-index:2;font-size:clamp(9px,1.05vw,13px);font-weight:1000;text-shadow:0 2px 8px rgba(0,0,0,.84)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicOrderCard[data-final-state="invalidated"]{opacity:.28;filter:grayscale(.9) brightness(.58)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicOrderCard[data-final-state="unresolved-final"]{opacity:.74;filter:saturate(.72)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicOrderCard[data-final-state="resolved-win"]{opacity:1;filter:brightness(1.16);box-shadow:0 10px 28px rgba(0,0,0,.44),0 0 0 2px rgba(255,233,152,.56),0 0 26px rgba(255,225,115,.34)}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="reveal"] [${LANE_ATTR}]{animation:grBattleCinematicReveal 520ms cubic-bezier(.16,.78,.24,1) both}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="reveal"] [${LANE_ATTR}]:nth-child(2){animation-delay:60ms}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="reveal"] [${LANE_ATTR}]:nth-child(3){animation-delay:120ms}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="reveal"] [${LANE_ATTR}]:nth-child(4){animation-delay:180ms}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="attack"] [${LANE_ATTR}][data-role="source"],
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="ability"] [${LANE_ATTR}][data-role="source"]{transform:translateZ(130px) scale(1.16);opacity:1;filter:brightness(1.13)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="ability"] [${LANE_ATTR}][data-role="source"]{transform:translate3d(0,-2%,170px) scale(1.22);opacity:1;filter:brightness(1.14);z-index:4}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="attack"] [${LANE_ATTR}][data-role="source"] .grBattleLanePublicCard,
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="ability"] [${LANE_ATTR}][data-role="source"] .grBattleLanePublicCard{animation:grBattleCinematicStrike 460ms cubic-bezier(.18,.78,.24,1) both}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="attack"] [${LANE_ATTR}][data-role="target"],
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="ability"] [${LANE_ATTR}][data-role="target"]{transform:translateZ(36px) scale(1.03);opacity:.94}
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="compare4"] [${LANE_ATTR}]{opacity:.96;transform:translateZ(50px)}
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="finisher"] [${LANE_ATTR}]:not([data-role="winner"]){transform:translateZ(-100px) scale(.82);opacity:.2;filter:brightness(.55)}
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="finisher"] [${LANE_ATTR}][data-role="winner"]{transform:translateZ(190px) scale(1.32);opacity:1;filter:brightness(1.22);z-index:5}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="ability"] [${LANE_ATTR}][data-role="target"]{transform:translate3d(0,3%,18px) scale(.96);opacity:.9;filter:brightness(.88)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="compare4"] [${LANE_ATTR}]{opacity:.97;transform:translateZ(54px)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="compare4"] .grBattleLanePublicCard{animation:grBattleCinematicCompare 720ms cubic-bezier(.2,.72,.24,1) both}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="finisher"] [${LANE_ATTR}]:not([data-role="winner"]){transform:translate3d(0,7%,-130px) scale(.78);opacity:.16;filter:grayscale(.72) brightness(.5)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="finisher"] [${LANE_ATTR}][data-role="winner"]{transform:translate3d(0,-4%,220px) scale(1.38);opacity:1;filter:brightness(1.24);z-index:5}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="finisher"] [${LANE_ATTR}][data-role="winner"] .grBattleLanePublicCard{animation:grBattleCinematicWinner 760ms cubic-bezier(.16,.8,.2,1) both}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="settle"] [${LANE_ATTR}]{animation:grBattleCinematicSettle 420ms ease both}
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] [${LANE_ATTR}]{animation:none!important;transition:none!important}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="settle"] [${LANE_ATTR}][data-final-state="resolved-win"]{animation:none!important;transform:translate3d(0,-2%,150px) scale(1.18);opacity:1;filter:brightness(1.16)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="settle"] [${LANE_ATTR}][data-final-state="invalidated"]{animation:none!important;transform:translate3d(0,7%,-120px) scale(.78);opacity:.18;filter:grayscale(.86) brightness(.56)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="settle"] [${LANE_ATTR}][data-final-state="unresolved-final"]{animation:none!important;transform:translateZ(-24px) scale(.94);opacity:.64;filter:saturate(.72)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] [${LANE_ATTR}],
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] .grBattleLanePublicCard,
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] .grBattleCinematicOrderCard{animation:none!important;transition:none!important}
 @keyframes grBattleCinematicReveal{0%{opacity:0;transform:translateY(28px) translateZ(-180px) scale(.72)}65%{opacity:1;transform:translateY(-4px) translateZ(42px) scale(1.04)}100%{opacity:.92;transform:none}}
+@keyframes grBattleCinematicStrike{0%{transform:translateY(8px) rotate(-1deg) scale(.97)}42%{transform:translateY(-10px) rotate(1.5deg) scale(1.07)}58%{transform:translateY(-10px) rotate(1.5deg) scale(1.07)}100%{transform:translateY(0) rotate(0) scale(1)}}
+@keyframes grBattleCinematicCompare{0%{transform:translateY(14px) scale(.94);filter:brightness(.82)}58%{transform:translateY(-2px) scale(1.04);filter:brightness(1.12)}100%{transform:translateY(0) scale(1);filter:brightness(1)}}
+@keyframes grBattleCinematicWinner{0%{transform:translateY(16px) scale(.86)}52%{transform:translateY(-10px) scale(1.09)}100%{transform:translateY(0) scale(1)}}
 @keyframes grBattleCinematicSettle{0%{opacity:1;transform:translateZ(40px)}100%{opacity:.38;transform:translateY(-10px) translateZ(-120px) scale(.86)}}
 
 @media(max-width:540px) and (orientation:portrait){[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}]{left:2px;top:82px;bottom:auto;width:72px;height:90px;opacity:.13}}
@@ -541,6 +571,72 @@ function writePlayedCard(document, cardNode, card) {
   return art.source;
 }
 
+function createCinematicOrderRail(document) {
+  const rail = createNode(document, 'section', 'grBattleCinematicOrder');
+  rail.setAttribute?.(CINEMATIC_ORDER_ATTR, '1');
+  rail.setAttribute?.('aria-label', '確定した処理順のカード');
+  rail.dataset.presentationOnly = 'true';
+  rail.dataset.authority = 'accepted-causal-processing-order-only';
+  rail.hidden = true;
+  rail.setAttribute?.('aria-hidden', 'true');
+  return rail;
+}
+
+function writeCinematicOrderRail(document, rail, model) {
+  clearChildren(rail);
+  setData(rail, 'eventId', null);
+  setData(rail, 'cardCount', null);
+  setData(rail, 'orderSource', null);
+  const processing = model?.causalReturn?.processing;
+  const slots = Array.isArray(processing?.finalSlots) ? processing.finalSlots : [];
+  if (model?.battlePhasePresentationMode !== 'FULLSCREEN_ANIMATION' || slots.length === 0) {
+    rail.hidden = true;
+    rail.setAttribute?.('aria-hidden', 'true');
+    return null;
+  }
+
+  const tilt = [-7, -2, 2, 7];
+  const lift = [7, 1, 1, 7];
+  for (let index = 0; index < slots.length; index += 1) {
+    const slot = slots[index];
+    const card = createNode(document, 'div', 'grBattleCinematicOrderCard');
+    setData(card, 'sequenceIndex', index);
+    setData(card, 'playerId', slot.playerId ?? null);
+    setData(card, 'cardId', slot.cardId ?? null);
+    setData(card, 'finalState', slot.visualState ?? null);
+    card.style.transform = `translateY(${lift[index] ?? 0}px) rotate(${tilt[index] ?? 0}deg)`;
+    const handKey = typeof slot.hand === 'string' ? slot.hand.trim().toLowerCase() : '';
+    const handLabel = LOAD_JANKEN_LABELS[handKey] ?? slot.hand ?? '';
+    const numberLabel = slot.displayNumber == null ? '' : String(slot.displayNumber);
+    const readable = [numberLabel, handLabel].filter(Boolean).join('、');
+    card.setAttribute?.('aria-label', `処理順${index + 1}${readable ? `、${readable}` : ''}`);
+
+    const art = typeof slot.cardId === 'string' ? resolveViewerLocalPlayedCardArt(document, slot.cardId) : null;
+    if (art) {
+      const image = createNode(document, 'img', 'grBattleCinematicOrderCardArt');
+      image.src = art.src;
+      image.alt = '';
+      image.setAttribute?.('aria-hidden', 'true');
+      card.appendChild(image);
+      setData(card, 'artSource', art.source);
+    } else {
+      const fallback = createNode(document, 'span', 'grBattleCinematicOrderCardFallback');
+      fallback.setAttribute?.('aria-hidden', 'true');
+      card.appendChild(fallback);
+    }
+    if (numberLabel) card.appendChild(createNode(document, 'span', 'grBattleCinematicOrderCardNumber', numberLabel));
+    if (handLabel) card.appendChild(createNode(document, 'span', 'grBattleCinematicOrderCardHand', handLabel));
+    rail.appendChild(card);
+  }
+
+  rail.hidden = false;
+  rail.setAttribute?.('aria-hidden', 'false');
+  setData(rail, 'eventId', model?.eventId ?? null);
+  setData(rail, 'cardCount', slots.length);
+  setData(rail, 'orderSource', 'accepted-causal-processing-order');
+  return rail;
+}
+
 function writePublicLaneCard(document, cardNode, card) {
   clearChildren(cardNode);
   setData(cardNode, 'playerId', null);
@@ -906,6 +1002,9 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   const progressGuide = createProgressGuide(document);
   visualHost.appendChild(progressGuide);
 
+  const cinematicOrderRail = createCinematicOrderRail(document);
+  visualHost.appendChild(cinematicOrderRail);
+
   const grid = createNode(document, 'div', 'grBattleCausalGrid');
   grid.setAttribute?.(GRID_ATTR, '');
   grid.setAttribute?.('aria-label', '4人バトル比較');
@@ -1073,6 +1172,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     // Rejected/stale input must not leave the previous accepted return highlighted.
     writeCurrentActionCue(currentActionCue, null);
     writeCausalTrace(document, causalTrace, null);
+    writeCinematicOrderRail(document, cinematicOrderRail, null);
     setData(shell, 'boardReturnDestination', null);
     setData(phaseSurface, 'battleBoardReturnDestination', null);
     setData(resolutionSurface, 'battleBoardReturnDestination', null);
@@ -1128,6 +1228,10 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     if (planSlot) planSlot.hidden = battle || resultExit;
     syncFieldLandmark(fieldLandmark, phaseSurface, shell, root);
     if (cinematicBattle) fieldLandmark.hidden = true;
+    writeCinematicOrderRail(document, cinematicOrderRail, cinematicBattle ? model : null);
+    const finalStateByParticipant = new Map(
+      (model?.causalReturn?.processing?.finalSlots ?? []).map(slot => [slot.playerId, slot.visualState])
+    );
 
     for (let index = 0; index < lanes.length; index += 1) {
       const view = lanes[index];
@@ -1136,6 +1240,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
       view.lane.dataset.participantId = lane.id;
       view.lane.dataset.role = lane.role;
       view.lane.dataset.viewerRole = viewerRole;
+      setData(view.lane, 'finalState', finalStateByParticipant.get(lane.id) ?? null);
       view.lane.setAttribute?.('aria-label', viewerRole === 'self' ? `${lane.label}（自分）` : lane.label);
       view.viewerRole.hidden = viewerRole !== 'self';
       view.viewerRole.textContent = viewerRole === 'self' ? '自分' : '';
@@ -1180,6 +1285,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     if (currentActionCue?.parentNode && typeof currentActionCue.parentNode.removeChild === 'function') currentActionCue.parentNode.removeChild(currentActionCue);
     if (causalTrace?.parentNode && typeof causalTrace.parentNode.removeChild === 'function') causalTrace.parentNode.removeChild(causalTrace);
     if (progressGuide?.parentNode && typeof progressGuide.parentNode.removeChild === 'function') progressGuide.parentNode.removeChild(progressGuide);
+    if (cinematicOrderRail?.parentNode && typeof cinematicOrderRail.parentNode.removeChild === 'function') cinematicOrderRail.parentNode.removeChild(cinematicOrderRail);
     if (grid?.parentNode && typeof grid.parentNode.removeChild === 'function') grid.parentNode.removeChild(grid);
     resourceHud.destroy();
     if (hud.root?.parentNode && typeof hud.root.parentNode.removeChild === 'function') hud.root.parentNode.removeChild(hud.root);
@@ -1204,6 +1310,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     currentActionCue,
     causalTrace,
     progressGuide,
+    cinematicOrderRail,
     hud,
     resourceHud,
     currentPlayerUi,
@@ -1244,6 +1351,9 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   battlePhaseNormalPlanUiVisible: false,
   battlePhaseBoardSurfacePolicy: 'HIDE_EXISTING_BATTLE_MAP_AND_DISABLE_POINTERS',
   battlePhaseAllowedInputs: Object.freeze(['skip', 'public_info', 'accessibility']),
+  cinematicOrderAuthority: 'MODEL_CAUSAL_RETURN_PROCESSING_ORDER_ONLY_NO_SORT_OR_INFERENCE',
+  cinematicOrderVisibleCardIdText: false,
+  cinematicPhaseMotion: Object.freeze(['reveal', 'attack', 'ability', 'compare4', 'finisher', 'settle']),
   shieldLanePresentation: 'STRUCTURE_PLUS_EXACT_ACCEPTED_BOARD_RETURN_CUE_NO_SHIELD_STATE_INFERENCE',
   boardReturnAuthority: 'MODEL_ONLY_EXACT_OPPONENT_PLUS_SHIELD_LANE',
   shieldSlots: SHIELD_SLOTS,

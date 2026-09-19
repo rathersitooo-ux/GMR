@@ -31,6 +31,15 @@ const BATTLE_JANKEN_INPUT_MODE_OPTIONS = Object.freeze([
   Object.freeze({ id: BATTLE_JANKEN_INPUT_MODE.PLAIN, label: 'そのまま', shortLabel: 'そのまま' }),
 ]);
 
+export const BATTLE_PHYSICAL_CARD_LINEAGE_SCHEMA = 'gameroad.battle-physical-card-lineage.v1';
+export const BATTLE_PHYSICAL_CARD_LINEAGE_STATE = Object.freeze({
+  HAND_AVAILABLE: 'HAND_AVAILABLE',
+  JANKEN_RESERVED: 'JANKEN_RESERVED',
+  PLAN_STAGED: 'PLAN_STAGED',
+  RESOLVED: 'RESOLVED',
+  SOURCE_KNOWN: 'SOURCE_KNOWN',
+});
+
 export function normalizeBattleJankenInputMode(value, fallback = BATTLE_JANKEN_INPUT_MODE.LAUNCHER) {
   const candidate = typeof value === 'string' ? value.trim() : '';
   if (BATTLE_JANKEN_INPUT_MODE_OPTIONS.some((option) => option.id === candidate)) return candidate;
@@ -137,6 +146,79 @@ export function projectBattlePlayableHandAffordance({
   });
 }
 
+function canonicalPhysicalCardIds(values) {
+  const out = [];
+  const seen = new Set();
+  for (const raw of Array.isArray(values) ? values : []) {
+    const cardId = typeof raw === 'string' ? raw.trim() : '';
+    if (!cardId || seen.has(cardId)) continue;
+    seen.add(cardId);
+    out.push(cardId);
+  }
+  return out;
+}
+
+/**
+ * Projects one record per existing physical card identity across Battle hand
+ * presentation states. This is deliberately not a card-zone authority: callers
+ * supply the already-authoritative identities for current hand, janken
+ * reservation, staged plan and resolved/used state. Overlap changes flags/state
+ * on the same cardId rather than manufacturing another card entity.
+ */
+export function projectBattlePhysicalCardLineage({
+  sourceCardIds = [],
+  currentHandCardIds = [],
+  reservedCardIds = [],
+  stagedCardIds = [],
+  resolvedCardIds = [],
+} = {}) {
+  const source = canonicalPhysicalCardIds(sourceCardIds);
+  const current = canonicalPhysicalCardIds(currentHandCardIds);
+  const reserved = canonicalPhysicalCardIds(reservedCardIds);
+  const staged = canonicalPhysicalCardIds(stagedCardIds);
+  const resolved = canonicalPhysicalCardIds(resolvedCardIds);
+  const ordered = canonicalPhysicalCardIds([...source, ...current, ...reserved, ...staged, ...resolved]);
+  const sourceSet = new Set(source);
+  const currentSet = new Set(current);
+  const reservedSet = new Set(reserved);
+  const stagedSet = new Set(staged);
+  const resolvedSet = new Set(resolved);
+
+  return deepFreeze({
+    schema: BATTLE_PHYSICAL_CARD_LINEAGE_SCHEMA,
+    physicalCards: Object.freeze(ordered.map((cardId) => {
+      const inCurrentHand = currentSet.has(cardId);
+      const jankenReserved = reservedSet.has(cardId);
+      const planStaged = stagedSet.has(cardId);
+      const resolvedUsed = resolvedSet.has(cardId);
+      const state = resolvedUsed
+        ? BATTLE_PHYSICAL_CARD_LINEAGE_STATE.RESOLVED
+        : planStaged
+          ? BATTLE_PHYSICAL_CARD_LINEAGE_STATE.PLAN_STAGED
+          : jankenReserved
+            ? BATTLE_PHYSICAL_CARD_LINEAGE_STATE.JANKEN_RESERVED
+            : inCurrentHand
+              ? BATTLE_PHYSICAL_CARD_LINEAGE_STATE.HAND_AVAILABLE
+              : BATTLE_PHYSICAL_CARD_LINEAGE_STATE.SOURCE_KNOWN;
+      return Object.freeze({
+        cardId,
+        physicalCardId: cardId,
+        state,
+        inRoundSource: sourceSet.has(cardId),
+        inCurrentHand,
+        jankenReserved,
+        planStaged,
+        resolvedUsed,
+        samePhysicalCardIdentity: true,
+      });
+    })),
+    presentationOnly: true,
+    gameplayAuthority: false,
+    cardZoneAuthority: false,
+    gameStateWrite: false,
+  });
+}
+
 function canonicalRoundId(value) {
   const text = String(value ?? '').trim();
   if (!text) return null;
@@ -174,6 +256,10 @@ export function buildBattleJankenSlidePadModel({
       roundId: canonical,
       assignment: currentSnapshot,
       ordinaryHandCardIds: Object.freeze(cards.map((card) => card.id)),
+      cardLineage: projectBattlePhysicalCardLineage({
+        sourceCardIds: cards.map((card) => card.id),
+        currentHandCardIds: cards.map((card) => card.id),
+      }),
       slots: Object.freeze(SLOT_ORDER.map((jankenHand) => Object.freeze({
         jankenHand,
         ...SLOT_VIEW[jankenHand],
@@ -212,6 +298,11 @@ export function buildBattleJankenSlidePadModel({
     roundId: canonical,
     assignment,
     ordinaryHandCardIds: assignment.ordinaryHandCardIds,
+    cardLineage: projectBattlePhysicalCardLineage({
+      sourceCardIds: assignment.sourceHandCardIds,
+      currentHandCardIds: cards.map((card) => card.id),
+      reservedCardIds: assignment.selectedJankenCardIds,
+    }),
     slots: Object.freeze(slots),
   });
 }
@@ -504,10 +595,12 @@ function planProjection(battleRoot) {
   const activeRole = roadActive === battleActive ? null : (roadActive ? 'road' : 'battle');
   const active = activeRole === 'road' ? road : activeRole === 'battle' ? battle : null;
   const opposite = activeRole === 'road' ? battle : activeRole === 'battle' ? road : null;
+  const selectedCardIds = canonicalPhysicalCardIds([road?.value, battle?.value]);
   return {
     activeRole,
     activeOptionValues: selectOptionValues(active),
     oppositeSelectedCardId: typeof opposite?.value === 'string' ? opposite.value : null,
+    selectedCardIds,
     phasePlayable: !!active && active.disabled !== true,
   };
 }
@@ -584,6 +677,7 @@ function readHand(globalRef, battleRoot) {
 function restoreHandNode(node) {
   if (!node?.dataset) return;
   delete node.dataset.jankenReserved;
+  delete node.dataset.cardLineageState;
   delete node.dataset.handAuraDraggable;
   delete node.dataset.handAuraDragging;
   delete node.dataset.cardFocus;
@@ -597,13 +691,18 @@ function restoreHandNode(node) {
   }
 }
 
-function syncHandZoneProjection(battleRoot, model) {
+function syncHandZoneProjection(battleRoot, model, cardLineage = model?.cardLineage ?? null) {
   const selected = new Set(Array.isArray(model?.assignment?.selectedJankenCardIds)
     ? model.assignment.selectedJankenCardIds
     : []);
+  const lineageById = new Map((Array.isArray(cardLineage?.physicalCards) ? cardLineage.physicalCards : [])
+    .map((entry) => [entry.cardId, entry]));
   for (const node of handCardNodes(battleRoot)) {
     const id = node.dataset?.cardId?.trim?.() ?? '';
     const reserved = !!id && selected.has(id);
+    const lineage = lineageById.get(id) ?? null;
+    if (lineage) node.dataset.cardLineageState = lineage.state;
+    else delete node.dataset.cardLineageState;
     if (reserved) {
       node.dataset.jankenReserved = 'true';
       node.dataset.handAuraDraggable = 'false';
@@ -1036,6 +1135,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
 
   let assignment = null;
   let model = null;
+  let currentCardLineage = projectBattlePhysicalCardLineage();
   let expanded = false;
   let destroyed = false;
   let timer = null;
@@ -1694,6 +1794,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     const roundText = root.querySelector?.('#roundNo')?.textContent;
     const hand = readHand(globalRef, root);
     if (!String(roundText ?? '').trim() || hand.length === 0) {
+      currentCardLineage = projectBattlePhysicalCardLineage();
       clearPlayableHandAffordance(root);
       rowRouletteHost.hidden = true;
       rowRouletteRuntime?.refresh?.();
@@ -1708,6 +1809,17 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       pickDuplicateIndex: (request) => entropyIndex(globalRef, request),
     });
     assignment = model.assignment;
+    const sourceCardIds = Array.isArray(assignment?.sourceHandCardIds)
+      ? assignment.sourceHandCardIds
+      : hand.map((card) => card.id);
+    const sourceSet = new Set(sourceCardIds);
+    const stagedCardIds = planProjection(root).selectedCardIds.filter((cardId) => sourceSet.has(cardId));
+    currentCardLineage = projectBattlePhysicalCardLineage({
+      sourceCardIds,
+      currentHandCardIds: hand.map((card) => card.id),
+      reservedCardIds: assignment?.selectedJankenCardIds ?? [],
+      stagedCardIds,
+    });
     const awaitingCurrentHand3 = dedicatedFocus
       && assignment?.assignmentMode !== NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY;
     if (awaitingCurrentHand3) {
@@ -1733,7 +1845,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       }
       return;
     }
-    syncHandZoneProjection(root, model);
+    syncHandZoneProjection(root, model, currentCardLineage);
     syncPlayableHandAffordance(root);
     syncHandCardFocusPresentation();
     rowRouletteHost.hidden = rouletteEnabled !== true;
@@ -1743,6 +1855,9 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       const cardText = node.querySelector('.grJankenSlidePadCard');
       node.disabled = !slot.selectable;
       node.dataset.cardId = slot.cardId ?? '';
+      node.dataset.physicalCardId = slot.cardId ?? '';
+      const lineage = currentCardLineage.physicalCards.find((entry) => entry.cardId === slot.cardId) ?? null;
+      node.dataset.cardLineageState = lineage?.state ?? '';
       node.setAttribute('aria-label', slot.occupied
         ? `${slot.symbol} ${slot.hand} ${slot.cardLabel}`
         : `${slot.symbol} ${slot.hand} 空き`);
@@ -1838,6 +1953,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   const runtime = Object.freeze({
     render,
     snapshot: () => model,
+    cardLineageSnapshot: () => currentCardLineage,
     rowRouletteHost,
     rowRouletteSnapshot: () => rowRouletteController.snapshot(),
     loadPreviewSnapshot: () => projectBattleLoadCardPreview(model, armedHand),

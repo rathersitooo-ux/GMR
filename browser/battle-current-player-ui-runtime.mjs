@@ -1,4 +1,4 @@
-const SCHEMA = 'gameroad.battle-current-player-ui-runtime.v2';
+const SCHEMA = 'gameroad.battle-current-player-ui-runtime.v3';
 const STYLE_ID = 'gameroad-battle-current-player-ui-r3-style';
 const ROOT_ATTR = 'data-gr-current-player-ui';
 const ZONE_ATTR = 'data-gr-current-ui-zone';
@@ -39,7 +39,7 @@ const STYLE_TEXT = `
 .screen.battle[${ROOT_ATTR}="1"] #phaseBar{display:none!important}
 .screen.battle[${ROOT_ATTR}="1"] [data-battle-r75-hud="1"]{z-index:33!important}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="current-action"]{position:absolute!important;z-index:32!important;top:calc(var(--gr-ui-edge) + clamp(42px,9vh,72px))!important;left:var(--gr-ui-edge)!important;right:auto!important;bottom:auto!important;max-width:min(38vw,310px)!important;transform:none!important;margin:0!important;pointer-events:none!important}
-.screen.battle[${ROOT_ATTR}="1"] #publicTurnHud{position:absolute!important;z-index:31!important;top:var(--gr-ui-edge)!important;left:50%!important;right:auto!important;bottom:auto!important;transform:translateX(-50%)!important;width:min(48vw,500px)!important;max-height:54px!important;overflow:hidden!important;padding:3px 6px!important;pointer-events:none!important}
+.screen.battle[${ROOT_ATTR}="1"] #publicTurnHud{position:absolute!important;z-index:31!important;top:var(--gr-ui-edge)!important;left:50%!important;right:auto!important;bottom:auto!important;transform:translateX(-50%)!important;width:min(48vw,500px)!important;max-height:54px!important;overflow:hidden!important;padding:3px 6px!important;pointer-events:none!important;opacity:.68;transition:opacity 120ms ease,filter 120ms ease}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{position:absolute!important;z-index:32!important;left:var(--gr-ui-edge)!important;right:auto!important;top:auto!important;bottom:var(--gr-ui-edge)!important;width:auto!important;max-width:min(22vw,170px)!important;pointer-events:none!important}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="support-entry"]{position:absolute!important;z-index:33!important;left:var(--gr-ui-edge)!important;right:auto!important;top:auto!important;bottom:calc(var(--gr-ui-edge) + 46px)!important;min-width:44px!important;min-height:36px!important;width:auto!important;height:36px!important;max-height:36px!important;padding:5px 8px!important;margin:0!important;transform:none!important;box-sizing:border-box!important;font-size:9px!important;pointer-events:auto!important}
 .screen.battle[${ROOT_ATTR}="1"] .battleInfo{position:absolute!important;z-index:25!important;left:clamp(104px,16vw,190px)!important;right:calc(var(--gr-thumb-w) + var(--gr-ui-edge) + var(--gr-ui-gap))!important;top:auto!important;bottom:var(--gr-ui-edge)!important;height:var(--gr-bottom-h)!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(138px,28%)!important;align-items:end!important;gap:var(--gr-ui-gap)!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important;pointer-events:none!important}
@@ -55,7 +55,11 @@ const STYLE_TEXT = `
 .screen.battle[${ROOT_ATTR}="1"] .battleRail{position:absolute!important;z-index:34!important;top:var(--gr-ui-edge)!important;right:var(--gr-ui-edge)!important;left:auto!important;bottom:auto!important;width:auto!important;height:auto!important;max-width:min(28vw,340px)!important;max-height:44px!important;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:flex-end!important;gap:4px!important;padding:0!important;margin:0!important;transform:none!important;overflow-x:auto!important;overflow-y:hidden!important;white-space:nowrap!important;background:none!important;border:0!important;pointer-events:auto!important;scrollbar-width:none!important}
 .screen.battle[${ROOT_ATTR}="1"] .battleRail .railBtn{min-width:44px!important;min-height:36px!important;width:auto!important;height:36px!important;max-height:36px!important;padding:5px 8px!important;margin:0!important;transform:none!important;box-sizing:border-box!important;flex:0 0 auto!important;font-size:9px!important}
 .screen.battle[${ROOT_ATTR}="1"][data-gr-decision-active="false"] #quickCoil{display:none!important}
-.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner"]{position:absolute!important;z-index:30!important;left:var(--gr-ui-edge)!important;right:auto!important;bottom:calc(var(--gr-ui-edge) + 92px)!important;width:min(23vw,170px)!important;max-height:30vh!important;overflow:hidden!important}
+.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner"]{position:absolute!important;z-index:30!important;left:var(--gr-ui-edge)!important;right:auto!important;bottom:calc(var(--gr-ui-edge) + 92px)!important;width:min(23vw,170px)!important;max-height:30vh!important;overflow:hidden!important;opacity:.22;pointer-events:none!important;transition:opacity 120ms ease,filter 120ms ease}
+.screen.battle[${ROOT_ATTR}="1"][data-gr-advice-active="true"] [${ZONE_ATTR}="partner"]{opacity:1;pointer-events:auto!important}
+.screen.battle[${ROOT_ATTR}="1"][data-gr-waiting-for-others="true"] #publicTurnHud{opacity:1;filter:brightness(1.08)}
+.screen.battle[${ROOT_ATTR}="1"][data-gr-waiting-for-others="true"] [${ZONE_ATTR}="current-action"]{border-color:rgba(255,239,170,.76)!important;background:rgba(4,28,24,.92)!important;box-shadow:0 6px 18px rgba(0,0,0,.28),0 0 0 1px rgba(255,239,170,.12)!important}
+.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="details-on-demand"][hidden]{display:none!important}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner-visual"]{width:clamp(132px,15vw,190px)!important;height:min(34vh,245px)!important}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="mana-art"]{--r8-size:clamp(84px,8.5vw,108px)!important;width:var(--r8-size)!important;height:var(--r8-size)!important}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="mana-art"] .r8ManaNumber{font-size:clamp(24px,2.5vw,32px)!important}
@@ -235,6 +239,8 @@ function mountBattleCurrentPlayerUiOwned(global = globalThis, options = {}) {
     setData(root, 'grDecisionActive', boolToken(snapshot.decisionActive));
     setData(root, 'grJankenActive', boolToken(snapshot.jankenActive));
     setData(root, 'grRouletteEnabled', boolToken(snapshot.rouletteEnabled));
+    setData(root, 'grAdviceActive', boolToken(snapshot.adviceActive));
+    setData(root, 'grWaitingForOthers', boolToken(snapshot.waitingForOthers));
     setData(root, 'grStale', boolToken(snapshot.stale));
     setData(root, 'grReconnecting', boolToken(snapshot.reconnecting));
     setData(root, 'grReducedMotion', boolToken(snapshot.reducedMotion));
@@ -268,6 +274,12 @@ function mountBattleCurrentPlayerUiOwned(global = globalThis, options = {}) {
       gameStateWrite: false,
       privacyPolicy: 'PUBLIC_ONLY_NO_PRIVATE_COUNT_PROJECTION',
       legacyPhaseStripHiddenByComposition: Boolean(surfaces.legacyPhaseStrip),
+      attentionState: Object.freeze({
+        adviceActive: root.dataset?.grAdviceActive === 'true',
+        waitingForOthers: root.dataset?.grWaitingForOthers === 'true',
+        adviceDefaultWeak: root.dataset?.grAdviceActive !== 'true',
+        fourPlayerPublicDefaultWeak: root.dataset?.grWaitingForOthers !== 'true'
+      }),
       resolvedLiveConsumers: Object.freeze({
         currentAction: Boolean(surfaces.currentAction),
         resources: Boolean(surfaces.resources),
@@ -370,6 +382,7 @@ export const BATTLE_CURRENT_PLAYER_UI_RUNTIME = Object.freeze({
   legacyPhaseStripPolicy: 'HIDDEN_BY_CURRENT_COMPOSITION',
   secondaryActionPolicy: 'COMPACT_RANGE_EXIT_RAIL_SUPPORT_ENTRY_LOWER_LEFT',
   supportEntryPolicy: 'EXISTING_DETAILS_HISTORY_DECK_ENTRY_LOWER_LEFT',
+  attentionPolicy: 'ADVICE_WEAK_UNTIL_ACTIVE_WAITING_STRONG_ONLY_WHILE_WAITING_DETAILS_ON_DEMAND',
   boardProtagonistPolicy: 'BOUND_EXISTING_PARTNER_VISUAL_AND_MANA_ART_WITHOUT_RELOCATION_OR_STATE_WRITE',
   lowPerfPolicy: 'REMOVE_COMPOSITOR_BACKDROP_FILTER_ONLY',
   unresolvedGameplayPolicy: 'DO_NOT_INFER',

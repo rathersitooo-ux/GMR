@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-AFTERMATH-R1-20260920T0412-SOL-Q8N4V66",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_RESOLUTION_BOARD_AFTERMATH_PRESENTATION_R1",
+  "acquireKey": "BATTLE-BOARD-AFTERMATH-R1-20260920T0412-SOL-Q8N4V66",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_32CD710_PLUS_DISJOINT_LEASE_READBACK_20260920T0412JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_BOARD_RETURN_PLUS_GOAL_PATH_PRESENTATION_COMPOSITION",
+  "proceedToken": "PROCEED|BATTLE-BOARD-AFTERMATH-R1-20260920T0412-SOL-Q8N4V66|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-board-aftermath|new-files-only|active-lease",
+  "authorizationBaseSha": "32cd7103c33340caf88caa610e4d1b3cc5e4ff64",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_RESOLUTION_BOARD_AFTERMATH_PRESENTATION_R1",
+  "leaseAcquireKey": "BATTLE-BOARD-AFTERMATH-R1-20260920T0412-SOL-Q8N4V66",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 04:12 JST",
+  "leaseUntilJst": "2026-09-20 05:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "browser/battle-resolution-board-aftermath-presentation-core.mjs; tests/battle-resolution-board-aftermath-presentation-core.test.mjs; data/preaction-authorizations/BATTLE-BOARD-AFTERMATH-R1-20260920T0412-SOL-Q8N4V66.json cleanup-delete only; own fresh branch/PR/check/merge/readback; own CURRENT lease/R24 event",
+  "solutionSignature": "BATTLE_BOARD_RETURN_ACCEPTED_AFTERMATH_DIFF_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_BOARD_RETURN_GOAL_PATH_PROGRESSION_AND_GOAL_ARRIVAL_REUSE",
+  "solutionSearchEvidence": [
+    "battle-resolution-board-return-presentation-core already owns accepted result-to-committed-shield return identity and route.",
+    "new-base-goal-path-core and new-base-goal-path-presentation-core already own seven-card path-open semantics and explicitly keep seven-straight nonterminal.",
+    "new-base-progression-lane-presentation-core already projects exactly seven latent/built progression stages from accepted goal-path state.",
+    "new-base-goal-arrival-consumer already owns actual authoritative GOAL_REACHED acceptance and result handoff; this slice must not duplicate terminal logic.",
+    "Active Battle screen and board-world owners use different exact mutable files; this slice adds only a presentation composer and focused test."
+  ],
+  "scope": [
+    "browser/battle-resolution-board-aftermath-presentation-core.mjs",
+    "tests/battle-resolution-board-aftermath-presentation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-resolution-board-aftermath-presentation-core.mjs",
+    "tests/battle-resolution-board-aftermath-presentation-core.test.mjs"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CINEMATIC-DUEL-CORE-R8B-20260920T0325-SOL-Q8N4V63",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CINEMATIC_DUEL_SEQUENCE_CORE_R8",
+  "acquireKey": "BATTLE-CINEMATIC-DUEL-CORE-R8B-20260920T0325-SOL-Q8N4V63",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_900D085_AND_DISJOINT_ACTIVE_LEASE_READBACK_20260920T0325JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_BATTLE_CONVEYOR_AND_SCREEN_PRESENTATION_CONTRACTS_READBACK",
+  "proceedToken": "PROCEED|BATTLE-CINEMATIC-DUEL-CORE-R8B-20260920T0325-SOL-Q8N4V63|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-cinematic-duel-sequence-core|new-files-only|active-lease",
+  "authorizationBaseSha": "900d0852ebc4f4f76212391892ba497358fa19a6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CINEMATIC_DUEL_SEQUENCE_CORE_R8",
+  "leaseAcquireKey": "BATTLE-CINEMATIC-DUEL-CORE-R8B-20260920T0325-SOL-Q8N4V63",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 03:25 JST",
+  "leaseUntilJst": "2026-09-20 04:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:N7",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/battle-cinematic-duel-core-r8-20260920; browser/battle-cinematic-duel-sequence-core.mjs; tests/battle-cinematic-duel-sequence-core.test.mjs; own transient data/preaction-authorizations/BATTLE-CINEMATIC-DUEL-CORE-R8B-20260920T0325-SOL-Q8N4V63.json only. battle-screen/janken runtime and browser/GAMEROAD.html READ_ONLY because the 03:20 prototype owns them.",
+  "solutionSignature": "BATTLE_CINEMATIC_DUEL_SEQUENCE_PRESENTATION_ONLY_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_BATTLE_CONVEYOR_PLUS_ACTION_ORDER_PLUS_SCREEN_R7_ACTUAL",
+  "solutionSearchEvidence": [
+    "Current battle-conveyor-presentation-core already owns accepted event ordering, stage transitions, timing, and handoff overlap.",
+    "Current battle-screen-presentation/runtime already owns full-screen Battle phase, source/target roles, four public cards, and board return.",
+    "The active 03:20 prototype owns the live battle-screen and janken runtime files, so this WorkUnit creates only a disjoint presentation core plus focused tests.",
+    "The new core will not sort actions, choose targets, resolve winners, calculate reactions, or mutate game state.",
+    "Used-card identity is caller-supplied per accepted event; the core rejects owner/source mismatch instead of inferring from suit or UI."
+  ],
+  "scope": [
+    "browser/battle-cinematic-duel-sequence-core.mjs",
+    "tests/battle-cinematic-duel-sequence-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-cinematic-duel-sequence-core.mjs",
+    "tests/battle-cinematic-duel-sequence-core.test.mjs"
+  ]
+}

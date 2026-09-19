@@ -1,3 +1,5 @@
+[Reading 230 lines from start (total: 230 lines, 0 remaining)]
+
 const BRIDGE_SCHEMA = 'gameroad.battle-compound-preview-live-consumer-bridge.v1';
 
 function requireObject(value, name) {
@@ -30,10 +32,11 @@ function readRoundId(value) {
  * a staged compound attack is not commit-capable through this bridge unless the
  * exact staged package has first produced an active precommit preview.
  *
- * Explicit player cancel is deliberately different from stale-focus cleanup:
- * the former delegates to the shared consumer's existing global precommit clear
- * (caller plan/target draft + local compound stage), while the latter uses only
- * compound-stage clear so pointer churn cannot erase unrelated caller drafts.
+ * Clearing an uncommitted selection is deliberately different from stale-focus
+ * cleanup: the former delegates to the shared consumer's existing global
+ * precommit clear (caller plan/target draft + local compound stage), while the
+ * latter uses only compound-stage clear so pointer churn cannot erase unrelated
+ * caller drafts.
  */
 export function createBattleCompoundPreviewLiveConsumerBridge({
   liveConsumer,
@@ -154,9 +157,10 @@ export function createBattleCompoundPreviewLiveConsumerBridge({
       });
     },
 
-    // Explicit player cancel uses the already-merged shared semantic that clears
-    // caller draft + adapter-owned compound stage atomically. A rejected clear
-    // keeps the visible preview so the same staged decision remains retryable.
+    // Internal uncommitted-selection clear uses the already-merged shared semantic
+    // that clears caller draft + adapter-owned compound stage atomically. A
+    // rejected clear keeps the visible preview so the same staged decision
+    // remains retryable.
     async clearPrecommitSelection() {
       const result = requireObject(
         await clearGlobalPrecommitSelection(),
@@ -209,7 +213,7 @@ export const BATTLE_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_CONTRACT = Object.free
   stagedPackageSource: 'EXISTING_NEW_BASE_LIVE_CONSUMER_ONLY',
   previewProjection: 'EXISTING_COMPOUND_ATTACK_PREVIEW_RUNTIME_ONLY',
   commitTransport: 'EXISTING_NEW_BASE_LIVE_CONSUMER_ONLY',
-  explicitCancelPolicy: 'EXISTING_SHARED_GLOBAL_PRECOMMIT_CLEAR',
+  uncommittedSelectionClearPolicy: 'EXISTING_SHARED_GLOBAL_PRECOMMIT_CLEAR',
   staleFocusClearPolicy: 'COMPOUND_STAGE_ONLY',
   globalClearRejectPolicy: 'KEEP_VISIBLE_PREVIEW_AND_STAGE',
   visiblePreviewRequiredBeforeBridgeCommit: true,
@@ -226,3 +230,5 @@ export const BATTLE_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_CONTRACT = Object.free
   mutatesJankenRuntime: false,
   mutatesBattleScreenRuntime: false,
 });
+
+[executed on device: DESKTOP-ODSOHQD (01bf07a9-543b-4891-9550-4539d562ff6f)]

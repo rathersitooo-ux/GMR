@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-FINAL-RESOLUTION-EMPHASIS-R1-20260920T0433-SOL-Q8N4V92",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FINAL_RESOLUTION_EMPHASIS_PROJECTION_R1",
+  "acquireKey": "BATTLE-FINAL-RESOLUTION-EMPHASIS-R1-20260920T0433-SOL-Q8N4V92",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_0D75F4_PLUS_DISJOINT_NEW_FILES_20260920T0433JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_CONVEYOR_SETTLE_PLAN_PRESENTATION_ONLY",
+  "proceedToken": "PROCEED|BATTLE-FINAL-RESOLUTION-EMPHASIS-R1-20260920T0433-SOL-Q8N4V92|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-final-resolution-emphasis|new-files-only|active-lease",
+  "authorizationBaseSha": "0d75f438d320def44c3daf9bd12f711a0253b153",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_FINAL_RESOLUTION_EMPHASIS_PROJECTION_R1",
+  "leaseAcquireKey": "BATTLE-FINAL-RESOLUTION-EMPHASIS-R1-20260920T0433-SOL-Q8N4V92",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 04:33 JST",
+  "leaseUntilJst": "2026-09-20 05:33 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:L9",
+  "leaseExactMutableResources": "browser/battle-final-resolution-emphasis-core.mjs; tests/battle-final-resolution-emphasis-core.test.mjs; data/preaction-authorizations/BATTLE-FINAL-RESOLUTION-EMPHASIS-R1-20260920T0433-SOL-Q8N4V92.json cleanup-delete only; own fresh branch/PR/check/merge/readback; own CURRENT lease/R24 event",
+  "solutionSignature": "BATTLE_EXISTING_SETTLE_PLAN_FINAL_EMPHASIS_PROJECTION_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_CONVEYOR_SETTLE_EXISTS_WITH_AMBIENT_PRESENTATION_AND_NO_FINAL_EMPHASIS_PROJECTION",
+  "solutionSearchEvidence": [
+    "battle-conveyor-presentation-core already emits accepted settle plans and owns their timing/order.",
+    "No current dedicated final-resolution emphasis projection was found.",
+    "battle-screen-runtime-mount.mjs is actively owned by another WorkUnit, so this slice does not touch the live mount.",
+    "The new core must consume only an existing accepted settle plan and may not calculate winner, target, result, effect, card movement, or new timing.",
+    "Exact visual strength remains provisional for Human comparison; no formal art/timing lock."
+  ],
+  "scope": [
+    "browser/battle-final-resolution-emphasis-core.mjs",
+    "tests/battle-final-resolution-emphasis-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-final-resolution-emphasis-core.mjs",
+    "tests/battle-final-resolution-emphasis-core.test.mjs"
+  ]
+}

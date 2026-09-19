@@ -95,6 +95,45 @@ function motionMarkers(kind, importance, reducedMotion = false) {
   return freeze(base);
 }
 
+function stageMembers(stage) {
+  return [stage?.left, stage?.right].filter((id, index, ids) => id && ids.indexOf(id) === index);
+}
+function stageActor(actorId, previousStage, nextStage, movementIntent) {
+  return freeze({
+    actorId,
+    fromSide: sideOf(previousStage, actorId),
+    toSide: sideOf(nextStage, actorId),
+    movementIntent
+  });
+}
+function planStageHandoff(previousStage, nextStage, transition, startMs, previousRecoveryEndMs) {
+  const previous = stageMembers(previousStage);
+  const next = stageMembers(nextStage);
+  const previousSet = new Set(previous);
+  const nextSet = new Set(next);
+  const outgoing = previous.filter(id => !nextSet.has(id));
+  const retained = next.filter(id => previousSet.has(id));
+  const incoming = next.filter(id => !previousSet.has(id));
+  const pairChange = previous.length === 0 && next.length > 0 ? 'ENTRY_PAIR'
+    : outgoing.length === 0 && incoming.length === 0 ? 'KEEP_PAIR'
+      : outgoing.length === 2 && incoming.length === 2 ? 'REPLACE_PAIR'
+        : 'REPLACE_ONE';
+  const recoveryOverlapMs = Math.max(0, (previousRecoveryEndMs ?? startMs) - startMs);
+  return freeze({
+    presentationOnly: true,
+    authorityBoundary: 'derived_from_accepted_stage_only',
+    transition,
+    pairChange,
+    outgoing: outgoing.map(id => stageActor(id, previousStage, nextStage, 'EXIT_STAGE')),
+    retained: retained.map(id => stageActor(id, previousStage, nextStage, 'REMAIN_STAGE')),
+    incoming: incoming.map(id => stageActor(id, previousStage, nextStage, 'ENTER_STAGE')),
+    timing: { start: startMs, recoveryOverlapMs, entersDuringPreviousRecovery: recoveryOverlapMs > 0 },
+    gameStateWrite: false,
+    targetWrite: false,
+    orderWrite: false
+  });
+}
+
 const ENVIRONMENT_PHASES = Object.freeze({
   IDLE_READ: 'IDLE_READ',
   RESOLVE: 'RESOLVE',
@@ -171,6 +210,7 @@ export function planBattleConveyor(events, { reducedMotion = false, lowPerf = fa
   for (const raw of events) {
     const event = normalizeAcceptedEvent(raw);
     const data = event.publicData;
+    const previousStage = stage ? clone(stage) : null;
     let nextStage = stage ? clone(stage) : null;
     let transition = TRANSITIONS.CONTINUE;
     let targets = [];
@@ -220,6 +260,8 @@ export function planBattleConveyor(events, { reducedMotion = false, lowPerf = fa
     const actionImpact = isAction ? cursor + markers.anticipation + markers.travel : null;
     const recoveryEnd = cursor + duration;
     const handoffAt = isAction ? Math.max(cursor, recoveryEnd - markers.handoffLead) : recoveryEnd;
+    const previousPlan = plans[plans.length - 1] || null;
+    const stageHandoff = planStageHandoff(previousStage, nextStage, transition, cursor, previousPlan?.timing?.recoveryEnd ?? cursor);
 
     plans.push(freeze({
       schema: SCHEMA,
@@ -229,6 +271,7 @@ export function planBattleConveyor(events, { reducedMotion = false, lowPerf = fa
       kind: event.kind,
       transition,
       stage: nextStage ? clone(nextStage) : null,
+      stageHandoff,
       groupTargets: targets,
       importance,
       emphasis: EMPHASIS[importance],

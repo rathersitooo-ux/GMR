@@ -235,6 +235,30 @@ test('JANKEN_FOCUS uses centered flower-bloom presentation with a reduced-motion
   assert.match(style.textContent, /\.grJankenRoleBadge\{position:absolute;[^}]*z-index:3/);
 });
 
+test('played janken card becomes a provisional large centered hero while commit is pending', async () => {
+  let resolveCommit;
+  const liveInputStack = createLiveStack();
+  liveInputStack.commit = async () => new Promise((resolve) => { resolveCommit = resolve; });
+  const { documentRef, runtime } = mount({ liveInputStack, artByCardId: exactArt() });
+  const pending = runtime.focus('ROCK');
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.equal(runtime.snapshot().presentation.surface, 'COMMITTING');
+  assert.match(runtime.host.innerHTML, /data-provisional-card-hero="true"/);
+  assert.match(runtime.host.innerHTML, /data-physical-card-id="rock-card-g1"/);
+  assert.match(runtime.host.innerHTML, /src="https:\/\/assets\.example\/g1\/rock\.webp"/);
+  const style = documentRef.head.children.find((child) => child.attributes.has('data-gr-janken-focus-surface-style'));
+  assert.ok(style);
+  assert.match(style.textContent, /\.grJankenLoadPanel\{top:50%;bottom:auto;width:min\(940px/);
+  assert.match(style.textContent, /grid-template-columns:minmax\(0,1fr\) clamp\(210px,30vw,360px\) minmax\(190px,1fr\)/);
+  assert.match(style.textContent, /min-height:clamp\(300px,42vw,520px\)/);
+  resolveCommit({ ok: true, committed: true, reason: 'COMMITTED' });
+  const result = await pending;
+  assert.equal(result.committed, true);
+  assert.equal(result.autoCommitted, true);
+  assert.equal(runtime.host.hidden, true);
+});
+
 test('playing a focused physical card preserves the exact authoritative identity into the accepted auto-commit', async () => {
   const liveInputStack = createLiveStack();
   const artByCardId = exactArt();

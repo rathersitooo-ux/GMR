@@ -151,6 +151,21 @@ test('fixed janken slot presentation identifies the hand instead of reusing nati
   assert.equal(model.slots.some((slot) => ['♣', '♦', '♠'].includes(slot.symbol)), false);
 });
 
+test('janken role stays secondary to the same physical card face in the live slot presentation', () => {
+  const runtimeSource = readFileSync(
+    new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
+    'utf8',
+  ).replace(/\r\n/g, '\n');
+  assert.match(runtimeSource, /node\.dataset\.physicalCardId = id;[\s\S]*node\.dataset\.jankenRole = role;/);
+  assert.match(runtimeSource, /const source = handCardNodes\(battleRoot\)\.find\([\s\S]*=== cardId\)/);
+  assert.match(runtimeSource, /const clone = source\.cloneNode\(true\);/);
+  assert.match(runtimeSource, /clone\.dataset\.physicalCardId = cardId;[\s\S]*clone\.dataset\.jankenRole = slot\.jankenHand;/);
+  assert.match(runtimeSource, /badge\.textContent = `\$\{slot\.symbol\} \$\{slot\.hand\}`;/);
+  assert.match(runtimeSource, /slotNode\.dataset\.physicalCardVisible = 'true';/);
+  assert.match(runtimeSource, /\.grJankenSlidePadSlot\[data-physical-card-visible="true"\]\{border-color:transparent;background:transparent;box-shadow:none;padding:0\}/);
+  assert.match(runtimeSource, /\.grJankenSlidePadRoleBadge\{position:absolute;right:1px;bottom:1px;/);
+});
+
 test('janken slot can still reach its round-source card action without restoring ordinary-hand membership', () => {
   const model = buildBattleJankenSlidePadModel({ roundId: '1', hand, pickDuplicateIndex: () => 1 });
   assert.equal(

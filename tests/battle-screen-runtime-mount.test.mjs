@@ -362,7 +362,7 @@ runtime.render(idle);
 assert.equal(runtime.shell.dataset.mode, 'MATCH_PLAN');
 assert.equal(runtime.shell.hidden, false);
 assert.equal(runtime.phaseSurface.hidden, true);
-assert.equal(runtime.hud.root.hidden, true);
+assert.equal(runtime.hud.root.hidden, false);
 assert.equal(runtime.currentActionCue.hidden, false);
 assert.equal(runtime.currentActionCue.textContent, '今：選択');
 assert.equal(runtime.currentActionCue.dataset.phase, 'plan');

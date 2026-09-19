@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-CENTER-HERO-R1-20260920T0416-SOL-Q8N4V90",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_PLAYED_CARD_CENTER_HERO_R1",
+  "acquireKey": "BATTLE-JANKEN-CENTER-HERO-R1-20260920T0416-SOL-Q8N4V90",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_USER_CENTER_CARD_DIRECTIVE_PLUS_MAIN_FOCUS_SURFACE_INSPECTION_20260920",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "STYLE_ONLY_PLUS_EXISTING_PHYSICAL_CARD_MARKUP_NO_GAMEPLAY_CHANGE",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-CENTER-HERO-R1-20260920T0416-SOL-Q8N4V90|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|janken-center-card-prototype|human-review-gated",
+  "authorizationBaseSha": "0075acf982e8f7988dcf6c9adfaaeb52990c1f4f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_PLAYED_CARD_CENTER_HERO_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-CENTER-HERO-R1-20260920T0416-SOL-Q8N4V90",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 04:16 JST",
+  "leaseUntilJst": "2026-09-20 05:16 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A16:L16",
+  "leaseExactMutableResources": "browser/battle-janken-focus-runtime-surface.mjs; tests/battle-janken-focus-runtime-surface.test.mjs; data/preaction-authorizations/BATTLE-JANKEN-CENTER-HERO-R1-20260920T0416-SOL-Q8N4V90.json cleanup-delete only; own fresh branch/PR/check/merge/readback; own CURRENT lease",
+  "scope": [
+    "browser/battle-janken-focus-runtime-surface.mjs",
+    "tests/battle-janken-focus-runtime-surface.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-focus-runtime-surface.mjs",
+    "tests/battle-janken-focus-runtime-surface.test.mjs"
+  ]
+}

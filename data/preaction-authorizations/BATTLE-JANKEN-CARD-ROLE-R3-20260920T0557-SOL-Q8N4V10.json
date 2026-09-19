@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-CARD-ROLE-R3-20260920T0557-SOL-Q8N4V10",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_PHYSICAL_CARD_ROLE_BADGE_R3",
+  "acquireKey": "BATTLE-JANKEN-CARD-ROLE-R3-20260920T0557-SOL-Q8N4V10",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_632BF35_TARGET_BLOBS_FREE_AFTER_EXPIRED_08K_20260920T0557JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "OLD_PR1883_REQUIRED_GATE_SUCCESS_35464302122_PLUS_DIFF_HUNK_NONOVERLAP_WITH_04E",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-CARD-ROLE-R3-20260920T0557-SOL-Q8N4V10|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|janken-role-badge-current-main|active-lease",
+  "authorizationBaseSha": "632bf35e05f3f636ec2b3bf565241db23904fa57",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_PHYSICAL_CARD_ROLE_BADGE_R3",
+  "leaseAcquireKey": "BATTLE-JANKEN-CARD-ROLE-R3-20260920T0557-SOL-Q8N4V10",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 05:57 JST",
+  "leaseUntilJst": "2026-09-20 06:57 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A22:L22",
+  "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; data/preaction-authorizations/BATTLE-JANKEN-CARD-ROLE-R3-20260920T0557-SOL-Q8N4V10.json cleanup-delete only; replacement branch sol/battle-janken-card-role-r3-20260920; replacement PR/check/merge/readback; own CURRENT_ACTIVE_LEASES row22 and R24 event",
+  "solutionSignature": "BATTLE_JANKEN_PHYSICAL_CARD_ROLE_BADGE_CURRENT_MAIN_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1883_PROVEN_PRESENTATION_DELTA_REAPPLY_CURRENT_MAIN",
+  "solutionSearchEvidence": [
+    "PR#1883 already proved the exact presentation delta and passed Required Gate on its old base.",
+    "Current main retains the same reserved-slot and ordinary-hand source seams; 04え changed cancel API semantics elsewhere in the same files, so stale PR merge is avoided and only the non-overlapping presentation hunks are reapplied.",
+    "The role remains a secondary badge over a cloned presentation of the same physical cardId; no new card identity or gameplay authority is introduced."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

@@ -47,6 +47,7 @@ function styleFlightClone(clone, sourceRect) {
   if (clone.dataset) {
     clone.dataset.armed = 'false';
     clone.dataset.jankenFlight = '1';
+    clone.dataset.centerCardPresentation = 'provisional-human-review-required';
   }
   clone.setAttribute?.('aria-hidden', 'true');
   Object.assign(clone.style, {

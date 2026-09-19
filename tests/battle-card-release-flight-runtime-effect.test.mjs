@@ -110,9 +110,10 @@ test('full top flight consumes the merged core trajectory and counter-clockwise 
   assert.equal(clone.animationCalls.length, 1);
   const { frames, options } = clone.animationCalls[0];
   assert.match(frames.at(-1).transform, /rotate\(-720\.00deg\)/);
-  assert.match(frames.at(-1).transform, /scale\(0\.340\)/);
-  assert.equal(options.duration, 560);
+  assert.match(frames.at(-1).transform, /scale\(2\.000\)/);
+  assert.equal(options.duration, 700);
   assert.equal(clone.dataset.jankenFlight, '1');
+  assert.equal(clone.dataset.centerCardPresentation, 'provisional-human-review-required');
   assert.equal(clone.style.pointerEvents, 'none');
 });
 
@@ -141,8 +142,9 @@ test('reduced motion avoids large travel and exposes a destination pulse', () =>
 
   assert.equal(playBattleCardReleaseFlightEffect({ host, flight, documentRef }), true);
   const { frames, options } = clone.animationCalls[0];
-  assert.ok(frames.every((frame) => frame.transform.includes('translate3d(0.00px,0.00px,0)')));
+  assert.ok(frames.every((frame) => frame.transform.includes('translate3d(284.00px,-108.00px,0)')));
   assert.ok(frames.every((frame) => frame.transform.includes('rotate(0.00deg)')));
+  assert.ok(frames.every((frame) => frame.transform.includes('scale(2.000)')));
   assert.ok(options.duration <= 180);
   assert.equal(cues.length, 1);
   assert.equal(cues[0].dataset.jankenFlightDestination, '1');

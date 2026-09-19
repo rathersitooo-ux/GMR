@@ -4,6 +4,8 @@ import {
   BATTLE_CARD_RELEASE_FLIGHT_DEFAULT_DURATION_MS,
   BATTLE_CARD_RELEASE_FLIGHT_LOW_PERF_MAX_DURATION_MS,
   BATTLE_CARD_RELEASE_FLIGHT_MODE,
+  BATTLE_CARD_RELEASE_PROVISIONAL_CENTER_SCALE,
+  BATTLE_CARD_RELEASE_PROVISIONAL_HOLD_START,
   projectBattleCardReleaseFlightMotion,
   toBattleCardReleaseFlightKeyframes,
 } from '../browser/battle-card-release-flight-motion-core.mjs';
@@ -47,25 +49,30 @@ test('upper and lower cards visibly travel outward before converging while the m
   }
 });
 
-test('all full-motion roles arrive at the authoritative captured destination with material depth recession', () => {
+test('all full-motion roles arrive at the authoritative captured destination as a large provisional center card', () => {
   for (const role of ['top', 'middle', 'bottom']) {
     const projection = full(role);
     const end = projection.frames.at(-1);
+    const hold = projection.frames.find((frame) => frame.offset === BATTLE_CARD_RELEASE_PROVISIONAL_HOLD_START);
+    assert.ok(hold, 'projection includes a center-card hold frame');
+    assert.equal(hold.x, target.x - start.x);
+    assert.equal(hold.y, target.y - start.y);
+    assert.equal(hold.scale, BATTLE_CARD_RELEASE_PROVISIONAL_CENTER_SCALE);
     assert.equal(end.x, target.x - start.x);
     assert.equal(end.y, target.y - start.y);
-    assert.ok(Math.abs(end.scale - 0.34) < 1e-9, `${role} ends at the existing ~0.34 depth scale`);
-    assert.ok(Math.abs(end.opacity - 0.58) < 1e-9, `${role} retains the existing terminal opacity`);
+    assert.equal(end.scale, BATTLE_CARD_RELEASE_PROVISIONAL_CENTER_SCALE);
+    assert.equal(end.opacity, 1);
   }
 });
 
-test('full-motion depth scale decreases monotonically toward the board', () => {
+test('full-motion card compresses during flight then grows into the provisional center-card hold', () => {
   const projection = full('top');
-  for (let index = 1; index < projection.frames.length; index += 1) {
-    assert.ok(
-      projection.frames[index].scale <= projection.frames[index - 1].scale,
-      'depth recession must not grow the card again on approach',
-    );
-  }
+  const preHold = projection.frames.filter((frame) => frame.offset < BATTLE_CARD_RELEASE_PROVISIONAL_HOLD_START);
+  assert.ok(preHold.some((frame) => frame.scale < 1), 'flight still has depth compression before arrival');
+  const hold = projection.frames.filter((frame) => frame.offset >= BATTLE_CARD_RELEASE_PROVISIONAL_HOLD_START);
+  assert.ok(hold.length >= 2, 'center-card arrival has a visible hold segment');
+  assert.equal(hold.every((frame) => frame.scale === BATTLE_CARD_RELEASE_PROVISIONAL_CENTER_SCALE), true);
+  assert.equal(hold.every((frame) => frame.x === target.x - start.x && frame.y === target.y - start.y), true);
 });
 
 test('low performance mode keeps exact source-to-destination meaning with a short straight no-spin projection', () => {
@@ -79,14 +86,14 @@ test('low performance mode keeps exact source-to-destination meaning with a shor
     assert.equal(lowPerf.frames.length, 3);
     assert.equal(lowPerf.spinDeg, 0);
     assert.equal(lowPerf.bendPx, 0);
-    assert.deepEqual(lowPerf.frames.map((frame) => frame.offset), [0, 0.5, 1]);
+    assert.deepEqual(lowPerf.frames.map((frame) => frame.offset), [0, BATTLE_CARD_RELEASE_PROVISIONAL_HOLD_START, 1]);
     assert.equal(lowPerf.frames.every((frame) => frame.rotationDeg === 0 && frame.blurPx === 0 && frame.brightness === 1), true);
     assert.equal(lowPerf.frames[0].x, 0);
     assert.equal(lowPerf.frames[0].y, 0);
     assert.equal(end.x, target.x - start.x);
     assert.equal(end.y, target.y - start.y);
-    assert.ok(Math.abs(end.scale - 0.34) < 1e-9);
-    assert.ok(Math.abs(end.opacity - 0.58) < 1e-9);
+    assert.equal(end.scale, BATTLE_CARD_RELEASE_PROVISIONAL_CENTER_SCALE);
+    assert.equal(end.opacity, 1);
     assert.equal(toBattleCardReleaseFlightKeyframes(lowPerf).every((frame) => frame.filter === 'none'), true);
     assert.deepEqual(lowPerf.destinationCue, {
       kind: 'NONE',
@@ -108,7 +115,8 @@ test('reduced motion removes large translation/rotation and exposes a destinatio
   assert.equal(reduced.spinDeg, 0);
   assert.equal(reduced.bendPx, 0);
   assert.ok(reduced.durationMs <= 180);
-  assert.equal(reduced.frames.every((frame) => frame.x === 0 && frame.y === 0 && frame.rotationDeg === 0), true);
+  assert.equal(reduced.frames.every((frame) => frame.x === target.x - start.x && frame.y === target.y - start.y && frame.rotationDeg === 0), true);
+  assert.equal(reduced.frames.every((frame) => frame.scale === BATTLE_CARD_RELEASE_PROVISIONAL_CENTER_SCALE), true);
   assert.deepEqual(reduced.destinationCue, {
     kind: 'DESTINATION_PULSE',
     x: target.x,
@@ -121,7 +129,8 @@ test('reduced motion remains the stronger accessibility override when low perfor
   const reducedLowPerf = full('bottom', { reducedMotion: true, lowPerf: true });
   assert.equal(reducedLowPerf.mode, BATTLE_CARD_RELEASE_FLIGHT_MODE.REDUCED);
   assert.equal(reducedLowPerf.lowPerf, true);
-  assert.equal(reducedLowPerf.frames.every((frame) => frame.x === 0 && frame.y === 0 && frame.rotationDeg === 0), true);
+  assert.equal(reducedLowPerf.frames.every((frame) => frame.x === target.x - start.x && frame.y === target.y - start.y && frame.rotationDeg === 0), true);
+  assert.equal(reducedLowPerf.frames.every((frame) => frame.scale === BATTLE_CARD_RELEASE_PROVISIONAL_CENTER_SCALE), true);
   assert.deepEqual(reducedLowPerf.destinationCue, {
     kind: 'DESTINATION_PULSE',
     x: target.x,
@@ -146,6 +155,6 @@ test('web-animation projection retains exact endpoint transform and role rotatio
   const topFrames = toBattleCardReleaseFlightKeyframes(full('top'));
   const bottomFrames = toBattleCardReleaseFlightKeyframes(full('bottom'));
 
-  assert.match(topFrames.at(-1).transform, /translate3d\(400\.00px,0\.00px,0\) rotate\(-720\.00deg\) scale\(0\.340\)/);
-  assert.match(bottomFrames.at(-1).transform, /translate3d\(400\.00px,0\.00px,0\) rotate\(720\.00deg\) scale\(0\.340\)/);
+  assert.match(topFrames.at(-1).transform, /translate3d\(400\.00px,0\.00px,0\) rotate\(-720\.00deg\) scale\(2\.000\)/);
+  assert.match(bottomFrames.at(-1).transform, /translate3d\(400\.00px,0\.00px,0\) rotate\(720\.00deg\) scale\(2\.000\)/);
 });

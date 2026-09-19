@@ -129,7 +129,34 @@ document.body.appendChild(battleMap);
 const root = document.createElement('main');
 root.setAttribute('data-gr-battle-screen-root', '');
 document.body.appendChild(root);
-const runtime = mountBattleScreenExternalSurface({ document }, { root, viewerParticipantId: 'P1' });
+const cinematicCharacterCalls = [];
+const cinematicCharacterGlobal = {
+  document,
+  GAMEROAD_PARTNER_STATE: { player: () => ({ id: 'partner.naki' }) },
+  GameRoadThreeCharRuntime: {
+    mount(host, options) {
+      const mount = { host, characterId: options.characterId, state: options.state };
+      cinematicCharacterCalls.push({ type: 'mount', characterId: options.characterId, state: options.state, allowNetwork: options.allowNetwork });
+      return mount;
+    },
+    setState(mount, state, options) {
+      mount.state = state;
+      cinematicCharacterCalls.push({ type: 'setState', characterId: mount.characterId, state, facing: options?.facing ?? null });
+      return true;
+    },
+    unmount(mount) {
+      cinematicCharacterCalls.push({ type: 'unmount', characterId: mount.characterId });
+      return true;
+    }
+  },
+  setTimeout(callback) { callback(); return 1; },
+  clearTimeout() {}
+};
+const runtime = mountBattleScreenExternalSurface(cinematicCharacterGlobal, {
+  root,
+  viewerParticipantId: 'P1',
+  cinematicCharacterByParticipant: { P4: 'partner.saasuna' }
+});
 
 assert.equal(runtime.presentationOnly, true);
 assert.equal(runtime.gameplayAuthority, false);
@@ -471,6 +498,8 @@ runtime.render(attack, {
     { cardId: 'C3', label: 'CARD-3' }
   ]
 });
+await Promise.resolve();
+await Promise.resolve();
 assert.equal(runtime.phaseSurface.hidden, false);
 assert.equal(runtime.shell.dataset.presentationMode, 'cinematic');
 assert.equal(runtime.phaseSurface.dataset.battlePhasePresentation, 'FULLSCREEN_ANIMATION');
@@ -502,10 +531,32 @@ assert.equal(runtime.cinematicDuel.dataset.eventId, 'attack-1');
 assert.equal(runtime.cinematicDuel.dataset.sourceId, 'P1');
 assert.equal(runtime.cinematicDuel.dataset.targetId, 'P4');
 assert.equal(runtime.cinematicDuel.dataset.handoff, 'replace_previous_pair_on_render');
-assert.deepEqual(runtime.cinematicDuel.children.map(node => node.dataset.role), ['source', 'target']);
-assert.deepEqual(runtime.cinematicDuel.children.map(node => node.dataset.participantId), ['P1', 'P4']);
-assert.deepEqual(runtime.cinematicDuel.children.map(node => node.children[1].children[0].textContent), ['攻撃側', '受け側']);
-assert.deepEqual(runtime.cinematicDuel.children.map(node => node.children[1].children[1].textContent), ['A-1', 'B-2']);
+assert.equal(runtime.cinematicDuel.dataset.sourceCharacterId, 'partner.naki');
+assert.equal(runtime.cinematicDuel.dataset.targetCharacterId, 'partner.saasuna');
+assert.equal(runtime.cinematicDuel.dataset.vfx, 'provisional-neutral-compressed-shot');
+const cinematicSides = runtime.cinematicDuel.children.filter(node => node.dataset.role);
+const cinematicVfx = runtime.cinematicDuel.children.find(node => node.dataset.layer === 'vfx');
+assert.deepEqual(cinematicSides.map(node => node.dataset.role), ['source', 'target']);
+assert.deepEqual(cinematicSides.map(node => node.dataset.participantId), ['P1', 'P4']);
+assert.deepEqual(cinematicSides.map(node => node.children[1].children[0].textContent), ['攻撃側', '受け側']);
+assert.deepEqual(cinematicSides.map(node => node.children[1].children[1].textContent), ['A-1', 'B-2']);
+assert.ok(cinematicVfx);
+assert.equal(cinematicVfx.dataset.presentationOnly, 'true');
+assert.equal(cinematicVfx.dataset.vfxKind, 'provisional-neutral-compressed-shot');
+assert.equal(cinematicSides[0].children[0].dataset.visualKind, 'character-runtime');
+assert.equal(cinematicSides[0].children[0].dataset.characterId, 'partner.naki');
+assert.equal(cinematicSides[1].children[0].dataset.visualKind, 'character-runtime');
+assert.equal(cinematicSides[1].children[0].dataset.characterId, 'partner.saasuna');
+assert.equal(cinematicSides[0].children[0].children[0].getAttribute('data-battle-cinematic-character'), '');
+assert.equal(cinematicSides[1].children[0].children[0].getAttribute('data-battle-cinematic-character'), '');
+assert.deepEqual(
+  cinematicCharacterCalls.filter(call => call.type === 'mount').map(call => [call.characterId, call.state, call.allowNetwork]),
+  [['partner.naki', 'idle', false], ['partner.saasuna', 'idle', false]]
+);
+assert.ok(cinematicCharacterCalls.some(call => call.type === 'setState' && call.characterId === 'partner.naki' && call.state === 'attack'));
+assert.ok(cinematicCharacterCalls.some(call => call.type === 'setState' && call.characterId === 'partner.naki' && call.state === 'idle'));
+assert.ok(cinematicCharacterCalls.some(call => call.type === 'setState' && call.characterId === 'partner.saasuna' && call.state === 'idle'));
+assert.equal(cinematicCharacterCalls.some(call => call.state === 'hit' || call.state === 'defeated'), false);
 assert.equal(runtime.resolutionSurface.textContent, 'EXISTING LIVE ADAPTER OWNS THIS CONTENT');
 assert.equal(runtime.resolutionSurface.dataset.battleScreenEventId, 'attack-1');
 assert.equal(runtime.resolutionSurface.dataset.battleBoardReturnDestination, undefined);
@@ -906,7 +957,9 @@ assert.deepEqual(BATTLE_SCREEN_RUNTIME.battlePhaseAllowedInputs, ['skip', 'publi
 assert.equal(BATTLE_SCREEN_RUNTIME.cinematicOrderAuthority, 'MODEL_CAUSAL_RETURN_PROCESSING_ORDER_ONLY_NO_SORT_OR_INFERENCE');
 assert.equal(BATTLE_SCREEN_RUNTIME.cinematicOrderVisibleCardIdText, false);
 assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelAuthority, 'MODEL_LANE_ROLE_EXACT_ONE_SOURCE_EXACT_ONE_TARGET_ONLY_NO_INFERENCE');
-assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelArt, 'CSS_PROXY_ONLY_NO_FORMAL_CHARACTER_ART');
+assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelArt, 'EXISTING_CHARACTER_RUNTIME_EXACT_IDENTITY_WITH_CSS_PROXY_FAIL_VISIBLE_NO_NEW_ART');
+assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelReaction, 'CLEAN_IDLE_CHARACTER_PLUS_WHOLE_FIGURE_RECOIL_NO_HIT_OR_DEFEATED_STATE');
+assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelVfx, 'SEPARATE_PROVISIONAL_NEUTRAL_COMPRESSED_SHOT_NO_FORMAL_ART');
 assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelHandoff, 'RENDER_REPLACES_PREVIOUS_PAIR_NO_ORDER_INFERENCE');
 assert.deepEqual(BATTLE_SCREEN_RUNTIME.cinematicPhaseMotion, ['reveal', 'attack', 'ability', 'compare4', 'finisher', 'settle']);
 assert.equal(BATTLE_SCREEN_RUNTIME.causalTraceAuthority, 'MODEL_CAUSAL_RETURN_STAGES_ONLY_NO_RECALCULATION');
@@ -924,7 +977,11 @@ assert.match(portraitScreenSource, /grBattleCinematicStrike/);
 assert.match(portraitScreenSource, /data-battle-cinematic-duel/);
 assert.match(portraitScreenSource, /grBattleCinematicDuelStrike/);
 assert.match(portraitScreenSource, /grBattleCinematicDuelHit/);
-assert.match(portraitScreenSource, /CSS_PROXY_ONLY_NO_FORMAL_CHARACTER_ART/);
+assert.match(portraitScreenSource, /EXISTING_CHARACTER_RUNTIME_EXACT_IDENTITY_WITH_CSS_PROXY_FAIL_VISIBLE_NO_NEW_ART/);
+assert.match(portraitScreenSource, /NO_HIT_OR_DEFEATED_STATE/);
+assert.match(portraitScreenSource, /provisional-neutral-compressed-shot/);
+assert.match(portraitScreenSource, /grBattleCinematicCompressedShot/);
+assert.match(portraitScreenSource, /data-battle-cinematic-character/);
 assert.match(portraitScreenSource, /grBattleCinematicCompare/);
 assert.match(portraitScreenSource, /grBattleCinematicWinner/);
 assert.match(portraitScreenSource, /data-battle-cinematic-order/);

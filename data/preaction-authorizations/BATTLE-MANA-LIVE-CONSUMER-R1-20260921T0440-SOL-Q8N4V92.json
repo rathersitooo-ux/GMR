@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-MANA-LIVE-CONSUMER-R1-20260921T0440-SOL-Q8N4V92",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FORMAL_RESOURCE_PAYMENT_LIVE_CONSUMER_R1",
+  "acquireKey": "BATTLE-MANA-LIVE-CONSUMER-R1-20260921T0440-SOL-Q8N4V92",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_DIRECT_20260920_MANA_REQUIRED_PLUS_CURRENT_ROW1374",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_HTML_READBACK_RESOLVEBATTLE_ACTIVE_SUBMISSION_GAP",
+  "proceedToken": "PROCEED|BATTLE-MANA-LIVE-CONSUMER-R1-20260921T0440-SOL-Q8N4V92|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-mana-live-consumer|existing-boundary-adapt|active-lease",
+  "authorizationBaseSha": "8b450e85701fe22f0d7c8d7a7c0bbc7c9019628b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_FORMAL_RESOURCE_PAYMENT_LIVE_CONSUMER_R1",
+  "leaseAcquireKey": "BATTLE-MANA-LIVE-CONSUMER-R1-20260921T0440-SOL-Q8N4V92",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 04:40 JST",
+  "leaseUntilJst": "2026-09-21 05:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:N9",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; tests/battle-formal-resource-payment-boundary.test.mjs; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback",
+  "solutionSignature": "BATTLE_FORMAL_MANA_ONLY_PAYMENT_LIVE_CONSUMER_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MERGED_PR1966_FORMAL_PAYMENT_BOUNDARY_PLUS_CURRENT_HTML_READBACK",
+  "solutionSearchEvidence": [
+    "Merged PR #1966 already owns the canonical MANA_ONLY_REQUIRED payment projection and must be reused rather than reimplemented.",
+    "Current row1374 states Road generic Mana cost 0 and ordinary Battle cost equals the used Battle-card number.",
+    "Current live resolveBattle removes and reveals active Battle cards without calling the formal payment projector.",
+    "The previous exact HTML writer lease expired at 04:40 JST; this WorkUnit holds the fresh exact HTML lease through 05:40 JST."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-formal-resource-payment-boundary.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-formal-resource-payment-boundary.test.mjs"
+  ]
+}

@@ -253,3 +253,79 @@ test('feedback cannot claim canonical write or use a non-request report type', a
     reason: 'report_request_invalid',
   });
 });
+
+
+function storedConversationQuality(overrides = {}) {
+  return {
+    idempotencyKey: 'conversation-quality-session-quality-1-turn-7',
+    partnerId: 'partner.saasuna',
+    reportType: 'request',
+    sourceUseSite: 'partner_conversation_quality_feedback',
+    sourceStateIdentity: 'session-quality-1:turn-7',
+    feedback: {
+      kind: 'conversation_quality_rating',
+      sessionId: 'session-quality-1',
+      turnId: 'turn-7',
+      dialogueVersion: 'saasuna.dialogue.current.r1.20260810',
+      sourceId: 'SOURCE-DIALOGUE-SAASUNA-20260810',
+      rating: 'good',
+      responseOrigin: 'provider_candidate',
+      canonStatus: 'ephemeral_candidate',
+      candidateOnly: true,
+      rawTextStored: false,
+      canonicalWrite: false,
+      automaticCanonMutation: false,
+      automaticRelationshipMutation: false,
+      automaticRewardMutation: false,
+      automaticLearning: false,
+    },
+    ...overrides,
+  };
+}
+
+test('report authority accepts metadata-only provider conversation quality without fake versions', async () => {
+  const storage = new FakeStorage();
+  const saved = await submitStoredPartnerReport(storage, storedConversationQuality(), { reportId: 'r-quality', nowMs: 200 });
+  assert.equal(saved.ok, true);
+  assert.equal(saved.report.feedback.kind, 'conversation_quality_rating');
+  assert.equal(saved.report.feedback.rating, 'good');
+  assert.equal(saved.report.feedback.rawTextStored, false);
+  assert.equal(saved.report.feedback.canonicalWrite, false);
+  assert.equal('versions' in saved.report, false);
+  assert.doesNotMatch(JSON.stringify(saved.report), /userMessage|assistantUtterance|proposedText/);
+  const reread = await readStoredPartnerReport(storage, { reportId: 'r-quality' });
+  assert.deepEqual(reread.report.feedback, saved.report.feedback);
+});
+
+test('conversation quality retry is idempotent while a changed vote on the same turn conflicts', async () => {
+  const storage = new FakeStorage();
+  const first = await submitStoredPartnerReport(storage, storedConversationQuality(), { reportId: 'r-quality-one' });
+  const retry = await submitStoredPartnerReport(storage, storedConversationQuality(), { reportId: 'r-quality-two' });
+  const changed = storedConversationQuality({
+    feedback: { ...storedConversationQuality().feedback, rating: 'bad' },
+  });
+  const conflict = await submitStoredPartnerReport(storage, changed, { reportId: 'r-quality-three' });
+  assert.equal(first.ok, true);
+  assert.equal(first.report.disposition, 'accepted_unique');
+  assert.equal(retry.ok, true);
+  assert.equal(retry.idempotent, true);
+  assert.equal(retry.report.reportId, 'r-quality-one');
+  assert.deepEqual(conflict, { ok: false, reason: 'report_idempotency_conflict' });
+});
+
+test('conversation quality rejects fallback, invented versions, and unexpected raw-text fields', async () => {
+  const storage = new FakeStorage();
+  assert.deepEqual(await submitStoredPartnerReport(storage, storedConversationQuality({
+    feedback: {
+      ...storedConversationQuality().feedback,
+      responseOrigin: 'approved_fallback',
+      canonStatus: 'approved_source_fallback',
+    },
+  }), { reportId: 'r-quality-fallback' }), { ok: false, reason: 'report_request_invalid' });
+  assert.deepEqual(await submitStoredPartnerReport(storage, storedConversationQuality({
+    versions: { rules: 'fake', content: 'fake', state: 'fake' },
+  }), { reportId: 'r-quality-versions' }), { ok: false, reason: 'report_request_invalid' });
+  assert.deepEqual(await submitStoredPartnerReport(storage, storedConversationQuality({
+    feedback: { ...storedConversationQuality().feedback, assistantUtterance: 'do not store me' },
+  }), { reportId: 'r-quality-raw' }), { ok: false, reason: 'report_request_invalid' });
+});

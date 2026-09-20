@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-CONVO-PROVIDER-PREACTION-R2-20260921T0413",
+  "taskId": "PARTNER-FUTURE-LLM-DIALOGUE-RESEARCH-001",
+  "workUnitKey": "PARTNER_CONVERSATION_PROVIDER_PRODUCTION_CONFIG_R1",
+  "acquireKey": "PARTNER-CONVO-PROVIDER-PROD-R1-20260921T0406-SOL-Q8N4V90",
+  "riskClass": "IRREVERSIBLE_OR_EXTERNAL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLIC-PARTNER-POST-503-NOT_CONFIGURED-20260921",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT-WS-NOT_CONFIGURED-BRANCH+CLOUDFLARE-PAGES-SECRET-PUT-OFFICIAL",
+  "proceedToken": "PROCEED|PARTNER-CONVO-PROVIDER-PREACTION-R2-20260921T0413|PREACTION_PROCEED_ALLOWED|IRREVERSIBLE_OR_EXTERNAL|public-503|encrypted-secret-sync|bounded-post",
+  "authorizationBaseSha": "2f7af383d9bf3dd2b9007e5cce852fee10cf2611",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-FUTURE-LLM-DIALOGUE-RESEARCH-001",
+  "leaseWorkUnitKey": "PARTNER_CONVERSATION_PROVIDER_PRODUCTION_CONFIG_R1",
+  "leaseAcquireKey": "PARTNER-CONVO-PROVIDER-PROD-R1-20260921T0406-SOL-Q8N4V90",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 04:13 JST",
+  "leaseUntilJst": "2026-09-21 05:06 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A18:L18",
+  "leaseExactMutableResources": ".github/workflows/cloudflare-public-deploy.yml; Cloudflare Pages gameroad-browser-r5 secrets CONVAI_API_KEY + CONVAI_SAASUNA_CHARACTER_ID via existing GitHub secret source only; own fresh branch/PR/check/merge/readback/public POST; deploy/cloudflare/functions/ws.js READ_ONLY; browser/board-facility-runtime-mount.mjs READ_ONLY active Partner feedback owner; browser/GAMEROAD.html READ_ONLY active Battle owner",
+  "scope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ]
+}

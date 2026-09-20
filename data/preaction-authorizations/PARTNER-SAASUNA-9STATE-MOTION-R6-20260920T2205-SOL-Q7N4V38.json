@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-SAASUNA-9STATE-MOTION-R6-20260920T2205-SOL-Q7N4V38",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_SAASUNA_9STATE_TRIGGER_MOTION_R6",
+  "acquireKey": "PARTNER-SAASUNA-9STATE-MOTION-R6-20260920T2205-SOL-Q7N4V38",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_0641E4E_TARGET_BLOBS_UNCHANGED_AND_CURRENT_LEASE_READBACK_20260920T2208JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R4_41_OF_41_CROSSFADE_REHEARSAL_PLUS_CURRENT_R5_STATE_MAPPING_SOURCE_AUDIT",
+  "proceedToken": "PROCEED|PARTNER-SAASUNA-9STATE-MOTION-R6-20260920T2205-SOL-Q7N4V38|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|accepted-nine-stills|state-trigger-motion|active-lease",
+  "authorizationBaseSha": "0641e4e12646e2b1874bc7ed064dfcf1245ba004",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_SAASUNA_9STATE_TRIGGER_MOTION_R6",
+  "leaseAcquireKey": "PARTNER-SAASUNA-9STATE-MOTION-R6-20260920T2205-SOL-Q7N4V38",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 22:08 JST",
+  "leaseUntilJst": "2026-09-20 23:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A37:L37",
+  "leaseExactMutableResources": "browser/partner-saasuna-bustup-visuals.mjs; tests/partner-saasuna-bustup-visuals.test.mjs; browser/partner-advice-runtime-mount.mjs; tests/partner-advice-runtime-mount.test.mjs; deploy/cloudflare/tests/build.test.mjs provenance-only; data/preaction-authorizations/PARTNER-SAASUNA-9STATE-MOTION-R6-20260920T2205-SOL-Q7N4V38.json cleanup-delete only; own fresh branch/PR/check/merge/readback",
+  "solutionSignature": "SAASUNA_ACCEPTED_9_STILL_TRIGGERED_WHOLE_LAYER_MOTION_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_FRAMED_BUSTUP_RUNTIME_AND_R4_CROSSFADE_SEAM_READBACK",
+  "solutionSearchEvidence": [
+    "Current main already registers the exact nine accepted transparent PNG assets and mounts the dedicated Battle Advice Partner bust-up.",
+    "Current main already exposes reaction, tutorial, quick-route and Advice presentation signals; the repair maps those existing signals instead of adding gameplay authority.",
+    "R4 proved whole-layer crossfade continuity; R6 limits additional motion to translation and uniform scale and does not create an internal rig or tenth asset."
+  ],
+  "scope": [
+    "browser/partner-saasuna-bustup-visuals.mjs",
+    "tests/partner-saasuna-bustup-visuals.test.mjs",
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-saasuna-bustup-visuals.mjs",
+    "tests/partner-saasuna-bustup-visuals.test.mjs",
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

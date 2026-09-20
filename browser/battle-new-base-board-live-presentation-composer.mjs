@@ -260,6 +260,35 @@ export function mountBattleNewBaseBoardLivePresentation({
         builtCountByLaneKey: builtCountByVisualLaneKey(currentProgressionPresentation),
       });
     },
+    visualGraphWorld() {
+      const model = createBattleBoardWorldFieldRenderModel({
+        worldBounds: { centerX: 0, centerZ: 0, width: 20, depth: 11.25, y: 0.035 },
+        builtCountByLaneKey: builtCountByVisualLaneKey(currentProgressionPresentation),
+      });
+      const nodes = {};
+      for (const cell of model.roundCells) nodes[cell.id] = cell.world;
+      for (const gate of model.gates) nodes[gate.id] = gate.world;
+      nodes[model.sharedGoal.id] = model.sharedGoal.world;
+      const toCompatEdge = (edge) => ({
+        id: edge.id,
+        region: edge.region,
+        points: [edge.from, ...(edge.waypoints ?? []), edge.to].filter(Boolean),
+      });
+      return deepFreeze({
+        schema: model.schema,
+        renderSpace: model.renderSpace,
+        screenSpaceBoardTopology: false,
+        presentationOnly: true,
+        gameplayAuthority: false,
+        movementAuthority: false,
+        nodes,
+        edges: [...model.edges, ...model.goalBranches].map(toCompatEdge),
+        goalId: model.sharedGoal.id,
+        gateIds: model.gates.map((gate) => gate.id),
+        upperCellIds: model.roundCells.filter((cell) => cell.region === 'UPPER_LANE').map((cell) => cell.id),
+        lowerCellIds: model.roundCells.filter((cell) => cell.region === 'LOWER_SHARED_FIELD').map((cell) => cell.id),
+      });
+    },
     snapshot() {
       return snapshotState();
     },

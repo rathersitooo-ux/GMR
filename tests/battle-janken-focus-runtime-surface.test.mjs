@@ -197,19 +197,25 @@ test('missing catalog metadata preserves exact package cardId and never borrows 
   assert.doesNotMatch(html, /foreign\.webp/);
 });
 
-test('JANKEN_FOCUS exposes exactly one target-rail switch for each authoritative package and playing a ready card commits it immediately', async () => {
+test('JANKEN_FOCUS exposes only the three janken choices; target, column, and Shield are read-only package facts', async () => {
   const liveInputStack = createLiveStack();
   const { runtime } = mount({ liveInputStack });
   const html = runtime.host.innerHTML;
-  const railActions = html.match(/class="grJankenTargetChip/g) ?? [];
-  assert.equal(railActions.length, 3);
-  assert.match(html, /aria-label="ロックオン対象切替"/);
-  assert.match(html, /data-opponent-id="opponent-rock-g1"/);
-  assert.match(html, /data-shield-lane="LEFT"/);
-  assert.match(html, /data-opponent-id="opponent-scissors-g1"/);
-  assert.match(html, /data-shield-lane="CENTER"/);
-  assert.match(html, /data-opponent-id="opponent-paper-g1"/);
-  assert.match(html, /data-shield-lane="RIGHT"/);
+  assert.equal((html.match(/class="grJankenFocusChoice/g) ?? []).length, 3);
+  assert.doesNotMatch(html, /grJankenTargetRail/);
+  assert.doesNotMatch(html, /grJankenTargetChip/);
+  assert.doesNotMatch(html, /ロックオン対象切替/);
+  assert.doesNotMatch(html, /data-opponent-id=/);
+  assert.doesNotMatch(html, /data-shield-lane=/);
+  assert.match(html, /列へ対応し、シールドの攻撃位置もカード選択だけで自動決定/);
+  assert.match(html, /opponent-rock-g1/);
+  assert.match(html, /LEFT \/ shield-rock-g1/);
+  assert.match(html, /opponent-scissors-g1/);
+  assert.match(html, /CENTER \/ shield-scissors-g1/);
+  assert.match(html, /opponent-paper-g1/);
+  assert.match(html, /RIGHT \/ shield-paper-g1/);
+  assert.ok(html.indexOf('rock-card-g1') < html.indexOf('scissors-card-g1'));
+  assert.ok(html.indexOf('scissors-card-g1') < html.indexOf('paper-card-g1'));
   const result = await runtime.focus('PAPER');
   assert.equal(result.ok, true);
   assert.equal(result.committed, true);
@@ -350,7 +356,7 @@ test('authoritative sync before card play replaces visible choices and only the 
   assert.equal(runtime.snapshot().presentation.surface, 'JANKEN_FOCUS');
   assert.equal(runtime.snapshot().presentation.focusedHand, null);
   assert.match(runtime.host.innerHTML, /rock-card-g2/);
-  assert.match(runtime.host.innerHTML, /data-opponent-id="opponent-rock-g2"/);
+  assert.match(runtime.host.innerHTML, /opponent-rock-g2/);
   const result = await runtime.focus('ROCK');
   assert.equal(result.committed, true);
   assert.equal(result.autoCommitted, true);
@@ -358,8 +364,8 @@ test('authoritative sync before card play replaces visible choices and only the 
 });
 test('surface contract auto-commits card play without visible confirm/cancel controls and keeps authority delegated', () => {
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.authority, 'NONE');
-  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.authoritativeTargetRail, true);
-  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.targetRailSource, 'EXISTING_THREE_COMPOUND_PACKAGES_ONLY');
+  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.authoritativeTargetRail, false);
+  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.targetRailSource, 'NONE_FREE_TARGET_PICKER');
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.targetRailMayCreateTarget, false);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.physicalCardLineageSource, 'EXACT_PACKAGE_CARD_ID_JOIN_GLOBAL_CARD_DATA');
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.cardArtSource, 'VIEWER_LOCAL_COLLECTION_EXACT_CARD_ID');

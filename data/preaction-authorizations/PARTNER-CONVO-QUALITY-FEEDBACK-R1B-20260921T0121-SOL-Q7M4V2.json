@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-CONVO-QUALITY-FEEDBACK-R1B-20260921T0121-SOL-Q7M4V2",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "PARTNER_CONVERSATION_QUALITY_FEEDBACK_REPORT_R1",
+  "acquireKey": "PARTNER-CONVO-QUALITY-FEEDBACK-R1B-20260921T0121-SOL-Q7M4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_PARTNER_COLLECTIVE_FEEDBACK_BOUNDARY_AND_EXISTING_REPORT_AUTHORITY_R1",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_LOCAL_GOOD_BAD_AND_PARTNER_REPORT_FOCUSED_REGRESSIONS",
+  "proceedToken": "PROCEED|PARTNER-CONVO-QUALITY-FEEDBACK-R1B-20260921T0121-SOL-Q7M4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|REUSE-EXISTING-REPORT-AUTHORITY|FOCUSED-REGRESSION",
+  "authorizationBaseSha": "d86eaa1c07237bd0ee18e9584fcc9d0eee924d16",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "PARTNER_CONVERSATION_QUALITY_FEEDBACK_REPORT_R1",
+  "leaseAcquireKey": "PARTNER-CONVO-QUALITY-FEEDBACK-R1B-20260921T0121-SOL-Q7M4V2",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 01:22 JST",
+  "leaseUntilJst": "2026-09-21 02:21 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:N8",
+  "leaseExactMutableResources": "browser/board-facility-runtime-mount.mjs; deploy/cloudflare/relay/src/partner-report-store.mjs; tests/board-facility-runtime-mount.test.mjs; tests/partner-dialogue-feedback-core.test.mjs; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback; own CURRENT lease",
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "deploy/cloudflare/relay/src/partner-report-store.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "tests/partner-dialogue-feedback-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "deploy/cloudflare/relay/src/partner-report-store.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "tests/partner-dialogue-feedback-core.test.mjs"
+  ],
+  "solutionSignature": "Reuse the existing Saasuna Good/Bad turn feedback and existing Partner report authority to persist privacy-minimized conversation-quality candidate evidence; no transcript storage, no second data store, and no automatic learning or gameplay mutation.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_COLLECTIVE_SPEC_PLUS_EXISTING_PARTNER_REPORT_AUTHORITY_AND_LOCAL_FEEDBACK_CORE",
+  "solutionSearchEvidence": [
+    "current collective specs require versioned feedback to become review candidates rather than automatic truth",
+    "partner-conversation-core already emits bounded Good/Bad feedback without raw text",
+    "partner-report-store already provides idempotent server-verified Partner report persistence",
+    "board-facility runtime already owns the live Saasuna conversation surface"
+  ]
+}

@@ -3,7 +3,6 @@ import {
   createHomeShellState,
   HOME_TOUCH_TARGET_MIN_PX,
 } from './home-shell-presentation-core.mjs';
-import { mountRogueRunFromCurrentBrowser } from './rogue-run-runtime-mount.mjs';
 import {
   advanceSlotRollDrag,
   createSlotRollState,
@@ -1143,7 +1142,6 @@ export function mountHomeBootPresentation() {
   });
   runtime.mounted = true;
   refreshHomeBootPresentation();
-  mountRogueRunFromCurrentBrowser();
   return snapshot();
 }
 

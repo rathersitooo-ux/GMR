@@ -107,7 +107,7 @@ function roadState(runtime, participantId, laneIndex, roadIndex) {
 
 test('mounts the existing Flanora surface and persistent Shield-entry gates with no false OPEN arrows', () => {
   const { host, runtime } = mount();
-  assert.equal(runtime.mounted, true);
+  assert.equal(runtime.mounted, true, runtime.reason);
   assert.equal(host.children.length, 1);
   assert.equal(runtime.snapshot().boardSurface.laneCount, 12);
   assert.equal(runtime.snapshot().gateCue.laneGateCount, 12);

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "FREE4P-OWNERSHIP-REBASE-R6-20260920T1525-SOL-Q5",
+  "taskId": "BATTLE-FREE4P-RUNTIME-CONFORMANCE-001",
+  "workUnitKey": "FREE4P_NEWBASE_SHIELD_ROAD_OWNERSHIP_REBASE_R6",
+  "acquireKey": "FREE4P-OWNERSHIP-REBASE-R6-20260920T1525-SOL-Q5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_ABSENCE+PR812_REQUIRED_GATE_SUCCESS+NO_LATER_EQUIVALENT_PR",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR812_FOCUSED_OWNERSHIP_TEST+REQUIRED_GATE_RUN33375401267_SUCCESS",
+  "proceedToken": "PROCEED|FREE4P-OWNERSHIP-REBASE-R6-20260920T1525-SOL-Q5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|pr812-proven-bounded-rebase|lease-snapshot",
+  "authorizationBaseSha": "03827c729ac328ae46d3f11877028b45f04a0c55",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-FREE4P-RUNTIME-CONFORMANCE-001",
+  "leaseWorkUnitKey": "FREE4P_NEWBASE_SHIELD_ROAD_OWNERSHIP_REBASE_R6",
+  "leaseAcquireKey": "FREE4P-OWNERSHIP-REBASE-R6-20260920T1525-SOL-Q5",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 15:25 JST",
+  "leaseUntilJst": "2026-09-20 16:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A29:L29",
+  "leaseExactMutableResources": "browser/new-base-match-ownership-adapter.mjs; tests/new-base-match-ownership-adapter.test.mjs; transient data/preaction-authorizations/FREE4P-OWNERSHIP-REBASE-R6-20260920T1525-SOL-Q5.json cleanup-delete only; own fresh branch sol/free4p-ownership-rebase-r6-20260920 + PR/check/merge/readback; GAMEROAD.html/match-store/reconnect/rules/result/Honey/Pursuit/GOAL/FIELD READ_ONLY; own CURRENT lease/R24 event",
+  "scope": [
+    "browser/new-base-match-ownership-adapter.mjs",
+    "tests/new-base-match-ownership-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-match-ownership-adapter.mjs",
+    "tests/new-base-match-ownership-adapter.test.mjs"
+  ]
+}

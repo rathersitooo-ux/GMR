@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-PROGRESSION-DIRECTION-R1-20260921T0255",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_BOARD_PROGRESSION_DIRECTION_VISUAL_R1",
+  "acquireKey": "BATTLE-BOARD-PROGRESSION-DIRECTION-R1-20260921T0255-SOL-Q8N4V79",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "DIRECT_TARGET_PLUS_CURRENT_GRAPH_RENDERER_DIRECTION_MISMATCH",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "STANDALONE_R8_SHIELD_TO_GOAL_SCREENSHOT_AND_GEOMETRY_PASS",
+  "proceedToken": "PROCEED|BATTLE-BOARD-PROGRESSION-DIRECTION-R1-20260921T0255|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|fixed-target-r8|shield-to-goal",
+  "authorizationBaseSha": "956021120af6905592e6552cbd0d5c9b8f8178ef",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_BOARD_PROGRESSION_DIRECTION_VISUAL_R1",
+  "leaseAcquireKey": "BATTLE-BOARD-PROGRESSION-DIRECTION-R1-20260921T0255-SOL-Q8N4V79",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 02:55 JST",
+  "leaseUntilJst": "2026-09-21 03:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/new-base-battle-board-visual-graph.mjs; tests/new-base-battle-board-visual-graph.test.mjs; tests/battle-board-world-field-renderer.test.mjs; transient data/preaction-authorizations/BATTLE-BOARD-PROGRESSION-DIRECTION-R1-20260921T0255-SOL-Q8N4V79.json cleanup-delete only; own fresh branch/PR/check/merge/readback",
+  "scope": [
+    "browser/new-base-battle-board-visual-graph.mjs",
+    "tests/new-base-battle-board-visual-graph.test.mjs",
+    "tests/battle-board-world-field-renderer.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-battle-board-visual-graph.mjs",
+    "tests/new-base-battle-board-visual-graph.test.mjs",
+    "tests/battle-board-world-field-renderer.test.mjs"
+  ]
+}

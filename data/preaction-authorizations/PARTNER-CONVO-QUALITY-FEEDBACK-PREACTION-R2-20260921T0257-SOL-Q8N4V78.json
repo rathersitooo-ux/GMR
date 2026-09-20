@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-CONVO-QUALITY-FEEDBACK-PREACTION-R2-20260921T0257-SOL-Q8N4V78",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "PARTNER_CONVERSATION_QUALITY_FEEDBACK_REPORT_R1",
+  "acquireKey": "PARTNER-CONVO-QUALITY-FEEDBACK-R2-20260921T0257-SOL-Q8N4V78",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "ACTUAL-PARTNER-CONVO-GOOD-BAD-MISSING-20260921",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PUBLIC-DOM-PARTNER-CONVO-FEEDBACK-GAP-20260921",
+  "proceedToken": "PROCEED|PARTNER-CONVO-QUALITY-FEEDBACK-PREACTION-R2-20260921T0257-SOL-Q8N4V78|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction-lease-snapshot",
+  "authorizationBaseSha": "956021120af6905592e6552cbd0d5c9b8f8178ef",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "PARTNER_CONVERSATION_QUALITY_FEEDBACK_REPORT_R1",
+  "leaseAcquireKey": "PARTNER-CONVO-QUALITY-FEEDBACK-R2-20260921T0257-SOL-Q8N4V78",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 02:57 JST",
+  "leaseUntilJst": "2026-09-21 03:57 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A14:L14",
+  "leaseExactMutableResources": "browser/board-facility-runtime-mount.mjs; deploy/cloudflare/relay/src/partner-report-store.mjs; tests/board-facility-runtime-mount.test.mjs; tests/partner-dialogue-feedback-core.test.mjs; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback/public readback; browser/GAMEROAD.html READ_ONLY active owner; deploy/cloudflare/tests/build.test.mjs READ_ONLY active owner; browser/partner-conversation-core.mjs READ_ONLY existing feedback authority; gameplay/rules/save/network READ_ONLY",
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "deploy/cloudflare/relay/src/partner-report-store.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "tests/partner-dialogue-feedback-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "deploy/cloudflare/relay/src/partner-report-store.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "tests/partner-dialogue-feedback-core.test.mjs"
+  ]
+}

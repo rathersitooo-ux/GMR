@@ -151,6 +151,25 @@ test('Historical record deck text resolves the live Array card-data shape and ke
   );
 });
 
+test('Historical record deck text prefers the current production display_name field', () => {
+  const historyEntry = {
+    deckStartSnapshot: {
+      deckRef: { deckSlotId: 'deck-current' },
+      deck: { main: ['SP_A'], ex: [] },
+    },
+  };
+  const fakeWindow = {
+    __CARD_DATA__: [
+      { id: 'SP_A', display_name: 'スペードA' },
+    ],
+  };
+
+  assert.equal(
+    projectHistoricalDeckText(historyEntry, fakeWindow),
+    '使用デッキ（deck-current）\nメイン 1枚：スペードA（SP_A）\nEX 0枚：なし',
+  );
+});
+
 test('Historical record deck text keeps legacy entries explicitly unrecorded', () => {
   assert.equal(projectHistoricalDeckText(null), '使用デッキ：この対戦履歴では未記録です。');
   assert.equal(projectHistoricalDeckText({ deckStartSnapshot: {} }), '使用デッキ：この対戦履歴では未記録です。');

@@ -121,6 +121,20 @@ function flatten(node) {
   return [node, ...node.children.flatMap(flatten)];
 }
 
+test('runtime disables acquire controls when no acquisition consumer is connected', () => {
+  const documentSource = new FakeDocument();
+  const host = new FakeNode('div', documentSource);
+  mountShopLiveCatalogRuntime({
+    host,
+    formalCatalogItems:[formalItem()],
+  });
+  const button = flatten(host).find((node)=>node.className === 'shopLiveCatalogAcquire');
+  assert.ok(button);
+  assert.equal(button.disabled, true);
+  assert.equal(button.dataset.shopAcquireState, 'unavailable');
+  assert.equal(button.listeners.has('click'), false);
+});
+
 test('runtime emits identity-only acquire intent and never claims purchase authority', () => {
   const documentSource = new FakeDocument();
   const host = new FakeNode('div', documentSource);
@@ -132,6 +146,8 @@ test('runtime emits identity-only acquire intent and never claims purchase autho
   });
   const button = flatten(host).find((node)=>node.className === 'shopLiveCatalogAcquire');
   assert.ok(button);
+  assert.equal(button.disabled, false);
+  assert.equal(button.dataset.shopAcquireState, 'ready');
   button.click();
   assert.deepEqual(requests, [{productId:'shop:coin:001', source:'FORMAL_CATALOG', itemIdentity:'product:shop:coin:001'}]);
   assert.equal('price' in requests[0], false);

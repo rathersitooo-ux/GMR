@@ -140,13 +140,18 @@ function renderItem(documentSource, grid, item, onAcquireRequest) {
   const button = appendText(documentSource, card, 'button', 'shopLiveCatalogAcquire', '取得する');
   button.type = 'button';
   button.dataset.shopProductId = item.productId;
-  button.addEventListener('click', ()=>{
-    onAcquireRequest?.(Object.freeze({
-      productId:item.productId,
-      source:item.source,
-      itemIdentity:item.identity,
-    }));
-  });
+  const acquireReady = typeof onAcquireRequest === 'function';
+  button.disabled = !acquireReady;
+  button.dataset.shopAcquireState = acquireReady ? 'ready' : 'unavailable';
+  if (acquireReady) {
+    button.addEventListener('click', ()=>{
+      onAcquireRequest(Object.freeze({
+        productId:item.productId,
+        source:item.source,
+        itemIdentity:item.identity,
+      }));
+    });
+  }
   grid.appendChild(card);
 }
 

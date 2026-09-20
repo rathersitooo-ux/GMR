@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   advanceSlotRollDrag,
@@ -115,6 +116,16 @@ test('Battle field catalog keeps approved battle fields distinct by landmark ide
   assert.equal(resolveBattleField('FIELD-06'), null);
   assert.equal(resolveBattleField('FIELD-07'), null);
   assert.equal(resolveBattleField('FIELD-10'), null);
+});
+
+test('short-landscape field picker keeps reel snap, angular silhouette, and touch-size styling in the live module', () => {
+  const source = readFileSync(new URL('../browser/slidepad-slot-roll-core.mjs', import.meta.url), 'utf8');
+  assert.match(source, /scroll-snap-type:x mandatory/);
+  assert.match(source, /scroll-snap-align:center/);
+  assert.match(source, /clip-path:polygon\(0 0,calc\(100% - 11px\)/);
+  assert.match(source, /aria-pressed="true"[^}]*scale\(1\.045\)/);
+  assert.match(source, /grid-auto-columns:106px/);
+  assert.match(source, /min-height:56px/);
 });
 
 test('Battle field identity can change without navigating or requiring Browser globals', () => {

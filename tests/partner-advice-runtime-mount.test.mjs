@@ -697,3 +697,14 @@ test('quick3 UI keeps delegation separate and does not create a permanent fourth
   assert.doesNotMatch(source, /\['three-options',\s*'3つ出して'\]/);
 });
 
+test('Saasuna accepted TOUCH_CRY asset has a real Battle player-touch path and semantic return timer', () => {
+  const source = readFileSync(new URL('../browser/partner-advice-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /saasunaBustup\.figure\.addEventListener\('click'/);
+  assert.match(source, /saasunaBustup\.figure\.addEventListener\('keydown'/);
+  assert.match(source, /touchCryActive:\s*saasunaTouchCryActive/);
+  assert.match(source, /saasunaTouchCryActive\s*=\s*true/);
+  assert.match(source, /saasunaTouchCryActive\s*=\s*false/);
+  assert.match(source, /},\s*3000\);/);
+  assert.match(source, /current\?\.partnerId\s*!==\s*SAASUNA_PARTNER_ID/);
+});
+

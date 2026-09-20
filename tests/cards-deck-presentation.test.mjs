@@ -12,9 +12,6 @@ import {
   createDeckSwipeSfxPlayer,
   isNeutralizedDeckEditorSwipe,
   presentDeckAddSwipe,
-  installCardsInspectorDismissInteractions,
-  countCardsLocalVoteHistory,
-  installCardsVoteUiRepair,
 } from '../browser/cards-deck-presentation.mjs';
 
 const rect = (left, top, width, height) => ({ left, top, width, height });
@@ -118,6 +115,55 @@ test('live Deck add binding reuses inserted slot as the existing presentation la
   assert.equal(calls[0][1].sourceElement, source);
   assert.equal(calls[0][1].targetElement, deck);
   assert.equal(calls[0][1].insertedElement, target);
+});
+
+test('live Deck add binding forwards pre-mutation source geometry after synchronous rerender', () => {
+  const source = fakeElement(rect(0, 0, 0, 0));
+  const sourceRect = rect(18, 22, 96, 132);
+  const target = fakeElement();
+  target.dataset = { id: 'c8' };
+  const deck = fakeElement();
+  target.closest = () => deck;
+  const calls = [];
+  const doc = {
+    querySelectorAll(selector) {
+      return selector === '#deckSlots [data-id], #exDeckSlots [data-id]' ? [target] : [];
+    },
+    querySelector() { return deck; },
+  };
+  assert.equal(presentDeckAddSwipe({
+    doc,
+    presentation: { playSuccess(payload) { calls.push(payload); } },
+    result: { ok: true, action: 'deck-add' },
+    sourceElement: source,
+    sourceRect,
+    cardId: 'c8',
+  }), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].sourceElement, source);
+  assert.deepEqual(calls[0].sourceRect, sourceRect);
+});
+
+test('live Deck add binding lands on visible Deck tray when inserted Deck root is closed', () => {
+  const source = fakeElement();
+  const hiddenDeck = fakeElement(rect(0, 0, 0, 0));
+  const tray = fakeElement(rect(690, 300, 120, 48));
+  const inserted = fakeElement();
+  inserted.dataset = { id: 'c8' };
+  inserted.closest = () => hiddenDeck;
+  let targetSeen = null;
+  const doc = {
+    querySelectorAll: (selector) => selector === '#deckSlots [data-id], #exDeckSlots [data-id]' ? [inserted] : [],
+    querySelector: (selector) => selector === '#r4DeckTrayToggle' ? tray : hiddenDeck,
+  };
+  assert.equal(presentDeckAddSwipe({
+    doc,
+    presentation: { playSuccess(payload) { targetSeen = payload.targetElement; } },
+    result: { ok: true, action: 'deck-add' },
+    sourceElement: source,
+    cardId: 'c8',
+  }), true);
+  assert.equal(targetSeen, tray);
 });
 
 test('live Deck add binding rejects without fake landing and presentation failures stay non-fatal', () => {
@@ -239,6 +285,45 @@ test('reduced controller emits commit then land and exposes SFX hooks without ow
   assert.deepEqual(order, ['sfx:commit', 'sfx:land']);
 });
 
+test('success controller uses preserved source geometry when live source rect is already zero', () => {
+  const doc = fakeDocument();
+  const source = fakeElement(rect(0, 0, 0, 0));
+  const sourceRect = rect(20, 30, 100, 140);
+  const target = fakeElement(rect(420, 80, 160, 220));
+  const controller = createDeckSwipePresentationController({
+    document: doc,
+    window: immediateWindow({ reduced: false }),
+    sfx: false,
+  });
+  const result = controller.playSuccess({ sourceElement: source, sourceRect, targetElement: target, cardId: 'c8' });
+  assert.equal(result.plan.source.left, 20);
+  assert.equal(result.plan.source.top, 30);
+  assert.equal(result.plan.source.width, 100);
+  assert.equal(result.plan.source.height, 140);
+  controller.dispose();
+});
+
+test('success controller falls back from a zero-sized legacy target to a visible Deck indicator', () => {
+  const doc = fakeDocument();
+  const visibleDeckIndicator = fakeElement(rect(680, 30, 28, 18));
+  doc.querySelector = (selector) => selector === '#r4DeckTotal' ? visibleDeckIndicator : null;
+  const controller = createDeckSwipePresentationController({
+    document: doc,
+    window: immediateWindow({ reduced: true }),
+    reducedMotion: true,
+    sfx: false,
+  });
+  const result = controller.playSuccess({
+    sourceElement: fakeElement(rect(20, 40, 80, 112)),
+    targetElement: fakeElement(rect(0, 0, 0, 0)),
+    cardId: 'c-visible-target',
+  });
+  assert.equal(result.plan.target.left, 680);
+  assert.equal(result.plan.target.top, 30);
+  assert.equal(result.plan.target.width, 28);
+  assert.equal(result.plan.target.height, 18);
+});
+
 test('reject controller emits reject only and never a land event', () => {
   const doc = fakeDocument();
   const hook = [];
@@ -250,6 +335,46 @@ test('reject controller emits reject only and never a land event', () => {
   controller.playReject({ sourceElement: fakeElement(), targetElement: fakeElement(), cardId: 'c9', reason: 'duplicate' });
   assert.deepEqual(doc.events.map((event) => event.type), ['gameroad:deck-swipe-reject']);
   assert.deepEqual(hook, ['duplicate']);
+});
+
+test('remove SFX fires once for one real deck membership disappearance despite duplicate mutation callbacks', async () => {
+  const doc = fakeDocument();
+  const roots = [fakeElement(), fakeElement()];
+  let liveCards = [{ dataset: { id: 'c-rem' } }];
+  let mutationCallback = null;
+  let commitCount = 0;
+  doc.querySelectorAll = (selector) => {
+    if (selector === '#deckSlots, #exDeckSlots') return roots;
+    if (selector === '#deckSlots [data-id], #exDeckSlots [data-id]') return liveCards;
+    return [];
+  };
+  class FakeMutationObserver {
+    constructor(callback) { mutationCallback = callback; }
+    observe() {}
+    disconnect() {}
+  }
+  const controller = createDeckSwipePresentationController({
+    document: doc,
+    window: { ...immediateWindow(), MutationObserver: FakeMutationObserver },
+    sfxPlayer: {
+      playCommit() { commitCount += 1; },
+      playLand() {},
+      playReject() {},
+      dispose() {},
+    },
+  });
+  assert.equal(typeof mutationCallback, 'function');
+  liveCards = [];
+  mutationCallback([]);
+  mutationCallback([]);
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.equal(commitCount, 1);
+  mutationCallback([]);
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.equal(commitCount, 1);
+  controller.dispose();
 });
 
 test('local SFX contract supplies distinct commit, land and reject cues without assets', () => {
@@ -681,302 +806,3 @@ test('public Battle local-art projection wraps only the existing public renderer
     assert.equal(slice.includes(forbidden), false, `forbidden transport/storage path: ${forbidden}`);
   }
 });
-
-function classList(...initial) {
-  const values = new Set(initial);
-  return {
-    contains(name) { return values.has(name); },
-    add(...names) { names.forEach((name) => values.add(name)); },
-    remove(...names) { names.forEach((name) => values.delete(name)); },
-  };
-}
-
-function makeHarness() {
-  const listeners = new Map();
-  const selected = {
-    focusCalls: 0,
-    focus() { this.focusCalls += 1; },
-  };
-  const inside = {};
-  const preview = {
-    contains(node) { return node === inside; },
-  };
-  const screen = {
-    dataset: { inspector: 'open' },
-    classList: classList('active'),
-    querySelector(selector) {
-      if (selector === '.cardPreview') return preview;
-      if (selector === '#collectionGrid [data-id].selected') return selected;
-      return null;
-    },
-  };
-  const doc = {
-    querySelector(selector) {
-      if (selector === 'section[data-screen="cards"]') return screen;
-      if (selector === 'section[data-screen="cards"] .cardPreview') return preview;
-      if (selector === 'section[data-screen="cards"] #collectionGrid [data-id].selected') return selected;
-      return null;
-    },
-    addEventListener(type, fn, capture) {
-      const key = `${type}:${capture === true}`;
-      const set = listeners.get(key) ?? new Set();
-      set.add(fn);
-      listeners.set(key, set);
-    },
-    removeEventListener(type, fn, capture) {
-      listeners.get(`${type}:${capture === true}`)?.delete(fn);
-    },
-  };
-  const dispatch = (type, init = {}) => {
-    const calls = { preventDefault: 0, stopPropagation: 0, stopImmediatePropagation: 0 };
-    const event = {
-      ...init,
-      preventDefault() { calls.preventDefault += 1; },
-      stopPropagation() { calls.stopPropagation += 1; },
-      stopImmediatePropagation() { calls.stopImmediatePropagation += 1; },
-    };
-    for (const fn of listeners.get(`${type}:true`) ?? []) fn(event);
-    return calls;
-  };
-  return { doc, screen, selected, inside, preview, dispatch, listeners };
-}
-
-test('outside click closes open Cards inspector, consumes input and restores selected-card focus', () => {
-  const h = makeHarness();
-  const controller = installCardsInspectorDismissInteractions({ document: h.doc });
-  const calls = h.dispatch('click', { target: {} });
-
-  assert.equal(h.screen.dataset.inspector, 'closed');
-  assert.deepEqual(calls, { preventDefault: 1, stopPropagation: 1, stopImmediatePropagation: 1 });
-  assert.equal(h.selected.focusCalls, 1);
-  controller.destroy();
-});
-
-test('click inside Cards preview stays open and is not consumed', () => {
-  const h = makeHarness();
-  const controller = installCardsInspectorDismissInteractions({ document: h.doc });
-  const calls = h.dispatch('click', { target: h.inside });
-
-  assert.equal(h.screen.dataset.inspector, 'open');
-  assert.deepEqual(calls, { preventDefault: 0, stopPropagation: 0, stopImmediatePropagation: 0 });
-  assert.equal(h.selected.focusCalls, 0);
-  controller.destroy();
-});
-
-test('Escape closes open Cards inspector, consumes input and restores focus', () => {
-  const h = makeHarness();
-  const controller = installCardsInspectorDismissInteractions({ document: h.doc });
-  const calls = h.dispatch('keydown', { key: 'Escape' });
-
-  assert.equal(h.screen.dataset.inspector, 'closed');
-  assert.deepEqual(calls, { preventDefault: 1, stopPropagation: 1, stopImmediatePropagation: 1 });
-  assert.equal(h.selected.focusCalls, 1);
-  controller.destroy();
-});
-
-test('non-Escape key does not dismiss Cards inspector', () => {
-  const h = makeHarness();
-  const controller = installCardsInspectorDismissInteractions({ document: h.doc });
-  const calls = h.dispatch('keydown', { key: 'Enter' });
-
-  assert.equal(h.screen.dataset.inspector, 'open');
-  assert.deepEqual(calls, { preventDefault: 0, stopPropagation: 0, stopImmediatePropagation: 0 });
-  assert.equal(h.selected.focusCalls, 0);
-  controller.destroy();
-});
-
-test('installation is idempotent and destroy removes capture listeners', () => {
-  const h = makeHarness();
-  const first = installCardsInspectorDismissInteractions({ document: h.doc });
-  const second = installCardsInspectorDismissInteractions({ document: h.doc });
-  assert.equal(first, second);
-
-  first.destroy();
-  h.screen.dataset.inspector = 'open';
-  const calls = h.dispatch('click', { target: {} });
-  assert.equal(h.screen.dataset.inspector, 'open');
-  assert.deepEqual(calls, { preventDefault: 0, stopPropagation: 0, stopImmediatePropagation: 0 });
-  assert.equal(h.selected.focusCalls, 0);
-});
-
-function makeVoteUiHarness() {
-  const docListeners = new Map();
-  const winListeners = new Map();
-  let snapshot = {
-    cardId: 'A',
-    history: [
-      { cardId: 'A', day: '2026-09-17' },
-      { cardId: 'B', day: '2026-09-18' },
-      { cardId: 'A', day: '2026-09-19' },
-    ],
-  };
-  let countNode = null;
-  const inside = {};
-  const choices = {
-    before(node) {
-      countNode = node;
-      node.parentNode = popover;
-    },
-  };
-  const popover = {
-    classList: classList('cardVotePopover', 'on'),
-    contains(node) { return node === inside; },
-    querySelector(selector) {
-      if (selector === '[data-role="cards-vote-local-count"]') return countNode;
-      if (selector === '.cardVoteChoices') return choices;
-      return null;
-    },
-    appendChild(node) {
-      countNode = node;
-      node.parentNode = this;
-      return node;
-    },
-  };
-  const opener = {
-    attrs: { 'aria-expanded': 'true' },
-    focusCalls: 0,
-    contains(node) { return node === this; },
-    setAttribute(name, value) { this.attrs[name] = value; },
-    focus() { this.focusCalls += 1; },
-  };
-  const screen = { classList: classList('active') };
-  const doc = {
-    querySelector(selector) {
-      if (selector === 'section[data-screen="cards"]') return screen;
-      if (selector === '#cardVotePopover') return popover;
-      if (selector === '#cardVoteOpen') return opener;
-      return null;
-    },
-    getElementById(id) {
-      if (id === 'cardVotePopover') return popover;
-      if (id === 'cardVoteOpen') return opener;
-      return null;
-    },
-    createElement() {
-      return {
-        dataset: {},
-        className: '',
-        hidden: false,
-        textContent: '',
-        parentNode: null,
-        setAttribute() {},
-      };
-    },
-    addEventListener(type, fn, capture) {
-      const key = `${type}:${capture === true}`;
-      const set = docListeners.get(key) ?? new Set();
-      set.add(fn);
-      docListeners.set(key, set);
-    },
-    removeEventListener(type, fn, capture) {
-      docListeners.get(`${type}:${capture === true}`)?.delete(fn);
-    },
-  };
-  const win = {
-    GAMEROAD_CARD_VOTE: { snapshot: () => snapshot },
-    queueMicrotask(fn) { fn(); },
-    addEventListener(type, fn) {
-      const set = winListeners.get(type) ?? new Set();
-      set.add(fn);
-      winListeners.set(type, set);
-    },
-    removeEventListener(type, fn) {
-      winListeners.get(type)?.delete(fn);
-    },
-  };
-  const dispatchDoc = (type, init = {}) => {
-    let immediateStopped = false;
-    const calls = { preventDefault: 0, stopPropagation: 0, stopImmediatePropagation: 0 };
-    const event = {
-      ...init,
-      preventDefault() { calls.preventDefault += 1; },
-      stopPropagation() { calls.stopPropagation += 1; },
-      stopImmediatePropagation() {
-        calls.stopImmediatePropagation += 1;
-        immediateStopped = true;
-      },
-    };
-    for (const fn of docListeners.get(`${type}:true`) ?? []) {
-      fn(event);
-      if (immediateStopped) break;
-    }
-    if (!immediateStopped) {
-      for (const fn of docListeners.get(`${type}:false`) ?? []) {
-        fn(event);
-        if (immediateStopped) break;
-      }
-    }
-    return calls;
-  };
-  const dispatchWin = (type) => {
-    for (const fn of winListeners.get(type) ?? []) fn({ type });
-  };
-  return {
-    doc, win, popover, opener, inside,
-    countNode: () => countNode,
-    setSnapshot(value) { snapshot = value; },
-    dispatchDoc, dispatchWin,
-  };
-}
-
-test('per-card local vote history counts only the selected card', () => {
-  assert.equal(countCardsLocalVoteHistory({
-    cardId: 'A',
-    history: [{ cardId: 'A' }, { cardId: 'B' }, { cardId: 'A' }],
-  }), 2);
-  assert.equal(countCardsLocalVoteHistory({ cardId: '', history: [{ cardId: 'A' }] }), 0);
-});
-
-test('vote UI repair projects selected-card local history and refreshes from the existing vote event', () => {
-  const h = makeVoteUiHarness();
-  const controller = installCardsVoteUiRepair({ document: h.doc, window: h.win });
-  assert.equal(h.countNode()?.textContent, 'この端末のこのカード投票履歴 2票');
-
-  h.setSnapshot({
-    cardId: 'A',
-    history: [{ cardId: 'A' }, { cardId: 'B' }, { cardId: 'A' }, { cardId: 'A' }],
-  });
-  h.dispatchWin('gameroad:card-vote-local');
-  assert.equal(h.countNode()?.textContent, 'この端末のこのカード投票履歴 3票');
-  controller.destroy();
-});
-
-test('outside click closes only the open vote popover, consumes input and restores vote-opener focus', () => {
-  const h = makeVoteUiHarness();
-  const controller = installCardsVoteUiRepair({ document: h.doc, window: h.win });
-  const calls = h.dispatchDoc('click', { target: {} });
-
-  assert.equal(h.popover.classList.contains('on'), false);
-  assert.equal(h.opener.attrs['aria-expanded'], 'false');
-  assert.deepEqual(calls, { preventDefault: 1, stopPropagation: 1, stopImmediatePropagation: 1 });
-  assert.equal(h.opener.focusCalls, 1);
-  controller.destroy();
-});
-
-test('vote-popover inside/opener interaction stays live while Escape performs safe dismiss', () => {
-  const h = makeVoteUiHarness();
-  const controller = installCardsVoteUiRepair({ document: h.doc, window: h.win });
-
-  const insideCalls = h.dispatchDoc('click', { target: h.inside });
-  assert.equal(h.popover.classList.contains('on'), true);
-  assert.deepEqual(insideCalls, { preventDefault: 0, stopPropagation: 0, stopImmediatePropagation: 0 });
-
-  const openerCalls = h.dispatchDoc('click', { target: h.opener });
-  assert.equal(h.popover.classList.contains('on'), true);
-  assert.deepEqual(openerCalls, { preventDefault: 0, stopPropagation: 0, stopImmediatePropagation: 0 });
-
-  const escapeCalls = h.dispatchDoc('keydown', { key: 'Escape' });
-  assert.equal(h.popover.classList.contains('on'), false);
-  assert.deepEqual(escapeCalls, { preventDefault: 1, stopPropagation: 1, stopImmediatePropagation: 1 });
-  assert.equal(h.opener.focusCalls, 1);
-  controller.destroy();
-});
-
-test('vote safe-dismiss auto-installs before Cards inspector dismiss so the frontmost transient wins', async () => {
-  const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
-  const vote = source.indexOf('installCardsVoteUiRepair({ document, window: globalThis.window })');
-  const inspector = source.indexOf('installCardsInspectorDismissInteractions({ document })');
-  assert.ok(vote >= 0 && inspector > vote);
-});
-

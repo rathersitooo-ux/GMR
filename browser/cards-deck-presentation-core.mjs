@@ -4,78 +4,11 @@ const EVENT_NAMES = Object.freeze({
   REJECT: 'gameroad:deck-swipe-reject',
 });
 
+const deckSwipeSourceRects = new WeakMap();
+const deckSwipeSourceCaptureDocs = new WeakSet();
+const deckRemovalSfxMonitors = new WeakMap();
+
 export const DECK_SWIPE_PRESENTATION_EVENTS = EVENT_NAMES;
-
-export const SETUP_QUICK_DECK_PREVIEW_CONTRACT = Object.freeze({
-  schema: 'gameroad.setup-quick-deck-preview.v1',
-  source: 'caller-selected-saved-deck',
-  readOnly: true,
-  ownsDeck: false,
-  mutatesDeck: false,
-  mutatesSelection: false,
-  validatesDeck: false,
-  editRoute: 'existing-deck-editor-only',
-});
-
-function requireSelectedDeckNumber(value) {
-  if (!Number.isInteger(value) || value < 1 || value > 3) {
-    throw new RangeError('SELECTED_DECK_NUMBER_INVALID');
-  }
-  return value;
-}
-
-function cloneQuickDeckCardIds(value, label) {
-  if (!Array.isArray(value)) throw new TypeError(`${label}_REQUIRED`);
-  const ids = value.map((cardId) => {
-    if (typeof cardId !== 'string' || cardId.trim().length === 0) {
-      throw new TypeError(`${label}_CARD_ID_INVALID`);
-    }
-    return cardId;
-  });
-  return Object.freeze(ids);
-}
-
-function cloneQuickDeckRuleScalar(value, label) {
-  if (value == null) return null;
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-    return value;
-  }
-  throw new TypeError(`${label}_INVALID`);
-}
-
-export function createSetupQuickDeckPreview({
-  selectedDeckNumber,
-  savedDeck,
-  savedDeckRule = null,
-} = {}) {
-  const deckNumber = requireSelectedDeckNumber(selectedDeckNumber);
-  if (!savedDeck || typeof savedDeck !== 'object' || Array.isArray(savedDeck)) {
-    throw new TypeError('SAVED_DECK_REQUIRED');
-  }
-  if (savedDeckRule != null && (typeof savedDeckRule !== 'object' || Array.isArray(savedDeckRule))) {
-    throw new TypeError('SAVED_DECK_RULE_INVALID');
-  }
-
-  const main = cloneQuickDeckCardIds(savedDeck.main, 'SAVED_DECK_MAIN');
-  const ex = cloneQuickDeckCardIds(savedDeck.ex, 'SAVED_DECK_EX');
-  const rule = Object.freeze({
-    id: cloneQuickDeckRuleScalar(savedDeckRule?.id ?? null, 'SAVED_DECK_RULE_ID'),
-    revision: cloneQuickDeckRuleScalar(savedDeckRule?.revision ?? null, 'SAVED_DECK_RULE_REVISION'),
-  });
-
-  return Object.freeze({
-    schema: SETUP_QUICK_DECK_PREVIEW_CONTRACT.schema,
-    selectedDeckNumber: deckNumber,
-    deck: Object.freeze({
-      main,
-      ex,
-      mainCount: main.length,
-      exCount: ex.length,
-      rule,
-    }),
-    readOnly: true,
-  });
-}
 
 export const DECK_SWIPE_SFX_CUES = Object.freeze({
   commit: Object.freeze({ kind: 'noise', durationSec: 0.072, gain: 0.17, filterStartHz: 1450, filterEndHz: 5200 }),
@@ -155,6 +88,49 @@ export function normalizeDeckSwipeRect(rect, name = 'RECT') {
     centerX: left + width / 2,
     centerY: top + height / 2,
   });
+}
+
+function snapshotDeckSwipeRect(element) {
+  try {
+    const rect = element?.getBoundingClientRect?.();
+    if (!(rect?.width > 0 && rect?.height > 0)) return null;
+    return { left: rect.left, top: rect.top, width: rect.width, height: rect.height, right: rect.right, bottom: rect.bottom };
+  } catch { return null; }
+}
+
+function ensureDeckSwipeSourceCapture(doc) {
+  if (!doc?.addEventListener || deckSwipeSourceCaptureDocs.has(doc)) return;
+  const capture = (event) => {
+    const card = event?.target?.closest?.('#collectionGrid [data-id]');
+    if (!card) return;
+    const rect = snapshotDeckSwipeRect(card);
+    if (rect) deckSwipeSourceRects.set(card, rect);
+  };
+  doc.addEventListener('pointerdown', capture, true);
+  doc.addEventListener('pointerup', capture, true);
+  deckSwipeSourceCaptureDocs.add(doc);
+}
+
+function resolveDeckSwipeSourceRect(sourceElement, explicitRect = null) {
+  if (explicitRect) {
+    try { normalizeDeckSwipeRect(explicitRect, 'SOURCE_RECT'); return explicitRect; } catch {}
+  }
+  return snapshotDeckSwipeRect(sourceElement) ?? deckSwipeSourceRects.get(sourceElement) ?? sourceElement?.getBoundingClientRect?.();
+}
+
+function resolveDeckSwipeLandingTarget(doc, targetElement) {
+  const candidates = [
+    targetElement,
+    doc?.querySelector?.('#r4DeckTotal'),
+    doc?.querySelector?.('#deckCount'),
+    doc?.querySelector?.('#deckSlots'),
+    doc?.querySelector?.('#exDeckSlots'),
+  ].filter(Boolean);
+  for (const element of candidates) {
+    const rect = snapshotDeckSwipeRect(element);
+    if (rect) return { element, rect };
+  }
+  return { element: targetElement, rect: targetElement?.getBoundingClientRect?.() };
 }
 
 export function createDeckSwipeFlightPlan({ sourceRect, targetRect, reducedMotion = false, config = {} } = {}) {
@@ -424,6 +400,42 @@ export function createDeckSwipeSfxPlayer({
   });
 }
 
+function registerDeckRemovalSfx({ document: doc, window: win, playCommit, enabled = true } = {}) {
+  const Observer = win?.MutationObserver ?? globalThis.MutationObserver;
+  if (!enabled || typeof playCommit !== 'function' || typeof Observer !== 'function' || !doc?.querySelectorAll) return () => {};
+  let monitor = deckRemovalSfxMonitors.get(doc);
+  if (!monitor) {
+    const roots = [...doc.querySelectorAll('#deckSlots, #exDeckSlots')];
+    if (!roots.length) return () => {};
+    const readLiveIds = () => new Set([...doc.querySelectorAll('#deckSlots [data-id], #exDeckSlots [data-id]')].map((node) => String(node.dataset?.id ?? '')).filter(Boolean));
+    monitor = { callbacks: new Set(), knownLiveIds: readLiveIds(), checkScheduled: false, observer: null };
+    const checkMembership = () => {
+      monitor.checkScheduled = false;
+      const liveIds = readLiveIds();
+      const removed = [...monitor.knownLiveIds].some((id) => !liveIds.has(id));
+      monitor.knownLiveIds = liveIds;
+      if (!removed) return;
+      const callback = monitor.callbacks.values().next().value;
+      try { callback?.(); } catch {}
+    };
+    monitor.observer = new Observer(() => {
+      if (monitor.checkScheduled) return;
+      monitor.checkScheduled = true;
+      Promise.resolve().then(checkMembership);
+    });
+    for (const root of roots) monitor.observer.observe(root, { childList: true, subtree: true });
+    deckRemovalSfxMonitors.set(doc, monitor);
+  }
+  const registration = () => playCommit();
+  monitor.callbacks.add(registration);
+  return () => {
+    monitor.callbacks.delete(registration);
+    if (monitor.callbacks.size) return;
+    monitor.observer?.disconnect?.();
+    deckRemovalSfxMonitors.delete(doc);
+  };
+}
+
 export function createDeckSwipePresentationController({
   document: doc = globalThis.document,
   window: win = globalThis.window,
@@ -441,44 +453,14 @@ export function createDeckSwipePresentationController({
   const timers = new Set();
   const layers = new Set();
   installDeckSwipePresentationStyles(doc);
+  ensureDeckSwipeSourceCapture(doc);
   const localSfx = sfx === false ? null : (sfxPlayer ?? createDeckSwipeSfxPlayer({ window: win, enabled: sfxEnabled, volume: sfxVolume }));
-
-  const deckMutationObserver = (() => {
-    const Observer = win?.MutationObserver ?? globalThis.MutationObserver;
-    if (!localSfx || typeof Observer !== 'function' || !doc?.querySelectorAll) return null;
-    const roots = [...doc.querySelectorAll('#deckSlots, #exDeckSlots')];
-    if (!roots.length) return null;
-
-    const observer = new Observer((records) => {
-      const removedIds = new Set();
-      const collect = (node) => {
-        if (!node || node.nodeType !== 1) return;
-        const ownId = node.dataset?.id ?? node.getAttribute?.('data-id');
-        if (ownId) removedIds.add(String(ownId));
-        for (const child of [...(node.querySelectorAll?.('[data-id]') ?? [])]) {
-          const id = child.dataset?.id ?? child.getAttribute?.('data-id');
-          if (id) removedIds.add(String(id));
-        }
-      };
-      for (const record of records) {
-        for (const node of [...(record.removedNodes ?? [])]) collect(node);
-      }
-      if (!removedIds.size) return;
-
-      Promise.resolve().then(() => {
-        const liveIds = new Set(
-          [...doc.querySelectorAll('#deckSlots [data-id], #exDeckSlots [data-id]')]
-            .map((node) => String(node.dataset?.id ?? ''))
-            .filter(Boolean),
-        );
-        if ([...removedIds].some((id) => !liveIds.has(id))) {
-          try { localSfx.playCommit?.(); } catch {}
-        }
-      });
-    });
-    for (const root of roots) observer.observe(root, { childList: true, subtree: true });
-    return observer;
-  })();
+  const removeSfxUnsubscribe = registerDeckRemovalSfx({
+    document: doc,
+    window: win,
+    playCommit: () => localSfx?.playCommit?.(),
+    enabled: Boolean(localSfx),
+  });
 
   const setTimer = (fn, ms) => {
     let id;
@@ -516,14 +498,15 @@ export function createDeckSwipePresentationController({
     fire('land', { cardId, reducedMotion: reduced }, onLandSfx);
   };
 
-  function playSuccess({ sourceElement, targetElement, countElement = null, insertedElement = null, cardId = null } = {}) {
+  function playSuccess({ sourceElement, sourceRect = null, targetElement, countElement = null, insertedElement = null, cardId = null } = {}) {
     if (!sourceElement?.getBoundingClientRect || !targetElement?.getBoundingClientRect) {
       throw new TypeError('SOURCE_AND_TARGET_ELEMENTS_REQUIRED');
     }
     const reduced = resolveReducedMotion(win, reducedMotion);
+    const landingTarget = resolveDeckSwipeLandingTarget(doc, targetElement);
     const plan = createDeckSwipeFlightPlan({
-      sourceRect: sourceElement.getBoundingClientRect(),
-      targetRect: targetElement.getBoundingClientRect(),
+      sourceRect: resolveDeckSwipeSourceRect(sourceElement, sourceRect),
+      targetRect: landingTarget.rect,
       reducedMotion: reduced,
       config: cfg,
     });
@@ -533,13 +516,13 @@ export function createDeckSwipePresentationController({
     clearPresentationClass(countElement, 'gr-deck-swipe-count-hit', cfg.countPulseMs);
 
     if (plan.reducedMotion || plan.flightMs === 0) {
-      land({ targetElement, insertedElement, cardId, reduced });
+      land({ targetElement: landingTarget.element, insertedElement, cardId, reduced });
       return Object.freeze({ plan, cancel: () => {} });
     }
 
     const flight = cloneForFlight(sourceElement, doc, plan);
     if (!flight) {
-      land({ targetElement, insertedElement, cardId, reduced });
+      land({ targetElement: landingTarget.element, insertedElement, cardId, reduced });
       return Object.freeze({ plan, cancel: () => {} });
     }
     layers.add(flight.layer);
@@ -549,7 +532,7 @@ export function createDeckSwipePresentationController({
       landed = true;
       layers.delete(flight.layer);
       flight.layer.remove?.();
-      land({ targetElement, insertedElement, cardId, reduced });
+      land({ targetElement: landingTarget.element, insertedElement, cardId, reduced });
     };
 
     const cardAnim = safeAnimate(flight.clone, [
@@ -599,7 +582,7 @@ export function createDeckSwipePresentationController({
     layers.clear();
   }
 
-  const dispose = () => { deckMutationObserver?.disconnect?.(); cancelAll(); try { localSfx?.dispose?.(); } catch {} };
+  const dispose = () => { removeSfxUnsubscribe?.(); cancelAll(); try { localSfx?.dispose?.(); } catch {} };
 
   return Object.freeze({ playSuccess, playReject, cancelAll, dispose, config: cfg, sfxPlayer: localSfx });
 }

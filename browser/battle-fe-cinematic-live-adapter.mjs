@@ -167,6 +167,7 @@ function addStyle(document) {
   style.textContent = `
 #${SURFACE_ID}.battleFeCinematicLive{position:absolute!important;inset:0!important;z-index:46!important;display:block!important;overflow:hidden!important;pointer-events:auto!important;background:#102f22!important;color:#f9f4dc!important;font-family:Georgia,'Times New Roman',serif!important}
 #${SURFACE_ID}.battleFeCinematicLive[hidden]{display:none!important}
+#${SURFACE_ID}.battleFeCinematicLive:before,#${SURFACE_ID}.battleFeCinematicLive:after{display:none!important;content:none!important}
 #${SURFACE_ID}.battleFeCinematicLive>.battlePhaseBackdrop,#${SURFACE_ID}.battleFeCinematicLive>.battlePhaseHeader,#${SURFACE_ID}.battleFeCinematicLive>.battlePhaseCutin,#${SURFACE_ID}.battleFeCinematicLive>.battlePhaseTarget,#${SURFACE_ID}.battleFeCinematicLive>.battlePhaseResolutionSlot{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
 #${SURFACE_ID} .battleFeStage{position:absolute;inset:0;overflow:hidden;isolation:isolate;background:radial-gradient(circle at 50% 48%,rgba(185,207,110,.98) 0 18%,rgba(111,161,74,.98) 52%,rgba(45,98,52,.99) 100%)}
 #${SURFACE_ID} .battleFeStage:before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(30,83,51,.28),transparent 38%,rgba(4,37,24,.40)),repeating-linear-gradient(0deg,rgba(255,255,210,.045) 0 2px,transparent 2px 7px),repeating-linear-gradient(90deg,rgba(13,72,37,.06) 0 3px,transparent 3px 11px);opacity:.85}
@@ -456,6 +457,18 @@ export function mountBattleFeCinematicLiveAdapter(global = globalThis, options =
     if (destroyed) throw new Error('BATTLE_FE_CINEMATIC_ADAPTER_DESTROYED');
     const view = projectBattleFeDuelState(snapshot);
     if (!view.active) {
+      if (snapshot?.presentation?.stage === 'settle' && currentView) {
+        surface.classList.add('battleFeCinematicLive');
+        surface.hidden = false;
+        surface.dataset.stage = 'winner';
+        surface.dataset.returningToBoard = 'true';
+        if (map?.style) {
+          map.style.visibility = 'hidden';
+          map.style.pointerEvents = 'none';
+          map.setAttribute?.('aria-hidden', 'true');
+        }
+        return currentView;
+      }
       restoreBoard();
       return view;
     }
@@ -473,6 +486,7 @@ export function mountBattleFeCinematicLiveAdapter(global = globalThis, options =
     surface.dataset.targetId = view.targetId;
     surface.dataset.presentationOnly = 'true';
     surface.dataset.gameplayAuthority = 'false';
+    delete surface.dataset.returningToBoard;
     if (map?.style) {
       map.style.visibility = 'hidden';
       map.style.pointerEvents = 'none';

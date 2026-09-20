@@ -1,0 +1,88 @@
+name: GAMEROAD Battle Board R16 Patcher
+
+on:
+  push:
+    branches:
+      - sol/battle-board-live-world-r14b-20260920
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[R16-PATCHED]') && !contains(github.event.head_commit.message, '[R16-CLEANUP]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Apply bounded R16 patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          html_path = Path('browser/GAMEROAD.html')
+          html = html_path.read_text(encoding='utf-8')
+          marker = '/* BATTLE_BOARD_WORLD_FIELD_LIVE_HTML_R14 */'
+          anchor = '\nconst gl=initFieldGL();'
+
+          if marker not in html:
+              if html.count(anchor) != 1:
+                  raise SystemExit(f'R16_HTML_ANCHOR_COUNT:{html.count(anchor)}')
+              draw = r"""/* BATTLE_BOARD_WORLD_FIELD_LIVE_HTML_R14 */
+          const liveWorldBoard=battleCentralWorldRuntimeR8?.worldFieldRenderModel?.({centerX:0,centerZ:0,width:20,depth:11.25,y:.035});if(liveWorldBoard?.renderSpace==='WORLD_FIELD'){const graphColor=[.78,.70,.43],goalColor=[.96,.78,.28],gateColor=[.54,.36,.66],lowerColor=[.42,.58,.47],faintGoal=[.36,.34,.27];const segment=(a,b,col,size=.16,kind='liveWorldEdge')=>{if(!a||!b)return;const dx=b.x-a.x,dz=b.z-a.z,dy=(b.y||0)-(a.y||0),dist=Math.hypot(dx,dz),steps=Math.max(1,Math.ceil(dist/.34));for(let j=0;j<=steps;j++){const t=j/steps;box(a.x+dx*t,(a.y||0)+dy*t+.02,a.z+dz*t,size,.022,size,col,kind)}};for(const edge of liveWorldBoard.edges||[]){const pts=[edge.from,...(edge.waypoints||[]),edge.to];const col=edge.region==='LOWER_SHARED_FIELD'?lowerColor:graphColor;for(let i=1;i<pts.length;i++)segment(pts[i-1],pts[i],col,.16,'liveWorldEdge')}for(const edge of liveWorldBoard.goalBranches||[]){const pts=[edge.from,...(edge.waypoints||[]),edge.to],col=edge.visualState==='STRONG_OPEN'?goalColor:faintGoal,size=edge.visualState==='STRONG_OPEN'?.20:.11;for(let i=1;i<pts.length;i++)segment(pts[i-1],pts[i],col,size,'liveWorldGoalBranch')}for(const cell of liveWorldBoard.roundCells||[]){const q=cell.world;if(!q)continue;box(q.x,q.y+.04,q.z,.48,.08,.48,cell.region==='LOWER_SHARED_FIELD'?lowerColor:graphColor,'liveWorldCell')}for(const gate of liveWorldBoard.gates||[]){const q=gate.world;if(!q)continue;const owner=String(gate.laneKey||'').split(':')[0],pc=fieldPlayerColor(owner,true);box(q.x,q.y+.06,q.z,.78,.12,.78,gate.state==='OPEN_PASSABLE_FRAME'?pc:gateColor,'liveWorldGate')}for(const shield of liveWorldBoard.shields||[]){const q=shield.world;if(!q)continue;const owner=String(shield.laneKey||'').split(':')[0],pc=fieldPlayerColor(owner,true);box(q.x,q.y+.15,q.z,.50,.045,.50,pc,'liveWorldShield')}const goal=liveWorldBoard.sharedGoal?.world;if(goal)box(goal.x,goal.y+.18,goal.z,1.18,.18,1.18,goalColor,'liveWorldGoal')}"""
+              html = html.replace(anchor, '\n' + draw + anchor)
+
+          immediate = "$('#battleMap')?.setAttribute('data-central-world-live','1');renderField3D();"
+          scheduled = "$('#battleMap')?.setAttribute('data-central-world-live','1');requestAnimationFrame(()=>{if(state.match)renderField3D()});"
+          if scheduled not in html:
+              if html.count(immediate) != 1:
+                  raise SystemExit(f'R16_REDRAW_ANCHOR_COUNT:{html.count(immediate)}')
+              html = html.replace(immediate, scheduled)
+
+          required = (
+              marker,
+              'battleCentralWorldRuntimeR8?.worldFieldRenderModel?.(',
+              'requestAnimationFrame(()=>{if(state.match)renderField3D()})',
+          )
+          for token in required:
+              if token not in html:
+                  raise SystemExit(f'R16_REQUIRED_TOKEN_MISSING:{token}')
+          if 'battleCentralWorldRuntimeR8?.visualGraphWorld?.(' in html:
+              raise SystemExit('R16_RETIRED_VISUAL_GRAPH_CALL_PRESENT')
+
+          html_path.write_text(html, encoding='utf-8')
+
+          build_path = Path('deploy/cloudflare/tests/build.test.mjs')
+          build = build_path.read_text(encoding='utf-8')
+          old = 'ffa494458b9a5e03dd93cdc4c0d053bdc21a3339'
+          new = 'a02c5470a2643750d13744a0dbb9c43c6b781591'
+          if old in build:
+              if build.count(old) != 1:
+                  raise SystemExit(f'R16_PROVENANCE_OLD_HASH_COUNT:{build.count(old)}')
+              build = build.replace(old, new)
+              build_path.write_text(build, encoding='utf-8')
+          elif build.count(new) != 1:
+              raise SystemExit('R16_PROVENANCE_HASH_UNEXPECTED')
+          PY
+
+      - name: Verify focused contracts
+        run: |
+          node tests/browser-static-check.mjs
+          node --test tests/battle-new-base-board-live-presentation-composer.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+
+      - name: Commit bounded patch
+        run: |
+          if git diff --quiet -- browser/GAMEROAD.html deploy/cloudflare/tests/build.test.mjs; then
+            echo "R16 patch already applied"
+            exit 0
+          fi
+          git config user.name "gameroad-r16-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add browser/GAMEROAD.html deploy/cloudflare/tests/build.test.mjs
+          git commit -m "Battle: wire current world-field board live [R16-PATCHED]"
+          git push origin HEAD:${GITHUB_REF_NAME}

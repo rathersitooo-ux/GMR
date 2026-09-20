@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "LOBBY-QUICK-DECK-PROJECTION-R1-20260920T1543-SOL-Q1",
+  "taskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "workUnitKey": "LOBBY_SETUP_QUICK_DECK_READONLY_PROJECTION_R1",
+  "acquireKey": "LOBBY-QUICK-DECK-PROJECTION-R1-20260920T1543-SOL-Q1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_MATCH_SNAPSHOT_PLUS_OWNER_FREE_CARDS_PRESENTATION_CORE_20260920T1543JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_DECK_MATCH_START_SNAPSHOT_IMMUTABILITY_TEST_PLUS_EXISTING_PRESENTATION_CORE_CONTRACT",
+  "proceedToken": "PROCEED|LOBBY-QUICK-DECK-PROJECTION-R1-20260920T1543-SOL-Q1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|setup-quick-deck-readonly-projection|cards-presentation|active-lease",
+  "authorizationBaseSha": "03827c729ac328ae46d3f11877028b45f04a0c55",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "leaseWorkUnitKey": "LOBBY_SETUP_QUICK_DECK_READONLY_PROJECTION_R1",
+  "leaseAcquireKey": "LOBBY-QUICK-DECK-PROJECTION-R1-20260920T1543-SOL-Q1",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 15:43 JST",
+  "leaseUntilJst": "2026-09-20 16:43 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/cards-deck-presentation-core.mjs; tests/cards-deck-presentation-core.test.mjs; transient data/preaction-authorizations/LOBBY-QUICK-DECK-PROJECTION-R1-20260920T1543-SOL-Q1.json cleanup-delete only; own fresh branch/PR/check/merge/readback; browser/GAMEROAD.html READ_ONLY; gameplay/rules/save/network READ_ONLY; own CURRENT lease/R24 event",
+  "scope": [
+    "browser/cards-deck-presentation-core.mjs",
+    "tests/cards-deck-presentation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation-core.mjs",
+    "tests/cards-deck-presentation-core.test.mjs"
+  ]
+}

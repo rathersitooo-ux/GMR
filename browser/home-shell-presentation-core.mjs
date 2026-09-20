@@ -19,6 +19,27 @@ const UPDATE_DETAILS_DIALOG_ID = 'gameroadUpdateDetailsDialog';
 const UPDATE_DETAILS_STYLE_ID = 'gameroad-update-details-style-r1';
 const RELEASE_COMMS_URL = './gameroad-release-comms.json';
 const UPDATE_MESSAGE = 'アップデートがあります';
+
+const HOME_BORDER_LIGHT_OVERLAY_STYLE_ID = 'gameroad-home-border-light-overlay-r1';
+export const HOME_BORDER_LIGHT_OVERLAY_ASSET = Object.freeze({
+  id: 'home-border-light-overlay-v1',
+  sourcePath: 'assets/visual/effects/home-border-light-overlay-v1.png',
+  runtimePath: '../assets/visual/effects/home-border-light-overlay-v1.png',
+  formal: true,
+  readOnly: true,
+  frameCount: 1,
+});
+const HOME_BORDER_LIGHT_OVERLAY_URL = new URL(
+  HOME_BORDER_LIGHT_OVERLAY_ASSET.runtimePath,
+  import.meta.url,
+).href;
+export const HOME_BORDER_LIGHT_OVERLAY_CSS = `
+.codexHomeArtStage::after{content:"";position:absolute;inset:0;z-index:4;pointer-events:none;background-image:url('${HOME_BORDER_LIGHT_OVERLAY_URL}');background-size:cover;background-position:center;background-repeat:no-repeat;opacity:.22;mix-blend-mode:screen;filter:saturate(1.08) brightness(1.08);animation:gameroadHomeBorderLightDrift 8s ease-in-out infinite alternate;will-change:opacity,transform,filter}
+@keyframes gameroadHomeBorderLightDrift{0%{opacity:.14;transform:scale(1);filter:saturate(1.02) brightness(1.02)}100%{opacity:.24;transform:scale(1.018);filter:saturate(1.16) brightness(1.12)}}
+.home.codexHome[data-home-transition-phase="exit"] .codexHomeArtStage::after,.home.codexHome[data-home-transition-phase="enter"] .codexHomeArtStage::after{opacity:.1;transform:scale(1.006)}
+@media(prefers-reduced-motion:reduce){.codexHomeArtStage::after{animation:none!important;transform:none!important}}
+html.r10LowPerf .codexHomeArtStage::after,html.r10Reduced .codexHomeArtStage::after{animation:none!important;opacity:.16;transform:none!important}
+`;
 export const SETUP_MODE_PICTOGRAMS = Object.freeze({
   '2p': '● ●',
   '4p': '● ● ● ●',
@@ -341,6 +362,13 @@ function ensureSetupQuickDeckConsumer() {
 function ensureSharedShellPresentation() {
   if (typeof document === 'undefined' || !document.head) return false;
   let inserted = false;
+  if (!document.getElementById(HOME_BORDER_LIGHT_OVERLAY_STYLE_ID)) {
+    const style = document.createElement('style');
+    style.id = HOME_BORDER_LIGHT_OVERLAY_STYLE_ID;
+    style.textContent = HOME_BORDER_LIGHT_OVERLAY_CSS;
+    document.head.append(style);
+    inserted = true;
+  }
   if (!document.getElementById(SETUP_STAGING_STYLE_ID)) {
     const style = document.createElement('style');
     style.id = SETUP_STAGING_STYLE_ID;

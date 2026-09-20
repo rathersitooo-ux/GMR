@@ -18,6 +18,10 @@ const REPORT_TYPES = new Set(['bug', 'defect', 'request']);
 const VERSION_KEYS = Object.freeze(['rules', 'content', 'state']);
 const MAX_REQUEST_BYTES = 4096;
 const DIALOGUE_FEEDBACK_KIND = 'dialogue_edit';
+const CONVERSATION_QUALITY_FEEDBACK_KIND = 'conversation_quality';
+const CONVERSATION_QUALITY_RATINGS = new Set(['good', 'bad']);
+const CONVERSATION_RESPONSE_ORIGINS = new Set(['provider_candidate', 'approved_fallback']);
+const CONVERSATION_CANON_STATUSES = new Set(['ephemeral_candidate', 'approved_source_fallback']);
 const BATTLE_RECEIPT_KINDS = new Set(['battle_resolution', 'match_ended']);
 const BATTLE_RECEIPT_MAX_REQUEST_BYTES = 16_384;
 const BATTLE_RECEIPT_MAX_EVENTS = 512;
@@ -75,26 +79,91 @@ function normalizeFeedback(value, reportType) {
   if (value === undefined) return null;
   if (reportType !== 'request' || !value || typeof value !== 'object' || Array.isArray(value)) return false;
   const kind = exactToken(value.kind, 64);
-  const sourceLineId = exactToken(value.sourceLineId, 160);
-  const proposedText = boundedText(value.proposedText, 600);
-  const voiceTuning = normalizeVoiceTuning(value.voiceTuning);
+
+  if (kind === DIALOGUE_FEEDBACK_KIND) {
+    const sourceLineId = exactToken(value.sourceLineId, 160);
+    const proposedText = boundedText(value.proposedText, 600);
+    const voiceTuning = normalizeVoiceTuning(value.voiceTuning);
+    if (
+      !sourceLineId
+      || !proposedText
+      || !voiceTuning
+      || value.candidateOnly !== true
+      || value.canonicalWrite !== false
+      || value.chatgptOpinionInput !== true
+    ) return false;
+    return {
+      kind,
+      sourceLineId,
+      proposedText,
+      voiceTuning,
+      candidateOnly: true,
+      canonicalWrite: false,
+      chatgptOpinionInput: true,
+    };
+  }
+
+  if (kind !== CONVERSATION_QUALITY_FEEDBACK_KIND) return false;
+  const allowed = new Set([
+    'kind', 'sessionId', 'turnId', 'dialogueVersion', 'sourceId', 'rating',
+    'responseOrigin', 'canonStatus', 'replacedPrevious', 'candidateOnly',
+    'canonicalWrite', 'collectiveCandidate', 'formalPromotionRequired',
+    'rawTextStored', 'automaticCanonMutation', 'automaticRelationshipMutation',
+    'automaticRewardMutation', 'automaticLearning',
+  ]);
+  if (Object.keys(value).some((key) => !allowed.has(key))) return false;
+
+  const sessionId = exactToken(value.sessionId, 160);
+  const turnId = exactToken(value.turnId, 160);
+  const dialogueVersion = exactToken(value.dialogueVersion, 160);
+  const sourceId = exactToken(value.sourceId, 160);
+  const rating = exactToken(value.rating, 16);
+  const responseOrigin = exactToken(value.responseOrigin, 64);
+  const canonStatus = exactToken(value.canonStatus, 64);
+  const expectedCanonStatus = responseOrigin === 'provider_candidate'
+    ? 'ephemeral_candidate'
+    : responseOrigin === 'approved_fallback'
+      ? 'approved_source_fallback'
+      : null;
   if (
-    kind !== DIALOGUE_FEEDBACK_KIND
-    || !sourceLineId
-    || !proposedText
-    || !voiceTuning
+    !sessionId
+    || !turnId
+    || !dialogueVersion
+    || !sourceId
+    || !CONVERSATION_QUALITY_RATINGS.has(rating)
+    || !CONVERSATION_RESPONSE_ORIGINS.has(responseOrigin)
+    || !CONVERSATION_CANON_STATUSES.has(canonStatus)
+    || canonStatus !== expectedCanonStatus
+    || typeof value.replacedPrevious !== 'boolean'
     || value.candidateOnly !== true
     || value.canonicalWrite !== false
-    || value.chatgptOpinionInput !== true
+    || value.collectiveCandidate !== true
+    || value.formalPromotionRequired !== true
+    || value.rawTextStored !== false
+    || value.automaticCanonMutation !== false
+    || value.automaticRelationshipMutation !== false
+    || value.automaticRewardMutation !== false
+    || value.automaticLearning !== false
   ) return false;
   return {
     kind,
-    sourceLineId,
-    proposedText,
-    voiceTuning,
+    sessionId,
+    turnId,
+    dialogueVersion,
+    sourceId,
+    rating,
+    responseOrigin,
+    canonStatus,
+    replacedPrevious: value.replacedPrevious,
     candidateOnly: true,
     canonicalWrite: false,
-    chatgptOpinionInput: true,
+    collectiveCandidate: true,
+    formalPromotionRequired: true,
+    rawTextStored: false,
+    automaticCanonMutation: false,
+    automaticRelationshipMutation: false,
+    automaticRewardMutation: false,
+    automaticLearning: false,
   };
 }
 
@@ -105,13 +174,29 @@ function normalizeSubmit(input) {
   const reportType = exactToken(input.reportType, 32);
   const sourceUseSite = exactToken(input.sourceUseSite, 160);
   const sourceStateIdentity = exactToken(input.sourceStateIdentity, 256);
-  const versions = safeVersions(input.versions);
-  if (!idempotencyKey || !partnerId || !REPORT_TYPES.has(reportType) || !sourceUseSite || !sourceStateIdentity || !versions) {
+  if (!idempotencyKey || !partnerId || !REPORT_TYPES.has(reportType) || !sourceUseSite || !sourceStateIdentity) {
     return null;
   }
+
   const feedback = normalizeFeedback(input.feedback, reportType);
   if (feedback === false) return null;
-  return { idempotencyKey, partnerId, reportType, sourceUseSite, sourceStateIdentity, versions, ...(feedback ? { feedback } : {}) };
+  const conversationQuality = feedback?.kind === CONVERSATION_QUALITY_FEEDBACK_KIND;
+  const versions = input.versions === undefined ? null : safeVersions(input.versions);
+  if (conversationQuality) {
+    if (input.versions !== undefined) return null;
+  } else if (!versions) {
+    return null;
+  }
+
+  return {
+    idempotencyKey,
+    partnerId,
+    reportType,
+    sourceUseSite,
+    sourceStateIdentity,
+    ...(versions ? { versions } : {}),
+    ...(feedback ? { feedback } : {}),
+  };
 }
 
 function normalizeRead(input) {
@@ -138,11 +223,13 @@ function canonicalIdentity(input) {
     input.reportType,
     input.sourceUseSite,
     input.sourceStateIdentity,
-    input.versions.rules,
-    input.versions.content,
-    input.versions.state,
   ];
-  if (input.feedback) {
+  if (input.versions) {
+    base.push(input.versions.rules, input.versions.content, input.versions.state);
+  } else {
+    base.push('dialogue-versioned');
+  }
+  if (input.feedback?.kind === DIALOGUE_FEEDBACK_KIND) {
     base.push(
       input.feedback.kind,
       input.feedback.sourceLineId,
@@ -152,6 +239,18 @@ function canonicalIdentity(input) {
       String(input.feedback.voiceTuning.volume),
       String(input.feedback.voiceTuning.pauseMs),
       input.feedback.voiceTuning.voiceURI,
+    );
+  } else if (input.feedback?.kind === CONVERSATION_QUALITY_FEEDBACK_KIND) {
+    base.push(
+      input.feedback.kind,
+      input.feedback.sessionId,
+      input.feedback.turnId,
+      input.feedback.dialogueVersion,
+      input.feedback.sourceId,
+      input.feedback.rating,
+      input.feedback.responseOrigin,
+      input.feedback.canonStatus,
+      String(input.feedback.replacedPrevious),
     );
   }
   return base.join('\u001f');
@@ -172,11 +271,13 @@ function publicReport(record) {
     partnerId: record.partnerId,
     sourceUseSite: record.sourceUseSite,
     sourceStateIdentity: record.sourceStateIdentity,
-    versions: {
-      rules: record.versions.rules,
-      content: record.versions.content,
-      state: record.versions.state,
-    },
+    ...(record.versions ? {
+      versions: {
+        rules: record.versions.rules,
+        content: record.versions.content,
+        state: record.versions.state,
+      },
+    } : {}),
     ...(record.feedback ? { feedback: structuredClone(record.feedback) } : {}),
     authority: {
       verified: true,
@@ -218,14 +319,18 @@ export async function submitStoredPartnerReport(storage, input, runtime = {}) {
     const uniqueReportId = await txn.get(canonicalKey);
     const disposition = exactToken(uniqueReportId, 160) ? 'duplicate' : 'accepted_unique';
     const record = {
-      schema: normalized.feedback ? 'gameroad.partner-report.record.v2' : 'gameroad.partner-report.record.v1',
+      schema: normalized.feedback?.kind === CONVERSATION_QUALITY_FEEDBACK_KIND
+        ? 'gameroad.partner-report.record.v3'
+        : normalized.feedback
+          ? 'gameroad.partner-report.record.v2'
+          : 'gameroad.partner-report.record.v1',
       reportId: generated.reportId,
       reportType: normalized.reportType,
       disposition,
       partnerId: normalized.partnerId,
       sourceUseSite: normalized.sourceUseSite,
       sourceStateIdentity: normalized.sourceStateIdentity,
-      versions: normalized.versions,
+      ...(normalized.versions ? { versions: normalized.versions } : {}),
       ...(normalized.feedback ? { feedback: normalized.feedback } : {}),
       createdAtMs: generated.createdAtMs,
       authorityId: PARTNER_REPORT_AUTHORITY_ID,

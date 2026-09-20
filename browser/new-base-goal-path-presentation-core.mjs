@@ -33,6 +33,8 @@ function failClosed(reason) {
     reason,
     lanePresentations: [],
     openGoalPathCount: 0,
+    gateOpen: false,
+    gateOpenScope: 'ALL_ROUTE_GATE_ANCHORS',
     terminalWin: false,
     presentationOnly: true,
     gameplayAuthority: false,
@@ -50,7 +52,7 @@ function normalizeStraightCardIds(lane) {
   return ids.some((value) => value === null) ? undefined : ids;
 }
 
-function normalizeLaneState(lane) {
+function normalizeLaneState(lane, gateOpen) {
   if (!lane || typeof lane !== 'object' || Array.isArray(lane)) return null;
   if (!nonEmptyString(lane.participantId)) return null;
   if (!safeNonNegativeInteger(lane.laneIndex)) return null;
@@ -69,7 +71,7 @@ function normalizeLaneState(lane) {
   const visualState = lane.connectedToGoal
     ? NEW_BASE_GOAL_PATH_VISUAL_STATE.OPEN
     : NEW_BASE_GOAL_PATH_VISUAL_STATE.CLOSED;
-  const gateVisualState = lane.connectedToGoal
+  const gateVisualState = gateOpen
     ? NEW_BASE_GOAL_GATE_VISUAL_STATE.OPEN_HOOP
     : NEW_BASE_GOAL_GATE_VISUAL_STATE.LOCKED_BARRIER;
 
@@ -83,6 +85,7 @@ function normalizeLaneState(lane) {
     straightCardIds,
     physicalCardIdentityResolved: straightCardIds !== null,
     connectedToGoal: lane.connectedToGoal,
+    gateOpen,
     routeGateId,
     sharedGoalId,
     visualState,
@@ -101,15 +104,17 @@ export function projectNewBaseGoalPathPresentation(goalPathProjection) {
   }
   if (goalPathProjection.ok !== true) return failClosed('GOAL_PATH_PROJECTION_NOT_OK');
   if (goalPathProjection.terminalWin !== false) return failClosed('SEVEN_STRAIGHT_TERMINAL_WIN_FORBIDDEN');
+  if (typeof goalPathProjection.gateOpen !== 'boolean') return failClosed('GLOBAL_GATE_STATE_REQUIRED');
   if (!safeNonNegativeInteger(goalPathProjection.horizontalCellCount)) return failClosed('HORIZONTAL_CELL_COUNT_INVALID');
   if (!Array.isArray(goalPathProjection.laneStates) || goalPathProjection.laneStates.length === 0) {
     return failClosed('LANE_STATES_REQUIRED');
   }
 
+  const gateOpen = goalPathProjection.gateOpen;
   const lanePresentations = [];
   const seenKeys = new Set();
   for (const lane of goalPathProjection.laneStates) {
-    const normalized = normalizeLaneState(lane);
+    const normalized = normalizeLaneState(lane, gateOpen);
     if (!normalized) return failClosed('LANE_STATE_INVALID');
     if (seenKeys.has(normalized.key)) return failClosed('LANE_IDENTITY_DUPLICATE');
     seenKeys.add(normalized.key);
@@ -120,6 +125,7 @@ export function projectNewBaseGoalPathPresentation(goalPathProjection) {
     (count, lane) => count + (lane.connectedToGoal ? 1 : 0),
     0,
   );
+  if (gateOpen !== (openGoalPathCount > 0)) return failClosed('GATE_OPEN_CONNECTION_STATE_MISMATCH');
   const sharedGoalIds = new Set(lanePresentations.map((lane) => lane.sharedGoalId));
   if (sharedGoalIds.size !== 1) return failClosed('SHARED_GOAL_IDENTITY_MISMATCH');
   const sharedGoalId = [...sharedGoalIds][0];
@@ -137,6 +143,8 @@ export function projectNewBaseGoalPathPresentation(goalPathProjection) {
     lanePresentations,
     openGoalPathCount,
     hasAnyOpenGoalPath: openGoalPathCount > 0,
+    gateOpen,
+    gateOpenScope: 'ALL_ROUTE_GATE_ANCHORS',
     terminalWin: false,
     requiresAuthoritativeGoalReachedForResult: true,
     presentationOnly: true,
@@ -156,6 +164,8 @@ export function isNewBaseGoalPathPresentation(value) {
       && value.schema === SCHEMA
       && typeof value.ok === 'boolean'
       && Array.isArray(value.lanePresentations)
+      && typeof value.gateOpen === 'boolean'
+      && value.gateOpenScope === 'ALL_ROUTE_GATE_ANCHORS'
       && value.terminalWin === false
       && value.presentationOnly === true
       && value.gameplayAuthority === false
@@ -174,6 +184,8 @@ export const NEW_BASE_GOAL_PATH_PRESENTATION_CONTRACT = deepFreeze({
   resultAuthority: 'EXISTING_AUTHORITATIVE_GOAL_REACHED_PATH',
   sharedGoalCount: 1,
   routeGateCount: 12,
+  gateOpenPolicy: 'ALL_AT_ONCE_WHEN_ANY_GOAL_PATH_CONNECTED',
+  laneGoalConnectionIsNotGateOpenState: true,
   closedGateVisual: 'LOCKED_BARRIER',
   openGateVisual: 'OPEN_HOOP',
   sevenStraightTerminalWin: false,

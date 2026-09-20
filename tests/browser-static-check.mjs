@@ -182,6 +182,9 @@ if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stat
     [/syncBattleCentralWorldPresentation\(m\);renderBoardPlayers\(\);renderRouteLine\(\)/, 'legacy renderBoard cadence does not sync the existing central world presentation'],
     [/authority:Object\.freeze\(\{gameplay:false,movement:false,target:false,legality:false,result:false,stateWrite:false\}\)/, 'central world live mount lost its gameplay authority firewall'],
     [/\.battleCentralWorldLiveHost\{position:absolute;inset:3% 3% 18%;pointer-events:none;/, 'central world presentation host can take Battle input ownership'],
+    [/BATTLE_BOARD_WORLD_FIELD_LIVE_HTML_R14/, 'live Battle field does not declare the R14 world-field handoff'],
+    [/battleCentralWorldRuntimeR8\?\.worldFieldRenderModel\?\.\(/, 'live renderField3D does not consume the existing world-field renderer model'],
+    [/requestAnimationFrame\(\(\)=>\{if\(state\.match\)renderField3D\(\)\}\)/, 'central world mount does not request a field redraw after the world-field model becomes available'],
   ];
   for (const [pattern, message] of centralWorldLiveContracts) {
     if (!pattern.test(html)) errors.push(message);
@@ -195,6 +198,7 @@ if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stat
   if (/createFlanoraMapLayout\s*\(/.test(html) || /createNewBaseGoalPathLayout\s*\(/.test(html)) {
     errors.push('HTML reimplements central board/GOAL projection instead of consuming the existing composer');
   }
+  if (/visualGraphWorld\s*\(/.test(html)) errors.push('HTML uses the retired duplicate visual-graph projection instead of worldFieldRenderModel');
   const correctedBattleResourceContracts = [
     [/const hand=deck\.splice\(0,7\);/, 'fresh Battle ordinary hand is not initialized to seven'],
     [/function refill\(p\)\{while\(p\.hand\.length<3&&p\.deck\.length\)p\.hand\.push\(p\.deck\.shift\(\)\)\}/, 'post-use refill target is no longer three'],

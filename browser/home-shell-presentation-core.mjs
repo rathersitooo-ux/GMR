@@ -187,6 +187,23 @@ function setupQuickDeckElement(doc, tag, className, text) {
   return node;
 }
 
+export function containSetupQuickDeckTabFocus(event, dialog, documentSource = globalThis.document) {
+  if (event?.key !== 'Tab' || !dialog?.querySelectorAll) return false;
+  const focusable = Array.from(dialog.querySelectorAll(
+    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+  )).filter((node) => node?.hidden !== true && node?.getAttribute?.('aria-hidden') !== 'true');
+  if (focusable.length === 0) return false;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  const active = documentSource?.activeElement;
+  const inside = typeof dialog.contains === 'function' ? dialog.contains(active) : focusable.includes(active);
+  const shouldWrap = !inside || (!event.shiftKey && active === last) || (event.shiftKey && active === first);
+  if (!shouldWrap) return false;
+  event.preventDefault?.();
+  (event.shiftKey ? last : first)?.focus?.();
+  return true;
+}
+
 export function setupQuickDeckCardLabel(cardId) {
   const id = String(cardId);
   const cards = globalThis.__CARD_DATA__;
@@ -285,6 +302,10 @@ function ensureSetupQuickDeckConsumer() {
   };
 
   const onKeydown = (event) => {
+    if (event?.key === 'Tab') {
+      containSetupQuickDeckTabFocus(event, dialog, document);
+      return;
+    }
     if (event?.key !== 'Escape') return;
     event.preventDefault?.();
     closeDialog();

@@ -1,0 +1,47 @@
+{
+  "recovered_from": {
+    "repository": "rathersitooo-ux/GMR",
+    "commit": "4c30486c3a39433da2b2c31a0d549cb1bda3b888",
+    "source_blob_sha": "12839c58646f849f0ad4470695c391bfb07b1174",
+    "source_path": "browser/GAMEROAD.html"
+  },
+  "recovered_at": "2026-09-21",
+  "purpose": "Historical donor recovery only; no live Home wiring or rule/state change.",
+  "assets": [
+    {
+      "name": "battle",
+      "path": "assets/recovered/codex-home-r48/pad-battle.png",
+      "encoding_source": "embedded data:image/png;base64"
+    },
+    {
+      "name": "shop",
+      "path": "assets/recovered/codex-home-r48/pad-shop.png",
+      "encoding_source": "embedded data:image/png;base64"
+    },
+    {
+      "name": "partner",
+      "path": "assets/recovered/codex-home-r48/pad-partner.png",
+      "encoding_source": "embedded data:image/png;base64"
+    },
+    {
+      "name": "deck",
+      "path": "assets/recovered/codex-home-r48/pad-deck.png",
+      "encoding_source": "embedded data:image/png;base64"
+    },
+    {
+      "name": "center",
+      "path": "assets/recovered/codex-home-r48/pad-center.png",
+      "encoding_source": "embedded data:image/png;base64"
+    }
+  ],
+  "donor_files": [
+    "assets/recovered/codex-home-r48/ui-pro-max-r48.css",
+    "assets/recovered/codex-home-r48/codex-home-r4-shell.css",
+    "assets/recovered/codex-home-r48/codex-home-r4-markup.html"
+  ],
+  "status_notes": [
+    "R48 is historical presentation donor material, not current formal Home authority.",
+    "PR #1542 later removed codexHomeVisualLayer, codexPartnerChip and codexBattleCta as retired initial producers.",
+    "Recovered SlidePad art and presentation grammar must be selectively adapted to current Home rather than reviving retired routes or copy."
+  ]
+}

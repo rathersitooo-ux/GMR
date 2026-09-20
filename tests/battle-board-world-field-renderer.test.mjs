@@ -22,7 +22,11 @@ test('world-field render model keeps the lower shared field, Gate boundary and o
   model = createBattleBoardWorldFieldRenderModel({ builtCountByLaneKey: { 'P2:C': 3 } });
   assert.equal(model.counts.builtUpperCards, 3);
   assert.equal(model.counts.visibleFutureUpperSlots, 0);
-  assert.deepEqual(model.roundCells.filter((cell) => cell.laneKey === 'P2:C').map((cell) => cell.stageIndex), [1, 2, 3]);
+  const p2cBuilt = model.roundCells.filter((cell) => cell.laneKey === 'P2:C');
+  assert.deepEqual(p2cBuilt.map((cell) => cell.stageIndex), [1, 2, 3]);
+  assert.ok(p2cBuilt[0].world.z > p2cBuilt[1].world.z);
+  assert.ok(p2cBuilt[1].world.z > p2cBuilt[2].world.z);
+  assert.equal(model.edges.find((edge) => edge.id === 'gate-edge:P2:C:upper').fromId, 'upper:P2:C:1');
   assert.equal(model.roundCells.some((cell) => cell.id === 'upper:P2:C:4'), false);
   assert.equal(model.gates.find((gate) => gate.laneKey === 'P2:C').state, 'CLOSED_HEAVY_BARRIER');
   assert.equal(model.gameplayAuthority, false);

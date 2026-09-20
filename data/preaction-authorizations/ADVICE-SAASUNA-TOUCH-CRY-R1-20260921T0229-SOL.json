@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ADVICE-SAASUNA-TOUCH-CRY-R1-20260921T0229-SOL",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "SAASUNA_TOUCH_CRY_VISIBLE_RUNTIME_BINDING_R1",
+  "acquireKey": "ADVICE-SAASUNA-TOUCH-CRY-R1-20260921T0229-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "DRIVE_ACCEPTED_SAASUNA_9_ASSET_MANIFEST_PLUS_CURRENT_MAIN_UNREACHABLE_TOUCH_CRY_20260921T0229JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_MAIN_9560211_EXISTING_SAASUNA_BUSTUP_REGISTRY_RENDER_SEAM_AND_HANDOFF_TOUCH_REACTION_CONTRACT",
+  "proceedToken": "PROCEED|ADVICE-SAASUNA-TOUCH-CRY-R1-20260921T0229-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-touch-cry-asset|runtime-binding",
+  "authorizationBaseSha": "956021120af6905592e6552cbd0d5c9b8f8178ef",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "SAASUNA_TOUCH_CRY_VISIBLE_RUNTIME_BINDING_R1",
+  "leaseAcquireKey": "ADVICE-SAASUNA-TOUCH-CRY-R1-20260921T0229-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 02:29 JST",
+  "leaseUntilJst": "2026-09-21 03:29 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:L10",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/saasuna-touch-cry-runtime-r1-20260921 only: browser/partner-saasuna-bustup-visuals.mjs; browser/partner-advice-runtime-mount.mjs; tests/partner-saasuna-bustup-visuals.test.mjs; tests/partner-advice-runtime-mount.test.mjs. Existing nine browser/assets/partners/saasuna PNG assets READ_ONLY; deploy/cloudflare/scripts/build.mjs READ_ONLY; browser/GAMEROAD.html READ_ONLY; browser/board-facility-runtime-mount.mjs READ_ONLY; deploy/cloudflare/relay/src/partner-report-store.mjs READ_ONLY; gameplay/rules/save/network READ_ONLY.",
+  "solutionSignature": "Bind the already-registered TOUCH_CRY visual to an existing visible Saasuna Advice Partner touch interaction without creating a new asset, registry, save, or gameplay authority.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "existing-saasuna-bustup-registry-and-live-advice-render-seam",
+  "solutionSearchEvidence": [
+    "Drive manifest 1rg5jBqT6OUJsdZ-PRr9wgEXbz2Ye8N_E marks the nine transparent images user-adopted for Home left navigator / Advice Partner and runtime_bound=false at registration.",
+    "Current main partner-saasuna-bustup-visuals.mjs contains all nine exact SHA-checked assets but TOUCH_CRY has no resolver path.",
+    "Current handoff 1GvvvaYc-eobDkQ51GMvzl8beJulmdSEGEmUa18vjKPA defines touch reaction and TOUCH_CRY one-shot semantics, so no new character meaning is invented.",
+    "Current partner-advice-runtime-mount.mjs already owns the live Battle Advice Partner bust-up render seam."
+  ],
+  "scope": [
+    "browser/partner-saasuna-bustup-visuals.mjs",
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-saasuna-bustup-visuals.test.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-saasuna-bustup-visuals.mjs",
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-saasuna-bustup-visuals.test.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs"
+  ]
+}

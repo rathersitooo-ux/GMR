@@ -62,6 +62,25 @@ class FakeElement {
   }
 }
 
+class FakeMutationObserver {
+  static last = null;
+  constructor(callback) {
+    this.callback = callback;
+    this.observed = [];
+    this.disconnected = false;
+    FakeMutationObserver.last = this;
+  }
+  observe(node, options) {
+    this.observed.push({ node, options });
+  }
+  disconnect() {
+    this.disconnected = true;
+  }
+  trigger() {
+    this.callback([]);
+  }
+}
+
 class FakeDocument {
   constructor(root = null) {
     this.head = new FakeElement('head');
@@ -115,6 +134,12 @@ function fixture() {
   const partner = new FakeElement('aside', rect(8, 177, 96, 98));
   const partnerVisual = new FakeElement('div', rect(0, 165, 150, 210));
   const manaArt = new FakeElement('section', rect(82, 205, 112, 112));
+  const manaDial = new FakeElement('img');
+  const manaNumber = new FakeElement('div');
+  manaArt.appendChild(manaDial);
+  manaArt.appendChild(manaNumber);
+  manaArt.selectorMap.set('.r8DialImage', manaDial);
+  manaArt.selectorMap.set('#r8ManaNumber', manaNumber);
 
   root.appendChild(battleMap);
   battleMap.appendChild(board);
@@ -145,7 +170,7 @@ function fixture() {
     battleMap, board, boardPlayers, controlledCharacter, currentAction, resources, battleScreenHud,
     public4p, hand, battleInfo, thumbActions, quickDecision, quickCoil, jankenSlidePad,
     roulette, targetConfirm, secondaryActions, supportEntry, legacyPhaseStrip, detailsDrawer, partner,
-    partnerVisual, manaArt
+    partnerVisual, manaArt, manaDial, manaNumber
   };
   for (const [key, selectors] of Object.entries(BATTLE_CURRENT_PLAYER_UI_SELECTORS)) {
     const node = nodes[key];
@@ -166,6 +191,7 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.resources[0], '[data-battle-crit
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.partner[0], '#partnerAdviceChatPresentation');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.partnerVisual[0], '#battleAdvicePartnerStage');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.manaArt[0], '#battleManaArtR8');
+assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'RETIRE_DIAL_IMAGE_HIDE_HOST_KEEP_NUMERIC_MANA_STATE');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.jankenSlidePad[0], '[data-battle-janken-slidepad="1"]');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.roulette[0], '[data-battle-playable-hand-row-roulette-live="1"]');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.supportEntry[0], '#detailsBtn');
@@ -208,6 +234,11 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
   assert.equal(nodes.partner.getAttribute('data-gr-current-ui-zone'), 'partner');
   assert.equal(nodes.partnerVisual.getAttribute('data-gr-current-ui-zone'), 'partner-visual');
   assert.equal(nodes.manaArt.getAttribute('data-gr-current-ui-zone'), 'mana-art');
+  assert.equal(nodes.manaArt.hasAttribute('hidden'), true);
+  assert.equal(nodes.manaArt.getAttribute('aria-hidden'), 'true');
+  assert.equal(nodes.manaArt.getAttribute('data-gr-current-ui-disposition'), 'obsolete-blue-mana-art-retired');
+  assert.equal(nodes.manaDial.parentNode, null);
+  assert.equal(nodes.manaNumber.parentNode, nodes.manaArt);
   assert.equal(nodes.supportEntry.getAttribute('data-gr-current-ui-zone'), 'support-entry');
   assert.equal(nodes.jankenSlidePad.getAttribute('data-gr-current-ui-zone'), 'janken-slidepad');
   assert.equal(nodes.roulette.getAttribute('data-gr-current-ui-zone'), 'conditional-roulette');
@@ -262,6 +293,7 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
   assert.match(styleText, /@media\(max-width:520px\) and \(orientation:portrait\)\{[\s\S]*?\[data-gr-current-ui-zone="current-action"\]\{transform:translateY\(6px\)!important\}/);
   const snapshot = runtime.inspect();
   assert.equal(snapshot.boardProtagonist, true);
+  assert.equal(snapshot.manaArtRetired, true);
   assert.deepEqual(snapshot.resolvedLiveConsumers, {
     currentAction: true,
     resources: true,
@@ -322,7 +354,38 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
   assert.equal(nodes.supportEntry.parentNode, originalSupportEntryParent);
   assert.equal(nodes.partnerVisual.parentNode, originalPartnerVisualParent);
   assert.equal(nodes.manaArt.parentNode, originalManaArtParent);
+  assert.equal(nodes.manaArt.hasAttribute('hidden'), true);
+  assert.equal(nodes.manaDial.parentNode, null);
+  assert.equal(nodes.manaNumber.parentNode, nodes.manaArt);
   assert.equal(document.head.children.length, 0);
+}
+
+{
+  const { document, root, nodes } = fixture();
+  root.selectorMap.delete('#battleManaArtR8');
+  nodes.manaArt.parentNode.removeChild(nodes.manaArt);
+  FakeMutationObserver.last = null;
+  const runtime = mountBattleCurrentPlayerUi({ document, MutationObserver: FakeMutationObserver }, { root });
+  assert.equal(runtime.inspect().manaArtRetired, false);
+  const lateManaArt = new FakeElement('section', rect(82, 205, 112, 112));
+  const lateDial = new FakeElement('img');
+  const lateNumber = new FakeElement('div');
+  lateManaArt.appendChild(lateDial);
+  lateManaArt.appendChild(lateNumber);
+  lateManaArt.selectorMap.set('.r8DialImage', lateDial);
+  lateManaArt.selectorMap.set('#r8ManaNumber', lateNumber);
+  nodes.battleMap.appendChild(lateManaArt);
+  root.selectorMap.set('#battleManaArtR8', lateManaArt);
+  assert.equal(FakeMutationObserver.last?.observed?.length, 1);
+  FakeMutationObserver.last.trigger();
+  assert.equal(lateManaArt.hasAttribute('hidden'), true);
+  assert.equal(lateManaArt.getAttribute('aria-hidden'), 'true');
+  assert.equal(lateDial.parentNode, null);
+  assert.equal(lateNumber.parentNode, lateManaArt);
+  assert.equal(runtime.inspect().manaArtRetired, true);
+  const observer = FakeMutationObserver.last;
+  assert.equal(runtime.destroy(), true);
+  assert.equal(observer.disconnected, true);
 }
 
 {

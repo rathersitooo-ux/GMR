@@ -103,7 +103,7 @@ export function mountBattleNewBaseBoardLivePresentation({
     flanoraLayout = createFlanoraMapLayout(layoutInput);
     goalPathLayout = createNewBaseGoalPathLayout({
       participantIds: flanoraLayout.participantIds,
-      horizontalCellCount: flanoraLayout.horizontalCellCount,
+      horizontalCellCount: layoutInput?.horizontalCellCount,
       shieldLinkedLaneColumnsByParticipant: flanoraLayout.shieldLinkedLaneColumnsByParticipant,
     });
   } catch (error) {

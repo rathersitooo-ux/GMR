@@ -290,7 +290,7 @@ test('Home border light overlay reuses the accepted asset and stays presentation
     frameCount: 1,
   });
   assert.match(HOME_BORDER_LIGHT_OVERLAY_CSS, /codexHomeArtStage::after/);
-  assert.match(HOME_BORDER_LIGHT_OVERLAY_CSS, /home-border-light-overlay-v1\\.png/);
+  assert.match(HOME_BORDER_LIGHT_OVERLAY_CSS, /home-border-light-overlay-v1\.png/);
   assert.match(HOME_BORDER_LIGHT_OVERLAY_CSS, /pointer-events:none/);
   assert.match(HOME_BORDER_LIGHT_OVERLAY_CSS, /gameroadHomeBorderLightDrift/);
   assert.match(HOME_BORDER_LIGHT_OVERLAY_CSS, /prefers-reduced-motion/);

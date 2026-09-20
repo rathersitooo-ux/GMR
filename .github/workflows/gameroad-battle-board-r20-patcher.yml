@@ -1,0 +1,66 @@
+name: GAMEROAD Battle Board R21 Final One Shot
+
+on:
+  push:
+    branches:
+      - sol/battle-board-world-recompose-r20-20260920
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[R21-FINAL-PATCHED]') && !contains(github.event.head_commit.message, '[R21-FINAL-CLEANUP]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Remove legacy 3D board under live world map
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('browser/GAMEROAD.html')
+          s=p.read_text(encoding='utf-8')
+          live="battleCentralWorldRuntimeR8?.worldFieldRenderModel?.({centerX:0,centerZ:0,width:20,depth:11.25,y:.035})"
+          start="const items=[];const box=(x,y,z,sx,sy,sz,col,kind='box')=>items.push({x,y,z,sx,sy,sz,col,kind});const active=activeNodes();for(const id of all){"
+          repl="const items=[];const box=(x,y,z,sx,sy,sz,col,kind='box')=>items.push({x,y,z,sx,sy,sz,col,kind});const liveWorldBoard="+live+";if(!liveWorldBoard){const active=activeNodes();for(const id of all){"
+          marker='/* BATTLE_BOARD_WORLD_FIELD_LIVE_HTML_R19 */'
+          if 'if(!liveWorldBoard){const active=activeNodes();for(const id of all){' not in s:
+              if s.count(start)!=1: raise SystemExit(f'LEGACY_LOOP_START_COUNT:{s.count(start)}')
+              s=s.replace(start,repl)
+              pre,post=s.split(marker,1)
+              tail="}}if(m.honey?.byNode)"
+              if pre.count(tail)!=1: raise SystemExit(f'LEGACY_LOOP_END_COUNT:{pre.count(tail)}')
+              pre=pre.replace(tail,"}}}if(m.honey?.byNode)")
+              s=pre+marker+post
+          duplicate="const liveWorldBoard="+live+";"
+          marker_pos=s.index(marker)
+          after=s[marker_pos:]
+          if duplicate in after:
+              after=after.replace(duplicate,'',1)
+              s=s[:marker_pos]+after
+          if s.count("const liveWorldBoard=")!=1: raise SystemExit(f'LIVE_WORLD_DECL_COUNT:{s.count("const liveWorldBoard=")}')
+          if 'if(!liveWorldBoard){const active=activeNodes();for(const id of all){' not in s: raise SystemExit('LEGACY_3D_GUARD_MISSING')
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Verify focused contracts
+        run: |
+          node tests/browser-static-check.mjs
+          node --test tests/battle-board-world-field-renderer.test.mjs
+          node --test tests/battle-new-base-board-live-presentation-composer.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Commit final patch and remove helper
+        shell: bash
+        run: |
+          git config user.name "gameroad-r21-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if ! git diff --quiet -- browser/GAMEROAD.html; then
+            git add browser/GAMEROAD.html
+            git commit -m "Battle: replace legacy 3D board with live world map [R21-FINAL-PATCHED]"
+          fi
+          git rm .github/workflows/gameroad-battle-board-r20-patcher.yml
+          git commit -m "Battle: remove final one-shot helper [R21-FINAL-CLEANUP]"
+          git push origin HEAD:${GITHUB_REF_NAME}

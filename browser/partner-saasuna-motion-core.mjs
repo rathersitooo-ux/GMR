@@ -295,7 +295,7 @@ function runEffect(surface, effect, profile, animationState) {
   });
 }
 
-function runMotion(surface, profile, animationState, restart = true) {
+function runMotion(surface, profile, animationState) {
   animationState.motionAnimation?.cancel?.();
   const timing = {
     duration: profile.durationMs,
@@ -309,7 +309,6 @@ function runMotion(surface, profile, animationState, restart = true) {
     const lastFrame = profile.keyframes[profile.keyframes.length - 1];
     surface.image.style.transform = lastFrame.transform;
   }
-  if (!restart && animation) animation.pause?.();
 }
 
 function startAssetTransition(surface, plan, transitionMs, currentFile, isActive, done) {
@@ -367,7 +366,8 @@ export function createSaasunaMotionController({ doc, bustup, transitionMs = 180 
     const plan = resolveSaasunaMotionPlan(input);
     if (!plan) return null;
     const restart = options.restart !== false;
-    const shouldRestart = restart || currentState !== plan.state;
+    const stateChanged = currentState !== plan.state;
+    const shouldRestart = restart || stateChanged;
     if (!shouldRestart && currentState === plan.state) return plan;
     sequence += 1;
     const activeSequence = sequence;
@@ -378,7 +378,7 @@ export function createSaasunaMotionController({ doc, bustup, transitionMs = 180 
     surface.figure.dataset.motionLoop = plan.loop ? 'true' : 'false';
     startAssetTransition(surface, plan, options.transitionMs ?? transitionMs, previousAssetFile, () => activeSequence === sequence, () => {
       if (activeSequence !== sequence) return;
-      runMotion(surface, SAASUNA_MOTION_PROFILES[plan.state], animationState, restart);
+      runMotion(surface, SAASUNA_MOTION_PROFILES[plan.state], animationState);
     });
     runEffect(surface, plan.effect, SAASUNA_MOTION_PROFILES[plan.state], animationState);
     return plan;

@@ -150,3 +150,13 @@ test('state changes retain a crossfade even when the caller has already swapped 
   assert.ok(surface.crossfadeImage.animations.length >= 1);
   assert.ok(surface.image.animations.length >= 2);
 });
+
+test('a new state still plays when the live renderer requests no restart for repeated renders', () => {
+  const { doc, bustup } = fakeBustup();
+  const controller = createSaasunaMotionController({ doc, bustup, transitionMs: 0 });
+  controller.setState({ partnerId: 'partner.saasuna', visualState: 'HAPPY_WAVE' });
+  controller.setState({ partnerId: 'partner.saasuna', visualState: 'SURPRISED' }, { restart: false });
+  const imageAnimations = controller.snapshot().surface.image.animations;
+  assert.equal(imageAnimations.at(-1).timing.duration, SAASUNA_MOTION_PROFILES.SURPRISED.durationMs);
+  assert.equal(imageAnimations.at(-1).timing.iterations, 1);
+});

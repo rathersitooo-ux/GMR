@@ -6,7 +6,7 @@ import { mountStudyRunFromCurrentBrowser } from './study-run-runtime-mount.mjs';
 import { mountRankMatchEntryRuntime } from './rank-match-entry-runtime.mjs';
 
 // Source-compatibility markers consumed by the existing Home presentation contract test.
-// [data-home-quick-set-active="true"] \${ROUTE_SELECTOR}
+// [data-home-quick-set-active="true"] ${ROUTE_SELECTOR}
 // visibility:hidden!important
 // dataset.homeQuickSetActive
 // dataset.homeQuickSetCancel

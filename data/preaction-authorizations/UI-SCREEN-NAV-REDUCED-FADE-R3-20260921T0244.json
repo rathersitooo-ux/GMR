@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-SCREEN-NAV-REDUCED-FADE-R3-20260921T0244",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "SCREEN_NAV_REDUCED_MOTION_FADE_R3",
+  "acquireKey": "UI-SCREEN-NAV-REDUCED-FADE-R3-20260921T0244-SOL-Q8N4V78",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "REDUCED_MOTION_EXISTING_REDUCED_PROFILE_DIRECT_ACTUAL",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FOCUSED_SCREEN_NAV_DONOR_R2_35_OF_35_PASS",
+  "proceedToken": "PROCEED|UI-SCREEN-NAV-REDUCED-FADE-R3-20260921T0244|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-reduced-profile|focused-35of35",
+  "authorizationBaseSha": "956021120af6905592e6552cbd0d5c9b8f8178ef",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "SCREEN_NAV_REDUCED_MOTION_FADE_R3",
+  "leaseAcquireKey": "UI-SCREEN-NAV-REDUCED-FADE-R3-20260921T0244-SOL-Q8N4V78",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 02:44 JST",
+  "leaseUntilJst": "2026-09-21 03:34 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A12:L12",
+  "leaseExactMutableResources": "browser/screen-navigation-core.mjs; tests/screen-navigation-core.test.mjs; deploy/cloudflare/tests/build.test.mjs; transient data/preaction-authorizations/UI-SCREEN-NAV-REDUCED-FADE-R3-20260921T0244.json cleanup-delete only; own fresh branch/PR/check/merge/readback/public readback",
+  "scope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

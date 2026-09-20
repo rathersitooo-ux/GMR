@@ -116,6 +116,8 @@ function validGoalPathPresentation(value) {
       && value.legalityAuthority === false
       && value.resultAuthority === false
       && value.terminalWin === false
+      && typeof value.gateOpen === 'boolean'
+      && value.gateOpenScope === 'ALL_ROUTE_GATE_ANCHORS'
       && Array.isArray(value.lanePresentations)
   );
 }
@@ -156,7 +158,10 @@ function normalizeLaneStates(goalPathPresentation) {
       sharedGoalId: nonEmptyString(lane.sharedGoalId) ? lane.sharedGoalId.trim() : 'goal:shared',
     });
   }
-  return byKey;
+  return {
+    gateOpen: goalPathPresentation.gateOpen,
+    byKey,
+  };
 }
 
 function createArrowStack(documentLike, key, cueColor) {
@@ -201,8 +206,8 @@ export function mountNewBaseGoalEntryGateCue({
   const profile = resolveProfile({ reducedMotion, lowPerf });
   if (!documentLike || typeof documentLike.createElement !== 'function') return failSoft('DOM_DOCUMENT_REQUIRED', profile);
   if (!validBoardSurface(boardSurfaceRuntime)) return failSoft('BOARD_SURFACE_RUNTIME_INVALID', profile);
-  const initialLaneStates = normalizeLaneStates(goalPathPresentation);
-  if (!initialLaneStates) return failSoft('GOAL_PATH_PRESENTATION_INVALID', profile);
+  const initialPresentation = normalizeLaneStates(goalPathPresentation);
+  if (!initialPresentation) return failSoft('GOAL_PATH_PRESENTATION_INVALID', profile);
 
   ensureStyle(documentLike);
   const mountedByLaneKey = new Map();
@@ -214,7 +219,7 @@ export function mountNewBaseGoalEntryGateCue({
   const sharedGoal = boardSurfaceRuntime.resolveSharedGoal();
   if (!sharedGoal) return failSoft('SHARED_GOAL_REQUIRED', profile);
 
-  for (const lane of initialLaneStates.values()) {
+  for (const lane of initialPresentation.byKey.values()) {
     const anchor = boardSurfaceRuntime.resolveRouteGate?.(lane.participantId, lane.laneIndex)
       ?? boardSurfaceRuntime.resolveGoal?.(lane.participantId, lane.laneIndex)
       ?? null;
@@ -262,8 +267,9 @@ export function mountNewBaseGoalEntryGateCue({
 
   function syncGoalPathPresentation(nextGoalPathPresentation, { participantColors: nextParticipantColors } = {}) {
     if (destroyed) return Object.freeze({ ok: false, reason: 'RUNTIME_DESTROYED' });
-    const nextLaneStates = normalizeLaneStates(nextGoalPathPresentation);
-    if (!nextLaneStates) return Object.freeze({ ok: false, reason: 'GOAL_PATH_PRESENTATION_INVALID' });
+    const nextPresentation = normalizeLaneStates(nextGoalPathPresentation);
+    if (!nextPresentation) return Object.freeze({ ok: false, reason: 'GOAL_PATH_PRESENTATION_INVALID' });
+    const nextLaneStates = nextPresentation.byKey;
     if (nextLaneStates.size !== mountedByLaneKey.size) return Object.freeze({ ok: false, reason: 'GOAL_PATH_LANE_SET_MISMATCH' });
     for (const key of mountedByLaneKey.keys()) {
       if (!nextLaneStates.has(key)) return Object.freeze({ ok: false, reason: 'GOAL_PATH_LANE_SET_MISMATCH' });
@@ -278,7 +284,7 @@ export function mountNewBaseGoalEntryGateCue({
       desired.push({ record, connectedToGoal: lane.connectedToGoal === true, cueColor: normalizeColor(colors?.[record.participantId]) });
     }
 
-    const nextGlobalGateOpen = desired.some(({ connectedToGoal }) => connectedToGoal);
+    const nextGlobalGateOpen = nextPresentation.gateOpen;
     const openingGateNow = nextGlobalGateOpen && !globalGateOpen;
     const nextUnresolved = new Set();
     for (const { record, connectedToGoal, cueColor } of desired) {
@@ -358,6 +364,7 @@ export const NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT = deepFreeze({
   gateCount: 12,
   sharedGoalCount: 1,
   gateOpenPolicy: 'ALL_AT_ONCE_WHEN_ANY_GOAL_BRANCH_IS_CONNECTED',
+  gateOpenAuthority: 'CALLER_GOAL_PATH_PRESENTATION_GATE_OPEN',
   laneGoalBranchCueSeparateFromGateOpen: true,
   closedGateVisual: 'SOLID_LOCKED_BARRIER',
   openGateVisual: 'OPEN_HOOP_WITH_TRANSPARENT_MEMBRANE',
@@ -373,6 +380,7 @@ export const NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT = deepFreeze({
   reducedMotion: 'STATIC_GATE_STATE',
   lowPerf: 'STATIC_GATE_STATE',
   computesSevenCardCompletion: false,
+  computesGateOpen: false,
   computesMovementLegality: false,
   computesResult: false,
   writesGameState: false,

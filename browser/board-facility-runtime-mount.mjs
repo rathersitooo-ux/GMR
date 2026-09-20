@@ -8,6 +8,11 @@ const RUNTIME_VERSION = 'gameroad.board-facility-runtime-mount.v1';
 const PARTNER_CONVERSATION_MOUNT_NAME = 'GAMEROAD_PARTNER_CONVERSATION_PRODUCT_MOUNT';
 const PARTNER_CONVERSATION_STYLE_ID = 'gameroad-partner-conversation-product-style';
 const PARTNER_EDGE_ENDPOINT = '/ws?partnerOp=conversation';
+const PARTNER_REPORT_ENDPOINT = '/report?reportOp=submit';
+const PARTNER_CONVERSATION_QUALITY_SCHEMA = 'gameroad.partner-conversation-quality-feedback.v1';
+const PARTNER_CONVERSATION_QUALITY_USE_SITE = 'partner_conversation_turn_quality';
+const PARTNER_CONVERSATION_QUALITY_RATINGS = new Set(['good', 'bad']);
+const PARTNER_CONVERSATION_RESPONSE_ORIGINS = new Set(['provider_candidate', 'approved_fallback']);
 const SAASUNA_PROVISIONAL_VISUAL = '/ws?partnerOp=visual';
 const COLLECTIVE_EVIDENCE_SOURCE_NAME = 'GAMEROAD_PARTNER_CONVERSATION_COLLECTIVE_EVIDENCE_SOURCE';
 const COLLECTIVE_CONTEXT_SCHEMA = 'gameroad.partner-conversation-collective-context.v1';
@@ -46,6 +51,134 @@ function exactToken(value, max = 256) {
 
 function hasOnlyKeys(value, allowed) {
   return Object.keys(value).every((key) => allowed.has(key));
+}
+
+function fnv1a(text) {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, '0');
+}
+
+export function buildSaasunaConversationQualityReport(feedback) {
+  if (!feedback || typeof feedback !== 'object' || Array.isArray(feedback)) return null;
+  const partnerId = exactToken(feedback.partnerId, 160);
+  const sessionId = exactToken(feedback.sessionId, 160);
+  const turnId = exactToken(feedback.turnId, 160);
+  const dialogueVersion = exactToken(feedback.dialogueVersion, 160);
+  const sourceId = exactToken(feedback.sourceId, 160);
+  const rating = exactToken(feedback.rating, 16);
+  const responseOrigin = exactToken(feedback.responseOrigin, 64);
+  const canonStatus = exactToken(feedback.canonStatus, 64);
+  const expectedCanonStatus = responseOrigin === 'provider_candidate'
+    ? 'ephemeral_candidate'
+    : responseOrigin === 'approved_fallback'
+      ? 'approved_source_fallback'
+      : null;
+  if (
+    feedback.ok !== true
+    || feedback.schemaVersion !== PARTNER_CONVERSATION_QUALITY_SCHEMA
+    || !partnerId
+    || !sessionId
+    || !turnId
+    || !dialogueVersion
+    || !sourceId
+    || !PARTNER_CONVERSATION_QUALITY_RATINGS.has(rating)
+    || !PARTNER_CONVERSATION_RESPONSE_ORIGINS.has(responseOrigin)
+    || !canonStatus
+    || canonStatus !== expectedCanonStatus
+    || typeof feedback.replacedPrevious !== 'boolean'
+    || feedback.localOnly !== true
+    || feedback.rawTextStored !== false
+    || feedback.automaticCanonMutation !== false
+    || feedback.automaticRelationshipMutation !== false
+    || feedback.automaticRewardMutation !== false
+    || feedback.automaticLearning !== false
+  ) return null;
+
+  const sourceStateIdentity = `${sessionId}:${turnId}`;
+  if (sourceStateIdentity.length > 256) return null;
+  const identity = [
+    partnerId, sessionId, turnId, dialogueVersion, sourceId, rating, responseOrigin, canonStatus,
+  ].join('\u001f');
+  return Object.freeze({
+    idempotencyKey: `conversation-quality-${fnv1a(identity)}`,
+    partnerId,
+    reportType: 'request',
+    sourceUseSite: PARTNER_CONVERSATION_QUALITY_USE_SITE,
+    sourceStateIdentity,
+    feedback: Object.freeze({
+      kind: 'conversation_quality',
+      sessionId,
+      turnId,
+      dialogueVersion,
+      sourceId,
+      rating,
+      responseOrigin,
+      canonStatus,
+      replacedPrevious: feedback.replacedPrevious,
+      candidateOnly: true,
+      canonicalWrite: false,
+      collectiveCandidate: true,
+      formalPromotionRequired: true,
+      rawTextStored: false,
+      automaticCanonMutation: false,
+      automaticRelationshipMutation: false,
+      automaticRewardMutation: false,
+      automaticLearning: false,
+    }),
+  });
+}
+
+export async function submitSaasunaConversationQualityFeedback(feedback, {
+  fetchImpl = globalThis.fetch,
+  endpoint = PARTNER_REPORT_ENDPOINT,
+} = {}) {
+  const submission = buildSaasunaConversationQualityReport(feedback);
+  if (!submission) return Object.freeze({ ok: false, reason: 'conversation_quality_feedback_invalid' });
+  if (typeof fetchImpl !== 'function') {
+    return Object.freeze({ ok: false, reason: 'conversation_quality_feedback_transport_unavailable' });
+  }
+
+  let response;
+  try {
+    response = await fetchImpl(endpoint, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(submission),
+    });
+  } catch {
+    return Object.freeze({ ok: false, reason: 'conversation_quality_feedback_transport_failed' });
+  }
+
+  let body = null;
+  try { body = await response.json(); } catch { body = null; }
+  if (
+    !response?.ok
+    || body?.ok !== true
+    || body?.authority?.verified !== true
+    || body?.feedback?.kind !== 'conversation_quality'
+    || body?.feedback?.candidateOnly !== true
+    || body?.feedback?.canonicalWrite !== false
+    || body?.feedback?.automaticLearning !== false
+  ) {
+    return Object.freeze({
+      ok: false,
+      reason: body?.reason || `conversation_quality_feedback_http_${response?.status ?? 'unknown'}`,
+    });
+  }
+
+  return Object.freeze({
+    ok: true,
+    reportId: body.reportId ?? null,
+    disposition: body.disposition ?? null,
+    rating: body.feedback.rating,
+    candidateOnly: true,
+    canonicalWrite: false,
+    automaticLearning: false,
+  });
 }
 
 function safeCollectivePromptItems(value) {
@@ -206,6 +339,10 @@ function addConversationStyle(document) {
 .grPartnerConversationMessage{max-width:86%;padding:10px 12px;border:1px solid rgba(193,212,255,.13);border-radius:14px 14px 14px 4px;background:rgba(33,42,76,.72);font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
 .grPartnerConversationMessage.user{align-self:flex-end;border-radius:14px 14px 4px 14px;background:rgba(60,91,161,.58)}.grPartnerConversationMessage.saasuna{align-self:flex-start}
 .grPartnerConversationMessage.system{align-self:stretch;max-width:none;background:transparent;border-style:dashed;color:#aeb7d9;font-size:10px}
+.grPartnerConversationFeedback{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:7px;border-top:1px solid rgba(193,212,255,.1);white-space:normal}
+.grPartnerConversationFeedback button{border:1px solid rgba(193,212,255,.2);border-radius:999px;background:rgba(16,23,51,.72);color:#dfe7ff;padding:4px 8px;font:inherit;font-size:10px;cursor:pointer}
+.grPartnerConversationFeedback button:disabled{cursor:default;opacity:.55}.grPartnerConversationFeedback button[data-selected="true"]{opacity:1;border-color:rgba(220,232,255,.55);background:rgba(87,111,189,.36)}
+.grPartnerConversationFeedbackStatus{font-size:9px;color:#aeb7d9}
 .grPartnerConversationComposer{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:12px 14px 14px;border-top:1px solid rgba(196,215,255,.13)}
 .grPartnerConversationInput{min-height:50px;max-height:112px;resize:vertical;border:1px solid rgba(184,207,255,.23);border-radius:13px;background:rgba(7,11,27,.76);color:#f7f8ff;padding:11px 12px;font:inherit;outline:none}
 .grPartnerConversationInput:focus{border-color:rgba(159,190,255,.55)}.grPartnerConversationInput::placeholder{color:#7e8aaf}
@@ -247,6 +384,74 @@ function setConversationResponseState(node, turn) {
     return;
   }
   setConversationState(node, '会話できます', 'neutral');
+}
+
+export function attachSaasunaConversationQualityControls({
+  document,
+  row,
+  entry,
+  turn,
+  fetchImpl = globalThis.fetch,
+  endpoint = PARTNER_REPORT_ENDPOINT,
+} = {}) {
+  const turnId = exactToken(turn?.evidence?.turnId, 160);
+  if (!document?.createElement || !row?.appendChild || typeof entry?.feedback !== 'function' || !turnId) return null;
+
+  const controls = document.createElement('div');
+  controls.className = 'grPartnerConversationFeedback';
+  controls.dataset.conversationQuality = '1';
+
+  const status = document.createElement('span');
+  status.className = 'grPartnerConversationFeedbackStatus';
+  status.dataset.conversationQualityStatus = 'idle';
+  status.textContent = 'この返事はどう？';
+
+  const buttons = [];
+  const setDisabled = (disabled) => {
+    for (const button of buttons) button.disabled = disabled;
+  };
+
+  const rate = async (rating) => {
+    if (buttons.some((button) => button.disabled)) return Object.freeze({ ok: false, reason: 'feedback_busy_or_saved' });
+    const localFeedback = entry.feedback(turnId, rating);
+    if (localFeedback?.ok !== true) {
+      status.dataset.conversationQualityStatus = 'error';
+      status.textContent = '評価できませんでした';
+      return localFeedback;
+    }
+
+    setDisabled(true);
+    status.dataset.conversationQualityStatus = 'saving';
+    status.textContent = '改善候補として記録中';
+    const saved = await submitSaasunaConversationQualityFeedback(localFeedback, { fetchImpl, endpoint });
+    if (!saved.ok) {
+      setDisabled(false);
+      status.dataset.conversationQualityStatus = 'error';
+      status.textContent = '記録できませんでした';
+      return saved;
+    }
+
+    controls.dataset.savedRating = rating;
+    for (const button of buttons) button.dataset.selected = String(button.dataset.rating === rating);
+    status.dataset.conversationQualityStatus = 'saved';
+    status.textContent = '改善候補として記録しました';
+    return saved;
+  };
+
+  for (const [rating, label] of [['good', '♡ よかった'], ['bad', '△ 微妙']]) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.rating = rating;
+    button.dataset.selected = 'false';
+    button.textContent = label;
+    button.setAttribute?.('aria-label', `この返事を${rating === 'good' ? 'よかった' : '微妙'}と評価`);
+    button.addEventListener('click', () => rate(rating));
+    buttons.push(button);
+    controls.appendChild(button);
+  }
+  controls.appendChild(status);
+  row.appendChild(controls);
+  return controls;
 }
 
 export function mountSaasunaConversationProductSurface(global = globalThis) {
@@ -322,7 +527,16 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
         const turn = response?.turn;
         const ok = turn?.ok && typeof turn.utterance === 'string';
         if (!ok) restoreSaasunaConversationRetryDraft(input, userRow, message);
-        appendMessage(document, log, ok ? 'saasuna' : 'system', ok ? turn.utterance : '応答できませんでした。もう一度送ってください。');
+        const responseRow = appendMessage(document, log, ok ? 'saasuna' : 'system', ok ? turn.utterance : '応答できませんでした。もう一度送ってください。');
+        if (ok) {
+          attachSaasunaConversationQualityControls({
+            document,
+            row: responseRow,
+            entry,
+            turn,
+            fetchImpl: global?.fetch,
+          });
+        }
         setConversationResponseState(state, turn);
       } catch {
         restoreSaasunaConversationRetryDraft(input, userRow, message);
@@ -350,7 +564,7 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
   project();
 
   const runtime = Object.freeze({
-    version: 'gameroad.partner-conversation-product-mount.v2',
+    version: 'gameroad.partner-conversation-product-mount.v3',
     partnerId: 'partner.saasuna',
     pickerRequired: true,
     providerReady: provider !== null,
@@ -366,6 +580,9 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
       visual: SAASUNA_PROVISIONAL_VISUAL_CONTRACT,
       collectiveEvidenceSourceMounted: typeof global?.[COLLECTIVE_EVIDENCE_SOURCE_NAME] === 'function',
       collectiveContextPolicy: 'approved_runtime_source_only',
+      conversationQualityFeedback: 'server_verified_candidate_only',
+      conversationQualityRawTextStored: false,
+      conversationQualityAutomaticLearning: false,
       provider: provider?.status?.() ?? Object.freeze({ transport: 'fallback_only', providerSessionActive: false, providerSessionStoredInCanon: false }),
     }),
     disconnect: () => observer?.disconnect(),

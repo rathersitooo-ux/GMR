@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-BORDER-LIGHT-R1-20260921T0300-CODEX",
+  "taskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "workUnitKey": "BACKGROUND_BORDER_LIGHT_OVERLAY_R1",
+  "acquireKey": "HOME-BORDER-LIGHT-R1-20260921T0300-CODEX",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "UI-PRESENTATION-FX-QUALITY-001/BACKGROUND_BORDER_LIGHT_OVERLAY_R1/PREDICTED_ASSET_ONLY",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "local-background-overlay-alpha-check-20260921T0300",
+  "proceedToken": "PROCEED|HOME-BORDER-LIGHT-R1-20260921T0300-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|20260921T0300",
+  "authorizationBaseSha": "956021120af6905592e6552cbd0d5c9b8f8178ef",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "leaseWorkUnitKey": "BACKGROUND_BORDER_LIGHT_OVERLAY_R1",
+  "leaseAcquireKey": "HOME-BORDER-LIGHT-R1-20260921T0300-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 03:00 JST",
+  "leaseUntilJst": "2026-09-21 04:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A13:L13",
+  "leaseExactMutableResources": "assets/visual/effects/home-border-light-overlay-v1.png; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback",
+  "scope": [
+    "assets/visual/effects/home-border-light-overlay-v1.png"
+  ],
+  "leaseScope": [
+    "assets/visual/effects/home-border-light-overlay-v1.png"
+  ],
+  "solutionSignature": "transparent edge-light overlay for the existing home/background visual consumer",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "UI-PRESENTATION-FX-QUALITY-001/BACKGROUND_BORDER_LIGHT_OVERLAY_R1/REUSE_CHECK",
+  "solutionSearchEvidence": [
+    "actual:assets/visual/home/home-illustration-landscape.webp is the existing formal opaque home background",
+    "consumer:browser/GAMEROAD.html and current background presentation use the opaque scene asset rather than a separate transparent light layer",
+    "inventory:assets/visual contains no existing transparent edge-light overlay for background compositing"
+  ],
+  "buildResidualReason": "The existing home scene is an opaque background image and cannot provide an independently composited edge-light layer. A generated transparent overlay is the minimal missing visual asset; runtime mounting is intentionally deferred until a real consumer and visual acceptance are wired.",
+  "sourceGeneratedPath": "/workspace/scratch/4e0decd8fa4f/generated_images/exec-5e459b39-6514-4056-8e3a-344cc8194f2a.png",
+  "runtimeAssetPath": "assets/visual/effects/home-border-light-overlay-v1.png",
+  "deterministicProcessing": "Downscaled to 1024x576 with Lanczos and stripped generator metadata; RGBA alpha and edge-light composition remain the production asset payload.",
+  "intendedMutation": "Add one generated RGBA transparent edge-light overlay as a versioned formal asset. Do not modify GAMEROAD.html or claim runtime background behavior in this work unit.",
+  "acceptance": [
+    "Production asset is a deterministic runtime derivative of the actual generated file at the exact asset path",
+    "PNG has true alpha and a calm transparent central region",
+    "No opaque matte, character, text, logo, watermark, or full-scene replacement",
+    "PR and required checks/readback are verified",
+    "Runtime consumer integration remains explicitly pending until a real background mount and focused visual acceptance exist"
+  ],
+  "rollback": "Close the unmerged asset-only PR or revert its exact commit; leave the generated preview original intact.",
+  "createdAtJst": "2026-09-21 03:01 JST"
+}

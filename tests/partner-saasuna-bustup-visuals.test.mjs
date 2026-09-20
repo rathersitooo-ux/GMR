@@ -36,6 +36,8 @@ test('Battle presentation selects only context-appropriate Saasuna bust-ups auto
   assert.equal(resolveSaasunaAdviceBustupState({ ...base, quickRouteId: 'situation' }), 'CURIOUS_CONFUSED');
   assert.equal(resolveSaasunaAdviceBustupState({ ...base, quickRouteId: 'idea' }), 'GUIDE_PRESENT');
   assert.equal(resolveSaasunaAdviceBustupState({ ...base, tutorialActive: true }), 'GUIDE_PRESENT');
+  assert.equal(resolveSaasunaAdviceBustupState({ ...base, touchCryActive: true }), 'TOUCH_CRY');
+  assert.equal(resolveSaasunaAdviceBustupState({ ...base, touchCryActive: true, reactionActive: true }), 'TOUCH_CRY');
   assert.equal(resolveSaasunaAdviceBustupState({ ...base, reactionActive: true }), 'SURPRISED');
   assert.equal(resolveSaasunaAdviceBustupState({ partnerId: 'partner.other' }), null);
   assert.ok(SAASUNA_BUSTUP_ASSETS.SHH && SAASUNA_BUSTUP_ASSETS.TOUCH_CRY && SAASUNA_BUSTUP_ASSETS.SAD_DOWNCAST);

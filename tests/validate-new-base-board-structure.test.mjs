@@ -76,6 +76,24 @@ test('Gate must retain reciprocal Shield identity and valid upper/lower attachme
   assert.ok(codes(result).has('GATE_LOWER_LINK'));
 });
 
+test('validator pins stage 1 to the Shield side and stage 7 to the shared GOAL side', () => {
+  const graph = fresh();
+  assert.equal(validateNewBaseBoardStructure(graph).ok, true);
+
+  for (const lane of graph.upperLanes) {
+    lane.gate.upperCellId = lane.cells[6].id;
+    const goalBranch = graph.goalBranches.find((edge) => edge.id === `goal-branch:${lane.laneKey}`);
+    goalBranch.toId = lane.cells[0].id;
+    const upperGateEdge = graph.gateConnections.find((edge) => edge.id === `gate-edge:${lane.laneKey}:upper`);
+    upperGateEdge.fromId = lane.cells[6].id;
+  }
+
+  const result = validateNewBaseBoardStructure(graph);
+  assert.equal(result.ok, false);
+  assert.ok(codes(result).has('GATE_UPPER_LINK'));
+  assert.ok(codes(result).has('EDGE_SET_MISMATCH'));
+});
+
 test('the lower board must remain one connected shared visual field', () => {
   const graph = fresh();
   graph.lowerEdges = [];

@@ -47,6 +47,9 @@ test('new map keeps four players x three Shield-linked routes but exposes one sh
   assert.equal(NEW_BASE_GOAL_PATH_CORE.sharedGoalCount, 1);
   assert.equal(NEW_BASE_GOAL_PATH_CORE.routeGateCount, 12);
   assert.equal(NEW_BASE_GOAL_PATH_CORE.topRowColumnsAreRouteAnchors, true);
+  assert.equal(NEW_BASE_GOAL_PATH_CORE.gateOpenPolicy, 'ALL_AT_ONCE_WHEN_ANY_GOAL_PATH_CONNECTED');
+  assert.equal(NEW_BASE_GOAL_PATH_CORE.gateOpenIsTerminal, false);
+  assert.equal(NEW_BASE_GOAL_PATH_CORE.laneGoalConnectionIsNotGateOpenState, true);
   assert.throws(() => layout({ horizontalCellCount: 11 }), /MINIMUM_TWELVE_HORIZONTAL_CELLS_REQUIRED/);
 });
 
@@ -65,7 +68,7 @@ test('12 is a minimum and lane positions still come from caller authority', () =
   assert.equal(thirteen.sharedGoalCount, 1);
 });
 
-test('each of all 4 x 3 routes independently connects through its gate to the same GOAL at exactly seven cards', () => {
+test('each of all 4 x 3 routes independently connects its branch to the same GOAL at exactly seven cards', () => {
   const map = layout();
   for (const participantId of participantIds) {
     for (const columnIndex of map.shieldLinkedLaneColumnsByParticipant[participantId]) {
@@ -78,6 +81,8 @@ test('each of all 4 x 3 routes independently connects through its gate to the sa
       assert.equal(projection.sharedGoalId, 'goal:shared');
       assert.equal(projection.sharedGoalCount, 1);
       assert.equal(projection.routeGateCount, 12);
+      assert.equal(projection.gateOpen, true);
+      assert.equal(projection.gateOpenScope, 'ALL_ROUTE_GATE_ANCHORS');
       assert.equal(projection.connectedGoalPaths.length, 1);
       const connected = projection.connectedGoalPaths[0];
       assert.equal(connected.participantId, participantId);
@@ -92,13 +97,14 @@ test('each of all 4 x 3 routes independently connects through its gate to the sa
   }
 });
 
-test('fewer than seven keeps exact physical card identities without opening the gate', () => {
+test('fewer than seven keeps exact physical card identities without connecting a GOAL branch or opening Gate', () => {
   const map = layout();
   const columns = emptyColumns();
   const cards = sevenCards('p1-lane').slice(0, 6);
   columns[0] = cards;
   const projection = projectNewBaseGoalPathConnections(map, { straightCardIdsByColumn: columns });
   assert.equal(projection.ok, true);
+  assert.equal(projection.gateOpen, false);
   assert.equal(projection.connectedGoalPaths.length, 0);
   const lane = projection.laneStates.find((item) => item.columnIndex === 0);
   assert.equal(lane.straightCardCount, 6);
@@ -111,10 +117,10 @@ test('overfilled or incomplete snapshots fail closed rather than inventing >7 se
   const overfilled = emptyColumns();
   overfilled[0] = [...sevenCards('p1-lane'), 'p1-lane-8'];
   assert.deepEqual(projectNewBaseGoalPathConnections(map, { straightCardIdsByColumn: overfilled }), {
-    ok: false, reason: 'STRAIGHT_COLUMN_SNAPSHOT_INVALID', connectedGoalPaths: [],
+    ok: false, reason: 'STRAIGHT_COLUMN_SNAPSHOT_INVALID', gateOpen: false, connectedGoalPaths: [],
   });
   assert.deepEqual(projectNewBaseGoalPathConnections(map, { straightCardIdsByColumn: emptyColumns(11) }), {
-    ok: false, reason: 'STRAIGHT_COLUMN_SNAPSHOT_INVALID', connectedGoalPaths: [],
+    ok: false, reason: 'STRAIGHT_COLUMN_SNAPSHOT_INVALID', gateOpen: false, connectedGoalPaths: [],
   });
 });
 
@@ -124,6 +130,7 @@ test('seven straight connects a route but still does not revive legacy terminal 
   columns[5] = sevenCards('p2-middle');
   const projection = projectNewBaseGoalPathConnections(map, { straightCardIdsByColumn: columns });
   assert.equal(projection.connectedGoalPaths.length, 1);
+  assert.equal(projection.gateOpen, true);
   assert.equal(projection.terminalWin, false);
   assert.equal(shouldForwardLegacySevenRoadWin({ rulesetIsNewBase: true, legacySevenRoadWin: true }), false);
   for (const forbidden of ['winnerId','winnerIds','result','finalizedResult','goalReached']) {

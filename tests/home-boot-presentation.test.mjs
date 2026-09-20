@@ -10,6 +10,7 @@ import {
   parsePublishedReleaseNotes,
   projectHomeShell,
   setupQuickDeckCardLabel,
+  containSetupQuickDeckTabFocus,
 } from '../browser/home-shell-presentation-core.mjs';
 import {
   BOOT_LOADING_PHASES,
@@ -39,6 +40,52 @@ import {
   shouldDismissHomeSlidepadOnBlankDoubleClick,
   toggleExistingQuickSetting,
 } from '../browser/home-boot-runtime-mount.mjs';
+
+test('Setup Quick Deck keeps keyboard Tab focus inside the existing modal', () => {
+  const documentSource = { activeElement: null };
+  const node = (name) => ({
+    name,
+    hidden: false,
+    getAttribute() { return null; },
+    focus() { documentSource.activeElement = this; },
+  });
+  const first = node('edit');
+  const last = node('close');
+  const inside = new Set([first, last]);
+  const dialog = {
+    querySelectorAll() { return [first, last]; },
+    contains(value) { return inside.has(value); },
+  };
+  const event = (shiftKey = false) => ({
+    key: 'Tab',
+    shiftKey,
+    prevented: false,
+    preventDefault() { this.prevented = true; },
+  });
+
+  documentSource.activeElement = last;
+  const forward = event(false);
+  assert.equal(containSetupQuickDeckTabFocus(forward, dialog, documentSource), true);
+  assert.equal(forward.prevented, true);
+  assert.equal(documentSource.activeElement, first);
+
+  documentSource.activeElement = first;
+  const backward = event(true);
+  assert.equal(containSetupQuickDeckTabFocus(backward, dialog, documentSource), true);
+  assert.equal(backward.prevented, true);
+  assert.equal(documentSource.activeElement, last);
+
+  documentSource.activeElement = first;
+  const interior = event(false);
+  assert.equal(containSetupQuickDeckTabFocus(interior, dialog, documentSource), false);
+  assert.equal(interior.prevented, false);
+
+  documentSource.activeElement = {};
+  const escaped = event(false);
+  assert.equal(containSetupQuickDeckTabFocus(escaped, dialog, documentSource), true);
+  assert.equal(escaped.prevented, true);
+  assert.equal(documentSource.activeElement, first);
+});
 
 test('Setup Quick Deck resolves production display_name before raw card ids', () => {
   const previousCardData = globalThis.__CARD_DATA__;

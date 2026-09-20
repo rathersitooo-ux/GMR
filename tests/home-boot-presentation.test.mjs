@@ -9,6 +9,7 @@ import {
   parsePublishedReleaseCommunications,
   parsePublishedReleaseNotes,
   projectHomeShell,
+  setupQuickDeckCardLabel,
 } from '../browser/home-shell-presentation-core.mjs';
 import {
   BOOT_LOADING_PHASES,
@@ -38,6 +39,18 @@ import {
   shouldDismissHomeSlidepadOnBlankDoubleClick,
   toggleExistingQuickSetting,
 } from '../browser/home-boot-runtime-mount.mjs';
+
+test('Setup Quick Deck resolves production display_name before raw card ids', () => {
+  const previousCardData = globalThis.__CARD_DATA__;
+  try {
+    globalThis.__CARD_DATA__ = [{ id: 'SP_A', display_name: 'スペードA' }];
+    assert.equal(setupQuickDeckCardLabel('SP_A'), 'スペードA');
+    assert.equal(setupQuickDeckCardLabel('UNKNOWN'), 'UNKNOWN');
+  } finally {
+    if (previousCardData === undefined) delete globalThis.__CARD_DATA__;
+    else globalThis.__CARD_DATA__ = previousCardData;
+  }
+});
 
 test('Setup Quick Deck live consumer delegates to the canonical read-only preview and does not own deck state', () => {
   const source = fs.readFileSync(new URL('../browser/home-shell-presentation-core.mjs', import.meta.url), 'utf8');

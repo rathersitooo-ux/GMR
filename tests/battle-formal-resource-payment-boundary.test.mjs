@@ -10,7 +10,7 @@ import {
   projectFormalResourcePayment,
 } from '../browser/battle-formal-resource-payment-boundary.mjs';
 
-test('Road generic Mana cost is zero', () => {
+test('initial janken/Road generic Mana cost is zero', () => {
   assert.equal(
     getFormalGenericManaCost({ kind: FORMAL_RESOURCE_PAYMENT_KIND.ROAD, cardNumber: 9 }),
     0,
@@ -19,14 +19,14 @@ test('Road generic Mana cost is zero', () => {
   const receipt = projectFormalResourcePayment({
     kind: FORMAL_RESOURCE_PAYMENT_KIND.ROAD,
     cardNumber: 9,
-    mana: 4,
+    mana: 0,
     honey: 6,
   });
   assert.equal(receipt.status, FORMAL_RESOURCE_PAYMENT_STATUS.RESOLVED);
   assert.equal(receipt.cost, 0);
   assert.equal(receipt.manaPaid, 0);
   assert.equal(receipt.honeyPaid, 0);
-  assert.equal(receipt.manaAfter, 4);
+  assert.equal(receipt.manaAfter, 0);
   assert.equal(receipt.honeyAfter, 6);
 });
 
@@ -37,7 +37,7 @@ test('normal Battle card generic Mana cost equals its card number', () => {
   );
 });
 
-test('Mana alone pays first when it covers the Battle card cost', () => {
+test('sufficient Mana pays the full Battle card cost and Honey is untouched', () => {
   const receipt = projectFormalResourcePayment({
     kind: FORMAL_RESOURCE_PAYMENT_KIND.BATTLE,
     cardNumber: 7,
@@ -60,28 +60,12 @@ test('Mana alone pays first when it covers the Battle card cost', () => {
   });
 });
 
-test('Honey forcibly pays exactly the Mana deficit when sufficient', () => {
+test('Honey cannot substitute for missing Mana', () => {
   const receipt = projectFormalResourcePayment({
     kind: FORMAL_RESOURCE_PAYMENT_KIND.BATTLE,
     cardNumber: 7,
     mana: 4,
-    honey: 8,
-  });
-
-  assert.equal(receipt.status, FORMAL_RESOURCE_PAYMENT_STATUS.RESOLVED);
-  assert.equal(receipt.manaPaid, 4);
-  assert.equal(receipt.honeyPaid, 3);
-  assert.equal(receipt.manaAfter, 0);
-  assert.equal(receipt.honeyAfter, 5);
-  assert.equal(receipt.userChoiceRequired, false);
-});
-
-test('total resource shortage fails closed instead of inventing an outcome', () => {
-  const receipt = projectFormalResourcePayment({
-    kind: FORMAL_RESOURCE_PAYMENT_KIND.BATTLE,
-    cardNumber: 7,
-    mana: 2,
-    honey: 1,
+    honey: 99,
   });
 
   assert.equal(
@@ -89,12 +73,41 @@ test('total resource shortage fails closed instead of inventing an outcome', () 
     FORMAL_RESOURCE_PAYMENT_STATUS.AUTHORITY_UNRESOLVED_INSUFFICIENT_TOTAL,
   );
   assert.equal(receipt.resolved, false);
-  assert.equal(receipt.manaPaid, 2);
-  assert.equal(receipt.honeyRequired, 5);
-  assert.equal(receipt.userChoiceRequired, false);
+  assert.equal(receipt.reason, 'INSUFFICIENT_MANA');
+  assert.equal(receipt.manaPaid, 0);
+  assert.equal(receipt.honeyPaid, 0);
+  assert.equal(receipt.manaDeficit, 3);
   assert.equal('manaAfter' in receipt, false);
   assert.equal('honeyAfter' in receipt, false);
-  assert.equal('honeyPaid' in receipt, false);
+});
+
+test('zero Mana cannot play a non-janken Battle card even with Honey available', () => {
+  const receipt = projectFormalResourcePayment({
+    kind: FORMAL_RESOURCE_PAYMENT_KIND.BATTLE,
+    cardNumber: 1,
+    mana: 0,
+    honey: 100,
+  });
+
+  assert.equal(receipt.resolved, false);
+  assert.equal(receipt.reason, 'INSUFFICIENT_MANA');
+  assert.equal(receipt.manaPaid, 0);
+  assert.equal(receipt.honeyPaid, 0);
+});
+
+test('exact Mana succeeds without Honey', () => {
+  const receipt = projectFormalResourcePayment({
+    kind: FORMAL_RESOURCE_PAYMENT_KIND.BATTLE,
+    cardNumber: 4,
+    mana: 4,
+    honey: 0,
+  });
+
+  assert.equal(receipt.resolved, true);
+  assert.equal(receipt.manaPaid, 4);
+  assert.equal(receipt.manaAfter, 0);
+  assert.equal(receipt.honeyPaid, 0);
+  assert.equal(receipt.honeyAfter, 0);
 });
 
 test('invalid resource or card inputs fail closed', () => {

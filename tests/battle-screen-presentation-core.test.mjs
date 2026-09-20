@@ -228,7 +228,59 @@ assert.deepEqual(
   ]
 );
 assert.equal(orderedSettle.causalReturn.destination.destinationKey, 'P3:R');
+assert.equal(orderedSettle.actionOrderChain, null);
 assert.equal(auditBattleScreenModel(orderedSettle).ok, true);
+
+const orderedCompareTimeline = projectAcceptedBattleEventsToScreen({
+  participants,
+  events,
+  actionOrderByEventId: { c1: actionOrder }
+});
+const orderedCompare = orderedCompareTimeline.models.find(model => model.eventId === 'c1');
+assert.equal(orderedCompare.phase, 'compare4');
+assert.equal(orderedCompare.boardReturn, null);
+assert.equal(orderedCompare.causalReturn, null);
+assert.equal(orderedCompare.actionOrderChain.schema, 'gameroad.battle-causal-order-bridge.v1');
+assert.deepEqual(orderedCompare.actionOrderChain.processingOrder, ['P2', 'P1', 'P4', 'P3']);
+assert.deepEqual(orderedCompare.actionOrderChain.processedOrder, ['P2', 'P4']);
+assert.deepEqual(
+  orderedCompare.actionOrderChain.finalSlots.map(slot => [slot.playerId, slot.cardId, slot.visualState]),
+  [
+    ['P2', 'C-202', 'resolved-win'],
+    ['P1', 'C-101', 'invalidated'],
+    ['P4', 'C-404', 'unresolved-final'],
+    ['P3', 'C-303', 'unresolved-final']
+  ]
+);
+assert.equal(auditBattleScreenModel(orderedCompare).ok, true);
+
+const revealOrderTimeline = projectAcceptedBattleEventsToScreen({
+  participants,
+  events,
+  actionOrderByEventId: { r1: actionOrder }
+});
+const revealWithOrderInput = revealOrderTimeline.models.find(model => model.eventId === 'r1');
+assert.equal(revealWithOrderInput.phase, 'reveal');
+assert.equal(revealWithOrderInput.actionOrderChain, null);
+assert.equal(revealWithOrderInput.causalReturn, null);
+assert.equal(auditBattleScreenModel(revealWithOrderInput).ok, true);
+
+const wrongPhaseChain = { ...orderedCompare, phase: 'reveal' };
+const wrongPhaseAudit = auditBattleScreenModel(wrongPhaseChain);
+assert.equal(wrongPhaseAudit.ok, false);
+assert.equal(wrongPhaseAudit.defects.includes('ACTION_ORDER_CHAIN_PHASE'), true);
+
+const wrongSlotChain = {
+  ...orderedCompare,
+  actionOrderChain: {
+    ...orderedCompare.actionOrderChain,
+    finalSlots: orderedCompare.actionOrderChain.finalSlots.map((slot, index) =>
+      index === 0 ? { ...slot, playerId: 'P4' } : slot)
+  }
+};
+const wrongSlotAudit = auditBattleScreenModel(wrongSlotChain);
+assert.equal(wrongSlotAudit.ok, false);
+assert.equal(wrongSlotAudit.defects.includes('ACTION_ORDER_CHAIN_SLOT_BINDING'), true);
 
 const orderedMapTimeline = projectAcceptedBattleEventsToScreen({
   participants,

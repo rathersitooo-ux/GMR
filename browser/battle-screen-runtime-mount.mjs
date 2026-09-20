@@ -804,7 +804,9 @@ function writeCinematicOrderRail(document, rail, model) {
   setData(rail, 'eventId', null);
   setData(rail, 'cardCount', null);
   setData(rail, 'orderSource', null);
-  const processing = model?.causalReturn?.processing;
+  const causalProcessing = model?.causalReturn?.processing ?? null;
+  const compareProcessing = model?.phase === 'compare4' ? model?.actionOrderChain ?? null : null;
+  const processing = causalProcessing ?? compareProcessing;
   const slots = Array.isArray(processing?.finalSlots) ? processing.finalSlots : [];
   if (model?.battlePhasePresentationMode !== 'FULLSCREEN_ANIMATION' || slots.length === 0) {
     rail.hidden = true;
@@ -850,7 +852,11 @@ function writeCinematicOrderRail(document, rail, model) {
   rail.setAttribute?.('aria-hidden', 'false');
   setData(rail, 'eventId', model?.eventId ?? null);
   setData(rail, 'cardCount', slots.length);
-  setData(rail, 'orderSource', 'accepted-causal-processing-order');
+  setData(
+    rail,
+    'orderSource',
+    causalProcessing ? 'accepted-causal-processing-order' : 'accepted-action-order-compare4'
+  );
   return rail;
 }
 
@@ -1455,8 +1461,11 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
       viewerParticipantId: viewer.resolved,
       cinematicCharacterByParticipant: presentationContext?.cinematicCharacterByParticipant ?? defaultCinematicCharacterByParticipant
     });
+    const finalStateSlots = model?.causalReturn?.processing?.finalSlots
+      ?? (model?.phase === 'compare4' ? model?.actionOrderChain?.finalSlots : null)
+      ?? [];
     const finalStateByParticipant = new Map(
-      (model?.causalReturn?.processing?.finalSlots ?? []).map(slot => [slot.playerId, slot.visualState])
+      finalStateSlots.map(slot => [slot.playerId, slot.visualState])
     );
 
     for (let index = 0; index < lanes.length; index += 1) {

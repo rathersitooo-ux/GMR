@@ -65,8 +65,11 @@ class FakeNode {
 }
 
 class FakeDocument {
-  constructor() {
+  constructor(reducedMotion = false) {
     this.head = new FakeNode('head');
+    this.defaultView = {
+      matchMedia: () => ({ matches: reducedMotion }),
+    };
   }
 
   createElement(tagName) {
@@ -159,4 +162,22 @@ test('a new state still plays when the live renderer requests no restart for rep
   const imageAnimations = controller.snapshot().surface.image.animations;
   assert.equal(imageAnimations.at(-1).timing.duration, SAASUNA_MOTION_PROFILES.SURPRISED.durationMs);
   assert.equal(imageAnimations.at(-1).timing.iterations, 1);
+});
+
+test('reduced motion keeps the final pose and suppresses the transient effect', () => {
+  const doc = new FakeDocument(true);
+  const figure = new FakeNode('figure');
+  const art = new FakeNode('div');
+  art.className = 'partnerAdviceBustupArt';
+  const image = new FakeNode('img');
+  art.append(image);
+  figure.append(art);
+  const bustup = { figure, image };
+  const surface = ensureSaasunaMotionSurface(doc, bustup);
+  const controller = createSaasunaMotionController({ doc, bustup });
+  controller.setState({ partnerId: 'partner.saasuna', visualState: 'HAPPY_WAVE' });
+  assert.equal(controller.snapshot().reducedMotion, true);
+  assert.equal(surface.image.animations.length, 0);
+  assert.equal(surface.effect.hidden, true);
+  assert.match(surface.image.style.transform, /scale\(1\)/);
 });

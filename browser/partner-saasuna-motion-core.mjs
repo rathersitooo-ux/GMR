@@ -233,6 +233,8 @@ export function ensureSaasunaMotionStyle(doc) {
     '[data-role="saasuna-motion-effect"] .saasunaWindCutLine:nth-child(1){transform:translate(-14px,-12px) rotate(-16deg)}',
     '[data-role="saasuna-motion-effect"] .saasunaWindCutLine:nth-child(2){width:40%;transform:translate(8px,0) rotate(-16deg);opacity:.72}',
     '[data-role="saasuna-motion-effect"] .saasunaWindCutLine:nth-child(3){width:31%;transform:translate(21px,12px) rotate(-16deg);opacity:.44}',
+    '[data-role="saasuna-motion-effect"][data-kind="tear"] .saasunaWindCutLine{display:none}',
+    '[data-role="saasuna-motion-effect"][data-kind="wind-cut"] .saasunaTearLine{display:none}',
     '[data-role="saasuna-motion-effect"][data-kind="tear"]{inset:20% 12% 10%;place-items:start center}',
     '[data-role="saasuna-motion-effect"][data-kind="tear"] .saasunaTearLine{display:block;width:5px;height:16px;border-radius:999px;background:linear-gradient(rgba(184,238,255,.9),rgba(95,166,224,.18));box-shadow:0 0 7px rgba(137,212,255,.55)}',
     '[data-role="saasuna-motion-effect"][data-kind="tear"] .saasunaTearLine:nth-child(1){transform:translate(-14px,10px)}',
@@ -268,13 +270,13 @@ export function ensureSaasunaMotionSurface(doc, bustup) {
   return Object.freeze({ art, image: bustup.image, crossfadeImage, effect, figure: bustup.figure });
 }
 
-function runEffect(surface, effect, profile, animationState) {
+function runEffect(surface, effect, profile, animationState, reducedMotion) {
   if (!surface?.effect) return;
   animationState.effectAnimation?.cancel?.();
   const kind = effect?.kind || 'none';
   surface.effect.dataset.kind = kind;
-  surface.effect.hidden = kind === 'none';
-  if (kind === 'none') return;
+  surface.effect.hidden = kind === 'none' || reducedMotion;
+  if (kind === 'none' || reducedMotion) return;
   const duration = Math.max(260, Math.min(profile.durationMs, kind === 'tear' ? 1100 : 720));
   const keyframes = kind === 'tear'
     ? [
@@ -295,8 +297,14 @@ function runEffect(surface, effect, profile, animationState) {
   });
 }
 
-function runMotion(surface, profile, animationState) {
+function runMotion(surface, profile, animationState, reducedMotion) {
   animationState.motionAnimation?.cancel?.();
+  if (reducedMotion) {
+    const lastFrame = profile.keyframes[profile.keyframes.length - 1];
+    if (surface.image.style) surface.image.style.transform = lastFrame.transform;
+    animationState.motionAnimation = null;
+    return;
+  }
   const timing = {
     duration: profile.durationMs,
     easing: profile.easing,
@@ -358,6 +366,7 @@ export function createSaasunaMotionController({ doc, bustup, transitionMs = 180 
   if (!surface) return null;
   ensureSaasunaMotionStyle(doc);
   const animationState = { motionAnimation: null, effectAnimation: null };
+  const reducedMotion = Boolean(doc.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
   let currentState = null;
   let currentAssetFile = surface.image.dataset.assetFile || null;
   let sequence = 0;
@@ -376,11 +385,12 @@ export function createSaasunaMotionController({ doc, bustup, transitionMs = 180 
     currentAssetFile = plan.asset.fileName;
     surface.figure.dataset.motionState = plan.state;
     surface.figure.dataset.motionLoop = plan.loop ? 'true' : 'false';
-    startAssetTransition(surface, plan, options.transitionMs ?? transitionMs, previousAssetFile, () => activeSequence === sequence, () => {
+    const requestedTransitionMs = options.transitionMs ?? transitionMs;
+    startAssetTransition(surface, plan, reducedMotion ? 0 : requestedTransitionMs, previousAssetFile, () => activeSequence === sequence, () => {
       if (activeSequence !== sequence) return;
-      runMotion(surface, SAASUNA_MOTION_PROFILES[plan.state], animationState);
+      runMotion(surface, SAASUNA_MOTION_PROFILES[plan.state], animationState, reducedMotion);
     });
-    runEffect(surface, plan.effect, SAASUNA_MOTION_PROFILES[plan.state], animationState);
+    runEffect(surface, plan.effect, SAASUNA_MOTION_PROFILES[plan.state], animationState, reducedMotion);
     return plan;
   };
 
@@ -404,6 +414,6 @@ export function createSaasunaMotionController({ doc, bustup, transitionMs = 180 
     setState,
     settleTo,
     clear,
-    snapshot: () => Object.freeze({ state: currentState, surface }),
+    snapshot: () => Object.freeze({ state: currentState, reducedMotion, surface }),
   });
 }

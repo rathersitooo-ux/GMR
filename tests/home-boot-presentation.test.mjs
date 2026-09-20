@@ -39,6 +39,35 @@ import {
   toggleExistingQuickSetting,
 } from '../browser/home-boot-runtime-mount.mjs';
 
+test('Setup Quick Deck live consumer delegates to the canonical read-only preview and does not own deck state', () => {
+  const source = fs.readFileSync(new URL('../browser/home-shell-presentation-core.mjs', import.meta.url), 'utf8');
+  assert.match(source, /from '\.\/cards-deck-presentation-core\.mjs'/);
+  assert.match(source, /createSetupQuickDeckPreview\(\{/);
+  assert.match(source, /SETUP_QUICK_DECK_PREVIEW_CONTRACT\.readOnly !== true/);
+  assert.match(source, /SETUP_QUICK_DECK_PREVIEW_CONTRACT\.mutatesDeck !== false/);
+  assert.match(source, /SETUP_QUICK_DECK_PREVIEW_CONTRACT\.mutatesSelection !== false/);
+  assert.doesNotMatch(source, /createSetupQuickDeckModel/);
+  assert.match(source, /savedDeck:\s*state\?\.savedDeck/);
+  assert.match(source, /api\.show\('cards'\)/);
+  assert.match(source, /event\?\.key !== 'Escape'/);
+  assert.match(source, /event\?\.target === dialog/);
+  assert.doesNotMatch(source, /state\.savedDeck\s*=/);
+  assert.doesNotMatch(source, /state\.selectedDeckIndex\s*=/);
+  assert.doesNotMatch(source, /state\.deckDraft\s*=/);
+});
+
+test('Setup Quick Deck keeps the Start CTA separate and preserves all explicit dismissal paths', () => {
+  const source = fs.readFileSync(new URL('../browser/home-shell-presentation-core.mjs', import.meta.url), 'utf8');
+  assert.match(source, /setupQuickDeckTrigger', 'デッキ確認'/);
+  assert.match(source, /renderSection\('メイン', preview\.deck\.main\)/);
+  assert.match(source, /renderSection\('EX', preview\.deck\.ex\)/);
+  assert.match(source, /setupQuickDeckClose', '閉じる'/);
+  assert.match(source, /setupQuickDeckEdit', '編集へ'/);
+  assert.match(source, /startMatch\.insertAdjacentElement\('beforebegin', trigger\)/);
+  assert.match(source, /if \(restoreFocus\) trigger\.focus\?\.\(\)/);
+  assert.match(source, /dialog\.hidden = true/);
+});
+
 const landscapeProjection = Object.freeze({
   projectionKey: 'Home:HOME_INITIAL_DEFAULT:landscape',
   orientation: 'landscape',

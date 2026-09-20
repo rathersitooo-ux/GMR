@@ -2,11 +2,79 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  DEFAULT_DECK_SWIPE_PRESENTATION,
   DECK_SWIPE_PRESENTATION_EVENTS,
+  DECK_SWIPE_EFFECT_ASSETS,
   SETUP_QUICK_DECK_PREVIEW_CONTRACT,
+  createDeckSwipePresentationController,
   createDeckSwipeFeedbackDetail,
   createSetupQuickDeckPreview,
 } from '../browser/cards-deck-presentation-core.mjs';
+
+const rect = (left, top, width, height) => ({ left, top, width, height });
+
+function fakeClassList() {
+  const values = new Set();
+  return {
+    add: (...names) => names.forEach((name) => values.add(name)),
+    remove: (...names) => names.forEach((name) => values.delete(name)),
+    contains: (name) => values.has(name),
+  };
+}
+
+function fakeElement(box = rect(0, 0, 100, 140)) {
+  const attributes = new Map();
+  const element = {
+    classList: fakeClassList(),
+    style: { setProperty(name, value) { this[name] = value; } },
+    children: [],
+    dataset: {},
+    getBoundingClientRect: () => box,
+    appendChild(child) { child.parentNode = this; this.children.push(child); return child; },
+    cloneNode() { this.cloneCalls = (this.cloneCalls ?? 0) + 1; throw new Error('CARD_CLONE_FORBIDDEN'); },
+    setAttribute(name, value) { attributes.set(name, String(value)); },
+    getAttribute(name) { return attributes.get(name) ?? null; },
+    removeAttribute(name) { attributes.delete(name); },
+    remove() { this.removed = true; },
+    animate(keyframes, options) { this.animations = [...(this.animations ?? []), { keyframes, options }]; return {}; },
+  };
+  return element;
+}
+
+function fakeDocument() {
+  const events = [];
+  const body = fakeElement();
+  const head = fakeElement();
+  return {
+    events,
+    body,
+    head,
+    documentElement: fakeElement(),
+    createElement() { return fakeElement(); },
+    getElementById() { return null; },
+    dispatchEvent(event) { events.push(event); return true; },
+  };
+}
+
+class FakeCustomEvent {
+  constructor(type, init = {}) { this.type = type; this.detail = init.detail; }
+}
+
+function deferredWindow() {
+  let next = 1;
+  const pending = new Map();
+  return {
+    CustomEvent: FakeCustomEvent,
+    matchMedia: () => ({ matches: false }),
+    setTimeout(fn, ms) { const id = next++; pending.set(id, { fn, ms }); return id; },
+    clearTimeout(id) { pending.delete(id); },
+    pending,
+  };
+}
+
+function descendants(node) {
+  return (node?.children ?? []).flatMap((child) => [child, ...descendants(child)]);
+}
 
 test('cards deck presentation core preserves the existing swipe presentation contract', () => {
   assert.equal(DECK_SWIPE_PRESENTATION_EVENTS.COMMIT, 'gameroad:deck-swipe-commit');
@@ -21,6 +89,57 @@ test('cards deck presentation core preserves the existing swipe presentation con
   );
 });
 
+test('success presentation uses the formal aura and light trail without cloning the source card', () => {
+  const doc = fakeDocument();
+  const win = deferredWindow();
+  const source = fakeElement(rect(40, 400, 120, 168));
+  const target = fakeElement(rect(730, 120, 180, 250));
+  const controller = createDeckSwipePresentationController({
+    document: doc,
+    window: win,
+    sfx: false,
+  });
+
+  const result = controller.playSuccess({ sourceElement: source, targetElement: target, cardId: 'HT_8' });
+  const layer = doc.body.children.find((child) => child.className.includes('gr-deck-swipe-layer'));
+  const nodes = descendants(layer);
+  const aura = nodes.find((node) => node.getAttribute('data-role') === 'deck-swipe-aura');
+  const particles = nodes.filter((node) => node.getAttribute('data-role') === 'deck-swipe-particle');
+
+  assert.equal(source.cloneCalls ?? 0, 0);
+  assert.ok(layer);
+  assert.equal(nodes.some((node) => node.className.includes('gr-deck-swipe-flight-card')), false);
+  assert.ok(aura);
+  assert.equal(aura.getAttribute('data-asset-id'), DECK_SWIPE_EFFECT_ASSETS.aura.id);
+  assert.equal(aura.src, new URL('../assets/visual/battle-power-energy.jpg', import.meta.url).href);
+  assert.equal(particles.length, DEFAULT_DECK_SWIPE_PRESENTATION.particleCount);
+  assert.deepEqual(result.effect, {
+    kind: 'light-trail',
+    auraAssetId: 'battle-power-energy',
+    particleCount: 6,
+    lowPerf: false,
+  });
+  assert.deepEqual(doc.events.map((event) => event.type), ['gameroad:deck-swipe-commit']);
+  controller.cancelAll();
+});
+
+test('low-performance card transfer keeps the light path but caps particles', () => {
+  const doc = fakeDocument();
+  doc.body.classList.add('low-perf');
+  const win = deferredWindow();
+  const controller = createDeckSwipePresentationController({ document: doc, window: win, sfx: false });
+  const result = controller.playSuccess({
+    sourceElement: fakeElement(rect(0, 0, 100, 140)),
+    targetElement: fakeElement(rect(500, 100, 180, 250)),
+  });
+  const layer = doc.body.children.find((child) => child.className.includes('gr-deck-swipe-layer'));
+  const particles = descendants(layer).filter((node) => node.getAttribute('data-role') === 'deck-swipe-particle');
+
+  assert.match(layer.className, /gr-deck-swipe-low-perf/);
+  assert.equal(particles.length, DEFAULT_DECK_SWIPE_PRESENTATION.lowPerfParticleCount);
+  assert.equal(result.effect.lowPerf, true);
+  controller.cancelAll();
+});
 
 test('Setup Quick Deck projection is immutable and isolated from later source mutations', () => {
   const source = {

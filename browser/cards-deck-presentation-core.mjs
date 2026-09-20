@@ -83,6 +83,23 @@ export const DECK_SWIPE_SFX_CUES = Object.freeze({
   reject: Object.freeze({ kind: 'tone', durationSec: 0.09, gain: 0.08, wave: 'sine', startHz: 190, endHz: 135 }),
 });
 
+// This is an existing, read-only production visual. It is intentionally reused
+// as the light source instead of fabricating a new card/effect bitmap here.
+export const DECK_SWIPE_EFFECT_ASSETS = Object.freeze({
+  aura: Object.freeze({
+    id: 'battle-power-energy',
+    sourcePath: 'assets/visual/battle-power-energy.jpg',
+    runtimePath: '../assets/visual/battle-power-energy.jpg',
+    formal: true,
+    readOnly: true,
+  }),
+});
+
+const DECK_SWIPE_AURA_ASSET_URL = new URL(
+  DECK_SWIPE_EFFECT_ASSETS.aura.runtimePath,
+  import.meta.url,
+).href;
+
 export const DEFAULT_DECK_SWIPE_PRESENTATION = Object.freeze({
   flightMs: 220,
   landingPulseMs: 260,
@@ -96,6 +113,9 @@ export const DEFAULT_DECK_SWIPE_PRESENTATION = Object.freeze({
   arcMinPx: 18,
   arcMaxPx: 44,
   streakCount: 2,
+  particleCount: 6,
+  lowPerfParticleCount: 2,
+  auraSizePx: 76,
 });
 
 function finite(value, name) {
@@ -136,6 +156,12 @@ function normalizeConfig(config = {}) {
   if (!Number.isInteger(merged.streakCount) || merged.streakCount < 0 || merged.streakCount > 4) {
     throw new RangeError('STREAK_COUNT_INVALID');
   }
+  for (const key of ['particleCount', 'lowPerfParticleCount']) {
+    if (!Number.isInteger(merged[key]) || merged[key] < 0 || merged[key] > 8) {
+      throw new RangeError(`${key.toUpperCase()}_INVALID`);
+    }
+  }
+  positive(merged.auraSizePx, 'AURA_SIZE_PX');
   return Object.freeze(merged);
 }
 
@@ -186,6 +212,9 @@ export function createDeckSwipeFlightPlan({ sourceRect, targetRect, reducedMotio
     midFlightScale: cfg.midFlightScale,
     flightEndScale: cfg.flightEndScale,
     countPulseScale: cfg.countPulseScale,
+    particleCount: reduced ? 0 : cfg.particleCount,
+    lowPerfParticleCount: reduced ? 0 : cfg.lowPerfParticleCount,
+    auraSizePx: cfg.auraSizePx,
     preserveSemanticFeedback: true,
   });
 }
@@ -246,28 +275,44 @@ function safeAnimate(element, keyframes, options) {
   }
 }
 
-function cloneForFlight(sourceElement, doc, plan) {
-  if (!sourceElement?.cloneNode || !doc?.createElement || !doc?.body?.appendChild) return null;
+function resolveLowPerformance(doc) {
+  const body = doc?.body;
+  const root = doc?.documentElement;
+  return Boolean(
+    body?.classList?.contains?.('low-perf')
+      || root?.classList?.contains?.('low-perf')
+      || body?.dataset?.lowPerf === 'true'
+      || root?.dataset?.lowPerf === 'true',
+  );
+}
+
+function createLightTrailEffect(doc, plan, { lowPerf = false } = {}) {
+  if (!doc?.createElement || !doc?.body?.appendChild) return null;
   const layer = doc.createElement('div');
-  layer.className = 'gr-deck-swipe-layer';
+  layer.className = `gr-deck-swipe-layer${lowPerf ? ' gr-deck-swipe-low-perf' : ''}`;
   layer.setAttribute?.('aria-hidden', 'true');
 
-  const clone = sourceElement.cloneNode(true);
-  clone.removeAttribute?.('id');
-  clone.setAttribute?.('aria-hidden', 'true');
-  clone.classList?.add?.('gr-deck-swipe-flight-card');
-  Object.assign(clone.style ?? {}, {
-    left: `${plan.source.left}px`,
-    top: `${plan.source.top}px`,
-    width: `${plan.source.width}px`,
-    height: `${plan.source.height}px`,
+  const aura = doc.createElement('img');
+  aura.className = 'gr-deck-swipe-aura';
+  aura.src = DECK_SWIPE_AURA_ASSET_URL;
+  aura.alt = '';
+  aura.draggable = false;
+  aura.setAttribute?.('data-role', 'deck-swipe-aura');
+  aura.setAttribute?.('data-asset-id', DECK_SWIPE_EFFECT_ASSETS.aura.id);
+  aura.setAttribute?.('aria-hidden', 'true');
+  Object.assign(aura.style ?? {}, {
+    left: `${plan.source.centerX}px`,
+    top: `${plan.source.centerY}px`,
+    width: `${plan.auraSizePx}px`,
+    height: `${plan.auraSizePx}px`,
   });
-  layer.appendChild(clone);
+  layer.appendChild(aura);
 
   const streaks = [];
   for (let index = 0; index < plan.streakCount; index += 1) {
     const streak = doc.createElement('span');
     streak.className = 'gr-deck-swipe-streak';
+    streak.setAttribute?.('data-role', 'deck-swipe-light-trail');
     streak.style?.setProperty?.('--gr-streak-i', String(index));
     streak.style?.setProperty?.('--gr-streak-angle', `${Math.atan2(plan.dy, plan.dx) * 180 / Math.PI}deg`);
     streak.style?.setProperty?.('--gr-streak-left', `${plan.source.centerX}px`);
@@ -275,8 +320,28 @@ function cloneForFlight(sourceElement, doc, plan) {
     layer.appendChild(streak);
     streaks.push(streak);
   }
+
+  const particles = [];
+  const particleCount = lowPerf ? plan.lowPerfParticleCount : plan.particleCount;
+  for (let index = 0; index < particleCount; index += 1) {
+    const particle = doc.createElement('span');
+    const center = (particleCount - 1) / 2;
+    particle.className = 'gr-deck-swipe-particle';
+    particle.setAttribute?.('data-role', 'deck-swipe-particle');
+    particle.style?.setProperty?.('--gr-particle-left', `${plan.source.centerX}px`);
+    particle.style?.setProperty?.('--gr-particle-top', `${plan.source.centerY}px`);
+    particle.style?.setProperty?.('--gr-particle-index', String(index));
+    layer.appendChild(particle);
+    particles.push({
+      element: particle,
+      spreadX: (index - center) * 12,
+      spreadY: Math.sin(index * 1.7) * 16,
+      delay: index * 8,
+    });
+  }
+
   doc.body.appendChild(layer);
-  return { layer, clone, streaks };
+  return { layer, aura, streaks, particles };
 }
 
 export function installDeckSwipePresentationStyles(doc, { styleId = 'gameroad-deck-swipe-presentation-style' } = {}) {
@@ -286,11 +351,14 @@ export function installDeckSwipePresentationStyles(doc, { styleId = 'gameroad-de
   style.id = styleId;
   style.textContent = `
 .gr-deck-swipe-layer{position:fixed;inset:0;z-index:var(--gameroad-cards-transfer-z,120);pointer-events:none;overflow:hidden;contain:layout style paint}
-.gr-deck-swipe-flight-card{position:fixed!important;margin:0!important;pointer-events:none!important;transform-origin:center center;will-change:transform,opacity,filter;filter:drop-shadow(0 12px 14px rgba(0,0,0,.28)) brightness(1.05)}
+.gr-deck-swipe-aura{position:fixed;z-index:1;margin:0;pointer-events:none;transform-origin:center center;transform:translate3d(-50%,-50%,0) scale(.22);opacity:0;object-fit:cover;border-radius:50%;mix-blend-mode:screen;filter:saturate(1.35) brightness(1.38) drop-shadow(0 0 14px rgba(255,202,112,.82));will-change:transform,opacity,filter}
 .gr-deck-swipe-streak{position:fixed;left:var(--gr-streak-left);top:var(--gr-streak-top);width:88px;height:3px;border-radius:999px;transform-origin:right center;transform:translateX(-88px) rotate(var(--gr-streak-angle));opacity:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2) 24%,rgba(255,239,176,.96));filter:drop-shadow(0 0 6px rgba(255,224,139,.62));will-change:transform,opacity}
 .gr-deck-swipe-streak::before,.gr-deck-swipe-streak::after{content:"";position:absolute;right:0;border-radius:999px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),rgba(255,239,176,.72));pointer-events:none}
 .gr-deck-swipe-streak::before{top:-6px;width:62px;height:2px;opacity:.78}
 .gr-deck-swipe-streak::after{top:7px;width:48px;height:2px;opacity:.58}
+.gr-deck-swipe-particle{position:fixed;left:var(--gr-particle-left);top:var(--gr-particle-top);z-index:2;width:4px;height:4px;border-radius:50%;background:#fff6d5;box-shadow:0 0 7px 2px rgba(255,218,126,.82);opacity:0;will-change:transform,opacity}
+.gr-deck-swipe-low-perf .gr-deck-swipe-aura{filter:none}
+.gr-deck-swipe-low-perf .gr-deck-swipe-particle{box-shadow:none}
 .gr-deck-remove-ghost-layer{z-index:var(--gameroad-cards-transfer-z,120)!important}
 .gr-deck-remove-ghost-streak{width:88px!important;height:3px!important;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2) 24%,rgba(255,239,176,.96))!important;filter:drop-shadow(0 0 6px rgba(255,224,139,.62))!important}
 .gr-deck-remove-ghost-streak::before,.gr-deck-remove-ghost-streak::after{content:"";position:absolute;right:0;border-radius:999px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),rgba(255,239,176,.72));pointer-events:none}
@@ -307,7 +375,7 @@ export function installDeckSwipePresentationStyles(doc, { styleId = 'gameroad-de
 @keyframes grDeckSwipeRecentAdd{0%{filter:brightness(1)}24%{filter:brightness(1.35) drop-shadow(0 0 10px rgba(255,222,132,.62))}100%{filter:brightness(1)}}
 @keyframes grDeckSwipeReject{0%,100%{transform:translateX(0)}35%{transform:translateX(-8px)}65%{transform:translateX(4px)}}
 @keyframes grDeckSwipeTargetReject{0%,100%{filter:brightness(1)}45%{filter:brightness(1.18) saturate(.7)}}
-@media (prefers-reduced-motion:reduce){.gr-deck-swipe-flight-card,.gr-deck-swipe-streak{display:none!important}.gr-deck-swipe-target-hit,.gr-deck-swipe-count-hit,.gr-deck-swipe-recent-add,.gr-deck-swipe-reject,.gr-deck-swipe-target-reject{animation-duration:1ms!important}}
+@media (prefers-reduced-motion:reduce){.gr-deck-swipe-aura,.gr-deck-swipe-streak,.gr-deck-swipe-particle{display:none!important}.gr-deck-swipe-target-hit,.gr-deck-swipe-count-hit,.gr-deck-swipe-recent-add,.gr-deck-swipe-reject,.gr-deck-swipe-target-reject{animation-duration:1ms!important}}
 `;
   (doc.head ?? doc.documentElement)?.appendChild?.(style);
   return style;
@@ -537,7 +605,8 @@ export function createDeckSwipePresentationController({
       return Object.freeze({ plan, cancel: () => {} });
     }
 
-    const flight = cloneForFlight(sourceElement, doc, plan);
+    const lowPerf = resolveLowPerformance(doc);
+    const flight = createLightTrailEffect(doc, plan, { lowPerf });
     if (!flight) {
       land({ targetElement, insertedElement, cardId, reduced });
       return Object.freeze({ plan, cancel: () => {} });
@@ -552,10 +621,14 @@ export function createDeckSwipePresentationController({
       land({ targetElement, insertedElement, cardId, reduced });
     };
 
-    const cardAnim = safeAnimate(flight.clone, [
-      { transform: 'translate3d(0,0,0) scale(1)', opacity: 1, offset: 0 },
-      { transform: `translate3d(${plan.dx * 0.52}px,${plan.dy * 0.52 + plan.arcY}px,0) scale(${plan.midFlightScale}) rotate(${plan.rotationDeg}deg)`, opacity: 1, offset: 0.56 },
-      { transform: `translate3d(${plan.dx}px,${plan.dy}px,0) scale(${plan.flightEndScale}) rotate(${plan.rotationDeg * 0.35}deg)`, opacity: 0.18, offset: 1 },
+    const pathTransform = (x, y, scale, rotation = 0) => (
+      `translate3d(-50%,-50%,0) translate3d(${x}px,${y}px,0) scale(${scale}) rotate(${rotation}deg)`
+    );
+
+    const auraAnim = safeAnimate(flight.aura, [
+      { transform: pathTransform(0, 0, 0.22), opacity: 0, offset: 0 },
+      { transform: pathTransform(plan.dx * 0.52, plan.dy * 0.52 + plan.arcY, 1.04, plan.rotationDeg), opacity: 0.88, offset: 0.56 },
+      { transform: pathTransform(plan.dx, plan.dy, 0.58, plan.rotationDeg * 0.35), opacity: 0.08, offset: 1 },
     ], { duration: plan.flightMs, easing: 'cubic-bezier(.18,.82,.25,1)', fill: 'forwards' });
 
     for (let i = 0; i < flight.streaks.length; i += 1) {
@@ -568,11 +641,25 @@ export function createDeckSwipePresentationController({
       ], { duration: Math.max(90, plan.flightMs - lag), delay: lag, easing: 'ease-out', fill: 'forwards' });
     }
 
-    if (cardAnim && 'onfinish' in cardAnim) cardAnim.onfinish = finish;
+    for (const particle of flight.particles) {
+      safeAnimate(particle.element, [
+        { opacity: 0, transform: 'translate3d(-50%,-50%,0) scale(.35)', offset: 0 },
+        { opacity: 0.96, transform: `translate3d(${plan.dx * 0.42 + particle.spreadX * 0.5}px,${plan.dy * 0.42 + plan.arcY * 0.68 + particle.spreadY * 0.5}px,0) scale(1)`, offset: 0.42 },
+        { opacity: 0, transform: `translate3d(${plan.dx + particle.spreadX}px,${plan.dy + particle.spreadY + plan.arcY * 0.18}px,0) scale(.18)`, offset: 1 },
+      ], { duration: Math.max(100, plan.flightMs - particle.delay), delay: particle.delay, easing: 'ease-out', fill: 'forwards' });
+    }
+
+    if (auraAnim && 'onfinish' in auraAnim) auraAnim.onfinish = finish;
     setTimer(finish, plan.flightMs + 34);
 
     return Object.freeze({
       plan,
+      effect: Object.freeze({
+        kind: 'light-trail',
+        auraAssetId: DECK_SWIPE_EFFECT_ASSETS.aura.id,
+        particleCount: flight.particles.length,
+        lowPerf,
+      }),
       cancel: () => {
         if (landed) return;
         landed = true;

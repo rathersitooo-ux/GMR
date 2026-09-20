@@ -20,7 +20,7 @@ function emptyColumns(){ return Array.from({length:12},()=>[]); }
 function sevenCards(prefix){ return Array.from({length:7},(_,index)=>`${prefix}-${index+1}`); }
 function authoritativeProjectionWithOpenLane(columnIndex=0){ const columns=emptyColumns(); columns[columnIndex]=sevenCards(`lane-${columnIndex}`); return projectNewBaseGoalPathConnections(layout(),{straightCardIdsByColumn:columns}); }
 
-test('seven straight opens only its route gate toward one shared GOAL without terminal win',()=>{
+test('seven straight connects only its GOAL branch while Gate visuals open globally without terminal win',()=>{
   const source=authoritativeProjectionWithOpenLane(0);
   const presentation=projectNewBaseGoalPathPresentation(source);
   assert.equal(presentation.ok,true);
@@ -28,6 +28,8 @@ test('seven straight opens only its route gate toward one shared GOAL without te
   assert.equal(presentation.sharedGoalCount,1);
   assert.equal(presentation.routeGateCount,12);
   assert.equal(presentation.openGoalPathCount,1);
+  assert.equal(presentation.gateOpen,true);
+  assert.equal(presentation.gateOpenScope,'ALL_ROUTE_GATE_ANCHORS');
   assert.equal(presentation.terminalWin,false);
   assert.equal(presentation.requiresAuthoritativeGoalReachedForResult,true);
   const opened=presentation.lanePresentations.find(lane=>lane.columnIndex===0);
@@ -41,20 +43,23 @@ test('seven straight opens only its route gate toward one shared GOAL without te
   assert.equal(opened.physicalCardIdentityResolved,true);
   const closed=presentation.lanePresentations.find(lane=>lane.columnIndex===1);
   assert.equal(closed.visualState,NEW_BASE_GOAL_PATH_VISUAL_STATE.CLOSED);
-  assert.equal(closed.gateVisualState,NEW_BASE_GOAL_GATE_VISUAL_STATE.LOCKED_BARRIER);
+  assert.equal(closed.gateOpen,true);
+  assert.equal(closed.gateVisualState,NEW_BASE_GOAL_GATE_VISUAL_STATE.OPEN_HOOP);
   assert.equal(closed.roadConnectionCue,'SHARED_GOAL_LINK_GUIDE');
   assert.equal(closed.goalConnectionCue,'LOCKED_BEFORE_SHARED_GOAL');
 });
 
 test('presentation consumes connectedToGoal from caller and never recomputes completion from card count',()=>{
   const source=authoritativeProjectionWithOpenLane(0);
-  const manual={...source,laneStates:source.laneStates.map((lane,index)=>({...lane,straightCardCount:index===0?7:0,straightCardIds:index===0?sevenCards('manual'):[],connectedToGoal:index===0?false:lane.connectedToGoal})),connectedGoalPaths:[]};
+  const manual={...source,gateOpen:false,laneStates:source.laneStates.map((lane,index)=>({...lane,straightCardCount:index===0?7:0,straightCardIds:index===0?sevenCards('manual'):[],connectedToGoal:false})),connectedGoalPaths:[]};
   const presentation=projectNewBaseGoalPathPresentation(manual);
   const first=presentation.lanePresentations[0];
   assert.equal(presentation.ok,true);
   assert.equal(first.straightCardCount,7);
   assert.equal(first.connectedToGoal,false);
+  assert.equal(first.gateOpen,false);
   assert.equal(first.gateVisualState,NEW_BASE_GOAL_GATE_VISUAL_STATE.LOCKED_BARRIER);
+  assert.equal(presentation.gateOpen,false);
   assert.equal(presentation.openGoalPathCount,0);
 });
 
@@ -82,6 +87,15 @@ test('invalid source or terminal-win source fails closed with no open visual lan
   assert.equal(forbidden.ok,false); assert.equal(forbidden.reason,'SEVEN_STRAIGHT_TERMINAL_WIN_FORBIDDEN');
 });
 
+test('global Gate state that contradicts caller GOAL connections fails closed',()=>{
+  const source=authoritativeProjectionWithOpenLane(0);
+  const contradictory=projectNewBaseGoalPathPresentation({...source,gateOpen:false});
+  assert.equal(contradictory.ok,false);
+  assert.equal(contradictory.reason,'GATE_OPEN_CONNECTION_STATE_MISMATCH');
+  assert.equal(contradictory.gateOpen,false);
+  assert.deepEqual(contradictory.lanePresentations,[]);
+});
+
 test('malformed physical identity and duplicate lane identity fail closed',()=>{
   const source=authoritativeProjectionWithOpenLane(0);
   const malformedCards={...source,laneStates:[{...source.laneStates[0],straightCardIds:['wrong-length']}]};
@@ -101,6 +115,8 @@ test('presentation remains non-authoritative while declaring one GOAL and twelve
   assert.equal(presentation.resultAuthority,false);
   assert.equal(NEW_BASE_GOAL_PATH_PRESENTATION_CONTRACT.sharedGoalCount,1);
   assert.equal(NEW_BASE_GOAL_PATH_PRESENTATION_CONTRACT.routeGateCount,12);
+  assert.equal(NEW_BASE_GOAL_PATH_PRESENTATION_CONTRACT.gateOpenPolicy,'ALL_AT_ONCE_WHEN_ANY_GOAL_PATH_CONNECTED');
+  assert.equal(NEW_BASE_GOAL_PATH_PRESENTATION_CONTRACT.laneGoalConnectionIsNotGateOpenState,true);
   assert.equal(NEW_BASE_GOAL_PATH_PRESENTATION_CONTRACT.closedGateVisual,'LOCKED_BARRIER');
   assert.equal(NEW_BASE_GOAL_PATH_PRESENTATION_CONTRACT.openGateVisual,'OPEN_HOOP');
   assert.equal(NEW_BASE_GOAL_PATH_PRESENTATION_CONTRACT.computesStraightCompletion,false);

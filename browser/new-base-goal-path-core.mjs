@@ -132,12 +132,12 @@ function normalizeStraightColumns(layout, straightCardIdsByColumn) {
 
 export function projectNewBaseGoalPathConnections(layout, { straightCardIdsByColumn } = {}) {
   if (!validLayout(layout)) {
-    return deepFreeze({ ok: false, reason: 'LAYOUT_INVALID', connectedGoalPaths: [] });
+    return deepFreeze({ ok: false, reason: 'LAYOUT_INVALID', gateOpen: false, connectedGoalPaths: [] });
   }
 
   const straightColumns = normalizeStraightColumns(layout, straightCardIdsByColumn);
   if (!straightColumns) {
-    return deepFreeze({ ok: false, reason: 'STRAIGHT_COLUMN_SNAPSHOT_INVALID', connectedGoalPaths: [] });
+    return deepFreeze({ ok: false, reason: 'STRAIGHT_COLUMN_SNAPSHOT_INVALID', gateOpen: false, connectedGoalPaths: [] });
   }
 
   const laneStates = [];
@@ -164,10 +164,14 @@ export function projectNewBaseGoalPathConnections(layout, { straightCardIdsByCol
     });
   }
 
+  const gateOpen = connectedGoalPaths.length > 0;
+
   return deepFreeze({
     ok: true,
     reason: 'GOAL_PATHS_PROJECTED',
     terminalWin: false,
+    gateOpen,
+    gateOpenScope: 'ALL_ROUTE_GATE_ANCHORS',
     horizontalCellCount: layout.horizontalCellCount,
     minimumHorizontalCellCount: MIN_HORIZONTAL_CELLS,
     topRowGoalColumnIndices: [...layout.topRowGoalColumnIndices],
@@ -190,6 +194,9 @@ export const NEW_BASE_GOAL_PATH_CORE = Object.freeze({
   routeGateCount: ROUTE_GATE_COUNT,
   topmostRowAllGoal: true,
   topRowColumnsAreRouteAnchors: true,
+  gateOpenPolicy: 'ALL_AT_ONCE_WHEN_ANY_GOAL_PATH_CONNECTED',
+  gateOpenIsTerminal: false,
+  laneGoalConnectionIsNotGateOpenState: true,
   sevenStraightTerminalWin: false,
   sevenStraightEffect: 'CONNECT_PATH_TO_GOAL',
 });

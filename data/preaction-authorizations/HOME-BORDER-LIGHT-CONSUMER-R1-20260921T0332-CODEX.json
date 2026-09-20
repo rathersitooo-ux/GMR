@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-BORDER-LIGHT-CONSUMER-R1-20260921T0332-CODEX",
+  "taskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "workUnitKey": "BACKGROUND_BORDER_LIGHT_CONSUMER_R2",
+  "acquireKey": "HOME-BORDER-LIGHT-CONSUMER-R1-20260921T0332-CODEX",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "UI-PRESENTATION-FX-QUALITY-001/BACKGROUND_BORDER_LIGHT_CONSUMER_R2/PREDICTED_HOME_OVERLAY_ADAPTATION",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "existing-home-shell-style-consumer-and-generated-overlay-readback-20260921T0332",
+  "proceedToken": "PROCEED|HOME-BORDER-LIGHT-CONSUMER-R1-20260921T0332-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|20260921T0332",
+  "authorizationBaseSha": "073abd088d1a203d858511083de6f54d9a888e50",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "leaseWorkUnitKey": "BACKGROUND_BORDER_LIGHT_CONSUMER_R2",
+  "leaseAcquireKey": "HOME-BORDER-LIGHT-CONSUMER-R1-20260921T0332-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 03:32 JST",
+  "leaseUntilJst": "2026-09-21 04:32 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A20:L20",
+  "leaseExactMutableResources": "browser/home-shell-presentation-core.mjs; tests/home-shell-presentation-core.test.mjs; assets/visual/effects/home-border-light-overlay-v1.png; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback; own CURRENT lease/R24 event",
+  "scope": [
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-shell-presentation-core.test.mjs",
+    "assets/visual/effects/home-border-light-overlay-v1.png"
+  ],
+  "leaseScope": [
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-shell-presentation-core.test.mjs",
+    "assets/visual/effects/home-border-light-overlay-v1.png"
+  ],
+  "solutionSignature": "existing Home shell style consumer composed with a transparent edge-light overlay",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "UI-PRESENTATION-FX-QUALITY-001/BACKGROUND_BORDER_LIGHT_CONSUMER_R2/REUSE_CHECK",
+  "solutionSearchEvidence": [
+    "actual consumer: browser/home-boot-runtime-base-r3.mjs imports createHomeShellState from home-shell-presentation-core.mjs",
+    "actual call path: createHomeShellState -> ensureSharedShellPresentation injects the existing Home presentation style",
+    "accepted generated visual: assets/visual/effects/home-border-light-overlay-v1.png is a transparent edge-light derivative from the existing Home landscape reference",
+    "no GAMEROAD.html mutation, no second Home scene engine, and no gameplay/save/network overlap"
+  ],
+  "sourceGeneratedPath": "/workspace/scratch/4e0decd8fa4f/generated_images/exec-5e459b39-6514-4056-8e3a-344cc8194f2a.png",
+  "runtimeAssetPath": "assets/visual/effects/home-border-light-overlay-v1.png",
+  "deterministicProcessing": "Normalized to 1024x576 with Lanczos and stripped generator metadata; RGBA alpha preserved with calm transparent center and controlled edge light.",
+  "intendedMutation": "Adapt the existing Home shell style consumer to add one non-interactive overlay layer on the actual Home art stage. Use restrained opacity drift, preserve the center and controls, and disable animation for reduced-motion and low-performance profiles.",
+  "acceptance": [
+    "Home shell consumer references the exact versioned overlay URL",
+    "Overlay is edge-only, pointer-events none, and does not add a second scene or control layer",
+    "Reduced-motion and low-performance branches disable the animation safely",
+    "Focused tests verify URL, animation, and safety selectors",
+    "Required Gate passes; browser visual claim is reported only after direct inspection"
+  ],
+  "rollback": "Revert the integration PR or remove only the overlay style rule, leaving the existing Home art stage, scrim, focus, and transition effects intact.",
+  "createdAtJst": "2026-09-21 03:33 JST"
+}

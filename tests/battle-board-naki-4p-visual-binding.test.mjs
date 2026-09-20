@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING,
@@ -159,6 +160,27 @@ test('contract separates controlled-character identity from Advice Partner and n
   assert.equal(contract.presentationOnly, true);
   assert.equal(contract.gameplayAuthority, false);
   assert.equal(contract.failVisible, true);
+  assert.equal(contract.humanSurface, '#battleRuntime');
+  assert.deepEqual(contract.contactShadow, {
+    anchor: 'AUTHORITATIVE_BOARD_MARKER_FOOT',
+    widthPercent: 74,
+    heightPercent: 16,
+    planeScaleY: 0.42,
+    opacity: 0.92,
+    followsSpriteMotion: false,
+  });
+});
+
+test('renders an explicit contact shadow at the authoritative marker foot instead of relying on a full-sprite halo', () => {
+  const source = readFileSync(new URL('../browser/battle-board-naki-4p-visual-binding.mjs', import.meta.url), 'utf8');
+  assert.match(source, /\[\$\{SURFACE_ATTR\}\]::before\{content:"";/);
+  assert.match(source, /radial-gradient\(ellipse at center/);
+  assert.match(source, /scaleY\(\$\{CONTACT_SHADOW\.planeScaleY\}\)/);
+  assert.match(source, /surface\.dataset\.grounding = 'contact-shadow'/);
+  assert.match(source, /#battleRuntime::before\{content:"";/);
+  assert.match(source, /#battleRuntime \.grtc-root,#battleRuntime \.grtc-facing/);
+  assert.match(source, /drop-shadow\(0 2px 2px rgba\(0,0,0,\.18\)\)/);
+  assert.doesNotMatch(source, /drop-shadow\(0 6px 8px rgba\(0,0,0,\.42\)\)/);
 });
 
 test('keeps four-character identity surfaces inside the existing board-first footprint budget', () => {

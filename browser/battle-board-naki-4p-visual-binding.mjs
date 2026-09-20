@@ -12,6 +12,14 @@ const VISUAL_FOOTPRINT = Object.freeze({
   shortLandscape: Object.freeze({ surfaceWidth: 32, surfaceHeight: 40, fallbackWidth: 26, fallbackHeight: 32 }),
   portrait: Object.freeze({ surfaceWidth: 34, surfaceHeight: 44, fallbackWidth: 28, fallbackHeight: 36 }),
 });
+const CONTACT_SHADOW = Object.freeze({
+  anchor: 'AUTHORITATIVE_BOARD_MARKER_FOOT',
+  widthPercent: 74,
+  heightPercent: 16,
+  planeScaleY: 0.42,
+  opacity: 0.92,
+  followsSpriteMotion: false,
+});
 
 function canonicalString(value, maximum = 160) {
   if (typeof value !== 'string') return null;
@@ -119,12 +127,15 @@ function ensureStyle(documentRef) {
   style.textContent = `
 ${BATTLE_FOCUS_CHROME_SELECTOR}{display:none!important}
 #boardPlayers ${MARKER_SELECTOR}{overflow:visible}
-#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{position:absolute;left:50%;top:50%;width:${VISUAL_FOOTPRINT.desktop.surfaceWidth}px;height:${VISUAL_FOOTPRINT.desktop.surfaceHeight}px;transform:translate(-50%,-82%);display:flex;align-items:flex-end;justify-content:center;pointer-events:none;overflow:visible;filter:drop-shadow(0 6px 8px rgba(0,0,0,.42));--grcc-facing-scale:1;--grcc-motion-duration:0ms}
-#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}] .grtc-image{display:block;width:auto;height:100%;max-width:100%;object-fit:contain;opacity:1;visibility:visible;transform:scaleX(var(--grcc-facing-scale));transform-origin:50% 85%}
+#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{position:absolute;left:50%;top:50%;width:${VISUAL_FOOTPRINT.desktop.surfaceWidth}px;height:${VISUAL_FOOTPRINT.desktop.surfaceHeight}px;transform:translate(-50%,-82%);display:flex;align-items:flex-end;justify-content:center;pointer-events:none;overflow:visible;filter:drop-shadow(0 2px 2px rgba(0,0,0,.18));--grcc-facing-scale:1;--grcc-motion-duration:0ms}
+#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]::before{content:"";position:absolute;left:50%;bottom:0;width:${CONTACT_SHADOW.widthPercent}%;height:${CONTACT_SHADOW.heightPercent}%;transform:translateX(-50%) scaleY(${CONTACT_SHADOW.planeScaleY});transform-origin:50% 50%;border-radius:50%;background:radial-gradient(ellipse at center,rgba(4,8,10,.46) 0%,rgba(4,8,10,.30) 48%,rgba(4,8,10,0) 78%);opacity:${CONTACT_SHADOW.opacity};pointer-events:none;z-index:0}
+#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}] .grtc-image{position:relative;z-index:1;display:block;width:auto;height:100%;max-width:100%;object-fit:contain;opacity:1;visibility:visible;transform:scaleX(var(--grcc-facing-scale));transform-origin:50% 85%}
+#battleRuntime::before{content:"";position:absolute;left:50%;bottom:0;width:${CONTACT_SHADOW.widthPercent}%;height:${CONTACT_SHADOW.heightPercent}%;transform:translateX(-50%) scaleY(${CONTACT_SHADOW.planeScaleY});transform-origin:50% 50%;border-radius:50%;background:radial-gradient(ellipse at center,rgba(4,8,10,.46) 0%,rgba(4,8,10,.30) 48%,rgba(4,8,10,0) 78%);opacity:${CONTACT_SHADOW.opacity};pointer-events:none;z-index:0}
+#battleRuntime .grtc-root,#battleRuntime .grtc-facing,#battleRuntime .grtc-primary-motion,#battleRuntime .grtc-secondary-motion,#battleRuntime .grtc-image{position:relative;z-index:1}
 #boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}][data-motion-phase="moving"][data-motion-reduced="0"][data-motion-lowperf="0"] .grtc-image{animation:grccAcceptedMove var(--grcc-motion-duration) ease-out 1}
 #boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}][data-motion-phase="selected"][data-motion-reduced="0"][data-motion-lowperf="0"] .grtc-image{animation:grccSelected var(--grcc-motion-duration) ease-out 1}
 #boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}][data-motion-phase="reacting"][data-motion-reduced="0"][data-motion-lowperf="0"] .grtc-image{animation:grccReact var(--grcc-motion-duration) ease-out 1}
-#boardPlayers ${MARKER_SELECTOR} .grControlledCharacterFallback{width:${VISUAL_FOOTPRINT.desktop.fallbackWidth}px;height:${VISUAL_FOOTPRINT.desktop.fallbackHeight}px;display:grid;place-items:end center;padding:0 4px 6px;border:1px solid rgba(255,255,255,.5);border-radius:48% 48% 22% 22%;background:linear-gradient(180deg,rgba(136,187,199,.92),rgba(43,67,70,.95));box-shadow:0 6px 14px rgba(0,0,0,.34);color:#fff;font-size:8px;font-weight:900;letter-spacing:.08em;text-shadow:0 1px 3px #000}
+#boardPlayers ${MARKER_SELECTOR} .grControlledCharacterFallback{position:relative;z-index:1;width:${VISUAL_FOOTPRINT.desktop.fallbackWidth}px;height:${VISUAL_FOOTPRINT.desktop.fallbackHeight}px;display:grid;place-items:end center;padding:0 4px 6px;border:1px solid rgba(255,255,255,.5);border-radius:48% 48% 22% 22%;background:linear-gradient(180deg,rgba(136,187,199,.92),rgba(43,67,70,.95));box-shadow:0 3px 8px rgba(0,0,0,.24);color:#fff;font-size:8px;font-weight:900;letter-spacing:.08em;text-shadow:0 1px 3px #000}
 [${ACTIVE_ATTR}="1"] #boardPlayers{z-index:12}
 @keyframes grccAcceptedMove{0%,100%{transform:scaleX(var(--grcc-facing-scale)) translateY(0)}45%{transform:scaleX(var(--grcc-facing-scale)) translateY(-3px)}}
 @keyframes grccSelected{0%,100%{transform:scaleX(var(--grcc-facing-scale)) scale(1)}55%{transform:scaleX(var(--grcc-facing-scale)) scale(1.06)}}
@@ -217,6 +228,7 @@ function ensureSurface(globalRef, documentRef, marker, row) {
     surface.dataset.participantId = row.participantId;
     surface.dataset.characterId = row.characterId;
     surface.dataset.positionAuthority = 'parent-board-marker';
+    surface.dataset.grounding = 'contact-shadow';
     surface.dataset.role = 'controlled-character';
     surface.setAttribute('aria-hidden', 'true');
     marker.appendChild(surface);
@@ -390,6 +402,8 @@ export const CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING = Object.freeze({
   gameplayAuthority: false,
   failVisible: true,
   visualFootprint: VISUAL_FOOTPRINT,
+  humanSurface: '#battleRuntime',
+  contactShadow: CONTACT_SHADOW,
 });
 
 // Compatibility name retained for packaged/bootstrap consumers only.

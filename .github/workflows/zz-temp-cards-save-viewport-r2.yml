@@ -1,0 +1,70 @@
+name: temp Cards mobile save focused evidence R2
+
+on:
+  push:
+    branches:
+      - sol/browser-cards-save-viewport-r2-20260920
+    paths:
+      - '.github/workflows/zz-temp-cards-save-viewport-r2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  phone-cards-save-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact owned branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Verify product repair is present
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'height:min(67vh,565px);grid-template-rows:auto auto auto minmax(0,1fr) auto;z-index:94' browser/GAMEROAD.html
+          git diff --check
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run focused phone evidence
+        run: >
+          npx playwright test
+          --config=playwright.full-interaction.config.mjs
+          --workers=1
+          --project=phone-390x844
+          --grep "persists a legal 40-card deck across save and page reload through visible UI|R19 reaches Result from visible four-player Honey Hunt and returns Home"
+
+      - name: Upload focused evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: cards-mobile-save-focused-${{ github.run_id }}
+          path: |
+            playwright-report-full-interaction/
+            test-results/full-interaction/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Remove transient workflow
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-bounded-executor'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm -f .github/workflows/zz-temp-cards-save-viewport-r2.yml
+          git commit -m 'Cleanup transient Cards mobile save focused evidence workflow'
+          git push origin HEAD:${{ github.ref_name }}

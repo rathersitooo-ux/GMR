@@ -1,0 +1,20 @@
+{
+  "schema": "gameroad.pre_action.v1",
+  "acquireKey": "SETUP-QUICK-DECK-FOCUS-R1-20260921T0215-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "SETUP_QUICK_DECK_FOCUS_CONTAINMENT_R1",
+  "baseSha": "d86eaa1c07237bd0ee18e9584fcc9d0eee924d16",
+  "mutable": [
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "intent": "Contain keyboard Tab focus inside the existing Setup Quick Deck aria-modal without changing deck/game/save/network semantics.",
+  "forbidden": [
+    "browser/GAMEROAD.html",
+    "browser/cards-deck-presentation-core.mjs",
+    "gameplay",
+    "rules",
+    "save",
+    "network"
+  ]
+}

@@ -6,6 +6,77 @@ const EVENT_NAMES = Object.freeze({
 
 export const DECK_SWIPE_PRESENTATION_EVENTS = EVENT_NAMES;
 
+export const SETUP_QUICK_DECK_PREVIEW_CONTRACT = Object.freeze({
+  schema: 'gameroad.setup-quick-deck-preview.v1',
+  source: 'caller-selected-saved-deck',
+  readOnly: true,
+  ownsDeck: false,
+  mutatesDeck: false,
+  mutatesSelection: false,
+  validatesDeck: false,
+  editRoute: 'existing-deck-editor-only',
+});
+
+function requireSelectedDeckNumber(value) {
+  if (!Number.isInteger(value) || value < 1 || value > 3) {
+    throw new RangeError('SELECTED_DECK_NUMBER_INVALID');
+  }
+  return value;
+}
+
+function cloneQuickDeckCardIds(value, label) {
+  if (!Array.isArray(value)) throw new TypeError(`${label}_REQUIRED`);
+  const ids = value.map((cardId) => {
+    if (typeof cardId !== 'string' || cardId.trim().length === 0) {
+      throw new TypeError(`${label}_CARD_ID_INVALID`);
+    }
+    return cardId;
+  });
+  return Object.freeze(ids);
+}
+
+function cloneQuickDeckRuleScalar(value, label) {
+  if (value == null) return null;
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return value;
+  }
+  throw new TypeError(`${label}_INVALID`);
+}
+
+export function createSetupQuickDeckPreview({
+  selectedDeckNumber,
+  savedDeck,
+  savedDeckRule = null,
+} = {}) {
+  const deckNumber = requireSelectedDeckNumber(selectedDeckNumber);
+  if (!savedDeck || typeof savedDeck !== 'object' || Array.isArray(savedDeck)) {
+    throw new TypeError('SAVED_DECK_REQUIRED');
+  }
+  if (savedDeckRule != null && (typeof savedDeckRule !== 'object' || Array.isArray(savedDeckRule))) {
+    throw new TypeError('SAVED_DECK_RULE_INVALID');
+  }
+
+  const main = cloneQuickDeckCardIds(savedDeck.main, 'SAVED_DECK_MAIN');
+  const ex = cloneQuickDeckCardIds(savedDeck.ex, 'SAVED_DECK_EX');
+  const rule = Object.freeze({
+    id: cloneQuickDeckRuleScalar(savedDeckRule?.id ?? null, 'SAVED_DECK_RULE_ID'),
+    revision: cloneQuickDeckRuleScalar(savedDeckRule?.revision ?? null, 'SAVED_DECK_RULE_REVISION'),
+  });
+
+  return Object.freeze({
+    schema: SETUP_QUICK_DECK_PREVIEW_CONTRACT.schema,
+    selectedDeckNumber: deckNumber,
+    deck: Object.freeze({
+      main,
+      ex,
+      mainCount: main.length,
+      exCount: ex.length,
+      rule,
+    }),
+    readOnly: true,
+  });
+}
+
 export const DECK_SWIPE_SFX_CUES = Object.freeze({
   commit: Object.freeze({ kind: 'noise', durationSec: 0.072, gain: 0.17, filterStartHz: 1450, filterEndHz: 5200 }),
   land: Object.freeze({ kind: 'tone', durationSec: 0.075, gain: 0.12, wave: 'triangle', startHz: 760, endHz: 1180 }),

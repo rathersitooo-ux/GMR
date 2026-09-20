@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-FINDABILITY-HITACCESS-PREACTION-R2-20260921T0330",
+  "taskId": "COLLECTION-CROSSDOMAIN-EXPERIENCE-001",
+  "workUnitKey": "CARDS_FINDABILITY_HIT_ACCESS_INTEGRATION_R1",
+  "acquireKey": "CARDS-FINDABILITY-HITACCESS-R1-20260921T0320-SOL-Q8N4V80",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLIC-CARDS-HITACCESS-390x844-667x375-R1",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CARDS-FINDABILITY-INTEGRATED-PROTOTYPE-2OF2-AND-43OF43",
+  "proceedToken": "PROCEED|CARDS-FINDABILITY-HITACCESS-PREACTION-R2-20260921T0330|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|public-reproduction|prototype-rehearsal|lease-snapshot",
+  "authorizationBaseSha": "073abd088d1a203d858511083de6f54d9a888e50",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTION-CROSSDOMAIN-EXPERIENCE-001",
+  "leaseWorkUnitKey": "CARDS_FINDABILITY_HIT_ACCESS_INTEGRATION_R1",
+  "leaseAcquireKey": "CARDS-FINDABILITY-HITACCESS-R1-20260921T0320-SOL-Q8N4V80",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 03:30 JST",
+  "leaseUntilJst": "2026-09-21 04:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A19:L19",
+  "leaseExactMutableResources": "browser/cards-deck-presentation.mjs; tests/browser-full-interaction.spec.mjs; transient data/preaction-authorizations/CARDS-FINDABILITY-HITACCESS-PREACTION-R2-20260921T0330.json create/delete only; own fresh branch/PR/check/merge/readback/public readback; tests/cards-deck-presentation.test.mjs READ_ONLY; playwright.full-interaction.config.mjs READ_ONLY; browser/GAMEROAD.html READ_ONLY; gameplay/rules/save/network READ_ONLY",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

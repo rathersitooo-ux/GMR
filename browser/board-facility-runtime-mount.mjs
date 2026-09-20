@@ -8,6 +8,9 @@ const RUNTIME_VERSION = 'gameroad.board-facility-runtime-mount.v1';
 const PARTNER_CONVERSATION_MOUNT_NAME = 'GAMEROAD_PARTNER_CONVERSATION_PRODUCT_MOUNT';
 const PARTNER_CONVERSATION_STYLE_ID = 'gameroad-partner-conversation-product-style';
 const PARTNER_EDGE_ENDPOINT = '/ws?partnerOp=conversation';
+const PARTNER_REPORT_ENDPOINT = '/report?reportOp=submit';
+const CONVERSATION_QUALITY_FEEDBACK_KIND = 'conversation_quality_rating';
+const CONVERSATION_QUALITY_FEEDBACK_USE_SITE = 'partner_conversation_quality_feedback';
 const SAASUNA_PROVISIONAL_VISUAL = '/ws?partnerOp=visual';
 const COLLECTIVE_EVIDENCE_SOURCE_NAME = 'GAMEROAD_PARTNER_CONVERSATION_COLLECTIVE_EVIDENCE_SOURCE';
 const COLLECTIVE_CONTEXT_SCHEMA = 'gameroad.partner-conversation-collective-context.v1';
@@ -185,6 +188,99 @@ export function createSaasunaEdgeProvider(global = globalThis) {
   });
 }
 
+export function buildSaasunaConversationQualitySubmission(feedback) {
+  if (!feedback || typeof feedback !== 'object' || Array.isArray(feedback)) return null;
+  const sessionId = exactToken(feedback.sessionId, 96);
+  const turnId = exactToken(feedback.turnId, 48);
+  const partnerId = exactToken(feedback.partnerId, 160);
+  const dialogueVersion = exactToken(feedback.dialogueVersion, 160);
+  const sourceId = exactToken(feedback.sourceId, 160);
+  const rating = feedback.rating === 'good' || feedback.rating === 'bad' ? feedback.rating : null;
+  if (
+    feedback.schemaVersion !== 'gameroad.partner-conversation-quality-feedback.v1'
+    || partnerId !== 'partner.saasuna'
+    || !sessionId
+    || !turnId
+    || !dialogueVersion
+    || !sourceId
+    || !rating
+    || feedback.responseOrigin !== 'provider_candidate'
+    || feedback.canonStatus !== 'ephemeral_candidate'
+    || feedback.localOnly !== true
+    || feedback.rawTextStored !== false
+    || feedback.automaticCanonMutation !== false
+    || feedback.automaticRelationshipMutation !== false
+    || feedback.automaticRewardMutation !== false
+    || feedback.automaticLearning !== false
+  ) return null;
+
+  return Object.freeze({
+    idempotencyKey: `conversation-quality-${sessionId}-${turnId}`,
+    partnerId,
+    reportType: 'request',
+    sourceUseSite: CONVERSATION_QUALITY_FEEDBACK_USE_SITE,
+    sourceStateIdentity: `${sessionId}:${turnId}`,
+    feedback: Object.freeze({
+      kind: CONVERSATION_QUALITY_FEEDBACK_KIND,
+      sessionId,
+      turnId,
+      dialogueVersion,
+      sourceId,
+      rating,
+      responseOrigin: 'provider_candidate',
+      canonStatus: 'ephemeral_candidate',
+      candidateOnly: true,
+      rawTextStored: false,
+      canonicalWrite: false,
+      automaticCanonMutation: false,
+      automaticRelationshipMutation: false,
+      automaticRewardMutation: false,
+      automaticLearning: false,
+    }),
+  });
+}
+
+export async function submitSaasunaConversationQualityFeedback(feedback, {
+  fetchImpl = globalThis.fetch,
+  endpoint = PARTNER_REPORT_ENDPOINT,
+} = {}) {
+  const submission = buildSaasunaConversationQualitySubmission(feedback);
+  if (!submission) return Object.freeze({ ok: false, reason: 'conversation_quality_feedback_invalid' });
+  if (typeof fetchImpl !== 'function') return Object.freeze({ ok: false, reason: 'conversation_quality_feedback_transport_unavailable' });
+
+  let response;
+  try {
+    response = await fetchImpl(endpoint, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(submission),
+    });
+  } catch {
+    return Object.freeze({ ok: false, reason: 'conversation_quality_feedback_transport_failed' });
+  }
+
+  let body = null;
+  try { body = await response.json(); } catch { body = null; }
+  if (!response.ok || !body?.ok) {
+    return Object.freeze({ ok: false, reason: body?.reason || `conversation_quality_feedback_http_${response.status}` });
+  }
+  return Object.freeze({
+    ok: true,
+    reportId: body.reportId ?? null,
+    disposition: body.disposition ?? null,
+    idempotent: body.idempotent === true,
+    rating: body.feedback?.rating ?? feedback.rating,
+  });
+}
+
+export function saasunaConversationQualityFeedbackEligible(turn) {
+  return Boolean(
+    turn?.ok
+    && turn.responseOrigin === 'provider_candidate'
+    && exactToken(turn.turnId, 48)
+  );
+}
+
 function addConversationStyle(document) {
   if (document.getElementById?.(PARTNER_CONVERSATION_STYLE_ID)) return;
   const style = document.createElement('style');
@@ -210,6 +306,8 @@ function addConversationStyle(document) {
 .grPartnerConversationInput{min-height:50px;max-height:112px;resize:vertical;border:1px solid rgba(184,207,255,.23);border-radius:13px;background:rgba(7,11,27,.76);color:#f7f8ff;padding:11px 12px;font:inherit;outline:none}
 .grPartnerConversationInput:focus{border-color:rgba(159,190,255,.55)}.grPartnerConversationInput::placeholder{color:#7e8aaf}
 .grPartnerConversationSend{min-width:72px;border-radius:13px!important}
+.grPartnerQuality{display:flex;align-items:center;gap:6px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(193,212,255,.10)}
+.grPartnerQualityLabel{font-size:9px;color:#9da9cf;margin-right:2px}.grPartnerQualityButton{min-width:54px;min-height:36px;border:1px solid rgba(184,207,255,.22);border-radius:999px;background:rgba(19,27,58,.78);color:#edf2ff;font:inherit;font-size:10px;cursor:pointer}.grPartnerQualityButton[aria-pressed="true"]{border-color:rgba(176,208,255,.72);background:rgba(70,102,170,.56)}.grPartnerQualityButton:disabled{cursor:default;opacity:.7}.grPartnerQualityStatus{min-width:0;font-size:9px;color:#aeb9dd}
 @media(max-width:760px){.grPartnerConversation{grid-template-columns:42% 58%;border-radius:13px}.grPartnerIdentity{left:12px;bottom:12px}.grPartnerIdentity b{font-size:18px}.grPartnerConversationHead{padding:10px 11px 9px}.grPartnerConversationLog{padding:10px}.grPartnerConversationComposer{padding:9px 10px 10px}}
 @media(max-width:540px) and (orientation:portrait){.grPartnerConversation{grid-template-columns:1fr;grid-template-rows:minmax(190px,42vh) minmax(320px,1fr)}.grPartnerHero img{object-position:center 35%}.grPartnerChat{min-height:320px}.grPartnerConversationComposer{grid-template-columns:1fr auto}}
 `;
@@ -224,6 +322,55 @@ function appendMessage(document, log, role, text) {
   log.appendChild(row);
   log.scrollTop = log.scrollHeight;
   return row;
+}
+
+function appendConversationQualityControls(document, row, turn, entry, global) {
+  if (!saasunaConversationQualityFeedbackEligible(turn)) return null;
+  const controls = document.createElement('div');
+  controls.className = 'grPartnerQuality';
+  controls.dataset.partnerConversationQualityControls = '1';
+
+  const label = document.createElement('span');
+  label.className = 'grPartnerQualityLabel';
+  label.textContent = 'この返答';
+  controls.appendChild(label);
+
+  const status = document.createElement('span');
+  status.className = 'grPartnerQualityStatus';
+  status.setAttribute('aria-live', 'polite');
+  const buttons = [];
+  for (const [rating, text] of [['good', '良い'], ['bad', '悪い']]) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'grPartnerQualityButton';
+    button.dataset.partnerConversationQuality = rating;
+    button.setAttribute('aria-pressed', 'false');
+    button.textContent = text;
+    buttons.push(button);
+    controls.appendChild(button);
+    button.addEventListener('click', async () => {
+      if (controls.dataset.submitting === '1' || controls.dataset.submitted === '1') return;
+      controls.dataset.submitting = '1';
+      for (const item of buttons) item.disabled = true;
+      status.textContent = '送信中';
+      const local = entry.feedback(turn.turnId, rating);
+      const saved = local?.ok
+        ? await submitSaasunaConversationQualityFeedback(local, { fetchImpl: global?.fetch })
+        : Object.freeze({ ok: false, reason: local?.reason || 'conversation_quality_feedback_invalid' });
+      delete controls.dataset.submitting;
+      if (saved.ok) {
+        controls.dataset.submitted = '1';
+        for (const item of buttons) item.setAttribute('aria-pressed', item === button ? 'true' : 'false');
+        status.textContent = '評価を記録しました';
+        return;
+      }
+      for (const item of buttons) item.disabled = false;
+      status.textContent = '評価を送信できませんでした';
+    });
+  }
+  controls.appendChild(status);
+  row.appendChild(controls);
+  return controls;
 }
 
 export function restoreSaasunaConversationRetryDraft(input, userRow, message) {
@@ -322,7 +469,8 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
         const turn = response?.turn;
         const ok = turn?.ok && typeof turn.utterance === 'string';
         if (!ok) restoreSaasunaConversationRetryDraft(input, userRow, message);
-        appendMessage(document, log, ok ? 'saasuna' : 'system', ok ? turn.utterance : '応答できませんでした。もう一度送ってください。');
+        const responseRow = appendMessage(document, log, ok ? 'saasuna' : 'system', ok ? turn.utterance : '応答できませんでした。もう一度送ってください。');
+        if (ok) appendConversationQualityControls(document, responseRow, turn, entry, global);
         setConversationResponseState(state, turn);
       } catch {
         restoreSaasunaConversationRetryDraft(input, userRow, message);

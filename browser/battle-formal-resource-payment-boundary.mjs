@@ -8,7 +8,7 @@ export const FORMAL_RESOURCE_PAYMENT_STATUS = Object.freeze({
   AUTHORITY_UNRESOLVED_INSUFFICIENT_TOTAL: 'AUTHORITY_UNRESOLVED_INSUFFICIENT_TOTAL',
 });
 
-export const FORMAL_RESOURCE_PAYMENT_POLICY = 'MANA_FIRST_FORCED_HONEY_DEFICIT';
+export const FORMAL_RESOURCE_PAYMENT_POLICY = 'MANA_ONLY_REQUIRED';
 export const FORMAL_MANA_MAX = 10;
 
 function requireNonNegativeInteger(value, name) {
@@ -38,18 +38,18 @@ export function projectFormalResourcePayment({ kind, cardNumber, mana, honey } =
   const manaBefore = requireMana(mana);
   const honeyBefore = requireNonNegativeInteger(honey, 'honey');
   const cost = getFormalGenericManaCost({ kind, cardNumber });
-  const manaPaid = Math.min(manaBefore, cost);
-  const honeyRequired = cost - manaPaid;
 
-  if (honeyRequired > honeyBefore) {
+  if (manaBefore < cost) {
     return Object.freeze({
       status: FORMAL_RESOURCE_PAYMENT_STATUS.AUTHORITY_UNRESOLVED_INSUFFICIENT_TOTAL,
       resolved: false,
+      reason: 'INSUFFICIENT_MANA',
       cost,
       manaBefore,
       honeyBefore,
-      manaPaid,
-      honeyRequired,
+      manaPaid: 0,
+      honeyPaid: 0,
+      manaDeficit: cost - manaBefore,
       paymentPolicy: FORMAL_RESOURCE_PAYMENT_POLICY,
       userChoiceRequired: false,
     });
@@ -61,10 +61,10 @@ export function projectFormalResourcePayment({ kind, cardNumber, mana, honey } =
     cost,
     manaBefore,
     honeyBefore,
-    manaPaid,
-    honeyPaid: honeyRequired,
-    manaAfter: manaBefore - manaPaid,
-    honeyAfter: honeyBefore - honeyRequired,
+    manaPaid: cost,
+    honeyPaid: 0,
+    manaAfter: manaBefore - cost,
+    honeyAfter: honeyBefore,
     paymentPolicy: FORMAL_RESOURCE_PAYMENT_POLICY,
     userChoiceRequired: false,
   });

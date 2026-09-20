@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ADVICE-SAASUNA-TOUCH-CRY-R2-20260921T0241-SOL",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "SAASUNA_TOUCH_CRY_VISIBLE_HTML_BINDING_R2",
+  "acquireKey": "ADVICE-SAASUNA-TOUCH-CRY-R2-20260921T0241-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_073ABD_EXISTING_SAASUNA_TOUCH_CRY_CANONICAL_REGISTRY_PLUS_PROVEN_R2_OVERLAY_20260921T0320JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R2_DONOR_PLAYER_PATH_HOME_PARTNER_SAASUNA_BATTLE_TOUCH_CRY_1254X1254_DISPLAY_NONE_BLOCK_NONE_PLUS_FOCUSED_41_41_BUILD_7_7",
+  "proceedToken": "PROCEED|ADVICE-SAASUNA-TOUCH-CRY-R2-20260921T0241-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|accepted-touch-cry-asset|html-overlay-binding",
+  "authorizationBaseSha": "073abd088d1a203d858511083de6f54d9a888e50",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "SAASUNA_TOUCH_CRY_VISIBLE_HTML_BINDING_R2",
+  "leaseAcquireKey": "ADVICE-SAASUNA-TOUCH-CRY-R2-20260921T0241-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 03:20 JST",
+  "leaseUntilJst": "2026-09-21 04:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:L10",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; tests/partner-saasuna-bustup-visuals.test.mjs; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback; browser/partner-saasuna-bustup-visuals.mjs READ_ONLY canonical registry; browser/partner-advice-runtime-mount.mjs READ_ONLY live owner; existing nine browser/assets/partners/saasuna PNG assets READ_ONLY; deploy/cloudflare/scripts/build.mjs READ_ONLY; deploy/cloudflare/tests/build.test.mjs READ_ONLY active owner; gameplay/rules/save/network READ_ONLY",
+  "solutionSignature": "Fresh-main adaptation of the already-proven R2 presentation-only overlay: reuse canonical SAASUNA_BUSTUP_ASSETS.TOUCH_CRY in GAMEROAD.html for 3 seconds on visible Advice Partner touch; underlying Advice state continues independently.",
+  "reuseDisposition": "ADAPT_PROVEN_DONOR",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "donor-d99a7c28-plus-player-path-readback",
+  "solutionSearchEvidence": [
+    "Formal asset registration identifies TOUCH_CRY as accepted static transparent material for Home left navigator / Advice Partner use.",
+    "Donor R2 browser probe proved normal display none, tap display block with 1254x1254 complete image, then display none after 3 seconds while semantic Advice state remained GUIDE_PRESENT.",
+    "Fresh main advanced by one unrelated Battle target-picker commit; compare shows intended delta remains exactly GAMEROAD.html plus focused Saasuna visual test.",
+    "Build-test owner stays read-only; this branch does not change deploy/cloudflare/tests/build.test.mjs."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/partner-saasuna-bustup-visuals.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/partner-saasuna-bustup-visuals.test.mjs"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-LIVE-FIELD-STYLE-R2-20260921T0509-SOL",
+  "taskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "workUnitKey": "SETUP_BATTLE_FIELD_REEL_STYLE_AND_HITACCESS_R1",
+  "acquireKey": "UI-LIVE-FIELD-STYLE-R2-20260921T0509-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_96FD34BC_LIVE_667X375_STYLE_DELTA",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "FOCUSED_12_OF_12_AND_VALID_HTTP_RENDER_DIFF",
+  "proceedToken": "PROCEED|UI-LIVE-FIELD-STYLE-R2-20260921T0509-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|short-landscape-field-reel|presentation-only|active-lease",
+  "authorizationBaseSha": "96fd34bc70b852092b09f916740bd0dc499c49fd",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "leaseWorkUnitKey": "SETUP_BATTLE_FIELD_REEL_STYLE_AND_HITACCESS_R1",
+  "leaseAcquireKey": "UI-LIVE-FIELD-STYLE-R2-20260921T0509-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 05:31 JST",
+  "leaseUntilJst": "2026-09-21 06:09 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A18:L18",
+  "leaseExactMutableResources": "browser/slidepad-slot-roll-core.mjs; tests/slidepad-slot-roll-core.test.mjs; own transient live-style probe; own fresh branch/PR/check/merge/readback; browser/GAMEROAD.html READ_ONLY active Battle owner; browser/home-shell-presentation-core.mjs READ_ONLY active Home owner; gameplay/rules/save/network READ_ONLY",
+  "scope": [
+    "browser/slidepad-slot-roll-core.mjs",
+    "tests/slidepad-slot-roll-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/slidepad-slot-roll-core.mjs",
+    "tests/slidepad-slot-roll-core.test.mjs"
+  ]
+}

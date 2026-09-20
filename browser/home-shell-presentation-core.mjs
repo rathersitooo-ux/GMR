@@ -187,11 +187,11 @@ function setupQuickDeckElement(doc, tag, className, text) {
   return node;
 }
 
-function setupQuickDeckCardLabel(cardId) {
+export function setupQuickDeckCardLabel(cardId) {
   const id = String(cardId);
   const cards = globalThis.__CARD_DATA__;
   const card = Array.isArray(cards) ? cards.find((entry) => String(entry?.id ?? '') === id) : null;
-  const label = card?.nameJa ?? card?.name ?? card?.label ?? id;
+  const label = card?.display_name ?? card?.nameJa ?? card?.name ?? card?.label ?? id;
   return String(label || id);
 }
 

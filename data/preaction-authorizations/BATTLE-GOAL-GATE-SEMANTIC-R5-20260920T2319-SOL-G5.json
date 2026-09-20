@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-GOAL-GATE-SEMANTIC-R5-20260920T2319-SOL-G5",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_GOAL_GATE_FRESH_LINEAGE_R5",
+  "acquireKey": "BATTLE-GOAL-GATE-SEMANTIC-R5-20260920T2319-SOL-G5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "REQ_GATE_35516072256_FIRST_COMMIT_VALIDATOR_READBACK",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1932_SIX_FILE_FINAL_DIFF_DONOR_AD4CA0E3",
+  "proceedToken": "PROCEED|BATTLE-GOAL-GATE-SEMANTIC-R5-20260920T2319-SOL-G5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|goal-gate-fresh-lineage|six-file-bounded|active-lease",
+  "authorizationBaseSha": "0641e4e12646e2b1874bc7ed064dfcf1245ba004",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_GOAL_GATE_FRESH_LINEAGE_R5",
+  "leaseAcquireKey": "BATTLE-GOAL-GATE-SEMANTIC-R5-20260920T2319-SOL-G5",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 23:19 JST",
+  "leaseUntilJst": "2026-09-21 00:19 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A27:N27",
+  "leaseExactMutableResources": "browser/new-base-goal-path-core.mjs; tests/new-base-goal-path-core.test.mjs; browser/new-base-goal-path-presentation-core.mjs; tests/new-base-goal-path-presentation-core.test.mjs; browser/new-base-goal-entry-gate-cue-runtime.mjs; tests/new-base-goal-entry-gate-cue-runtime.test.mjs; transient data/preaction-authorizations/BATTLE-GOAL-GATE-SEMANTIC-R5-20260920T2319-SOL-G5.json cleanup-delete only; fresh branch sol/battle-goal-gate-semantic-r5-20260920 + successor PR/check/readback; PR#1932 READ_ONLY donor then close only after successor durable; deploy/cloudflare/tests/build.test.mjs READ_ONLY due active R20 owner; browser/GAMEROAD.html/gameplay/movement/result authority READ_ONLY",
+  "solutionSignature": "GLOBAL_GATE_ALL_AT_ONCE_PLUS_LANE_GOAL_BRANCH_SEPARATION_V2",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1932_EXACT_FINAL_SIX_FILE_DONOR_REUSE",
+  "solutionSearchEvidence": [
+    "PR#1932 contains the tested target six-file semantic diff but has invalid PRE_ACTION lineage because its first manifest was narrower.",
+    "The validator explicitly requires the branch's first commit from merge base to be the sole authorization witness.",
+    "R5 reuses the exact final six file contents from PR#1932 on a fresh branch from current main, with no semantic expansion.",
+    "build.test remains read-only under active R20 ownership; HTML/gameplay/movement/result remain read-only."
+  ],
+  "scope": [
+    "browser/new-base-goal-path-core.mjs",
+    "tests/new-base-goal-path-core.test.mjs",
+    "browser/new-base-goal-path-presentation-core.mjs",
+    "tests/new-base-goal-path-presentation-core.test.mjs",
+    "browser/new-base-goal-entry-gate-cue-runtime.mjs",
+    "tests/new-base-goal-entry-gate-cue-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-goal-path-core.mjs",
+    "tests/new-base-goal-path-core.test.mjs",
+    "browser/new-base-goal-path-presentation-core.mjs",
+    "tests/new-base-goal-path-presentation-core.test.mjs",
+    "browser/new-base-goal-entry-gate-cue-runtime.mjs",
+    "tests/new-base-goal-entry-gate-cue-runtime.test.mjs"
+  ]
+}

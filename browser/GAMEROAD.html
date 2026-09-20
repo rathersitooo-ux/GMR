@@ -4470,4 +4470,88 @@ import { mountBattleCameraLiveRuntime } from './battle-camera-live-runtime.mjs';
   if(battle)new MutationObserver(()=>{if(battle.classList.contains('active'))syncFromGame()}).observe(battle,{attributes:true,attributeFilter:['class','hidden','aria-hidden']});
 })();
 </script>
+
+<script type="module" id="gameroad-saasuna-touch-cry-visible-r2">
+import { SAASUNA_BUSTUP_ASSETS } from './partner-saasuna-bustup-visuals.mjs';
+
+const TOUCH_CRY_HOLD_MS = 3000;
+const BUSTUP_SELECTOR = '[data-role="advice-partner-bustup"]';
+const ART_SELECTOR = '.partnerAdviceBustupArt';
+let touchCryTimer = null;
+
+function bindSaasunaTouchCry(figure) {
+  if (!figure || figure.dataset.touchCryVisibleBound === 'true') return false;
+  const art = figure.querySelector(ART_SELECTOR);
+  if (!art) return false;
+
+  const overlay = document.createElement('img');
+  overlay.className = 'partnerAdviceTouchCryOverlay';
+  overlay.src = SAASUNA_BUSTUP_ASSETS.TOUCH_CRY.src;
+  overlay.alt = '';
+  overlay.decoding = 'async';
+  overlay.draggable = false;
+  overlay.dataset.assetFile = SAASUNA_BUSTUP_ASSETS.TOUCH_CRY.fileName;
+  Object.assign(overlay.style, {
+    position: 'absolute',
+    inset: '0',
+    width: '100%',
+    height: '100%',
+    objectFit: 'contain',
+    objectPosition: 'center bottom',
+    pointerEvents: 'none',
+    display: 'none',
+    zIndex: '3',
+    filter: 'drop-shadow(0 7px 10px rgba(0,0,0,.34))',
+  });
+  art.append(overlay);
+
+  figure.dataset.touchCryVisibleBound = 'true';
+  figure.setAttribute('role', 'button');
+  figure.setAttribute('tabindex', '0');
+  figure.setAttribute('aria-label', 'アドバイスパートナー サースナーに触れる');
+  figure.style.pointerEvents = 'auto';
+  figure.style.touchAction = 'manipulation';
+  figure.style.cursor = 'pointer';
+
+  const trigger = () => {
+    if (figure.hidden || figure.dataset.state == null) return false;
+    if (touchCryTimer !== null) {
+      clearTimeout(touchCryTimer);
+      touchCryTimer = null;
+    }
+    overlay.style.display = 'block';
+    figure.dataset.touchCryVisible = 'true';
+    touchCryTimer = setTimeout(() => {
+      touchCryTimer = null;
+      overlay.style.display = 'none';
+      delete figure.dataset.touchCryVisible;
+    }, TOUCH_CRY_HOLD_MS);
+    return true;
+  };
+
+  figure.addEventListener('click', (event) => {
+    if (!trigger()) return;
+    event.stopPropagation();
+  });
+  figure.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    if (!trigger()) return;
+    event.preventDefault();
+    event.stopPropagation();
+  });
+  return true;
+}
+
+function tryBind() {
+  return bindSaasunaTouchCry(document.querySelector(BUSTUP_SELECTOR));
+}
+
+if (!tryBind()) {
+  const observer = new MutationObserver(() => {
+    if (tryBind()) observer.disconnect();
+  });
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+}
+</script>
+
 </body></html>

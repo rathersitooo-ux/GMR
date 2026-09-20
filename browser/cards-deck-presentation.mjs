@@ -264,12 +264,16 @@ export function installCardsDeckFindability({ document: doc = globalThis.documen
   const host = doc.createElement('div');
   host.dataset.role = 'cards-deck-findability';
   host.setAttribute?.('role', 'search');
-  const input = doc.createElement('input');
-  input.type = 'search';
-  input.placeholder = 'カード検索';
-  input.autocomplete = 'off';
-  input.spellcheck = false;
-  input.setAttribute?.('aria-label', 'カード名またはカードIDで検索');
+  const existingSearch = doc.querySelector('#cardSearch');
+  const input = existingSearch ?? doc.createElement('input');
+  const ownsSearchInput = !existingSearch;
+  if (ownsSearchInput) {
+    input.type = 'search';
+    input.placeholder = 'カード検索';
+    input.autocomplete = 'off';
+    input.spellcheck = false;
+    input.setAttribute?.('aria-label', 'カード名またはカードIDで検索');
+  }
   const inDeckButton = doc.createElement('button');
   inDeckButton.type = 'button';
   inDeckButton.textContent = '札組中';
@@ -294,14 +298,20 @@ export function installCardsDeckFindability({ document: doc = globalThis.documen
   const count = doc.createElement('span');
   count.dataset.role = 'cards-deck-findability-count';
   count.setAttribute?.('aria-live', 'polite');
-  host.appendChild(input);
+  if (ownsSearchInput) host.appendChild(input);
   host.appendChild(inDeckButton);
   host.appendChild(outDeckButton);
   host.appendChild(favoriteFilterButton);
   host.appendChild(resetButton);
   host.appendChild(count);
-  grid.before?.(host);
-  if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);
+  const existingFilterRow = doc.querySelector('#r4SuitFilters');
+  if (existingSearch && existingFilterRow) {
+    host.dataset.integrated = 'true';
+    existingFilterRow.appendChild(host);
+  } else {
+    grid.before?.(host);
+    if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);
+  }
 
   const detailAnchor = doc.querySelector('#addSelectedCard');
   const favoriteAction = detailAnchor ? doc.createElement('button') : null;
@@ -319,6 +329,7 @@ export function installCardsDeckFindability({ document: doc = globalThis.documen
     const style = doc.createElement('style');
     style.id = 'gameroad-cards-deck-findability-style';
     style.textContent = '[data-role="cards-deck-findability"]{position:relative;z-index:2;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}[data-role="cards-deck-findability"] input{min-height:44px;min-width:min(240px,58vw);padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(10,18,30,.72);color:inherit;font:inherit}[data-role="cards-deck-findability"] button{min-height:44px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:transparent;color:inherit;font:700 13px/1 system-ui}[data-role="cards-deck-findability"] button[aria-pressed="true"]{background:rgba(255,216,74,.22);border-color:#ffd84a}[data-role="cards-deck-findability"] button[hidden]{display:none}[data-role="cards-deck-findability-count"]{font:700 12px/1 system-ui;opacity:.72;white-space:nowrap}[data-role="cards-favorite-action"]{min-height:44px;padding:8px 12px}';
+    style.textContent += '[data-role="cards-deck-findability"][data-integrated="true"]{display:contents;margin:0}.screen.cards #collectionGrid [data-cards-deck-filter-hidden="true"]{display:none!important}';
     (doc.head ?? doc.documentElement)?.appendChild?.(style);
   }
 
@@ -339,13 +350,37 @@ export function installCardsDeckFindability({ document: doc = globalThis.documen
   };
   const render = () => {
     if (destroyed) return Object.freeze({ total: 0, visible: 0, query: '', deckFilter: 'all', favoriteOnly: false });
-    const result = applyCardsDeckFindability({
-      document: doc,
-      query: input.value,
-      deckFilter,
-      favoriteOnly,
-      favoriteIds,
-    });
+    let result;
+    if (existingSearch) {
+      const favoriteSet = new Set(normalizeCardsFavoriteIds(favoriteIds));
+      const nodes = [...doc.querySelectorAll('#collectionGrid [data-id]')];
+      for (const node of nodes) {
+        const matchesOwnFilters = matchCardsDeckFindabilityCard(
+          currentCollectionFindabilityRecord(node, favoriteSet),
+          { query: '', deckFilter, favoriteOnly },
+        );
+        if (matchesOwnFilters) delete node.dataset.cardsDeckFilterHidden;
+        else node.dataset.cardsDeckFilterHidden = 'true';
+      }
+      const visible = nodes.filter(
+        (node) => !node.hidden && node.dataset.cardsDeckFilterHidden !== 'true',
+      ).length;
+      result = Object.freeze({
+        total: nodes.length,
+        visible,
+        query: normalizeCardsDeckSearchQuery(input.value),
+        deckFilter,
+        favoriteOnly,
+      });
+    } else {
+      result = applyCardsDeckFindability({
+        document: doc,
+        query: input.value,
+        deckFilter,
+        favoriteOnly,
+        favoriteIds,
+      });
+    }
     inDeckButton.setAttribute?.('aria-pressed', String(deckFilter === 'in-deck'));
     outDeckButton.setAttribute?.('aria-pressed', String(deckFilter === 'not-in-deck'));
     favoriteFilterButton.setAttribute?.('aria-pressed', String(favoriteOnly));
@@ -366,6 +401,9 @@ export function installCardsDeckFindability({ document: doc = globalThis.documen
     input.value = '';
     deckFilter = 'all';
     favoriteOnly = false;
+    if (existingSearch && typeof win?.Event === 'function') {
+      input.dispatchEvent?.(new win.Event('input', { bubbles: true }));
+    }
     render();
     input.focus?.();
   };
@@ -392,7 +430,14 @@ export function installCardsDeckFindability({ document: doc = globalThis.documen
   const observer = typeof win?.MutationObserver === 'function'
     ? new win.MutationObserver(() => render())
     : null;
-  observer?.observe?.(grid, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'aria-label', 'data-id'] });
+  observer?.observe?.(grid, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: existingSearch
+      ? ['class', 'aria-label', 'data-id', 'hidden']
+      : ['class', 'aria-label', 'data-id'],
+  });
   render();
 
   const installation = Object.freeze({
@@ -417,7 +462,10 @@ export function installCardsDeckFindability({ document: doc = globalThis.documen
       resetButton.removeEventListener?.('click', onReset);
       screen.removeEventListener?.('click', onCollectionSelect, true);
       favoriteAction?.removeEventListener?.('click', onFavoriteAction);
-      for (const node of [...(doc.querySelectorAll?.('#collectionGrid [data-id]') ?? [])]) node.hidden = false;
+      for (const node of [...(doc.querySelectorAll?.('#collectionGrid [data-id]') ?? [])]) {
+        if (existingSearch) delete node.dataset.cardsDeckFilterHidden;
+        else node.hidden = false;
+      }
       favoriteAction?.remove?.();
       host.remove?.();
       cardsDeckFindabilityInstallations.delete(doc);

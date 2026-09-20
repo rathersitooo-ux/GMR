@@ -27,6 +27,8 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CONVAI_API_KEY: ${{ secrets.CONVAI_API_KEY }}
+      CONVAI_SAASUNA_CHARACTER_ID: ${{ secrets.CONVAI_SAASUNA_CHARACTER_ID }}
       PAGES_PROJECT: gameroad-browser-r5
       RELAY_WORKER: gameroad-friend-relay-r5
       EVIDENCE_ISSUE: '158'
@@ -202,6 +204,20 @@ jobs:
               --production-branch main
           fi
 
+      - name: Sync Partner provider secrets when available
+        id: partner_provider
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${CONVAI_API_KEY:-}" || -z "${CONVAI_SAASUNA_CHARACTER_ID:-}" ]]; then
+            echo "::warning::Partner AI provider repository secrets are not both configured; preserving approved fallback behavior."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          printf '%s' "$CONVAI_API_KEY" | npx --yes wrangler@4 pages secret put CONVAI_API_KEY --project-name "$PAGES_PROJECT"
+          printf '%s' "$CONVAI_SAASUNA_CHARACTER_ID" | npx --yes wrangler@4 pages secret put CONVAI_SAASUNA_CHARACTER_ID --project-name "$PAGES_PROJECT"
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+
       - name: Deploy Pages production package
         id: pages
         shell: bash
@@ -261,6 +277,39 @@ jobs:
             exit 1
           fi
           echo "External HTTP exact-byte probe succeeded for ${PAGES_URL}/"
+
+      - name: Probe Partner conversation provider
+        if: steps.partner_provider.outputs.configured == 'true'
+        shell: bash
+        env:
+          PAGES_URL: ${{ steps.pages.outputs.url }}
+        run: |
+          set -euo pipefail
+          RESPONSE_BODY="$RUNNER_TEMP/gameroad-partner-provider-probe.json"
+          HTTP_CODE="$(curl --silent --show-error --location \
+            --header 'content-type: application/json' \
+            --request POST \
+            --data '{"userMessage":"公開接続確認","providerSessionId":null}' \
+            --max-time 30 \
+            --output "$RESPONSE_BODY" \
+            --write-out '%{http_code}' \
+            "${PAGES_URL}/ws?partnerOp=conversation")"
+          if [[ "$HTTP_CODE" != "200" ]]; then
+            echo "::error::Partner provider public probe returned HTTP ${HTTP_CODE}, expected 200"
+            exit 1
+          fi
+          RESPONSE_BODY="$RESPONSE_BODY" node <<'NODE'
+          const fs = require('node:fs');
+          const payload = JSON.parse(fs.readFileSync(process.env.RESPONSE_BODY, 'utf8'));
+          if (payload?.ok !== true) throw new Error(`Partner provider response ok=${payload?.ok}`);
+          if (typeof payload.text !== 'string' || payload.text.trim().length < 1 || payload.text.trim().length > 800) {
+            throw new Error('Partner provider response text contract failed');
+          }
+          if (typeof payload.providerSessionId !== 'string' || payload.providerSessionId.trim().length < 1) {
+            throw new Error('Partner provider response session contract failed');
+          }
+          console.log('Partner provider public probe succeeded: HTTP 200 / text contract OK / session present.');
+          NODE
 
       - name: Probe public version manifest
         id: manifest_probe

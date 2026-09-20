@@ -17,6 +17,9 @@ import {
 import {
   mountNewBaseGoalEntryGateCue,
 } from './new-base-goal-entry-gate-cue-runtime.mjs';
+import {
+  createBattleBoardWorldFieldRenderModel,
+} from './battle-board-world-field-renderer.mjs';
 
 const SCHEMA = 'gameroad.battle-new-base-board-live-presentation-composer.v1';
 
@@ -64,6 +67,20 @@ function copyStraightSnapshot(value) {
   return value.map((column) => (Array.isArray(column) ? [...column] : column));
 }
 
+const VISUAL_LANE_LABELS = Object.freeze(['L', 'C', 'R']);
+
+function builtCountByVisualLaneKey(progressionPresentation) {
+  const counts = {};
+  for (const lane of progressionPresentation?.lanePresentations ?? []) {
+    const [participantId, laneIndexRaw] = String(lane?.key ?? '').split(':');
+    const laneIndex = Number(laneIndexRaw);
+    const laneLabel = VISUAL_LANE_LABELS[laneIndex];
+    if (!participantId || laneLabel === undefined || !Number.isSafeInteger(lane?.builtStageCount)) continue;
+    counts[`${participantId}:${laneLabel}`] = lane.builtStageCount;
+  }
+  return counts;
+}
+
 export function mountBattleNewBaseBoardLivePresentation({
   host,
   documentLike = globalThis?.document,
@@ -86,7 +103,7 @@ export function mountBattleNewBaseBoardLivePresentation({
     flanoraLayout = createFlanoraMapLayout(layoutInput);
     goalPathLayout = createNewBaseGoalPathLayout({
       participantIds: flanoraLayout.participantIds,
-      horizontalCellCount: flanoraLayout.horizontalCellCount,
+      horizontalCellCount: layoutInput?.horizontalCellCount,
       shieldLinkedLaneColumnsByParticipant: flanoraLayout.shieldLinkedLaneColumnsByParticipant,
     });
   } catch (error) {
@@ -237,6 +254,12 @@ export function mountBattleNewBaseBoardLivePresentation({
     progressionPresentation() {
       return currentProgressionPresentation;
     },
+    worldFieldRenderModel(worldBounds = {}) {
+      return createBattleBoardWorldFieldRenderModel({
+        worldBounds,
+        builtCountByLaneKey: builtCountByVisualLaneKey(currentProgressionPresentation),
+      });
+    },
     snapshot() {
       return snapshotState();
     },
@@ -262,6 +285,7 @@ export const BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT = deepFre
   progressionPresentationAuthority: 'EXISTING_NEW_BASE_PROGRESSION_LANE_PRESENTATION_CORE',
   boardSurfaceAuthority: 'EXISTING_FLANORA_PRESENTATION_RUNTIME',
   goalEntryCueAuthority: 'EXISTING_STATEFUL_GOAL_ENTRY_GATE_CUE_RUNTIME',
+  worldFieldGeometryAuthority: 'EXISTING_BATTLE_BOARD_WORLD_FIELD_RENDERER',
   participantColorAuthority: 'CALLER',
   ownsSevenCardRule: false,
   ownsProgressionRule: false,

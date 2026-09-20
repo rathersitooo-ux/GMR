@@ -1,15 +1,7 @@
-import {
-  BATTLE_JANKEN_INPUT_MODE,
-  normalizeBattleJankenInputMode,
-  projectBattleJankenInputModeOptions,
-} from './battle-janken-slidepad-runtime-mount.mjs';
-
 export const BATTLE_JANKEN_INPUT_MODE_SETTING_SCHEMA =
   'gameroad.battle-janken-input-mode-setting.v1';
 export const BATTLE_JANKEN_INPUT_MODE_SETTING_STORAGE_KEY =
   'gameroad.battle.janken.inputMode.v1';
-
-const MODE_VALUES = new Set(Object.values(BATTLE_JANKEN_INPUT_MODE));
 
 function freeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -33,15 +25,33 @@ function usableStorage(storage) {
     && typeof storage.setItem === 'function';
 }
 
+function normalizeModeAuthority(authority) {
+  const modes = authority?.modes;
+  const normalize = authority?.normalize;
+  const projectOptions = authority?.projectOptions;
+  if (!modes || typeof modes !== 'object'
+    || typeof normalize !== 'function'
+    || typeof projectOptions !== 'function') {
+    throw new TypeError('battle janken input-mode authority is required');
+  }
+  const values = [modes.CARD_PULL, modes.LAUNCHER, modes.PLAIN];
+  if (values.some((value) => typeof value !== 'string' || !value.trim())
+    || new Set(values).size !== values.length) {
+    throw new TypeError('battle janken input-mode authority must expose the existing three modes');
+  }
+  return Object.freeze({ modes, normalize, projectOptions, values: Object.freeze(values) });
+}
+
 export function createBattleJankenInputModeSetting({
   storage,
   storageKey = BATTLE_JANKEN_INPUT_MODE_SETTING_STORAGE_KEY,
-  defaultMode = BATTLE_JANKEN_INPUT_MODE.LAUNCHER,
+  defaultMode,
+  modeAuthority,
 } = {}) {
-  const fallbackMode = normalizeBattleJankenInputMode(
-    defaultMode,
-    BATTLE_JANKEN_INPUT_MODE.LAUNCHER,
-  );
+  const authority = normalizeModeAuthority(modeAuthority);
+  const launcher = authority.modes.LAUNCHER;
+  const fallbackMode = authority.normalize(defaultMode ?? launcher, launcher);
+  const modeValues = new Set(authority.values);
   const key = typeof storageKey === 'string' && storageKey.trim()
     ? storageKey.trim()
     : BATTLE_JANKEN_INPUT_MODE_SETTING_STORAGE_KEY;
@@ -70,7 +80,7 @@ export function createBattleJankenInputModeSetting({
     return freeze({
       schema: BATTLE_JANKEN_INPUT_MODE_SETTING_SCHEMA,
       mode: memoryMode,
-      options: projectBattleJankenInputModeOptions(memoryMode),
+      options: authority.projectOptions(memoryMode),
       source,
       storageKey: key,
       persistence: lastPersistence,
@@ -96,10 +106,8 @@ export function createBattleJankenInputModeSetting({
       return snapshot('MEMORY_AFTER_READ_FAILURE');
     }
 
-    const valid = typeof raw === 'string' && MODE_VALUES.has(raw.trim());
-    memoryMode = valid
-      ? normalizeBattleJankenInputMode(raw, fallbackMode)
-      : fallbackMode;
+    const valid = typeof raw === 'string' && modeValues.has(raw.trim());
+    memoryMode = valid ? authority.normalize(raw, fallbackMode) : fallbackMode;
 
     if (!valid) {
       const repaired = persist(memoryMode);
@@ -110,7 +118,7 @@ export function createBattleJankenInputModeSetting({
   }
 
   function write(nextMode) {
-    memoryMode = normalizeBattleJankenInputMode(nextMode, fallbackMode);
+    memoryMode = authority.normalize(nextMode, fallbackMode);
     const persisted = persist(memoryMode);
     return snapshot(persisted ? 'SETTING_WRITE' : 'MEMORY_WRITE');
   }
@@ -126,14 +134,9 @@ export function createBattleJankenInputModeSetting({
 export const BATTLE_JANKEN_INPUT_MODE_SETTING_CONTRACT = freeze({
   schema: BATTLE_JANKEN_INPUT_MODE_SETTING_SCHEMA,
   reusesModeAuthority: 'battle-janken-slidepad-runtime-mount.mjs',
-  defaultMode: BATTLE_JANKEN_INPUT_MODE.LAUNCHER,
-  validModes: Object.freeze([
-    BATTLE_JANKEN_INPUT_MODE.CARD_PULL,
-    BATTLE_JANKEN_INPUT_MODE.LAUNCHER,
-    BATTLE_JANKEN_INPUT_MODE.PLAIN,
-  ]),
+  modeAuthorityInjectionRequired: true,
   persistenceFailurePolicy: 'FAIL_SOFT_TO_MEMORY',
-  invalidOrMissingStoredValuePolicy: 'REPAIR_TO_DEFAULT_WHEN_STORAGE_WRITABLE',
+  invalidOrMissingStoredValuePolicy: 'REPAIR_TO_INJECTED_DEFAULT_WHEN_STORAGE_WRITABLE',
   presentationPreferenceOnly: true,
   gameplayAuthority: false,
   cardIdentityAuthority: false,

@@ -1285,6 +1285,19 @@ if (battleSurface) {
   delete root.dataset.battleAdviceOverlay;
 }
 const saasunaBustup = ensureSaasunaBattleBustup(doc, battleSurface);
+  let saasunaTouchCryActive = false;
+  let saasunaTouchCryTimer = null;
+  const clearSaasunaTouchCryTimer = () => {
+    if (saasunaTouchCryTimer !== null) {
+      const clearTimer = typeof win.clearTimeout === 'function' ? win.clearTimeout.bind(win) : globalThis.clearTimeout;
+      clearTimer(saasunaTouchCryTimer);
+      saasunaTouchCryTimer = null;
+    }
+  };
+  const resetSaasunaTouchCry = () => {
+    clearSaasunaTouchCryTimer();
+    saasunaTouchCryActive = false;
+  };
 
   let lastReceipt = null;
   let lastCharacterReaction = null;
@@ -1310,8 +1323,10 @@ const saasunaBustup = ensureSaasunaBattleBustup(doc, battleSurface);
   });
   const render = () => {
     const current = currentBattleChatSnapshot(win);
+    const battleActive = win.__GAMEROAD_TEST__?.state?.screen === 'battle';
+    if ((!battleActive || current?.partnerId !== SAASUNA_PARTNER_ID) && (saasunaTouchCryActive || saasunaTouchCryTimer !== null)) resetSaasunaTouchCry();
     const roster = partnerRosterIdsFromRuntime(win);
-    const roleControlActive = win.__GAMEROAD_TEST__?.state?.screen === 'battle' && roster.length > 1 && Boolean(current?.partnerId);
+    const roleControlActive = battleActive && roster.length > 1 && Boolean(current?.partnerId);
     const confirmedSelf = readBattleR75SelfHudDom(doc);
     if (lastCharacterReaction && current?.partnerId !== lastCharacterReaction.partnerId) lastCharacterReaction = null;
     const nextReaction = characterReaction.consume({ partnerId: current?.partnerId, resolution: confirmedSelf?.resolution });
@@ -1345,7 +1360,7 @@ const saasunaBustup = ensureSaasunaBattleBustup(doc, battleSurface);
     const quickRoutesAvailable = win.__GAMEROAD_TEST__?.state?.screen === 'battle' && Boolean(current?.partnerId);
     const bustupPresentation = renderSaasunaBattleBustup({
       root, bustup: saasunaBustup, partnerId: current?.partnerId,
-      battleActive: win.__GAMEROAD_TEST__?.state?.screen === 'battle', reactionActive,
+      battleActive, touchCryActive: saasunaTouchCryActive, reactionActive,
       tutorialActive: tutorialStatus.active || tutorialExperienceStatus.active,
       quickRouteId: quickRouteStatus.routeId, adviceActive: adviceSpeechActive,
     });
@@ -1435,8 +1450,38 @@ const saasunaBustup = ensureSaasunaBattleBustup(doc, battleSurface);
       tutorialButton.setAttribute('aria-pressed', tutorialStatus.active ? 'true' : 'false');
       tutorialButton.textContent = tutorialStatus.active ? '説明を閉じる' : '操作を再確認';
     }
-    return Object.freeze({ projection, tutorial: tutorialStatus, idleReadable, characterReaction: lastCharacterReaction, bustup: bustupPresentation, advicePartnerId: current?.partnerId || null, roster });
+    return Object.freeze({ projection, tutorial: tutorialStatus, idleReadable, characterReaction: lastCharacterReaction, bustup: bustupPresentation, touchCryActive: saasunaTouchCryActive, advicePartnerId: current?.partnerId || null, roster });
   };
+
+  const triggerSaasunaTouchCry = () => {
+    const current = currentBattleChatSnapshot(win);
+    const battleActive = win.__GAMEROAD_TEST__?.state?.screen === 'battle';
+    if (!battleActive || current?.partnerId !== SAASUNA_PARTNER_ID || !saasunaBustup?.figure || saasunaBustup.figure.hidden) return false;
+    clearSaasunaTouchCryTimer();
+    saasunaTouchCryActive = true;
+    render();
+    const setTimer = typeof win.setTimeout === 'function' ? win.setTimeout.bind(win) : globalThis.setTimeout;
+    saasunaTouchCryTimer = setTimer(() => {
+      saasunaTouchCryTimer = null;
+      saasunaTouchCryActive = false;
+      render();
+    }, 3000);
+    return true;
+  };
+
+  if (saasunaBustup?.figure && saasunaBustup.figure.dataset.touchCryBound !== 'true') {
+    saasunaBustup.figure.dataset.touchCryBound = 'true';
+    saasunaBustup.figure.addEventListener('click', (event) => {
+      if (!triggerSaasunaTouchCry()) return;
+      event.stopPropagation();
+    });
+    saasunaBustup.figure.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      if (!triggerSaasunaTouchCry()) return;
+      event.preventDefault();
+      event.stopPropagation();
+    });
+  }
 
   const quickRoutesElement = root.querySelector('.partnerAdviceQuickRoutes');
   if (quickRoutesElement && quickRoutesElement.dataset.quickRoutesBound !== 'true') {

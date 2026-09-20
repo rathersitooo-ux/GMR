@@ -1,7 +1,6 @@
-// R3 composition shim: preserve the current Home implementation byte-for-byte in the base module,
-// then mount the already-authorized Study runtime beside the existing Rogue runtime.
+// R3 composition shim: keep the current Home implementation in the base module.
+// Standalone Study/Rogue runtimes remain available without injecting launchers into Home.
 export * from './home-boot-runtime-base-r3.mjs';
-import { mountStudyRunFromCurrentBrowser } from './study-run-runtime-mount.mjs';
 
 // Source-compatibility markers consumed by the existing Home presentation contract test.
 // [data-home-quick-set-active="true"] ${ROUTE_SELECTOR}
@@ -18,14 +17,3 @@ import { mountStudyRunFromCurrentBrowser } from './study-run-runtime-mount.mjs';
 // [data-go="settings"]::before
 // HOME_CONTEXTUAL_REPLAY_LABEL
 
-function mountStudyAfterHome() {
-  mountStudyRunFromCurrentBrowser();
-}
-
-if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', mountStudyAfterHome, { once: true });
-  } else {
-    mountStudyAfterHome();
-  }
-}

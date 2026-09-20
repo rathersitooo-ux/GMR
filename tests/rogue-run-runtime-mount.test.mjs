@@ -222,11 +222,13 @@ test('Rogue modal outside dismiss closes once, keeps inside clicks, and consumes
   assert.deepEqual(counts, { prevent: 1, stop: 1, immediate: 1 });
 });
 
-test('already-loaded Home runtime mounts the Rogue consumer once without rewriting production HTML', () => {
+test('Home composition no longer attaches the independent Rogue entry', () => {
   const homeBoot = fs.readFileSync(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
-  assert.equal((homeBoot.match(/mountRogueRunFromCurrentBrowser/g) || []).length, 2);
-  assert.match(homeBoot, /import \{ mountRogueRunFromCurrentBrowser \} from '\.\/rogue-run-runtime-mount\.mjs';/);
-  assert.match(homeBoot, /refreshHomeBootPresentation\(\);\s*mountRogueRunFromCurrentBrowser\(\);/);
+  const homeBase = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
+  assert.equal(homeBoot.includes('rogue-run-runtime-mount'), false);
+  assert.equal(homeBoot.includes('mountRogueRunFromCurrentBrowser'), false);
+  assert.equal(homeBase.includes('rogue-run-runtime-mount'), false);
+  assert.equal(homeBase.includes('mountRogueRunFromCurrentBrowser'), false);
 
   const build = fs.readFileSync(new URL('../deploy/cloudflare/scripts/build.mjs', import.meta.url), 'utf8');
   assert.match(build, /source: 'browser\/rogue-run-core\.mjs'.*output: 'rogue-run-core\.mjs'/);

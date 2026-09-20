@@ -188,6 +188,7 @@ if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stat
     [/liveGoalLabel\.textContent=['\"]GOAL['\"]/, 'shared GOAL has no player-visible label in the live Battle field'],
     [/#battleMap\[data-central-world-live=['\"]1['\"]\] #board \.node:not\(\.reachable\):not\(\.path\):not\(\.currentPosition\):not\(\.nextStep\)/, 'legacy future board scaffolding is still player-visible after the central world mount'],
     [/if\(!liveWorldBoard\)\{const active=activeNodes\(\);for\(const id of all\)/, 'legacy 3D board geometry is still drawn underneath the new world-field map'],
+    [/if\(!liveWorldBoard\)\{ctx\.save\(\);ctx\.lineCap='round';ctx\.lineJoin='round';for\(const owner of \['P1','P2','P3','P4'\]\)/, 'legacy canvas lane scaffolding is still drawn under the new world-field map'],
   ];
   for (const [pattern, message] of centralWorldLiveContracts) {
     if (!pattern.test(html)) errors.push(message);

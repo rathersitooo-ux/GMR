@@ -174,7 +174,7 @@ export function createScreenNavigationRuntimeBridge() {
 function requireFunction(value, label) { if (typeof value !== 'function') throw new Error(`${label} must be a function`); return value; }
 function readBoolean(source) { return Boolean(typeof source === 'function' ? source() : source); }
 function resolveMotionProfile({reducedMotion, lowPerf}) {
-  if (reducedMotion) return MENU_TRANSITION_MOTION_PROFILE.NONE;
+  if (reducedMotion) return MENU_TRANSITION_MOTION_PROFILE.REDUCED;
   if (lowPerf) return MENU_TRANSITION_MOTION_PROFILE.REDUCED;
   return MENU_TRANSITION_MOTION_PROFILE.NORMAL;
 }

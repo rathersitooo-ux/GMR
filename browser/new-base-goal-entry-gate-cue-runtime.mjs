@@ -73,8 +73,8 @@ function ensureStyle(documentLike) {
 .grGoalEntryBarrier::before{left:35%}.grGoalEntryBarrier::after{right:34%;transform:rotate(-18deg)}
 .grGoalEntryHoop{position:absolute;left:8%;right:8%;top:-2px;bottom:-2px;border:2px solid color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 68%,white);border-radius:50% 50% 42% 42%/60% 60% 40% 40%;background:color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 8%,transparent);box-shadow:0 0 10px color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 36%,transparent),inset 0 0 8px color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 14%,transparent);opacity:0;transform:scale(.82)}
 .grGoalEntryMembrane{position:absolute;left:17%;right:17%;top:18%;bottom:10%;border-radius:50%;background:radial-gradient(ellipse at center,color-mix(in srgb,var(--gameroad-goal-entry-cue-color) 12%,transparent),transparent 70%);opacity:0}
-.grGoalEntryGate[data-goal-path-open="1"] .grGoalEntryBarrier{opacity:0;transform:scale(.55) rotate(3deg)}
-.grGoalEntryGate[data-goal-path-open="1"] .grGoalEntryHoop,.grGoalEntryGate[data-goal-path-open="1"] .grGoalEntryMembrane{opacity:1;transform:scale(1)}
+.grGoalEntryGate[data-gate-open="1"] .grGoalEntryBarrier{opacity:0;transform:scale(.55) rotate(3deg)}
+.grGoalEntryGate[data-gate-open="1"] .grGoalEntryHoop,.grGoalEntryGate[data-gate-open="1"] .grGoalEntryMembrane{opacity:1;transform:scale(1)}
 .grGoalEntryGate[data-gate-transition="shatter_to_open"] .grGoalEntryBarrier{animation:grGoalGateShatter .42s cubic-bezier(.2,.7,.25,1) both}
 .grGoalEntryGate[data-gate-transition="shatter_to_open"] .grGoalEntryHoop{animation:grGoalGateOpen .34s .12s ease-out both}
 @keyframes grGoalGateShatter{0%{opacity:1;transform:scale(1)}45%{opacity:.92;transform:scale(1.06) rotate(-2deg);filter:brightness(1.6)}100%{opacity:0;transform:scale(.52) rotate(8deg)}}
@@ -181,6 +181,7 @@ function createGate(documentLike, lane) {
   setAttr(gate, 'data-shared-goal-id', lane.sharedGoalId);
   setAttr(gate, 'data-participant-id', lane.participantId);
   setAttr(gate, 'data-lane-index', lane.laneIndex);
+  setAttr(gate, 'data-gate-open', '0');
   setAttr(gate, 'data-goal-path-open', '0');
   setAttr(gate, 'aria-hidden', 'true');
   gate.appendChild(createNode(documentLike, 'span', 'grGoalEntryBarrier'));
@@ -206,6 +207,7 @@ export function mountNewBaseGoalEntryGateCue({
   ensureStyle(documentLike);
   const mountedByLaneKey = new Map();
   let unresolvedOpenLaneKeys = new Set();
+  let globalGateOpen = false;
   let activeParticipantColors = participantColors && typeof participantColors === 'object' ? participantColors : {};
   let destroyed = false;
 
@@ -234,15 +236,19 @@ export function mountNewBaseGoalEntryGateCue({
 
   function snapshotState() {
     const records = [...mountedByLaneKey.values()];
+    const connectedRecords = records.filter((item) => item.connectedToGoal);
     return deepFreeze({
       laneGateCount: records.length,
       sharedGoalCount: 1,
-      openLaneCount: records.filter((item) => item.connectedToGoal).length,
-      lockedBarrierCount: records.filter((item) => !item.connectedToGoal).length,
-      openHoopCount: records.filter((item) => item.connectedToGoal).length,
+      gateOpen: globalGateOpen,
+      connectedGoalPathCount: connectedRecords.length,
+      openLaneCount: connectedRecords.length,
+      lockedBarrierCount: globalGateOpen ? 0 : records.length,
+      openHoopCount: globalGateOpen ? records.length : 0,
       activeArrowCount: records.filter((item) => item.arrowStack !== null).length,
       unresolvedOpenLaneKeys: [...unresolvedOpenLaneKeys],
-      activeRouteGateIds: records.filter((item) => item.connectedToGoal).map((item) => item.routeGateId),
+      activeGoalBranchIds: connectedRecords.map((item) => item.routeGateId),
+      activeRouteGateIds: connectedRecords.map((item) => item.routeGateId),
       profile,
       animationMode: profile === 'standard' ? 'BARRIER_SHATTER_TO_OPEN_HOOP' : 'STATIC_GATE_STATE',
       presentationOnly: true,
@@ -272,14 +278,16 @@ export function mountNewBaseGoalEntryGateCue({
       desired.push({ record, connectedToGoal: lane.connectedToGoal === true, cueColor: normalizeColor(colors?.[record.participantId]) });
     }
 
+    const nextGlobalGateOpen = desired.some(({ connectedToGoal }) => connectedToGoal);
+    const openingGateNow = nextGlobalGateOpen && !globalGateOpen;
     const nextUnresolved = new Set();
     for (const { record, connectedToGoal, cueColor } of desired) {
-      const openingNow = connectedToGoal && !record.connectedToGoal;
       record.connectedToGoal = connectedToGoal;
       record.cueColor = cueColor;
-      record.lastTransition = openingNow ? 'shatter_to_open' : null;
+      record.lastTransition = openingGateNow ? 'shatter_to_open' : null;
+      setAttr(record.gate, 'data-gate-open', nextGlobalGateOpen ? '1' : '0');
       setAttr(record.gate, 'data-goal-path-open', connectedToGoal ? '1' : '0');
-      if (openingNow && profile === 'standard') setAttr(record.gate, 'data-gate-transition', 'shatter_to_open');
+      if (openingGateNow && profile === 'standard') setAttr(record.gate, 'data-gate-transition', 'shatter_to_open');
       else removeAttr(record.gate, 'data-gate-transition');
       setAttr(record.anchor, 'data-connected-to-goal', connectedToGoal ? 'true' : 'false');
 
@@ -300,6 +308,7 @@ export function mountNewBaseGoalEntryGateCue({
       }
     }
 
+    globalGateOpen = nextGlobalGateOpen;
     activeParticipantColors = colors;
     unresolvedOpenLaneKeys = nextUnresolved;
     setAttr(sharedGoal, 'data-connected-route-count', [...mountedByLaneKey.values()].filter((item) => item.connectedToGoal).length);
@@ -344,10 +353,12 @@ export function mountNewBaseGoalEntryGateCue({
 
 export const NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT = deepFreeze({
   schema: SCHEMA,
-  gateMeaning: 'ROUTE_SPECIFIC_BOUNDARY_BEFORE_ONE_SHARED_GOAL',
+  gateMeaning: 'GLOBAL_ENTRANCE_STATE_REPEATED_AT_TWELVE_ROUTE_ANCHORS',
   gateVisibility: 'PERSISTENT_WORLD_SPACE_AFFORDANCE',
   gateCount: 12,
   sharedGoalCount: 1,
+  gateOpenPolicy: 'ALL_AT_ONCE_WHEN_ANY_GOAL_BRANCH_IS_CONNECTED',
+  laneGoalBranchCueSeparateFromGateOpen: true,
   closedGateVisual: 'SOLID_LOCKED_BARRIER',
   openGateVisual: 'OPEN_HOOP_WITH_TRANSPARENT_MEMBRANE',
   standardOpeningTransition: 'BARRIER_SHATTER_TO_OPEN_HOOP',
@@ -355,7 +366,7 @@ export const NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT = deepFreeze({
   activeArrowAuthority: 'CALLER_GOAL_PATH_PRESENTATION_CONNECTED_TO_GOAL',
   activeArrowColorAuthority: 'CALLER_PARTICIPANT_COLOR',
   closedLaneArrowVisible: false,
-  multipleOpenLanesSupported: true,
+  multipleConnectedGoalBranchesSupported: true,
   statefulGoalPathSync: true,
   repeatedSyncIdempotent: true,
   standardMotion: 'BARRIER_SHATTER_TO_OPEN_HOOP',

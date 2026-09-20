@@ -18,6 +18,14 @@ const REPORT_TYPES = new Set(['bug', 'defect', 'request']);
 const VERSION_KEYS = Object.freeze(['rules', 'content', 'state']);
 const MAX_REQUEST_BYTES = 4096;
 const DIALOGUE_FEEDBACK_KIND = 'dialogue_edit';
+const CONVERSATION_QUALITY_FEEDBACK_KIND = 'conversation_quality_rating';
+const CONVERSATION_QUALITY_FEEDBACK_USE_SITE = 'partner_conversation_quality_feedback';
+const CONVERSATION_QUALITY_RATINGS = new Set(['good', 'bad']);
+const CONVERSATION_QUALITY_FEEDBACK_KEYS = new Set([
+  'kind', 'sessionId', 'turnId', 'dialogueVersion', 'sourceId', 'rating', 'responseOrigin', 'canonStatus',
+  'candidateOnly', 'rawTextStored', 'canonicalWrite', 'automaticCanonMutation', 'automaticRelationshipMutation',
+  'automaticRewardMutation', 'automaticLearning',
+]);
 const BATTLE_RECEIPT_KINDS = new Set(['battle_resolution', 'match_ended']);
 const BATTLE_RECEIPT_MAX_REQUEST_BYTES = 16_384;
 const BATTLE_RECEIPT_MAX_EVENTS = 512;
@@ -75,6 +83,48 @@ function normalizeFeedback(value, reportType) {
   if (value === undefined) return null;
   if (reportType !== 'request' || !value || typeof value !== 'object' || Array.isArray(value)) return false;
   const kind = exactToken(value.kind, 64);
+  if (kind === CONVERSATION_QUALITY_FEEDBACK_KIND) {
+    if (!Object.keys(value).every((key) => CONVERSATION_QUALITY_FEEDBACK_KEYS.has(key))) return false;
+    const sessionId = exactToken(value.sessionId, 96);
+    const turnId = exactToken(value.turnId, 48);
+    const dialogueVersion = exactToken(value.dialogueVersion, 160);
+    const sourceId = exactToken(value.sourceId, 160);
+    const rating = exactToken(value.rating, 16);
+    if (
+      !sessionId
+      || !turnId
+      || !dialogueVersion
+      || !sourceId
+      || !CONVERSATION_QUALITY_RATINGS.has(rating)
+      || value.responseOrigin !== 'provider_candidate'
+      || value.canonStatus !== 'ephemeral_candidate'
+      || value.candidateOnly !== true
+      || value.rawTextStored !== false
+      || value.canonicalWrite !== false
+      || value.automaticCanonMutation !== false
+      || value.automaticRelationshipMutation !== false
+      || value.automaticRewardMutation !== false
+      || value.automaticLearning !== false
+    ) return false;
+    return {
+      kind,
+      sessionId,
+      turnId,
+      dialogueVersion,
+      sourceId,
+      rating,
+      responseOrigin: 'provider_candidate',
+      canonStatus: 'ephemeral_candidate',
+      candidateOnly: true,
+      rawTextStored: false,
+      canonicalWrite: false,
+      automaticCanonMutation: false,
+      automaticRelationshipMutation: false,
+      automaticRewardMutation: false,
+      automaticLearning: false,
+    };
+  }
+
   const sourceLineId = exactToken(value.sourceLineId, 160);
   const proposedText = boundedText(value.proposedText, 600);
   const voiceTuning = normalizeVoiceTuning(value.voiceTuning);
@@ -105,12 +155,20 @@ function normalizeSubmit(input) {
   const reportType = exactToken(input.reportType, 32);
   const sourceUseSite = exactToken(input.sourceUseSite, 160);
   const sourceStateIdentity = exactToken(input.sourceStateIdentity, 256);
-  const versions = safeVersions(input.versions);
-  if (!idempotencyKey || !partnerId || !REPORT_TYPES.has(reportType) || !sourceUseSite || !sourceStateIdentity || !versions) {
-    return null;
-  }
+  if (!idempotencyKey || !partnerId || !REPORT_TYPES.has(reportType) || !sourceUseSite || !sourceStateIdentity) return null;
+
   const feedback = normalizeFeedback(input.feedback, reportType);
   if (feedback === false) return null;
+  const qualityFeedback = feedback?.kind === CONVERSATION_QUALITY_FEEDBACK_KIND;
+  if (qualityFeedback) {
+    if (sourceUseSite !== CONVERSATION_QUALITY_FEEDBACK_USE_SITE) return null;
+    if (sourceStateIdentity !== `${feedback.sessionId}:${feedback.turnId}`) return null;
+    if (input.versions !== undefined) return null;
+    return { idempotencyKey, partnerId, reportType, sourceUseSite, sourceStateIdentity, feedback };
+  }
+
+  const versions = safeVersions(input.versions);
+  if (!versions) return null;
   return { idempotencyKey, partnerId, reportType, sourceUseSite, sourceStateIdentity, versions, ...(feedback ? { feedback } : {}) };
 }
 
@@ -138,11 +196,20 @@ function canonicalIdentity(input) {
     input.reportType,
     input.sourceUseSite,
     input.sourceStateIdentity,
-    input.versions.rules,
-    input.versions.content,
-    input.versions.state,
   ];
-  if (input.feedback) {
+  if (input.versions) base.push(input.versions.rules, input.versions.content, input.versions.state);
+  if (input.feedback?.kind === CONVERSATION_QUALITY_FEEDBACK_KIND) {
+    base.push(
+      input.feedback.kind,
+      input.feedback.sessionId,
+      input.feedback.turnId,
+      input.feedback.dialogueVersion,
+      input.feedback.sourceId,
+      input.feedback.rating,
+      input.feedback.responseOrigin,
+      input.feedback.canonStatus,
+    );
+  } else if (input.feedback) {
     base.push(
       input.feedback.kind,
       input.feedback.sourceLineId,
@@ -172,11 +239,11 @@ function publicReport(record) {
     partnerId: record.partnerId,
     sourceUseSite: record.sourceUseSite,
     sourceStateIdentity: record.sourceStateIdentity,
-    versions: {
+    ...(record.versions ? { versions: {
       rules: record.versions.rules,
       content: record.versions.content,
       state: record.versions.state,
-    },
+    } } : {}),
     ...(record.feedback ? { feedback: structuredClone(record.feedback) } : {}),
     authority: {
       verified: true,
@@ -217,15 +284,18 @@ export async function submitStoredPartnerReport(storage, input, runtime = {}) {
     const canonicalKey = canonicalStorageKey(normalized);
     const uniqueReportId = await txn.get(canonicalKey);
     const disposition = exactToken(uniqueReportId, 160) ? 'duplicate' : 'accepted_unique';
+    const qualityFeedback = normalized.feedback?.kind === CONVERSATION_QUALITY_FEEDBACK_KIND;
     const record = {
-      schema: normalized.feedback ? 'gameroad.partner-report.record.v2' : 'gameroad.partner-report.record.v1',
+      schema: qualityFeedback
+        ? 'gameroad.partner-report.record.v3'
+        : normalized.feedback ? 'gameroad.partner-report.record.v2' : 'gameroad.partner-report.record.v1',
       reportId: generated.reportId,
       reportType: normalized.reportType,
       disposition,
       partnerId: normalized.partnerId,
       sourceUseSite: normalized.sourceUseSite,
       sourceStateIdentity: normalized.sourceStateIdentity,
-      versions: normalized.versions,
+      ...(normalized.versions ? { versions: normalized.versions } : {}),
       ...(normalized.feedback ? { feedback: normalized.feedback } : {}),
       createdAtMs: generated.createdAtMs,
       authorityId: PARTNER_REPORT_AUTHORITY_ID,

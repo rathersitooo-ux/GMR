@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "LOBBY-QUICKDECK-DISPLAYNAME-R1-20260920T2159-SOL-Q4",
+  "taskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "workUnitKey": "SETUP_QUICK_DECK_DISPLAY_NAME_R1",
+  "acquireKey": "LOBBY-QUICKDECK-DISPLAYNAME-R1-20260920T2159-SOL-Q4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_QUICK_DECK_LABEL_RESOLVER_AND_CURRENT_LEASE_READBACK_20260920T2159JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1909_INDEPENDENT_REVIEW_DISPLAY_NAME_DEFECT_PLUS_CURRENT_MAIN_EXACT_READBACK",
+  "proceedToken": "PROCEED|LOBBY-QUICKDECK-DISPLAYNAME-R1-20260920T2159-SOL-Q4|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|quick-deck-display-name|presentation-test|active-lease",
+  "authorizationBaseSha": "030fafe00522bfd5250abe492d575f0550e293ea",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "leaseWorkUnitKey": "SETUP_QUICK_DECK_DISPLAY_NAME_R1",
+  "leaseAcquireKey": "LOBBY-QUICKDECK-DISPLAYNAME-R1-20260920T2159-SOL-Q4",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 21:59 JST",
+  "leaseUntilJst": "2026-09-20 22:59 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/home-shell-presentation-core.mjs; tests/home-boot-presentation.test.mjs; transient data/preaction-authorizations/LOBBY-QUICKDECK-DISPLAYNAME-R1-20260920T2159-SOL-Q4.json cleanup-delete only; own fresh branch/PR/check/merge/readback; browser/GAMEROAD.html READ_ONLY; deck/save/rules/economy/network READ_ONLY",
+  "solutionSignature": "SETUP_QUICK_DECK_PRODUCTION_DISPLAY_NAME_FALLBACK_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1909_CURRENT_CONSUMER_REUSES_CANONICAL_QUICK_DECK_PREVIEW",
+  "solutionSearchEvidence": [
+    "Current Setup Quick Deck consumer is already merged and reuses createSetupQuickDeckPreview as the sole read-only deck projection.",
+    "Current production card data exposes display_name while setupQuickDeckCardLabel currently checks only nameJa/name/label before raw id.",
+    "The repair only extends the existing presentation label resolver and its focused test; it does not add deck state or authority."
+  ],
+  "scope": [
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ]
+}

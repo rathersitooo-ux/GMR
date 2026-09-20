@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-CONTACT-SHADOW-R2-20260921T0509-SOL-Q8N4V94",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_BOARD_ALL_CHARACTER_CONTACT_SHADOW_GROUNDING_R2",
+  "acquireKey": "BATTLE-BOARD-CONTACT-SHADOW-R2-20260921T0509-SOL-Q8N4V94",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_8B450E85_OWNER_FREE_BINDING_TARGETS_20260921T0509JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_LOCAL_FOCUSED_CHARACTER_BINDING_AND_HTML_HANDOFF_12_OF_12_PASS",
+  "proceedToken": "PROCEED|BATTLE-BOARD-CONTACT-SHADOW-R2-20260921T0509-SOL-Q8N4V94|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|all-character-contact-shadow|existing-live-binding|active-lease",
+  "authorizationBaseSha": "8b450e85701fe22f0d7c8d7a7c0bbc7c9019628b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_BOARD_ALL_CHARACTER_CONTACT_SHADOW_GROUNDING_R2",
+  "leaseAcquireKey": "BATTLE-BOARD-CONTACT-SHADOW-R2-20260921T0509-SOL-Q8N4V94",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 05:09 JST",
+  "leaseUntilJst": "2026-09-21 06:09 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A21:L21",
+  "leaseExactMutableResources": "browser/battle-board-naki-4p-visual-binding.mjs; tests/battle-board-naki-4p-visual-binding.test.mjs; own transient PRE_ACTION witness; existing branch chatgpt/battle-contact-shadow-r1 rewrite of unpushed product/cleanup commits only; own push/PR/check/readback; browser/GAMEROAD.html READ_ONLY active Mana owner until 05:40 JST; deploy/cloudflare/scripts/build.mjs READ_ONLY; gameplay/rules/save/network READ_ONLY; image generation forbidden",
+  "solutionSignature": "BATTLE_EXISTING_CONTROLLED_CHARACTER_BINDING_ALL_VISIBLE_ACTORS_CONTACT_SHADOW_V2",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "LIVE_BINDING_IMPORT_PLUS_EXISTING_BATTLERUNTIME_SURFACE",
+  "solutionSearchEvidence": [
+    "Current main imports browser/battle-board-naki-4p-visual-binding.mjs on the live Battle route.",
+    "CPU character surfaces are children of authoritative board markers; the human character uses the separate existing #battleRuntime surface and its own live position authority.",
+    "A single style injection from the existing binding can ground both surfaces without touching gameplay coordinates, save/network, or creating another renderer."
+  ],
+  "scope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs"
+  ]
+}

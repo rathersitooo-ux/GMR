@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { SAASUNA_BUSTUP_ASSETS } from '../browser/partner-saasuna-bustup-visuals.mjs';
 import {
   SAASUNA_MOTION_PROFILES,
   SAASUNA_MOTION_STATES,
@@ -129,7 +130,7 @@ test('motion controller adds only whole-layer transition/effect surfaces', () =>
   const plan = controller.setState({ partnerId: 'partner.saasuna', visualState: 'HAPPY_WAVE' });
   assert.equal(plan.state, 'HAPPY_WAVE');
   assert.equal(bustup.figure.dataset.motionState, 'HAPPY_WAVE');
-  assert.equal(surface.image.dataset.assetFile, 'HAPPY_WAVE.png');
+  assert.equal(surface.image.dataset.assetFile, SAASUNA_BUSTUP_ASSETS.HAPPY_WAVE.fileName);
   assert.equal(surface.effect.dataset.kind, 'wind-cut');
   assert.equal(surface.image.animations.length, 1);
   assert.match(surface.image.animations[0].keyframes[2].transform, /translate3d/);

@@ -235,18 +235,26 @@ async function submitVisiblePlan(battle) {
     return null;
   };
 
-  if (!(await roadSelect.inputValue())) await expect.poll(() => clickCandidate()).not.toBeNull();
-  if (!(await battleSelect.inputValue())) {
-    const roadValue = await roadSelect.inputValue();
-    await expect.poll(() => clickCandidate(roadValue)).not.toBeNull();
-    await expect(battleSelect, 'a different visible card can be reserved as Battle').not.toHaveValue('');
-  }
+  await expect(ready, 'explicit ready-plan decision is retired from the visible player path').toBeHidden();
 
-  expect(await roadSelect.inputValue(), 'visible Road selection').not.toBe('');
-  expect(await battleSelect.inputValue(), 'visible Battle selection').not.toBe('');
-  expect(await battleSelect.inputValue(), 'Road and Battle remain distinct').not.toBe(await roadSelect.inputValue());
-  await expect(ready).toBeEnabled();
-  await ready.click();
+  if (!(await roadSelect.inputValue())) {
+    const roadCandidate = await clickCandidate();
+    expect(roadCandidate, 'visible Road candidate can be selected').not.toBeNull();
+    await expect(roadSelect, 'first visible card is reserved as Road before auto-submit is eligible').toHaveValue(roadCandidate);
+  }
+  const roadValue = await roadSelect.inputValue();
+  const battleCandidate = await clickCandidate(roadValue);
+  expect(battleCandidate, 'a distinct visible Battle candidate can be selected').not.toBeNull();
+  expect(battleCandidate, 'Road and Battle candidates remain distinct').not.toBe(roadValue);
+
+  await expect.poll(async () => {
+    const phaseTitle = ((await battle.locator('#phaseTitle').textContent()) || '').trim();
+    const roadEnabled = await roadSelect.isEnabled();
+    const battleEnabled = await battleSelect.isEnabled();
+    return phaseTitle !== '行動を計画' || (!roadEnabled && !battleEnabled);
+  }, {
+    message: 'two distinct visible card selections auto-submit and leave the planning decision state',
+  }).toBeTruthy();
 }
 
 async function playVisibleTwoPlayerToResult(page, testInfo, evidencePrefix) {

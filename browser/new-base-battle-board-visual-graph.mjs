@@ -14,7 +14,8 @@ const LANE_LABELS = Object.freeze(['L', 'C', 'R']);
 // extents; this module does not pretend that a seventh source circle was visible in the drawing.
 const UPPER_LANE_X = Object.freeze([110, 210, 310, 477, 579, 683, 850, 952, 1054, 1222, 1324, 1425]);
 const REFERENCE_VISIBLE_UPPER_Y = Object.freeze([209, 253, 296, 340, 383, 427]);
-const STRUCTURAL_UPPER_Y = Object.freeze([209, 245.333333, 281.666667, 318, 354.333333, 390.666667, 427]);
+// Build order is Shield -> GOAL, so stage 1 is nearest the Shield and stage 7 is nearest GOAL.
+const STRUCTURAL_UPPER_Y = Object.freeze([427, 390.666667, 354.333333, 318, 281.666667, 245.333333, 209]);
 const GOAL_SOURCE_POINT = Object.freeze({ x: 767, y: 49 });
 const SHIELD_SOURCE_Y = 468;
 
@@ -151,7 +152,7 @@ function makeUpperLanes() {
       gate: {
         id: gateId,
         shieldId,
-        upperCellId: cells[cells.length - 1].id,
+        upperCellId: cells[0].id,
         lowerAnchorId,
         isCell: false,
         countsAsCell: false,
@@ -183,7 +184,7 @@ export function createBattleBoardVisualGraph() {
   const goalBranches = upperLanes.map((lane) => edge(
     `goal-branch:${lane.laneKey}`,
     goal.id,
-    lane.cells[0].id,
+    lane.cells[lane.cells.length - 1].id,
     { region: 'GOAL_BRANCH', kind: 'GOAL_BRANCH_VISUAL_CONNECTION' },
   ));
 
@@ -195,7 +196,7 @@ export function createBattleBoardVisualGraph() {
   )));
 
   const gateConnections = upperLanes.flatMap((lane) => [
-    edge(`gate-edge:${lane.laneKey}:upper`, lane.cells[lane.cells.length - 1].id, lane.gate.id, {
+    edge(`gate-edge:${lane.laneKey}:upper`, lane.cells[0].id, lane.gate.id, {
       region: 'GATE_CONNECTION',
       kind: 'STRUCTURAL_GATE_CONNECTION',
     }),

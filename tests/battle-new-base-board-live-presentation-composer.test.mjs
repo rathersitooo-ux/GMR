@@ -138,6 +138,18 @@ test('hands the current NEW_BOARD_ONLY world-field model to the live renderer se
   assert.equal(model.gates.find((gate) => gate.laneKey === 'P2:C').state, 'CLOSED_HEAVY_BARRIER');
   assert.equal(model.edges.find((edge) => edge.id === 'lower-edge:T0-L0').waypoints.length, 1);
 
+  const compat = runtime.visualGraphWorld();
+  assert.equal(compat.renderSpace, 'WORLD_FIELD');
+  assert.equal(compat.screenSpaceBoardTopology, false);
+  assert.equal(compat.goalId, 'goal:shared');
+  assert.equal(compat.gateIds.length, 12);
+  assert.equal(compat.upperCellIds.length, 84);
+  assert.equal(compat.lowerCellIds.length, 42);
+  assert.equal(Object.keys(compat.nodes).length, 139);
+  assert.equal(compat.edges.find((edge) => edge.id === 'lower-edge:T0-L0').points.length, 3);
+  assert.equal(compat.gameplayAuthority, false);
+  assert.equal(compat.movementAuthority, false);
+
   const seven = withStraight(emptyStraights(), 4, 7, 'P2-C');
   assert.equal(runtime.syncAuthoritativeSnapshot({ straightCardIdsByColumn: seven }).ok, true);
   model = runtime.worldFieldRenderModel(bounds);

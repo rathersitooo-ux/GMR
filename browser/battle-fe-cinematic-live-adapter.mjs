@@ -355,7 +355,7 @@ function disposeMounts(global, mounts) {
   mounts.splice(0, mounts.length);
 }
 
-function mountActorVisual(global, document, actor, stage, mounts, token) {
+function mountActorVisual(global, document, actor, stage, motion, mounts, token) {
   const characterId = actor.player.characterId;
   if (!characterId) {
     appendFallback(document, actor.host, actor.player);
@@ -384,7 +384,7 @@ function mountActorVisual(global, document, actor, stage, mounts, token) {
       characterId,
       state: 'idle',
       assetMode: 'embedded',
-      performance: 'normal',
+      performance: motion === 'static' ? 'low' : 'normal',
       allowNetwork: false
     });
   } catch {
@@ -412,7 +412,7 @@ function mountActorVisual(global, document, actor, stage, mounts, token) {
     try {
       runtime.setState?.(handle, state, {
         facing: actor.role === 'left' ? 'right' : 'left',
-        performance: 'normal'
+        performance: motion === 'static' ? 'low' : 'normal'
       });
     } catch {}
   }).catch(() => appendFallback(document, actor.host, actor.player));
@@ -494,7 +494,7 @@ export function mountBattleFeCinematicLiveAdapter(global = globalThis, options =
     }
     for (const actor of rendered.actors) {
       actor.host.dataset.mountToken = String(token);
-      mountActorVisual(global, document, actor, view.stage, mounts, String(token));
+      mountActorVisual(global, document, actor, view.stage, stage.dataset.motion, mounts, String(token));
     }
     return view;
   }

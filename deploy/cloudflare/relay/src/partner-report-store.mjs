@@ -22,7 +22,7 @@ const CONVERSATION_QUALITY_FEEDBACK_KIND = 'conversation_quality_rating';
 const CONVERSATION_QUALITY_FEEDBACK_USE_SITE = 'partner_conversation_quality_feedback';
 const CONVERSATION_QUALITY_RATINGS = new Set(['good', 'bad']);
 const CONVERSATION_QUALITY_FEEDBACK_KEYS = new Set([
-  'kind', 'sessionId', 'turnId', 'dialogueVersion', 'sourceId', 'rating', 'responseOrigin', 'canonStatus',
+  'kind', 'turnId', 'dialogueVersion', 'sourceId', 'rating', 'responseOrigin', 'canonStatus',
   'candidateOnly', 'rawTextStored', 'canonicalWrite', 'automaticCanonMutation', 'automaticRelationshipMutation',
   'automaticRewardMutation', 'automaticLearning',
 ]);
@@ -85,14 +85,12 @@ function normalizeFeedback(value, reportType) {
   const kind = exactToken(value.kind, 64);
   if (kind === CONVERSATION_QUALITY_FEEDBACK_KIND) {
     if (!Object.keys(value).every((key) => CONVERSATION_QUALITY_FEEDBACK_KEYS.has(key))) return false;
-    const sessionId = exactToken(value.sessionId, 96);
     const turnId = exactToken(value.turnId, 48);
     const dialogueVersion = exactToken(value.dialogueVersion, 160);
     const sourceId = exactToken(value.sourceId, 160);
     const rating = exactToken(value.rating, 16);
     if (
-      !sessionId
-      || !turnId
+      !turnId
       || !dialogueVersion
       || !sourceId
       || !CONVERSATION_QUALITY_RATINGS.has(rating)
@@ -108,7 +106,6 @@ function normalizeFeedback(value, reportType) {
     ) return false;
     return {
       kind,
-      sessionId,
       turnId,
       dialogueVersion,
       sourceId,
@@ -162,7 +159,10 @@ function normalizeSubmit(input) {
   const qualityFeedback = feedback?.kind === CONVERSATION_QUALITY_FEEDBACK_KIND;
   if (qualityFeedback) {
     if (sourceUseSite !== CONVERSATION_QUALITY_FEEDBACK_USE_SITE) return null;
-    if (sourceStateIdentity !== `${feedback.sessionId}:${feedback.turnId}`) return null;
+    const prefix = 'quality-feedback:';
+    if (!sourceStateIdentity.startsWith(prefix)) return null;
+    const eventId = exactToken(sourceStateIdentity.slice(prefix.length), 96);
+    if (!eventId || idempotencyKey !== `conversation-quality-${eventId}`) return null;
     if (input.versions !== undefined) return null;
     return { idempotencyKey, partnerId, reportType, sourceUseSite, sourceStateIdentity, feedback };
   }
@@ -201,7 +201,6 @@ function canonicalIdentity(input) {
   if (input.feedback?.kind === CONVERSATION_QUALITY_FEEDBACK_KIND) {
     base.push(
       input.feedback.kind,
-      input.feedback.sessionId,
       input.feedback.turnId,
       input.feedback.dialogueVersion,
       input.feedback.sourceId,

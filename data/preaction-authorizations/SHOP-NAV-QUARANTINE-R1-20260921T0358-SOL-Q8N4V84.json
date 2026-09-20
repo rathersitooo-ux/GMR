@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "SHOP-NAV-QUARANTINE-R1-20260921T0358-SOL-Q8N4V84",
+  "taskId": "SHOP-SAFE-ECONOMY-INTEGRATION-001",
+  "workUnitKey": "SHOP_NAVIGATION_ROW_QUARANTINE_R1",
+  "acquireKey": "SHOP-NAV-QUARANTINE-R1-20260921T0358-SOL-Q8N4V84",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "SHOP-NAV-QUARANTINE-CURRENT-MAIN-DIRECT-READBACK-R1",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "SHOP-NAV-QUARANTINE-FOCUSED-TEST-CONTRACT-R1",
+  "proceedToken": "PROCEED|SHOP-NAV-QUARANTINE-R1-20260921T0358-SOL-Q8N4V84|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-main-readback|lease-snapshot",
+  "authorizationBaseSha": "a5ec69c4938c82ac6abe0992da219807ae9b88b4",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHOP-SAFE-ECONOMY-INTEGRATION-001",
+  "leaseWorkUnitKey": "SHOP_NAVIGATION_ROW_QUARANTINE_R1",
+  "leaseAcquireKey": "SHOP-NAV-QUARANTINE-R1-20260921T0358-SOL-Q8N4V84",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 03:59 JST",
+  "leaseUntilJst": "2026-09-21 04:43 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A17:L17",
+  "leaseExactMutableResources": "browser/shop-live-catalog-runtime.mjs; tests/shop-live-catalog-runtime.test.mjs; transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback; browser/GAMEROAD.html READ_ONLY; shop-transaction-presentation-adapter.mjs READ_ONLY; price/ProductID/ownership/save/payment/gameplay READ_ONLY",
+  "scope": [
+    "browser/shop-live-catalog-runtime.mjs",
+    "tests/shop-live-catalog-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/shop-live-catalog-runtime.mjs",
+    "tests/shop-live-catalog-runtime.test.mjs"
+  ]
+}

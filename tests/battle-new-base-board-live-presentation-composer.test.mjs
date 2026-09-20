@@ -132,7 +132,10 @@ test('hands the current NEW_BOARD_ONLY world-field model to the live renderer se
   assert.equal(model.screenSpaceBoardTopology, false);
   assert.equal(model.counts.sharedGoal, 1);
   assert.equal(model.counts.upperLanes, 12);
-  assert.equal(model.counts.roundCells, 126);
+  assert.equal(model.counts.lowerRoundCells, 42);
+  assert.equal(model.counts.builtUpperCards, 0);
+  assert.equal(model.counts.visibleFutureUpperSlots, 0);
+  assert.equal(model.counts.roundCells, 42);
   assert.equal(model.counts.gates, 12);
   assert.equal(model.counts.shields, 12);
   assert.equal(model.gates.find((gate) => gate.laneKey === 'P2:C').state, 'CLOSED_HEAVY_BARRIER');
@@ -141,6 +144,9 @@ test('hands the current NEW_BOARD_ONLY world-field model to the live renderer se
   const seven = withStraight(emptyStraights(), 4, 7, 'P2-C');
   assert.equal(runtime.syncAuthoritativeSnapshot({ straightCardIdsByColumn: seven }).ok, true);
   model = runtime.worldFieldRenderModel(bounds);
+  assert.equal(model.counts.builtUpperCards, 7);
+  assert.equal(model.counts.visibleFutureUpperSlots, 0);
+  assert.equal(model.roundCells.filter((cell) => cell.laneKey === 'P2:C').length, 7);
   assert.equal(model.gates.find((gate) => gate.laneKey === 'P2:C').state, 'OPEN_PASSABLE_FRAME');
   assert.equal(model.goalBranches.find((branch) => branch.id === 'goal-branch:P2:C').visualState, 'STRONG_OPEN');
   assert.equal(model.gates.find((gate) => gate.laneKey === 'P2:L').state, 'CLOSED_HEAVY_BARRIER');

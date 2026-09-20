@@ -185,6 +185,8 @@ if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stat
     [/BATTLE_BOARD_WORLD_FIELD_LIVE_HTML_R19/, 'live Battle field does not declare the R19 world-field handoff'],
     [/battleCentralWorldRuntimeR8\?\.worldFieldRenderModel\?\.\(/, 'live renderField3D does not consume the existing world-field renderer model'],
     [/requestAnimationFrame\(\(\)=>\{if\(state\.match\)renderField3D\(\)\}\)/, 'central world mount does not request a field redraw after the world-field model becomes available'],
+    [/liveGoalLabel\.textContent=['\"]GOAL['\"]/, 'shared GOAL has no player-visible label in the live Battle field'],
+    [/#battleMap\[data-central-world-live=['\"]1['\"]\] #board \.node:not\(\.reachable\):not\(\.path\):not\(\.currentPosition\):not\(\.nextStep\)/, 'legacy future board scaffolding is still player-visible after the central world mount'],
   ];
   for (const [pattern, message] of centralWorldLiveContracts) {
     if (!pattern.test(html)) errors.push(message);

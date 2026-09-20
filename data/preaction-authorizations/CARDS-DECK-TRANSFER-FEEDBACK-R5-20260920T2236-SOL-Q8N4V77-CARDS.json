@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-DECK-TRANSFER-FEEDBACK-R5-20260920T2236-SOL-Q8N4V77-CARDS",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "CARDS_DECK_TRANSFER_FEEDBACK_R5",
+  "acquireKey": "CARDS-DECK-TRANSFER-FEEDBACK-R5-20260920T2236-SOL-Q8N4V77-CARDS",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R4_LIVE_BROWSER_DEFECT_REPAIR_VERIFIED_AND_CURRENT_MAIN_TARGET_PATHS_UNCHANGED",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R4_38_OF_38_FOCUSED_PLUS_844X390_ADD_REMOVE_POINTER_QA_PASS",
+  "proceedToken": "PROCEED|CARDS-DECK-TRANSFER-FEEDBACK-R5-20260920T2236-SOL-Q8N4V77-CARDS|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|cards-deck-transfer-feedback-r5|fresh-main-recovery|active-lease",
+  "authorizationBaseSha": "0641e4e12646e2b1874bc7ed064dfcf1245ba004",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "CARDS_DECK_TRANSFER_FEEDBACK_R5",
+  "leaseAcquireKey": "CARDS-DECK-TRANSFER-FEEDBACK-R5-20260920T2236-SOL-Q8N4V77-CARDS",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 22:36 JST",
+  "leaseUntilJst": "2026-09-20 23:36 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A40:N40",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR exact current main 0641e4e12646e2b1874bc7ed064dfcf1245ba004; mutable browser/cards-deck-presentation.mjs; browser/cards-deck-presentation-core.mjs; tests/cards-deck-presentation.test.mjs; own transient PRE_ACTION witness data/preaction-authorizations/CARDS-DECK-TRANSFER-FEEDBACK-R5-20260920T2236-SOL-Q8N4V77-CARDS.json; own fresh branch/PR/check/merge/readback; own CURRENT lease/R24 event. READ_ONLY browser/GAMEROAD.html; browser/deck-storage-corner-runtime.mjs; gameplay/rules/save/network; unrelated WorkUnits.",
+  "solutionSignature": "CARDS_DECK_TRANSFER_PREMUTATION_GEOMETRY_AND_SINGLE_REMOVE_SFX_R5",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE_ALREADY_BROWSER_VERIFIED_R4_PATCH_NO_SECOND_FEEDBACK_ENGINE",
+  "solutionSearchEvidence": [
+    "PR#1837/R4 focused 38/38 tests and 844x390 pointer QA verified add flight/streak plus one commit SFX and remove ghost/streak with one commit SFX.",
+    "Fresh current main compare (0641e4e12646e2b1874bc7ed064dfcf1245ba004) shows the donor product delta is limited to the same three Cards presentation/test files.",
+    "The patch reuses the existing Cards swipe presentation and audio authority; it adds no new feedback engine, gesture authority, Deck rule, save path, gameplay path, network path, or GAMEROAD.html change."
+  ],
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "browser/cards-deck-presentation-core.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "data/preaction-authorizations/CARDS-DECK-TRANSFER-FEEDBACK-R5-20260920T2236-SOL-Q8N4V77-CARDS.json"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "browser/cards-deck-presentation-core.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "data/preaction-authorizations/CARDS-DECK-TRANSFER-FEEDBACK-R5-20260920T2236-SOL-Q8N4V77-CARDS.json"
+  ]
+}

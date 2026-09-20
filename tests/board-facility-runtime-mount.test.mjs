@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  buildSaasunaConversationQualitySubmission,
   composeSaasunaProviderUserMessage,
   createSaasunaEdgeProvider,
   mountBoardFacilityRuntime,
@@ -9,7 +10,9 @@ import {
   partnerConversationProjectionDecision,
   resolveSaasunaCollectiveContext,
   restoreSaasunaConversationRetryDraft,
+  saasunaConversationQualityFeedbackEligible,
   SAASUNA_PROVISIONAL_VISUAL_CONTRACT,
+  submitSaasunaConversationQualityFeedback,
 } from '../browser/board-facility-runtime-mount.mjs';
 import { buildPartnerConversationCollectiveContext } from '../browser/partner-conversation-collective-context.mjs';
 import { onRequest as cloudflareEntry } from '../deploy/cloudflare/functions/ws.js';
@@ -92,6 +95,106 @@ test('failed Partner conversation send restores the retry draft without keeping 
   restoreSaasunaConversationRetryDraft(input, userRow, 'さっきのメッセージ');
   assert.equal(input.value, 'さっきのメッセージ');
   assert.equal(removals, 1);
+});
+
+
+function providerQualityFeedback(overrides = {}) {
+  return {
+    ok: true,
+    schemaVersion: 'gameroad.partner-conversation-quality-feedback.v1',
+    partnerId: 'partner.saasuna',
+    sessionId: 'session-quality-1',
+    turnId: 'turn-7',
+    dialogueVersion: 'saasuna.dialogue.current.r1.20260810',
+    sourceId: 'SOURCE-DIALOGUE-SAASUNA-20260810',
+    rating: 'good',
+    responseOrigin: 'provider_candidate',
+    canonStatus: 'ephemeral_candidate',
+    acknowledgement: 'heart',
+    badDetailDeferred: false,
+    replacedPrevious: false,
+    localOnly: true,
+    rawTextStored: false,
+    automaticCanonMutation: false,
+    automaticRelationshipMutation: false,
+    automaticRewardMutation: false,
+    automaticLearning: false,
+    ...overrides,
+  };
+}
+
+test('Saasuna quality feedback projection is limited to successful provider candidates', () => {
+  assert.equal(saasunaConversationQualityFeedbackEligible({
+    ok: true,
+    turnId: 'turn-1',
+    responseOrigin: 'provider_candidate',
+  }), true);
+  assert.equal(saasunaConversationQualityFeedbackEligible({
+    ok: true,
+    turnId: 'turn-1',
+    responseOrigin: 'approved_fallback',
+  }), false);
+  assert.equal(saasunaConversationQualityFeedbackEligible({
+    ok: false,
+    turnId: 'turn-1',
+    responseOrigin: 'provider_candidate',
+  }), false);
+});
+
+test('Saasuna quality submission contains only bounded metadata and no invented version tuple', () => {
+  const submission = buildSaasunaConversationQualitySubmission(providerQualityFeedback({
+    assistantUtterance: 'この本文は送信してはいけません',
+    rawUserText: 'この入力も送信してはいけません',
+  }));
+  assert.equal(submission.reportType, 'request');
+  assert.equal(submission.sourceUseSite, 'partner_conversation_quality_feedback');
+  assert.equal(submission.idempotencyKey, 'conversation-quality-session-quality-1-turn-7');
+  assert.equal(submission.feedback.kind, 'conversation_quality_rating');
+  assert.equal(submission.feedback.rating, 'good');
+  assert.equal('versions' in submission, false);
+  const serialized = JSON.stringify(submission);
+  assert.doesNotMatch(serialized, /この本文|この入力|assistantUtterance|rawUserText/);
+  assert.equal(submission.feedback.rawTextStored, false);
+  assert.equal(submission.feedback.canonicalWrite, false);
+});
+
+test('Saasuna quality transport reuses /report and returns authoritative report metadata', async () => {
+  let call = null;
+  const result = await submitSaasunaConversationQualityFeedback(providerQualityFeedback(), {
+    fetchImpl: async (url, init) => {
+      call = { url, body: JSON.parse(init.body) };
+      return new Response(JSON.stringify({
+        ok: true,
+        reportId: 'r-quality-1',
+        disposition: 'accepted_unique',
+        idempotent: false,
+        feedback: { rating: 'good', rawTextStored: false },
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    },
+  });
+  assert.equal(call.url, '/report?reportOp=submit');
+  assert.equal(call.body.feedback.rating, 'good');
+  assert.equal(JSON.stringify(call.body).includes('userMessage'), false);
+  assert.deepEqual(result, {
+    ok: true,
+    reportId: 'r-quality-1',
+    disposition: 'accepted_unique',
+    idempotent: false,
+    rating: 'good',
+  });
+});
+
+test('fallback quality feedback fails closed before any report request', async () => {
+  let calls = 0;
+  const result = await submitSaasunaConversationQualityFeedback(providerQualityFeedback({
+    responseOrigin: 'approved_fallback',
+    canonStatus: 'approved_source_fallback',
+  }), {
+    fetchImpl: async () => { calls += 1; throw new Error('must not run'); },
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, 'conversation_quality_feedback_invalid');
+  assert.equal(calls, 0);
 });
 
 test('Partner conversation only projects for Saasuna in the active normal Partner role', () => {

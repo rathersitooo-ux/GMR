@@ -193,6 +193,17 @@ function boolToken(value) {
   return value === true ? 'true' : value === false ? 'false' : null;
 }
 
+function retireObsoleteManaArt(root, provided = null) {
+  const host = provided ?? locate(root, SELECTOR_CANDIDATES.manaArt, null);
+  if (!host) return null;
+  host.setAttribute?.('hidden', '');
+  host.setAttribute?.('aria-hidden', 'true');
+  host.setAttribute?.('data-gr-current-ui-disposition', 'obsolete-blue-mana-art-retired');
+  const dial = host.querySelector?.('.r8DialImage') ?? null;
+  if (dial?.parentNode?.removeChild) dial.parentNode.removeChild(dial);
+  return host;
+}
+
 function mountBattleCurrentPlayerUiOwned(global = globalThis, options = {}) {
   const document = requireDocument(global);
   const root = options.root ?? document.querySelector?.('section.screen.battle[data-screen="battle"]') ?? document.querySelector?.('.screen.battle');
@@ -222,6 +233,29 @@ function mountBattleCurrentPlayerUiOwned(global = globalThis, options = {}) {
   for (const [key, zone] of zones) if (surfaces[key]) writeAttr(attrs, surfaces[key], ZONE_ATTR, zone);
   if (surfaces.legacyPhaseStrip) writeAttr(attrs, surfaces.legacyPhaseStrip, 'data-gr-current-ui-disposition', 'legacy-hidden');
   if (surfaces.detailsDrawer) writeAttr(attrs, surfaces.detailsDrawer, 'data-gr-current-ui-disposition', 'on-demand');
+
+  let manaArtRetired = Boolean(retireObsoleteManaArt(root, surfaces.manaArt));
+  let manaArtObserver = null;
+  const ManaObserver = global?.MutationObserver;
+  if (typeof ManaObserver === 'function') {
+    try {
+      manaArtObserver = new ManaObserver(() => {
+        const host = retireObsoleteManaArt(root, surfaces.manaArt);
+        if (!host) {
+          const lateHost = retireObsoleteManaArt(root);
+          if (lateHost) {
+            surfaces.manaArt = lateHost;
+            manaArtRetired = true;
+          }
+        } else {
+          manaArtRetired = true;
+        }
+      });
+      manaArtObserver.observe(root, { childList: true, subtree: true });
+    } catch {
+      manaArtObserver = null;
+    }
+  }
 
   const overlayParent = surfaces.battleMap ?? root;
   relocate(relocations, surfaces.resources, overlayParent);
@@ -269,6 +303,7 @@ function mountBattleCurrentPlayerUiOwned(global = globalThis, options = {}) {
       gameStateWrite: false,
       privacyPolicy: 'PUBLIC_ONLY_NO_PRIVATE_COUNT_PROJECTION',
       legacyPhaseStripHiddenByComposition: Boolean(surfaces.legacyPhaseStrip),
+      manaArtRetired,
       attentionState: Object.freeze({
         adviceActive: root.dataset?.grAdviceActive === 'true',
         waitingForOthers: root.dataset?.grWaitingForOthers === 'true',
@@ -294,6 +329,7 @@ function mountBattleCurrentPlayerUiOwned(global = globalThis, options = {}) {
   function destroy() {
     if (destroyed) return false;
     destroyed = true;
+    try { manaArtObserver?.disconnect?.(); } catch {}
     restoreRelocations(relocations);
     restoreAttrs(attrs);
     if (style.created && style.node?.parentNode?.removeChild) style.node.parentNode.removeChild(style.node);
@@ -378,8 +414,8 @@ export const BATTLE_CURRENT_PLAYER_UI_RUNTIME = Object.freeze({
   secondaryActionPolicy: 'COMPACT_RANGE_EXIT_RAIL_SUPPORT_ENTRY_LOWER_LEFT',
   supportEntryPolicy: 'EXISTING_DETAILS_HISTORY_DECK_ENTRY_LOWER_LEFT',
   attentionPolicy: 'ADVICE_WEAK_UNTIL_ACTIVE_WAITING_STRONG_ONLY_WHILE_WAITING_DETAILS_ON_DEMAND',
-  boardProtagonistPolicy: 'BOUND_EXISTING_PARTNER_VISUAL_WITH_BLUE_MANA_ART_HIDDEN',
-  manaArtPolicy: 'HIDDEN_BY_CURRENT_COMPOSITION_KEEP_NUMERIC_MANA_STATE',
+  boardProtagonistPolicy: 'BOUND_EXISTING_PARTNER_VISUAL_WITH_BLUE_MANA_ART_RETIRED',
+  manaArtPolicy: 'RETIRE_DIAL_IMAGE_HIDE_HOST_KEEP_NUMERIC_MANA_STATE',
   lowPerfPolicy: 'REMOVE_COMPOSITOR_BACKDROP_FILTER_ONLY',
   unresolvedGameplayPolicy: 'DO_NOT_INFER',
   productionHtmlMutationOwnedHere: false

@@ -689,6 +689,49 @@ const acceptedActionOrder = projectBattleActionOrderChain({
     ]
   }
 });
+
+const revealWithAcceptedOrder = createBattleScreenModel({
+  participants,
+  plan: revealPublicPlan,
+  actionOrder: acceptedActionOrder
+});
+runtime.render(revealWithAcceptedOrder);
+assert.equal(runtime.cinematicOrderRail.hidden, true);
+assert.equal(runtime.cinematicOrderRail.children.length, 0);
+assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.finalState), [undefined, undefined, undefined, undefined]);
+
+const compareOrderPlan = {
+  presentationOnly: true,
+  authorityBoundary: 'accepted_public_event_only',
+  eventId: 'compare-order-1',
+  kind: 'compare4',
+  transition: 'CONTINUE',
+  groupTargets: [],
+  importance: 'normal',
+  publicData: {
+    playerIds: ['P1', 'P2', 'P3', 'P4'],
+    winnerIds: ['P3'],
+    publicCards: fourPublicCards
+  }
+};
+const orderedCompare = createBattleScreenModel({
+  participants,
+  plan: compareOrderPlan,
+  returnIntent: 'MATCH_PLAN',
+  actionOrder: acceptedActionOrder
+});
+runtime.render(orderedCompare);
+assert.equal(runtime.shell.dataset.presentationMode, 'cinematic');
+assert.equal(runtime.phaseSurface.dataset.battlePhasePresentation, 'FULLSCREEN_ANIMATION');
+assert.equal(runtime.cinematicOrderRail.hidden, false);
+assert.equal(runtime.cinematicOrderRail.dataset.cardCount, '4');
+assert.equal(runtime.cinematicOrderRail.dataset.eventId, 'compare-order-1');
+assert.equal(runtime.cinematicOrderRail.dataset.orderSource, 'accepted-action-order-compare4');
+assert.deepEqual(runtime.cinematicOrderRail.children.map(node => node.dataset.playerId), ['P2', 'P4', 'P1', 'P3']);
+assert.deepEqual(runtime.cinematicOrderRail.children.map(node => node.dataset.cardId), ['C2', 'C4', 'C1', 'C3']);
+assert.deepEqual(runtime.cinematicOrderRail.children.map(node => node.dataset.finalState), ['invalidated', 'invalidated', 'invalidated', 'resolved-win']);
+assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.finalState), ['invalidated', 'invalidated', 'resolved-win', 'invalidated']);
+
 const orderedSettle = createBattleScreenModel({
   participants,
   plan: settlePlan,

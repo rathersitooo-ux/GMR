@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  buildSaasunaConversationQualityReport,
+  submitSaasunaConversationQualityReport,
   composeSaasunaProviderUserMessage,
   createSaasunaEdgeProvider,
   mountBoardFacilityRuntime,
@@ -34,6 +36,89 @@ function approvedEvidence(overrides = {}) {
     ...overrides,
   };
 }
+
+test('conversation quality report is candidate-only and omits session or raw text', async () => {
+  const feedback = {
+    ok: true,
+    schemaVersion: 'gameroad.partner-conversation-quality-feedback.v1',
+    partnerId: 'partner.saasuna',
+    sessionId: 'private-session-must-not-leave-browser',
+    turnId: 'turn-1',
+    dialogueVersion: 'saasuna.dialogue.current.r1.20260810',
+    sourceId: 'SOURCE-DIALOGUE-SAASUNA-20260810',
+    rating: 'good',
+    responseOrigin: 'approved_fallback',
+    localOnly: true,
+    rawTextStored: false,
+    automaticCanonMutation: false,
+    automaticRelationshipMutation: false,
+    automaticRewardMutation: false,
+    automaticLearning: false,
+    userMessage: 'raw user text must not be forwarded',
+    assistantUtterance: 'raw provider text must not be forwarded',
+  };
+  const report = buildSaasunaConversationQualityReport({ feedback, eventKey: 'quality-event-1' });
+  assert.equal(report.feedback.kind, 'conversation_quality');
+  assert.equal(report.feedback.rating, 'good');
+  assert.equal(report.feedback.candidateOnly, true);
+  assert.equal(report.feedback.canonicalWrite, false);
+  assert.equal('sessionId' in report, false);
+  assert.equal('sessionId' in report.feedback, false);
+  assert.equal('userMessage' in report.feedback, false);
+  assert.equal('assistantUtterance' in report.feedback, false);
+  assert.equal(JSON.stringify(report).includes('private-session-must-not-leave-browser'), false);
+  assert.equal(JSON.stringify(report).includes('raw user text must not be forwarded'), false);
+});
+
+test('conversation quality transport accepts only server-verified candidate reports', async () => {
+  let sent = null;
+  const result = await submitSaasunaConversationQualityReport({
+    feedback: {
+      ok: true,
+      schemaVersion: 'gameroad.partner-conversation-quality-feedback.v1',
+      partnerId: 'partner.saasuna',
+      turnId: 'turn-2',
+      dialogueVersion: 'saasuna.dialogue.current.r1.20260810',
+      sourceId: 'SOURCE-DIALOGUE-SAASUNA-20260810',
+      rating: 'bad',
+      responseOrigin: 'provider_candidate',
+      localOnly: true,
+      rawTextStored: false,
+      automaticCanonMutation: false,
+      automaticRelationshipMutation: false,
+      automaticRewardMutation: false,
+      automaticLearning: false,
+    },
+    eventKey: 'quality-event-2',
+  }, {
+    fetchImpl: async (url, init) => {
+      sent = { url, body: JSON.parse(init.body) };
+      return new Response(JSON.stringify({
+        ok: true,
+        reportId: 'r-quality-2',
+        disposition: 'accepted_unique',
+        feedback: {
+          kind: 'conversation_quality',
+          candidateOnly: true,
+          canonicalWrite: false,
+          rawTextStored: false,
+        },
+        authority: { verified: true },
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    },
+  });
+  assert.deepEqual(result, {
+    ok: true,
+    reportId: 'r-quality-2',
+    disposition: 'accepted_unique',
+    candidateOnly: true,
+    canonicalWrite: false,
+  });
+  assert.equal(sent.url, '/report?reportOp=submit');
+  assert.equal(sent.body.feedback.kind, 'conversation_quality');
+  assert.equal('sessionId' in sent.body, false);
+  assert.equal('userMessage' in sent.body.feedback, false);
+});
 
 test('fails closed when the classic bridge is missing', async () => {
   await assert.rejects(() => mountBoardFacilityRuntime({}), /BOARD_FACILITY_CLASSIC_BRIDGE_MISSING/);

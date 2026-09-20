@@ -40,10 +40,19 @@ export function createBattleBoardWorldFieldRenderModel({
 } = {}) {
   const projection = projectBattleBoardVisualGraphToWorld(graph, worldBounds);
   const nodes = projection.nodes;
-  const roundCells = graph.allRoundCells.map((cell) => ({
+  const lowerRoundCells = graph.lowerNodes.map((cell) => ({
     id: cell.id, kind: 'ROUND_CELL', region: cell.region, world: point(nodes, cell.id),
     semanticType: cell.semanticType, gameplayAuthority: false, movementAuthority: false,
   }));
+  const builtUpperCells = graph.upperLanes.flatMap((lane) => {
+    const builtCount = Number.isSafeInteger(builtCountByLaneKey[lane.laneKey]) ? builtCountByLaneKey[lane.laneKey] : 0;
+    return lane.cells.slice(0, builtCount).map((cell) => ({
+      id: cell.id, kind: 'ACTUAL_BUILT_CARD', region: cell.region, laneKey: lane.laneKey,
+      stageIndex: cell.stageIndex, world: point(nodes, cell.id),
+      semanticType: cell.semanticType, gameplayAuthority: false, movementAuthority: false,
+    }));
+  });
+  const roundCells = [...lowerRoundCells, ...builtUpperCells];
   const gates = graph.upperLanes.map((lane) => {
     const builtCount = Number.isSafeInteger(builtCountByLaneKey[lane.laneKey]) ? builtCountByLaneKey[lane.laneKey] : 0;
     const state = goalBranchVisualStateForBuiltCount(builtCount);
@@ -62,7 +71,14 @@ export function createBattleBoardWorldFieldRenderModel({
     const builtCount = lane && Number.isSafeInteger(builtCountByLaneKey[lane.laneKey]) ? builtCountByLaneKey[lane.laneKey] : 0;
     return { ...edgePrimitive(edge, nodes, projection), visualState: goalBranchVisualStateForBuiltCount(builtCount) };
   });
-  const edges = [...graph.upperLaneEdges, ...graph.gateConnections, ...graph.lowerEdges].map((edge) => edgePrimitive(edge, nodes, projection));
+  const visibleUpperIds = new Set(builtUpperCells.map((cell) => cell.id));
+  const upperLaneEdges = graph.upperLaneEdges
+    .filter((edge) => visibleUpperIds.has(edge.fromId) && visibleUpperIds.has(edge.toId))
+    .map((edge) => edgePrimitive(edge, nodes, projection));
+  const gateConnections = graph.gateConnections
+    .filter((edge) => edge.id.endsWith(':lower') || visibleUpperIds.has(edge.fromId))
+    .map((edge) => edgePrimitive(edge, nodes, projection));
+  const edges = [...upperLaneEdges, ...gateConnections, ...graph.lowerEdges.map((edge) => edgePrimitive(edge, nodes, projection))];
   return deepFreeze({
     schema: SCHEMA,
     renderSpace: 'WORLD_FIELD',
@@ -73,7 +89,16 @@ export function createBattleBoardWorldFieldRenderModel({
     legalityAuthority: false,
     sharedGoal: { id: graph.goal.id, kind: 'SHARED_GOAL', world: point(nodes, graph.goal.id) },
     roundCells, gates, shields, goalBranches, edges,
-    counts: { sharedGoal: 1, upperLanes: graph.upperLaneCount, roundCells: roundCells.length, gates: gates.length, shields: shields.length },
+    counts: {
+      sharedGoal: 1,
+      upperLanes: graph.upperLaneCount,
+      lowerRoundCells: lowerRoundCells.length,
+      builtUpperCards: builtUpperCells.length,
+      visibleFutureUpperSlots: 0,
+      roundCells: roundCells.length,
+      gates: gates.length,
+      shields: shields.length,
+    },
   });
 }
 
@@ -102,6 +127,8 @@ export const BATTLE_BOARD_WORLD_FIELD_RENDERER_CONTRACT = deepFreeze({
   screenSpaceBoardTopology: false,
   sharedGoalCount: 1,
   routeGateAndShieldPreserved: true,
+  upperProgressionVisibility: 'ACTUAL_BUILT_CARDS_ONLY',
+  visibleFutureUpperSlots: 0,
   secondBoardEngine: false,
   gameplayAuthority: false,
   movementAuthority: false,

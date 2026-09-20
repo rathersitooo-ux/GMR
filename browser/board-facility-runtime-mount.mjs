@@ -188,22 +188,31 @@ export function createSaasunaEdgeProvider(global = globalThis) {
   });
 }
 
-export function buildSaasunaConversationQualitySubmission(feedback) {
+export function createSaasunaConversationQualityEventId(cryptoObject = globalThis.crypto) {
+  const uuid = typeof cryptoObject?.randomUUID === 'function' ? exactToken(cryptoObject.randomUUID(), 96) : null;
+  if (uuid) return uuid;
+  if (typeof cryptoObject?.getRandomValues !== 'function') return null;
+  const bytes = new Uint8Array(16);
+  cryptoObject.getRandomValues(bytes);
+  return `q-${[...bytes].map((value) => value.toString(16).padStart(2, '0')).join('')}`;
+}
+
+export function buildSaasunaConversationQualitySubmission(feedback, { eventId = null } = {}) {
   if (!feedback || typeof feedback !== 'object' || Array.isArray(feedback)) return null;
-  const sessionId = exactToken(feedback.sessionId, 96);
   const turnId = exactToken(feedback.turnId, 48);
   const partnerId = exactToken(feedback.partnerId, 160);
   const dialogueVersion = exactToken(feedback.dialogueVersion, 160);
   const sourceId = exactToken(feedback.sourceId, 160);
   const rating = feedback.rating === 'good' || feedback.rating === 'bad' ? feedback.rating : null;
+  const qualityEventId = exactToken(eventId, 96);
   if (
     feedback.schemaVersion !== 'gameroad.partner-conversation-quality-feedback.v1'
     || partnerId !== 'partner.saasuna'
-    || !sessionId
     || !turnId
     || !dialogueVersion
     || !sourceId
     || !rating
+    || !qualityEventId
     || feedback.responseOrigin !== 'provider_candidate'
     || feedback.canonStatus !== 'ephemeral_candidate'
     || feedback.localOnly !== true
@@ -215,14 +224,13 @@ export function buildSaasunaConversationQualitySubmission(feedback) {
   ) return null;
 
   return Object.freeze({
-    idempotencyKey: `conversation-quality-${sessionId}-${turnId}`,
+    idempotencyKey: `conversation-quality-${qualityEventId}`,
     partnerId,
     reportType: 'request',
     sourceUseSite: CONVERSATION_QUALITY_FEEDBACK_USE_SITE,
-    sourceStateIdentity: `${sessionId}:${turnId}`,
+    sourceStateIdentity: `quality-feedback:${qualityEventId}`,
     feedback: Object.freeze({
       kind: CONVERSATION_QUALITY_FEEDBACK_KIND,
-      sessionId,
       turnId,
       dialogueVersion,
       sourceId,
@@ -241,10 +249,11 @@ export function buildSaasunaConversationQualitySubmission(feedback) {
 }
 
 export async function submitSaasunaConversationQualityFeedback(feedback, {
+  eventId = createSaasunaConversationQualityEventId(),
   fetchImpl = globalThis.fetch,
   endpoint = PARTNER_REPORT_ENDPOINT,
 } = {}) {
-  const submission = buildSaasunaConversationQualitySubmission(feedback);
+  const submission = buildSaasunaConversationQualitySubmission(feedback, { eventId });
   if (!submission) return Object.freeze({ ok: false, reason: 'conversation_quality_feedback_invalid' });
   if (typeof fetchImpl !== 'function') return Object.freeze({ ok: false, reason: 'conversation_quality_feedback_transport_unavailable' });
 
@@ -326,6 +335,8 @@ function appendMessage(document, log, role, text) {
 
 function appendConversationQualityControls(document, row, turn, entry, global) {
   if (!saasunaConversationQualityFeedbackEligible(turn)) return null;
+  const eventId = createSaasunaConversationQualityEventId(global?.crypto);
+  if (!eventId) return null;
   const controls = document.createElement('div');
   controls.className = 'grPartnerQuality';
   controls.dataset.partnerConversationQualityControls = '1';
@@ -355,7 +366,7 @@ function appendConversationQualityControls(document, row, turn, entry, global) {
       status.textContent = '送信中';
       const local = entry.feedback(turn.turnId, rating);
       const saved = local?.ok
-        ? await submitSaasunaConversationQualityFeedback(local, { fetchImpl: global?.fetch })
+        ? await submitSaasunaConversationQualityFeedback(local, { eventId, fetchImpl: global?.fetch })
         : Object.freeze({ ok: false, reason: local?.reason || 'conversation_quality_feedback_invalid' });
       delete controls.dataset.submitting;
       if (saved.ok) {

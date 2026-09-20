@@ -285,7 +285,7 @@ export function mountBattleNewBaseBoardLivePresentation({
         edges: [...model.edges, ...model.goalBranches].map(toCompatEdge),
         goalId: model.sharedGoal.id,
         gateIds: model.gates.map((gate) => gate.id),
-        upperCellIds: model.roundCells.filter((cell) => cell.region === 'UPPER_LANE').map((cell) => cell.id),
+        upperCellIds: model.roundCells.filter((cell) => cell.region === 'UPPER_PROGRESSION').map((cell) => cell.id),
         lowerCellIds: model.roundCells.filter((cell) => cell.region === 'LOWER_SHARED_FIELD').map((cell) => cell.id),
       });
     },

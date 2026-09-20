@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BLUE-MANA-DISC-RETIRE-PREACTION-R3-20260921T0632-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_BLUE_MANA_DISC_ART_RETIREMENT_R3",
+  "acquireKey": "BATTLE-BLUE-MANA-DISC-RETIRE-R3-20260921T0632-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_REPEATED_BLUE_MANA_DISC_REMOVAL_20260921",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_RUNTIME_IMPORT_CHAIN_AND_LEGACY_HOST_CONTRACT",
+  "proceedToken": "PROCEED|BATTLE-BLUE-MANA-DISC-RETIRE-PREACTION-R3-20260921T0632-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|retire-blue-mana-dial|battle-current-player-ui|active-lease",
+  "authorizationBaseSha": "a798d2827c4c3dd8dde315654f764f47a3573510",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_BLUE_MANA_DISC_ART_RETIREMENT_R3",
+  "leaseAcquireKey": "BATTLE-BLUE-MANA-DISC-RETIRE-R3-20260921T0632-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 06:32 JST",
+  "leaseUntilJst": "2026-09-21 07:31 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A19:L19",
+  "leaseExactMutableResources": "browser/battle-current-player-ui-runtime.mjs; tests/battle-current-player-ui-runtime.test.mjs; transient data/preaction-authorizations/BATTLE-BLUE-MANA-DISC-RETIRE-PREACTION-R3-20260921T0632-SOL.json create/delete only; own fresh branch/PR/check/merge/readback/public readback; browser/GAMEROAD.html READ_ONLY direct legacy producer; browser/battle-replay-live-adapter.mjs READ_ONLY live import chain; gameplay/rules/save/network READ_ONLY; image generation prohibited",
+  "solutionSignature": "BATTLE_BLUE_MANA_DIAL_RETIREMENT_CURRENT_PLAYER_RUNTIME_R3",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1970_HIDE_PLUS_LIVE_IMPORT_CHAIN_DIRECT_RUNTIME_RETIREMENT",
+  "solutionSearchEvidence": [
+    "The user-provided screenshot predates PR #1970; do not treat it as post-merge failure evidence.",
+    "PR #1970 is deployed to the stable canonical and hides #battleManaArtR8 in the current-player compositor.",
+    "Fresh main still contains the legacy producer in browser/GAMEROAD.html, but the 11.9 MB monolith cannot be safely replaced through the current connector transport.",
+    "The public live chain loads battle-replay-live-adapter.mjs, which imports battle-current-player-ui-live-adapter.mjs and the current-player runtime.",
+    "Retiring only the blue dial image while leaving the hidden numeric host preserves legacy renderMana compatibility and gameplay state."
+  ],
+  "scope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs"
+  ]
+}

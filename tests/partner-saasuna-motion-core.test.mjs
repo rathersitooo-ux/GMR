@@ -138,3 +138,15 @@ test('motion controller adds only whole-layer transition/effect surfaces', () =>
   controller.clear();
   assert.equal(bustup.figure.dataset.motionState, undefined);
 });
+
+test('state changes retain a crossfade even when the caller has already swapped the key pose', () => {
+  const { doc, bustup } = fakeBustup();
+  const surface = ensureSaasunaMotionSurface(doc, bustup);
+  const controller = createSaasunaMotionController({ doc, bustup, transitionMs: 180 });
+  controller.setState({ partnerId: 'partner.saasuna', visualState: 'HAPPY_WAVE' }, { transitionMs: 0 });
+  bustup.image.src = SAASUNA_BUSTUP_ASSETS.IDLE_GENTLE.src;
+  bustup.image.dataset.assetFile = SAASUNA_BUSTUP_ASSETS.IDLE_GENTLE.fileName;
+  controller.setState({ partnerId: 'partner.saasuna', visualState: 'IDLE_GENTLE' });
+  assert.ok(surface.crossfadeImage.animations.length >= 1);
+  assert.ok(surface.image.animations.length >= 2);
+});

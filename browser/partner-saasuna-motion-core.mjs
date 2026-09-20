@@ -312,8 +312,7 @@ function runMotion(surface, profile, animationState, restart = true) {
   if (!restart && animation) animation.pause?.();
 }
 
-function startAssetTransition(surface, plan, transitionMs, isActive, done) {
-  const currentFile = surface.image.dataset.assetFile;
+function startAssetTransition(surface, plan, transitionMs, currentFile, isActive, done) {
   const shouldCrossfade = Boolean(
     surface.crossfadeImage &&
     currentFile &&
@@ -325,6 +324,8 @@ function startAssetTransition(surface, plan, transitionMs, isActive, done) {
     done();
     return;
   }
+  const previousEntry = Object.values(SAASUNA_BUSTUP_ASSETS).find((entry) => entry.fileName === currentFile);
+  if (previousEntry) syncAsset(surface.image, previousEntry);
   syncAsset(surface.crossfadeImage, plan.asset);
   surface.crossfadeImage.hidden = false;
   surface.crossfadeImage.style.opacity = '0';
@@ -359,6 +360,7 @@ export function createSaasunaMotionController({ doc, bustup, transitionMs = 180 
   ensureSaasunaMotionStyle(doc);
   const animationState = { motionAnimation: null, effectAnimation: null };
   let currentState = null;
+  let currentAssetFile = surface.image.dataset.assetFile || null;
   let sequence = 0;
 
   const setState = (input = {}, options = {}) => {
@@ -370,9 +372,11 @@ export function createSaasunaMotionController({ doc, bustup, transitionMs = 180 
     sequence += 1;
     const activeSequence = sequence;
     currentState = plan.state;
+    const previousAssetFile = currentAssetFile;
+    currentAssetFile = plan.asset.fileName;
     surface.figure.dataset.motionState = plan.state;
     surface.figure.dataset.motionLoop = plan.loop ? 'true' : 'false';
-    startAssetTransition(surface, plan, options.transitionMs ?? transitionMs, () => activeSequence === sequence, () => {
+    startAssetTransition(surface, plan, options.transitionMs ?? transitionMs, previousAssetFile, () => activeSequence === sequence, () => {
       if (activeSequence !== sequence) return;
       runMotion(surface, SAASUNA_MOTION_PROFILES[plan.state], animationState, restart);
     });

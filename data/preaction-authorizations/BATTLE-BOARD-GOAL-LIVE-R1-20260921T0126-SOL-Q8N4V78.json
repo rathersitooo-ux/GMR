@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-GOAL-LIVE-R1-20260921T0126-SOL-Q8N4V78",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_BOARD_WORLD_FIELD_GOAL_LIVE_CLOSURE_R1",
+  "acquireKey": "BATTLE-BOARD-GOAL-LIVE-R1-20260921T0126-SOL-Q8N4V78",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "MAIN_D86EAA1_NEW_WORLD_FIELD_WITH_LEGACY_CGRID_AND_SEVEN_WIN_ACTUAL",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_HTML_READBACK_PLUS_MERGED_GOAL_CORE_CONTRACTS_20260921",
+  "proceedToken": "PROCEED|BATTLE-BOARD-GOAL-LIVE-R1-20260921T0126-SOL-Q8N4V78|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-board-goal-live-closure|five-file-bounded|active-lease",
+  "authorizationBaseSha": "d86eaa1c07237bd0ee18e9584fcc9d0eee924d16",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_BOARD_WORLD_FIELD_GOAL_LIVE_CLOSURE_R1",
+  "leaseAcquireKey": "BATTLE-BOARD-GOAL-LIVE-R1-20260921T0126-SOL-Q8N4V78",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 01:27 JST",
+  "leaseUntilJst": "2026-09-21 02:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; tests/browser-static-check.mjs; tests/browser-full-interaction.spec.mjs; tests/browser-full-interaction-state-sequence.spec.mjs; deploy/cloudflare/tests/build.test.mjs provenance-only; transient data/preaction-authorizations/BATTLE-BOARD-GOAL-LIVE-R1-20260921T0126-SOL-Q8N4V78.json cleanup-delete only; own fresh branch/PR/check/merge/readback/public readback; browser/new-base-battle-board-visual-graph.mjs READ_ONLY canonical topology; browser/battle-board-world-field-renderer.mjs READ_ONLY; browser/battle-new-base-board-live-presentation-composer.mjs READ_ONLY; browser/new-base-goal-path-core.mjs READ_ONLY; browser/new-base-goal-result-core.mjs READ_ONLY existing terminal authority; deploy/cloudflare/scripts/build.mjs READ_ONLY; save/network/card rules READ_ONLY; no second board/movement/result engine",
+  "solutionSignature": "CANONICAL_WORLD_FIELD_AS_LIVE_MOVEMENT_GRAPH_PLUS_EXISTING_GOAL_REACHED_TERMINAL_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE_EXISTING_VISUAL_GRAPH_AND_GOAL_RESULT_CORE_NO_SECOND_ENGINE",
+  "solutionSearchEvidence": [
+    "Current main renders the canonical world-field but still computes authoritative movement on legacy C:-1..1 and K corner IDs; this causes the visible/new map and actor/input map to diverge.",
+    "Current user authority says the lower shared field circles and their left/right/diagonal links are the actual character movement relation, so the existing canonical visual graph is the topology source to consume rather than redraw.",
+    "Current hidden setup semantics already say central/common start; canonical lower:M5 is the central lower-field round cell, preserving that meaning without inventing four new spawn rules.",
+    "Merged GOAL path semantics say a seven-card lane is nonterminal, Gate opens globally, and only completed lane branches connect to one shared GOAL.",
+    "Existing new-base-goal-result-core already owns GOAL_REACHED terminal transition, so live HTML should call that authority instead of creating a second result engine."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

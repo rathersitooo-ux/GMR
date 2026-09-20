@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BROWSER-BFI-AUTOCOMMIT-R1-20260920T1512-SOL-Q8N4V83",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BROWSER_BFI_AUTOCOMMIT_EVIDENCE_RECOVERY_R1",
+  "acquireKey": "BROWSER-BFI-AUTOCOMMIT-R1-20260920T1512-SOL-Q8N4V83",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_PUBLIC_BFI_35488999965_EXACT_BUILD_3OF3_SAME_FAILURE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXACT_CURRENT_SOURCE_AND_PUBLIC_FAILURE_TRACE_AUTO_COMMIT_TRANSITION",
+  "proceedToken": "PROCEED|BROWSER-BFI-AUTOCOMMIT-R1-20260920T1512-SOL-Q8N4V83|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|bfi-autocommit-evidence-recovery|test-only|active-lease",
+  "authorizationBaseSha": "03827c729ac328ae46d3f11877028b45f04a0c55",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BROWSER_BFI_AUTOCOMMIT_EVIDENCE_RECOVERY_R1",
+  "leaseAcquireKey": "BROWSER-BFI-AUTOCOMMIT-R1-20260920T1512-SOL-Q8N4V83",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 15:12 JST",
+  "leaseUntilJst": "2026-09-20 16:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A26:L26",
+  "leaseExactMutableResources": "tests/browser-full-interaction.spec.mjs; transient PRE_ACTION manifest; own fresh branch/PR/check/merge/readback; product runtime READ_ONLY; own CURRENT lease/R24 event",
+  "solutionSignature": "BROWSER_BFI_CURRENT_AUTOCOMMIT_VISIBLE_PATH_ADAPT_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_HELPER_PLUS_03U_MERGED_AUTOCOMMIT_RUNTIME",
+  "solutionSearchEvidence": [
+    "Current helper already drives visible physical hand cards and only its post-selection oracle assumes explicit readyPlan.",
+    "Current merged ready-plan adapter retires the explicit decision button and auto-submits when two distinct selections are complete.",
+    "Current public-origin run on the exact main build fails the same stale oracle in all three required viewports."
+  ],
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

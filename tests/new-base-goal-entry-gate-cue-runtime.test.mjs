@@ -122,29 +122,39 @@ test('mounts twelve persistent locked barriers at route anchors before one share
   assert.equal(runtime.mounted, true);
   assert.equal(runtime.snapshot().laneGateCount, 12);
   assert.equal(runtime.snapshot().sharedGoalCount, 1);
+  assert.equal(runtime.snapshot().gateOpen, false);
+  assert.equal(runtime.snapshot().connectedGoalPathCount, 0);
   assert.equal(runtime.snapshot().openLaneCount, 0);
   assert.equal(runtime.snapshot().lockedBarrierCount, 12);
   assert.equal(runtime.snapshot().openHoopCount, 0);
   assert.equal(runtime.snapshot().activeArrowCount, 0);
   assert.equal(board.routeGates.get('P1:0').children.length, 1);
+  assert.equal(runtime.resolveLane('P1', 0).gate.dataset.gateOpen, '0');
   assert.equal(runtime.resolveLane('P1', 0).gate.dataset.goalPathOpen, '0');
   assert.equal(board.sharedGoal.dataset.flanoraSharedGoal, 'goal:shared');
 });
 
-test('closed to open changes only the authoritative route from solid barrier to open hoop', () => {
+test('one completed GOAL branch opens every Gate barrier while only that branch gets the GOAL cue', () => {
   const documentLike = makeFakeDom();
   const board = makeBoardSurface(documentLike);
   const runtime = mountNewBaseGoalEntryGateCue({ boardSurfaceRuntime: board, goalPathPresentation: makeGoalPresentation(), participantColors: COLORS, documentLike });
   const gateBefore = runtime.resolveLane('P1', 1).gate;
   const result = runtime.syncGoalPathPresentation(makeGoalPresentation(['P1:1']));
   assert.equal(result.ok, true);
+  assert.equal(result.gateOpen, true);
+  assert.equal(result.connectedGoalPathCount, 1);
   assert.equal(result.openLaneCount, 1);
-  assert.equal(result.lockedBarrierCount, 11);
-  assert.equal(result.openHoopCount, 1);
+  assert.equal(result.lockedBarrierCount, 0);
+  assert.equal(result.openHoopCount, 12);
   assert.equal(runtime.resolveLane('P1', 1).gate, gateBefore);
+  assert.equal(gateBefore.dataset.gateOpen, '1');
   assert.equal(gateBefore.dataset.goalPathOpen, '1');
   assert.equal(gateBefore.dataset.gateTransition, 'shatter_to_open');
+  assert.equal(runtime.resolveLane('P1', 0).gate.dataset.gateOpen, '1');
+  assert.equal(runtime.resolveLane('P1', 0).gate.dataset.goalPathOpen, '0');
+  assert.equal(runtime.resolveLane('P1', 0).gate.dataset.gateTransition, 'shatter_to_open');
   assert.equal(runtime.resolveLane('P1', 1).arrowStack.children.length, 3);
+  assert.deepEqual(runtime.snapshot().activeGoalBranchIds, ['goal-gate:P1:1']);
   assert.deepEqual(runtime.snapshot().activeRouteGateIds, ['goal-gate:P1:1']);
   assert.equal(board.sharedGoal.dataset.connectedRouteCount, '1');
   assert.equal(board.routeGates.get('P1:1').dataset.connectedToGoal, 'true');
@@ -168,14 +178,19 @@ test('repeated open sync is idempotent and does not duplicate gate or arrow node
   assert.equal(runtime.snapshot().activeArrowCount, 1);
 });
 
-test('open to closed removes the open cue and restores the same persistent barrier gate', () => {
+test('when no GOAL branch remains connected every Gate barrier closes together', () => {
   const documentLike = makeFakeDom();
   const board = makeBoardSurface(documentLike);
   const runtime = mountNewBaseGoalEntryGateCue({ boardSurfaceRuntime: board, goalPathPresentation: makeGoalPresentation(['P4:0']), participantColors: COLORS, documentLike });
   const gateBefore = runtime.resolveLane('P4', 0).gate;
   runtime.syncGoalPathPresentation(makeGoalPresentation());
   assert.equal(runtime.resolveLane('P4', 0).gate, gateBefore);
+  assert.equal(runtime.snapshot().gateOpen, false);
+  assert.equal(runtime.snapshot().lockedBarrierCount, 12);
+  assert.equal(runtime.snapshot().openHoopCount, 0);
+  assert.equal(gateBefore.dataset.gateOpen, '0');
   assert.equal(gateBefore.dataset.goalPathOpen, '0');
+  assert.equal(runtime.resolveLane('P1', 0).gate.dataset.gateOpen, '0');
   assert.equal(runtime.resolveLane('P4', 0).arrowStack, null);
   assert.equal(board.routeGates.get('P4:0').children.length, 1);
   assert.equal(board.sharedGoal.dataset.connectedRouteCount, '0');
@@ -185,7 +200,12 @@ test('open lane without participant color remains open but does not invent an ar
   const documentLike = makeFakeDom();
   const board = makeBoardSurface(documentLike);
   const runtime = mountNewBaseGoalEntryGateCue({ boardSurfaceRuntime: board, goalPathPresentation: makeGoalPresentation(['P4:2']), participantColors: { P1: COLORS.P1 }, documentLike });
+  assert.equal(runtime.snapshot().gateOpen, true);
+  assert.equal(runtime.snapshot().openHoopCount, 12);
+  assert.equal(runtime.resolveLane('P4', 2).gate.dataset.gateOpen, '1');
   assert.equal(runtime.resolveLane('P4', 2).gate.dataset.goalPathOpen, '1');
+  assert.equal(runtime.resolveLane('P1', 0).gate.dataset.gateOpen, '1');
+  assert.equal(runtime.resolveLane('P1', 0).gate.dataset.goalPathOpen, '0');
   assert.equal(runtime.resolveLane('P4', 2).arrowStack, null);
   assert.deepEqual(runtime.snapshot().unresolvedOpenLaneKeys, ['P4:2']);
   const result = runtime.syncGoalPathPresentation(makeGoalPresentation(['P4:2']), { participantColors: COLORS });
@@ -214,6 +234,9 @@ test('reduced motion and low perf preserve static gate state without shatter ani
     runtime.syncGoalPathPresentation(makeGoalPresentation(['P1:0']));
     assert.equal(runtime.snapshot().activeArrowCount, 1);
     assert.equal(runtime.snapshot().animationMode, 'STATIC_GATE_STATE');
+    assert.equal(runtime.snapshot().gateOpen, true);
+    assert.equal(runtime.snapshot().openHoopCount, 12);
+    assert.equal(runtime.resolveLane('P1', 0).gate.dataset.gateOpen, '1');
     assert.equal(runtime.resolveLane('P1', 0).gate.dataset.goalPathOpen, '1');
     assert.equal(runtime.resolveLane('P1', 0).gate.dataset.gateTransition, undefined);
     assert.equal(runtime.resolveLane('P1', 0).arrowStack.children[0].textContent, '↑');
@@ -235,6 +258,9 @@ test('invalid authority fails soft and destroy removes only runtime-owned nodes'
   assert.equal(board.routeGates.get('P2:1').children.length, 0);
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.gateCount, 12);
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.sharedGoalCount, 1);
+  assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.gateOpenPolicy, 'ALL_AT_ONCE_WHEN_ANY_GOAL_BRANCH_IS_CONNECTED');
+  assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.laneGoalBranchCueSeparateFromGateOpen, true);
+  assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.multipleConnectedGoalBranchesSupported, true);
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.closedGateVisual, 'SOLID_LOCKED_BARRIER');
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.openGateVisual, 'OPEN_HOOP_WITH_TRANSPARENT_MEMBRANE');
   assert.equal(NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT.computesSevenCardCompletion, false);

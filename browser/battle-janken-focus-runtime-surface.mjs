@@ -164,31 +164,6 @@ function lockRows(preview) {
     <div class="grJankenFocusLockRow"><span>経路</span><strong>${escapeHtml(formatRoute(preview.route))}</strong></div>`;
 }
 
-function targetRailMarkup(state, busy) {
-  return `
-    <div class="grJankenTargetRail" role="group" aria-label="ロックオン対象切替">
-      ${state.choices.map((choice) => {
-        const focused = state.focusedHand === choice.jankenHand;
-        const preview = choice.preview;
-        const hand = HAND_LABEL[choice.jankenHand] ?? choice.jankenHand;
-        return `
-          <button type="button"
-            class="grJankenTargetChip${focused ? ' is-focused' : ''}"
-            data-gr-janken-focus-action="focus"
-            data-janken-hand="${choice.jankenHand}"
-            data-opponent-id="${escapeHtml(preview?.opponentId ?? '')}"
-            data-shield-lane="${escapeHtml(preview?.shieldLane ?? '')}"
-            aria-pressed="${focused ? 'true' : 'false'}"
-            aria-label="${escapeHtml(`${preview?.opponentId ?? '相手'} ${preview?.shieldLane ?? ''} ${hand}`)}"
-            ${busy ? 'disabled' : ''}>
-            <span class="grJankenTargetReticle" aria-hidden="true">◎</span>
-            <span class="grJankenTargetIdentity"><strong>${escapeHtml(preview?.opponentId ?? '—')}</strong><small>${escapeHtml(preview?.shieldLane ?? '—')} シールド</small></span>
-            <span class="grJankenTargetHand">${escapeHtml(hand)}</span>
-          </button>`;
-      }).join('')}
-    </div>`;
-}
-
 function choiceMarkup(choice, state, busy, cardIndex, resolveCardArt) {
   const focused = state.focusedHand === choice.jankenHand;
   return `
@@ -216,16 +191,6 @@ function installStyle(documentRef) {
 .grJankenFocusHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .grJankenFocusTitle{font-size:clamp(16px,2.4vw,24px);font-weight:900;line-height:1.1}
 .grJankenFocusSub{font-size:12px;font-weight:700;opacity:.68}
-.grJankenTargetRail{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 10px;padding:7px;border:1px solid rgba(16,19,25,.18);border-radius:18px;background:rgba(16,19,25,.045)}
-.grJankenTargetChip{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:7px;align-items:center;min-width:0;min-height:50px;border:2px solid transparent;border-radius:14px;background:rgba(255,255,255,.9);padding:6px 8px;text-align:left;font:inherit;color:inherit;cursor:pointer}
-.grJankenTargetChip.is-focused{border-color:#101319;background:#fff;box-shadow:0 0 0 2px rgba(16,19,25,.11)}
-.grJankenTargetChip:disabled{cursor:default;opacity:.58}
-.grJankenTargetReticle{display:grid;place-items:center;width:26px;height:26px;border:2px solid currentColor;border-radius:50%;font-size:14px;font-weight:900;line-height:1}
-.grJankenTargetChip.is-focused .grJankenTargetReticle{outline:3px double rgba(16,19,25,.5);outline-offset:2px}
-.grJankenTargetIdentity{min-width:0;display:flex;flex-direction:column;line-height:1.08}
-.grJankenTargetIdentity strong{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.grJankenTargetIdentity small{font-size:10px;font-weight:800;opacity:.62;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.grJankenTargetHand{font-size:12px;font-weight:900;white-space:nowrap}
 .grJankenFocusChoices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .grJankenFocusChoice{min-width:0;min-height:116px;border:2px solid rgba(16,19,25,.3);border-radius:18px;background:#fff;padding:10px;text-align:left;font:inherit;color:inherit;cursor:pointer}
 .grJankenFocusChoice.is-focused{border-color:#101319;box-shadow:0 0 0 2px rgba(16,19,25,.12)}
@@ -262,7 +227,6 @@ function installStyle(documentRef) {
 .grJankenFocusBloomPanel{top:50%;bottom:auto;width:min(780px,calc(100% - 24px));transform:translate(-50%,-50%);border-color:rgba(245,245,245,.86);background:linear-gradient(155deg,rgba(250,250,247,.985),rgba(225,226,224,.97));box-shadow:0 0 0 100vmax rgba(6,8,12,.46),0 22px 64px rgba(0,0,0,.38),0 0 0 1px rgba(255,255,255,.52) inset;overflow:visible}
 .grJankenFocusBloomPanel .grJankenFocusHeader{margin-bottom:8px}
 .grJankenFocusBloomPanel .grJankenFocusTitle{letter-spacing:.04em}
-.grJankenFocusBloomPanel .grJankenTargetRail{margin-bottom:8px;background:rgba(16,19,25,.06)}
 .grJankenFocusBloomPanel .grJankenFocusChoices{gap:clamp(7px,1.35vw,14px);perspective:900px;align-items:stretch;padding:4px 2px 8px}
 .grJankenFocusBloomPanel .grJankenFocusChoice{--petal-x:0px;--petal-y:0px;--petal-r:0deg;min-height:128px;border-radius:42% 58% 54% 46%/48% 44% 56% 52%;transform:translate(var(--petal-x),var(--petal-y)) rotate(var(--petal-r));transform-origin:50% 120%;animation:grJankenFocusPetalBloom 260ms cubic-bezier(.16,.84,.23,1) both;box-shadow:0 12px 28px rgba(5,7,10,.18),inset 0 1px 0 rgba(255,255,255,.72);will-change:transform,opacity,filter}
 .grJankenFocusBloomPanel .grJankenFocusChoice:nth-child(1){--petal-x:8px;--petal-y:10px;--petal-r:-7deg;animation-delay:0ms}
@@ -270,9 +234,9 @@ function installStyle(documentRef) {
 .grJankenFocusBloomPanel .grJankenFocusChoice:nth-child(3){--petal-x:-8px;--petal-y:10px;--petal-r:7deg;animation-delay:70ms}
 .grJankenFocusBloomPanel .grJankenFocusChoice.is-focused{border-color:#101319;filter:brightness(1.04);box-shadow:0 0 0 3px rgba(16,19,25,.16),0 18px 34px rgba(5,7,10,.24)}
 @keyframes grJankenFocusPetalBloom{0%{opacity:.18;filter:brightness(.82) blur(1px);transform:translate(clamp(72px,16vw,152px),clamp(44px,12vh,94px)) rotate(22deg) scale(.58)}68%{opacity:1;filter:brightness(1.04) blur(0);transform:translate(calc(var(--petal-x) * .88),calc(var(--petal-y) * .88)) rotate(calc(var(--petal-r) * .88)) scale(1.035)}100%{opacity:1;filter:brightness(1) blur(0);transform:translate(var(--petal-x),var(--petal-y)) rotate(var(--petal-r)) scale(1)} }
-@media (max-width:700px){.grJankenFocusPanel{padding:10px;border-radius:18px}.grJankenTargetRail{gap:5px;padding:5px}.grJankenTargetChip{grid-template-columns:24px minmax(0,1fr);min-height:46px;padding:5px}.grJankenTargetReticle{width:22px;height:22px}.grJankenTargetHand{grid-column:2;font-size:10px}.grJankenFocusChoices{gap:6px}.grJankenFocusChoice{min-height:96px;padding:7px;border-radius:14px}.grJankenFocusLockRow{grid-template-columns:42px minmax(0,1fr);font-size:10px}.grJankenRoleBadge{font-size:10px}.grJankenLoadHero{grid-template-columns:minmax(0,1fr) clamp(180px,42vw,280px) minmax(150px,1fr);gap:10px;min-height:min(64vh,430px)}.grJankenLoadHero>.grJankenPhysicalCard{min-height:clamp(260px,58vw,400px)}.grJankenLoadInfo{font-size:10px}.grJankenFocusActions{margin-top:7px}.grJankenFocusBloomPanel .grJankenFocusChoice{min-height:108px;border-radius:40% 60% 54% 46%/48% 43% 57% 52%}.grJankenFocusBloomPanel .grJankenRoleBadge{font-size:10px}}
-@media (max-height:430px) and (orientation:landscape){.grJankenFocusBloomPanel{top:50%;width:min(720px,calc(100% - 16px));padding:8px 10px}.grJankenFocusBloomPanel .grJankenFocusHeader{margin-bottom:4px}.grJankenFocusBloomPanel .grJankenFocusTitle{font-size:17px}.grJankenFocusBloomPanel .grJankenFocusSub{font-size:10px}.grJankenFocusBloomPanel .grJankenTargetRail{margin-bottom:4px;padding:4px}.grJankenFocusBloomPanel .grJankenTargetChip{min-height:38px;padding:3px 5px}.grJankenFocusBloomPanel .grJankenFocusChoice{min-height:86px;padding:6px}.grJankenFocusBloomPanel .grJankenFocusLockRow{display:none}.grJankenFocusBloomPanel .grJankenRoleBadge{font-size:9px}.grJankenLoadPanel{width:min(760px,calc(100% - 12px));padding:8px 10px}.grJankenLoadPanel .grJankenFocusHeader{margin-bottom:2px}.grJankenLoadHero{grid-template-columns:minmax(0,1fr) clamp(132px,23vw,190px) minmax(150px,1fr);gap:8px;min-height:300px}.grJankenLoadHero>.grJankenPhysicalCard{min-height:250px;max-height:300px}.grJankenLoadInfo{padding:7px}.grJankenLoadInfo .grJankenFocusLockRow{font-size:9px}}
-@media (max-width:460px){.grJankenFocusPanel{width:calc(100% - 16px);bottom:8px}.grJankenTargetRail{grid-template-columns:1fr 1fr 1fr}.grJankenTargetChip{display:flex;justify-content:center;min-height:48px}.grJankenTargetIdentity{display:none}.grJankenTargetHand{font-size:11px}.grJankenFocusChoices{grid-template-columns:1fr}.grJankenFocusChoice{min-height:74px}.grJankenFocusChoice .grJankenFocusLockRow{display:none}.grJankenLoadPanel{top:50%;bottom:auto;width:calc(100% - 12px);padding:8px}.grJankenLoadPanel .grJankenFocusHeader{margin-bottom:4px}.grJankenLoadHero{grid-template-columns:1fr;min-height:0;gap:6px}.grJankenLoadHero>.grJankenPhysicalCard{grid-column:1;width:min(58vw,250px);min-height:min(72vw,360px);justify-self:center}.grJankenLoadInfo{grid-column:1;width:min(88%,300px);justify-self:center;padding:6px}.grJankenFocusBloomPanel{top:50%;bottom:auto;width:calc(100% - 12px);padding:10px 8px}.grJankenFocusBloomPanel .grJankenTargetChip{display:grid;grid-template-columns:20px minmax(0,1fr);justify-content:stretch;min-height:46px;padding:4px}.grJankenFocusBloomPanel .grJankenTargetIdentity{display:flex}.grJankenFocusBloomPanel .grJankenTargetHand{display:none}.grJankenFocusBloomPanel .grJankenFocusChoices{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding-bottom:6px}.grJankenFocusBloomPanel .grJankenFocusChoice{min-height:100px;padding:6px 4px}.grJankenFocusBloomPanel .grJankenFocusChoice .grJankenFocusLockRow{display:none}.grJankenFocusBloomPanel .grJankenRoleBadge{font-size:9px}}
+@media (max-width:700px){.grJankenFocusPanel{padding:10px;border-radius:18px}.grJankenFocusChoices{gap:6px}.grJankenFocusChoice{min-height:96px;padding:7px;border-radius:14px}.grJankenFocusLockRow{grid-template-columns:42px minmax(0,1fr);font-size:10px}.grJankenRoleBadge{font-size:10px}.grJankenLoadHero{grid-template-columns:minmax(0,1fr) clamp(180px,42vw,280px) minmax(150px,1fr);gap:10px;min-height:min(64vh,430px)}.grJankenLoadHero>.grJankenPhysicalCard{min-height:clamp(260px,58vw,400px)}.grJankenLoadInfo{font-size:10px}.grJankenFocusActions{margin-top:7px}.grJankenFocusBloomPanel .grJankenFocusChoice{min-height:108px;border-radius:40% 60% 54% 46%/48% 43% 57% 52%}.grJankenFocusBloomPanel .grJankenRoleBadge{font-size:10px}}
+@media (max-height:430px) and (orientation:landscape){.grJankenFocusBloomPanel{top:50%;width:min(720px,calc(100% - 16px));padding:8px 10px}.grJankenFocusBloomPanel .grJankenFocusHeader{margin-bottom:4px}.grJankenFocusBloomPanel .grJankenFocusTitle{font-size:17px}.grJankenFocusBloomPanel .grJankenFocusSub{font-size:10px}.grJankenFocusBloomPanel .grJankenFocusChoice{min-height:86px;padding:6px}.grJankenFocusBloomPanel .grJankenFocusLockRow{display:none}.grJankenFocusBloomPanel .grJankenRoleBadge{font-size:9px}.grJankenLoadPanel{width:min(760px,calc(100% - 12px));padding:8px 10px}.grJankenLoadPanel .grJankenFocusHeader{margin-bottom:2px}.grJankenLoadHero{grid-template-columns:minmax(0,1fr) clamp(132px,23vw,190px) minmax(150px,1fr);gap:8px;min-height:300px}.grJankenLoadHero>.grJankenPhysicalCard{min-height:250px;max-height:300px}.grJankenLoadInfo{padding:7px}.grJankenLoadInfo .grJankenFocusLockRow{font-size:9px}}
+@media (max-width:460px){.grJankenFocusPanel{width:calc(100% - 16px);bottom:8px}.grJankenFocusChoices{grid-template-columns:1fr}.grJankenFocusChoice{min-height:74px}.grJankenFocusChoice .grJankenFocusLockRow{display:none}.grJankenLoadPanel{top:50%;bottom:auto;width:calc(100% - 12px);padding:8px}.grJankenLoadPanel .grJankenFocusHeader{margin-bottom:4px}.grJankenLoadHero{grid-template-columns:1fr;min-height:0;gap:6px}.grJankenLoadHero>.grJankenPhysicalCard{grid-column:1;width:min(58vw,250px);min-height:min(72vw,360px);justify-self:center}.grJankenLoadInfo{grid-column:1;width:min(88%,300px);justify-self:center;padding:6px}.grJankenFocusBloomPanel{top:50%;bottom:auto;width:calc(100% - 12px);padding:10px 8px}.grJankenFocusBloomPanel .grJankenFocusChoices{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding-bottom:6px}.grJankenFocusBloomPanel .grJankenFocusChoice{min-height:100px;padding:6px 4px}.grJankenFocusBloomPanel .grJankenFocusChoice .grJankenFocusLockRow{display:none}.grJankenFocusBloomPanel .grJankenRoleBadge{font-size:9px}}
 @media (prefers-reduced-motion:reduce){.grJankenFocusSurface *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 `;
   documentRef.head.appendChild(style);
@@ -291,10 +255,9 @@ function renderJanken(state, { busy, errorText, cardIndex, resolveCardArt }) {
   return `
     <section class="grJankenFocusPanel grJankenFocusBloomPanel" data-janken-focus-visual="flower-bloom" aria-label="じゃんけん攻撃選択">
       <div class="grJankenFocusHeader">
-        <div><div class="grJankenFocusTitle">じゃんけん攻撃</div><div class="grJankenFocusSub">同じ実カード3枚とロックオン先を見比べて選択</div></div>
+        <div><div class="grJankenFocusTitle">じゃんけん攻撃</div><div class="grJankenFocusSub">3枚は左から順に既存の列へ対応し、シールドの攻撃位置もカード選択だけで自動決定</div></div>
         <button type="button" class="grJankenFocusAction" data-gr-janken-focus-action="peek" ${busy ? 'disabled' : ''}>盤面を見る</button>
       </div>
-      ${targetRailMarkup(state, busy)}
       <div class="grJankenFocusChoices">${state.choices.map((choice) => choiceMarkup(choice, state, busy, cardIndex, resolveCardArt)).join('')}</div>
       ${busy ? '<div class="grJankenFocusError">攻撃先を確認中…</div>' : errorText ? `<div class="grJankenFocusError">${escapeHtml(errorText)}</div>` : ''}
     </section>`;
@@ -628,8 +591,8 @@ export const BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT = Object.freeze({
   authority: 'NONE',
   source: 'EXISTING_FOCUS_PRESENTATION_PLUS_CALLER_SUPPLIED_EXISTING_LIVE_INPUT_STACK',
   exactThreeChoices: true,
-  authoritativeTargetRail: true,
-  targetRailSource: 'EXISTING_THREE_COMPOUND_PACKAGES_ONLY',
+  authoritativeTargetRail: false,
+  targetRailSource: 'NONE_FREE_TARGET_PICKER',
   targetRailMayCreateTarget: false,
   visibleLockFields: Object.freeze(['cardId', 'opponentId', 'shieldLane', 'shieldRef', 'route']),
   physicalCardLineageSource: 'EXACT_PACKAGE_CARD_ID_JOIN_GLOBAL_CARD_DATA',

@@ -2,6 +2,7 @@ import { projectApprovedFanArtShopCatalog } from './shop-transaction-presentatio
 
 export const SHOP_LIVE_CATALOG_SCHEMA = 'gameroad.shop-live-catalog-runtime.v1';
 const VALID_STANDARD_KINDS = new Set(['STANDARD', 'COSMETIC']);
+const NON_MERCHANDISE_KINDS = new Set(['NAVIGATION']);
 const CURRENCY_DISPLAY = Object.freeze({ COIN: 'コイン', MANII: 'マニィ' });
 
 function token(value, max = 160) {
@@ -58,6 +59,9 @@ function projectFormalCatalog(items) {
   const reasons = [];
   const identities = new Set();
   for (const raw of items) {
+    const rawKind = token(raw?.kind, 32);
+    if (rawKind && NON_MERCHANDISE_KINDS.has(rawKind)) continue;
+
     const result = projectStandardItem(raw);
     if (!result.ok) {
       const key = token(raw?.productId, 128) ?? 'unknown';

@@ -66,8 +66,11 @@ test('the six-circle source discrepancy stays explicit instead of silently losin
     assert.equal(lane.referenceVisibleCircleCount, 6);
     assert.equal(lane.structuralRoundCellCount, 7);
     assert.equal(lane.cells.length, 7);
-    assert.equal(lane.cells[0].source.y, 209);
-    assert.equal(lane.cells[6].source.y, 427);
+    assert.equal(lane.cells[0].source.y, 427);
+    assert.equal(lane.cells[6].source.y, 209);
+    assert.equal(lane.gate.upperCellId, lane.cells[0].id);
+    const goalBranch = graph.goalBranches.find((branch) => branch.id === `goal-branch:${lane.laneKey}`);
+    assert.equal(goalBranch.toId, lane.cells[6].id);
   }
 });
 

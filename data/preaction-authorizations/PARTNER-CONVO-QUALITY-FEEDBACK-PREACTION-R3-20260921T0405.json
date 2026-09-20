@@ -1,0 +1,28 @@
+{
+  "recordId": "PARTNER-CONVO-QUALITY-FEEDBACK-PREACTION-R3-20260921T0405",
+  "acquireKey": "PARTNER-CONVO-QUALITY-FEEDBACK-R3-20260921T0405-SOL-Q8N4V86",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "PARTNER_CONVERSATION_QUALITY_FEEDBACK_REPORT_R1",
+  "baseMain": "2f7af383d9bf3dd2b9007e5cce852fee10cf2611",
+  "exactTargets": {
+    "browser/board-facility-runtime-mount.mjs": "b6a95b404df1510182415444361f492c241df1c3",
+    "deploy/cloudflare/relay/src/partner-report-store.mjs": "0e9c8d080546e2e65f2e6f071bdb8df7b8fa5958",
+    "tests/board-facility-runtime-mount.test.mjs": "89d557db9b9a4882ec9877229c326f9858a1bfc5",
+    "tests/partner-dialogue-feedback-core.test.mjs": "047b88af20b1a1939616a5c64e5dd908a4bd98af"
+  },
+  "intent": [
+    "Expose Good/Bad controls only for provider_candidate Saasuna responses.",
+    "Persist metadata-only quality feedback through the existing /report authority.",
+    "Add no fake rules/content/state version tuple and no second report service."
+  ],
+  "forbidden": [
+    "browser/GAMEROAD.html",
+    "browser/partner-conversation-core.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "raw user or assistant conversation text in report payload/storage",
+    "canon, relationship, reward, gameplay or automatic learning mutation"
+  ],
+  "externalPresentationBasis": "W3C WAI-ARIA APG Button Pattern: semantic button; aria-pressed only when representing a persistent selected state. External evidence does not define GAMEROAD gameplay semantics.",
+  "rollback": "Close PR/delete branch or revert exact scoped commits; no save/gameplay schema migration.",
+  "postReadback": "focused Node tests; Required Gate; exact-head merge only if current lease/base scope remain non-conflicting; main/public readback."
+}

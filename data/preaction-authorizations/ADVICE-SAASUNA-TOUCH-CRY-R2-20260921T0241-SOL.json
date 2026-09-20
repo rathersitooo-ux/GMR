@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ADVICE-SAASUNA-TOUCH-CRY-R2-20260921T0241-SOL",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "SAASUNA_TOUCH_CRY_VISIBLE_HTML_BINDING_R2",
+  "acquireKey": "ADVICE-SAASUNA-TOUCH-CRY-R2-20260921T0241-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_9560211_EXISTING_SAASUNA_TOUCH_CRY_CANONICAL_REGISTRY_PLUS_HTML_IMPORT_SEAM_20260921T0241JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R1_VISIBLE_BROWSER_PROBE_PROVED_HOME_TO_SAASUNA_TO_BATTLE_TO_TOUCH_CRY_TO_SEMANTIC_RETURN_ON_SAME_MAIN_BASE",
+  "proceedToken": "PROCEED|ADVICE-SAASUNA-TOUCH-CRY-R2-20260921T0241-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-touch-cry-asset|html-overlay-binding",
+  "authorizationBaseSha": "956021120af6905592e6552cbd0d5c9b8f8178ef",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "SAASUNA_TOUCH_CRY_VISIBLE_HTML_BINDING_R2",
+  "leaseAcquireKey": "ADVICE-SAASUNA-TOUCH-CRY-R2-20260921T0241-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 02:41 JST",
+  "leaseUntilJst": "2026-09-21 03:41 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/saasuna-touch-cry-visible-r2-20260921 only: browser/GAMEROAD.html; tests/partner-saasuna-bustup-visuals.test.mjs. browser/partner-saasuna-bustup-visuals.mjs READ_ONLY canonical registry; browser/partner-advice-runtime-mount.mjs READ_ONLY live owner; existing nine browser/assets/partners/saasuna PNG assets READ_ONLY; deploy/cloudflare/scripts/build.mjs READ_ONLY; deploy/cloudflare/tests/build.test.mjs READ_ONLY active owner; gameplay/rules/save/network READ_ONLY.",
+  "solutionSignature": "Reuse canonical SAASUNA_BUSTUP_ASSETS.TOUCH_CRY from the existing module and add only a transient presentation overlay binding in GAMEROAD.html.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "r1-visible-browser-proof-plus-canonical-registry",
+  "solutionSearchEvidence": [
+    "Drive manifest 1rg5jBqT6OUJsdZ-PRr9wgEXbz2Ye8N_E marks TOUCH_CRY as user-adopted static transparent material for Home left navigator / Advice Partner.",
+    "Current main browser/partner-saasuna-bustup-visuals.mjs already exposes SAASUNA_BUSTUP_ASSETS.TOUCH_CRY with exact accepted filename and hash-backed test.",
+    "R1 browser probe on same base demonstrated the intended visible behavior GUIDE_PRESENT -> TOUCH_CRY -> current semantic state after 3 seconds.",
+    "R2 avoids touching active build-test owner by binding through GAMEROAD.html while keeping canonical registry/runtime modules read-only."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/partner-saasuna-bustup-visuals.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/partner-saasuna-bustup-visuals.test.mjs"
+  ]
+}

@@ -62,9 +62,33 @@ test('normal Shop items preserve COIN and cosmetics use MANII display', () => {
   assert.equal(cosmetic.currencyDisplayName, 'マニィ');
 });
 
-test('deck or navigation-shaped catalog rows fail closed instead of becoming merchandise', () => {
+test('navigation-shaped catalog rows are quarantined instead of becoming merchandise', () => {
   const out = projectShopLiveCatalog({formalCatalogItems:[
     formalItem({productId:'deck:route', title:'デッキ', kind:'NAVIGATION'}),
+  ]});
+  assert.equal(out.visible, false);
+  assert.equal(out.empty, true);
+  assert.deepEqual(out.reasons, []);
+  assert.equal(out.sections.flatMap((section)=>section.items).some((item)=>item.kind === 'NAVIGATION'), false);
+});
+
+test('navigation rows do not suppress valid authoritative merchandise', () => {
+  const out = projectShopLiveCatalog({formalCatalogItems:[
+    formalItem({productId:'deck:route', title:'デッキ', kind:'NAVIGATION'}),
+    formalItem({productId:'cosmetic:001', title:'外観A', kind:'COSMETIC', currency:'MANII', price:250}),
+  ]});
+  assert.equal(out.visible, true);
+  assert.equal(out.empty, false);
+  assert.deepEqual(
+    out.sections.flatMap((section)=>section.items).map((item)=>item.productId),
+    ['cosmetic:001'],
+  );
+  assert.deepEqual(out.reasons, []);
+});
+
+test('unknown merchandise kinds still fail closed', () => {
+  const out = projectShopLiveCatalog({formalCatalogItems:[
+    formalItem({productId:'mystery:001', title:'不明商品', kind:'MYSTERY'}),
   ]});
   assert.equal(out.visible, false);
   assert.equal(out.empty, true);

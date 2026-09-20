@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-CONTACT-SHADOW-R1-20260921T0448-SOL-Q8N4V93",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_BOARD_CHARACTER_CONTACT_SHADOW_GROUNDING_R1",
+  "acquireKey": "BATTLE-BOARD-CONTACT-SHADOW-R1-20260921T0448-SOL-Q8N4V93",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_8B450E85_FREE_CHARACTER_VISUAL_BINDING_TARGETS_20260921T0448JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOCAL_FOCUSED_CHARACTER_BINDING_AND_HTML_HANDOFF_12_OF_12_PASS",
+  "proceedToken": "PROCEED|BATTLE-BOARD-CONTACT-SHADOW-R1-20260921T0448-SOL-Q8N4V93|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|contact-shadow|controlled-character-board-visual|active-lease",
+  "authorizationBaseSha": "8b450e85701fe22f0d7c8d7a7c0bbc7c9019628b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_BOARD_CHARACTER_CONTACT_SHADOW_GROUNDING_R1",
+  "leaseAcquireKey": "BATTLE-BOARD-CONTACT-SHADOW-R1-20260921T0448-SOL-Q8N4V93",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 04:48 JST",
+  "leaseUntilJst": "2026-09-21 05:48 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A21:L21",
+  "leaseExactMutableResources": "browser/battle-board-naki-4p-visual-binding.mjs; tests/battle-board-naki-4p-visual-binding.test.mjs; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback; browser/GAMEROAD.html READ_ONLY active Mana owner until 05:40 JST; browser/battle-board-world-field-renderer.mjs READ_ONLY; browser/new-base-battle-board-visual-graph.mjs READ_ONLY; gameplay/rules/save/network READ_ONLY; image generation forbidden",
+  "solutionSignature": "BATTLE_CONTROLLED_CHARACTER_MARKER_ANCHORED_CONTACT_SHADOW_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING_IS_LIVE_HTML_CONSUMER",
+  "solutionSearchEvidence": [
+    "Current HTML directly imports browser/battle-board-naki-4p-visual-binding.mjs, so the existing live character visual binding is the correct consumer rather than a new shadow system.",
+    "The existing binding positions each character as a child of the authoritative board marker, allowing the contact shadow to share the same ground anchor without changing gameplay or movement coordinates.",
+    "The current full-sprite drop-shadow is presentation-only and can be reduced while adding an explicit foot contact ellipse; no image generation or second renderer is required."
+  ],
+  "scope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs"
+  ]
+}

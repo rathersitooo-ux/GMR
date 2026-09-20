@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ACTION-ORDER-EARLY-RAIL-R1-20260920T1641-SOL-Q8N4V33",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PHASE_EARLY_ACCEPTED_ACTION_ORDER_RAIL_R1",
+  "acquireKey": "BATTLE-ACTION-ORDER-EARLY-RAIL-R1-20260920T1641-SOL-Q8N4V33",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_030FAFE_ACCEPTED_ACTION_ORDER_BRIDGE_PLUS_SETTLE_ONLY_RAIL_20260920T1641JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_FOCUSED_TESTS_PROVE_SETTLE_RAIL_AND_REVEAL_HIDDEN_BEFORE_DELTA",
+  "proceedToken": "PROCEED|BATTLE-ACTION-ORDER-EARLY-RAIL-R1-20260920T1641-SOL-Q8N4V33|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-action-order-early-rail-r1|screen-presentation-runtime|active-lease",
+  "authorizationBaseSha": "030fafe00522bfd5250abe492d575f0550e293ea",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PHASE_EARLY_ACCEPTED_ACTION_ORDER_RAIL_R1",
+  "leaseAcquireKey": "BATTLE-ACTION-ORDER-EARLY-RAIL-R1-20260920T1641-SOL-Q8N4V33",
+  "leaseSnapshotReadbackAtJst": "2026-09-20 16:41 JST",
+  "leaseUntilJst": "2026-09-20 17:41 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A31:L31",
+  "leaseExactMutableResources": "browser/battle-screen-presentation-core.mjs; tests/battle-screen-presentation-core.test.mjs; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; transient data/preaction-authorizations/BATTLE-ACTION-ORDER-EARLY-RAIL-R1-20260920T1641-SOL-Q8N4V33.json cleanup-delete only; own fresh branch/PR/check/merge/readback. browser/GAMEROAD.html READ_ONLY due BATTLE-BOARD-LIVE-WORLD-R14. gameplay/order/winner/target READ_ONLY.",
+  "solutionSignature": "BATTLE_SCREEN_ACCEPTED_ACTION_ORDER_CHAIN_TO_COMPARE_RAIL_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_ACTION_ORDER_PRESENTATION_CORE_PLUS_CAUSAL_ORDER_ADAPTER_PLUS_R7_CINEMATIC_RAIL",
+  "solutionSearchEvidence": [
+    "Current battle-resolution-action-order-adapter already audits and preserves caller-supplied accepted processing order without sorting, resolving, or calculating winner/target.",
+    "Current battle-screen model accepts actionOrder for every accepted event but only materializes it when settle creates boardReturn/causalReturn.",
+    "Current cinematic rail already renders physical card identity, printed number, janken hand, and final presentation state; no second rail is needed.",
+    "The safe earlier consumer is compare4 only when caller supplies accepted actionOrder; reveal remains hidden to avoid result/order leakage before accepted processing evidence.",
+    "browser/GAMEROAD.html remains read-only under the current live-board owner; this slice does not claim live caller completion."
+  ],
+  "scope": [
+    "browser/battle-screen-presentation-core.mjs",
+    "tests/battle-screen-presentation-core.test.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-presentation-core.mjs",
+    "tests/battle-screen-presentation-core.test.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

@@ -6,6 +6,8 @@ import {
   createHomeShellState,
   HOME_TOUCH_TARGET_MIN_PX,
   HOME_VIEWPORT_VARIANTS,
+  HOME_BORDER_LIGHT_OVERLAY_ASSET,
+  HOME_BORDER_LIGHT_OVERLAY_CSS,
   parsePublishedReleaseCommunications,
   parsePublishedReleaseNotes,
   projectHomeShell,
@@ -278,6 +280,23 @@ test('Home projection preserves routes and selected route across viewport profil
   assert.equal(HOME_TOUCH_TARGET_MIN_PX, 44);
 });
 
+test('Home border light overlay reuses the accepted asset and stays presentation-only', () => {
+  assert.deepEqual(HOME_BORDER_LIGHT_OVERLAY_ASSET, {
+    id: 'home-border-light-overlay-v1',
+    sourcePath: 'assets/visual/effects/home-border-light-overlay-v1.png',
+    runtimePath: '../assets/visual/effects/home-border-light-overlay-v1.png',
+    formal: true,
+    readOnly: true,
+    frameCount: 1,
+  });
+  assert.match(HOME_BORDER_LIGHT_OVERLAY_CSS, /codexHomeArtStage::after/);
+  assert.match(HOME_BORDER_LIGHT_OVERLAY_CSS, /home-border-light-overlay-v1\\.png/);
+  assert.match(HOME_BORDER_LIGHT_OVERLAY_CSS, /pointer-events:none/);
+  assert.match(HOME_BORDER_LIGHT_OVERLAY_CSS, /gameroadHomeBorderLightDrift/);
+  assert.match(HOME_BORDER_LIGHT_OVERLAY_CSS, /prefers-reduced-motion/);
+  assert.match(HOME_BORDER_LIGHT_OVERLAY_CSS, /r10LowPerf/);
+  assert.equal(HOME_BORDER_LIGHT_OVERLAY_CSS.includes('z-index:4'), true);
+});
 test('Home reduced/lowPerf profiles preserve semantic state rather than invent routes', () => {
   const s = state();
   const normal = projectHomeShell({ viewport: { width: 1280, height: 720 }, homeProjection: landscapeProjection, state: s });

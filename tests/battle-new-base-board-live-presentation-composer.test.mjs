@@ -123,6 +123,32 @@ test('mounts the existing Flanora surface and persistent Shield-entry gates with
   assert.equal(runtime.resolveGateCueLane('P2', 1).arrowStack, null);
 });
 
+test('hands the current NEW_BOARD_ONLY world-field model to the live renderer seam without duplicating geometry rules', () => {
+  const { runtime } = mount();
+  const bounds = { centerX: 1, centerZ: -2, width: 24, depth: 13.5, y: 0.1 };
+
+  let model = runtime.worldFieldRenderModel(bounds);
+  assert.equal(model.renderSpace, 'WORLD_FIELD');
+  assert.equal(model.screenSpaceBoardTopology, false);
+  assert.equal(model.counts.sharedGoal, 1);
+  assert.equal(model.counts.upperLanes, 12);
+  assert.equal(model.counts.roundCells, 126);
+  assert.equal(model.counts.gates, 12);
+  assert.equal(model.counts.shields, 12);
+  assert.equal(model.gates.find((gate) => gate.laneKey === 'P2:C').state, 'CLOSED_HEAVY_BARRIER');
+  assert.equal(model.edges.find((edge) => edge.id === 'lower-edge:T0-L0').waypoints.length, 1);
+
+  const seven = withStraight(emptyStraights(), 4, 7, 'P2-C');
+  assert.equal(runtime.syncAuthoritativeSnapshot({ straightCardIdsByColumn: seven }).ok, true);
+  model = runtime.worldFieldRenderModel(bounds);
+  assert.equal(model.gates.find((gate) => gate.laneKey === 'P2:C').state, 'OPEN_PASSABLE_FRAME');
+  assert.equal(model.goalBranches.find((branch) => branch.id === 'goal-branch:P2:C').visualState, 'STRONG_OPEN');
+  assert.equal(model.gates.find((gate) => gate.laneKey === 'P2:L').state, 'CLOSED_HEAVY_BARRIER');
+  assert.equal(model.gameplayAuthority, false);
+  assert.equal(model.movementAuthority, false);
+  assert.equal(BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT.worldFieldGeometryAuthority, 'EXISTING_BATTLE_BOARD_WORLD_FIELD_RENDERER');
+});
+
 test('1..6 established cards become BUILT while future stages stay logical-only and GOAL remains closed', () => {
   const { runtime } = mount();
   for (const count of [1, 3, 6]) {

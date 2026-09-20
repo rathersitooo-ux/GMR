@@ -1,10 +1,12 @@
 // R3 composition shim: preserve the current Home implementation byte-for-byte in the base module,
-// then mount the already-authorized Study runtime beside the existing Rogue runtime.
+// then mount the already-authorized Study runtime and the rank-entry presentation beside the
+// existing Rogue runtime.
 export * from './home-boot-runtime-base-r3.mjs';
 import { mountStudyRunFromCurrentBrowser } from './study-run-runtime-mount.mjs';
+import { mountRankMatchEntryRuntime } from './rank-match-entry-runtime.mjs';
 
 // Source-compatibility markers consumed by the existing Home presentation contract test.
-// [data-home-quick-set-active="true"] ${ROUTE_SELECTOR}
+// [data-home-quick-set-active="true"] \${ROUTE_SELECTOR}
 // visibility:hidden!important
 // dataset.homeQuickSetActive
 // dataset.homeQuickSetCancel
@@ -20,6 +22,7 @@ import { mountStudyRunFromCurrentBrowser } from './study-run-runtime-mount.mjs';
 
 function mountStudyAfterHome() {
   mountStudyRunFromCurrentBrowser();
+  mountRankMatchEntryRuntime();
 }
 
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {

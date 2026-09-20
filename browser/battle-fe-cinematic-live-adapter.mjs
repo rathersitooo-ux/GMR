@@ -246,9 +246,8 @@ function cardValue(player) {
 }
 
 function barValue(player) {
-  const score = Number(player?.score);
-  if (!Number.isFinite(score)) return 0;
-  return Math.max(0, Math.min(100, score));
+  // Decorative occupancy only; the card game has no HP authority here.
+  return player?.id ? 100 : 0;
 }
 
 function createActor(document, view, role) {
@@ -291,6 +290,7 @@ function createStatPanel(document, player, role, view) {
   const fill = createNode(document, 'i');
   fill.style.width = `${barValue(player)}%`;
   fill.setAttribute('aria-hidden', 'true');
+  bar.dataset.presentationOnly = 'true';
   bar.appendChild(fill);
   panel.append(head, stats, bar);
   return panel;

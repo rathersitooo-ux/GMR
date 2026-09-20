@@ -52,3 +52,17 @@ test('Battle bust-up owns a dedicated framed Advice Partner slot instead of a ba
   assert.match(source, /overflow:hidden/);
   assert.match(source, /border:1px solid/);
 });
+
+test('accepted TOUCH_CRY asset is bound from the canonical registry to a visible Battle touch overlay', () => {
+  const html = readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
+  assert.match(html, /id="gameroad-saasuna-touch-cry-visible-r2"/);
+  assert.match(html, /import \{ SAASUNA_BUSTUP_ASSETS \} from '\.\/partner-saasuna-bustup-visuals\.mjs'/);
+  assert.match(html, /SAASUNA_BUSTUP_ASSETS\.TOUCH_CRY\.src/);
+  assert.match(html, /data-role="advice-partner-bustup"/);
+  assert.match(html, /TOUCH_CRY_HOLD_MS\s*=\s*3000/);
+  assert.match(html, /figure\.addEventListener\('click'/);
+  assert.match(html, /figure\.addEventListener\('keydown'/);
+  assert.match(html, /display:\s*'none'/);
+  assert.match(html, /overlay\.style\.display\s*=\s*'block'/);
+  assert.match(html, /overlay\.style\.display\s*=\s*'none'/);
+});

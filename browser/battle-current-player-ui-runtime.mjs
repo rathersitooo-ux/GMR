@@ -61,8 +61,7 @@ const STYLE_TEXT = `
 .screen.battle[${ROOT_ATTR}="1"][data-gr-waiting-for-others="true"] [${ZONE_ATTR}="current-action"]{border-color:rgba(255,239,170,.76)!important;background:rgba(4,28,24,.92)!important;box-shadow:0 6px 18px rgba(0,0,0,.28),0 0 0 1px rgba(255,239,170,.12)!important}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="details-on-demand"][hidden]{display:none!important}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner-visual"]{width:clamp(132px,15vw,190px)!important;height:min(34vh,245px)!important}
-.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="mana-art"]{--r8-size:clamp(84px,8.5vw,108px)!important;width:var(--r8-size)!important;height:var(--r8-size)!important}
-.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="mana-art"] .r8ManaNumber{font-size:clamp(24px,2.5vw,32px)!important}
+.screen.battle[${ROOT_ATTR}="1"] #battleManaArtR8,.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="mana-art"]{display:none!important}
 .screen.battle[${ROOT_ATTR}="1"] #battleDrawer{z-index:60!important}
 .screen.battle[${ROOT_ATTR}="1"][data-gr-stale="true"] #hand,
 .screen.battle[${ROOT_ATTR}="1"][data-gr-reconnecting="true"] #hand,
@@ -87,8 +86,6 @@ const STYLE_TEXT = `
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{max-width:104px!important;font-size:8px!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="support-entry"]{min-height:32px!important;height:32px!important;max-height:32px!important;padding:3px 6px!important;font-size:8px!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner-visual"]{width:112px!important;height:160px!important}
-  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="mana-art"]{--r8-size:84px!important}
-  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="mana-art"] .r8ManaNumber{font-size:24px!important}
   .screen.battle[${ROOT_ATTR}="1"] .battleInfo{left:104px!important;grid-template-columns:minmax(0,1fr) minmax(126px,27%)!important}
   .screen.battle[${ROOT_ATTR}="1"] .planBox{max-width:172px!important;padding:3px!important}
   .screen.battle[${ROOT_ATTR}="1"] .battleRail{top:144px!important;bottom:auto!important;max-width:168px!important}
@@ -105,8 +102,6 @@ const STYLE_TEXT = `
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="support-entry"]{bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap) + 46px)!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner"]{bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap) + 92px)!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner-visual"]{width:96px!important;height:154px!important}
-  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="mana-art"]{--r8-size:82px!important}
-  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="mana-art"] .r8ManaNumber{font-size:22px!important}
   .screen.battle[${ROOT_ATTR}="1"] .battleInfo{left:1.5%!important;right:calc(var(--gr-thumb-w) + var(--gr-ui-edge) + var(--gr-ui-gap))!important;height:28vh!important;grid-template-columns:1fr!important;grid-template-rows:minmax(0,1fr) auto!important}
   .screen.battle[${ROOT_ATTR}="1"] .planBox{max-width:none!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}
   .screen.battle[${ROOT_ATTR}="1"] [data-battle-janken-slidepad="1"]{width:var(--gr-thumb-w)!important;height:var(--gr-thumb-h)!important;right:var(--gr-ui-edge)!important;bottom:var(--gr-ui-edge)!important}
@@ -383,7 +378,8 @@ export const BATTLE_CURRENT_PLAYER_UI_RUNTIME = Object.freeze({
   secondaryActionPolicy: 'COMPACT_RANGE_EXIT_RAIL_SUPPORT_ENTRY_LOWER_LEFT',
   supportEntryPolicy: 'EXISTING_DETAILS_HISTORY_DECK_ENTRY_LOWER_LEFT',
   attentionPolicy: 'ADVICE_WEAK_UNTIL_ACTIVE_WAITING_STRONG_ONLY_WHILE_WAITING_DETAILS_ON_DEMAND',
-  boardProtagonistPolicy: 'BOUND_EXISTING_PARTNER_VISUAL_AND_MANA_ART_WITHOUT_RELOCATION_OR_STATE_WRITE',
+  boardProtagonistPolicy: 'BOUND_EXISTING_PARTNER_VISUAL_WITH_BLUE_MANA_ART_HIDDEN',
+  manaArtPolicy: 'HIDDEN_BY_CURRENT_COMPOSITION_KEEP_NUMERIC_MANA_STATE',
   lowPerfPolicy: 'REMOVE_COMPOSITOR_BACKDROP_FILTER_ONLY',
   unresolvedGameplayPolicy: 'DO_NOT_INFER',
   productionHtmlMutationOwnedHere: false

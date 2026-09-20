@@ -171,7 +171,8 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.roulette[0], '[data-battle-playa
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.supportEntry[0], '#detailsBtn');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.supportEntryPolicy, 'EXISTING_DETAILS_HISTORY_DECK_ENTRY_LOWER_LEFT');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.attentionPolicy, 'ADVICE_WEAK_UNTIL_ACTIVE_WAITING_STRONG_ONLY_WHILE_WAITING_DETAILS_ON_DEMAND');
-assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.boardProtagonistPolicy, 'BOUND_EXISTING_PARTNER_VISUAL_AND_MANA_ART_WITHOUT_RELOCATION_OR_STATE_WRITE');
+assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.boardProtagonistPolicy, 'BOUND_EXISTING_PARTNER_VISUAL_WITH_BLUE_MANA_ART_HIDDEN');
+assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_COMPOSITION_KEEP_NUMERIC_MANA_STATE');
 
 {
   const { document, root, nodes } = fixture();
@@ -238,12 +239,6 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.boardProtagonistPolicy, 'BOUND_EXI
   for (const rule of partnerVisualRules) {
     assert.doesNotMatch(rule, /(?:^|;)(?:left|right|top|bottom):/);
   }
-  const manaArtRules = [...styleText.matchAll(/\[data-gr-current-ui-zone="mana-art"\]\{([^}]*)\}/g)]
-    .map((match) => match[1]);
-  assert.ok(manaArtRules.length >= 3);
-  for (const rule of manaArtRules) {
-    assert.doesNotMatch(rule, /(?:^|;)(?:left|right|top|bottom):/);
-  }
   assert.match(styleText, /\[data-gr-current-ui-zone="support-entry"\]\{[^}]*left:var\(--gr-ui-edge\)!important[^}]*bottom:calc\(var\(--gr-ui-edge\) \+ 46px\)!important/);
   assert.match(styleText, /\[data-gr-current-ui-zone="partner"\]\{[^}]*bottom:calc\(var\(--gr-ui-edge\) \+ 92px\)!important[^}]*opacity:\.22[^}]*pointer-events:none!important/);
   assert.match(styleText, /data-gr-advice-active="true"[\s\S]*?\[data-gr-current-ui-zone="partner"\]\{opacity:1;pointer-events:auto!important\}/);
@@ -251,17 +246,16 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.boardProtagonistPolicy, 'BOUND_EXI
   assert.match(styleText, /data-gr-waiting-for-others="true"[\s\S]*?\[data-gr-current-ui-zone="current-action"\]\{[^}]*border-color:/);
   assert.match(styleText, /\[data-gr-current-ui-zone="details-on-demand"\]\[hidden\]\{display:none!important\}/);
   assert.match(styleText, /\[data-gr-current-ui-zone="partner-visual"\]\{width:clamp\(132px,15vw,190px\)!important;height:min\(34vh,245px\)!important\}/);
-  assert.match(styleText, /\[data-gr-current-ui-zone="mana-art"\]\{--r8-size:clamp\(84px,8\.5vw,108px\)!important;width:var\(--r8-size\)!important;height:var\(--r8-size\)!important\}/);
+  assert.match(styleText, /#battleManaArtR8[^}]*display:none!important/);
+  assert.doesNotMatch(styleText, /--r8-size/);
   assert.match(styleText, /\.planBox\{[^}]*transform:none!important/);
   assert.match(styleText, /\.battleRail\{[^}]*max-width:min\(28vw,340px\)!important[^}]*transform:none!important/);
   assert.match(styleText, /data-battle-janken-slidepad=\"1\"\]\{[^}]*width:var\(--gr-thumb-w\)!important[^}]*height:var\(--gr-thumb-h\)!important/);
   assert.match(styleText, /@media\(max-height:430px\)[\s\S]*\[data-gr-current-ui-zone="partner-visual"\]\{width:112px!important;height:160px!important\}/);
-  assert.match(styleText, /@media\(max-height:430px\)[\s\S]*\[data-gr-current-ui-zone="mana-art"\]\{--r8-size:84px!important\}/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\.battleInfo\{[^}]*right:calc\(var\(--gr-thumb-w\) \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\)\)!important/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="support-entry"\]\{[^}]*bottom:calc\(28vh \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\) \+ 46px\)!important/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="partner"\]\{[^}]*bottom:calc\(28vh \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\) \+ 92px\)!important/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="partner-visual"\]\{width:96px!important;height:154px!important\}/);
-  assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="mana-art"\]\{--r8-size:82px!important\}/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\.battleRail\{[^}]*top:118px!important[^}]*max-width:none!important/);
   assert.equal(styleText.includes('.battleRail{top:144px!important;bottom:auto!important;max-width:168px!important}'), true);
 

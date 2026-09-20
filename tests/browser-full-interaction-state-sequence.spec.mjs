@@ -425,6 +425,9 @@ test('Cards favorite-only filter is physically clickable and survives reload in 
   await favoriteAction.click();
   await expect(favoriteAction, 'favorite state commits before filtering').toHaveAttribute('aria-pressed', 'true');
 
+  await page.keyboard.press('Escape');
+  await expect(cards, 'Cards inspector closes before using the separate findability toolbar').toHaveAttribute('data-inspector', 'closed');
+
   const favoriteFilter = cards.locator('[data-role="cards-deck-findability"] [data-filter="favorite"]');
   await expect(favoriteFilter, 'favorite-only filter is visible').toBeVisible();
   await favoriteFilter.scrollIntoViewIfNeeded();

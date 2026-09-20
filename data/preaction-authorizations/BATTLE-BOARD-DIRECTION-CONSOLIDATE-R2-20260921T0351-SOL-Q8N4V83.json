@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-DIRECTION-CONSOLIDATE-R2-20260921T0351-SOL-Q8N4V83",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_BOARD_PROGRESSION_DIRECTION_CONSOLIDATED_R2",
+  "acquireKey": "BATTLE-BOARD-DIRECTION-CONSOLIDATE-R2-20260921T0351-SOL-Q8N4V83",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_GRAPH_DIRECTION_MISMATCH_PLUS_PR1947_AND_CLEAN_VALIDATOR_DONOR_ORACLE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FRESH_COMBINED_ORACLE_46_OF_46_ON_CURRENT_LINEAGE",
+  "proceedToken": "PROCEED|BATTLE-BOARD-DIRECTION-CONSOLIDATE-R2-20260921T0351-SOL-Q8N4V83|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|shield-stage1-goal-stage7|current-byte-adaptation",
+  "authorizationBaseSha": "a5ec69c4938c82ac6abe0992da219807ae9b88b4",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_BOARD_PROGRESSION_DIRECTION_CONSOLIDATED_R2",
+  "leaseAcquireKey": "BATTLE-BOARD-DIRECTION-CONSOLIDATE-R2-20260921T0351-SOL-Q8N4V83",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 03:51 JST",
+  "leaseUntilJst": "2026-09-21 04:36 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A16:L16",
+  "leaseExactMutableResources": "browser/new-base-battle-board-visual-graph.mjs; tests/new-base-battle-board-visual-graph.test.mjs; tests/battle-board-world-field-renderer.test.mjs; tools/validate-new-base-board-structure.mjs; tests/validate-new-base-board-structure.test.mjs; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback; browser/GAMEROAD.html READ_ONLY active GOAL-live owner; tests/battle-board-live-movement-goal-r2.test.mjs READ_ONLY; browser/battle-board-world-field-renderer.mjs READ_ONLY; browser/battle-new-base-board-live-presentation-composer.mjs READ_ONLY; browser/new-base-goal-path-core.mjs READ_ONLY; browser/new-base-goal-result-core.mjs READ_ONLY; save/network/card rules READ_ONLY",
+  "scope": [
+    "browser/new-base-battle-board-visual-graph.mjs",
+    "tests/new-base-battle-board-visual-graph.test.mjs",
+    "tests/battle-board-world-field-renderer.test.mjs",
+    "tools/validate-new-base-board-structure.mjs",
+    "tests/validate-new-base-board-structure.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-battle-board-visual-graph.mjs",
+    "tests/new-base-battle-board-visual-graph.test.mjs",
+    "tests/battle-board-world-field-renderer.test.mjs",
+    "tools/validate-new-base-board-structure.mjs",
+    "tests/validate-new-base-board-structure.test.mjs"
+  ]
+}

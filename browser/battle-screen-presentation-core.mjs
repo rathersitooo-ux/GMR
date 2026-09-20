@@ -1,5 +1,9 @@
 import { planBattleConveyor } from './battle-conveyor-presentation-core.mjs';
-import { projectBattleResolutionWithActionOrder } from './battle-resolution-action-order-adapter.mjs';
+import {
+  BATTLE_CAUSAL_ORDER_BRIDGE_SCHEMA,
+  adaptBattleActionOrderToCausalOrderChain,
+  projectBattleResolutionWithActionOrder
+} from './battle-resolution-action-order-adapter.mjs';
 
 const MODEL_SCHEMA = 'gameroad.battle-screen-presentation.v1';
 const TIMELINE_SCHEMA = 'gameroad.battle-screen-timeline.v1';
@@ -320,6 +324,12 @@ export function createBattleScreenModel({
     : projectBattleFourPublicCardState({ participants: normalizedParticipants, publicCards: publicCardSource });
   const publicCardByPlayer = new Map((publicCardState?.cards ?? []).map(card => [card.playerId, card]));
   const normalizedAfterstate = normalizeAfterstate(persistentAfterstate, participantIds);
+  const standaloneActionOrderChain = actionOrder != null && boardReturn == null
+    ? adaptBattleActionOrderToCausalOrderChain(actionOrder)
+    : null;
+  const actionOrderChain = normalizedPlan?.kind === 'compare4'
+    ? standaloneActionOrderChain
+    : null;
   if (returnIntent != null && !RETURN_INTENTS.has(returnIntent)) {
     throw new TypeError('BATTLE_SCREEN_RETURN_INTENT_INVALID');
   }
@@ -377,6 +387,7 @@ export function createBattleScreenModel({
     },
     focus: focusForPlan(normalizedPlan, boardReturn),
     publicCardState,
+    actionOrderChain,
     boardReturn,
     causalReturn,
     lanes,
@@ -443,6 +454,36 @@ export function auditBattleScreenModel(model) {
     if (Array.isArray(model?.lanes) && model.lanes.some(lane => lane.publicCard !== (cardByPlayer.get(lane.id) ?? null))) defects.push('FOUR_PUBLIC_CARD_LANE_BINDING');
   } else if (Array.isArray(model?.lanes) && model.lanes.some(lane => lane.publicCard != null)) {
     defects.push('FOUR_PUBLIC_CARD_GHOST');
+  }
+  if (model?.actionOrderChain != null) {
+    const chain = model.actionOrderChain;
+    const participantIds = new Set((model?.lanes ?? []).map(row => row?.id));
+    if (model.phase !== 'compare4') defects.push('ACTION_ORDER_CHAIN_PHASE');
+    if (chain.schema !== BATTLE_CAUSAL_ORDER_BRIDGE_SCHEMA
+      || chain.presentationOnly !== true
+      || chain.gameplayAuthority !== false
+      || chain.gameStateWrite !== false
+      || chain.orderCalculation !== false
+      || chain.winnerCalculation !== false
+      || chain.targetCalculation !== false) {
+      defects.push('ACTION_ORDER_CHAIN_AUTHORITY');
+    }
+    if (!Array.isArray(chain.processingOrder)
+      || !Array.isArray(chain.processedOrder)
+      || !Array.isArray(chain.finalSlots)
+      || chain.processingOrder.length !== 4
+      || chain.finalSlots.length !== chain.processingOrder.length) {
+      defects.push('ACTION_ORDER_CHAIN_SHAPE');
+    } else {
+      if (new Set(chain.processingOrder).size !== chain.processingOrder.length) defects.push('ACTION_ORDER_CHAIN_IDENTITY');
+      if (chain.finalSlots.some((slot, index) =>
+        slot?.playerId !== chain.processingOrder[index] || !participantIds.has(slot?.playerId))) {
+        defects.push('ACTION_ORDER_CHAIN_SLOT_BINDING');
+      }
+      if (chain.processedOrder.some(playerId => !chain.processingOrder.includes(playerId))) {
+        defects.push('ACTION_ORDER_CHAIN_PROCESSED_UNKNOWN');
+      }
+    }
   }
   if (Array.isArray(model?.lanes)) {
     if (new Set(model.lanes.map(row => row.id)).size !== model.lanes.length) defects.push('LANE_IDENTITY');

@@ -1,3 +1,8 @@
+import {
+  SETUP_QUICK_DECK_PREVIEW_CONTRACT,
+  createSetupQuickDeckPreview,
+} from './cards-deck-presentation-core.mjs';
+
 const SCHEMA = 'gameroad.home-shell-presentation.v1';
 const VIEWPORT_VARIANTS = Object.freeze({
   WIDE_LANDSCAPE: 'wide-landscape',
@@ -6,6 +11,8 @@ const VIEWPORT_VARIANTS = Object.freeze({
 });
 const TOUCH_TARGET_MIN_PX = 44;
 const SETUP_STAGING_STYLE_ID = 'gameroad-setup-staging-presentation-r2';
+const SETUP_QUICK_DECK_TRIGGER_ID = 'gameroadSetupQuickDeckTrigger';
+const SETUP_QUICK_DECK_DIALOG_ID = 'gameroadSetupQuickDeckDialog';
 const UPDATE_BANNER_ID = 'gameroadUpdateBanner';
 const UPDATE_DETAILS_TRIGGER_CLASS = 'gameroadUpdateDetailsTrigger';
 const UPDATE_DETAILS_DIALOG_ID = 'gameroadUpdateDetailsDialog';
@@ -51,6 +58,23 @@ section[data-screen="setup"] #startMatch:focus-visible{outline:3px solid current
 @media (min-width:900px) and (min-height:520px){section[data-screen="setup"] .setupHero{display:flex;align-items:center;gap:clamp(18px,2.4vw,34px);min-height:min(62vh,448px);padding:clamp(24px,3vw,40px);border-radius:28px;background:radial-gradient(circle at 64% 46%,color-mix(in srgb,currentColor 24%,transparent),transparent 42%),linear-gradient(145deg,color-mix(in srgb,currentColor 12%,transparent),color-mix(in srgb,currentColor 3%,transparent));box-shadow:0 24px 56px rgba(0,0,0,.25),inset 0 0 0 1px color-mix(in srgb,currentColor 22%,transparent)}section[data-screen="setup"] .setupHero img{height:min(50vh,360px)!important;max-height:calc(100% - 36px)!important;width:auto!important;max-width:min(46vw,430px)!important;object-fit:contain;filter:drop-shadow(0 18px 26px rgba(0,0,0,.34))}section[data-screen="setup"] .setupBox{backdrop-filter:blur(9px);box-shadow:0 20px 48px rgba(0,0,0,.18),inset 0 0 0 1px color-mix(in srgb,currentColor 18%,transparent)}}
 @media (max-width:540px){section[data-screen="setup"]{overflow-y:auto;overscroll-behavior:contain}section[data-screen="setup"] .setupHero{padding:14px;border-radius:18px}section[data-screen="setup"] .setupBox{gap:10px;padding:12px;border-radius:18px}section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode]{min-height:48px !important}section[data-screen="setup"] [data-mode]::before{min-width:4.3em;margin-inline-end:.46em;padding-inline:.34em;font-size:.68em}section[data-screen="setup"] #startMatch{position:sticky;bottom:max(10px,env(safe-area-inset-bottom));z-index:20;min-height:64px !important;margin-top:12px}}
 @media (max-height:430px) and (orientation:landscape){section[data-screen="setup"] .setupHero{padding:9px 12px}section[data-screen="setup"] .setupBox{gap:7px;padding:9px 11px}section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode]{min-height:44px !important;padding-block:7px !important}section[data-screen="setup"] [data-mode]::before{min-width:4.15em;margin-inline-end:.42em;font-size:.66em}section[data-screen="setup"] #startMatch{min-height:50px !important;margin-top:7px}}
+section[data-screen="setup"] #${SETUP_QUICK_DECK_TRIGGER_ID}{grid-column:1/-1;min-height:44px;padding:9px 14px;border-radius:13px;border:1px solid color-mix(in srgb,currentColor 24%,transparent);background:color-mix(in srgb,currentColor 7%,transparent);color:inherit;font:inherit;font-weight:800;cursor:pointer;touch-action:manipulation}
+section[data-screen="setup"] #${SETUP_QUICK_DECK_TRIGGER_ID}:focus-visible{outline:3px solid currentColor;outline-offset:3px}
+#${SETUP_QUICK_DECK_DIALOG_ID}[hidden]{display:none!important}
+#${SETUP_QUICK_DECK_DIALOG_ID}{position:fixed;inset:0;z-index:2147482400;display:grid;place-items:center;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));background:rgba(2,8,12,.72)}
+#${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckPanel{width:min(900px,96vw);max-height:min(86vh,720px);overflow:auto;border:1px solid color-mix(in srgb,currentColor 28%,rgba(255,255,255,.16));border-radius:18px;background:color-mix(in srgb,var(--bg,#071019) 96%,#101923);box-shadow:0 24px 64px rgba(0,0,0,.48);padding:14px;color:var(--text,#f5f7fb)}
+#${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckHead{display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;z-index:2;background:inherit;padding-bottom:10px}
+#${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckTitle{margin:0;font-size:clamp(18px,2.5vw,25px)}
+#${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckActions{display:flex;gap:8px}
+#${SETUP_QUICK_DECK_DIALOG_ID} button{min-height:44px;padding:8px 12px;border-radius:11px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:inherit;font:inherit;font-weight:800}
+#${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckSummary{margin:0 0 12px;opacity:.8;font-size:13px}
+#${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckSection+ .setupQuickDeckSection{margin-top:14px}
+#${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckSectionTitle{margin:0 0 8px;font-size:14px}
+#${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px}
+#${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckCard{min-height:54px;display:flex;align-items:center;padding:8px 9px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.045);font-size:12px;overflow-wrap:anywhere}
+#${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckEmpty{margin:0;padding:10px;opacity:.68}
+@media (max-height:430px) and (orientation:landscape){#${SETUP_QUICK_DECK_DIALOG_ID}{place-items:stretch;padding:7px}#${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckPanel{width:100%;max-height:100%;border-radius:13px;padding:10px}#${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckGrid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}}
+
 `;
 const UPDATE_DETAILS_CSS = `
 .${UPDATE_DETAILS_TRIGGER_CLASS}{appearance:none;border:0;background:none;color:inherit;font:inherit;font-weight:inherit;line-height:inherit;min-height:${TOUCH_TARGET_MIN_PX}px;padding:0;margin:0;text-decoration:underline;text-decoration-thickness:.08em;text-underline-offset:.18em;cursor:pointer;touch-action:manipulation}
@@ -156,13 +180,155 @@ export function isUpdateBannerMessage(value) {
   return typeof value === 'string' && value.includes(UPDATE_MESSAGE);
 }
 
-function ensureSharedShellPresentation() {
-  if (typeof document === 'undefined' || !document.head || document.getElementById(SETUP_STAGING_STYLE_ID)) return false;
-  const style = document.createElement('style');
-  style.id = SETUP_STAGING_STYLE_ID;
-  style.textContent = SETUP_STAGING_CSS;
-  document.head.append(style);
+function setupQuickDeckElement(doc, tag, className, text) {
+  const node = doc.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = String(text);
+  return node;
+}
+
+function setupQuickDeckCardLabel(cardId) {
+  const id = String(cardId);
+  const cards = globalThis.__CARD_DATA__;
+  const card = Array.isArray(cards) ? cards.find((entry) => String(entry?.id ?? '') === id) : null;
+  const label = card?.nameJa ?? card?.name ?? card?.label ?? id;
+  return String(label || id);
+}
+
+function readCurrentSetupQuickDeckPreview() {
+  const state = globalThis.__GAMEROAD_TEST__?.state;
+  const selectedDeckIndex = Number(state?.selectedDeckIndex);
+  if (!Number.isInteger(selectedDeckIndex)) return null;
+  if (
+    SETUP_QUICK_DECK_PREVIEW_CONTRACT.readOnly !== true ||
+    SETUP_QUICK_DECK_PREVIEW_CONTRACT.mutatesDeck !== false ||
+    SETUP_QUICK_DECK_PREVIEW_CONTRACT.mutatesSelection !== false
+  ) return null;
+  try {
+    return createSetupQuickDeckPreview({
+      selectedDeckNumber: selectedDeckIndex + 1,
+      savedDeck: state?.savedDeck,
+    });
+  } catch {
+    return null;
+  }
+}
+
+function ensureSetupQuickDeckConsumer() {
+  if (typeof document === 'undefined' || !document.body?.append || !document.querySelector) return false;
+  const setup = document.querySelector('section[data-screen="setup"]');
+  const box = setup?.querySelector?.('.setupBox');
+  if (!setup || !box) return false;
+  if (document.getElementById(SETUP_QUICK_DECK_TRIGGER_ID)) return true;
+
+  const trigger = setupQuickDeckElement(document, 'button', 'setupQuickDeckTrigger', 'デッキ確認');
+  trigger.id = SETUP_QUICK_DECK_TRIGGER_ID;
+  trigger.type = 'button';
+  trigger.setAttribute('aria-haspopup', 'dialog');
+  trigger.setAttribute('aria-controls', SETUP_QUICK_DECK_DIALOG_ID);
+
+  const startMatch = box.querySelector?.('#startMatch');
+  const recovery = box.querySelector?.('.setupDeckRecovery');
+  if (startMatch?.insertAdjacentElement) startMatch.insertAdjacentElement('beforebegin', trigger);
+  else if (recovery?.insertAdjacentElement) recovery.insertAdjacentElement('afterend', trigger);
+  else box.append(trigger);
+
+  const dialog = setupQuickDeckElement(document, 'div', 'setupQuickDeckDialog');
+  dialog.id = SETUP_QUICK_DECK_DIALOG_ID;
+  dialog.hidden = true;
+  dialog.setAttribute('role', 'dialog');
+  dialog.setAttribute('aria-modal', 'true');
+  dialog.setAttribute('aria-label', 'デッキ確認');
+
+  const panel = setupQuickDeckElement(document, 'section', 'setupQuickDeckPanel');
+  const head = setupQuickDeckElement(document, 'div', 'setupQuickDeckHead');
+  const title = setupQuickDeckElement(document, 'h2', 'setupQuickDeckTitle', 'デッキ確認');
+  const actions = setupQuickDeckElement(document, 'div', 'setupQuickDeckActions');
+  const edit = setupQuickDeckElement(document, 'button', 'setupQuickDeckEdit', '編集へ');
+  edit.type = 'button';
+  const close = setupQuickDeckElement(document, 'button', 'setupQuickDeckClose', '閉じる');
+  close.type = 'button';
+  actions.append(edit, close);
+  head.append(title, actions);
+  const summary = setupQuickDeckElement(document, 'p', 'setupQuickDeckSummary');
+  const content = setupQuickDeckElement(document, 'div', 'setupQuickDeckContent');
+  panel.append(head, summary, content);
+  dialog.append(panel);
+  document.body.append(dialog);
+
+  let opened = false;
+  const renderSection = (label, cards) => {
+    const section = setupQuickDeckElement(document, 'section', 'setupQuickDeckSection');
+    section.append(setupQuickDeckElement(document, 'h3', 'setupQuickDeckSectionTitle', `${label}（${cards.length}枚）`));
+    if (!cards.length) {
+      section.append(setupQuickDeckElement(document, 'p', 'setupQuickDeckEmpty', 'カードなし'));
+      return section;
+    }
+    const grid = setupQuickDeckElement(document, 'div', 'setupQuickDeckGrid');
+    for (const cardId of cards) {
+      const id = String(cardId);
+      const item = setupQuickDeckElement(document, 'div', 'setupQuickDeckCard', setupQuickDeckCardLabel(id));
+      item.dataset.cardId = id;
+      grid.append(item);
+    }
+    section.append(grid);
+    return section;
+  };
+
+  const closeDialog = ({ restoreFocus = true } = {}) => {
+    if (!opened) return false;
+    opened = false;
+    dialog.hidden = true;
+    document.removeEventListener?.('keydown', onKeydown);
+    if (restoreFocus) trigger.focus?.();
+    return true;
+  };
+
+  const onKeydown = (event) => {
+    if (event?.key !== 'Escape') return;
+    event.preventDefault?.();
+    closeDialog();
+  };
+
+  const openDialog = () => {
+    const preview = readCurrentSetupQuickDeckPreview();
+    if (!preview) return false;
+    title.textContent = `デッキ${preview.selectedDeckNumber}を確認`;
+    summary.textContent = `メイン ${preview.deck.mainCount}枚・EX ${preview.deck.exCount}枚`;
+    content.replaceChildren(renderSection('メイン', preview.deck.main), renderSection('EX', preview.deck.ex));
+    dialog.hidden = false;
+    opened = true;
+    document.addEventListener?.('keydown', onKeydown);
+    close.focus?.();
+    return true;
+  };
+
+  trigger.addEventListener('click', openDialog);
+  close.addEventListener('click', () => closeDialog());
+  dialog.addEventListener('click', (event) => {
+    if (event?.target === dialog) closeDialog();
+  });
+  edit.addEventListener('click', () => {
+    const api = globalThis.__GAMEROAD_TEST__;
+    if (typeof api?.show !== 'function') return;
+    closeDialog({ restoreFocus: false });
+    api.show('cards');
+  });
   return true;
+}
+
+function ensureSharedShellPresentation() {
+  if (typeof document === 'undefined' || !document.head) return false;
+  let inserted = false;
+  if (!document.getElementById(SETUP_STAGING_STYLE_ID)) {
+    const style = document.createElement('style');
+    style.id = SETUP_STAGING_STYLE_ID;
+    style.textContent = SETUP_STAGING_CSS;
+    document.head.append(style);
+    inserted = true;
+  }
+  ensureSetupQuickDeckConsumer();
+  return inserted;
 }
 
 function ensureUpdateDetailsStyle() {

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARD-TRANSFER-SPRITE-R1-20260921T0241-CODEX",
+  "taskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "workUnitKey": "CARDS_DECK_TRANSFER_SPRITE_ASSET_R1",
+  "acquireKey": "CARD-TRANSFER-SPRITE-R1-20260921T0241-CODEX",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "UI-PRESENTATION-FX-QUALITY-001/CARDS_DECK_TRANSFER_SPRITE_ASSET_R1/PREDICTED_ASSET_ONLY",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "local-generated-sprite-alpha-and-four-cell-check-20260921T0241",
+  "proceedToken": "PROCEED|CARD-TRANSFER-SPRITE-R1-20260921T0241-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|20260921T0241",
+  "authorizationBaseSha": "956021120af6905592e6552cbd0d5c9b8f8178ef",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "leaseWorkUnitKey": "CARDS_DECK_TRANSFER_SPRITE_ASSET_R1",
+  "leaseAcquireKey": "CARD-TRANSFER-SPRITE-R1-20260921T0241-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 02:41 JST",
+  "leaseUntilJst": "2026-09-21 03:41 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A12:L12",
+  "leaseExactMutableResources": "assets/visual/effects/card-transfer-burst-sprite-v1.png; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback",
+  "scope": [
+    "assets/visual/effects/card-transfer-burst-sprite-v1.png"
+  ],
+  "leaseScope": [
+    "assets/visual/effects/card-transfer-burst-sprite-v1.png"
+  ],
+  "solutionSignature": "transparent four-frame card-transfer VFX sprite sheet for the existing light-trail consumer",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "UI-PRESENTATION-FX-QUALITY-001/CARDS_DECK_TRANSFER_SPRITE_ASSET_R1/REUSE_CHECK",
+  "solutionSearchEvidence": [
+    "actual:assets/visual/battle-power-energy.jpg is the only existing formal battle-energy bitmap",
+    "consumer:browser/cards-deck-presentation-core.mjs currently has no transparent animation-sprite consumer",
+    "inventory:assets/visual contains no existing four-frame transparent card-transfer sprite"
+  ],
+  "buildResidualReason": "The existing formal aura is a single opaque JPG and cannot supply same-origin transparent animation frames. A new generated sprite is the minimal missing asset; consumer wiring is intentionally deferred to the current card-transfer owner boundary.",
+  "sourceGeneratedPath": "/workspace/scratch/4e0decd8fa4f/generated_images/exec-48533e77-2acb-4dc4-8161-5b1f591567d2.png",
+  "runtimeAssetPath": "assets/visual/effects/card-transfer-burst-sprite-v1.png",
+  "deterministicProcessing": "Downscaled 50% to 1086x362 with Lanczos and stripped generator metadata; RGBA pixels/alpha and frame order remain the production asset payload.",
+  "intendedMutation": "Add one generated RGBA four-frame card-transfer VFX sprite sheet as a versioned formal asset. Do not modify the current card transfer code owner or claim runtime integration in this work unit.",
+  "acceptance": [
+    "Production asset is a deterministic 50% runtime derivative of the actual generated file at the exact asset path",
+    "PNG has true alpha and four same-origin frame cells",
+    "No opaque matte, card art, text, logo, or watermark",
+    "PR and required checks/readback are verified",
+    "Runtime consumer integration remains explicitly pending until the existing card transfer owner resolves"
+  ],
+  "rollback": "Close the unmerged asset-only PR or revert its exact commit; leave the generated preview original intact.",
+  "createdAtJst": "2026-09-21 02:42 JST"
+}

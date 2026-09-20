@@ -201,7 +201,7 @@ test('JANKEN_FOCUS exposes only the three janken choices; target, column, and Sh
   const liveInputStack = createLiveStack();
   const { runtime } = mount({ liveInputStack });
   const html = runtime.host.innerHTML;
-  assert.equal((html.match(/class="grJankenFocusChoice/g) ?? []).length, 3);
+  assert.equal((html.match(/data-gr-janken-focus-action="focus"/g) ?? []).length, 3);
   assert.doesNotMatch(html, /grJankenTargetRail/);
   assert.doesNotMatch(html, /grJankenTargetChip/);
   assert.doesNotMatch(html, /ロックオン対象切替/);

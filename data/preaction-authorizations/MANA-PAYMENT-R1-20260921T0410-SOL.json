@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "MANA-PAYMENT-R1-20260921T0410-SOL",
+  "taskId": "JANKEN-MANA-LIVE-INTEGRATION-001",
+  "workUnitKey": "BATTLE_MANA_PAYMENT_ENFORCEMENT_R1",
+  "acquireKey": "MANA-PAYMENT-R1-20260921T0410-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_DIRECT_20260921_MANA_REQUIRED_PLUS_CURRENT_CANON_20260912",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1965_DIFF_PREACTION_ORDER_FAIL_ONLY_PRODUCT_TESTS_NOT_RUN",
+  "proceedToken": "PROCEED|MANA-PAYMENT-R1-20260921T0410-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|mana-payment|existing-boundary-adapt|active-lease",
+  "authorizationBaseSha": "2f7af383d9bf3dd2b9007e5cce852fee10cf2611",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "JANKEN-MANA-LIVE-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_MANA_PAYMENT_ENFORCEMENT_R1",
+  "leaseAcquireKey": "MANA-PAYMENT-R1-20260921T0410-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 04:10 JST",
+  "leaseUntilJst": "2026-09-21 05:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A18:L18",
+  "leaseExactMutableResources": "browser/battle-formal-resource-payment-boundary.mjs; tests/battle-formal-resource-payment-boundary.test.mjs; own fresh branch/PR/check/merge/readback; browser/GAMEROAD.html READ_ONLY active Battle owner",
+  "solutionSignature": "BATTLE_FORMAL_MANA_ONLY_PAYMENT_EXISTING_BOUNDARY_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_PR1712_FORMAL_PAYMENT_BOUNDARY_AND_CURRENT_HTML_READBACK",
+  "solutionSearchEvidence": [
+    "Current formal boundary already owns generic Road/Battle payment projection and is the correct reuse target.",
+    "Current canon states ordinary Road generic Mana cost is 0 and ordinary Battle submission pays Mana equal to the used Battle card number.",
+    "Current canon states Honey is not a direct payment substitute for Mana.",
+    "Current browser actual does not consume generic Battle Mana at submission; this work unit first corrects the reusable payment boundary while browser/GAMEROAD.html remains read-only under another active owner."
+  ],
+  "scope": [
+    "browser/battle-formal-resource-payment-boundary.mjs",
+    "tests/battle-formal-resource-payment-boundary.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-formal-resource-payment-boundary.mjs",
+    "tests/battle-formal-resource-payment-boundary.test.mjs"
+  ]
+}

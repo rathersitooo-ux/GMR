@@ -410,7 +410,7 @@ test('press feedback never delays the screen swap or the next actionable surface
   assert.deepEqual(runtime.getPresentationState().activeRevisions, []);
 });
 
-test('reduced-motion makes screen presentation effect-free while low-perf uses opacity-only timing', async () => {
+test('reduced-motion and low-perf both keep an opacity-only state-change cue', async () => {
   const reducedDocument = fakeMotionDocument();
   let reducedScreen = 'home';
   const reducedRuntime = createScreenTransitionRuntimeAdapter({
@@ -420,8 +420,12 @@ test('reduced-motion makes screen presentation effect-free while low-perf uses o
     presentationDriver: createScreenMotionPresentationDriver({document: reducedDocument})
   });
   assert.equal((await reducedRuntime.navigate('cards')).status, 'completed');
-  assert.equal(reducedDocument.surfaces.home.animations.length, 0);
-  assert.equal(reducedDocument.surfaces.cards.animations.length, 0);
+  const reducedExit = reducedDocument.surfaces.home.animations[0];
+  const reducedEnter = reducedDocument.surfaces.cards.animations[0];
+  assert.equal(reducedExit.options.duration, SCREEN_MOTION_PRESENTATION_SPEC.reduced.exitMs);
+  assert.equal(reducedEnter.options.duration, SCREEN_MOTION_PRESENTATION_SPEC.reduced.enterMs);
+  assert.ok(reducedExit.frames.every((frame) => !('transform' in frame)));
+  assert.ok(reducedEnter.frames.every((frame) => !('transform' in frame)));
 
   const lowDocument = fakeMotionDocument();
   let lowScreen = 'home';
@@ -586,7 +590,7 @@ test('reduced-motion and low-perf change effect profile without changing semanti
 
   assert.equal((await runtime.navigate('cards')).status, 'completed');
   assert.deepEqual(phases, ['PREPARE', 'EXIT', 'SWAP', 'ENTER', 'SETTLE']);
-  assert.ok(profiles.every((profile) => profile === MENU_TRANSITION_MOTION_PROFILE.NONE));
+  assert.ok(profiles.every((profile) => profile === MENU_TRANSITION_MOTION_PROFILE.REDUCED));
 
   phases.length = 0;
   profiles.length = 0;
@@ -758,8 +762,10 @@ test('Home route takeover preserves low-perf and reduced-motion spatial suppress
     presentationDriver: createScreenMotionPresentationDriver({document: reduced.documentSource})
   });
   assert.equal((await reducedRuntime.navigate('cards')).status, 'completed');
-  assert.equal(reduced.homeVisual.animations.length, 0);
-  assert.equal(reduced.cards.animations.length, 0);
+  assert.equal(reduced.homeVisual.animations.length, 1);
+  assert.equal(reduced.cards.animations.length, 1);
+  assert.ok(reduced.homeVisual.animations[0].frames.every((frame) => !('transform' in frame)));
+  assert.ok(reduced.cards.animations[0].frames.every((frame) => !('transform' in frame)));
 });
 
 

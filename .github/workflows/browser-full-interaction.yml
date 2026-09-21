@@ -281,8 +281,12 @@ jobs:
             await setupControl.click();
             const setup = page.locator('section[data-screen="setup"]');
             await expect(setup).toBeVisible({ timeout: 10_000 });
-            await setup.locator('[data-content="road_shield"]').click();
-            await setup.locator('[data-mode="2p"]').click();
+            const roadShield = setup.locator('[data-content="road_shield"]:visible').first();
+            await expect(roadShield).toBeVisible();
+            if ((await roadShield.getAttribute('aria-pressed')) !== 'true') await roadShield.click();
+            const twoPlayer = setup.locator('[data-mode="2p"]:visible').first();
+            await expect(twoPlayer).toBeVisible();
+            if ((await twoPlayer.getAttribute('aria-pressed')) !== 'true') await twoPlayer.click();
             const startMatch = setup.locator('#startMatch');
             await expect(startMatch).toBeVisible();
             await expect(startMatch).toBeEnabled();
@@ -290,11 +294,22 @@ jobs:
 
             const battle = page.locator('section[data-screen="battle"]');
             await expect(battle).toBeVisible({ timeout: 10_000 });
+            const publicPartnerRoster = await page.evaluate(() => {
+              const t = window.__GAMEROAD_TEST__;
+              const profiles = t?.partnerRoles?.()?.profiles || t?.state?.partnerProfiles || {};
+              return Object.keys(profiles || {});
+            });
+            console.log('SAASUNA_PUBLIC_RUNTIME_ROSTER=' + JSON.stringify(publicPartnerRoster));
+            expect(
+              publicPartnerRoster,
+              'public runtime partner roster must expose partner.saasuna before Advice motion can be accepted',
+            ).toContain('partner.saasuna');
             const roleName = battle.locator('[data-role="advice-partner-name"]');
-            const switcher = battle.locator('.partnerAdvicePartnerSwitch');
-            for (let i = 0; i < 6; i += 1) {
+            const switcher = battle.locator('.partnerAdvicePartnerSwitch:visible').first();
+            for (let i = 0; i < publicPartnerRoster.length + 1; i += 1) {
               if ((await roleName.textContent())?.includes('サースナー')) break;
-              if (await switcher.isVisible()) await switcher.click();
+              await expect(switcher).toBeVisible();
+              await switcher.click();
             }
             await expect(roleName).toContainText('サースナー');
             return battle;

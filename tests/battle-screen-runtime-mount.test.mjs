@@ -580,6 +580,7 @@ const attack2 = createBattleScreenModel({
     ...attackPlan,
     eventId: 'attack-2',
     transition: 'IMPACT_CARRY_RIGHT',
+    groupTargets: ['P3'],
     publicData: { sourceId: 'P1', targetIds: ['P3'] }
   },
   persistentAfterstate: [],

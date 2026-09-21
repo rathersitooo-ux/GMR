@@ -9,6 +9,12 @@ import {
   createSaasunaBattleMotionController,
   SAASUNA_BATTLE_MOTION_RUNTIME
 } from './saasuna-battle-motion-core.mjs';
+import {
+  BATTLE_CINEMATIC_CAUSAL_TIMELINE,
+  clearBattleCinematicCausalTimeline,
+  createBattleCinematicCausalTimeline,
+  scheduleBattleCinematicCausalTimeline
+} from './battle-cinematic-causal-timeline-core.mjs';
 
 const RUNTIME_SCHEMA = 'gameroad.battle-screen-runtime-mount.v1';
 const STYLE_ID = 'gameroad-battle-screen-runtime-r1-style';
@@ -152,12 +158,11 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicEnvironmentLight{position:absolute;inset:0;background:radial-gradient(circle at 50% 48%,rgba(225,249,255,.24),rgba(125,208,212,.08) 27%,transparent 58%),linear-gradient(90deg,rgba(97,175,170,.05),transparent 28%,transparent 72%,rgba(151,188,214,.05));mix-blend-mode:screen;opacity:.34}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_ENV_ATTR}]::before{content:"";position:absolute;z-index:4;left:-6%;right:-6%;bottom:6%;height:28%;background:linear-gradient(180deg,transparent,rgba(191,225,213,.08) 42%,rgba(214,239,232,.14));filter:blur(10px);opacity:.68}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_ENV_ATTR}]::after{content:"";position:absolute;z-index:5;inset:0;background:radial-gradient(ellipse at 50% 48%,transparent 38%,rgba(1,5,7,.25) 72%,rgba(0,1,2,.64) 100%)}
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="attack"] .grBattleCinematicEnvironmentLight,
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="ability"] .grBattleCinematicEnvironmentLight{animation:grBattleCinematicEnvironmentImpact 760ms cubic-bezier(.18,.76,.2,1) both}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-causal-phase="impact"] .grBattleCinematicEnvironmentLight{animation:grBattleCinematicEnvironmentImpact 90ms cubic-bezier(.18,.76,.2,1) both}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] .grBattleCinematicEnvironmentDistant,
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] .grBattleCinematicEnvironmentLight{animation:none!important}
 @keyframes grBattleCinematicEnvironmentDrift{0%{transform:scale(1.035) translate3d(-.35%,0,0)}100%{transform:scale(1.055) translate3d(.35%,-.45%,0)}}
-@keyframes grBattleCinematicEnvironmentImpact{0%,48%{opacity:.28}60%{opacity:.82}67%{opacity:.46}100%{opacity:.32}}
+@keyframes grBattleCinematicEnvironmentImpact{0%{opacity:.34}28%{opacity:.96}58%{opacity:.62}100%{opacity:.36}}
 @media(max-width:540px) and (orientation:portrait){[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicEnvironmentDistant{inset:-2% -18%;background-position:center 54%}[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicEnvironmentGround{left:-22%;right:-22%;bottom:-10%;height:42%;transform:perspective(620px) rotateX(61deg) scale(1.24)}}
 @media(max-height:420px) and (orientation:landscape){[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicEnvironmentDistant{inset:-10% -3%;background-position:center 63%}[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicEnvironmentGround{bottom:-34%;height:62%}}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleScreenTop,
@@ -205,31 +210,38 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelCharacterHost>*{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelCharacterHost .grtc-image{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;object-position:50% 100%!important}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFx{position:relative;grid-column:2;align-self:center;justify-self:stretch;height:clamp(72px,18vh,150px);pointer-events:none;overflow:visible}
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFx::before{content:"";position:absolute;left:-18%;top:50%;width:clamp(24px,4.8vw,66px);aspect-ratio:1.7;border:2px solid rgba(226,248,255,.72);border-radius:50%;background:radial-gradient(ellipse at 35% 48%,rgba(255,255,255,.82),rgba(173,226,239,.28) 42%,transparent 70%);box-shadow:0 0 18px rgba(185,236,249,.52),inset -8px 0 14px rgba(45,129,158,.32);transform:translateY(-50%) scaleX(.72);opacity:0;animation:grBattleCinematicCompressedShot 620ms cubic-bezier(.18,.78,.2,1) both}
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFx::after{content:"";position:absolute;right:-9%;top:50%;width:clamp(22px,4vw,54px);height:2px;background:linear-gradient(90deg,transparent,rgba(239,252,255,.96),transparent);box-shadow:0 -10px 0 -1px rgba(217,246,255,.56),0 10px 0 -1px rgba(217,246,255,.48);opacity:0;transform:translateY(-50%) rotate(-8deg);animation:grBattleCinematicImpactLine 620ms ease-out both}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFx::before{content:"";position:absolute;left:-18%;top:50%;width:clamp(24px,4.8vw,66px);aspect-ratio:1.7;border:2px solid rgba(226,248,255,.72);border-radius:50%;background:radial-gradient(ellipse at 35% 48%,rgba(255,255,255,.82),rgba(173,226,239,.28) 42%,transparent 70%);box-shadow:0 0 18px rgba(185,236,249,.52),inset -8px 0 14px rgba(45,129,158,.32);transform:translateY(-50%) scaleX(.72);opacity:0}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFx::after{content:"";position:absolute;right:-9%;top:50%;width:clamp(22px,4vw,54px);height:2px;background:linear-gradient(90deg,transparent,rgba(239,252,255,.96),transparent);box-shadow:0 -10px 0 -1px rgba(217,246,255,.56),0 10px 0 -1px rgba(217,246,255,.48);opacity:0;transform:translateY(-50%) rotate(-8deg)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}][data-causal-phase="release"] .grBattleCinematicDuelFx::before{animation:grBattleCinematicCompressedShot 190ms cubic-bezier(.18,.78,.2,1) both}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}][data-causal-phase="impact"] .grBattleCinematicDuelFx::after{animation:grBattleCinematicImpactLine 90ms ease-out both}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] .grBattleCinematicDuelFx::before,
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] .grBattleCinematicDuelFx::after{animation:none!important;opacity:.38!important}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelMeta{min-width:0;max-width:100%;padding:5px 10px;border:1px solid rgba(241,247,239,.28);border-radius:999px;background:rgba(3,10,15,.72);text-align:center;text-shadow:0 2px 8px rgba(0,0,0,.8)}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelMeta small{display:block;font-size:clamp(9px,.85vw,12px);font-weight:900;letter-spacing:.12em;opacity:.7}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelMeta b{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(12px,1.2vw,17px)}
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="attack"] .grBattleCinematicDuelSide[data-role="source"] .grBattleCinematicDuelFigure,
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="ability"] .grBattleCinematicDuelSide[data-role="source"] .grBattleCinematicDuelFigure{animation:grBattleCinematicDuelStrike 620ms cubic-bezier(.18,.78,.2,1) both}
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="attack"] .grBattleCinematicDuelSide[data-role="target"] .grBattleCinematicDuelFigure,
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="ability"] .grBattleCinematicDuelSide[data-role="target"] .grBattleCinematicDuelFigure{animation:grBattleCinematicDuelHit 620ms cubic-bezier(.2,.74,.22,1) both}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}][data-causal-phase="anticipation"] .grBattleCinematicDuelSide[data-role="source"] .grBattleCinematicDuelFigure{animation:grBattleCinematicDuelAnticipation 240ms cubic-bezier(.28,.64,.3,1) both}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}][data-causal-phase="release"] .grBattleCinematicDuelSide[data-role="source"] .grBattleCinematicDuelFigure,
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}][data-causal-phase="impact"] .grBattleCinematicDuelSide[data-role="source"] .grBattleCinematicDuelFigure,
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}][data-causal-phase="reaction"] .grBattleCinematicDuelSide[data-role="source"] .grBattleCinematicDuelFigure{animation:grBattleCinematicDuelRelease 190ms cubic-bezier(.12,.82,.18,1) both}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}][data-causal-phase="reaction"] .grBattleCinematicDuelSide[data-role="target"] .grBattleCinematicDuelFigure{animation:grBattleCinematicDuelReaction 180ms cubic-bezier(.2,.74,.22,1) both}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}][data-causal-phase="return"] .grBattleCinematicDuelSide[data-role="source"] .grBattleCinematicDuelFigure{animation:grBattleCinematicDuelReturnSource 220ms cubic-bezier(.2,.72,.24,1) both}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}][data-causal-phase="return"] .grBattleCinematicDuelSide[data-role="target"] .grBattleCinematicDuelFigure{animation:grBattleCinematicDuelReturnTarget 220ms cubic-bezier(.2,.72,.24,1) both}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] .grBattleCinematicDuelFigure{animation:none!important;transform:none!important}
 @keyframes grBattleCinematicDuelEnter{0%{opacity:.2;transform:translateY(4%) scale(.96)}100%{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes grBattleCinematicDuelStrike{0%{transform:translateX(-10vw) scale(.92);opacity:.25}34%{transform:translateX(0) scale(1);opacity:1}58%{transform:translateX(14vw) rotate(3deg) scale(1.08);opacity:1}100%{transform:translateX(0) rotate(0) scale(1);opacity:.96}}
-@keyframes grBattleCinematicDuelHit{0%,48%{transform:translateX(8vw) scale(.96);opacity:.35}62%{transform:translateX(-2.4vw) rotate(-4deg) scale(.98);opacity:1;filter:brightness(1.35)}100%{transform:translateX(0) rotate(0) scale(1);opacity:.96;filter:none}}
-@keyframes grBattleCinematicCompressedShot{0%,24%{left:-18%;opacity:0;transform:translateY(-50%) scale(.45,.72)}34%{opacity:.92}68%{left:92%;opacity:1;transform:translateY(-50%) scale(1.08,.72)}78%,100%{left:108%;opacity:0;transform:translateY(-50%) scale(.62,.46)}}
-@keyframes grBattleCinematicImpactLine{0%,60%{opacity:0;transform:translateY(-50%) scaleX(.25) rotate(-8deg)}69%{opacity:1;transform:translateY(-50%) scaleX(1.35) rotate(-8deg)}82%,100%{opacity:0;transform:translateY(-50%) scaleX(.55) rotate(-8deg)}}
+@keyframes grBattleCinematicDuelAnticipation{0%{transform:translateX(0) translateY(0) scale(1)}52%{transform:translateX(-1.7vw) translateY(1.2%) rotate(-1.2deg) scale(.985)}100%{transform:translateX(-2.2vw) translateY(.6%) rotate(-1.6deg) scale(.98)}}
+@keyframes grBattleCinematicDuelRelease{0%{transform:translateX(-2.2vw) translateY(.6%) rotate(-1.6deg) scale(.98);opacity:.98}26%{transform:translateX(1.2vw) translateY(-.5%) rotate(.5deg) scale(1.01);opacity:1}100%{transform:translateX(12vw) translateY(-1.6%) rotate(2.6deg) scale(1.07);opacity:1}}
+@keyframes grBattleCinematicDuelReaction{0%{transform:translateX(0) rotate(0) scale(1);filter:none}18%{transform:translateX(-2.8vw) rotate(-4.5deg) scale(.985);filter:brightness(1.42)}58%{transform:translateX(.8vw) rotate(1.4deg) scale(.995);filter:brightness(1.12)}100%{transform:translateX(-.7vw) rotate(-.8deg) scale(.997);filter:none}}
+@keyframes grBattleCinematicDuelReturnSource{0%{transform:translateX(12vw) translateY(-1.6%) rotate(2.6deg) scale(1.07)}100%{transform:translateX(0) translateY(0) rotate(0) scale(1)}}
+@keyframes grBattleCinematicDuelReturnTarget{0%{transform:translateX(-.7vw) rotate(-.8deg) scale(.997)}100%{transform:translateX(0) rotate(0) scale(1)}}
+@keyframes grBattleCinematicCompressedShot{0%{left:-18%;opacity:0;transform:translateY(-50%) scale(.48,.72)}18%{opacity:.92}78%{left:92%;opacity:1;transform:translateY(-50%) scale(1.08,.72)}100%{left:108%;opacity:0;transform:translateY(-50%) scale(.62,.46)}}
+@keyframes grBattleCinematicImpactLine{0%{opacity:0;transform:translateY(-50%) scaleX(.25) rotate(-8deg)}24%{opacity:1;transform:translateY(-50%) scaleX(1.35) rotate(-8deg)}100%{opacity:0;transform:translateY(-50%) scaleX(.58) rotate(-8deg)}}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="reveal"] [${LANE_ATTR}]{animation:grBattleCinematicReveal 520ms cubic-bezier(.16,.78,.24,1) both}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="reveal"] [${LANE_ATTR}]:nth-child(2){animation-delay:60ms}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="reveal"] [${LANE_ATTR}]:nth-child(3){animation-delay:120ms}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="reveal"] [${LANE_ATTR}]:nth-child(4){animation-delay:180ms}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="attack"] [${LANE_ATTR}][data-role="source"],
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="ability"] [${LANE_ATTR}][data-role="source"]{transform:translate3d(0,-2%,170px) scale(1.22);opacity:1;filter:brightness(1.14);z-index:4}
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="attack"] [${LANE_ATTR}][data-role="source"] .grBattleLanePublicCard,
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="ability"] [${LANE_ATTR}][data-role="source"] .grBattleLanePublicCard{animation:grBattleCinematicStrike 460ms cubic-bezier(.18,.78,.24,1) both}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-causal-phase="release"] [${LANE_ATTR}][data-role="source"] .grBattleLanePublicCard{animation:grBattleCinematicStrike 190ms cubic-bezier(.18,.78,.24,1) both}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="attack"] [${LANE_ATTR}][data-role="target"],
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="ability"] [${LANE_ATTR}][data-role="target"]{transform:translate3d(0,3%,18px) scale(.96);opacity:.9;filter:brightness(.88)}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="compare4"] [${LANE_ATTR}]{opacity:.97;transform:translateZ(54px)}
@@ -663,6 +675,7 @@ function disposeCinematicDuelRuntime(global, scene) {
       try { global.clearTimeout(timer); } catch {}
     }
   }
+  clearBattleCinematicCausalTimeline(active.timelineNodes ?? [scene]);
   for (const controller of active.motionControllers ?? []) {
     try { controller.destroy?.(); } catch {}
   }
@@ -781,6 +794,26 @@ function createCinematicDuelFx(document) {
   return fx;
 }
 
+function applyCinematicTimelinePhaseToCharacters(global, active, entry) {
+  if (!active || !entry) return;
+  active.timelinePhase = entry.phase;
+  const runtime = global?.GameRoadThreeCharRuntime;
+  if (typeof runtime?.setState !== 'function') return;
+  for (const binding of active.characterBindings ?? []) {
+    const desired = binding.role === 'source' && (entry.phase === 'release' || entry.phase === 'impact')
+      ? 'attack'
+      : 'idle';
+    if (binding.state === desired) continue;
+    try {
+      runtime.setState(binding.mount, desired, {
+        facing: binding.facing,
+        performance: binding.performance
+      });
+      binding.state = desired;
+    } catch {}
+  }
+}
+
 function mountCinematicDuelCharacter(global, scene, view, characterId, role, motion, motionContext = {}) {
   const runtime = global?.GameRoadThreeCharRuntime;
   if (!characterId || typeof runtime?.mount !== 'function') return false;
@@ -838,16 +871,22 @@ function mountCinematicDuelCharacter(global, scene, view, characterId, role, mot
     }
 
     if (typeof runtime.setState !== 'function') return;
-    const performance = motion === 'static_only' ? 'low' : 'normal';
-    const facing = role === 'source' ? 'right' : 'left';
-    try { runtime.setState(mount, role === 'source' && motion !== 'static_only' ? 'attack' : 'idle', { facing, performance }); } catch {}
-
-    if (role === 'source' && motion !== 'static_only' && typeof global?.setTimeout === 'function') {
-      const timer = global.setTimeout(() => {
-        if (cinematicDuelRuntimeState.get(scene) !== active) return;
-        try { runtime.setState(mount, 'idle', { facing, performance }); } catch {}
-      }, 560);
-      active.timers.push(timer);
+    const binding = {
+      mount,
+      role,
+      facing: role === 'source' ? 'right' : 'left',
+      performance: motion === 'static_only' ? 'low' : 'normal',
+      state: 'idle'
+    };
+    active.characterBindings.push(binding);
+    try {
+      runtime.setState(mount, 'idle', {
+        facing: binding.facing,
+        performance: binding.performance
+      });
+    } catch {}
+    if (active.timelinePhase) {
+      applyCinematicTimelinePhaseToCharacters(global, active, { phase: active.timelinePhase });
     }
   }).catch(() => {});
   return true;
@@ -872,6 +911,10 @@ function writeCinematicDuel(global, document, scene, model, context = {}) {
   setData(scene, 'transition', null);
   setData(scene, 'motion', null);
   setData(scene, 'saasunaMotionRuntime', null);
+  setData(scene, 'causalPhase', null);
+  setData(scene, 'causalTimeline', null);
+  setData(scene, 'causalTimelineMode', null);
+  setData(scene, 'causalTimelineDurationMs', null);
   const phase = model?.phase;
   const enabled = model?.battlePhasePresentationMode === 'FULLSCREEN_ANIMATION'
     && (phase === 'attack' || phase === 'ability');
@@ -896,7 +939,14 @@ function writeCinematicDuel(global, document, scene, model, context = {}) {
   const retainedParticipants = currentPair.filter(id => previousSet.has(id));
   const incomingParticipants = currentPair.filter(id => !previousSet.has(id));
   const outgoingParticipants = previousPair.filter(id => !currentSet.has(id));
-  const active = { mounts: [], timers: [], motionControllers: [] };
+  const active = {
+    mounts: [],
+    timers: [],
+    motionControllers: [],
+    characterBindings: [],
+    timelineNodes: [],
+    timelinePhase: null
+  };
   cinematicDuelRuntimeState.set(scene, active);
   cinematicDuelPairState.set(scene, currentPair);
   const sourceView = createCinematicDuelSide(document, 'source', source);
@@ -919,6 +969,31 @@ function writeCinematicDuel(global, document, scene, model, context = {}) {
     phase,
     transition: model.transition,
     motionState: motionByParticipant[target.id] ?? null
+  });
+
+  const causalTimeline = createBattleCinematicCausalTimeline({
+    actionPhase: phase,
+    motion: model.motion
+  });
+  active.timelineNodes = [
+    scene,
+    context?.cinematicEnvironment ?? null,
+    context?.cinematicShell ?? null
+  ].filter(Boolean);
+  setData(scene, 'causalTimeline', causalTimeline.schema);
+  setData(scene, 'causalTimelineMode', causalTimeline.mode);
+  setData(scene, 'causalTimelineDurationMs', causalTimeline.totalDurationMs);
+  void Promise.resolve().then(() => {
+    if (cinematicDuelRuntimeState.get(scene) !== active) return;
+    const scheduled = scheduleBattleCinematicCausalTimeline({
+      clock: global,
+      nodes: active.timelineNodes,
+      timeline: causalTimeline,
+      onPhase(entry) {
+        applyCinematicTimelinePhaseToCharacters(global, active, entry);
+      }
+    });
+    active.timers.push(...scheduled.timers);
   });
 
   scene.hidden = false;
@@ -1622,7 +1697,9 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     writeCinematicDuel(global, document, cinematicDuel, cinematicBattle ? model : null, {
       viewerParticipantId: viewer.resolved,
       cinematicCharacterByParticipant: presentationContext?.cinematicCharacterByParticipant ?? defaultCinematicCharacterByParticipant,
-      cinematicMotionByParticipant: presentationContext?.cinematicMotionByParticipant ?? {}
+      cinematicMotionByParticipant: presentationContext?.cinematicMotionByParticipant ?? {},
+      cinematicEnvironment: cinematicEnvironment.root,
+      cinematicShell: shell
     });
     const finalStateSlots = model?.causalReturn?.processing?.finalSlots
       ?? (model?.phase === 'compare4' ? model?.actionOrderChain?.finalSlots : null)
@@ -1766,6 +1843,10 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   cinematicDuelReaction: 'EXISTING_CHARACTER_RUNTIME_PLUS_PROVISIONAL_SAASUNA_STATEFUL_REACTION_NO_GAMEPLAY_STATE',
   cinematicDuelVfx: 'PROVISIONAL_ICE_WIND_IMPACT_LAYERS_PLUS_EXISTING_NEUTRAL_SHOT_NO_FORMAL_ART',
   cinematicDuelHandoff: 'ACCEPTED_CONVEYOR_TRANSITION_PLUS_CONSECUTIVE_ACCEPTED_PAIR_CONTINUITY_NO_ORDER_INFERENCE',
+  cinematicDuelTimeline: BATTLE_CINEMATIC_CAUSAL_TIMELINE.schema,
+  cinematicDuelTimelinePhases: BATTLE_CINEMATIC_CAUSAL_TIMELINE.phaseOrder,
+  cinematicDuelImpactSyncPoint: BATTLE_CINEMATIC_CAUSAL_TIMELINE.impactSyncPoint,
+  cinematicDuelExactReferenceTimingAuthority: BATTLE_CINEMATIC_CAUSAL_TIMELINE.exactReferenceTimingAuthority,
   saasunaBattleMotion: 'PRESENTATION_ONLY_9_KEYFRAME_SHEET_PLUS_CSS_TIMELINE_NO_GAMEPLAY_AUTHORITY',
   saasunaBattleMotionStates: SAASUNA_BATTLE_MOTION_RUNTIME.states,
   saasunaBattleMotionEffects: SAASUNA_BATTLE_MOTION_RUNTIME.effects,

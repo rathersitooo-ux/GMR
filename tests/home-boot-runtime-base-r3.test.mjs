@@ -86,3 +86,14 @@ test('R4B rank match observer refresh is idempotent for observed DOM writes', ()
   assert.equal(base.includes("if (!active) {\n    surface.hidden = true;"), false);
   assert.equal(base.includes("if (runtimeNode) {\n    if (!runtimeNode.dataset.rankPreviousHidden) runtimeNode.dataset.rankPreviousHidden = runtimeNode.hidden ? 'true' : 'false';\n    runtimeNode.hidden = true;"), false);
 });
+
+
+test('R5 rank match refresh observes only screen roots and keeps body bootstrap child-only', () => {
+  const base = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
+  assert.ok(base.includes('observerSignature'));
+  assert.ok(base.includes('rankMatchBindObserver'));
+  assert.ok(base.includes('observer.observe(target, {'));
+  assert.ok(base.includes("attributeFilter: ['class', 'hidden']"));
+  assert.ok(base.includes('observer.observe(doc.body, { childList: true, subtree: true });'));
+  assert.equal(base.includes("observer.observe(doc.body, { childList: true, subtree: true, attributes: true"), false);
+});

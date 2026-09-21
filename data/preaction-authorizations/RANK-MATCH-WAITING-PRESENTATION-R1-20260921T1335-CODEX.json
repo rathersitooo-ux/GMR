@@ -1,30 +1,42 @@
 {
-  "schema": "gameroad.pre-action-authorization.v1",
-  "acquireKey": "RANK-MATCH-WAITING-PRESENTATION-R1-20260921T1321-CODEX",
-  "checkpoint": "fresh-main-reconciliation-r2",
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RANK-MATCH-WAITING-PRESENTATION-R1-20260921T1335-CODEX",
   "taskId": "UI-PRESENTATION-FX-QUALITY-001",
   "workUnitKey": "RANK_MATCH_FLOW_AND_PARTNER_PICKER_R1",
-  "owner": "ChatGPT / GPT-5.6 Codex / current user まかせた",
-  "baseCommit": "251ff1569448550a334be2a27dc75aa9ce3a0b50",
-  "targetBlobs": {
-    "browser/home-boot-runtime-base-r3.mjs": "1cd3edb354cd1797a03f3d957d9950b2d350a6a3",
-    "tests/home-boot-runtime-base-r3.test.mjs": "e688bfc8cd713d37841f53072ecfa4d0f4084c26"
-  },
-  "mutableResources": [
+  "acquireKey": "RANK-MATCH-WAITING-PRESENTATION-R1-20260921T1321-CODEX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_AND_EXACT_HOME_RUNTIME_SCOPE_20260921T1338JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "HOME_BATTLE_RANK_FLOW_PUBLIC_AUDIT_AND_GENERATED_TEXTURE_PREVIEW",
+  "proceedToken": "PROCEED|RANK-MATCH-WAITING-PRESENTATION-R1-20260921T1335-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|rank-match-battle-child|home-runtime-only",
+  "authorizationBaseSha": "251ff1569448550a334be2a27dc75aa9ce3a0b50",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "leaseWorkUnitKey": "RANK_MATCH_FLOW_AND_PARTNER_PICKER_R1",
+  "leaseAcquireKey": "RANK-MATCH-WAITING-PRESENTATION-R1-20260921T1321-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 13:38 JST",
+  "leaseUntilJst": "2026-09-21 13:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A28:L28",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch codex/rank-match-waiting-presentation-r2; browser/home-boot-runtime-base-r3.mjs; tests/home-boot-runtime-base-r3.test.mjs; own transient data/preaction-authorizations/RANK-MATCH-WAITING-PRESENTATION-R1-20260921T1335-CODEX.json only. Existing browser/GAMEROAD.html, deploy/cloudflare/scripts/build.mjs, browser/partner-saasuna-bustup-visuals.mjs, gameplay/rules/save/network READ_ONLY.",
+  "solutionSignature": "RANK_MATCH_BATTLE_CHILD_EXISTING_HOME_RUNTIME_COMPOSED_WAITING_SURFACE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_HOME_BOOT_MOUNT_AND_CANONICAL_SAASUNA_BUSTUP_REUSE_20260921T1338JST",
+  "solutionSearchEvidence": [
+    "Fresh public audit reproduced Home's non-button rank text/crest and Battle's existing setup screen without a rank choice.",
+    "Existing Home runtime already owns legacy Home-node removal and is the current consumer for the Home shell; the patch extends that consumer instead of adding a second Home navigation system.",
+    "Existing canonical Saasuna bust-up assets and partner roster authorities are reused; playerCharacterId remains separate and no ranked queue/backend provider is invented.",
+    "Generated waiting background, chrome, buttons, picker and VFX were produced from the supplied references and are consumed as presentation textures."
+  ],
+  "scope": [
     "browser/home-boot-runtime-base-r3.mjs",
     "tests/home-boot-runtime-base-r3.test.mjs"
   ],
-  "readonlyResources": [
-    "browser/GAMEROAD.html",
-    "deploy/cloudflare/scripts/build.mjs",
-    "browser/partner-saasuna-bustup-visuals.mjs",
-    "gameplay/rules/save/network"
-  ],
-  "intent": "Add Battle-child rank selection and truthful presentation-only waiting surface. Remove Home rank producer through existing home runtime. Use generated textures and canonical Saasuna bust-up; no ranked backend invention.",
-  "generatedAssets": [
-    "generated_images/exec-1a6db4da-c745-402c-b9fd-79fa4b1c4a69.png",
-    "generated_images/exec-450238bd-2ba7-42c1-8fcf-2f42871e2b21.png",
-    "generated_images/exec-8d3ff6b6-b5a0-47fe-87af-db0dba9bb95e.png",
-    "generated_images/exec-ee90b924-c48e-4327-896e-15de27a04b51.png"
+  "leaseScope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs"
   ]
 }

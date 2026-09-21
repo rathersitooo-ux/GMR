@@ -340,6 +340,8 @@ test('Cards findability focus sprite is a live 4x2 asset with distinct selected-
   assert.match(source, /background-size:400% 200%/);
   assert.match(source, /grCardsSelectionSprite 176ms/);
   assert.match(source, /contains\?\.\('selected'\) \|\| node\?\.classList\?\.contains\?\.\('pick'\)/);
+  assert.match(source, /data-cards-selection-low-perf="true"/);
+  assert.match(source, /data-cards-selection-low-perf', profile\.softGlow \? 'false' : 'true'/);
   assert.match(source, /prefers-reduced-motion:reduce/);
 });
 
@@ -1174,4 +1176,3 @@ test('vote safe-dismiss auto-installs before Cards inspector dismiss so the fron
   const inspector = source.indexOf('installCardsInspectorDismissInteractions({ document })');
   assert.ok(vote >= 0 && inspector > vote);
 });
-

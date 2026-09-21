@@ -28,6 +28,7 @@ import {
   ensureSaasunaBattleBustupStyle,
   renderSaasunaBattleBustup,
 } from './partner-saasuna-bustup-visuals.mjs';
+import { createSaasunaMotionController } from './partner-saasuna-motion-core.mjs';
 
 const VERSION_KEYS = Object.freeze(['rulesVersion', 'cardVersion', 'stateVersion']);
 const PARTNER_STRATEGY_RULES = new Set(['left', 'right', 'max', 'min']);
@@ -1285,6 +1286,7 @@ if (battleSurface) {
   delete root.dataset.battleAdviceOverlay;
 }
 const saasunaBustup = ensureSaasunaBattleBustup(doc, battleSurface);
+const saasunaMotion = createSaasunaMotionController({ doc, bustup: saasunaBustup });
 
   let lastReceipt = null;
   let lastCharacterReaction = null;
@@ -1349,6 +1351,11 @@ const saasunaBustup = ensureSaasunaBattleBustup(doc, battleSurface);
       tutorialActive: tutorialStatus.active || tutorialExperienceStatus.active,
       quickRouteId: quickRouteStatus.routeId, adviceActive: adviceSpeechActive,
     });
+    if (bustupPresentation.visible && saasunaMotion) {
+      saasunaMotion.setState({ partnerId: current?.partnerId, visualState: bustupPresentation.state }, { restart: false });
+    } else if (saasunaMotion) {
+      saasunaMotion.clear();
+    }
     root.hidden = !projection.active && !tutorialStatus.available && !tutorialExperienceStatus.active && !reactionActive && !roleControlActive && !idleReadable.active && !quickRoutesAvailable;
     const roleControl = root.querySelector('.partnerAdviceRoleControl');
     if (roleControl) roleControl.hidden = !roleControlActive;

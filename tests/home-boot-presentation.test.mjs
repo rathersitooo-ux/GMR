@@ -8,6 +8,8 @@ import {
   HOME_VIEWPORT_VARIANTS,
   HOME_BORDER_LIGHT_OVERLAY_ASSET,
   HOME_BORDER_LIGHT_OVERLAY_CSS,
+  SETUP_ACTION_STATE_SPRITE_ASSET,
+  SETUP_ACTION_STATE_SPRITE_CSS,
   parsePublishedReleaseCommunications,
   parsePublishedReleaseNotes,
   projectHomeShell,
@@ -296,6 +298,28 @@ test('Home border light overlay reuses the accepted asset and stays presentation
   assert.match(HOME_BORDER_LIGHT_OVERLAY_CSS, /prefers-reduced-motion/);
   assert.match(HOME_BORDER_LIGHT_OVERLAY_CSS, /r10LowPerf/);
   assert.equal(HOME_BORDER_LIGHT_OVERLAY_CSS.includes('z-index:4'), true);
+});
+test('Home setup action sprite maps light states without replacing the real button', () => {
+  assert.deepEqual(SETUP_ACTION_STATE_SPRITE_ASSET, {
+    id: 'setup-action-state-light-sprite-v1',
+    sourcePath: 'assets/visual/effects/setup-action-state-light-sprite-v1.png',
+    runtimePath: '../assets/visual/effects/setup-action-state-light-sprite-v1.png',
+    formal: true,
+    readOnly: true,
+    frameCount: 4,
+    frameLayout: 'horizontal-4-up',
+  });
+  assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /section\[data-screen="setup"\] #startMatch::before/);
+  assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /setup-action-state-light-sprite-v1\.png/);
+  assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /background-size:400% 100%/);
+  assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /background-position:33\.333% 50%/);
+  assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /background-position:66\.667% 50%/);
+  assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /#startMatch:disabled::before\{[^}]*opacity:0/);
+  assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /pointer-events:none/);
+  assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /gameroadSetupActionLightBreath/);
+  assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /prefers-reduced-motion/);
+  assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /r10LowPerf/);
+  assert.equal(SETUP_ACTION_STATE_SPRITE_CSS.includes('GAMEROAD.html'), false);
 });
 test('Home reduced/lowPerf profiles preserve semantic state rather than invent routes', () => {
   const s = state();

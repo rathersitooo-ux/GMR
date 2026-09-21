@@ -66,7 +66,7 @@ export function mountNakiAdviceLiveAdapter(global = globalThis) {
   const observers = [];
   if (typeof global.MutationObserver === 'function') {
     const observer = new global.MutationObserver(() => queueMicrotask(render));
-    observer.observe(battleSurface, { subtree: true, childList: true, characterData: true, attributes: true });
+    observer.observe(battleSurface, { subtree: true, childList: true, characterData: true });
     observers.push(observer);
   }
   const api = Object.freeze({
@@ -104,4 +104,3 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     queueMicrotask(() => scheduleMount(window));
   }
 }
-

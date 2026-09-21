@@ -159,7 +159,8 @@ test('explicit per-card material hooks override DOM hooks without becoming requi
     receiptGlowUrl: '/formal/receipt.webp',
   });
 
-  const plain = capture(source);
+  const { source: plainSource } = fixture();
+  const plain = capture(plainSource);
   assert.deepEqual(plain.assets, {
     heroFrameUrl: null,
     impactSpriteUrl: null,

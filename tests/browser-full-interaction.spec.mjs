@@ -382,9 +382,6 @@ test('RANK-MATCH-R5 reaches waiting, loads generated chrome, and edits only the 
   for (const asset of [
     'waiting-bg.webp',
     'ui-chrome.webp',
-    'partner-picker.webp',
-    'picker-modal.webp',
-    'picker-tile-selected.webp',
     'button-primary.webp',
     'button-secondary.webp',
     'action-ring.webp',
@@ -399,6 +396,14 @@ test('RANK-MATCH-R5 reaches waiting, loads generated chrome, and edits only the 
 
   const picker = page.locator('#gameroad-rank-partner-picker');
   await expect(picker).toBeVisible();
+
+  for (const asset of [
+    'partner-picker.webp',
+    'picker-modal.webp',
+    'picker-tile-selected.webp',
+  ]) {
+    expect(assetStatuses.get(asset), `generated rank asset ${asset} loaded`).toBe(200);
+  }
   const shell = picker.locator('.rankPartnerPickerShell');
   const box = await shell.boundingBox();
   expect(box, 'partner picker shell has layout bounds').not.toBeNull();

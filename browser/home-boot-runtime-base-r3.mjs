@@ -1729,6 +1729,7 @@ const RANK_MATCH_WAITING_SCHEMA = 'gameroad.rank-match-waiting-presentation.v1';
 const rankMatchRuntime = {
   installed: false,
   observer: null,
+  observerSignature: '',
   refreshScheduled: false,
   selectedMode: 'normal',
   waiting: false,
@@ -2151,12 +2152,37 @@ function rankMatchHandleKeydown(event) {
   }
 }
 
+function rankMatchBindObserver(doc) {
+  if (!doc?.body) return;
+  const targets = [
+    doc.querySelector('section[data-screen="setup"]'),
+    doc.querySelector('section[data-screen="battle"]'),
+  ].filter(Boolean);
+  const signature = targets.map((target) => target.dataset.screen || target.id || '').join('|') || 'body-bootstrap';
+  if (rankMatchRuntime.observer && rankMatchRuntime.observerSignature === signature) return;
+  rankMatchRuntime.observer?.disconnect?.();
+  const observer = new MutationObserver(scheduleRankMatchRefresh);
+  if (targets.length === 2) {
+    for (const target of targets) {
+      observer.observe(target, {
+        attributes: true,
+        attributeFilter: ['class', 'hidden'],
+      });
+    }
+  } else {
+    observer.observe(doc.body, { childList: true, subtree: true });
+  }
+  rankMatchRuntime.observer = observer;
+  rankMatchRuntime.observerSignature = signature;
+}
+
 function scheduleRankMatchRefresh() {
   if (rankMatchRuntime.refreshScheduled) return;
   rankMatchRuntime.refreshScheduled = true;
   queueMicrotask(() => {
     rankMatchRuntime.refreshScheduled = false;
     const doc = rankMatchDocument();
+    rankMatchBindObserver(doc);
     ensureRankMatchSetupControls(doc);
     rankMatchSyncBattleVisibility(doc);
   });
@@ -2169,8 +2195,7 @@ function installRankMatchPresentation() {
   ensureRankMatchStyle(doc);
   doc.addEventListener('click', rankMatchHandleClick, true);
   doc.addEventListener('keydown', rankMatchHandleKeydown, true);
-  rankMatchRuntime.observer = new MutationObserver(scheduleRankMatchRefresh);
-  rankMatchRuntime.observer.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'hidden'] });
+  rankMatchBindObserver(doc);
   rankMatchRuntime.installed = true;
   scheduleRankMatchRefresh();
   return true;

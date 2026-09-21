@@ -12,6 +12,7 @@ const deckStorageLiveInstallations = new WeakMap();
 const cardsDeckFindabilityInstallations = new WeakMap();
 const cardsInspectorDismissInstallations = new WeakMap();
 const cardsVoteUiRepairInstallations = new WeakMap();
+const cardsSelectionFeedbackInstallations = new WeakMap();
 const CARDS_FAVORITE_STORAGE_KEY = 'gameroad.cards.favorite.v1';
 const DECK_SWIPE_DISCOVERY_STORAGE_KEY = 'gameroad.cards.deckSwipeDiscovery.v1';
 
@@ -624,6 +625,170 @@ function resolveDeckSwipePrecommitLowPerf(doc) {
   );
 }
 
+export const CARDS_SELECTION_FEEDBACK = Object.freeze({
+  pressCancelPx: 7,
+  pressScale: 0.982,
+  lowPerfPressScale: 0.99,
+  confirmMs: 180,
+  reducedConfirmMs: 120,
+  lowPerfConfirmMs: 140,
+});
+
+export function createCardsSelectionFeedbackProfile({
+  reducedMotion = false,
+  lowPerf = false,
+} = {}) {
+  return Object.freeze({
+    pressScale: reducedMotion
+      ? 1
+      : (lowPerf ? CARDS_SELECTION_FEEDBACK.lowPerfPressScale : CARDS_SELECTION_FEEDBACK.pressScale),
+    pressTranslateY: reducedMotion ? 0 : 1,
+    confirmMs: reducedMotion
+      ? CARDS_SELECTION_FEEDBACK.reducedConfirmMs
+      : (lowPerf ? CARDS_SELECTION_FEEDBACK.lowPerfConfirmMs : CARDS_SELECTION_FEEDBACK.confirmMs),
+    spatialConfirm: !reducedMotion,
+    softGlow: !lowPerf,
+  });
+}
+
+function installCardsSelectionFeedbackStyles(doc) {
+  if (!doc?.createElement) return null;
+  const styleId = 'gameroad-cards-selection-feedback-style';
+  if (doc.getElementById?.(styleId)) return doc.getElementById(styleId);
+  const style = doc.createElement('style');
+  style.id = styleId;
+  style.textContent = `
+.gr-cards-selection-press{translate:0 var(--gr-cards-press-y,1px);scale:var(--gr-cards-press-scale,.982);transition:translate 42ms ease-out,scale 42ms ease-out}
+.gr-cards-selection-confirm-glow{position:fixed;pointer-events:none;box-sizing:border-box;z-index:18;border:1px solid rgba(255,246,210,.96);border-radius:10px;background:radial-gradient(ellipse at 50% 50%,rgba(255,245,210,.13),transparent 68%);box-shadow:0 0 9px rgba(255,232,160,.58),0 0 20px rgba(255,203,95,.24);opacity:0;transform-origin:center center;animation:grCardsSelectionConfirm 180ms cubic-bezier(.2,.78,.24,1) forwards}
+@keyframes grCardsSelectionConfirm{0%{opacity:0;transform:scale(.985)}32%{opacity:.92;transform:scale(1.012)}100%{opacity:0;transform:scale(1.025)}}
+body.low-perf .gr-cards-selection-confirm-glow,html.low-perf .gr-cards-selection-confirm-glow{background:transparent;box-shadow:none;animation-duration:140ms}
+@media(prefers-reduced-motion:reduce){.gr-cards-selection-press{translate:0 0!important;scale:1!important;transition:none!important}.gr-cards-selection-confirm-glow{background:transparent;box-shadow:none;animation:grCardsSelectionConfirmReduced 120ms linear forwards}@keyframes grCardsSelectionConfirmReduced{0%{opacity:0}35%{opacity:.9}100%{opacity:0}}}
+`;
+  (doc.head ?? doc.documentElement)?.appendChild?.(style);
+  return style;
+}
+
+export function installCardsSelectionPressReleaseFeedback({
+  document: doc = globalThis.document,
+  window: win = globalThis.window,
+} = {}) {
+  if (!doc?.addEventListener || !doc?.removeEventListener || !doc?.createElement) {
+    return Object.freeze({ destroy() {} });
+  }
+  const existing = cardsSelectionFeedbackInstallations.get(doc);
+  if (existing) return existing;
+
+  installCardsSelectionFeedbackStyles(doc);
+  const profile = createCardsSelectionFeedbackProfile({
+    reducedMotion: resolveDeckSwipePrecommitReducedMotion(win),
+    lowPerf: resolveDeckSwipePrecommitLowPerf(doc),
+  });
+  let pressed = null;
+  const glowTimers = new Map();
+  const glowNodes = new Set();
+
+  const clearPressed = () => {
+    if (!pressed) return;
+    pressed.node?.classList?.remove?.('gr-cards-selection-press');
+    pressed.node?.style?.removeProperty?.('--gr-cards-press-scale');
+    pressed.node?.style?.removeProperty?.('--gr-cards-press-y');
+    pressed = null;
+  };
+
+  const removeGlow = (glow) => {
+    if (!glow) return;
+    const timer = glowTimers.get(glow);
+    if (timer != null) win?.clearTimeout?.(timer);
+    glowTimers.delete(glow);
+    glowNodes.delete(glow);
+    glow.remove?.();
+  };
+
+  const confirmSelection = (card) => {
+    const rect = card?.getBoundingClientRect?.();
+    if (!rect || ![rect.left, rect.top, rect.width, rect.height].every(Number.isFinite)) return false;
+    if (rect.width <= 0 || rect.height <= 0) return false;
+    const glow = doc.createElement('span');
+    glow.className = 'gr-cards-selection-confirm-glow';
+    glow.setAttribute?.('aria-hidden', 'true');
+    glow.style.left = `${rect.left}px`;
+    glow.style.top = `${rect.top}px`;
+    glow.style.width = `${rect.width}px`;
+    glow.style.height = `${rect.height}px`;
+    glow.style.animationDuration = `${profile.confirmMs}ms`;
+    (doc.body ?? doc.documentElement)?.appendChild?.(glow);
+    glowNodes.add(glow);
+    const timer = win?.setTimeout?.(
+      () => removeGlow(glow),
+      profile.confirmMs + 40,
+    );
+    if (timer != null) glowTimers.set(glow, timer);
+    return true;
+  };
+
+  const onPointerDown = (event) => {
+    if (event?.isPrimary === false) return;
+    if (Number.isFinite(event?.button) && event.button !== 0) return;
+    const node = closestSwipeCard(event?.target);
+    if (!node) return;
+    clearPressed();
+    const x = Number.isFinite(event?.clientX) ? event.clientX : 0;
+    const y = Number.isFinite(event?.clientY) ? event.clientY : 0;
+    pressed = { node, x, y };
+    node.classList?.add?.('gr-cards-selection-press');
+    node.style?.setProperty?.('--gr-cards-press-scale', String(profile.pressScale));
+    node.style?.setProperty?.('--gr-cards-press-y', `${profile.pressTranslateY}px`);
+  };
+
+  const onPointerMove = (event) => {
+    if (!pressed) return;
+    const x = Number.isFinite(event?.clientX) ? event.clientX : pressed.x;
+    const y = Number.isFinite(event?.clientY) ? event.clientY : pressed.y;
+    if (Math.hypot(x - pressed.x, y - pressed.y) >= CARDS_SELECTION_FEEDBACK.pressCancelPx) {
+      clearPressed();
+    }
+  };
+
+  const onPointerUp = () => clearPressed();
+  const onPointerCancel = () => clearPressed();
+  const onClick = (event) => {
+    if (event?.isTrusted === false) return;
+    const node = closestSwipeCard(event?.target);
+    if (!node) return;
+    const confirm = () => {
+      if (node?.classList?.contains?.('selected')) confirmSelection(node);
+    };
+    const enqueue = win?.queueMicrotask ?? globalThis.queueMicrotask;
+    if (typeof enqueue === 'function') enqueue(confirm);
+    else confirm();
+  };
+
+  doc.addEventListener('pointerdown', onPointerDown, false);
+  doc.addEventListener('pointermove', onPointerMove, false);
+  doc.addEventListener('pointerup', onPointerUp, false);
+  doc.addEventListener('pointercancel', onPointerCancel, false);
+  doc.addEventListener('click', onClick, false);
+
+  let destroyed = false;
+  const controller = Object.freeze({
+    profile,
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      clearPressed();
+      for (const glow of [...glowNodes]) removeGlow(glow);
+      doc.removeEventListener('pointerdown', onPointerDown, false);
+      doc.removeEventListener('pointermove', onPointerMove, false);
+      doc.removeEventListener('pointerup', onPointerUp, false);
+      doc.removeEventListener('pointercancel', onPointerCancel, false);
+      doc.removeEventListener('click', onClick, false);
+      cardsSelectionFeedbackInstallations.delete(doc);
+    },
+  });
+  cardsSelectionFeedbackInstallations.set(doc, controller);
+  return controller;
+}
+
 export function isNeutralizedDeckEditorSwipe(intent) {
   return intent?.action === 'none' && intent?.consumed === true;
 }
@@ -1131,6 +1296,7 @@ function autoInstallCardsDeckFindability(doc, win) {
 if (typeof document !== 'undefined') {
   autoInstallDeckStorageLiveMount(document, globalThis.window);
   autoInstallCardsDeckFindability(document, globalThis.window);
+  installCardsSelectionPressReleaseFeedback({ document, window: globalThis.window });
   installCardsVoteUiRepair({ document, window: globalThis.window });
   installCardsInspectorDismissInteractions({ document });
 }

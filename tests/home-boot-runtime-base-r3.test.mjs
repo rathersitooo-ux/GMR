@@ -48,3 +48,24 @@ test('R2 rank match externalizes generated textures and square-constrains the pa
   assert.ok(base.includes("if (event.key === 'Escape')"));
   assert.ok(base.includes('rankMatchRuntime.lastFocus?.focus?.()'));
 });
+
+
+test('R4 rank match tactile feedback and short-landscape recompose remain presentation-only', () => {
+  const base = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
+  for (const selector of [
+    '.gameroadRankMatchMode:active',
+    '.rankWaitingBack:active,.rankWaitingCancel:active',
+    '.rankWaitingPartner:active',
+    '.rankWaitingAction:active',
+    '.rankPartnerPickerClose:active',
+    '.rankPartnerChoice:active',
+  ]) assert.ok(base.includes(selector), selector);
+  assert.ok(base.includes('@media(max-height:430px) and (orientation:landscape)'));
+  assert.ok(base.includes('.rankWaitingContent{grid-template-columns:minmax(96px,.55fr) minmax(190px,1.35fr) minmax(132px,.72fr)'));
+  assert.ok(base.includes('.rankWaitingAction{min-width:118px;min-height:44px'));
+  assert.ok(base.includes('.rankPartnerPickerShell{width:min(92vh,92vw,680px)'));
+  assert.ok(base.includes('@media(prefers-reduced-motion:reduce)'));
+  assert.ok(base.includes('.rankPartnerChoice:active{transform:none!important;}'));
+  assert.ok(base.includes("style.textContent = style.textContent.replaceAll('gameroadd', 'gameroad');"));
+  assert.equal(base.includes('GAMEROAD_RANK_MATCH_SEARCH ='), false);
+});

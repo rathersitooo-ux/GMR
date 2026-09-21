@@ -1130,8 +1130,11 @@ assert.match(portraitScreenSource, /data-battle-phase-presentation="FULLSCREEN_A
 assert.match(portraitScreenSource, /grBattleCinematicReveal/);
 assert.match(portraitScreenSource, /grBattleCinematicStrike/);
 assert.match(portraitScreenSource, /data-battle-cinematic-duel/);
-assert.match(portraitScreenSource, /grBattleCinematicDuelAnticipation/);\nassert.match(portraitScreenSource, /grBattleCinematicDuelRelease/);
-assert.match(portraitScreenSource, /grBattleCinematicDuelReaction/);\nassert.match(portraitScreenSource, /grBattleCinematicDuelReturnSource/);\nassert.match(portraitScreenSource, /grBattleCinematicDuelReturnTarget/);
+assert.match(portraitScreenSource, /grBattleCinematicDuelAnticipation/);
+assert.match(portraitScreenSource, /grBattleCinematicDuelRelease/);
+assert.match(portraitScreenSource, /grBattleCinematicDuelReaction/);
+assert.match(portraitScreenSource, /grBattleCinematicDuelReturnSource/);
+assert.match(portraitScreenSource, /grBattleCinematicDuelReturnTarget/);
 assert.match(portraitScreenSource, /grBattleCinematicDuelEnter/);
 assert.match(portraitScreenSource, /data-movement-intent/);
 assert.match(portraitScreenSource, /saasuna-battle-motion-core/);

@@ -25,6 +25,7 @@ const SHIELD_RAIL_ATTR = 'data-battle-shield-lane-rail';
 const SHIELD_SLOT_ATTR = 'data-battle-shield-slot';
 const CINEMATIC_ORDER_ATTR = 'data-battle-cinematic-order';
 const CINEMATIC_DUEL_ATTR = 'data-battle-cinematic-duel';
+const CINEMATIC_ENV_ATTR = 'data-battle-cinematic-environment';
 const CINEMATIC_DUEL_CHARACTER_ATTR = 'data-battle-cinematic-character';
 const SHIELD_SLOTS = Object.freeze(['L', 'C', 'R']);
 const BATTLE_FIELD_IDS = Object.freeze(['FIELD-01', 'FIELD-02', 'FIELD-03', 'FIELD-04', 'FIELD-05', 'FIELD-08', 'FIELD-09']);
@@ -142,6 +143,23 @@ function addStyle(document) {
 
 #battlePhaseSurface[data-battle-phase-presentation="FULLSCREEN_ANIMATION"]{position:absolute!important;inset:0!important;z-index:40!important;overflow:hidden!important;background:radial-gradient(circle at 50% 44%,rgba(26,40,58,.96),rgba(5,8,14,.985) 58%,#020305 100%)!important;pointer-events:auto!important}
 #battlePhaseSurface[data-battle-phase-presentation="FULLSCREEN_ANIMATION"]>[${SHELL_ATTR}="1"]{position:absolute!important;inset:0!important;width:auto!important;height:auto!important;background:radial-gradient(circle at 50% 48%,rgba(36,55,76,.78),rgba(4,8,13,.86) 62%,rgba(0,0,0,.97) 100%)!important;perspective:1200px}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_ENV_ATTR}]{position:absolute;z-index:10;inset:0;overflow:hidden;pointer-events:none;isolation:isolate;background:linear-gradient(180deg,rgba(6,17,24,.1),rgba(3,10,13,.58) 74%,rgba(1,4,5,.9))}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_ENV_ATTR}][hidden]{display:none!important}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicEnvironmentDistant{position:absolute;inset:-5%;background:radial-gradient(ellipse at 50% 36%,rgba(106,164,159,.34),transparent 44%),linear-gradient(180deg,#244b4a 0%,#2e5a4b 46%,#18392f 72%,#0b211d 100%);background-size:cover;background-position:center 58%;filter:saturate(.88) contrast(1.04) brightness(.82);transform:scale(1.035);opacity:.96;animation:grBattleCinematicEnvironmentDrift 8s ease-in-out infinite alternate}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicEnvironmentDistant[data-asset="true"]{filter:saturate(.8) contrast(1.03) brightness(.66)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicEnvironmentGround{position:absolute;left:-7%;right:-7%;bottom:-22%;height:52%;background:radial-gradient(ellipse at 50% 12%,rgba(126,168,121,.42),rgba(39,69,47,.82) 47%,rgba(13,28,24,.98) 78%),repeating-linear-gradient(100deg,rgba(255,255,255,.035) 0 2px,transparent 2px 22px);clip-path:polygon(0 22%,16% 12%,34% 18%,53% 4%,71% 14%,100% 7%,100% 100%,0 100%);transform:perspective(760px) rotateX(58deg) scale(1.18);transform-origin:50% 100%;box-shadow:0 -24px 44px rgba(7,20,17,.34)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicEnvironmentGround[data-asset="true"]{background-size:cover;background-position:center bottom}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicEnvironmentLight{position:absolute;inset:0;background:radial-gradient(circle at 50% 48%,rgba(225,249,255,.24),rgba(125,208,212,.08) 27%,transparent 58%),linear-gradient(90deg,rgba(97,175,170,.05),transparent 28%,transparent 72%,rgba(151,188,214,.05));mix-blend-mode:screen;opacity:.34}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_ENV_ATTR}]::before{content:"";position:absolute;z-index:4;left:-6%;right:-6%;bottom:6%;height:28%;background:linear-gradient(180deg,transparent,rgba(191,225,213,.08) 42%,rgba(214,239,232,.14));filter:blur(10px);opacity:.68}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_ENV_ATTR}]::after{content:"";position:absolute;z-index:5;inset:0;background:radial-gradient(ellipse at 50% 48%,transparent 38%,rgba(1,5,7,.25) 72%,rgba(0,1,2,.64) 100%)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="attack"] .grBattleCinematicEnvironmentLight,
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="ability"] .grBattleCinematicEnvironmentLight{animation:grBattleCinematicEnvironmentImpact 760ms cubic-bezier(.18,.76,.2,1) both}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] .grBattleCinematicEnvironmentDistant,
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] .grBattleCinematicEnvironmentLight{animation:none!important}
+@keyframes grBattleCinematicEnvironmentDrift{0%{transform:scale(1.035) translate3d(-.35%,0,0)}100%{transform:scale(1.055) translate3d(.35%,-.45%,0)}}
+@keyframes grBattleCinematicEnvironmentImpact{0%,48%{opacity:.28}60%{opacity:.82}67%{opacity:.46}100%{opacity:.32}}
+@media(max-width:540px) and (orientation:portrait){[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicEnvironmentDistant{inset:-2% -18%;background-position:center 54%}[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicEnvironmentGround{left:-22%;right:-22%;bottom:-10%;height:42%;transform:perspective(620px) rotateX(61deg) scale(1.24)}}
+@media(max-height:420px) and (orientation:landscape){[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicEnvironmentDistant{inset:-10% -3%;background-position:center 63%}[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicEnvironmentGround{bottom:-34%;height:62%}}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleScreenTop,
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${PROGRESS_GUIDE_ATTR}],
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${FIELD_LANDMARK_ATTR}],
@@ -655,6 +673,73 @@ function disposeCinematicDuelRuntime(global, scene) {
     }
   }
   cinematicDuelRuntimeState.delete(scene);
+}
+
+function canonicalCinematicEnvironmentUrl(value) {
+  const url = typeof value === 'string' ? value.trim() : '';
+  if (!url || /[\n\r"'()\\]/.test(url)) return null;
+  return /^(?:\.{1,2}\/|\/|blob:|data:image\/)/.test(url) ? url : null;
+}
+
+function createCinematicEnvironment(document) {
+  const root = createNode(document, 'div', 'grBattleCinematicEnvironment');
+  root.setAttribute?.(CINEMATIC_ENV_ATTR, '1');
+  root.setAttribute?.('aria-hidden', 'true');
+  root.dataset.presentationOnly = 'true';
+  root.dataset.authority = 'presentation-context-local-visual-only-no-gameplay-authority';
+  const distant = createNode(document, 'div', 'grBattleCinematicEnvironmentDistant');
+  distant.dataset.layer = 'background-distant';
+  const ground = createNode(document, 'div', 'grBattleCinematicEnvironmentGround');
+  ground.dataset.layer = 'ground-terrain';
+  const light = createNode(document, 'div', 'grBattleCinematicEnvironmentLight');
+  light.dataset.layer = 'lighting-flash';
+  root.appendChild(distant);
+  root.appendChild(ground);
+  root.appendChild(light);
+  root.hidden = true;
+  return { root, distant, ground, light };
+}
+
+function writeCinematicEnvironment(environment, model, context = null) {
+  const root = environment?.root;
+  if (!root) return environment;
+  const cinematic = model?.screenMode === 'BATTLE_PHASE'
+    && model?.battlePhasePresentationMode === 'FULLSCREEN_ANIMATION';
+  setData(root, 'phase', null);
+  setData(root, 'eventId', null);
+  setData(root, 'motion', null);
+  setData(root, 'assetMode', null);
+  setData(environment.distant, 'asset', null);
+  setData(environment.ground, 'asset', null);
+  environment.distant.style.backgroundImage = '';
+  environment.ground.style.backgroundImage = '';
+  if (!cinematic) {
+    root.hidden = true;
+    root.setAttribute?.('aria-hidden', 'true');
+    return environment;
+  }
+
+  const source = context && typeof context === 'object' && !Array.isArray(context) ? context : {};
+  const distantUrl = canonicalCinematicEnvironmentUrl(source.distantUrl);
+  const groundUrl = canonicalCinematicEnvironmentUrl(source.groundUrl);
+  if (distantUrl) {
+    environment.distant.style.backgroundImage =
+      `linear-gradient(180deg,rgba(10,26,31,.18),rgba(5,14,17,.58)),url("${distantUrl}")`;
+    setData(environment.distant, 'asset', 'true');
+  }
+  if (groundUrl) {
+    environment.ground.style.backgroundImage =
+      `linear-gradient(180deg,rgba(15,37,30,.22),rgba(7,18,15,.72)),url("${groundUrl}")`;
+    setData(environment.ground, 'asset', 'true');
+  }
+
+  root.hidden = false;
+  root.setAttribute?.('aria-hidden', 'false');
+  setData(root, 'phase', model.phase ?? null);
+  setData(root, 'eventId', model.eventId ?? null);
+  setData(root, 'motion', model.motion ?? null);
+  setData(root, 'assetMode', distantUrl || groundUrl ? 'local-asset' : 'procedural-fallback');
+  return environment;
 }
 
 function createCinematicDuel(document) {
@@ -1292,6 +1377,9 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   const progressGuide = createProgressGuide(document);
   visualHost.appendChild(progressGuide);
 
+  const cinematicEnvironment = createCinematicEnvironment(document);
+  visualHost.appendChild(cinematicEnvironment.root);
+
   const cinematicOrderRail = createCinematicOrderRail(document);
   visualHost.appendChild(cinematicOrderRail);
 
@@ -1306,6 +1394,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   for (const lane of lanes) grid.appendChild(lane.lane);
   const defaultViewerParticipantId = normalizeViewerParticipantId(options.viewerParticipantId);
   const defaultCinematicCharacterByParticipant = options.cinematicCharacterByParticipant ?? null;
+  const defaultCinematicEnvironment = options.cinematicEnvironment ?? null;
 
   const resolutionAnchor = ensureAnchor(document, phaseSurface, providedResolution, 'battleResolution', 'div');
   const resolutionSurface = resolutionAnchor.node;
@@ -1467,6 +1556,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     writeCurrentActionCue(currentActionCue, null);
     writeCausalTrace(document, causalTrace, null);
     writeCinematicOrderRail(document, cinematicOrderRail, null);
+    writeCinematicEnvironment(cinematicEnvironment, null);
     writeCinematicDuel(global, document, cinematicDuel, null, { preserveConveyorPair: true });
     setData(shell, 'boardReturnDestination', null);
     setData(phaseSurface, 'battleBoardReturnDestination', null);
@@ -1524,6 +1614,11 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     syncFieldLandmark(fieldLandmark, phaseSurface, shell, root);
     if (cinematicBattle) fieldLandmark.hidden = true;
     writeCinematicOrderRail(document, cinematicOrderRail, cinematicBattle ? model : null);
+    writeCinematicEnvironment(
+      cinematicEnvironment,
+      cinematicBattle ? model : null,
+      presentationContext?.cinematicEnvironment ?? defaultCinematicEnvironment
+    );
     writeCinematicDuel(global, document, cinematicDuel, cinematicBattle ? model : null, {
       viewerParticipantId: viewer.resolved,
       cinematicCharacterByParticipant: presentationContext?.cinematicCharacterByParticipant ?? defaultCinematicCharacterByParticipant,
@@ -1589,6 +1684,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     if (causalTrace?.parentNode && typeof causalTrace.parentNode.removeChild === 'function') causalTrace.parentNode.removeChild(causalTrace);
     if (progressGuide?.parentNode && typeof progressGuide.parentNode.removeChild === 'function') progressGuide.parentNode.removeChild(progressGuide);
     if (cinematicOrderRail?.parentNode && typeof cinematicOrderRail.parentNode.removeChild === 'function') cinematicOrderRail.parentNode.removeChild(cinematicOrderRail);
+    if (cinematicEnvironment.root?.parentNode && typeof cinematicEnvironment.root.parentNode.removeChild === 'function') cinematicEnvironment.root.parentNode.removeChild(cinematicEnvironment.root);
     disposeCinematicDuelRuntime(global, cinematicDuel);
     cinematicDuelPairState.delete(cinematicDuel);
     if (cinematicDuel?.parentNode && typeof cinematicDuel.parentNode.removeChild === 'function') cinematicDuel.parentNode.removeChild(cinematicDuel);
@@ -1616,6 +1712,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     currentActionCue,
     causalTrace,
     progressGuide,
+    cinematicEnvironment: cinematicEnvironment.root,
     cinematicOrderRail,
     cinematicDuel,
     hud,
@@ -1660,6 +1757,10 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   battlePhaseAllowedInputs: Object.freeze(['skip', 'public_info', 'accessibility']),
   cinematicOrderAuthority: 'MODEL_CAUSAL_RETURN_PROCESSING_ORDER_ONLY_NO_SORT_OR_INFERENCE',
   cinematicOrderVisibleCardIdText: false,
+  cinematicEnvironmentAuthority: 'PRESENTATION_CONTEXT_LOCAL_VISUAL_OR_PROCEDURAL_FALLBACK_ONLY_NO_GAMEPLAY_AUTHORITY',
+  cinematicEnvironmentLayers: Object.freeze(['BACKGROUND_DISTANT', 'GROUND_TERRAIN', 'LIGHTING_FLASH']),
+  cinematicEnvironmentNetwork: false,
+  cinematicEnvironmentFormalArt: false,
   cinematicDuelAuthority: 'MODEL_LANE_ROLE_EXACT_ONE_SOURCE_EXACT_ONE_TARGET_ONLY_NO_INFERENCE',
   cinematicDuelArt: 'EXISTING_CHARACTER_RUNTIME_PLUS_PROVISIONAL_SAASUNA_9_KEYFRAME_SHEET_NO_FORMAL_ART',
   cinematicDuelReaction: 'EXISTING_CHARACTER_RUNTIME_PLUS_PROVISIONAL_SAASUNA_STATEFUL_REACTION_NO_GAMEPLAY_STATE',

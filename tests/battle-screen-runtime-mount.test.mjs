@@ -222,6 +222,13 @@ assert.equal(runtime.cinematicDuel.dataset.authority, 'model-lane-role-only-no-t
 assert.equal(runtime.cinematicDuel.hidden, true);
 assert.equal(runtime.cinematicDuel.children.length, 0);
 assert.equal(runtime.cinematicDuel.parentNode, runtime.phaseSurface);
+assert.ok(runtime.cinematicEnvironment);
+assert.equal(runtime.cinematicEnvironment.getAttribute('data-battle-cinematic-environment'), '1');
+assert.equal(runtime.cinematicEnvironment.dataset.presentationOnly, 'true');
+assert.equal(runtime.cinematicEnvironment.dataset.authority, 'presentation-context-local-visual-only-no-gameplay-authority');
+assert.equal(runtime.cinematicEnvironment.hidden, true);
+assert.equal(runtime.cinematicEnvironment.parentNode, runtime.phaseSurface);
+assert.deepEqual(runtime.cinematicEnvironment.children.map(node => node.dataset.layer), ['background-distant', 'ground-terrain', 'lighting-flash']);
 assert.ok(runtime.fieldLandmark);
 assert.equal(runtime.fieldLandmark.parentNode, runtime.phaseSurface);
 assert.equal(runtime.fieldLandmark.hidden, true);
@@ -261,6 +268,13 @@ assert.ok(runtimeStyle.textContent.includes('.grBattleLanePublicCard'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleCinematicOrderCard'));
 assert.ok(runtimeStyle.textContent.includes('data-battle-cinematic-order'));
 assert.ok(runtimeStyle.textContent.includes('grBattleCinematicStrike'));
+assert.ok(runtimeStyle.textContent.includes('[data-battle-cinematic-environment]'));
+assert.ok(runtimeStyle.textContent.includes('.grBattleCinematicEnvironmentDistant'));
+assert.ok(runtimeStyle.textContent.includes('.grBattleCinematicEnvironmentGround'));
+assert.ok(runtimeStyle.textContent.includes('.grBattleCinematicEnvironmentLight'));
+assert.ok(runtimeStyle.textContent.includes('@keyframes grBattleCinematicEnvironmentDrift'));
+assert.ok(runtimeStyle.textContent.includes('@keyframes grBattleCinematicEnvironmentImpact'));
+assert.ok(runtimeStyle.textContent.includes('[data-motion="static_only"] .grBattleCinematicEnvironmentDistant'));
 assert.ok(runtimeStyle.textContent.includes('grBattleCinematicCompare'));
 assert.ok(runtimeStyle.textContent.includes('grBattleCinematicWinner'));
 assert.ok(runtimeStyle.textContent.includes('data-final-state="resolved-win"'));
@@ -392,6 +406,10 @@ assert.equal(BATTLE_SCREEN_RUNTIME.loadCardLiveProjectionSource, 'EXISTING_FOCUS
 assert.equal(BATTLE_SCREEN_RUNTIME.loadCardFocusDomMutation, false);
 assert.equal(BATTLE_SCREEN_RUNTIME.viewerRoleAuthority, 'CALLER_EXPLICIT_PARTICIPANT_ID_ONLY_NO_ORDER_INFERENCE');
 assert.equal(BATTLE_SCREEN_RUNTIME.viewerRoleFallback, 'NEUTRAL_PUBLIC_SUMMARIES');
+assert.equal(BATTLE_SCREEN_RUNTIME.cinematicEnvironmentAuthority, 'PRESENTATION_CONTEXT_LOCAL_VISUAL_OR_PROCEDURAL_FALLBACK_ONLY_NO_GAMEPLAY_AUTHORITY');
+assert.deepEqual(BATTLE_SCREEN_RUNTIME.cinematicEnvironmentLayers, ['BACKGROUND_DISTANT', 'GROUND_TERRAIN', 'LIGHTING_FLASH']);
+assert.equal(BATTLE_SCREEN_RUNTIME.cinematicEnvironmentNetwork, false);
+assert.equal(BATTLE_SCREEN_RUNTIME.cinematicEnvironmentFormalArt, false);
 assert.equal(BATTLE_SCREEN_RUNTIME.viewerSelfPresentation, 'SAME_AUTHORITATIVE_PARTICIPANT_NO_DUPLICATE_PEER_ENTITY');
 
 const neutralRoot = document.createElement('main');
@@ -541,6 +559,14 @@ assert.equal(runtime.cinematicDuel.dataset.saasunaMotionRuntime, 'gameroad.saasu
 assert.equal(runtime.cinematicDuel.dataset.sourceCharacterId, 'partner.naki');
 assert.equal(runtime.cinematicDuel.dataset.targetCharacterId, 'partner.saasuna');
 assert.equal(runtime.cinematicDuel.dataset.vfx, 'provisional-neutral-compressed-shot');
+assert.equal(runtime.cinematicEnvironment.hidden, false);
+assert.equal(runtime.cinematicEnvironment.getAttribute('aria-hidden'), 'false');
+assert.equal(runtime.cinematicEnvironment.dataset.phase, 'attack');
+assert.equal(runtime.cinematicEnvironment.dataset.eventId, 'attack-1');
+assert.equal(runtime.cinematicEnvironment.dataset.assetMode, 'procedural-fallback');
+assert.equal(runtime.cinematicEnvironment.children[0].dataset.asset, undefined);
+assert.equal(runtime.cinematicEnvironment.children[1].dataset.asset, undefined);
+
 const cinematicSides = runtime.cinematicDuel.children.filter(node => node.dataset.role);
 const cinematicVfx = runtime.cinematicDuel.children.find(node => node.dataset.layer === 'vfx');
 assert.deepEqual(cinematicSides.map(node => node.dataset.role), ['source', 'target']);
@@ -573,6 +599,32 @@ assert.ok(cinematicCharacterCalls.some(call => call.type === 'setState' && call.
 assert.ok(cinematicCharacterCalls.some(call => call.type === 'setState' && call.characterId === 'partner.naki' && call.state === 'idle'));
 assert.ok(cinematicCharacterCalls.some(call => call.type === 'setState' && call.characterId === 'partner.saasuna' && call.state === 'idle'));
 assert.equal(cinematicCharacterCalls.some(call => call.state === 'hit' || call.state === 'defeated'), false);
+
+runtime.render(attack, null, {
+  cinematicEnvironment: {
+    distantUrl: './assets/visual/provisional/battle-forest.webp',
+    groundUrl: 'blob:gameroad-battle-ground'
+  }
+});
+await Promise.resolve();
+await Promise.resolve();
+assert.equal(runtime.cinematicEnvironment.dataset.assetMode, 'local-asset');
+assert.equal(runtime.cinematicEnvironment.children[0].dataset.asset, 'true');
+assert.equal(runtime.cinematicEnvironment.children[1].dataset.asset, 'true');
+assert.ok(runtime.cinematicEnvironment.children[0].style.backgroundImage.includes('./assets/visual/provisional/battle-forest.webp'));
+assert.ok(runtime.cinematicEnvironment.children[1].style.backgroundImage.includes('blob:gameroad-battle-ground'));
+
+runtime.render(attack, null, {
+  cinematicEnvironment: {
+    distantUrl: 'https://example.invalid/remote.webp',
+    groundUrl: 'javascript:alert(1)'
+  }
+});
+await Promise.resolve();
+await Promise.resolve();
+assert.equal(runtime.cinematicEnvironment.dataset.assetMode, 'procedural-fallback');
+assert.equal(runtime.cinematicEnvironment.children[0].dataset.asset, undefined);
+assert.equal(runtime.cinematicEnvironment.children[1].dataset.asset, undefined);
 
 const attack2 = createBattleScreenModel({
   participants,
@@ -701,6 +753,9 @@ assert.equal(runtime.currentActionCue.dataset.causalJanken, undefined);
 assert.equal(runtime.cinematicDuel.hidden, true);
 assert.equal(runtime.cinematicDuel.children.length, 0);
 assert.equal(runtime.cinematicDuel.getAttribute('aria-hidden'), 'true');
+assert.equal(runtime.cinematicEnvironment.hidden, false);
+assert.equal(runtime.cinematicEnvironment.dataset.phase, 'settle');
+assert.equal(runtime.cinematicEnvironment.dataset.assetMode, 'procedural-fallback');
 assert.equal(runtime.shell.dataset.boardReturnDestination, 'P3:R');
 assert.equal(runtime.phaseSurface.dataset.battleBoardReturnDestination, 'P3:R');
 assert.equal(runtime.resolutionSurface.dataset.battleBoardReturnDestination, 'P3:R');
@@ -921,6 +976,7 @@ const progressGuide = runtime.progressGuide;
 const fieldLandmark = runtime.fieldLandmark;
 const currentActionCue = runtime.currentActionCue;
 const causalTrace = runtime.causalTrace;
+const cinematicEnvironment = runtime.cinematicEnvironment;
 const cinematicOrderRail = runtime.cinematicOrderRail;
 const cinematicDuel = runtime.cinematicDuel;
 const resourceHudRoot = runtime.resourceHud.root;
@@ -930,6 +986,7 @@ assert.equal(progressGuide.parentNode, null);
 assert.equal(fieldLandmark.parentNode, null);
 assert.equal(currentActionCue.parentNode, null);
 assert.equal(causalTrace.parentNode, null);
+assert.equal(cinematicEnvironment.parentNode, null);
 assert.equal(cinematicOrderRail.parentNode, null);
 assert.equal(cinematicDuel.parentNode, null);
 assert.equal(resourceHudRoot.parentNode, null);

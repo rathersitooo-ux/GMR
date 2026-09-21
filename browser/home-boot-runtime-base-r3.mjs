@@ -1923,15 +1923,18 @@ function rankMatchRenderPartner(surface, doc) {
   const nameNode = surface.querySelector('[data-role="rank-waiting-partner-name"]');
   const source = rankMatchPartnerAsset(id);
   if (image) {
-    image.hidden = !source;
+    const nextImageHidden = !source;
+    if (image.hidden !== nextImageHidden) image.hidden = nextImageHidden;
     if (source && image.src !== source) image.src = source;
     image.alt = name;
   }
   if (icon) {
-    icon.hidden = Boolean(source);
-    icon.textContent = source ? '' : rankMatchPartnerInitial(id);
+    const nextIconHidden = Boolean(source);
+    if (icon.hidden !== nextIconHidden) icon.hidden = nextIconHidden;
+    const nextIconText = source ? '' : rankMatchPartnerInitial(id);
+    if (icon.textContent !== nextIconText) icon.textContent = nextIconText;
   }
-  if (nameNode) nameNode.textContent = name;
+  if (nameNode && nameNode.textContent !== name) nameNode.textContent = name;
   surface.dataset.advicePartnerId = id;
 }
 
@@ -2005,14 +2008,14 @@ function rankMatchRenderPicker(doc) {
 function openRankMatchPartnerPicker(doc) {
   const overlay = rankMatchRenderPicker(doc);
   rankMatchRuntime.lastFocus = doc.activeElement;
-  overlay.hidden = false;
+  if (overlay.hidden) overlay.hidden = false;
   overlay.querySelector('[data-partner-choice][aria-pressed="true"]')?.focus?.();
 }
 
 function closeRankMatchPartnerPicker(doc) {
   const overlay = doc.getElementById(RANK_MATCH_PICKER_ID);
   if (!overlay) return;
-  overlay.hidden = true;
+  if (!overlay.hidden) overlay.hidden = true;
   rankMatchRuntime.lastFocus?.focus?.();
   rankMatchRuntime.lastFocus = null;
 }
@@ -2064,15 +2067,15 @@ function rankMatchSyncBattleVisibility(doc) {
   const waitingValue = active ? 'true' : 'false';
   if (battle.dataset.rankWaiting !== waitingValue) battle.dataset.rankWaiting = waitingValue;
   if (!active) {
-    surface.hidden = true;
+    if (!surface.hidden) surface.hidden = true;
     return surface;
   }
   const runtimeNode = doc.getElementById('battleRuntime');
   if (runtimeNode) {
     if (!runtimeNode.dataset.rankPreviousHidden) runtimeNode.dataset.rankPreviousHidden = runtimeNode.hidden ? 'true' : 'false';
-    runtimeNode.hidden = true;
+    if (!runtimeNode.hidden) runtimeNode.hidden = true;
   }
-  surface.hidden = false;
+  if (surface.hidden) surface.hidden = false;
   rankMatchRenderPartner(surface, doc);
   return surface;
 }
@@ -2082,7 +2085,7 @@ function exitRankMatchWaiting(doc) {
   rankMatchRuntime.waiting = false;
   const battle = doc.querySelector('section[data-screen="battle"]');
   const surface = doc.getElementById(RANK_MATCH_WAITING_ID);
-  if (surface) surface.hidden = true;
+  if (surface && !surface.hidden) surface.hidden = true;
   if (battle) {
     battle.dataset.rankWaiting = 'false';
     battle.removeAttribute('aria-busy');
@@ -2090,8 +2093,8 @@ function exitRankMatchWaiting(doc) {
   const runtimeNode = doc.getElementById('battleRuntime');
   if (runtimeNode) {
     const previous = runtimeNode.dataset.rankPreviousHidden;
-    if (previous === 'false') runtimeNode.hidden = false;
-    else if (previous === 'true') runtimeNode.hidden = true;
+    if (previous === 'false' && runtimeNode.hidden) runtimeNode.hidden = false;
+    else if (previous === 'true' && !runtimeNode.hidden) runtimeNode.hidden = true;
     delete runtimeNode.dataset.rankPreviousHidden;
   }
   const navigate = rankMatchWindow().GAMEROAD_APPLY_SCREEN_TRANSITION;

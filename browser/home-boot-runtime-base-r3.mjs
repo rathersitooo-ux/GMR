@@ -1730,6 +1730,7 @@ const rankMatchRuntime = {
   installed: false,
   observer: null,
   observerSignature: '',
+  observerTargets: [],
   refreshScheduled: false,
   selectedMode: 'normal',
   waiting: false,
@@ -2159,7 +2160,10 @@ function rankMatchBindObserver(doc) {
     doc.querySelector('section[data-screen="battle"]'),
   ].filter(Boolean);
   const signature = targets.map((target) => target.dataset.screen || target.id || '').join('|') || 'body-bootstrap';
-  if (rankMatchRuntime.observer && rankMatchRuntime.observerSignature === signature) return;
+  const sameTargets = rankMatchRuntime.observer
+    && rankMatchRuntime.observerTargets.length === targets.length
+    && targets.every((target, index) => rankMatchRuntime.observerTargets[index] === target);
+  if (sameTargets) return;
   rankMatchRuntime.observer?.disconnect?.();
   const observer = new MutationObserver(scheduleRankMatchRefresh);
   if (targets.length === 2) {
@@ -2174,6 +2178,7 @@ function rankMatchBindObserver(doc) {
   }
   rankMatchRuntime.observer = observer;
   rankMatchRuntime.observerSignature = signature;
+  rankMatchRuntime.observerTargets = targets;
 }
 
 function scheduleRankMatchRefresh() {

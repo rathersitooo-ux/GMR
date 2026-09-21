@@ -211,6 +211,14 @@ test('Records detail lets another rendered row switch directly while outside cli
 });
 
 
+test('Records selectable rows give a short active press response without changing handlers', () => {
+  const source = readFileSync(new URL('../browser/profile-presentation-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /record\[data-records-selectable="true"\]:active\{transform:translateY\(1px\) scale\(\.992\);filter:brightness\(\.94\)/);
+  assert.match(source, /transition-duration:\.06s/);
+  assert.match(source, /@media\(prefers-reduced-motion:reduce\)[\s\S]*?record\[data-records-selectable="true"\]:active\{transform:none;filter:brightness\(\.94\)\}/);
+  assert.doesNotMatch(source, /records-row-press-listener/);
+});
+
 test('Records detail panel uses a short reveal and keeps Reduced Motion opacity-only', () => {
   const source = readFileSync(new URL('../browser/profile-presentation-runtime-mount.mjs', import.meta.url), 'utf8');
   assert.match(source, /recordsMatchDetail\{[^}]*animation:gameroadRecordsDetailReveal \.18s/);

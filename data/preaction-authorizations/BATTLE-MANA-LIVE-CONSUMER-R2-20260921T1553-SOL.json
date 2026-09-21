@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-MANA-LIVE-CONSUMER-R2-20260921T1553-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FORMAL_RESOURCE_PAYMENT_LIVE_CONSUMER_R2",
+  "acquireKey": "BATTLE-MANA-LIVE-CONSUMER-R2-20260921T1553-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-MANA-ONLY-BOUNDARY-67a2b2e",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FORMAL-PAYMENT-FOCUSED-TESTS-MAIN",
+  "proceedToken": "PROCEED|BATTLE-MANA-LIVE-CONSUMER-R2-20260921T1553-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|adapt-existing-payment-boundary|lease-snapshot",
+  "authorizationBaseSha": "1ce29f6ee5e43f245477d3addc175b721d762c14",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_FORMAL_RESOURCE_PAYMENT_LIVE_CONSUMER_R2",
+  "leaseAcquireKey": "BATTLE-MANA-LIVE-CONSUMER-R2-20260921T1553-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 15:53 JST",
+  "leaseUntilJst": "2026-09-21 16:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A31:L31",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; tests/battle-formal-resource-payment-boundary.test.mjs; own fresh branch/PR/check/merge/readback; browser/battle-formal-resource-payment-boundary.mjs READ_ONLY existing MANA_ONLY_REQUIRED authority; gameplay/save/network/other Battle rules READ_ONLY; no second payment authority",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-formal-resource-payment-boundary.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-formal-resource-payment-boundary.test.mjs"
+  ],
+  "solutionSignature": "Connect the existing MANA_ONLY_REQUIRED formal payment projector to the existing live Battle card submission seam without changing Road, Honey, ability, save, or network authority.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING-FORMAL-PAYMENT-BOUNDARY-AND-RESOLVEBATTLE-SEAM",
+  "solutionSearchEvidence": [
+    "browser/battle-formal-resource-payment-boundary.mjs@d64a89d6811e056a633eb0773af4f9c2627e3fa2",
+    "browser/GAMEROAD.html resolveBattle active_submission seam"
+  ]
+}

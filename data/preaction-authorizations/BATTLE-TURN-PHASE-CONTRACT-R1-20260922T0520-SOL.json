@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-TURN-PHASE-CONTRACT-R1-20260922T0520-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_TURN_PHASE_STATE_MACHINE_R1",
+  "acquireKey": "BATTLE-TURN-PHASE-CONTRACT-R1-20260922T0520-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ACTUAL_FIVE_PHASE_DUPLICATED_WRITES_20260922T0524JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "READONLY_EXACT_MAIN_PHASE_ASSIGNMENT_CENSUS_AND_NO_SAME_PURPOSE_PR",
+  "proceedToken": "PROCEED|BATTLE-TURN-PHASE-CONTRACT-R1-20260922T0520-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-turn-phase-contract|GAMEROAD-html|active-lease",
+  "authorizationBaseSha": "7c385f22c5faf2cbfb6f8508986c2469251fe718",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_TURN_PHASE_STATE_MACHINE_R1",
+  "leaseAcquireKey": "BATTLE-TURN-PHASE-CONTRACT-R1-20260922T0520-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-22 05:24 JST",
+  "leaseUntilJst": "2026-09-22 06:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:N9",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; browser/battle-turn-phase-contract-core.mjs; tests/battle-turn-phase-contract-core.test.mjs; own transient PRE_ACTION witness; own fresh branch/PR/check/readback. battle-screen/current-player UI READ_ONLY; unrelated gameplay semantics READ_ONLY.",
+  "solutionSignature": "CURRENT_FIVE_PHASE_GUARDED_TRANSITION_CONTRACT_V1",
+  "reuseDisposition": "CENTRALIZE_EXISTING_LOOP",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MAIN_7C385F2_DIRECT_PHASE_WRITES_AND_EXISTING_PHASE_BAR",
+  "solutionSearchEvidence": [
+    "Current gameplay authority already uses exactly plan, reveal, move, target, resolve.",
+    "The same plan→reveal→move→target sequence is duplicated in normal and friend-room paths.",
+    "resolveBattle independently writes resolve, while battlePresentation.stage separately owns cinematic focus/reveal/read/compare/winner/settle.",
+    "No existing current phase/turn contract module was found in browser/tests directory names.",
+    "This slice adds no phase meaning, rule result, board topology, save/economy/network behavior, or second turn controller."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "browser/battle-turn-phase-contract-core.mjs",
+    "tests/battle-turn-phase-contract-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "browser/battle-turn-phase-contract-core.mjs",
+    "tests/battle-turn-phase-contract-core.test.mjs"
+  ]
+}

@@ -174,6 +174,7 @@ function addStyle(document) {
 #${SURFACE_ID}.battleFeCinematicLive[hidden]{display:none!important}
 #${SURFACE_ID}.battleFeCinematicLive:before,#${SURFACE_ID}.battleFeCinematicLive:after{display:none!important;content:none!important}
 #${SURFACE_ID}.battleFeCinematicLive>.battlePhaseBackdrop,#${SURFACE_ID}.battleFeCinematicLive>.battlePhaseHeader,#${SURFACE_ID}.battleFeCinematicLive>.battlePhaseCutin,#${SURFACE_ID}.battleFeCinematicLive>.battlePhaseTarget,#${SURFACE_ID}.battleFeCinematicLive>.battlePhaseResolutionSlot{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+#${SURFACE_ID}.battleFeCinematicLive>[data-gr-battle-screen="1"]{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
 #${SURFACE_ID} .battleFeStage{position:absolute;inset:0;overflow:hidden;isolation:isolate;background:radial-gradient(circle at 50% 48%,rgba(185,207,110,.98) 0 18%,rgba(111,161,74,.98) 52%,rgba(45,98,52,.99) 100%)}
 #${SURFACE_ID} .battleFeStage:before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(30,83,51,.28),transparent 38%,rgba(4,37,24,.40)),repeating-linear-gradient(0deg,rgba(255,255,210,.045) 0 2px,transparent 2px 7px),repeating-linear-gradient(90deg,rgba(13,72,37,.06) 0 3px,transparent 3px 11px);opacity:.85}
 #${SURFACE_ID} .battleFeStage:after{content:"";position:absolute;left:7%;right:7%;bottom:21%;height:18%;z-index:-1;border-radius:50%;background:radial-gradient(ellipse,rgba(242,226,141,.42),rgba(200,213,126,.16) 40%,transparent 72%);filter:blur(2px)}

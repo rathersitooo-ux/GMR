@@ -377,6 +377,22 @@ test('RANK-MATCH-R5 reaches waiting, loads generated chrome, and edits only the 
   });
 
   const { setup, battle, waiting } = await enterRankMatchWaitingEvidence(page);
+  if (testInfo.project.name === 'short-landscape-667x375') {
+    const panel = waiting.locator('.rankWaitingPanel');
+    const box = await panel.boundingBox();
+    const viewport = page.viewportSize();
+    expect(box, 'rank waiting scene-layout panel has geometry').not.toBeNull();
+    expect(box.width / viewport.width, 'rank waiting panel no longer behaves like a nested full-screen modal').toBeLessThan(0.92);
+    expect(box.height / viewport.height, 'rank waiting panel leaves the viewport as the visual scene').toBeLessThan(0.92);
+    const frame = await panel.evaluate((node) => {
+      const style = getComputedStyle(node);
+      return { borderTopWidth: style.borderTopWidth, backgroundColor: style.backgroundColor, backgroundImage: style.backgroundImage, boxShadow: style.boxShadow, clipPath: style.clipPath };
+    });
+    expect(frame.borderTopWidth).toBe('0px');
+    expect(frame.backgroundImage).toBe('none');
+    expect(frame.boxShadow).toBe('none');
+    expect(frame.clipPath).toBe('none');
+  }
   await attachStateScreenshot(page, testInfo, 'rank-waiting-surface');
 
   for (const asset of [

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RANK-MATCH-WAITING-PRESENTATION-R4-AAA-FX-20260921T2109-SOL",
+  "taskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "workUnitKey": "RANK_MATCH_FLOW_AND_PARTNER_PICKER_R1",
+  "acquireKey": "RANK-MATCH-WAITING-PRESENTATION-R4-20260921T2109-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "DIRECT_SOURCE_KEYFRAME_NAME_MISMATCH_AND_MISSING_TACTILE_ACTIVE_STATE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR2007_FOCUSED_PACKAGE_STATIC_CHECKS_PASS_OLD_RUNTIME_TIMEOUT_PRE_PAGE_BOOT",
+  "proceedToken": "PROCEED|RANK-MATCH-WAITING-PRESENTATION-R4-AAA-FX-20260921T2109-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|repair-rank-waiting-motion|tactile-active|reduced-motion",
+  "authorizationBaseSha": "148cc6b616767523c3804d29daa3944001d9f9df",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "leaseWorkUnitKey": "RANK_MATCH_FLOW_AND_PARTNER_PICKER_R1",
+  "leaseAcquireKey": "RANK-MATCH-WAITING-PRESENTATION-R4-20260921T2109-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 21:09 JST",
+  "leaseUntilJst": "2026-09-21 22:09 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A168:N168",
+  "leaseExactMutableResources": "PR #2007 exact head 148cc6b616767523c3804d29daa3944001d9f9df; browser/home-boot-runtime-base-r3.mjs; tests/home-boot-runtime-base-r3.test.mjs; browser/assets/visual/rank-match/*.webp; candidate successor assets/visual/rank-match/*.webp relocation only if repeated CI proves browser/assets classification is the blocker; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; own transient PRE_ACTION witness on any rebuilt clean branch; PR/check/rerun/merge/readback/public readback; browser/GAMEROAD.html READ_ONLY; .github/workflows/gameroad-required-gate.yml READ_ONLY; browser/partner-saasuna-bustup-visuals.mjs READ_ONLY; gameplay/rules/save/network READ_ONLY; no ranked queue/backend authority",
+  "solutionSignature": "RANK_MATCH_WAITING_AAA_PRESENTATION_FX_REPAIR_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_UIVIS_GRAMMAR_PLUS_DIRECT_PR2007_SOURCE_DEFECT",
+  "solutionSearchEvidence": [
+    "Current UIVIS grammar requires immediate selection feedback, static-arrival legibility, single visual focus and distinct screen composition.",
+    "PR #2007 already owns the correct generated textures and square partner picker; replacing the visual system would discard working assets and semantics.",
+    "Direct source inspection proves animation declarations reference nonexistent keyframe names, making the intended waiting VFX and status pulse inert.",
+    "Rank controls already define hover/focus states, so adding bounded tactile :active feedback reuses the existing presentation contract without changing navigation or ranked authority.",
+    "prefers-reduced-motion already disables animation; the repair will additionally neutralize press movement while keeping state contrast."
+  ],
+  "scope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs"
+  ]
+}

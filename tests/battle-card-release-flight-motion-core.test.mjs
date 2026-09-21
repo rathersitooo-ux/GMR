@@ -26,6 +26,12 @@ test('release motion v2 keeps the captured screen-center destination as presenta
   assert.deepEqual(projection.target, target);
   assert.equal(projection.durationMs, BATTLE_CARD_RELEASE_FLIGHT_DEFAULT_DURATION_MS);
   assert.equal(projection.mode, BATTLE_CARD_RELEASE_FLIGHT_MODE.FULL);
+  const travelMs = projection.durationMs * BATTLE_CARD_RELEASE_FLIGHT_ARRIVAL_OFFSET;
+  const heroMs = projection.durationMs * (BATTLE_CARD_RELEASE_FLIGHT_HERO_HOLD_END_OFFSET - BATTLE_CARD_RELEASE_FLIGHT_ARRIVAL_OFFSET);
+  const dissolveMs = projection.durationMs * (1 - BATTLE_CARD_RELEASE_FLIGHT_HERO_HOLD_END_OFFSET);
+  assert.ok(travelMs >= 200 && travelMs <= 220, 'release reaches center quickly instead of spending most of the beat in transit');
+  assert.ok(heroMs >= 260 && heroMs <= 280, 'the center hero shot owns the longest presentation beat');
+  assert.ok(dissolveMs <= 80, 'the close is a short dissolve, not a second travel sequence');
 });
 
 test('upper and lower releases arc outward but settle upright at the same center hero position', () => {

@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-TURN-PHASE-GUARD-R2-20260922T0541-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_TURN_PHASE_LIVE_GUARD_R2",
+  "acquireKey": "BATTLE-TURN-PHASE-GUARD-R2-20260922T0541-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_BRANCH_AND_EXISTING_REPLAY_IMPORT_PATH_20260922T0541JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_DIRECT_PHASE_WRITE_CENSUS_PLUS_LIVE_STATE_ACCESSOR_GUARD_DESIGN",
+  "proceedToken": "PROCEED|BATTLE-TURN-PHASE-GUARD-R2-20260922T0541-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-turn-phase-live-guard|existing-replay-import|active-lease",
+  "authorizationBaseSha": "8a91c2d07cfcd8a9043dc7aec9798b0c38e8f97f",
+  "currentMainSha": "7c385f22c5faf2cbfb6f8508986c2469251fe718",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_TURN_PHASE_LIVE_GUARD_R2",
+  "leaseAcquireKey": "BATTLE-TURN-PHASE-GUARD-R2-20260922T0541-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-22 05:41 JST",
+  "leaseUntilJst": "2026-09-22 06:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:N9",
+  "leaseExactMutableResources": "browser/battle-turn-phase-contract-core.mjs; browser/battle-turn-phase-live-guard.mjs; browser/battle-replay-live-adapter.mjs; tests/battle-turn-phase-contract-core.test.mjs; own transient preaction witness; branch/PR/check/readback. GAMEROAD.html and unrelated gameplay/UI runtimes READ_ONLY.",
+  "solutionSignature": "CURRENT_MATCH_PHASE_ACCESSOR_GUARD_V2",
+  "reuseDisposition": "COMPOSE_EXISTING_REPLAY_IMPORT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "GAMEROAD_ALREADY_IMPORTS_BATTLE_REPLAY_LIVE_ADAPTER",
+  "solutionSearchEvidence": [
+    "Current authoritative gameplay values are exactly plan, reveal, move, target, resolve.",
+    "Normal and friend-room paths write those phases directly, so a match.phase accessor guard intercepts both without replacing the turn controller.",
+    "GAMEROAD.html already dynamically imports battle-replay-live-adapter.mjs at runtime, providing a small-file production mount path.",
+    "battlePresentation.stage remains independent cinematic state and is not promoted to gameplay phase.",
+    "Two large-body GAMEROAD.html write routes were fresh-classified NOT_APPLIED; GAMEROAD.html remains read-only in this recovery slice.",
+    "No gameplay result, board topology, save, economy, network, card semantics, or additional phase is introduced."
+  ],
+  "recoveryEvidence": {
+    "priorAcquireKey": "BATTLE-TURN-PHASE-CONTRACT-R1-20260922T0520-SOL",
+    "priorHtmlBlobUnchanged": "8729c080aa2c4a1247ae7fd5010819f2dbcc422a",
+    "firstLargeWrite": "NOT_APPLIED_AFTER_FRESH_READBACK",
+    "secondLargeBlobWrite": "NOT_APPLIED_TO_BRANCH_AFTER_FRESH_READBACK",
+    "noBlindRetry": true
+  },
+  "scope": [
+    "browser/battle-turn-phase-contract-core.mjs",
+    "browser/battle-turn-phase-live-guard.mjs",
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-turn-phase-contract-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-turn-phase-contract-core.mjs",
+    "browser/battle-turn-phase-live-guard.mjs",
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-turn-phase-contract-core.test.mjs"
+  ]
+}

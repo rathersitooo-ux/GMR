@@ -1,0 +1,29 @@
+{
+  "schema": "gameroad.pre-action-authority.v1",
+  "acquireKey": "NAKI-IDOL-BATTLE-R2-20260921T2027-CODEX-Q8N4V9A",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "NAKI_IDOL_BATTLE_LIVE_SUCCESSOR_R1",
+  "owner": "ChatGPT / GPT-5.6 Codex / current user 続けて",
+  "baseRef": "main",
+  "baseSha": "011214183c790f03feda477d054f81dd3b7dd86c",
+  "branch": "codex/naki-idol-battle-live-r1-20260921",
+  "targetFiles": [
+    "browser/GAMEROAD.html",
+    "browser/battle-fe-cinematic-live-adapter.mjs",
+    "browser/battle-naki-idol-sprite-runtime.mjs",
+    "browser/naki-idol-battle-assets.mjs",
+    "browser/partner-naki-advice-live-adapter.mjs",
+    "browser/partner-naki-advice-visuals.mjs",
+    "tests/battle-fe-cinematic-live-adapter.test.mjs",
+    "tests/battle-naki-idol-sprite-runtime.test.mjs",
+    "browser/assets/partners/naki-idol/"
+  ],
+  "readOnly": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    "gameplay/rules/save/network/board topology/formal art/pixel canon"
+  ],
+  "intent": "Reconnect transparent Naki battle/advice presentation to current main; six explicit phases, heart-primary VFX, low-frequency moon afterglow only; presentation-only; no gameplay/target/winner/order/board recalculation.",
+  "createdAtJst": "2026-09-21 20:27 JST",
+  "cleanupRequired": true
+}

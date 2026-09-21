@@ -97,3 +97,14 @@ test('R5 rank match refresh observes only screen roots and keeps body bootstrap 
   assert.ok(base.includes('observer.observe(doc.body, { childList: true, subtree: true });'));
   assert.equal(base.includes("observer.observe(doc.body, { childList: true, subtree: true, attributes: true"), false);
 });
+
+test('R7 rank match waiting entry motion is staged and reduced-motion safe', () => {
+  const base = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
+  assert.ok(base.includes('@keyframes gameroadRankWaitingPanelIn'));
+  assert.ok(base.includes('@keyframes gameroadRankWaitingStageIn'));
+  assert.ok(base.includes('animation:gameroadRankWaitingPanelIn 360ms cubic-bezier(.16,1,.3,1) both'));
+  assert.ok(base.includes('animation:gameroadRankWaitingStageIn 300ms cubic-bezier(.16,1,.3,1) 90ms both'));
+  assert.ok(base.includes('animation:gameroadRankWaitingStageIn 300ms cubic-bezier(.16,1,.3,1) 150ms both'));
+  assert.ok(base.includes('animation:gameroadRankWaitingStageIn 300ms cubic-bezier(.16,1,.3,1) 210ms both'));
+  assert.ok(base.includes('.rankWaitingVfx,.rankWaitingStatus:before,.rankWaitingPanel,.rankWaitingPartnerRail,.rankWaitingCopy,.rankWaitingActions{animation:none!important;}'));
+});

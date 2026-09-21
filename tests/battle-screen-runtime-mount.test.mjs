@@ -530,7 +530,14 @@ assert.equal(runtime.cinematicDuel.getAttribute('aria-hidden'), 'false');
 assert.equal(runtime.cinematicDuel.dataset.eventId, 'attack-1');
 assert.equal(runtime.cinematicDuel.dataset.sourceId, 'P1');
 assert.equal(runtime.cinematicDuel.dataset.targetId, 'P4');
-assert.equal(runtime.cinematicDuel.dataset.handoff, 'replace_previous_pair_on_render');
+assert.equal(runtime.cinematicDuel.dataset.handoff, 'ENTRY');
+assert.equal(runtime.cinematicDuel.dataset.conveyorTransition, 'ENTRY');
+assert.equal(runtime.cinematicDuel.dataset.retainedParticipants, undefined);
+assert.equal(runtime.cinematicDuel.dataset.incomingParticipants, 'P1|P4');
+assert.equal(runtime.cinematicDuel.dataset.outgoingParticipants, undefined);
+assert.equal(runtime.cinematicDuel.dataset.phase, 'attack');
+assert.equal(runtime.cinematicDuel.dataset.transition, 'ENTRY');
+assert.equal(runtime.cinematicDuel.dataset.saasunaMotionRuntime, 'gameroad.saasuna-battle-motion-core.v1');
 assert.equal(runtime.cinematicDuel.dataset.sourceCharacterId, 'partner.naki');
 assert.equal(runtime.cinematicDuel.dataset.targetCharacterId, 'partner.saasuna');
 assert.equal(runtime.cinematicDuel.dataset.vfx, 'provisional-neutral-compressed-shot');
@@ -547,6 +554,15 @@ assert.equal(cinematicSides[0].children[0].dataset.visualKind, 'character-runtim
 assert.equal(cinematicSides[0].children[0].dataset.characterId, 'partner.naki');
 assert.equal(cinematicSides[1].children[0].dataset.visualKind, 'character-runtime');
 assert.equal(cinematicSides[1].children[0].dataset.characterId, 'partner.saasuna');
+assert.equal(cinematicSides[1].children[0].dataset.motionVisualKind, 'provisional-keyframe-sheet');
+assert.equal(cinematicSides[1].children[0].dataset.provisionalArt, 'true');
+const saasunaMotionSurface = cinematicSides[1].children[0].children.find(
+  node => node.dataset.role === 'saasuna-battle-motion-surface'
+);
+assert.ok(saasunaMotionSurface);
+assert.equal(saasunaMotionSurface.dataset.motionState, 'HIT_RECOIL');
+assert.equal(saasunaMotionSurface.children[0].dataset.keyframeId, 'wind-cut');
+assert.equal(saasunaMotionSurface.children[3].hidden, false);
 assert.equal(cinematicSides[0].children[0].children[0].getAttribute('data-battle-cinematic-character'), '');
 assert.equal(cinematicSides[1].children[0].children[0].getAttribute('data-battle-cinematic-character'), '');
 assert.deepEqual(
@@ -557,6 +573,41 @@ assert.ok(cinematicCharacterCalls.some(call => call.type === 'setState' && call.
 assert.ok(cinematicCharacterCalls.some(call => call.type === 'setState' && call.characterId === 'partner.naki' && call.state === 'idle'));
 assert.ok(cinematicCharacterCalls.some(call => call.type === 'setState' && call.characterId === 'partner.saasuna' && call.state === 'idle'));
 assert.equal(cinematicCharacterCalls.some(call => call.state === 'hit' || call.state === 'defeated'), false);
+
+const attack2 = createBattleScreenModel({
+  participants,
+  plan: {
+    ...attackPlan,
+    eventId: 'attack-2',
+    transition: 'IMPACT_CARRY_RIGHT',
+    groupTargets: ['P3'],
+    publicData: { sourceId: 'P1', targetIds: ['P3'] }
+  },
+  persistentAfterstate: [],
+  returnIntent: 'MATCH_PLAN'
+});
+runtime.render(attack2);
+await Promise.resolve();
+await Promise.resolve();
+assert.equal(runtime.cinematicDuel.dataset.handoff, 'IMPACT_CARRY_RIGHT');
+assert.equal(runtime.cinematicDuel.dataset.retainedParticipants, 'P1');
+assert.equal(runtime.cinematicDuel.dataset.incomingParticipants, 'P3');
+assert.equal(runtime.cinematicDuel.dataset.outgoingParticipants, 'P4');
+assert.deepEqual(
+  runtime.cinematicDuel.children.filter(node => node.dataset.role).map(node => node.dataset.movementIntent),
+  ['REMAIN_STAGE', 'ENTER_STAGE']
+);
+
+runtime.render(attack, null, {
+  cinematicMotionByParticipant: { P4: 'KNEE_PILLOW' }
+});
+await Promise.resolve();
+await Promise.resolve();
+const explicitSaasunaSurface = runtime.cinematicDuel.children
+  .find(node => node.dataset.role === 'target')
+  .children[0].children.find(node => node.dataset.role === 'saasuna-battle-motion-surface');
+assert.equal(explicitSaasunaSurface.dataset.motionState, 'KNEE_PILLOW');
+
 assert.equal(runtime.resolutionSurface.textContent, 'EXISTING LIVE ADAPTER OWNS THIS CONTENT');
 assert.equal(runtime.resolutionSurface.dataset.battleScreenEventId, 'attack-1');
 assert.equal(runtime.resolutionSurface.dataset.battleBoardReturnDestination, undefined);
@@ -1000,10 +1051,14 @@ assert.deepEqual(BATTLE_SCREEN_RUNTIME.battlePhaseAllowedInputs, ['skip', 'publi
 assert.equal(BATTLE_SCREEN_RUNTIME.cinematicOrderAuthority, 'MODEL_CAUSAL_RETURN_PROCESSING_ORDER_ONLY_NO_SORT_OR_INFERENCE');
 assert.equal(BATTLE_SCREEN_RUNTIME.cinematicOrderVisibleCardIdText, false);
 assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelAuthority, 'MODEL_LANE_ROLE_EXACT_ONE_SOURCE_EXACT_ONE_TARGET_ONLY_NO_INFERENCE');
-assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelArt, 'EXISTING_CHARACTER_RUNTIME_EXACT_IDENTITY_WITH_CSS_PROXY_FAIL_VISIBLE_NO_NEW_ART');
-assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelReaction, 'CLEAN_IDLE_CHARACTER_PLUS_WHOLE_FIGURE_RECOIL_NO_HIT_OR_DEFEATED_STATE');
-assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelVfx, 'SEPARATE_PROVISIONAL_NEUTRAL_COMPRESSED_SHOT_NO_FORMAL_ART');
-assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelHandoff, 'RENDER_REPLACES_PREVIOUS_PAIR_NO_ORDER_INFERENCE');
+assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelArt, 'EXISTING_CHARACTER_RUNTIME_PLUS_PROVISIONAL_SAASUNA_9_KEYFRAME_SHEET_NO_FORMAL_ART');
+assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelReaction, 'EXISTING_CHARACTER_RUNTIME_PLUS_PROVISIONAL_SAASUNA_STATEFUL_REACTION_NO_GAMEPLAY_STATE');
+assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelVfx, 'PROVISIONAL_ICE_WIND_IMPACT_LAYERS_PLUS_EXISTING_NEUTRAL_SHOT_NO_FORMAL_ART');
+assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelHandoff, 'ACCEPTED_CONVEYOR_TRANSITION_PLUS_CONSECUTIVE_ACCEPTED_PAIR_CONTINUITY_NO_ORDER_INFERENCE');
+assert.equal(BATTLE_SCREEN_RUNTIME.saasunaBattleMotion, 'PRESENTATION_ONLY_9_KEYFRAME_SHEET_PLUS_CSS_TIMELINE_NO_GAMEPLAY_AUTHORITY');
+assert.deepEqual(BATTLE_SCREEN_RUNTIME.saasunaBattleMotionStates.length, 11);
+assert.deepEqual(BATTLE_SCREEN_RUNTIME.saasunaBattleMotionEffects, ['ice', 'wind', 'impact']);
+assert.equal(BATTLE_SCREEN_RUNTIME.saasunaBattleMotionFormalArt, false);
 assert.deepEqual(BATTLE_SCREEN_RUNTIME.cinematicPhaseMotion, ['reveal', 'attack', 'ability', 'compare4', 'finisher', 'settle']);
 assert.equal(BATTLE_SCREEN_RUNTIME.causalTraceAuthority, 'MODEL_CAUSAL_RETURN_STAGES_ONLY_NO_RECALCULATION');
 assert.equal(BATTLE_SCREEN_RUNTIME.causalTraceStageOrder, 'MODEL_ORDER_ONLY');
@@ -1020,8 +1075,13 @@ assert.match(portraitScreenSource, /grBattleCinematicStrike/);
 assert.match(portraitScreenSource, /data-battle-cinematic-duel/);
 assert.match(portraitScreenSource, /grBattleCinematicDuelStrike/);
 assert.match(portraitScreenSource, /grBattleCinematicDuelHit/);
-assert.match(portraitScreenSource, /EXISTING_CHARACTER_RUNTIME_EXACT_IDENTITY_WITH_CSS_PROXY_FAIL_VISIBLE_NO_NEW_ART/);
-assert.match(portraitScreenSource, /NO_HIT_OR_DEFEATED_STATE/);
+assert.match(portraitScreenSource, /grBattleCinematicDuelEnter/);
+assert.match(portraitScreenSource, /data-movement-intent/);
+assert.match(portraitScreenSource, /saasuna-battle-motion-core/);
+assert.match(portraitScreenSource, /SAASUNA_BATTLE_MOTION_RUNTIME/);
+assert.match(portraitScreenSource, /provisional-keyframe-sheet/);
+assert.match(portraitScreenSource, /PROVISIONAL_SAASUNA_9_KEYFRAME_SHEET_NO_FORMAL_ART/);
+assert.match(portraitScreenSource, /STATEFUL_REACTION_NO_GAMEPLAY_STATE/);
 assert.match(portraitScreenSource, /provisional-neutral-compressed-shot/);
 assert.match(portraitScreenSource, /grBattleCinematicCompressedShot/);
 assert.match(portraitScreenSource, /data-battle-cinematic-character/);

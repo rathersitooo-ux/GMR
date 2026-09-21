@@ -1,0 +1,62 @@
+{
+  "schema": "gameroad.preaction-authorization.v3",
+  "acquireKey": "SHOP-SAASUNA-SLEEVE-R1-20260921T1209-CODEX",
+  "taskId": "SHOP-SAFE-ECONOMY-INTEGRATION-001",
+  "workUnitKey": "SHOP_FANART_SLEEVE_COMMERCE_R1",
+  "owner": "ChatGPT / GPT-5.6 Codex / current user direct",
+  "leaseUntilJST": "2026-09-21 13:30 JST",
+  "currentMain": "521a3daf8750ccb0756045a5680f250bb6cae776",
+  "currentTree": "f3157ef88d5f8444f5183bdf765f16228dd8910d",
+  "targetBlobs": {
+    "html": "8729c080aa2c4a1247ae7fd5010819f2dbcc422a",
+    "shopRuntime": "b9378f1a8b54c9917baffec045f2088de6c1cbca",
+    "shopAdapter": "6063239b47c1ae1075461b52538b1ec78168cd37",
+    "build": "95d89ae4fa0bf6267ae6c15d04c0dae125cbaacc"
+  },
+  "image": {
+    "source": "upload/01-1000011146.png",
+    "storedAs": "assets/shop/fanart/saasuna-sleeve-snow-blue-v1.jpg",
+    "mime": "image/jpeg",
+    "width": 1152,
+    "height": 1536,
+    "sha256": "392309e2fe04e1096b2caf19bed072fe57db2895d369dda1f7488c0fd3e322c6"
+  },
+  "userAuthority": {
+    "targetUseSite": "CARD_SLEEVE",
+    "targetPartnerId": "partner.saasuna",
+    "currency": "MANII",
+    "currencyDisplayName": "マニィ",
+    "price": 50
+  },
+  "mutableScope": [
+    "browser/GAMEROAD.html",
+    "browser/shop-live-catalog-runtime.mjs",
+    "browser/shop-transaction-presentation-adapter.mjs",
+    "browser/shop-formal-catalog.mjs",
+    "browser/shop-economy-core.mjs",
+    "browser/shop-commerce-runtime.mjs",
+    "assets/shop/fanart/saasuna-sleeve-snow-blue-v1.jpg",
+    "tests/shop-live-catalog-runtime.test.mjs",
+    "tests/shop-transaction-presentation-adapter.test.mjs",
+    "tests/shop-formal-catalog.test.mjs",
+    "tests/shop-economy-core.test.mjs",
+    "tests/shop-fanart-asset.test.mjs"
+  ],
+  "readOnlyScope": [
+    "partner motion/character roster files",
+    "deploy/cloudflare/scripts/build.mjs until SAASUNA-MOTION-LIVE-R4 expiry 12:32 JST",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "Battle/gameplay/rules/save/network authorities"
+  ],
+  "boundaries": [
+    "Shop-only card/deck/person navigation is removed; cards and characters screens remain separate consumers",
+    "FanArt/sleeve is non-gameplay and does not create card ability, power, cost, or canonical card identity",
+    "normal Shop COIN and Battle Honey remain unchanged",
+    "no user listing/trading/resale",
+    "no second payment authority"
+  ],
+  "idempotency": "re-read main, branch head, and target blobs before product write; fail-closed on mismatch",
+  "rollback": "close unmerged branch and delete transient witness; no main write before required gates",
+  "productWrite": false,
+  "createdAtJST": "2026-09-21 12:09 JST"
+}

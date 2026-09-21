@@ -1144,3 +1144,22 @@ test('vote safe-dismiss auto-installs before Cards inspector dismiss so the fron
   assert.ok(vote >= 0 && inspector > vote);
 });
 
+test('Cards findability controls use angular visual states without shrinking semantic hit targets', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('gameroad-cards-deck-findability-style');
+  const end = source.indexOf('let deckFilter =', start);
+  assert.ok(start >= 0 && end > start);
+  const css = source.slice(start, end);
+
+  assert.match(css, /clip-path:polygon\(7px 0,100% 0,calc\(100% - 7px\) 100%,0 100%\)/);
+  assert.doesNotMatch(css, /border-radius:999px/);
+  assert.match(css, /button:active::before/);
+  assert.match(css, /button:focus-visible/);
+  assert.match(css, /button\[aria-pressed="true"\]::before/);
+  assert.match(css, /min-height:44px/);
+  assert.match(css, /font-variant-numeric:tabular-nums/);
+  assert.match(css, /prefers-reduced-motion:reduce/);
+  assert.match(css, /html\.r10LowPerf/);
+  assert.equal(css.includes('addEventListener'), false);
+});

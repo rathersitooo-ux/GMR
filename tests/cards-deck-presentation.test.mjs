@@ -10,6 +10,8 @@ import {
   createDeckSwipeFeedbackDetail,
   createDeckSwipePresentationController,
   createDeckSwipeSfxPlayer,
+  DECK_SWIPE_PRECOMMIT_FEEDBACK,
+  createDeckSwipePrecommitVisual,
   isNeutralizedDeckEditorSwipe,
   presentDeckAddSwipe,
   installCardsInspectorDismissInteractions,
@@ -146,6 +148,77 @@ test('neutralized card left-swipe is explicitly recognized for follow-up click s
   assert.equal(isNeutralizedDeckEditorSwipe({ action: 'none', consumed: true }), true);
   assert.equal(isNeutralizedDeckEditorSwipe({ action: 'none' }), false);
   assert.equal(isNeutralizedDeckEditorSwipe({ action: 'deck-add', consumed: true }), false);
+});
+
+test('precommit touch feedback stays dormant for taps and vertical scroll but grows toward the real swipe threshold', () => {
+  assert.equal(DECK_SWIPE_PRECOMMIT_FEEDBACK.thresholdPx, 56);
+  assert.equal(createDeckSwipePrecommitVisual({
+    surface: 'collection', deltaX: 6, deltaY: 1,
+  }).active, false);
+  assert.equal(createDeckSwipePrecommitVisual({
+    surface: 'collection', deltaX: 28, deltaY: 30,
+  }).active, false);
+  assert.equal(createDeckSwipePrecommitVisual({
+    surface: 'collection', deltaX: -40, deltaY: 0,
+  }).active, false);
+
+  const preview = createDeckSwipePrecommitVisual({
+    surface: 'collection', deltaX: 30, deltaY: 2,
+  });
+  assert.equal(preview.active, true);
+  assert.equal(preview.ready, false);
+  assert.ok(preview.progress > 0 && preview.progress < 1);
+  assert.ok(preview.translateX > 0 && preview.translateX < DECK_SWIPE_PRECOMMIT_FEEDBACK.maxTranslatePx);
+  assert.ok(preview.rotateDeg > 0 && preview.rotateDeg < DECK_SWIPE_PRECOMMIT_FEEDBACK.maxRotateDeg);
+
+  const ready = createDeckSwipePrecommitVisual({
+    surface: 'collection', deltaX: 60, deltaY: 4,
+  });
+  assert.equal(ready.ready, true);
+  assert.equal(ready.progress, 1);
+  assert.equal(ready.translateX, DECK_SWIPE_PRECOMMIT_FEEDBACK.maxTranslatePx);
+
+  const remove = createDeckSwipePrecommitVisual({
+    surface: 'deck', deltaX: -60, deltaY: 4,
+  });
+  assert.equal(remove.active, true);
+  assert.equal(remove.ready, true);
+  assert.ok(remove.translateX < 0);
+});
+
+test('precommit feedback keeps a non-spatial cue for Reduced Motion and halves movement in low-perf mode', () => {
+  const normal = createDeckSwipePrecommitVisual({
+    surface: 'collection', deltaX: 60, deltaY: 0,
+  });
+  const lowPerf = createDeckSwipePrecommitVisual({
+    surface: 'collection', deltaX: 60, deltaY: 0, lowPerf: true,
+  });
+  const reduced = createDeckSwipePrecommitVisual({
+    surface: 'collection', deltaX: 60, deltaY: 0, reducedMotion: true,
+  });
+  assert.ok(Math.abs(lowPerf.translateX) < Math.abs(normal.translateX));
+  assert.ok(lowPerf.glowOpacity > 0);
+  assert.equal(reduced.active, true);
+  assert.equal(reduced.ready, true);
+  assert.equal(reduced.translateX, 0);
+  assert.equal(reduced.rotateDeg, 0);
+  assert.equal(reduced.scale, 1);
+  assert.ok(reduced.glowOpacity > 0);
+});
+
+test('live swipe consumer coalesces pointermove feedback and always removes it on cancel/destroy', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('export function installDeckStorageLiveMount');
+  const end = source.indexOf('const cardsInspectorDismissInstallations', start);
+  const live = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.match(live, /addEventListener\('pointermove', onPointerMove, false\)/);
+  assert.match(live, /requestAnimationFrame/);
+  assert.match(live, /clearPrecommitFeedback\(current\)/);
+  const moveStart = live.indexOf('const onPointerMove');
+  const moveEnd = live.indexOf('const onPointerUp', moveStart);
+  assert.equal(live.slice(moveStart, moveEnd).includes('preventDefault'), false);
 });
 
 test('rect normalization preserves usable centers without trusting right/bottom', () => {

@@ -228,5 +228,7 @@ test('Records selection feedback uses the generated four-frame effect without ch
   assert.match(source, /animation:gameroadRecordsSelectionSweep/);
   assert.match(source, /@media\(prefers-reduced-motion:reduce\)/);
   assert.match(source, /background-position:50% 50%;opacity:\.18/);
+  assert.match(source, /html\.r10LowPerf\{--records-selection-sweep-alpha:\.44\}/);
+  assert.match(source, /html\.r10Reduced\{--records-selection-sweep-alpha:\.26\}/);
   assert.match(source, /data-records-selectable="true"]\{position:relative/);
 });

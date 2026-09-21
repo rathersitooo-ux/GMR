@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CAUSAL-TIMELINE-R1-20260921T2257-SOL",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CINEMATIC_CAUSAL_TIMELINE_R1",
+  "acquireKey": "BATTLE-CAUSAL-TIMELINE-R1-20260921T2257-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FE8_ACTUAL_PLUS_TACTICALSLASH_CAUSAL_PHASE_EVIDENCE_AND_CURRENT_PARALLEL_620MS_GAP",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "UIVIS_ART_BTL_036_PLUS_PR2010_MAIN_SEAM",
+  "proceedToken": "PROCEED|BATTLE-CAUSAL-TIMELINE-R1-20260921T2257-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-cinematic-causal-timeline|runtime-test|active-lease",
+  "authorizationBaseSha": "3ef23d5d5b7257661399565b4638295d385f74b7",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CINEMATIC_CAUSAL_TIMELINE_R1",
+  "leaseAcquireKey": "BATTLE-CAUSAL-TIMELINE-R1-20260921T2257-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 22:57 JST",
+  "leaseUntilJst": "2026-09-21 23:57 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES row20",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR fresh branch sol/battle-causal-timeline-r1-20260921; new browser/battle-cinematic-causal-timeline-core.mjs; new tests/battle-cinematic-causal-timeline-core.test.mjs; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; own transient PRE_ACTION witness. Naki/Saasuna motion files, GAMEROAD.html, gameplay/rules/save/network/formal art READ_ONLY. Image generation prohibited.",
+  "solutionSignature": "BATTLE_CINEMATIC_CAUSAL_PHASE_SCHEDULER_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "UIVIS_SRC_142_151_ART_BTL_036_CURRENT_MAIN_3EF23D5",
+  "solutionSearchEvidence": [
+    "Current battle runtime still starts source strike, compressed-shot VFX, impact line and target hit in the same CSS animation window.",
+    "FE8 actual separates actor pose holds, sound/action calls, HP wait and opposite-turn transition; Tactical Slash public implementation separates wind-up, release, impact, hit-stop, reaction and recovery.",
+    "The scheduler will be presentation-only and will not recalculate battle results or change gameplay authority.",
+    "Reduced-motion/low-performance states must preserve a static readable result without spatial motion.",
+    "Existing Naki/Saasuna motion implementations remain read-only in this WorkUnit."
+  ],
+  "scope": [
+    "browser/battle-cinematic-causal-timeline-core.mjs",
+    "tests/battle-cinematic-causal-timeline-core.test.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-cinematic-causal-timeline-core.mjs",
+    "tests/battle-cinematic-causal-timeline-core.test.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

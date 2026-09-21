@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-SETUP-ACTION-SPRITE-CONSUMER-R1-20260921T1135-CODEX",
+  "taskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "workUnitKey": "HOME_SETUP_ACTION_STATE_SPRITE_CONSUMER_R1",
+  "acquireKey": "HOME-SETUP-ACTION-SPRITE-CONSUMER-R1-20260921T1135-CODEX",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "UI-PRESENTATION-FX-QUALITY-001/HOME_SETUP_ACTION_STATE_SPRITE_CONSUMER_R1/PREDICTED_STATE_AWARE_OVERLAY",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "existing-setup-start-match-consumer-and-home-presentation-focused-test-readback-20260921T1135",
+  "proceedToken": "PROCEED|HOME-SETUP-ACTION-SPRITE-CONSUMER-R1-20260921T1135-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|20260921T1135",
+  "authorizationBaseSha": "f55cc664dbaaa9af3e6614fc8ad405f7172ebfa6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "leaseWorkUnitKey": "HOME_SETUP_ACTION_STATE_SPRITE_CONSUMER_R1",
+  "leaseAcquireKey": "HOME-SETUP-ACTION-SPRITE-CONSUMER-R1-20260921T1135-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 11:35 JST",
+  "leaseUntilJst": "2026-09-21 12:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A24:L24",
+  "leaseExactMutableResources": "browser/home-shell-presentation-core.mjs; tests/home-boot-presentation.test.mjs; assets/visual/effects/setup-action-state-light-sprite-v1.png; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback",
+  "scope": [
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "assets/visual/effects/setup-action-state-light-sprite-v1.png"
+  ],
+  "leaseScope": [
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "assets/visual/effects/setup-action-state-light-sprite-v1.png"
+  ],
+  "solutionSignature": "existing Home setup primary action layered with a transparent state-aware light sprite",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "UI-PRESENTATION-FX-QUALITY-001/HOME_SETUP_ACTION_STATE_SPRITE_CONSUMER_R1/REUSE_CHECK",
+  "solutionSearchEvidence": [
+    "actual consumer: browser/home-shell-presentation-core.mjs styles section[data-screen=setup] #startMatch",
+    "existing behavior: the consumer already distinguishes hover, active, focus-visible, disabled, reduced-motion, and low-performance states",
+    "visual reference: current-site.png is an actual GAMEROAD Home capture with glossy colored action controls",
+    "generated output is effect-only: no text, icon, button chrome, scene, or DOM replacement",
+    "no GAMEROAD.html mutation, no second UI engine, and no gameplay/save/network overlap"
+  ],
+  "sourceGeneratedPath": "/workspace/scratch/4e0decd8fa4f/generated_images/exec-b4ec6908-7c8e-4c47-b0d6-23facf1446a2.png",
+  "runtimeAssetPath": "assets/visual/effects/setup-action-state-light-sprite-v1.png",
+  "deterministicProcessing": "Normalized to 1088x362 with RGBA alpha preserved; four equal horizontal frames retained for background-position state mapping.",
+  "intendedMutation": "Adapt only the existing Home shell presentation CSS so the real #startMatch control receives a non-interactive transparent light overlay. Use the generated frames for idle, hover/focus, and pressed states; keep disabled visually off and preserve reduced-motion/low-performance fallbacks.",
+  "acceptance": [
+    "main consumer references the exact versioned sprite URL and four-frame identity",
+    "overlay is pointer-events none, does not replace button text or chrome, and preserves hit testing",
+    "hover/focus/pressed use visible sprite states while disabled/off hides the effect safely",
+    "reduced-motion and low-performance branches remove the sprite animation safely",
+    "existing Home presentation test verifies asset identity, state selectors, and safety boundaries",
+    "Required Gate passes; browser visual claim is reported only after direct inspection"
+  ],
+  "rollback": "Revert the integration PR or remove only the sprite pseudo-element rules, leaving the existing #startMatch layout, text, hit area, and state transitions intact.",
+  "createdAtJst": "2026-09-21 11:35 JST"
+}

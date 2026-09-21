@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-FINDABILITY-PACKAGE-R2-20260922-SOL",
+  "taskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "workUnitKey": "CARDS_FINDABILITY_PUBLIC_PACKAGE_R2",
+  "acquireKey": "CARDS-FINDABILITY-PACKAGE-R2-20260922T0325-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "STALE_PR2011_DIFF_PORTABLE_WITH_BUILD_TEST_OWNER_SPLIT",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "MAIN_00966A1_TARGET_BLOB_AND_PR2011_DIFF_READBACK",
+  "proceedToken": "PROCEED|CARDS-FINDABILITY-PACKAGE-R2-20260922-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|cards-findability|package-registration",
+  "authorizationBaseSha": "00966a1ef78330ebedb61671687108158aee8003",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "leaseWorkUnitKey": "CARDS_FINDABILITY_PUBLIC_PACKAGE_R2",
+  "leaseAcquireKey": "CARDS-FINDABILITY-PACKAGE-R2-20260922T0325-SOL",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A173:N173",
+  "leaseUntilJst": "2026-09-22 04:25 JST",
+  "solutionSignature": "CARDS_FINDABILITY_PRESENTATION_AND_PACKAGE_R2",
+  "reuseDisposition": "REPAIR",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "PR #2011 preserves the intended Cards findability presentation, 44px touch targets, 176ms one-shot focus cue, Reduced Motion and LowPerf fallbacks.",
+    "Fresh main 00966a1 changed build.mjs and build.test.mjs since the donor merge-base, but did not change cards-deck-presentation.mjs or tests/cards-deck-presentation.test.mjs.",
+    "Active BATTLE-CARD-CENTER-HERO-COMPARE-R3 owns deploy/cloudflare/tests/build.test.mjs through 03:47 JST, so this successor excludes that file and stops before package-test/merge.",
+    "The generated PNG is reused byte-exact from donor PR #2011; no image generation is performed."
+  ],
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "assets/visual/effects/cards-findability-focus-sprite-v1.png",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "assets/visual/effects/cards-findability-focus-sprite-v1.png",
+    "deploy/cloudflare/scripts/build.mjs"
+  ]
+}

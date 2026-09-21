@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-ONE-PER-TURN-R1-20260921T2348-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_ONE_PER_TURN_AND_HAND_REJOIN_R1",
+  "acquireKey": "BATTLE-JANKEN-ONE-PER-TURN-R1-20260921T2348-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_DIRECT_JANKEN_ONE_PER_TURN_PLUS_CURRENT_RUNTIME_DIFF_R1",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_LIVE_CONSUMER_ADAPTATION_PLUS_FOCUSED_REGRESSION_TESTS_R1",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-ONE-PER-TURN-R1-20260921T2348-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|USER_DIRECT_R1",
+  "authorizationBaseSha": "ee0a913ec11b533b621adc0d1c0f3344b739879b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_ONE_PER_TURN_AND_HAND_REJOIN_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-ONE-PER-TURN-R1-20260921T2348-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 23:48 JST",
+  "leaseUntilJst": "2026-09-22 00:48 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A174:L174",
+  "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; data/preaction-authorizations/BATTLE-JANKEN-ONE-PER-TURN-R1-20260921T2348-SOL.json create/delete only; GAMEROAD 全作業一覧!Y1374 append-only USER_DIRECT source trace; own fresh branch/PR/check/merge/readback; browser/GAMEROAD.html READ_ONLY; gameplay/save/network/other Battle rules READ_ONLY; no second turn/janken authority",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "intent": "One janken card per turn; after accepted use, hide janken selection controls for that turn and release remaining reserved cards back to the ordinary hand.",
+  "nonRegression": [
+    "keep GAMEROAD.html read-only",
+    "preserve existing hand-card execution authority",
+    "do not create second turn or janken authority"
+  ]
+}

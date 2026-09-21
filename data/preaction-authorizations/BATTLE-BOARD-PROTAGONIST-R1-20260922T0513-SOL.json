@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-PROTAGONIST-R1-20260922T0513-SOL",
+  "taskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "workUnitKey": "BATTLE_ACTUAL_BOARD_PROTAGONIST_HIERARCHY_R1",
+  "acquireKey": "BATTLE-BOARD-PROTAGONIST-R1-20260922T0513-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_LEASE_A5_L5_PLUS_R1_DIFF_REVIEW_20260922T0513JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R1_BRANCH_DIFF_AND_EXISTING_CINEMATIC_DISPLAY_OVERRIDE",
+  "proceedToken": "PROCEED|BATTLE-BOARD-PROTAGONIST-R1-20260922T0513-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|board-protagonist|presentation-only|active-lease",
+  "authorizationBaseSha": "7c385f22c5faf2cbfb6f8508986c2469251fe718",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "leaseWorkUnitKey": "BATTLE_ACTUAL_BOARD_PROTAGONIST_HIERARCHY_R1",
+  "leaseAcquireKey": "BATTLE-BOARD-PROTAGONIST-R1-20260922T0513-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-22 05:13 JST",
+  "leaseUntilJst": "2026-09-22 06:13 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; own transient PRE_ACTION witness; own fresh branch/PR/check/readback. browser/battle-current-player-ui-runtime.mjs READ_ONLY; browser/GAMEROAD.html READ_ONLY; gameplay/rules/save/economy/network/card data READ_ONLY",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

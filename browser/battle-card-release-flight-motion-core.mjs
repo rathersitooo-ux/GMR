@@ -105,6 +105,7 @@ function heroFrame(geometry, offset) {
   const heroSpan = Math.max(0.001, BATTLE_CARD_RELEASE_FLIGHT_HERO_HOLD_END_OFFSET - BATTLE_CARD_RELEASE_FLIGHT_ARRIVAL_OFFSET);
   const heroProgress = Math.max(0, Math.min(1, (offset - BATTLE_CARD_RELEASE_FLIGHT_ARRIVAL_OFFSET) / heroSpan));
   const settle = smoothDepth(heroProgress);
+  const reveal = smoothDepth(Math.min(1, heroProgress / 0.4));
   const heroScale = 0.82 + (0.30 * Math.min(1, heroProgress / 0.43));
   const settledScale = heroProgress <= 0.43
     ? heroScale
@@ -115,7 +116,7 @@ function heroFrame(geometry, offset) {
     y: geometry.dy,
     rotationDeg: 0,
     scale: settledScale,
-    opacity: 0.82 + (0.18 * settle),
+    opacity: 0.82 + (0.18 * reveal),
     blurPx: Math.max(0, 0.34 * (1 - settle)),
     brightness: 1.42 - (0.32 * settle),
   });

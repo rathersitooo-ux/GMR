@@ -264,32 +264,33 @@ jobs:
           HTTP_CODE="${PROBE_RESULT##*$'\n'}"
           PROBE_BODY="${PROBE_RESULT%$'\n'*}"
           if [[ "$HTTP_CODE" != "200" ]]; then
-            SAFE_STATE="$(PROBE_BODY="$PROBE_BODY" node <<'NODE'
-            const allowed = new Set([
-              'not_configured',
-              'invalid_request',
-              'provider_auth_rejected',
-              'provider_access_rejected',
-              'provider_rate_limited',
-              'provider_request_rejected',
-              'provider_unavailable',
-              'provider_invalid',
-            ]);
-            let safeState = 'unknown';
-            try {
-              const response = JSON.parse(process.env.PROBE_BODY || '');
-              if (
-                response
-                && typeof response === 'object'
-                && response.ok === false
-                && typeof response.state === 'string'
-                && allowed.has(response.state)
-              ) {
-                safeState = response.state;
-              }
-            } catch {}
-            process.stdout.write(safeState);
-            NODE
+            SAFE_STATE="$(
+              PROBE_BODY="$PROBE_BODY" node -e '
+                const allowed = new Set([
+                  "not_configured",
+                  "invalid_request",
+                  "provider_auth_rejected",
+                  "provider_access_rejected",
+                  "provider_rate_limited",
+                  "provider_request_rejected",
+                  "provider_unavailable",
+                  "provider_invalid",
+                ]);
+                let safeState = "unknown";
+                try {
+                  const response = JSON.parse(process.env.PROBE_BODY || "");
+                  if (
+                    response
+                    && typeof response === "object"
+                    && response.ok === false
+                    && typeof response.state === "string"
+                    && allowed.has(response.state)
+                  ) {
+                    safeState = response.state;
+                  }
+                } catch {}
+                process.stdout.write(safeState);
+              '
             )"
             echo "::error::Public Saasuna provider probe returned HTTP ${HTTP_CODE} state=${SAFE_STATE}"
             exit 1

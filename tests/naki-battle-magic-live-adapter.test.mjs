@@ -5,6 +5,7 @@ import {
   NAKI_BATTLE_MAGIC_LIVE_ADAPTER_RUNTIME,
   createNakiBattleMagicLiveAdapter,
   isExactNakiBattleCharacterMatch,
+  resolveNakiBattleMagicCausalState,
 } from '../browser/naki-battle-magic-live-adapter.mjs';
 
 function fakeDocument({ reducedMotion = false } = {}) {
@@ -207,6 +208,51 @@ test('default adapter composes with the merged Naki motion core in reduced-motio
   adapter.destroy();
 });
 
+
+test('causal timeline phases map to Naki-specific source and target motion states', () => {
+  assert.equal(resolveNakiBattleMagicCausalState({ causalPhase: 'stance', role: 'source', actionPhase: 'attack' }), 'IDLE_HEART_MOON');
+  assert.equal(resolveNakiBattleMagicCausalState({ causalPhase: 'anticipation', role: 'source', actionPhase: 'attack' }), 'MIC_SPELLCAST');
+  assert.equal(resolveNakiBattleMagicCausalState({ causalPhase: 'release', role: 'source', actionPhase: 'attack' }), 'SLASH_TURN');
+  assert.equal(resolveNakiBattleMagicCausalState({ causalPhase: 'release', role: 'source', actionPhase: 'ability' }), 'HEART_RELEASE');
+  assert.equal(resolveNakiBattleMagicCausalState({ causalPhase: 'impact', role: 'source', actionPhase: 'attack' }), 'IMPACT_HEART');
+  assert.equal(resolveNakiBattleMagicCausalState({ causalPhase: 'reaction', role: 'target', actionPhase: 'attack' }), 'HIT_RECOIL');
+  assert.equal(resolveNakiBattleMagicCausalState({ causalPhase: 'return', role: 'target', actionPhase: 'attack' }), 'IDLE_HEART_MOON');
+});
+
+test('adapter exposes causal-phase application without re-running gameplay logic', () => {
+  const calls = [];
+  const adapter = createNakiBattleMagicLiveAdapter({
+    host: { dataset: {} },
+    characterId: 'naki-current',
+    nakiCharacterId: 'naki-current',
+    role: 'source',
+    phase: 'attack',
+    createMotionController: () => ({
+      setState(input) {
+        calls.push(input);
+        return input;
+      },
+      destroy() {},
+    }),
+  });
+  assert.deepEqual(adapter.applyCausalPhase({ causalPhase: 'anticipation' }), {
+    role: 'source',
+    phase: 'attack',
+    motionState: 'MIC_SPELLCAST',
+  });
+  assert.deepEqual(adapter.applyCausalPhase({ causalPhase: 'release' }), {
+    role: 'source',
+    phase: 'attack',
+    motionState: 'SLASH_TURN',
+  });
+  assert.deepEqual(adapter.applyCausalPhase({ causalPhase: 'impact' }), {
+    role: 'source',
+    phase: 'attack',
+    motionState: 'IMPACT_HEART',
+  });
+  assert.equal(calls.length, 3);
+});
+
 test('runtime contract keeps adapter presentation-only and independent of Saasuna', () => {
   const runtime = NAKI_BATTLE_MAGIC_LIVE_ADAPTER_RUNTIME;
   assert.equal(runtime.identityPolicy, 'CALLER_EXPLICIT_EXACT_CHARACTER_ID_MATCH_ONLY');
@@ -219,6 +265,8 @@ test('runtime contract keeps adapter presentation-only and independent of Saasun
   assert.equal(runtime.networkAuthority, false);
   assert.equal(runtime.saasunaMotionReuse, false);
   assert.equal(runtime.motionRuntime, 'gameroad.naki-battle-magic-motion-core.v1');
+  assert.equal(runtime.causalTimelineCompatible, true);
+  assert.deepEqual(runtime.causalPhaseOrder, ['stance', 'anticipation', 'release', 'impact', 'reaction', 'return']);
   assert.deepEqual(runtime.passthrough, [
     'role',
     'motion',

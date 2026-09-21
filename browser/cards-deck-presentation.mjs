@@ -727,9 +727,11 @@ function installCardsSelectionFeedbackStyles(doc) {
 .gr-cards-selection-confirm-sprite{position:absolute;inset:-14%;pointer-events:none;background-image:url("${CARDS_FINDABILITY_FOCUS_SPRITE_ASSET_URL}");background-repeat:no-repeat;background-size:400% 200%;background-position:0% 0%;mix-blend-mode:screen;opacity:0;transform-origin:center center;animation:grCardsSelectionSprite 176ms steps(1,end) forwards}
 @keyframes grCardsSelectionSprite{0%,12.49%{background-position:0% 0%;opacity:0;transform:scale(.86) rotate(-8deg)}12.5%,24.99%{background-position:33.333% 0%;opacity:.96;transform:scale(.94) rotate(-4deg)}25%,37.49%{background-position:66.667% 0%;opacity:.92;transform:scale(.99) rotate(-2deg)}37.5%,49.99%{background-position:100% 0%;opacity:.86;transform:scale(1.01) rotate(0deg)}50%,62.49%{background-position:0% 100%;opacity:.74;transform:scale(1.02) rotate(2deg)}62.5%,74.99%{background-position:33.333% 100%;opacity:.58;transform:scale(1.03) rotate(3deg)}75%,87.49%{background-position:66.667% 100%;opacity:.36;transform:scale(1.04) rotate(5deg)}87.5%,99.99%{background-position:100% 100%;opacity:.16;transform:scale(1.05) rotate(7deg)}100%{background-position:100% 100%;opacity:0;transform:scale(1.06) rotate(8deg)}}
 body.low-perf .gr-cards-selection-confirm-sprite,html.low-perf .gr-cards-selection-confirm-sprite{display:none}
+.gr-cards-selection-confirm-glow[data-cards-selection-low-perf="true"] .gr-cards-selection-confirm-sprite{display:none}
 @media(prefers-reduced-motion:reduce){.gr-cards-selection-confirm-sprite{background-image:none;animation:none;opacity:0!important}.screen.cards #collectionGrid [data-id].gr-cards-selection-press{transform:none!important}}
 @keyframes grCardsSelectionConfirm{0%{opacity:0;transform:scale(.985)}32%{opacity:.92;transform:scale(1.012)}100%{opacity:0;transform:scale(1.025)}}
 body.low-perf .gr-cards-selection-confirm-glow,html.low-perf .gr-cards-selection-confirm-glow{background:transparent;box-shadow:none;animation-duration:140ms}
+.gr-cards-selection-confirm-glow[data-cards-selection-low-perf="true"]{background:transparent;box-shadow:none;animation-duration:140ms}
 @media(prefers-reduced-motion:reduce){.gr-cards-selection-press{translate:0 0!important;scale:1!important;transition:none!important}.gr-cards-selection-confirm-glow{background:transparent;box-shadow:none;animation:grCardsSelectionConfirmReduced 120ms linear forwards}@keyframes grCardsSelectionConfirmReduced{0%{opacity:0}35%{opacity:.9}100%{opacity:0}}}
 `;
   (doc.head ?? doc.documentElement)?.appendChild?.(style);
@@ -784,6 +786,7 @@ export function installCardsSelectionPressReleaseFeedback({
     glow.style.width = `${rect.width}px`;
     glow.style.height = `${rect.height}px`;
     glow.style.animationDuration = `${profile.confirmMs}ms`;
+    glow.setAttribute?.('data-cards-selection-low-perf', profile.softGlow ? 'false' : 'true');
     const sprite = doc.createElement('span');
     sprite.className = 'gr-cards-selection-confirm-sprite';
     sprite.setAttribute?.('aria-hidden', 'true');

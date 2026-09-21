@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-CONVO-PROVIDER-PROD-R3-20260921T1257-SOL-Q8N4V90",
+  "taskId": "PARTNER-FUTURE-LLM-DIALOGUE-RESEARCH-001",
+  "workUnitKey": "PARTNER_CONVERSATION_PROVIDER_PRODUCTION_CONFIG_R1",
+  "acquireKey": "PARTNER-CONVO-PROVIDER-PROD-R1-20260921T0406-SOL-Q8N4V90",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R2_WORKFLOW_ONLY_DIFF_PUBLIC_PROVIDER_CONFIG_BOUNDARY_CHECKED_20260921",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_WS_RESPONSE_SHAPE_AND_WRANGLER_DOCS_20260921",
+  "proceedToken": "PROCEED|PARTNER-CONVO-PROVIDER-PROD-R3-20260921T1257-SOL-Q8N4V90|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-cloudflare-deploy-path|secret-sync-only|bounded-public-probe",
+  "authorizationBaseSha": "483f3e41ace711d6a2eff00ea834cbd025519972",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-FUTURE-LLM-DIALOGUE-RESEARCH-001",
+  "leaseWorkUnitKey": "PARTNER_CONVERSATION_PROVIDER_PRODUCTION_CONFIG_R1",
+  "leaseAcquireKey": "PARTNER-CONVO-PROVIDER-PROD-R1-20260921T0406-SOL-Q8N4V90",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 12:57 JST",
+  "leaseUntilJst": "2026-09-21 13:57 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A15:L15",
+  "leaseExactMutableResources": ".github/workflows/cloudflare-public-deploy.yml; Cloudflare Pages gameroad-browser-r5 secrets CONVAI_API_KEY + CONVAI_SAASUNA_CHARACTER_ID via existing GitHub secret source only; own fresh branch/PR/check/merge/readback/public POST; deploy/cloudflare/functions/ws.js READ_ONLY; browser/board-facility-runtime-mount.mjs READ_ONLY active Partner feedback owner; browser/GAMEROAD.html READ_ONLY active Battle owner",
+  "solutionSignature": "EXISTING_CLOUDFLARE_PUBLIC_DEPLOY_WORKFLOW_CONVAI_SECRET_SYNC_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_LEASE_PREACTION_EXISTING_WORKFLOW_OWNER_R1",
+  "solutionSearchEvidence": [
+    "Existing deploy workflow already owns the Cloudflare Pages production deployment and Cloudflare credential gate.",
+    "Existing deploy/cloudflare/functions/ws.js is the sole Partner conversation provider route and already returns the bounded success shape.",
+    "Cloudflare's official Wrangler Pages command supports pages secret put with --project-name; no second provider or router is needed.",
+    "The intended diff adds only secret synchronization and a conditional public probe; browser/game/dialogue/memory/rules/save code remains read-only."
+  ],
+  "scope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ]
+}

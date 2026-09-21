@@ -377,6 +377,8 @@ test('RANK-MATCH-R5 reaches waiting, loads generated chrome, and edits only the 
   });
 
   const { setup, battle, waiting } = await enterRankMatchWaitingEvidence(page);
+  const stagedAnimationNames = await waiting.locator('.rankWaitingPanel,.rankWaitingPartnerRail,.rankWaitingCopy,.rankWaitingActions').evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).animationName));
+  expect(stagedAnimationNames).toEqual(['gameroadRankWaitingPanelIn', 'gameroadRankWaitingStageIn', 'gameroadRankWaitingStageIn', 'gameroadRankWaitingStageIn']);
   await attachStateScreenshot(page, testInfo, 'rank-waiting-surface');
 
   for (const asset of [
@@ -439,8 +441,10 @@ test('RANK-MATCH-R5 honors reduced motion without losing the waiting flow', asyn
   const { waiting } = await enterRankMatchWaitingEvidence(page);
   const vfxAnimation = await waiting.locator('.rankWaitingVfx').evaluate((node) => getComputedStyle(node).animationName);
   const pulseAnimation = await waiting.locator('.rankWaitingStatus').evaluate((node) => getComputedStyle(node, '::before').animationName);
+  const stagedAnimationNames = await waiting.locator('.rankWaitingPanel,.rankWaitingPartnerRail,.rankWaitingCopy,.rankWaitingActions').evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).animationName));
   expect(vfxAnimation).toBe('none');
   expect(pulseAnimation).toBe('none');
+  expect(stagedAnimationNames).toEqual(['none', 'none', 'none', 'none']);
 });
 
 test('captures success-state screenshots for current pointer navigation', async ({ page }, testInfo) => {

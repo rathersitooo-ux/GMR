@@ -86,6 +86,6 @@ test('live GAMEROAD routes gameplay phase writes through the guarded transition 
 
 test('live battle presentation settle is not promoted into a gameplay phase', async () => {
   const html = await readFile(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
-  assert.match(html, /setBattlePresentation\('settle'/);
+  assert.match(html, /battlePresentation=\{stage:'settle'/);
   assert.doesNotMatch(html, /setBattleTurnPhase\(m,'settle'/);
 });

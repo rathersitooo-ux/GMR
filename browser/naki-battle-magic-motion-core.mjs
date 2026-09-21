@@ -217,7 +217,7 @@ function ensureSurface(doc, host) {
   surface.appendChild(crescent);
   surface.appendChild(impact);
   host.appendChild(surface);
-  return deepFreeze({ surface, moon, hearts, voice, slash, crescent, impact });
+  return Object.freeze({ surface, moon, hearts, voice, slash, crescent, impact });
 }
 
 function applyProfile(host, layers, motion, profile, reducedMotion) {

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CINEMATIC-MOTION-ROUTER-R1-20260921T2353-SOL",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CINEMATIC_CHARACTER_MOTION_ROUTER_R1",
+  "acquireKey": "BATTLE-CINEMATIC-MOTION-ROUTER-R1-20260921T2353-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "MERGED_NAKI_LIVE_ADAPTER_PLUS_SAASUNA_MOTION_CORE_EXACT_API_READBACK",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_MAIN_EE0A913_CAUSAL_TIMELINE_BOUND_AND_NONOVERLAP_ROUTER_SCOPE",
+  "proceedToken": "PROCEED|BATTLE-CINEMATIC-MOTION-ROUTER-R1-20260921T2353-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-cinematic-character-motion-router|focused-test|active-lease",
+  "authorizationBaseSha": "ee0a913ec11b533b621adc0d1c0f3344b739879b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CINEMATIC_CHARACTER_MOTION_ROUTER_R1",
+  "leaseAcquireKey": "BATTLE-CINEMATIC-MOTION-ROUTER-R1-20260921T2353-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 23:59 JST",
+  "leaseUntilJst": "2026-09-22 00:53 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-cinematic-motion-router-r1-20260921; browser/battle-cinematic-character-motion-router.mjs; tests/battle-cinematic-character-motion-router.test.mjs; own transient data/preaction-authorizations/BATTLE-CINEMATIC-MOTION-ROUTER-R1-20260921T2353-SOL.json only. browser/battle-screen-runtime-mount.mjs, causal timeline files, Naki/Saasuna core files, gameplay/rules/save/network/formal art READ_ONLY.",
+  "solutionSignature": "BATTLE_CINEMATIC_CHARACTER_MOTION_ROUTER_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "NAKI_LIVE_ADAPTER_494C0C9_PLUS_SAASUNA_CORE_0D459BC_PLUS_CAUSAL_TIMELINE_MAIN_EE0A913",
+  "solutionSearchEvidence": [
+    "Current main already provides createNakiBattleMagicLiveAdapter with exact caller-supplied Naki identity matching and causal-phase support.",
+    "Current main already provides createSaasunaBattleMotionController with exact partner.saasuna identity rejection and presentation-only state control.",
+    "A standalone router can compose these two existing controllers without modifying either character runtime or the shared Battle mount.",
+    "Naki route must be attempted only through its existing exact-ID adapter; the router must not trim, normalize, guess, or default Naki identity.",
+    "Unknown characters must fail closed and gameplay/result/board/save/network authority remains absent."
+  ],
+  "scope": [
+    "browser/battle-cinematic-character-motion-router.mjs",
+    "tests/battle-cinematic-character-motion-router.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-cinematic-character-motion-router.mjs",
+    "tests/battle-cinematic-character-motion-router.test.mjs"
+  ]
+}

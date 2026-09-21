@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RANK-MATCH-WAITING-VISUAL-R8-SCENE-FRAME-20260922-SOL",
+  "taskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "workUnitKey": "RANK_MATCH_FLOW_AND_PARTNER_PICKER_R1",
+  "acquireKey": "RANK-MATCH-WAITING-VISUAL-R8-20260922T0339-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "SHORT_LANDSCAPE_PANEL_OCCUPIES_97_PERCENT_VIEWPORT_AS_NESTED_FRAME",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_SOURCE_EXACT_GEOMETRY_PLUS_UIVIS_GRAM013_GRAM017_AND_SHADOWVERSE_OFFICIAL_SCREEN_COMPARE",
+  "proceedToken": "PROCEED|RANK-MATCH-WAITING-VISUAL-R8-SCENE-FRAME-20260922-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|short-landscape|scene-frame",
+  "authorizationBaseSha": "00966a1ef78330ebedb61671687108158aee8003",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "leaseWorkUnitKey": "RANK_MATCH_FLOW_AND_PARTNER_PICKER_R1",
+  "leaseAcquireKey": "RANK-MATCH-WAITING-VISUAL-R8-20260922T0339-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-22 03:40 JST",
+  "leaseUntilJst": "2026-09-22 04:39 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A179:L179",
+  "leaseExactMutableResources": "fresh branch sol/rank-match-waiting-visual-r8-20260922t0339-sol; browser/home-boot-runtime-base-r3.mjs; tests/home-boot-runtime-base-r3.test.mjs; tests/browser-full-interaction.spec.mjs; own transient PRE_ACTION witness; own fresh PR/check/readback/public readback; prior R7/R7B branches READ_ONLY; browser/assets/visual/rank-match/*.webp READ_ONLY for contradiction #1; deploy/cloudflare/scripts/build.mjs READ_ONLY; deploy/cloudflare/tests/build.test.mjs READ_ONLY; browser/GAMEROAD.html READ_ONLY; browser/partner-saasuna-bustup-visuals.mjs READ_ONLY; gameplay/rules/save/network/ranked provider READ_ONLY",
+  "solutionSignature": "RANK_MATCH_WAITING_SHORT_LANDSCAPE_SCENE_FRAME_R1",
+  "reuseDisposition": "REPAIR",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_UIVIS_SHADOWVERSE_CASE_AND_EXISTING_RANK_WAITING_SURFACE_REPAIR",
+  "solutionSearchEvidence": [
+    "CURRENT UIVIS GRAM-017 fixes the main game baseline to landscape 16:9 and requires horizontal redistribution instead of nested portrait-like stacking.",
+    "CURRENT UIVIS GRAM-013 requires the current visual subject to remain a large surface rather than being buried in small panel groups.",
+    "CURRENT UIVIS CASE-019 records Shadowverse Worlds Beyond as a comparison where the game state is the main surface and system UI is pushed to the periphery.",
+    "Fresh GAMEROAD actual uses a framed panel at 8px/6px inset on 667x375, leaving almost no visual distinction between viewport and modal."
+  ],
+  "scope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs",
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs",
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

@@ -12,6 +12,7 @@ test.use({ baseURL: PUBLIC, browserName: 'chromium', headless: true });
 async function enterBattle(page) {
   await page.goto('/', { waitUntil: 'commit', timeout: 15_000 });
   await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+  await page.waitForFunction(() => window.__GAMEROAD_TEST__?.state?.screen === 'home', null, { timeout: 15_000 });
   await page.locator('[data-home-target="setup"]:visible').click();
   const setup = page.locator('section[data-screen="setup"]');
   await expect(setup).toBeVisible();

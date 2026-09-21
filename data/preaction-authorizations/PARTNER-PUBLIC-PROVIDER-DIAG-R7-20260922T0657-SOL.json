@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-PUBLIC-PROVIDER-DIAG-R7-20260922T0657-SOL",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PUBLIC_PARTNER_PROVIDER_DIAGNOSTIC_R1",
+  "acquireKey": "PARTNER-PUBLIC-PROVIDER-DIAG-R7-20260922T0657-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R6_PUBLIC_DEPLOY_SHELL_PARSE_FAILURE_AFTER_PAGES_SUCCESS",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOCAL_BASH_N_AND_EXECUTION_WITH_BOUNDED_STATE_PASS",
+  "proceedToken": "PROCEED|PARTNER-PUBLIC-PROVIDER-DIAG-R7-20260922T0657-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|workflow-shell-repair|allowlist-only",
+  "authorizationBaseSha": "7252f0b7aff549ead96223d6e16dbf72b4969b68",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PUBLIC_PARTNER_PROVIDER_DIAGNOSTIC_R1",
+  "leaseAcquireKey": "PARTNER-PUBLIC-PROVIDER-DIAG-R7-20260922T0657-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-22 06:57 JST",
+  "leaseUntilJst": "2026-09-22 07:57 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": ".github/workflows/cloudflare-public-deploy.yml; fresh branch sol/partner-public-provider-probe-state-r7-20260922; own transient data/preaction-authorizations/PARTNER-PUBLIC-PROVIDER-DIAG-R7-20260922T0657-SOL.json only; own fresh PR/check/readback. deploy/cloudflare/functions/ws.js READ_ONLY; deploy/cloudflare/tests/partner-report-provider.test.mjs READ_ONLY; deploy/cloudflare/tests/build.test.mjs READ_ONLY; browser/Battle/card-flight/gameplay/rules/save/network/formal art READ_ONLY; active BFI/UI owners READ_ONLY; unrelated Remote Commander workflow READ_ONLY.",
+  "solutionSignature": "PUBLIC_PROVIDER_SAFE_FAILURE_STATE_SHELL_REPAIR_R7",
+  "reuseDisposition": "REPAIR",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REPLACE_NESTED_HEREDOC_COMMAND_SUBSTITUTION_WITH_NODE_E",
+  "solutionSearchEvidence": [
+    "Merged R6 public deployment completed Pages deployment and then failed before state logging with bash error unexpected EOF while looking for matching ')'.",
+    "The failure is isolated to the nested heredoc inside SAFE_STATE command substitution; runtime/provider request behavior is unaffected.",
+    "A node -e parser inside ordinary command substitution preserves the same fixed allowlist and unknown fallback without nested heredoc syntax.",
+    "Local bash -n passed, and execution with HTTP424 plus bounded state provider_access_rejected returned exactly that safe state and no raw response content."
+  ],
+  "scope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ]
+}

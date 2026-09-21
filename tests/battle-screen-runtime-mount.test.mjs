@@ -245,7 +245,9 @@ assert.ok(runtimeStyle.textContent.includes('#battlePhaseSurface[hidden]{display
 assert.ok(runtimeStyle.textContent.includes('[data-gr-battle-screen="1"] #battlePhaseSurface::before,[data-gr-battle-screen="1"] #battlePhaseSurface::after{content:none!important;display:none!important}'));
 assert.equal(runtimeStyle.textContent.includes('#battlePhaseSurface{position:absolute;inset:0;z-index:3;overflow:hidden;background:'), false);
 assert.equal(runtimeStyle.textContent.includes('#battlePhaseSurface::before{content:"";position:absolute;'), false);
-assert.ok(runtimeStyle.textContent.includes('left:40%;height:clamp(86px,15vh,116px);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr)'));
+assert.ok(runtimeStyle.textContent.includes('left:40%;height:clamp(86px,15vh,116px);display:none;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr)'));
+assert.ok(runtimeStyle.textContent.includes('[data-presentation-mode="cinematic"] [data-battle-screen-causal-grid]{position:absolute!important;inset:8% 4% 8%!important;height:auto!important;display:flex!important'));
+assert.equal(runtimeStyle.textContent.includes('left:40%;height:clamp(86px,15vh,116px);display:grid;grid-template-columns:repeat(4,minmax(0,1fr))'), false);
 assert.ok(runtimeStyle.textContent.includes('[data-battle-screen-causal-grid]::before'));
 assert.ok(runtimeStyle.textContent.includes('clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)'));
 assert.ok(runtimeStyle.textContent.includes('[data-gr-battle-screen="1"] [data-battle-screen-causal-grid]::before{content:"";display:none;'));

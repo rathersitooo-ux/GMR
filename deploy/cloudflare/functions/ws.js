@@ -69,7 +69,7 @@ async function handlePartnerConversation(context, request) {
   try {
     upstream = await upstreamFetch(PARTNER_ENDPOINT, {
       method: 'POST',
-      headers: { 'CONVAI-API-KEY': apiKey },
+      headers: { Authorization: 'Bearer ' + apiKey, 'CONVAI-API-KEY': apiKey },
       body: form,
       signal: abortController.signal,
     });

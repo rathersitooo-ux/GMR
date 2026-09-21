@@ -170,6 +170,8 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelSide{position:relative;display:grid;justify-items:center;align-content:end;gap:7px;min-width:0;height:78%;filter:drop-shadow(0 18px 22px rgba(0,0,0,.42))}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelSide[data-role="source"]{grid-column:1;justify-self:start;width:min(34vw,330px)}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelSide[data-role="target"]{grid-column:3;justify-self:end;width:min(34vw,330px)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelSide[data-movement-intent="ENTER_STAGE"]{animation:grBattleCinematicDuelEnter 260ms cubic-bezier(.18,.78,.2,1) both}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] .grBattleCinematicDuelSide[data-movement-intent="ENTER_STAGE"]{animation:none!important}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFigure{position:relative;width:clamp(84px,14vw,168px);height:clamp(150px,34vh,310px);transform-origin:50% 100%;opacity:.96}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFigure::before{content:"";position:absolute;left:50%;top:3%;width:42%;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle at 40% 32%,rgba(255,255,255,.24),transparent 24%),linear-gradient(150deg,rgba(171,221,232,.95),rgba(37,76,91,.96) 58%,rgba(9,18,27,.98));box-shadow:0 0 0 2px rgba(238,250,255,.18),0 0 34px rgba(126,211,237,.2)}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFigure::after{content:"";position:absolute;left:50%;bottom:0;width:78%;height:72%;transform:translateX(-50%);border-radius:44% 44% 20% 20% / 28% 28% 12% 12%;background:linear-gradient(145deg,rgba(104,179,196,.96),rgba(31,72,87,.98) 46%,rgba(7,17,26,.99));clip-path:polygon(25% 0,75% 0,100% 36%,82% 48%,76% 100%,24% 100%,18% 48%,0 36%);box-shadow:inset 0 0 0 2px rgba(229,249,255,.12)}
@@ -193,6 +195,7 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="attack"] .grBattleCinematicDuelSide[data-role="target"] .grBattleCinematicDuelFigure,
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-phase="ability"] .grBattleCinematicDuelSide[data-role="target"] .grBattleCinematicDuelFigure{animation:grBattleCinematicDuelHit 620ms cubic-bezier(.2,.74,.22,1) both}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] .grBattleCinematicDuelFigure{animation:none!important;transform:none!important}
+@keyframes grBattleCinematicDuelEnter{0%{opacity:.2;transform:translateY(4%) scale(.96)}100%{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes grBattleCinematicDuelStrike{0%{transform:translateX(-10vw) scale(.92);opacity:.25}34%{transform:translateX(0) scale(1);opacity:1}58%{transform:translateX(14vw) rotate(3deg) scale(1.08);opacity:1}100%{transform:translateX(0) rotate(0) scale(1);opacity:.96}}
 @keyframes grBattleCinematicDuelHit{0%,48%{transform:translateX(8vw) scale(.96);opacity:.35}62%{transform:translateX(-2.4vw) rotate(-4deg) scale(.98);opacity:1;filter:brightness(1.35)}100%{transform:translateX(0) rotate(0) scale(1);opacity:.96;filter:none}}
 @keyframes grBattleCinematicCompressedShot{0%,24%{left:-18%;opacity:0;transform:translateY(-50%) scale(.45,.72)}34%{opacity:.92}68%{left:92%;opacity:1;transform:translateY(-50%) scale(1.08,.72)}78%,100%{left:108%;opacity:0;transform:translateY(-50%) scale(.62,.46)}}
@@ -606,6 +609,7 @@ function writePlayedCard(document, cardNode, card) {
 }
 
 const cinematicDuelRuntimeState = new WeakMap();
+const cinematicDuelPairState = new WeakMap();
 
 function exactCinematicCharacterId(global, document, participantId, context = {}) {
   const mapped = context?.cinematicCharacterByParticipant?.[participantId];
@@ -741,6 +745,7 @@ function mountCinematicDuelCharacter(global, scene, view, characterId, role, mot
 }
 
 function writeCinematicDuel(global, document, scene, model, context = {}) {
+  const previousPair = [...(cinematicDuelPairState.get(scene) ?? [])];
   disposeCinematicDuelRuntime(global, scene);
   clearChildren(scene);
   setData(scene, 'eventId', null);
@@ -750,6 +755,10 @@ function writeCinematicDuel(global, document, scene, model, context = {}) {
   setData(scene, 'targetCharacterId', null);
   setData(scene, 'vfx', null);
   setData(scene, 'handoff', null);
+  setData(scene, 'conveyorTransition', null);
+  setData(scene, 'retainedParticipants', null);
+  setData(scene, 'incomingParticipants', null);
+  setData(scene, 'outgoingParticipants', null);
   const phase = model?.phase;
   const enabled = model?.battlePhasePresentationMode === 'FULLSCREEN_ANIMATION'
     && (phase === 'attack' || phase === 'ability');
@@ -757,6 +766,10 @@ function writeCinematicDuel(global, document, scene, model, context = {}) {
   const sources = enabled ? modelLanes.filter(lane => lane?.role === 'source') : [];
   const targets = enabled ? modelLanes.filter(lane => lane?.role === 'target') : [];
   if (!enabled || sources.length !== 1 || targets.length !== 1) {
+    if (context?.preserveConveyorPair !== true
+      && (!model || model.screenMode !== 'BATTLE_PHASE' || phase === 'settle')) {
+      cinematicDuelPairState.delete(scene);
+    }
     scene.hidden = true;
     scene.setAttribute?.('aria-hidden', 'true');
     return scene;
@@ -764,10 +777,19 @@ function writeCinematicDuel(global, document, scene, model, context = {}) {
 
   const source = sources[0];
   const target = targets[0];
+  const currentPair = [source.id, target.id];
+  const previousSet = new Set(previousPair);
+  const currentSet = new Set(currentPair);
+  const retainedParticipants = currentPair.filter(id => previousSet.has(id));
+  const incomingParticipants = currentPair.filter(id => !previousSet.has(id));
+  const outgoingParticipants = previousPair.filter(id => !currentSet.has(id));
   const active = { mounts: [], timers: [] };
   cinematicDuelRuntimeState.set(scene, active);
+  cinematicDuelPairState.set(scene, currentPair);
   const sourceView = createCinematicDuelSide(document, 'source', source);
   const targetView = createCinematicDuelSide(document, 'target', target);
+  setData(sourceView.side, 'movementIntent', retainedParticipants.includes(source.id) ? 'REMAIN_STAGE' : 'ENTER_STAGE');
+  setData(targetView.side, 'movementIntent', retainedParticipants.includes(target.id) ? 'REMAIN_STAGE' : 'ENTER_STAGE');
   const sourceCharacterId = exactCinematicCharacterId(global, document, source.id, context);
   const targetCharacterId = exactCinematicCharacterId(global, document, target.id, context);
 
@@ -785,7 +807,11 @@ function writeCinematicDuel(global, document, scene, model, context = {}) {
   setData(scene, 'sourceCharacterId', sourceCharacterId);
   setData(scene, 'targetCharacterId', targetCharacterId);
   setData(scene, 'vfx', 'provisional-neutral-compressed-shot');
-  setData(scene, 'handoff', 'replace_previous_pair_on_render');
+  setData(scene, 'handoff', model.transition ?? 'CONTINUE');
+  setData(scene, 'conveyorTransition', model.transition ?? 'CONTINUE');
+  setData(scene, 'retainedParticipants', retainedParticipants.join('|') || null);
+  setData(scene, 'incomingParticipants', incomingParticipants.join('|') || null);
+  setData(scene, 'outgoingParticipants', outgoingParticipants.join('|') || null);
   return scene;
 }
 function createCinematicOrderRail(document) {
@@ -1400,7 +1426,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     writeCurrentActionCue(currentActionCue, null);
     writeCausalTrace(document, causalTrace, null);
     writeCinematicOrderRail(document, cinematicOrderRail, null);
-    writeCinematicDuel(global, document, cinematicDuel, null);
+    writeCinematicDuel(global, document, cinematicDuel, null, { preserveConveyorPair: true });
     setData(shell, 'boardReturnDestination', null);
     setData(phaseSurface, 'battleBoardReturnDestination', null);
     setData(resolutionSurface, 'battleBoardReturnDestination', null);
@@ -1522,6 +1548,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     if (progressGuide?.parentNode && typeof progressGuide.parentNode.removeChild === 'function') progressGuide.parentNode.removeChild(progressGuide);
     if (cinematicOrderRail?.parentNode && typeof cinematicOrderRail.parentNode.removeChild === 'function') cinematicOrderRail.parentNode.removeChild(cinematicOrderRail);
     disposeCinematicDuelRuntime(global, cinematicDuel);
+    cinematicDuelPairState.delete(cinematicDuel);
     if (cinematicDuel?.parentNode && typeof cinematicDuel.parentNode.removeChild === 'function') cinematicDuel.parentNode.removeChild(cinematicDuel);
     if (grid?.parentNode && typeof grid.parentNode.removeChild === 'function') grid.parentNode.removeChild(grid);
     resourceHud.destroy();
@@ -1595,7 +1622,7 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   cinematicDuelArt: 'EXISTING_CHARACTER_RUNTIME_EXACT_IDENTITY_WITH_CSS_PROXY_FAIL_VISIBLE_NO_NEW_ART',
   cinematicDuelReaction: 'CLEAN_IDLE_CHARACTER_PLUS_WHOLE_FIGURE_RECOIL_NO_HIT_OR_DEFEATED_STATE',
   cinematicDuelVfx: 'SEPARATE_PROVISIONAL_NEUTRAL_COMPRESSED_SHOT_NO_FORMAL_ART',
-  cinematicDuelHandoff: 'RENDER_REPLACES_PREVIOUS_PAIR_NO_ORDER_INFERENCE',
+  cinematicDuelHandoff: 'ACCEPTED_CONVEYOR_TRANSITION_PLUS_CONSECUTIVE_ACCEPTED_PAIR_CONTINUITY_NO_ORDER_INFERENCE',
   cinematicPhaseMotion: Object.freeze(['reveal', 'attack', 'ability', 'compare4', 'finisher', 'settle']),
   shieldLanePresentation: 'STRUCTURE_PLUS_EXACT_ACCEPTED_BOARD_RETURN_CUE_NO_SHIELD_STATE_INFERENCE',
   boardReturnAuthority: 'MODEL_ONLY_EXACT_OPPONENT_PLUS_SHIELD_LANE',

@@ -69,3 +69,20 @@ test('R4 rank match tactile feedback and short-landscape recompose remain presen
   assert.ok(base.includes("style.textContent = style.textContent.replaceAll('gameroadd', 'gameroad');"));
   assert.equal(base.includes('GAMEROAD_RANK_MATCH_SEARCH ='), false);
 });
+
+
+test('R4B rank match observer refresh is idempotent for observed DOM writes', () => {
+  const base = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
+  assert.ok(base.includes("attributeFilter: ['class', 'hidden']"));
+  assert.ok(base.includes('if (!surface.hidden) surface.hidden = true;'));
+  assert.ok(base.includes('if (surface.hidden) surface.hidden = false;'));
+  assert.ok(base.includes('if (!runtimeNode.hidden) runtimeNode.hidden = true;'));
+  assert.ok(base.includes('if (image.hidden !== nextImageHidden) image.hidden = nextImageHidden;'));
+  assert.ok(base.includes('if (icon.hidden !== nextIconHidden) icon.hidden = nextIconHidden;'));
+  assert.ok(base.includes('if (icon.textContent !== nextIconText) icon.textContent = nextIconText;'));
+  assert.ok(base.includes('if (nameNode && nameNode.textContent !== name) nameNode.textContent = name;'));
+  assert.ok(base.includes('if (overlay.hidden) overlay.hidden = false;'));
+  assert.ok(base.includes('if (!overlay.hidden) overlay.hidden = true;'));
+  assert.equal(base.includes("if (!active) {\n    surface.hidden = true;"), false);
+  assert.equal(base.includes("if (runtimeNode) {\n    if (!runtimeNode.dataset.rankPreviousHidden) runtimeNode.dataset.rankPreviousHidden = runtimeNode.hidden ? 'true' : 'false';\n    runtimeNode.hidden = true;"), false);
+});

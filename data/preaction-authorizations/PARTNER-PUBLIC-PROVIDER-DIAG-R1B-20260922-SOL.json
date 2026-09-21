@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-PUBLIC-PROVIDER-DIAG-R1B-20260922-SOL",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PUBLIC_PARTNER_PROVIDER_DIAGNOSTIC_R1",
+  "acquireKey": "PARTNER-PUBLIC-PROVIDER-DIAG-R1-20260922T0339-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLIC_PROVIDER_PROBE_502_WITH_PACKAGE_DEPLOY_SUCCESS",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR2031_EXACT_PRODUCT_DIFF_PRESERVED_PREACTION_PATH_MISMATCH_ONLY",
+  "proceedToken": "PROCEED|PARTNER-PUBLIC-PROVIDER-DIAG-R1B-20260922-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|provider-diagnostic|no-secret-leak",
+  "authorizationBaseSha": "00966a1ef78330ebedb61671687108158aee8003",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PUBLIC_PARTNER_PROVIDER_DIAGNOSTIC_R1",
+  "leaseAcquireKey": "PARTNER-PUBLIC-PROVIDER-DIAG-R1-20260922T0339-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-22 03:49 JST",
+  "leaseUntilJst": "2026-09-22 04:39 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A153:L153",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR superseded branch sol/partner-public-provider-diag-r1-20260922 READ_ONLY; fresh replacement branch sol/partner-public-provider-diag-r1b-20260922; deploy/cloudflare/functions/ws.js; deploy/cloudflare/tests/partner-report-provider.test.mjs; own transient data/preaction-authorizations/PARTNER-PUBLIC-PROVIDER-DIAG-R1B-20260922-SOL.json only; own fresh PR/check/readback. .github/workflows/cloudflare-public-deploy.yml READ_ONLY; deploy/cloudflare/tests/build.test.mjs READ_ONLY active owner; browser/Battle/card-flight/gameplay/rules/save/network/formal art READ_ONLY.",
+  "solutionSignature": "PARTNER_PROVIDER_BOUNDED_UPSTREAM_DIAGNOSTIC_R1",
+  "reuseDisposition": "REPAIR",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_PROVIDER_PROXY_KEEP_REQUEST_SEMANTICS_ADD_SAFE_DIAGNOSTICS",
+  "solutionSearchEvidence": [
+    "Current Cloudflare deployment reaches package deployment successfully and fails only at the public Saasuna provider probe with HTTP 502.",
+    "Current ws.js maps every non-OK Convai response to the same provider_unavailable state, hiding material failure class.",
+    "Current official Convai documentation retains POST https://api.convai.com/character/getResponse with the existing form-data request contract.",
+    "The current Interaction API documentation states Professional plan and above, so provider entitlement remains a material possible upstream rejection class.",
+    "PR #2031 preserved the intended two-file product diff but Required Gate stopped before product tests solely because its first PRE_ACTION record path did not match recordId.",
+    "The existing deploy/cloudflare/tests/partner-report-provider.test.mjs is already mapped to PublicHost in Required Gate; no workflow/validator change is needed."
+  ],
+  "scope": [
+    "deploy/cloudflare/functions/ws.js",
+    "deploy/cloudflare/tests/partner-report-provider.test.mjs"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/functions/ws.js",
+    "deploy/cloudflare/tests/partner-report-provider.test.mjs"
+  ]
+}

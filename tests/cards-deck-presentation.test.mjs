@@ -12,6 +12,9 @@ import {
   createDeckSwipeSfxPlayer,
   DECK_SWIPE_PRECOMMIT_FEEDBACK,
   createDeckSwipePrecommitVisual,
+  CARDS_SELECTION_FEEDBACK,
+  createCardsSelectionFeedbackProfile,
+  installCardsSelectionPressReleaseFeedback,
   isNeutralizedDeckEditorSwipe,
   presentDeckAddSwipe,
   installCardsInspectorDismissInteractions,
@@ -219,6 +222,94 @@ test('live swipe consumer coalesces pointermove feedback and always removes it o
   const moveStart = live.indexOf('const onPointerMove');
   const moveEnd = live.indexOf('const onPointerUp', moveStart);
   assert.equal(live.slice(moveStart, moveEnd).includes('preventDefault'), false);
+});
+
+test('Cards tap selection feedback keeps Reduced Motion semantic and low-perf variants bounded', () => {
+  const normal = createCardsSelectionFeedbackProfile();
+  const lowPerf = createCardsSelectionFeedbackProfile({ lowPerf: true });
+  const reduced = createCardsSelectionFeedbackProfile({ reducedMotion: true });
+  assert.equal(CARDS_SELECTION_FEEDBACK.pressCancelPx, 7);
+  assert.ok(normal.pressScale < 1);
+  assert.ok(lowPerf.pressScale > normal.pressScale);
+  assert.equal(reduced.pressScale, 1);
+  assert.equal(reduced.pressTranslateY, 0);
+  assert.ok(reduced.confirmMs < normal.confirmMs);
+  assert.equal(reduced.spatialConfirm, false);
+  assert.equal(lowPerf.softGlow, false);
+});
+
+test('Cards tap feedback depresses only before drag and confirms only trusted selected clicks', () => {
+  const listeners = new Map();
+  const classes = new Set();
+  const styleValues = new Map();
+  const bodyChildren = [];
+  const card = {
+    classList: {
+      add(name) { classes.add(name); },
+      remove(name) { classes.delete(name); },
+      contains(name) { return classes.has(name); },
+    },
+    style: {
+      setProperty(name, value) { styleValues.set(name, value); },
+      removeProperty(name) { styleValues.delete(name); },
+    },
+    closest() { return this; },
+    getBoundingClientRect() { return rect(20, 30, 100, 140); },
+  };
+  const createNode = () => ({
+    style: {},
+    setAttribute() {},
+    remove() { this.removed = true; },
+  });
+  const doc = {
+    body: { appendChild(node) { bodyChildren.push(node); return node; } },
+    head: { appendChild() {} },
+    documentElement: {},
+    createElement() { return createNode(); },
+    getElementById() { return null; },
+    addEventListener(type, fn) { listeners.set(type, fn); },
+    removeEventListener(type, fn) { if (listeners.get(type) === fn) listeners.delete(type); },
+  };
+  let timerId = 0;
+  const win = {
+    matchMedia: () => ({ matches: false }),
+    queueMicrotask(fn) { fn(); },
+    setTimeout() { timerId += 1; return timerId; },
+    clearTimeout() {},
+  };
+  const feedback = installCardsSelectionPressReleaseFeedback({ document: doc, window: win });
+
+  listeners.get('pointerdown')({ target: card, button: 0, isPrimary: true, clientX: 10, clientY: 10 });
+  assert.equal(classes.has('gr-cards-selection-press'), true);
+  listeners.get('pointermove')({ clientX: 13, clientY: 10 });
+  assert.equal(classes.has('gr-cards-selection-press'), true);
+  listeners.get('pointermove')({ clientX: 18, clientY: 10 });
+  assert.equal(classes.has('gr-cards-selection-press'), false);
+
+  classes.add('selected');
+  listeners.get('click')({ target: card, isTrusted: false });
+  assert.equal(bodyChildren.length, 0);
+  listeners.get('click')({ target: card, isTrusted: true });
+  assert.equal(bodyChildren.length, 1);
+  assert.equal(bodyChildren[0].className, 'gr-cards-selection-confirm-glow');
+
+  feedback.destroy();
+  assert.equal(listeners.size, 0);
+  assert.equal(bodyChildren[0].removed, true);
+});
+
+test('Cards tap feedback is auto-installed without changing click or swipe authority', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('export function installCardsSelectionPressReleaseFeedback');
+  const end = source.indexOf('export function isNeutralizedDeckEditorSwipe', start);
+  const live = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.match(live, /event\?\.isTrusted === false/);
+  assert.match(live, /Math\.hypot\(x - pressed\.x, y - pressed\.y\) >= CARDS_SELECTION_FEEDBACK\.pressCancelPx/);
+  assert.equal(live.includes('preventDefault'), false);
+  assert.equal(live.includes('stopPropagation'), false);
+  assert.match(source, /installCardsSelectionPressReleaseFeedback\(\{ document, window: globalThis\.window \}\)/);
 });
 
 test('rect normalization preserves usable centers without trusting right/bottom', () => {

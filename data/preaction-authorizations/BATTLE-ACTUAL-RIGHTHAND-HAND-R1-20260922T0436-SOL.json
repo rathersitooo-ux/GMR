@@ -19,7 +19,7 @@
   "leaseAcquireKey": "BATTLE-ACTUAL-RIGHTHAND-HAND-R1-20260922T0436-SOL",
   "leaseSnapshotReadbackAtJst": "2026-09-22 04:36 JST",
   "leaseUntilJst": "2026-09-22 05:36 JST",
-  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:N9",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:L9",
   "leaseExactMutableResources": "browser/battle-current-player-ui-runtime.mjs; tests/battle-current-player-ui-runtime.test.mjs; own transient PRE_ACTION witness; own fresh branch/PR/check/readback. browser/GAMEROAD.html READ_ONLY; gameplay/rules/save/economy/network/card data READ_ONLY; image generation/editing 0 for this response",
   "solutionSignature": "BATTLE_PLAYABLE_HAND_RIGHT_THUMB_CLUSTER_ALIGNMENT_V1",
   "reuseDisposition": "ADAPT",

@@ -204,3 +204,185 @@ jobs:
             public-origin-metadata/
           if-no-files-found: error
           retention-days: 14
+
+  saasuna-public-motion-acceptance-r2:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GAMEROAD_PUBLIC_BASE_URL: https://gameroad-browser-r5.pages.dev
+    steps:
+      - name: Checkout validation head
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Prepare bounded Saasuna public acceptance runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .saasuna-public
+          mkdir -p .saasuna-public
+          cat > .saasuna-public/saasuna-public.spec.mjs <<'EOF'
+          import { test, expect } from '@playwright/test';
+
+          const PUBLIC = process.env.GAMEROAD_PUBLIC_BASE_URL;
+          const VIEWPORTS = [
+            ['desktop-1280x720', 1280, 720],
+            ['phone-390x844', 390, 844],
+            ['short-landscape-667x375', 667, 375],
+          ];
+
+          test.use({ baseURL: PUBLIC, browserName: 'chromium', headless: true });
+
+          function visibleHomeControl(page, target) {
+            return page.locator(`[data-home-target="${target}"]:visible, [data-go="${target}"]:visible`).first();
+          }
+
+          async function installLegalBattleDeck(page) {
+            return page.evaluate(() => {
+              const t = window.__GAMEROAD_TEST__;
+              const publicMain = new Set(t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
+              const standard = window.__CARD_DATA__
+                .filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)))
+                .map((card) => card.id);
+              const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
+              const nonRoyal = standard.filter((id) => !t.isRoyalCard(id));
+              const main = [...nonRoyal.slice(0, 37), ...royalIds];
+              const setValidation = t.deckSetDraft(main, []);
+              const draftValidation = t.deckValidate(t.state.deckDraft, { forBattle: true });
+              const committed = draftValidation.ok ? t.deckCommit() : false;
+              const savedValidation = t.deckValidate(t.state.savedDeck, { forBattle: true });
+              return { main, setValidation, draftValidation, committed, savedValidation };
+            });
+          }
+
+          async function enterBattle(page) {
+            await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 30_000 });
+            const home = page.locator('section[data-screen="home"]');
+            await expect(home).toBeVisible({ timeout: 15_000 });
+            await page.waitForFunction(() => window.__GAMEROAD_TEST__ && Array.isArray(window.__CARD_DATA__), null, { timeout: 15_000 });
+            const deckSetup = await installLegalBattleDeck(page);
+            expect(deckSetup.main).toHaveLength(40);
+            expect(deckSetup.committed).toBeTruthy();
+            expect(deckSetup.savedValidation.ok).toBeTruthy();
+
+            const setupControl = visibleHomeControl(page, 'setup');
+            await expect(setupControl).toBeVisible();
+            await setupControl.click();
+            const setup = page.locator('section[data-screen="setup"]');
+            await expect(setup).toBeVisible({ timeout: 10_000 });
+            await setup.locator('[data-content="road_shield"]').click();
+            await setup.locator('[data-mode="2p"]').click();
+            const startMatch = setup.locator('#startMatch');
+            await expect(startMatch).toBeVisible();
+            await expect(startMatch).toBeEnabled();
+            await startMatch.click();
+
+            const battle = page.locator('section[data-screen="battle"]');
+            await expect(battle).toBeVisible({ timeout: 10_000 });
+            const roleName = battle.locator('[data-role="advice-partner-name"]');
+            const switcher = battle.locator('.partnerAdvicePartnerSwitch');
+            for (let i = 0; i < 6; i += 1) {
+              if ((await roleName.textContent())?.includes('サースナー')) break;
+              if (await switcher.isVisible()) await switcher.click();
+            }
+            await expect(roleName).toContainText('サースナー');
+            return battle;
+          }
+
+          async function assertInsideViewport(page, locator) {
+            const box = await locator.boundingBox();
+            expect(box).not.toBeNull();
+            const vp = page.viewportSize();
+            expect(box.x).toBeGreaterThanOrEqual(0);
+            expect(box.y).toBeGreaterThanOrEqual(0);
+            expect(box.x + box.width).toBeLessThanOrEqual(vp.width + 1);
+            expect(box.y + box.height).toBeLessThanOrEqual(vp.height + 1);
+          }
+
+          for (const [name, width, height] of VIEWPORTS) {
+            test.describe(name, () => {
+              test.use({ viewport: { width, height } });
+
+              test('public Advice Saasuna motion + wind-cut', async ({ page }, testInfo) => {
+                const battle = await enterBattle(page);
+                const figure = battle.locator('[data-role="advice-partner-bustup"]');
+                await expect(figure).toBeVisible();
+                await expect(figure).toHaveAttribute('data-motion-state', /.+/);
+                await assertInsideViewport(page, figure);
+                const image = figure.locator('img:not([data-role="saasuna-motion-crossfade"])').first();
+                await expect.poll(() => image.evaluate((n) => n.getAnimations().length)).toBeGreaterThan(0);
+                await battle.locator('[data-quick-route="casual"]').click();
+                await expect(figure).toHaveAttribute('data-motion-state', 'HAPPY_WAVE');
+                const effect = figure.locator('[data-role="saasuna-motion-effect"]');
+                await expect(effect).toHaveAttribute('data-kind', 'wind-cut');
+                await expect(effect).toBeVisible();
+                await testInfo.attach(`${name}-normal.png`, { body: await page.screenshot(), contentType: 'image/png' });
+              });
+
+              test('public Advice Saasuna reduced-motion preserves state without transient motion', async ({ page }, testInfo) => {
+                await page.emulateMedia({ reducedMotion: 'reduce' });
+                const battle = await enterBattle(page);
+                const figure = battle.locator('[data-role="advice-partner-bustup"]');
+                await expect(figure).toBeVisible();
+                await assertInsideViewport(page, figure);
+                await battle.locator('[data-quick-route="casual"]').click();
+                await expect(figure).toHaveAttribute('data-motion-state', 'HAPPY_WAVE');
+                const image = figure.locator('img:not([data-role="saasuna-motion-crossfade"])').first();
+                await expect.poll(() => image.evaluate((n) => n.getAnimations().length)).toBe(0);
+                const effect = figure.locator('[data-role="saasuna-motion-effect"]');
+                await expect(effect).toBeHidden();
+                await testInfo.attach(`${name}-reduced.png`, { body: await page.screenshot(), contentType: 'image/png' });
+              });
+            });
+          }
+          EOF
+
+          cat > .saasuna-public/playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir: '.',
+            testMatch: 'saasuna-public.spec.mjs',
+            timeout: 45_000,
+            expect: { timeout: 10_000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            outputDir: '../test-results/saasuna-public-motion-r2',
+            reporter: [
+              ['line'],
+              ['json', { outputFile: '../test-results/saasuna-public-motion-r2/report.json' }],
+            ],
+            use: {
+              baseURL: process.env.GAMEROAD_PUBLIC_BASE_URL,
+              browserName: 'chromium',
+              headless: true,
+              trace: 'retain-on-failure',
+              screenshot: 'only-on-failure',
+              video: 'off',
+            },
+          });
+          EOF
+
+      - name: Run Saasuna public motion acceptance R2
+        run: npx playwright test --config=.saasuna-public/playwright.config.mjs --workers=1
+
+      - name: Upload Saasuna public motion evidence R2
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: saasuna-public-motion-r2-${{ github.run_id }}
+          path: |
+            test-results/saasuna-public-motion-r2/
+          if-no-files-found: warn
+          retention-days: 14

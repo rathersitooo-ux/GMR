@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { projectBattleFeDuelState } from './battle-fe-cinematic-live-adapter.mjs';
+import { projectBattleFeDuelState } from '../browser/battle-fe-cinematic-live-adapter.mjs';
 
 function snapshot(overrides = {}) {
   return {
@@ -87,3 +87,4 @@ test('fails closed outside the live resolve stages', () => {
     assert.equal(view.active, false);
   }
 });
+

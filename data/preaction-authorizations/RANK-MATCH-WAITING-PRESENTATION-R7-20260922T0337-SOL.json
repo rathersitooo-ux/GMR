@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RANK-MATCH-WAITING-PRESENTATION-R7-20260922T0337-SOL",
+  "taskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "workUnitKey": "RANK_MATCH_FLOW_AND_PARTNER_PICKER_R1",
+  "acquireKey": "RANK-MATCH-WAITING-PRESENTATION-R7-20260922T0337-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R7_RANK_WAITING_KEYFRAME_NAME_MISMATCH_DIRECT_SOURCE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R7_CURRENT_SOURCE_PLUS_EXISTING_BFI_REDUCED_MOTION_CONTRACT",
+  "proceedToken": "PROCEED|RANK-MATCH-WAITING-PRESENTATION-R7-20260922T0337-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|direct-source|lease-snapshot",
+  "authorizationBaseSha": "00966a1ef78330ebedb61671687108158aee8003",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "leaseWorkUnitKey": "RANK_MATCH_FLOW_AND_PARTNER_PICKER_R1",
+  "leaseAcquireKey": "RANK-MATCH-WAITING-PRESENTATION-R7-20260922T0337-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-22 03:37 JST",
+  "leaseUntilJst": "2026-09-22 04:37 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A174:L174",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/rank-match-waiting-presentation-r7-20260922t0337-sol; browser/home-boot-runtime-base-r3.mjs; tests/home-boot-runtime-base-r3.test.mjs; tests/browser-full-interaction.spec.mjs; CURRENT_ACTIVE_LEASES own AcquireKey row only",
+  "scope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs",
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs",
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

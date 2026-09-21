@@ -245,7 +245,7 @@ assert.ok(runtimeStyle.textContent.includes('#battlePhaseSurface[hidden]{display
 assert.ok(runtimeStyle.textContent.includes('[data-gr-battle-screen="1"] #battlePhaseSurface::before,[data-gr-battle-screen="1"] #battlePhaseSurface::after{content:none!important;display:none!important}'));
 assert.equal(runtimeStyle.textContent.includes('#battlePhaseSurface{position:absolute;inset:0;z-index:3;overflow:hidden;background:'), false);
 assert.equal(runtimeStyle.textContent.includes('#battlePhaseSurface::before{content:"";position:absolute;'), false);
-assert.ok(runtimeStyle.textContent.includes('left:40%;height:clamp(86px,15vh,116px);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr)'));
+assert.ok(runtimeStyle.textContent.includes('left:40%;height:clamp(86px,15vh,116px);display:none;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr)'));
 assert.ok(runtimeStyle.textContent.includes('[data-battle-screen-causal-grid]::before'));
 assert.ok(runtimeStyle.textContent.includes('clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)'));
 assert.ok(runtimeStyle.textContent.includes('[data-gr-battle-screen="1"] [data-battle-screen-causal-grid]::before{content:"";display:none;'));
@@ -1150,6 +1150,8 @@ assert.match(portraitScreenSource, /grBattleCinematicWinner/);
 assert.match(portraitScreenSource, /data-battle-cinematic-order/);
 assert.match(portraitScreenSource, /MODEL_CAUSAL_RETURN_PROCESSING_ORDER_ONLY_NO_SORT_OR_INFERENCE/);
 assert.match(portraitScreenSource, /data-presentation-mode="cinematic"/);
+assert.match(portraitScreenSource, /\[\$\{SHELL_ATTR\}="1"\] \[\$\{GRID_ATTR\}\]\{[^}]*display:none;/s);
+assert.match(portraitScreenSource, /data-presentation-mode="cinematic"\] \[\$\{GRID_ATTR\}\]\{[^}]*display:flex!important/s);
 assert.match(portraitScreenSource, /@media\(max-width:430px\) and \(orientation:portrait\)/);
 assert.match(portraitScreenSource, /grBattleScreenTop\{height:56px!important/);
 assert.match(portraitScreenSource, /bottom:248px!important/);

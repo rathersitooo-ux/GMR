@@ -97,3 +97,10 @@ test('R5 rank match refresh observes only screen roots and keeps body bootstrap 
   assert.ok(base.includes('observer.observe(doc.body, { childList: true, subtree: true });'));
   assert.equal(base.includes("observer.observe(doc.body, { childList: true, subtree: true, attributes: true"), false);
 });
+
+test('R8 rank match short-landscape uses scene layout instead of an almost-full-screen framed modal', () => {
+  const base = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
+  assert.ok(base.includes('@media(max-height:430px) and (orientation:landscape){.rankWaitingPanel{left:5vw;right:5vw;top:5vh;bottom:5vh;border:0;background:transparent;box-shadow:none;clip-path:none;}'));
+  assert.ok(base.includes('.rankWaitingPanel:before{display:none;}'));
+  assert.equal(base.includes('@media(max-height:430px) and (orientation:landscape){.rankWaitingPanel{left:8px;right:8px;top:6px;bottom:6px;}'), false);
+});

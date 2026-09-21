@@ -19,7 +19,7 @@
   "leaseAcquireKey": "BATTLE-CAUSAL-TIMELINE-R1-20260921T2257-SOL",
   "leaseSnapshotReadbackAtJst": "2026-09-21 22:57 JST",
   "leaseUntilJst": "2026-09-21 23:57 JST",
-  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES row20",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A20:L20",
   "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR fresh branch sol/battle-causal-timeline-r1-20260921; new browser/battle-cinematic-causal-timeline-core.mjs; new tests/battle-cinematic-causal-timeline-core.test.mjs; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; own transient PRE_ACTION witness. Naki/Saasuna motion files, GAMEROAD.html, gameplay/rules/save/network/formal art READ_ONLY. Image generation prohibited.",
   "solutionSignature": "BATTLE_CINEMATIC_CAUSAL_PHASE_SCHEDULER_V1",
   "reuseDisposition": "COMPOSE",

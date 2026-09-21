@@ -1150,6 +1150,8 @@ assert.match(portraitScreenSource, /grBattleCinematicWinner/);
 assert.match(portraitScreenSource, /data-battle-cinematic-order/);
 assert.match(portraitScreenSource, /MODEL_CAUSAL_RETURN_PROCESSING_ORDER_ONLY_NO_SORT_OR_INFERENCE/);
 assert.match(portraitScreenSource, /data-presentation-mode="cinematic"/);
+assert.match(portraitScreenSource, /\[\$\{SHELL_ATTR\}="1"\] \[\$\{GRID_ATTR\}\]\{[^}]*display:none;/s);
+assert.match(portraitScreenSource, /data-presentation-mode="cinematic"\] \[\$\{GRID_ATTR\}\]\{[^}]*display:flex!important/s);
 assert.match(portraitScreenSource, /@media\(max-width:430px\) and \(orientation:portrait\)/);
 assert.match(portraitScreenSource, /grBattleScreenTop\{height:56px!important/);
 assert.match(portraitScreenSource, /bottom:248px!important/);

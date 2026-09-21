@@ -211,6 +211,15 @@ test('Records detail lets another rendered row switch directly while outside cli
 });
 
 
+test('Records detail panel uses a short reveal and keeps Reduced Motion opacity-only', () => {
+  const source = readFileSync(new URL('../browser/profile-presentation-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /recordsMatchDetail\{[^}]*animation:gameroadRecordsDetailReveal \.18s/);
+  assert.match(source, /@keyframes gameroadRecordsDetailReveal\{0%\{opacity:\.08;transform:translateY\(5px\) scale\(\.995\)\}/);
+  assert.match(source, /@keyframes gameroadRecordsDetailFade\{0%\{opacity:\.12\}100%\{opacity:1\}\}/);
+  assert.match(source, /html\.r10LowPerf \[data-screen="records"\] \.recordsMatchDetail,html\.r10Reduced \[data-screen="records"\] \.recordsMatchDetail\{animation:gameroadRecordsDetailFade \.1s linear both\}/);
+  assert.match(source, /@media\(prefers-reduced-motion:reduce\)[\s\S]*?recordsMatchDetail\{animation:gameroadRecordsDetailFade \.09s linear both;transform:none\}/);
+});
+
 test('Records selection feedback uses the generated four-frame effect without changing selection authority', () => {
   assert.deepEqual(PROFILE_RECORDS_SELECTION_SWEEP_ASSET, {
     id: 'records-selection-sweep-sprite-v1',

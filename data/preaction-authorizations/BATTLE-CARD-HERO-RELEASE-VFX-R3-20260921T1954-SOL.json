@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CARD-HERO-RELEASE-VFX-R3-20260921T1954-SOL",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "BATTLE_CARD_RELEASE_HERO_CENTRE_AND_ORDER_RECEIPT_R1",
+  "acquireKey": "BATTLE-CARD-HERO-RELEASE-VFX-R3-20260921T1954-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CENTRE_HERO_TIMING_RATIO_MISMATCH_20260921T1954JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "560MS_TOTAL_REBALANCED_WITH_EXISTING_OFFSETS_ONLY",
+  "proceedToken": "PROCEED|BATTLE-CARD-HERO-RELEASE-VFX-R3-20260921T1954-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-card-release|centre-hero-timing",
+  "authorizationBaseSha": "25f9054c29bf4c769201f9dd118347e4fc17dd80",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "BATTLE_CARD_RELEASE_HERO_CENTRE_AND_ORDER_RECEIPT_R1",
+  "leaseAcquireKey": "BATTLE-CARD-HERO-RELEASE-VFX-R3-20260921T1954-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 19:54 JST",
+  "leaseUntilJst": "2026-09-21 21:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A165:L165",
+  "leaseExactMutableResources": "browser/battle-card-release-flight-motion-core.mjs; browser/battle-card-release-flight-runtime-effect.mjs; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-card-release-flight-motion-core.test.mjs; tests/battle-card-release-flight-runtime-effect.test.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; PR #2009 / branch work/battle-card-hero-release-vfx-r3-20260921; own checks/readback/merge; browser/battle-screen-runtime-mount.mjs READ_ONLY active Saasuna owner; browser/GAMEROAD.html READ_ONLY; gameplay/rules/save/network/order authority READ_ONLY; image generation PROHIBITED",
+  "solutionSignature": "SHORT_TOTAL_EARLY_CENTER_ARRIVAL_LONGER_HERO_PAYOFF",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "USER_CENTRE_FIRST_MEANING_PLUS_CYGAMES_TEMPO_EVIDENCE",
+  "solutionSearchEvidence": [
+    "User explicitly requires the flight destination to be screen center and the main payoff to happen while the card is visibly held in the air there.",
+    "The current 560ms projection reaches center at 60 percent, leaving only about 157ms before hero-hold end; this still overweights travel.",
+    "Cygames' Shadowverse animation production notes emphasize short repeated effects with concentrated impact rather than lengthening every action.",
+    "Rebalancing offsets keeps the same total duration, runtime engine, order authority, asset hooks, Reduced Motion and LowPerf paths."
+  ],
+  "scope": [
+    "browser/battle-card-release-flight-motion-core.mjs",
+    "browser/battle-card-release-flight-runtime-effect.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-card-release-flight-motion-core.test.mjs",
+    "tests/battle-card-release-flight-runtime-effect.test.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-card-release-flight-motion-core.mjs",
+    "browser/battle-card-release-flight-runtime-effect.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-card-release-flight-motion-core.test.mjs",
+    "tests/battle-card-release-flight-runtime-effect.test.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

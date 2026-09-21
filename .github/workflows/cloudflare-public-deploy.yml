@@ -27,6 +27,8 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CONVAI_API_KEY: ${{ secrets.CONVAI_API_KEY }}
+      CONVAI_SAASUNA_CHARACTER_ID: ${{ secrets.CONVAI_SAASUNA_CHARACTER_ID }}
       PAGES_PROJECT: gameroad-browser-r5
       RELAY_WORKER: gameroad-friend-relay-r5
       EVIDENCE_ISSUE: '158'
@@ -202,6 +204,20 @@ jobs:
               --production-branch main
           fi
 
+      - name: Sync Convai Pages secrets when configured
+        id: convai_secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${CONVAI_API_KEY:-}" || -z "${CONVAI_SAASUNA_CHARACTER_ID:-}" ]]; then
+            echo "::warning::Convai production secrets are not both configured; skipping Pages secret sync and live Partner probe."
+            echo "synced=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          printf '%s' "$CONVAI_API_KEY" | npx --yes wrangler@4 pages secret put CONVAI_API_KEY --project-name "$PAGES_PROJECT" >/dev/null
+          printf '%s' "$CONVAI_SAASUNA_CHARACTER_ID" | npx --yes wrangler@4 pages secret put CONVAI_SAASUNA_CHARACTER_ID --project-name "$PAGES_PROJECT" >/dev/null
+          echo "synced=true" >> "$GITHUB_OUTPUT"
+
       - name: Deploy Pages production package
         id: pages
         shell: bash
@@ -223,6 +239,53 @@ jobs:
           fi
           URL="$(printf '%s\n' "$OUTPUT" | grep -Eo 'https://[^[:space:]]+\.pages\.dev' | tail -n 1 || true)"
           echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Probe public Saasuna provider when configured
+        id: partner_probe
+        if: steps.convai_secrets.outputs.synced == 'true'
+        shell: bash
+        env:
+          PARTNER_PROBE_URL: ${{ steps.pages.outputs.url }}/ws?partnerOp=conversation
+        run: |
+          set -euo pipefail
+          set +e
+          PROBE_RESULT="$(curl --silent --location --max-time 30 \
+            --header 'Content-Type: application/json' \
+            --header 'Accept: application/json' \
+            --data '{"userMessage":"こんにちは。短く自己紹介してください。"}' \
+            --write-out $'\n%{http_code}' \
+            "$PARTNER_PROBE_URL" 2>/dev/null)"
+          CURL_STATUS=$?
+          set -e
+          if [[ "$CURL_STATUS" -ne 0 ]]; then
+            echo "::error::Public Saasuna provider probe could not reach the endpoint"
+            exit 1
+          fi
+          HTTP_CODE="${PROBE_RESULT##*$'\n'}"
+          PROBE_BODY="${PROBE_RESULT%$'\n'*}"
+          if [[ "$HTTP_CODE" != "200" ]]; then
+            echo "::error::Public Saasuna provider probe returned HTTP ${HTTP_CODE}"
+            exit 1
+          fi
+          PROBE_BODY="$PROBE_BODY" node <<'NODE'
+          const raw = process.env.PROBE_BODY || '';
+          let response;
+          try {
+            response = JSON.parse(raw);
+          } catch {
+            throw new Error('Public Saasuna provider probe returned invalid JSON');
+          }
+          if (response.ok !== true) {
+            throw new Error('Public Saasuna provider probe did not return ok=true');
+          }
+          if (typeof response.text !== 'string' || response.text.trim().length === 0 || response.text.length > 800) {
+            throw new Error('Public Saasuna provider probe returned invalid text');
+          }
+          if (typeof response.providerSessionId !== 'string' || response.providerSessionId.trim().length === 0) {
+            throw new Error('Public Saasuna provider probe returned no provider session');
+          }
+          NODE
+          echo "Public Saasuna provider probe succeeded with a bounded nonempty response."
 
       - name: Read back production deployment
         id: readback
@@ -575,6 +638,9 @@ jobs:
           BUILD_OUTCOME: ${{ steps.build.outcome }}
           RELAY_OUTCOME: ${{ steps.relay.outcome }}
           PROJECT_OUTCOME: ${{ steps.project.outcome }}
+          CONVAI_SECRETS_OUTCOME: ${{ steps.convai_secrets.outcome }}
+          CONVAI_SYNCED: ${{ steps.convai_secrets.outputs.synced }}
+          PARTNER_PROBE_OUTCOME: ${{ steps.partner_probe.outcome }}
           PAGES_OUTCOME: ${{ steps.pages.outcome }}
           READBACK_OUTCOME: ${{ steps.readback.outcome }}
           PROBE_OUTCOME: ${{ steps.probe.outcome }}
@@ -596,6 +662,9 @@ jobs:
           build=${BUILD_OUTCOME}
           relay=${RELAY_OUTCOME}
           project=${PROJECT_OUTCOME}
+          convai_secrets=${CONVAI_SECRETS_OUTCOME}
+          convai_synced=${CONVAI_SYNCED:-false}
+          partner_probe=${PARTNER_PROBE_OUTCOME}
           pages=${PAGES_OUTCOME}
           readback=${READBACK_OUTCOME}
           probe=${PROBE_OUTCOME}

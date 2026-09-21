@@ -1,0 +1,21 @@
+{
+  "schema": "gameroad.preaction.v1",
+  "acquireKey": "BATTLE-JANKEN-ONE-PER-TURN-R1-20260921T2348-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_ONE_PER_TURN_AND_HAND_REJOIN_R1",
+  "baseRef": "main",
+  "mutableResources": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "expectedBaseBlobs": {
+    "browser/battle-janken-slidepad-runtime-mount.mjs": "69cc5026317e5591ba9dbe9a84b448dc842aec76",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs": "547c9986850e306690e4fe0f6532cae718456e0f"
+  },
+  "userIntent": "1ターンにじゃんけんカードは1枚。使用後は同ターン中じゃんけんUIを消し、残りの予約カードを通常手札へ戻す。",
+  "constraints": [
+    "browser/GAMEROAD.html READ_ONLY",
+    "no second turn/janken authority",
+    "existing hand-card click authority preserved"
+  ]
+}

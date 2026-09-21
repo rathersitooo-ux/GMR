@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RANK-MATCH-WAITING-PRESENTATION-R7B-MOTION-POLISH-20260922-SOL",
+  "taskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "workUnitKey": "RANK_MATCH_FLOW_AND_PARTNER_PICKER_R1",
+  "acquireKey": "RANK-MATCH-WAITING-PRESENTATION-R7-20260922T0320-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_WAITING_SURFACE_HAS_AMBIENT_VFX_STATUS_PULSE_BUT_NO_STAGED_ENTRY_MOTION",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR2027_PRODUCT_DIFF_DIRECT_READBACK_PASS_PREACTION_METADATA_ONLY_FAILURE",
+  "proceedToken": "PROCEED|RANK-MATCH-WAITING-PRESENTATION-R7B-MOTION-POLISH-20260922-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|waiting-entry|reduced-motion",
+  "authorizationBaseSha": "00966a1ef78330ebedb61671687108158aee8003",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "leaseWorkUnitKey": "RANK_MATCH_FLOW_AND_PARTNER_PICKER_R1",
+  "leaseAcquireKey": "RANK-MATCH-WAITING-PRESENTATION-R7-20260922T0320-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-22 03:26 JST",
+  "leaseUntilJst": "2026-09-22 04:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A175:L175",
+  "leaseExactMutableResources": "superseded branch sol/rank-match-waiting-presentation-r7-20260922t0320-sol READ_ONLY; fresh replacement branch sol/rank-match-waiting-presentation-r7b-20260922t0326-sol; browser/home-boot-runtime-base-r3.mjs; tests/home-boot-runtime-base-r3.test.mjs; tests/browser-full-interaction.spec.mjs; own transient PRE_ACTION witness; own fresh PR/check/readback/public readback; deploy/cloudflare/scripts/build.mjs READ_ONLY; deploy/cloudflare/tests/build.test.mjs READ_ONLY; browser/GAMEROAD.html READ_ONLY; browser/partner-saasuna-bustup-visuals.mjs READ_ONLY; gameplay/rules/save/network/ranked provider READ_ONLY; no ranked queue/backend authority",
+  "solutionSignature": "RANK_MATCH_WAITING_STAGED_ENTRY_MOTION_R1",
+  "reuseDisposition": "REPAIR",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_RANK_WAITING_PRESENTATION_REUSE_AND_R7_FAILED_MANIFEST_ONLY",
+  "solutionSearchEvidence": [
+    "Current waiting surface already uses the approved generated background/chrome/action textures and Advice-only partner bust-up.",
+    "Current full-motion presentation has ambient VFX and status pulse but no one-shot hierarchy reveal for panel, Advice partner, central status, and actions.",
+    "PR #2027 product diff was directly read back as exactly three scoped files; Required Gate stopped only on the missing lease snapshot timestamp before product tests.",
+    "No provider, gameplay, save, network, asset, package, or GAMEROAD.html mutation is required."
+  ],
+  "scope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs",
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs",
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

@@ -11,3 +11,17 @@ test('R3 Home composition keeps the previous Home implementation behind a thin s
   assert.ok(base.includes('mountHomeBootPresentation'));
   assert.equal(wrapper.includes('GAMEROAD.html'), false);
 });
+
+test('R1 rank match is a Battle child and uses the generated presentation surface', () => {
+  const base = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
+  assert.ok(base.includes("'.codexBattleCrest'"));
+  assert.ok(base.includes("'.codexRankLabel'"));
+  assert.ok(base.includes('data-rank-match-controls'));
+  assert.ok(base.includes('ランクマッチ'));
+  assert.ok(base.includes('data-rank-waiting'));
+  assert.ok(base.includes('role', 'dialog'));
+  assert.ok(base.includes('RANK_MATCH_TEXTURES'));
+  assert.ok(base.includes('partner.saasuna'));
+  assert.ok(base.includes('setAdvicePartnerId'));
+  assert.ok(base.includes('GAMEROAD_RANK_MATCH_SEARCH'));
+});

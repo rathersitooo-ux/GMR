@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SAASUNA-MOTION-R1-20260921T1241-CODEX",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "SAASUNA_BATTLE_MOTION_LAYER_R1",
+  "acquireKey": "BATTLE-SAASUNA-MOTION-R1-20260921T1241-CODEX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_190F4A53_EXISTING_BATTLE_CINEMATIC_RUNTIME_20260921T1318JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "SAASUNA_MOTION_CORE_FOCUSED_TEST_AND_PR1926_SEAM_READBACK_20260921T1318JST",
+  "proceedToken": "PROCEED|BATTLE-SAASUNA-MOTION-R1-20260921T1241-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-motion-layer|provisional-keyframes|active-lease",
+  "authorizationBaseSha": "190f4a53375d9914dd2622ab2e3e8252b8b8094b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "SAASUNA_BATTLE_MOTION_LAYER_R1",
+  "leaseAcquireKey": "BATTLE-SAASUNA-MOTION-R1-20260921T1241-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 13:18 JST",
+  "leaseUntilJst": "2026-09-21 14:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A27:L27",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch codex/saasuna-battle-motion-r1; browser/saasuna-battle-motion-core.mjs; tests/saasuna-battle-motion-core.test.mjs; assets/visual/provisional/saasuna-battle-keyframes-r1.png; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; own transient data/preaction-authorizations/BATTLE-SAASUNA-MOTION-R1-20260921T1241-CODEX.json only; own fresh PR/check/merge/readback/public readback; browser/GAMEROAD.html READ_ONLY active SHOP-SAASUNA-SLEEVE-R1 until 13:30 JST; gameplay/rules/save/network/board topology READ_ONLY; formal art/pixel canon READ_ONLY.",
+  "solutionSignature": "SAASUNA_BATTLE_EXISTING_CINEMATIC_RUNTIME_PLUS_PROVISIONAL_KEYFRAME_MOTION_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1926_SEAM_AND_SAASUNA_R2_PROVISIONAL_ASSET_READBACK_20260921T1318JST",
+  "solutionSearchEvidence": [
+    "Existing battle-screen-runtime-mount.mjs already owns the accepted fullscreen source/target cinematic lane and remains the integration seam.",
+    "Existing Saasuna partner conversation and bust-up registries remain the canonical identity/emotion sources; this change composes a presentation-only battle overlay and does not create a second roster.",
+    "Existing PR#1926 conveyor handoff direction was read back and its accepted transition/pair continuity is preserved in the battle runtime layer.",
+    "The generated 3x3 sheet is explicitly provisional; final pixel art and formal art canon remain READ_ONLY pending Human acceptance.",
+    "Advice partner behavior, gameplay judgment, target/winner/order calculation, board topology, save, and network authority remain outside this work unit."
+  ],
+  "scope": [
+    "browser/saasuna-battle-motion-core.mjs",
+    "tests/saasuna-battle-motion-core.test.mjs",
+    "assets/visual/provisional/saasuna-battle-keyframes-r1.png",
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/saasuna-battle-motion-core.mjs",
+    "tests/saasuna-battle-motion-core.test.mjs",
+    "assets/visual/provisional/saasuna-battle-keyframes-r1.png",
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

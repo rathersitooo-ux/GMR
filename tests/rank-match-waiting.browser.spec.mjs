@@ -13,7 +13,7 @@ const RANK_ASSETS = [
 ];
 
 function visibleHomeBattle(page) {
-  return page.locator('[data-home-target="battle"]:visible, [data-go="battle"]:visible').first();
+  return page.locator('[data-home-target="setup"]:visible, [data-go="setup"]:visible, [data-home-target="battle"]:visible, [data-go="battle"]:visible').first();
 }
 
 async function enterRankWaiting(page) {

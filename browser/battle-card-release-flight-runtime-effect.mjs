@@ -134,8 +134,8 @@ function flightTrailKeyframes(projection) {
   return projection.frames.map((frame) => ({
     offset: frame.offset,
     opacity: Math.max(0, Math.min(0.94, frame.opacity * (1 - (0.16 * frame.offset)))),
-    filter: \`blur(\${Math.max(0.2, frame.blurPx * 0.8).toFixed(2)}px) drop-shadow(0 0 8px rgba(143,225,255,.92))\`,
-    transform: \`translate(-50%,-50%) translate3d(\${frame.x.toFixed(2)}px,\${frame.y.toFixed(2)}px,0) rotate(\${frame.rotationDeg.toFixed(2)}deg) scale(\${(0.78 + (frame.scale * 0.42)).toFixed(3)},.72)\`,
+    filter: `blur(${Math.max(0.2, frame.blurPx * 0.8).toFixed(2)}px) drop-shadow(0 0 8px rgba(143,225,255,.92))`,
+    transform: `translate(-50%,-50%) translate3d(${frame.x.toFixed(2)}px,${frame.y.toFixed(2)}px,0) rotate(${frame.rotationDeg.toFixed(2)}deg) scale(${(0.78 + (frame.scale * 0.42)).toFixed(3)},.72)`,
   }));
 }
 
@@ -152,10 +152,10 @@ function createFlightTrail({ documentRef, host, flight, projection }) {
   const sourceRect = flight.sourceRect;
   Object.assign(trail.style, {
     position: 'fixed',
-    left: \`\${sourceRect.left + (sourceRect.width / 2)}px\`,
-    top: \`\${sourceRect.top + (sourceRect.height / 2)}px\`,
-    width: \`\${Math.max(48, Math.min(112, sourceRect.width * 1.45))}px\`,
-    height: \`\${Math.max(3, Math.min(8, sourceRect.height * 0.08))}px\`,
+    left: `${sourceRect.left + (sourceRect.width / 2)}px`,
+    top: `${sourceRect.top + (sourceRect.height / 2)}px`,
+    width: `${Math.max(48, Math.min(112, sourceRect.width * 1.45))}px`,
+    height: `${Math.max(3, Math.min(8, sourceRect.height * 0.08))}px`,
     margin: '0',
     opacity: '0',
     pointerEvents: 'none',
@@ -195,8 +195,8 @@ function createFlightImpactCue({ documentRef, host, target }) {
   cue.setAttribute?.('aria-hidden', 'true');
   Object.assign(cue.style, {
     position: 'fixed',
-    left: \`\${target.x}px\`,
-    top: \`\${target.y}px\`,
+    left: `${target.x}px`,
+    top: `${target.y}px`,
     width: '30px',
     height: '30px',
     margin: '0',

@@ -560,8 +560,9 @@ test('dedicated focus commit keeps release flight presentation-only and invalida
   const acceptedEnd = source.indexOf('\n        },\n      });', acceptedStart);
   assert.ok(acceptedStart >= 0 && acceptedEnd > acceptedStart);
   const accepted = source.slice(acceptedStart, acceptedEnd);
-  assert.match(accepted, /captureReleasedJankenCardFlight\(globalRef, root, slotNodes, hand\)/);
-  assert.match(accepted, /playReleasedJankenCardFlight\(host, flight\)/);
+  assert.match(accepted, /const cardId = typeof readyPackage\?\.cardId === 'string' \? readyPackage\.cardId : null;/);
+  assert.match(accepted, /captureReleasedJankenCardFlight\(globalRef, root, slotNodes, hand, cardId\)/);
+  assert.match(accepted, /playReleasedJankenCardFlight\(globalRef, root, host, orderPresenterHost, flight\)/);
   assert.equal(accepted.includes('clickExistingHandCard'), false,
     'authoritative compound commit already happened inside the existing live stack');
   assert.match(source, /function openForRound\(roundId\) \{[\s\S]*closeDedicatedFocusSurface\(\);[\s\S]*lastRoundId = roundId;/);

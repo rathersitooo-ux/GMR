@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CAUSAL-TIMELINE-R3-20260921T2351-SOL",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CINEMATIC_CAUSAL_TIMELINE_R3",
+  "acquireKey": "BATTLE-CAUSAL-TIMELINE-R3-20260921T2351-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R2_PREACTION_PASS_PLUS_EXACT_STATIC_TEST_FAILURE_AND_FE8_CAUSAL_EVIDENCE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR2018_CONVENTIONAL_NODE_FAILURE_ISOLATED_TO_LEGACY_KEYFRAME_ASSERTIONS",
+  "proceedToken": "PROCEED|BATTLE-CAUSAL-TIMELINE-R3-20260921T2351-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-cinematic-causal-timeline|runtime-test-contract|active-lease",
+  "authorizationBaseSha": "294b7195149086eff3a4243a61a1341eae1908fe",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CINEMATIC_CAUSAL_TIMELINE_R3",
+  "leaseAcquireKey": "BATTLE-CAUSAL-TIMELINE-R3-20260921T2351-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 23:51 JST",
+  "leaseUntilJst": "2026-09-22 00:51 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A20:L20",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR fresh branch sol/battle-causal-timeline-r3-20260921; browser/battle-cinematic-causal-timeline-core.mjs; tests/battle-cinematic-causal-timeline-core.test.mjs; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; own transient data/preaction-authorizations/BATTLE-CAUSAL-TIMELINE-R3-20260921T2351-SOL.json only; own PR/check/merge/readback; Naki/Saasuna motion files READ_ONLY; browser/GAMEROAD.html READ_ONLY; gameplay/rules/save/network/formal art READ_ONLY; image generation PROHIBITED",
+  "solutionSignature": "BATTLE_CINEMATIC_CAUSAL_PHASE_SCHEDULER_V3_WITH_STATIC_CONTRACT_REPAIR",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R2_PR2018_PLUS_R2_REQUIRED_GATE_RUN35614763599",
+  "solutionSearchEvidence": [
+    "R2 PRE_ACTION passed exactly; the only observed conventional-test failure is the static assertion of removed legacy DuelStrike/DuelHit keyframe identifiers.",
+    "The R2 runtime and causal timeline core remain the product implementation to reuse unchanged.",
+    "The exact existing runtime source contract test will be updated to assert the new anticipation/release/reaction/return phase keyframes instead of removed simultaneous strike/hit names.",
+    "No gameplay/result/board/save/network/formal-art authority is changed.",
+    "Reduced-motion and low-performance behavior remain static/readable."
+  ],
+  "scope": [
+    "browser/battle-cinematic-causal-timeline-core.mjs",
+    "tests/battle-cinematic-causal-timeline-core.test.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-cinematic-causal-timeline-core.mjs",
+    "tests/battle-cinematic-causal-timeline-core.test.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

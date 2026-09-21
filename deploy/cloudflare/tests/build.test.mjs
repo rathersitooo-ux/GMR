@@ -148,6 +148,10 @@ test('build copies Browser, runtime dependencies, and formal version manifest de
   }
   const first = await buildPackage(options);
   assert.equal((await readFile(path.join(dist, 'index.html'))).equals(browserBytes), true);
+  const formalPaymentBytes = await readFile(path.join(repoRoot, 'browser/battle-formal-resource-payment-boundary.mjs'));
+  assert.equal((await readFile(path.join(dist, 'battle-formal-resource-payment-boundary.mjs'))).equals(formalPaymentBytes), true);
+  assert.equal(first.artifacts.battle_formal_resource_payment_boundary.git_blob_sha1, gitBlobSha1(formalPaymentBytes));
+  assert.equal(first.artifacts.battle_formal_resource_payment_boundary.output, 'battle-formal-resource-payment-boundary.mjs');
   for (const dep of dependencyContract) {
     assert.equal((await readFile(path.join(dist, dep.file))).equals(expected.get(dep.file)), true);
     assert.equal(first.artifacts[dep.artifact].git_blob_sha1, options[dep.expectedArg]);

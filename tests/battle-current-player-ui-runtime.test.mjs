@@ -248,6 +248,10 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
   assert.match(styleText, /\[data-gr-current-ui-zone="partner-visual"\]\{width:clamp\(132px,15vw,190px\)!important;height:min\(34vh,245px\)!important\}/);
   assert.match(styleText, /#battleManaArtR8[^}]*display:none!important/);
   assert.doesNotMatch(styleText, /--r8-size/);
+  assert.match(styleText, /#hand\{[^}]*justify-content:flex-end!important[^}]*transform-origin:right bottom!important/);
+  assert.match(styleText, /#hand \.handCard:nth-child\(1\)\{transform:translateY\(7px\) rotate\(-7deg\)\}/);
+  assert.match(styleText, /#hand \.handCard:nth-child\(3\)\{transform:translateY\(0\) rotate\(2deg\)\}/);
+  assert.match(styleText, /#hand \.handCard\.select\{[^}]*translateY\(-12px\)[^}]*scale\(1\.04\)!important/);
   assert.match(styleText, /\.planBox\{[^}]*transform:none!important/);
   assert.match(styleText, /\.battleRail\{[^}]*max-width:min\(28vw,340px\)!important[^}]*transform:none!important/);
   assert.match(styleText, /data-battle-janken-slidepad=\"1\"\]\{[^}]*width:var\(--gr-thumb-w\)!important[^}]*height:var\(--gr-thumb-h\)!important/);

@@ -16,6 +16,7 @@ import {
   isBattleHandAuraLaunchArmed,
   projectBattleHandDragGhostPosition,
   projectBattleJankenSlotRollDetents,
+  projectBattleJankenTurnLifecycle,
   projectBattleLoadCardPreview,
   resolveBattleJankenSlotCardAction,
   resolveBattleJankenSlidePadGestureTarget,
@@ -166,7 +167,7 @@ test('janken role stays secondary to the same physical card face in the live slo
   assert.match(runtimeSource, /\.grJankenSlidePadRoleBadge\{position:absolute;right:1px;bottom:1px;/);
 });
 
-test('janken slot can still reach its round-source card action without restoring ordinary-hand membership', () => {
+test('janken slot stays reserved before use, then all remaining cards rejoin the ordinary hand after the one allowed play', () => {
   const model = buildBattleJankenSlidePadModel({ roundId: '1', hand, pickDuplicateIndex: () => 1 });
   assert.equal(
     resolveBattleJankenSlotCardAction(model, 'ROCK', model.assignment.sourceHandCardIds),
@@ -175,8 +176,42 @@ test('janken slot can still reach its round-source card action without restoring
   assert.equal(
     resolveBattleJankenSlotCardAction(model, 'ROCK', model.ordinaryHandCardIds),
     null,
-    'ordinary hand membership is not a backdoor for a reserved janken card',
+    'before the janken play, reserved slot cards are not ordinary hand actions',
   );
+
+  const before = projectBattleJankenTurnLifecycle({
+    model,
+    currentHandCardIds: model.assignment.sourceHandCardIds,
+  });
+  assert.equal(before.usedThisTurn, false);
+  assert.equal(before.jankenUiVisible, true);
+  assert.deepEqual(before.reservedCardIds, model.assignment.selectedJankenCardIds);
+  assert.deepEqual(before.ordinaryHandCardIds, model.ordinaryHandCardIds);
+
+  const after = projectBattleJankenTurnLifecycle({
+    model,
+    currentHandCardIds: model.assignment.sourceHandCardIds,
+    committedRoundId: model.roundId,
+  });
+  assert.equal(after.usedThisTurn, true);
+  assert.equal(after.jankenUiVisible, false);
+  assert.deepEqual(after.reservedCardIds, []);
+  assert.deepEqual(after.ordinaryHandCardIds, model.assignment.sourceHandCardIds);
+});
+
+test('same-turn reconnect infers the janken play from the assigned physical card leaving the current hand', () => {
+  const model = buildBattleJankenSlidePadModel({ roundId: 'reconnect-1', hand, pickDuplicateIndex: () => 1 });
+  const playedCardId = model.slots.find((slot) => slot.jankenHand === 'ROCK').cardId;
+  const remaining = model.assignment.sourceHandCardIds.filter((id) => id !== playedCardId);
+  const lifecycle = projectBattleJankenTurnLifecycle({
+    model,
+    currentHandCardIds: remaining,
+  });
+  assert.equal(lifecycle.usedThisTurn, true);
+  assert.equal(lifecycle.jankenUiVisible, false);
+  assert.deepEqual(lifecycle.missingSelectedCardIds, [playedCardId]);
+  assert.deepEqual(lifecycle.reservedCardIds, []);
+  assert.deepEqual(lifecycle.ordinaryHandCardIds, remaining);
 });
 
 test('same-round redraw keeps the immutable slot assignment even if duplicate chooser would change', () => {
@@ -329,6 +364,16 @@ test('R75 preview fails closed for empty or disabled slots', () => {
   });
   assert.equal(projectBattleLoadCardPreview(model, 'SCISSORS'), null);
   assert.equal(projectBattleLoadCardPreview(model, 'PAPER'), null);
+});
+
+test('live runtime hides only the janken-selection controls after the accepted play and releases remaining cards to ordinary-hand projection', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = (await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
+  assert.match(source, /data-janken-turn-used="true"[\s\S]*\.grJankenSlidePadHandle/);
+  assert.match(source, /committedRoundId = model\.roundId;/);
+  assert.match(source, /syncHandZoneProjection\(root, model, turnLifecycle\.reservedCardIds\)/);
+  assert.match(source, /node\.disabled = turnLifecycle\.usedThisTurn \|\| !slot\.selectable;/);
+  assert.match(source, /turnLifecycle\?\.usedThisTurn === true/);
 });
 
 test('target-confirm proxy is layered above the expanded SlidePad only during target mode', () => {

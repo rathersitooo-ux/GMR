@@ -1,4 +1,5 @@
 import './battle-janken-slidepad-runtime-mount.mjs';
+import './battle-turn-phase-live-guard.mjs';
 import './battle-current-player-ui-live-adapter.mjs';
 import {
   appendAcceptedEvent,

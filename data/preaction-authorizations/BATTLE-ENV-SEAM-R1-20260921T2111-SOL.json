@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ENV-SEAM-R1-20260921T2111-SOL",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "BATTLE_ENVIRONMENT_CONSUMER_SEAM_R1",
+  "acquireKey": "BATTLE-ENV-SEAM-R1-20260921T2111-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_01121418_UIVIS_ART_BTL_039_EXACT_SEAM_20260921T2111JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "DONOR_BRANCH_STATIC_READBACK_PLUS_EXISTING_BATTLE_RUNTIME_FOCUSED_TEST_CONTRACT_20260921T2111JST",
+  "proceedToken": "PROCEED|BATTLE-ENV-SEAM-R1-20260921T2111-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-environment-seam|presentation-only|active-lease",
+  "authorizationBaseSha": "011214183c790f03feda477d054f81dd3b7dd86c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_ENVIRONMENT_CONSUMER_SEAM_R1",
+  "leaseAcquireKey": "BATTLE-ENV-SEAM-R1-20260921T2111-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 21:11 JST",
+  "leaseUntilJst": "2026-09-21 22:11 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A15:L15",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh successor branch sol/battle-environment-seam-r1a-20260921; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; own transient data/preaction-authorizations/BATTLE-ENV-SEAM-R1-20260921T2111-SOL.json only; own PR/check/merge/readback; donor branch sol/battle-environment-seam-r1-20260921 READ_ONLY; UIVIS ART-BTL-039 selected row update only; browser/GAMEROAD.html READ_ONLY; gameplay/rules/save/network/formal art READ_ONLY; image generation PROHIBITED",
+  "solutionSignature": "BATTLE_EXISTING_CINEMATIC_ROOT_PLUS_INDEPENDENT_ENVIRONMENT_PRESENTATION_LAYERS_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "UIVIS_ART_BTL_034_036_038_039_FE8_LAYER_STRUCTURE_POLYHAVEN_SEED_ACTUAL_20260921",
+  "solutionSearchEvidence": [
+    "Existing battle-screen-runtime-mount.mjs remains the single fullscreen cinematic consumer and is reused rather than creating a second battle runtime.",
+    "FE8 actual reference separates actor, motion, battle background, terrain and effects; only the separation principle is adapted, not proprietary art.",
+    "Drive already contains Poly Haven CC0 background-light visual seeds and Kenney/ice VFX seeds, so the new seam stays asset-agnostic and does not promote any candidate to formal art.",
+    "Current Battle runtime uses presentation-only data and must not recalculate gameplay, targets, order, save or network state."
+  ],
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

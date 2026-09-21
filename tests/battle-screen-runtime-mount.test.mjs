@@ -567,32 +567,6 @@ assert.equal(runtime.cinematicEnvironment.dataset.assetMode, 'procedural-fallbac
 assert.equal(runtime.cinematicEnvironment.children[0].dataset.asset, undefined);
 assert.equal(runtime.cinematicEnvironment.children[1].dataset.asset, undefined);
 
-runtime.render(attack, null, {
-  cinematicEnvironment: {
-    distantUrl: './assets/visual/provisional/battle-forest.webp',
-    groundUrl: 'blob:gameroad-battle-ground'
-  }
-});
-await Promise.resolve();
-await Promise.resolve();
-assert.equal(runtime.cinematicEnvironment.dataset.assetMode, 'local-asset');
-assert.equal(runtime.cinematicEnvironment.children[0].dataset.asset, 'true');
-assert.equal(runtime.cinematicEnvironment.children[1].dataset.asset, 'true');
-assert.ok(runtime.cinematicEnvironment.children[0].style.backgroundImage.includes('./assets/visual/provisional/battle-forest.webp'));
-assert.ok(runtime.cinematicEnvironment.children[1].style.backgroundImage.includes('blob:gameroad-battle-ground'));
-
-runtime.render(attack, null, {
-  cinematicEnvironment: {
-    distantUrl: 'https://example.invalid/remote.webp',
-    groundUrl: 'javascript:alert(1)'
-  }
-});
-await Promise.resolve();
-await Promise.resolve();
-assert.equal(runtime.cinematicEnvironment.dataset.assetMode, 'procedural-fallback');
-assert.equal(runtime.cinematicEnvironment.children[0].dataset.asset, undefined);
-assert.equal(runtime.cinematicEnvironment.children[1].dataset.asset, undefined);
-
 const cinematicSides = runtime.cinematicDuel.children.filter(node => node.dataset.role);
 const cinematicVfx = runtime.cinematicDuel.children.find(node => node.dataset.layer === 'vfx');
 assert.deepEqual(cinematicSides.map(node => node.dataset.role), ['source', 'target']);
@@ -625,6 +599,32 @@ assert.ok(cinematicCharacterCalls.some(call => call.type === 'setState' && call.
 assert.ok(cinematicCharacterCalls.some(call => call.type === 'setState' && call.characterId === 'partner.naki' && call.state === 'idle'));
 assert.ok(cinematicCharacterCalls.some(call => call.type === 'setState' && call.characterId === 'partner.saasuna' && call.state === 'idle'));
 assert.equal(cinematicCharacterCalls.some(call => call.state === 'hit' || call.state === 'defeated'), false);
+
+runtime.render(attack, null, {
+  cinematicEnvironment: {
+    distantUrl: './assets/visual/provisional/battle-forest.webp',
+    groundUrl: 'blob:gameroad-battle-ground'
+  }
+});
+await Promise.resolve();
+await Promise.resolve();
+assert.equal(runtime.cinematicEnvironment.dataset.assetMode, 'local-asset');
+assert.equal(runtime.cinematicEnvironment.children[0].dataset.asset, 'true');
+assert.equal(runtime.cinematicEnvironment.children[1].dataset.asset, 'true');
+assert.ok(runtime.cinematicEnvironment.children[0].style.backgroundImage.includes('./assets/visual/provisional/battle-forest.webp'));
+assert.ok(runtime.cinematicEnvironment.children[1].style.backgroundImage.includes('blob:gameroad-battle-ground'));
+
+runtime.render(attack, null, {
+  cinematicEnvironment: {
+    distantUrl: 'https://example.invalid/remote.webp',
+    groundUrl: 'javascript:alert(1)'
+  }
+});
+await Promise.resolve();
+await Promise.resolve();
+assert.equal(runtime.cinematicEnvironment.dataset.assetMode, 'procedural-fallback');
+assert.equal(runtime.cinematicEnvironment.children[0].dataset.asset, undefined);
+assert.equal(runtime.cinematicEnvironment.children[1].dataset.asset, undefined);
 
 const attack2 = createBattleScreenModel({
   participants,

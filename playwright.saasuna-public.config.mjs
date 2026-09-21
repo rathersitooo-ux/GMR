@@ -3,7 +3,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './tests',
   testMatch: ['saasuna-advice-motion-public-acceptance.spec.mjs'],
-  timeout: 45_000,
+  timeout: 20_000,
   expect: { timeout: 7_000 },
   fullyParallel: false,
   workers: 1,

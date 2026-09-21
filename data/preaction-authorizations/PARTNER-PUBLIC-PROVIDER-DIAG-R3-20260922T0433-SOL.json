@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-PUBLIC-PROVIDER-DIAG-R3-20260922T0433-SOL",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PUBLIC_PARTNER_PROVIDER_DIAGNOSTIC_R1",
+  "acquireKey": "PARTNER-PUBLIC-PROVIDER-DIAG-R3-20260922T0433-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLIC_PROVIDER_ATTEMPT2_HTTP424_BOUNDED_PROXY_STATE_DISCARDED_BY_WORKFLOW",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_WORKFLOW_CAPTURES_PROBE_BODY_BUT_LOGS_HTTP_ONLY",
+  "proceedToken": "PROCEED|PARTNER-PUBLIC-PROVIDER-DIAG-R3-20260922T0433-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|provider-probe-state|allowlist-only",
+  "authorizationBaseSha": "7c385f22c5faf2cbfb6f8508986c2469251fe718",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PUBLIC_PARTNER_PROVIDER_DIAGNOSTIC_R1",
+  "leaseAcquireKey": "PARTNER-PUBLIC-PROVIDER-DIAG-R3-20260922T0433-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-22 04:33 JST",
+  "leaseUntilJst": "2026-09-22 05:33 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:N9",
+  "leaseExactMutableResources": ".github/workflows/cloudflare-public-deploy.yml; fresh branch sol/partner-public-provider-probe-state-r3-20260922; own transient data/preaction-authorizations/PARTNER-PUBLIC-PROVIDER-DIAG-R3-20260922T0433-SOL.json only; own fresh PR/check/readback. deploy/cloudflare/functions/ws.js READ_ONLY; deploy/cloudflare/tests/partner-report-provider.test.mjs READ_ONLY; deploy/cloudflare/tests/build.test.mjs READ_ONLY; browser/Battle/card-flight/gameplay/rules/save/network/formal art READ_ONLY; prior invalid R2 branch READ_ONLY.",
+  "solutionSignature": "PUBLIC_PROVIDER_SAFE_FAILURE_STATE_LOG_R3",
+  "reuseDisposition": "REPAIR",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_BOUNDED_PROXY_STATE_ALREADY_AVAILABLE",
+  "solutionSearchEvidence": [
+    "Merged ws.js already maps upstream 401/403/other 4xx/429/5xx into bounded GAMEROAD states and status classes without exposing upstream response content.",
+    "The public deployment workflow captures the bounded proxy JSON in PROBE_BODY but discards it whenever HTTP status is not 200.",
+    "The previous same-SHA rerun reached the Pages Function and returned HTTP424, so the remaining diagnostic gap is only distinguishing provider_auth_rejected, provider_access_rejected, or provider_request_rejected.",
+    "A workflow-only allowlist parser can expose the bounded state without logging provider body, API credentials, character identifiers, arbitrary response text, or changing runtime/gameplay behavior."
+  ],
+  "scope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ]
+}

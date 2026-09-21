@@ -748,23 +748,192 @@ function spatialSlotRole(slotNodes, selectedHand) {
   return 'middle';
 }
 
-function captureReleasedJankenCardFlight(globalRef, battleRoot, slotNodes, selectedHand) {
+function exactCardNode(nodes, datasetKey, cardId) {
+  if (!cardId || !nodes) return null;
+  for (const node of nodes) {
+    if (node?.dataset?.[datasetKey] === cardId) return node;
+  }
+  return null;
+}
+
+function releaseVisualNode(battleRoot, sourceNode, cardId) {
+  if (!cardId) return sourceNode;
+  const physical = exactCardNode(
+    battleRoot?.querySelectorAll?.('[data-physical-card-id]'),
+    'physicalCardId',
+    cardId,
+  );
+  if (physical) return physical;
+  return exactCardNode(handCardNodes(battleRoot), 'cardId', cardId) ?? sourceNode;
+}
+
+function releaseVfxAssets(globalRef, visualNode, cardId) {
+  const registry = globalRef?.__GAMEROAD_BATTLE_CARD_RELEASE_VFX__;
+  const exact = cardId && registry && typeof registry === 'object' && !Array.isArray(registry)
+    ? registry[cardId]
+    : null;
+  const profile = exact && typeof exact === 'object' && !Array.isArray(exact) ? exact : {};
+  return Object.freeze({
+    heroFrameUrl: profile.heroFrameUrl ?? visualNode?.dataset?.releaseVfxHeroFrameSrc ?? null,
+    impactSpriteUrl: profile.impactSpriteUrl ?? visualNode?.dataset?.releaseVfxImpactSrc ?? null,
+    receiptGlowUrl: profile.receiptGlowUrl ?? visualNode?.dataset?.releaseVfxReceiptSrc ?? null,
+  });
+}
+
+function captureReleasedJankenCardFlight(globalRef, battleRoot, slotNodes, selectedHand, cardId = null) {
   const sourceNode = slotNodes.get(selectedHand);
+  const visualNode = releaseVisualNode(battleRoot, sourceNode, cardId);
   const start = elementCenter(sourceNode);
   const target = launchTargetCenter(battleRoot);
-  if (!sourceNode || !start || !target) return null;
+  if (!sourceNode || !visualNode || !start || !target) return null;
   return captureBattleCardReleaseFlightEffect({
     sourceNode,
+    visualNode,
     start,
     target,
+    cardId,
+    assets: releaseVfxAssets(globalRef, visualNode, cardId),
     role: spatialSlotRole(slotNodes, selectedHand),
     reducedMotion: globalRef?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true,
     lowPerf: battleRoot?.dataset?.lowPerf === 'true',
   });
 }
 
-function playReleasedJankenCardFlight(host, flight) {
-  return playBattleCardReleaseFlightEffect({ host, flight });
+function findBattleOrderReceiptTarget(battleRoot, orderPresenterHost, cardId) {
+  if (!cardId) return null;
+  const groups = [
+    battleRoot?.querySelectorAll?.('[data-battle-cinematic-order] .grBattleCinematicOrderCard'),
+    battleRoot?.querySelectorAll?.('.grBattleHudPlayedCard'),
+    orderPresenterHost?.querySelectorAll?.('.grJankenOrderItem'),
+  ];
+  for (const nodes of groups) {
+    const target = exactCardNode(nodes, 'cardId', cardId);
+    if (target) return target;
+  }
+  return null;
+}
+
+function appendBattleOrderReceiptGlow(globalRef, battleRoot, target, {
+  receiptGlowUrl = null,
+  reducedMotion = false,
+  lowPerf = false,
+} = {}) {
+  const documentRef = battleRoot?.ownerDocument ?? globalRef?.document;
+  const rect = target?.getBoundingClientRect?.();
+  if (!documentRef?.createElement || !rect) return false;
+  const left = Number(rect.left);
+  const top = Number(rect.top);
+  const width = Number(rect.width);
+  const height = Number(rect.height);
+  if (![left, top, width, height].every(Number.isFinite) || width <= 0 || height <= 0) return false;
+
+  const glow = documentRef.createElement(receiptGlowUrl ? 'img' : 'span');
+  glow.setAttribute?.('aria-hidden', 'true');
+  glow.dataset.battleOrderReceiptGlow = '1';
+  if (receiptGlowUrl) {
+    glow.src = receiptGlowUrl;
+    glow.alt = '';
+  }
+  Object.assign(glow.style, {
+    position: 'fixed',
+    left: `${left + (width * 0.08)}px`,
+    top: `${top + height - Math.max(3, height * 0.07)}px`,
+    width: `${width * 0.84}px`,
+    height: `${Math.max(3, Math.min(6, height * 0.08))}px`,
+    margin: '0',
+    borderRadius: '999px',
+    background: receiptGlowUrl
+      ? 'transparent'
+      : 'linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.96),rgba(255,255,255,0))',
+    boxShadow: receiptGlowUrl ? 'none' : '0 0 10px rgba(255,255,255,.82)',
+    objectFit: receiptGlowUrl ? 'fill' : '',
+    opacity: '0',
+    pointerEvents: 'none',
+    zIndex: '222',
+    transformOrigin: '50% 50%',
+  });
+  const mount = documentRef.body ?? battleRoot;
+  mount?.appendChild?.(glow);
+  if (!glow.parentNode && !Array.isArray(mount?.children)) return false;
+
+  const semanticOnly = reducedMotion === true || lowPerf === true;
+  if (typeof glow.animate === 'function') {
+    try {
+      const animation = glow.animate(
+        semanticOnly
+          ? [
+            { opacity: 0 },
+            { offset: 0.34, opacity: 0.92 },
+            { opacity: 0 },
+          ]
+          : [
+            { opacity: 0, transform: 'scaleX(.12)' },
+            { offset: 0.28, opacity: 1, transform: 'scaleX(1.04)' },
+            { offset: 0.62, opacity: 0.78, transform: 'scaleX(.92)' },
+            { opacity: 0, transform: 'scaleX(.72)' },
+          ],
+        {
+          duration: semanticOnly ? 140 : 220,
+          easing: 'cubic-bezier(.18,.78,.2,1)',
+          fill: 'forwards',
+        },
+      );
+      animation?.finished?.then?.(() => glow.remove?.(), () => glow.remove?.());
+      return true;
+    } catch {
+      glow.remove?.();
+      return false;
+    }
+  }
+
+  glow.style.opacity = '.86';
+  const timer = globalRef?.setTimeout?.(() => glow.remove?.(), semanticOnly ? 140 : 220);
+  timer?.unref?.();
+  return true;
+}
+
+export function pulseBattleCardOrderReceipt(globalRef, battleRoot, orderPresenterHost, {
+  cardId,
+  receiptGlowUrl = null,
+  reducedMotion = false,
+  lowPerf = false,
+  attempt = 0,
+} = {}) {
+  const target = findBattleOrderReceiptTarget(battleRoot, orderPresenterHost, cardId);
+  if (target) {
+    return appendBattleOrderReceiptGlow(globalRef, battleRoot, target, {
+      receiptGlowUrl,
+      reducedMotion,
+      lowPerf,
+    });
+  }
+  if (!cardId || attempt >= 4 || typeof globalRef?.setTimeout !== 'function') return false;
+  const timer = globalRef.setTimeout(() => {
+    pulseBattleCardOrderReceipt(globalRef, battleRoot, orderPresenterHost, {
+      cardId,
+      receiptGlowUrl,
+      reducedMotion,
+      lowPerf,
+      attempt: attempt + 1,
+    });
+  }, 48);
+  timer?.unref?.();
+  return false;
+}
+
+function playReleasedJankenCardFlight(globalRef, battleRoot, host, orderPresenterHost, flight) {
+  return playBattleCardReleaseFlightEffect({
+    host,
+    flight,
+    onPresentationSettled: (payload) => {
+      pulseBattleCardOrderReceipt(globalRef, battleRoot, orderPresenterHost, {
+        cardId: payload?.cardId,
+        receiptGlowUrl: payload?.assets?.receiptGlowUrl ?? null,
+        reducedMotion: payload?.reducedMotion === true,
+        lowPerf: payload?.lowPerf === true,
+      });
+    },
+  });
 }
 
 function animateHandAuraLaunch(globalRef, documentRef, battleRoot, powerEnergy, ghost) {
@@ -1196,8 +1365,9 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
         lowPerf: root.dataset?.lowPerf === 'true',
         onAccepted: (result, readyPackage) => {
           const hand = readyPackage?.jankenHand;
-          const flight = hand ? captureReleasedJankenCardFlight(globalRef, root, slotNodes, hand) : null;
-          if (flight) playReleasedJankenCardFlight(host, flight);
+          const cardId = typeof readyPackage?.cardId === 'string' ? readyPackage.cardId : null;
+          const flight = hand ? captureReleasedJankenCardFlight(globalRef, root, slotNodes, hand, cardId) : null;
+          if (flight) playReleasedJankenCardFlight(globalRef, root, host, orderPresenterHost, flight);
           const settle = () => {
             if (focusSurfaceRuntime === runtime) closeDedicatedFocusSurface();
           };
@@ -1360,8 +1530,10 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     }
     const currentSourceHandIds = readHand(globalRef, root).map((card) => card.id);
     const cardId = resolveBattleJankenSlotCardAction(model, selectedHand, currentSourceHandIds);
-    const flight = cardId ? captureReleasedJankenCardFlight(globalRef, root, slotNodes, selectedHand) : null;
-    if (cardId && clickExistingHandCard(root, cardId)) playReleasedJankenCardFlight(host, flight);
+    const flight = cardId ? captureReleasedJankenCardFlight(globalRef, root, slotNodes, selectedHand, cardId) : null;
+    if (cardId && clickExistingHandCard(root, cardId)) {
+      playReleasedJankenCardFlight(globalRef, root, host, orderPresenterHost, flight);
+    }
     return !!cardId;
   }
 

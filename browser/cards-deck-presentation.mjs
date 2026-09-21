@@ -521,6 +521,109 @@ function closestSwipeCard(target) {
   return target?.closest?.('#collectionGrid [data-id], #deckSlots [data-id], #exDeckSlots [data-id]') ?? null;
 }
 
+export const DECK_SWIPE_PRECOMMIT_FEEDBACK = Object.freeze({
+  activationPx: 10,
+  thresholdPx: 56,
+  axisRatio: 1.15,
+  maxTranslatePx: 8,
+  maxRotateDeg: 1.8,
+  maxScaleLift: 0.012,
+});
+
+export function createDeckSwipePrecommitVisual({
+  surface,
+  deltaX,
+  deltaY,
+  thresholdPx = DECK_SWIPE_PRECOMMIT_FEEDBACK.thresholdPx,
+  reducedMotion = false,
+  lowPerf = false,
+} = {}) {
+  if (!['collection', 'deck'].includes(surface)) throw new RangeError('SURFACE_INVALID');
+  if (![deltaX, deltaY, thresholdPx].every(Number.isFinite) || thresholdPx <= 0) {
+    throw new TypeError('SWIPE_INPUT_INVALID');
+  }
+  const absX = Math.abs(deltaX);
+  const absY = Math.abs(deltaY);
+  const allowedDirection = surface === 'collection' ? deltaX > 0 : deltaX < 0;
+  const horizontalIntent = absX > absY * DECK_SWIPE_PRECOMMIT_FEEDBACK.axisRatio;
+  const active = allowedDirection
+    && horizontalIntent
+    && absX >= DECK_SWIPE_PRECOMMIT_FEEDBACK.activationPx;
+  if (!active) {
+    return Object.freeze({
+      active: false,
+      ready: false,
+      progress: 0,
+      translateX: 0,
+      rotateDeg: 0,
+      scale: 1,
+      glowOpacity: 0,
+    });
+  }
+
+  const span = Math.max(1, thresholdPx - DECK_SWIPE_PRECOMMIT_FEEDBACK.activationPx);
+  const progress = Math.min(1, Math.max(
+    0,
+    (absX - DECK_SWIPE_PRECOMMIT_FEEDBACK.activationPx) / span,
+  ));
+  const direction = deltaX < 0 ? -1 : 1;
+  const motionFactor = reducedMotion ? 0 : (lowPerf ? 0.5 : 1);
+  const translateX = direction
+    * (1 + (DECK_SWIPE_PRECOMMIT_FEEDBACK.maxTranslatePx - 1) * progress)
+    * motionFactor;
+  const rotateDeg = direction
+    * (0.25 + (DECK_SWIPE_PRECOMMIT_FEEDBACK.maxRotateDeg - 0.25) * progress)
+    * motionFactor;
+  const scale = reducedMotion
+    ? 1
+    : 1 + DECK_SWIPE_PRECOMMIT_FEEDBACK.maxScaleLift * progress * (lowPerf ? 0.5 : 1);
+  const glowOpacity = (lowPerf ? 0.18 : 0.24) + progress * (lowPerf ? 0.22 : 0.46);
+
+  return Object.freeze({
+    active: true,
+    ready: absX >= thresholdPx,
+    progress,
+    translateX,
+    rotateDeg,
+    scale,
+    glowOpacity,
+  });
+}
+
+function installDeckSwipePrecommitFeedbackStyles(doc) {
+  if (!doc?.createElement) return null;
+  const styleId = 'gameroad-deck-swipe-precommit-feedback-style';
+  if (doc.getElementById?.(styleId)) return doc.getElementById(styleId);
+  const style = doc.createElement('style');
+  style.id = styleId;
+  style.textContent = `
+.gr-deck-swipe-precommit-card{will-change:translate,rotate,scale;transition:translate 48ms linear,rotate 48ms linear,scale 70ms ease-out}
+.gr-deck-swipe-precommit-card[data-deck-swipe-ready="1"]{transition:translate 36ms linear,rotate 36ms linear,scale 50ms ease-out}
+.gr-deck-swipe-precommit-glow{position:fixed;pointer-events:none;z-index:var(--gameroad-cards-transfer-z,120);border:1px solid rgba(255,241,194,.88);border-radius:10px;background:radial-gradient(ellipse at 50% 50%,rgba(255,245,209,.18),rgba(255,216,126,.08) 58%,transparent 76%);box-shadow:0 0 10px rgba(255,222,138,.54),0 0 22px rgba(255,198,96,.22);mix-blend-mode:screen;opacity:0;transform-origin:center center;will-change:transform,opacity;transition:opacity 55ms linear}
+.gr-deck-swipe-precommit-glow[data-deck-swipe-ready="1"]{border-color:rgba(255,248,218,.98);box-shadow:0 0 12px rgba(255,235,170,.72),0 0 28px rgba(255,198,96,.34)}
+body.low-perf .gr-deck-swipe-precommit-glow,html.low-perf .gr-deck-swipe-precommit-glow{background:transparent;box-shadow:none}
+@media (prefers-reduced-motion:reduce){.gr-deck-swipe-precommit-card{translate:0 0!important;rotate:0deg!important;scale:1!important;transition:none!important}.gr-deck-swipe-precommit-glow{transform:none!important;transition:opacity 60ms linear!important}}
+`;
+  (doc.head ?? doc.documentElement)?.appendChild?.(style);
+  return style;
+}
+
+function resolveDeckSwipePrecommitReducedMotion(win) {
+  try { return Boolean(win?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches); }
+  catch { return false; }
+}
+
+function resolveDeckSwipePrecommitLowPerf(doc) {
+  const body = doc?.body;
+  const root = doc?.documentElement;
+  return Boolean(
+    body?.classList?.contains?.('low-perf')
+      || root?.classList?.contains?.('low-perf')
+      || body?.dataset?.lowPerf === 'true'
+      || root?.dataset?.lowPerf === 'true',
+  );
+}
+
 export function isNeutralizedDeckEditorSwipe(intent) {
   return intent?.action === 'none' && intent?.consumed === true;
 }
@@ -591,6 +694,7 @@ export function installDeckStorageLiveMount({
     getCardLabel: (id) => cardLabel(doc, id),
   });
   const presentation = createDeckSwipePresentationController({ document: doc, window: win });
+  installDeckSwipePrecommitFeedbackStyles(doc);
 
   const discovery = createDeckSwipeDiscoveryController({ storage: cardsFavoriteStorage(win) });
   const discoveryHost = doc.createElement('div');
@@ -622,12 +726,110 @@ export function installDeckStorageLiveMount({
 
   let gesture = null;
   let suppressClick = null;
+  let precommitFrame = null;
+  let pendingPrecommitPoint = null;
+  let precommitGlow = null;
   const now = () => Number(win?.performance?.now?.() ?? Date.now());
+  const requestPrecommitFrame = typeof win?.requestAnimationFrame === 'function'
+    ? (fn) => win.requestAnimationFrame(fn)
+    : (fn) => (win?.setTimeout ?? globalThis.setTimeout)(fn, 16);
+  const cancelPrecommitFrame = typeof win?.cancelAnimationFrame === 'function'
+    ? (id) => win.cancelAnimationFrame(id)
+    : (id) => (win?.clearTimeout ?? globalThis.clearTimeout)(id);
+
+  const restorePrecommitCard = (current) => {
+    const card = current?.card;
+    if (!card) return;
+    card.classList?.remove?.('gr-deck-swipe-precommit-card');
+    if (card.dataset) delete card.dataset.deckSwipeReady;
+    if (card.style && current.originalInline) {
+      card.style.translate = current.originalInline.translate;
+      card.style.rotate = current.originalInline.rotate;
+      card.style.scale = current.originalInline.scale;
+    }
+  };
+
+  const clearPrecommitVisual = (current) => {
+    restorePrecommitCard(current);
+    precommitGlow?.remove?.();
+    precommitGlow = null;
+  };
+
+  const clearPrecommitFeedback = (current) => {
+    if (precommitFrame != null) cancelPrecommitFrame(precommitFrame);
+    precommitFrame = null;
+    pendingPrecommitPoint = null;
+    clearPrecommitVisual(current);
+  };
+
+  const ensurePrecommitGlow = (current) => {
+    if (precommitGlow || !doc?.createElement || !doc?.body?.appendChild) return precommitGlow;
+    const box = current?.card?.getBoundingClientRect?.();
+    if (!box || !Number.isFinite(box.left) || !Number.isFinite(box.top)
+      || !Number.isFinite(box.width) || !Number.isFinite(box.height)
+      || box.width <= 0 || box.height <= 0) return null;
+    const glow = doc.createElement('span');
+    glow.className = 'gr-deck-swipe-precommit-glow';
+    glow.setAttribute?.('aria-hidden', 'true');
+    Object.assign(glow.style ?? {}, {
+      left: `${box.left}px`,
+      top: `${box.top}px`,
+      width: `${box.width}px`,
+      height: `${box.height}px`,
+    });
+    doc.body.appendChild(glow);
+    precommitGlow = glow;
+    return glow;
+  };
+
+  const renderPrecommitFeedback = () => {
+    precommitFrame = null;
+    const current = gesture;
+    const point = pendingPrecommitPoint;
+    pendingPrecommitPoint = null;
+    if (!current || !point || current.pointerId !== point.pointerId) return;
+    const visual = createDeckSwipePrecommitVisual({
+      surface: current.surface,
+      deltaX: point.x - current.startX,
+      deltaY: point.y - current.startY,
+      thresholdPx: 56,
+      reducedMotion: resolveDeckSwipePrecommitReducedMotion(win),
+      lowPerf: resolveDeckSwipePrecommitLowPerf(doc),
+    });
+    if (!visual.active) {
+      clearPrecommitVisual(current);
+      return;
+    }
+
+    const glow = ensurePrecommitGlow(current);
+    current.card.classList?.add?.('gr-deck-swipe-precommit-card');
+    if (current.card.dataset) current.card.dataset.deckSwipeReady = visual.ready ? '1' : '0';
+    if (current.card.style) {
+      current.card.style.translate = `${visual.translateX.toFixed(2)}px 0px`;
+      current.card.style.rotate = `${visual.rotateDeg.toFixed(2)}deg`;
+      current.card.style.scale = visual.scale.toFixed(4);
+    }
+    if (glow?.style) {
+      glow.dataset.deckSwipeReady = visual.ready ? '1' : '0';
+      glow.style.opacity = visual.glowOpacity.toFixed(3);
+      glow.style.transform = `translate3d(${visual.translateX.toFixed(2)}px,0,0) scale(${(visual.scale + 0.01).toFixed(4)})`;
+    }
+  };
+
+  const schedulePrecommitFeedback = (event) => {
+    if (!gesture || gesture.pointerId !== event?.pointerId) return;
+    const x = Number(event.clientX);
+    const y = Number(event.clientY);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    pendingPrecommitPoint = { pointerId: event.pointerId, x, y };
+    if (precommitFrame == null) precommitFrame = requestPrecommitFrame(renderPrecommitFeedback);
+  };
 
   const onPointerDown = (event) => {
     if (event?.pointerType === 'mouse' && event?.button !== 0) return;
     const card = closestSwipeCard(event?.target);
     if (!card || !screen.contains?.(card)) return;
+    clearPrecommitFeedback(gesture);
     gesture = {
       pointerId: event.pointerId,
       cardId: String(card.dataset?.id ?? ''),
@@ -635,13 +837,26 @@ export function installDeckStorageLiveMount({
       startX: Number(event.clientX),
       startY: Number(event.clientY),
       card,
+      originalInline: {
+        translate: String(card.style?.translate ?? ''),
+        rotate: String(card.style?.rotate ?? ''),
+        scale: String(card.style?.scale ?? ''),
+      },
     };
+  };
+
+  const onPointerMove = (event) => {
+    schedulePrecommitFeedback(event);
   };
 
   const onPointerUp = (event) => {
     const current = gesture;
     gesture = null;
-    if (!current || current.pointerId !== event?.pointerId || !current.cardId) return;
+    if (!current || current.pointerId !== event?.pointerId || !current.cardId) {
+      clearPrecommitFeedback(current);
+      return;
+    }
+    clearPrecommitFeedback(current);
     const dx = Number(event.clientX) - current.startX;
     const dy = Number(event.clientY) - current.startY;
     if (!Number.isFinite(dx) || !Number.isFinite(dy)) return;
@@ -676,7 +891,11 @@ export function installDeckStorageLiveMount({
     mounted?.render?.();
   };
 
-  const onPointerCancel = () => { gesture = null; };
+  const onPointerCancel = () => {
+    const current = gesture;
+    gesture = null;
+    clearPrecommitFeedback(current);
+  };
   const onClickCapture = (event) => {
     if (!suppressClick || now() > suppressClick.until || event?.isTrusted === false) return;
     const card = closestSwipeCard(event?.target);
@@ -688,6 +907,7 @@ export function installDeckStorageLiveMount({
   };
 
   doc.addEventListener('pointerdown', onPointerDown, false);
+  doc.addEventListener('pointermove', onPointerMove, false);
   doc.addEventListener('pointerup', onPointerUp, false);
   doc.addEventListener('pointercancel', onPointerCancel, false);
   doc.addEventListener('click', onClickCapture, true);
@@ -699,7 +919,11 @@ export function installDeckStorageLiveMount({
     destroy() {
       if (destroyed) return;
       destroyed = true;
+      const current = gesture;
+      gesture = null;
+      clearPrecommitFeedback(current);
       doc.removeEventListener('pointerdown', onPointerDown, false);
+      doc.removeEventListener('pointermove', onPointerMove, false);
       doc.removeEventListener('pointerup', onPointerUp, false);
       doc.removeEventListener('pointercancel', onPointerCancel, false);
       doc.removeEventListener('click', onClickCapture, true);

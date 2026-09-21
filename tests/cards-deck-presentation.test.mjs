@@ -210,7 +210,7 @@ test('live swipe consumer coalesces pointermove feedback and always removes it o
   const { readFile } = await import('node:fs/promises');
   const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
   const start = source.indexOf('export function installDeckStorageLiveMount');
-  const end = source.indexOf('const cardsInspectorDismissInstallations', start);
+  const end = source.indexOf('export function installCardsInspectorDismissInteractions', start);
   const live = source.slice(start, end);
   assert.ok(start >= 0 && end > start);
   assert.match(live, /addEventListener\('pointermove', onPointerMove, false\)/);

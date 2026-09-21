@@ -379,6 +379,17 @@ test('RANK-MATCH-R5 reaches waiting, loads generated chrome, and edits only the 
   const { setup, battle, waiting } = await enterRankMatchWaitingEvidence(page);
   await attachStateScreenshot(page, testInfo, 'rank-waiting-surface');
 
+  const normalMotion = await waiting.evaluate((surface) => ({
+    vfx: getComputedStyle(surface.querySelector('.rankWaitingVfx')).animationName,
+    pulse: getComputedStyle(surface.querySelector('.rankWaitingStatus'), '::before').animationName,
+    panel: getComputedStyle(surface.querySelector('.rankWaitingPanel')).animationName,
+    partner: getComputedStyle(surface.querySelector('.rankWaitingPartner img')).animationName,
+  }));
+  expect(normalMotion.vfx).toBe('gameroadRankWaitingVfx');
+  expect(normalMotion.pulse).toBe('gameroadRankWaitingPulse');
+  expect(normalMotion.panel).toBe('gameroadRankWaitingEnter');
+  expect(normalMotion.partner).toBe('gameroadRankWaitingPartnerIdle');
+
   for (const asset of [
     'waiting-bg.webp',
     'ui-chrome.webp',
@@ -437,10 +448,13 @@ test('RANK-MATCH-R5 reaches waiting, loads generated chrome, and edits only the 
 test('RANK-MATCH-R5 honors reduced motion without losing the waiting flow', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const { waiting } = await enterRankMatchWaitingEvidence(page);
-  const vfxAnimation = await waiting.locator('.rankWaitingVfx').evaluate((node) => getComputedStyle(node).animationName);
-  const pulseAnimation = await waiting.locator('.rankWaitingStatus').evaluate((node) => getComputedStyle(node, '::before').animationName);
-  expect(vfxAnimation).toBe('none');
-  expect(pulseAnimation).toBe('none');
+  const reducedAnimations = await waiting.evaluate((surface) => ({
+    vfx: getComputedStyle(surface.querySelector('.rankWaitingVfx')).animationName,
+    pulse: getComputedStyle(surface.querySelector('.rankWaitingStatus'), '::before').animationName,
+    panel: getComputedStyle(surface.querySelector('.rankWaitingPanel')).animationName,
+    partner: getComputedStyle(surface.querySelector('.rankWaitingPartner img')).animationName,
+  }));
+  expect(reducedAnimations).toEqual({ vfx: 'none', pulse: 'none', panel: 'none', partner: 'none' });
 });
 
 test('captures success-state screenshots for current pointer navigation', async ({ page }, testInfo) => {

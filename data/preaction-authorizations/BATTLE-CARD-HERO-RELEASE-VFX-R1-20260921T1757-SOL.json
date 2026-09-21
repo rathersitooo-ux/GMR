@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CARD-HERO-RELEASE-VFX-R1-20260921T1757-SOL",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "BATTLE_CARD_RELEASE_HERO_CENTRE_AND_ORDER_RECEIPT_R1",
+  "acquireKey": "BATTLE-CARD-HERO-RELEASE-VFX-R1-20260921T1757-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_CORRECTED_CENTRE_HERO_THEN_ORDER_RECEIPT_20260921",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR2005_PR2008_DONOR_DIFF_PLUS_CURRENT_MAIN_UNCHANGED_SCOPE",
+  "proceedToken": "PROCEED|BATTLE-CARD-HERO-RELEASE-VFX-R1-20260921T1757-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-card-release|centre-hero|order-receipt",
+  "authorizationBaseSha": "25f9054c29bf4c769201f9dd118347e4fc17dd80",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "BATTLE_CARD_RELEASE_HERO_CENTRE_AND_ORDER_RECEIPT_R1",
+  "leaseAcquireKey": "BATTLE-CARD-HERO-RELEASE-VFX-R1-20260921T1757-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 17:57 JST",
+  "leaseUntilJst": "2026-09-21 18:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A165:L165",
+  "leaseExactMutableResources": "browser/battle-card-release-flight-motion-core.mjs; browser/battle-card-release-flight-runtime-effect.mjs; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-card-release-flight-motion-core.test.mjs; tests/battle-card-release-flight-runtime-effect.test.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; own fresh branch/PR/check/readback; browser/battle-screen-runtime-mount.mjs READ_ONLY active Saasuna reconciliation owner; browser/GAMEROAD.html READ_ONLY; gameplay/rules/save/network/order authority READ_ONLY; image generation PROHIBITED",
+  "solutionSignature": "CENTRE_HERO_SHOT_WITH_PROCEDURAL_TRAIL_AND_ORDER_RECEIPT_GLOW",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_RELEASE_EFFECT_ORDER_PRESENTER_PLUS_WEB_ANIMATION_SVG_PRIMARY_DOCS",
+  "solutionSearchEvidence": [
+    "Current main already has a canonical card-release motion core and runtime effect, so a second animation engine is unnecessary.",
+    "Current top order rail and HUD chain already expose exact cardId presentation nodes; presentation can pulse them without recalculating order or editing battle-screen ownership.",
+    "The corrected user meaning is centre-first: release ends at screen centre, the central card hero-shot is the main payoff, and the order slot receives only a short lower-edge confirmation after it is already registered.",
+    "Closed PR #2005 and #2008 are donor-only because their PRE_ACTION witness metadata failed before product tests; this successor is manifest-first from fresh current main and reuses only the bounded six-file delta.",
+    "Web Animations plus normalized SVG path strokes can render the trail and hero cues without raster generation; per-card material URLs remain optional enhancement hooks."
+  ],
+  "scope": [
+    "browser/battle-card-release-flight-motion-core.mjs",
+    "browser/battle-card-release-flight-runtime-effect.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-card-release-flight-motion-core.test.mjs",
+    "tests/battle-card-release-flight-runtime-effect.test.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-card-release-flight-motion-core.mjs",
+    "browser/battle-card-release-flight-runtime-effect.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-card-release-flight-motion-core.test.mjs",
+    "tests/battle-card-release-flight-runtime-effect.test.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

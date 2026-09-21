@@ -64,7 +64,7 @@ test('three input modes share one existing card-action commit path', () => {
   assert.match(source, /inputMode === BATTLE_JANKEN_INPUT_MODE\.LAUNCHER/);
   assert.match(source, /function commitSelectedHand\(selectedHand\)/);
   assert.match(source, /resolveBattleJankenSlotCardAction\(model, selectedHand, currentSourceHandIds\)/);
-  assert.match(source, /if \(cardId && clickExistingHandCard\(root, cardId\)\) playReleasedJankenCardFlight\(host, flight\);/);
+  assert.match(source, /const clicked = !!cardId && clickExistingHandCard\(root, cardId\);[\s\S]*if \(clicked\) \{[\s\S]*playReleasedJankenCardFlight\(host, flight\);/);
 });
 
 
@@ -504,7 +504,7 @@ test('remaining-hand row roulette live mount reuses the current playable project
   assert.match(source, /createBattlePlayableHandRowRouletteController/);
   assert.match(source, /getCandidateProjection: \(\) => currentPlayableHandAffordance\(root\)/);
   assert.match(source, /delegateHandCardAction: \(cardId\) => clickExistingHandCard\(root, cardId\)/);
-  assert.match(source, /syncHandZoneProjection\(root, model\);[\s\S]*syncPlayableHandAffordance\(root\);[\s\S]*rowRouletteRuntime\?\.refresh\?\.\(\)/);
+  assert.match(source, /syncHandZoneProjection\(root, model, turnLifecycle\.reservedCardIds\);[\s\S]*syncPlayableHandAffordance\(root\);[\s\S]*rowRouletteRuntime\?\.refresh\?\.\(\)/);
   assert.match(source, /rowRouletteRuntime\?\.destroy\?\.\(\);[\s\S]*rowRouletteHost\.remove\?\.\(\)/);
 });
 
@@ -814,7 +814,9 @@ test('release-flight live adapter delegates to the canonical effect and keeps su
   assert.equal(source.includes('sampleOffsets = [0, 0.12, 0.28'), false);
   assert.equal(source.includes("reducedMotion: globalRef?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true"), true);
   assert.equal(source.includes("lowPerf: battleRoot?.dataset?.lowPerf === 'true'"), true);
-  assert.equal(source.includes('if (cardId && clickExistingHandCard(root, cardId)) playReleasedJankenCardFlight(host, flight);'), true);
+  assert.equal(source.includes('const clicked = !!cardId && clickExistingHandCard(root, cardId);'), true);
+  assert.equal(source.includes('if (clicked) {'), true);
+  assert.equal(source.includes('playReleasedJankenCardFlight(host, flight);'), true);
   assert.equal(source.includes('onAccepted: (result, readyPackage) => {'), true);
   assert.equal(source.includes('const hand = readyPackage?.jankenHand;'), true);
   assert.equal(source.includes('if (flight) playReleasedJankenCardFlight(host, flight);'), true);

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RANK-MATCH-WAITING-PRESENTATION-R4B-BOOT-IDEMPOTENCE-20260921-SOL",
+  "taskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "workUnitKey": "RANK_MATCH_FLOW_AND_PARTNER_PICKER_R1",
+  "acquireKey": "RANK-MATCH-WAITING-PRESENTATION-R4-20260921T2109-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "MUTATION_OBSERVER_SELF_OBSERVED_HIDDEN_CHILD_LIST_WRITES_MATCH_PAGE_GOTO_STARVATION",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR2007_HEAD_7116_FOCUSED_NODE_STATIC_PACKAGE_DEPLOY_PREP_PASS_BROWSER_RUNTIME_STUCK_AT_PAGE_GOTO",
+  "proceedToken": "PROCEED|RANK-MATCH-WAITING-PRESENTATION-R4B-BOOT-IDEMPOTENCE-20260921-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|observer-idempotence|boot-unstarve",
+  "authorizationBaseSha": "7116b3fbed345c11264bf736d9d69fe2a8a0d14c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "leaseWorkUnitKey": "RANK_MATCH_FLOW_AND_PARTNER_PICKER_R1",
+  "leaseAcquireKey": "RANK-MATCH-WAITING-PRESENTATION-R4-20260921T2109-SOL",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A168:N168",
+  "leaseUntilJst": "2026-09-21 22:09 JST",
+  "solutionSignature": "RANK_MATCH_MUTATION_OBSERVER_IDEMPOTENT_REFRESH_R1",
+  "reuseDisposition": "REPAIR",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "The observer watches childList and hidden/class mutations over the whole body.",
+    "The scheduled refresh calls rankMatchSyncBattleVisibility after every observed mutation.",
+    "Several refresh-path writes assign hidden/textContent unconditionally, creating a self-observation path even when the semantic state did not change.",
+    "Prior browser runtime evidence times out in page.goto for every case after static/package checks pass and before rank asset request evidence, which is consistent with event-loop microtask starvation.",
+    "The repair is semantic no-op: only write DOM-observed state when it actually differs."
+  ],
+  "scope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs"
+  ]
+}

@@ -1817,7 +1817,10 @@ function rankMatchActiveSetup(doc) {
 }
 
 function rankMatchSetupStart(setup) {
-  return setup?.querySelector?.('#startMatch') || null;
+  if (!setup?.querySelector) return null;
+  return setup.querySelector('#startMatch')
+    || setup.parentElement?.querySelector?.('#startMatch')
+    || null;
 }
 
 function setRankMatchSetupMode(section, mode) {

@@ -217,6 +217,11 @@ test('build packages the exact current production Browser dependency set with ve
   assert.equal((await readFile(path.join(dist, 'partner-saasuna-conversation-source.mjs'))).equals(partnerSaasunaSourceBytes), true);
   assert.equal(manifest.artifacts.partner_conversation_core.git_blob_sha1, gitBlobSha1(partnerConversationCoreBytes));
   assert.equal(manifest.artifacts.partner_saasuna_conversation_source.git_blob_sha1, gitBlobSha1(partnerSaasunaSourceBytes));
+  const cardsFindabilitySpriteBytes = await readFile(path.join(repoRoot, 'assets/visual/effects/cards-findability-focus-sprite-v1.png'));
+  assert.equal((await readFile(path.join(dist, 'assets/visual/effects/cards-findability-focus-sprite-v1.png'))).equals(cardsFindabilitySpriteBytes), true);
+  assert.equal(manifest.artifacts.cards_findability_focus_sprite.output, 'assets/visual/effects/cards-findability-focus-sprite-v1.png');
+  assert.equal(manifest.artifacts.cards_findability_focus_sprite.sha256, sha256(cardsFindabilitySpriteBytes));
+  assert.equal(manifest.artifacts.cards_findability_focus_sprite.git_blob_sha1, gitBlobSha1(cardsFindabilitySpriteBytes));
 });
 
 test('isolated rollback drill restores a validated package and rejects corruption before target mutation', async () => {

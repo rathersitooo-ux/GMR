@@ -15,6 +15,21 @@ const cardsVoteUiRepairInstallations = new WeakMap();
 const cardsSelectionFeedbackInstallations = new WeakMap();
 const CARDS_FAVORITE_STORAGE_KEY = 'gameroad.cards.favorite.v1';
 const DECK_SWIPE_DISCOVERY_STORAGE_KEY = 'gameroad.cards.deckSwipeDiscovery.v1';
+const CARDS_FINDABILITY_FOCUS_SPRITE_ASSET_URL = new URL(
+  '../assets/visual/effects/cards-findability-focus-sprite-v1.png',
+  import.meta.url,
+).href;
+
+export const CARDS_FINDABILITY_FOCUS_SPRITE = Object.freeze({
+  id: 'cards-findability-focus-sprite-v1',
+  assetPath: 'assets/visual/effects/cards-findability-focus-sprite-v1.png',
+  frameCount: 8,
+  columns: 4,
+  rows: 2,
+  frameMs: 22,
+  totalMs: 176,
+  presentationOnly: true,
+});
 
 export const DECK_SWIPE_DISCOVERY_CONTRACT = Object.freeze({
   schema: 'gameroad.cards-deck-swipe-discovery.v1',
@@ -329,8 +344,29 @@ export function installCardsDeckFindability({ document: doc = globalThis.documen
   if (!doc.getElementById?.('gameroad-cards-deck-findability-style')) {
     const style = doc.createElement('style');
     style.id = 'gameroad-cards-deck-findability-style';
-    style.textContent = '[data-role="cards-deck-findability"]{position:relative;z-index:2;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}[data-role="cards-deck-findability"] input{min-height:44px;min-width:min(240px,58vw);padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(10,18,30,.72);color:inherit;font:inherit}[data-role="cards-deck-findability"] button{min-height:44px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:transparent;color:inherit;font:700 13px/1 system-ui}[data-role="cards-deck-findability"] button[aria-pressed="true"]{background:rgba(255,216,74,.22);border-color:#ffd84a}[data-role="cards-deck-findability"] button[hidden]{display:none}[data-role="cards-deck-findability-count"]{font:700 12px/1 system-ui;opacity:.72;white-space:nowrap}[data-role="cards-favorite-action"]{min-height:44px;padding:8px 12px}';
-    style.textContent += '[data-role="cards-deck-findability"][data-integrated="true"]{display:contents;margin:0}.screen.cards #collectionGrid [data-cards-deck-filter-hidden="true"]{display:none!important}';
+    style.textContent = `
+[data-role="cards-deck-findability"]{position:relative;z-index:2;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}
+[data-role="cards-deck-findability"] input{min-height:44px;min-width:min(240px,58vw);padding:8px 12px;border-radius:2px;border:1px solid rgba(154,239,213,.32);background:linear-gradient(135deg,rgba(10,18,30,.94),rgba(13,33,38,.78));color:inherit;font:700 13px/1.1 system-ui;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 7px 18px rgba(0,0,0,.16);outline:none}
+[data-role="cards-deck-findability"] input::placeholder{color:rgba(222,235,229,.58)}
+[data-role="cards-deck-findability"] input:focus-visible{border-color:#9aefd5;box-shadow:0 0 0 2px rgba(154,239,213,.2),0 8px 20px rgba(0,0,0,.22)}
+[data-role="cards-deck-findability"] button{position:relative;isolation:isolate;min-height:44px;padding:8px 12px;border-radius:2px;border:1px solid rgba(154,239,213,.28);background:linear-gradient(135deg,rgba(19,37,43,.96),rgba(11,22,30,.94));color:#eaf4ee;font:900 12px/1 system-ui;letter-spacing:.02em;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 7px 16px rgba(0,0,0,.16);clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px));transition:transform 120ms cubic-bezier(.2,.85,.25,1),border-color 120ms ease,background 120ms ease,box-shadow 120ms ease}
+[data-role="cards-deck-findability"] button::before{content:"";position:absolute;left:6px;right:6px;top:3px;height:1px;background:linear-gradient(90deg,rgba(255,214,106,.82),transparent);opacity:.74;pointer-events:none;z-index:-1}
+[data-role="cards-deck-findability"] button:hover{border-color:rgba(255,214,106,.76);box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),0 9px 22px rgba(0,0,0,.24)}
+[data-role="cards-deck-findability"] button:focus-visible{outline:2px solid #ffd66a;outline-offset:3px}
+[data-role="cards-deck-findability"] button:active{transform:translateY(1px) scale(.982)}
+[data-role="cards-deck-findability"] button[aria-pressed="true"]{background:linear-gradient(135deg,#ffd66a,#9aefd5);border-color:#fff3bd;color:#111820;box-shadow:0 0 0 1px rgba(255,247,207,.52),0 9px 24px rgba(255,198,96,.2)}
+[data-role="cards-deck-findability"] button[aria-pressed="true"]::before{background:linear-gradient(90deg,#111820,transparent);opacity:.55}
+[data-role="cards-deck-findability"] button[hidden]{display:none}
+[data-role="cards-deck-findability-count"]{font:900 12px/1 system-ui;letter-spacing:.06em;color:#d9e9e1;opacity:.82;white-space:nowrap}
+[data-role="cards-favorite-action"]{min-height:44px;padding:8px 12px;border-radius:2px!important}
+.screen.cards #r4SuitFilters > button[data-suit-filter]{min-height:44px;min-width:44px;padding:0 12px;border-radius:2px;background:linear-gradient(135deg,rgba(19,37,43,.96),rgba(11,22,30,.94));border-color:rgba(154,239,213,.28);color:#eaf4ee;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 7px 16px rgba(0,0,0,.16);clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))}
+.screen.cards #r4SuitFilters > button[data-suit-filter].on{background:linear-gradient(135deg,#ffd66a,#9aefd5);border-color:#fff3bd;color:#111820;box-shadow:0 0 0 1px rgba(255,247,207,.52),0 9px 24px rgba(255,198,96,.2)}
+.screen.cards #collectionGrid [data-id]:focus-visible{outline:2px solid #9aefd5;outline-offset:3px}
+.screen.cards #collectionGrid [data-id].pick{outline:2px solid #ffd66a!important;outline-offset:-2px;box-shadow:0 0 0 1px rgba(255,247,207,.56),0 14px 28px rgba(255,198,96,.2),inset 0 0 0 1px rgba(255,255,255,.78)!important;transform:translateY(-2px)}
+.screen.cards #collectionGrid [data-id].gr-cards-selection-press{transform:translateY(1px) scale(.982)!important}
+[data-role="cards-deck-findability"][data-integrated="true"]{display:contents;margin:0}.screen.cards #collectionGrid [data-cards-deck-filter-hidden="true"]{display:none!important}
+@media(prefers-reduced-motion:reduce){[data-role="cards-deck-findability"] button{transition:none!important}[data-role="cards-deck-findability"] button:active{transform:none}.screen.cards #collectionGrid [data-id].pick{transform:none!important}}
+`;
     (doc.head ?? doc.documentElement)?.appendChild?.(style);
   }
 
@@ -522,6 +558,10 @@ function closestSwipeCard(target) {
   return target?.closest?.('#collectionGrid [data-id], #deckSlots [data-id], #exDeckSlots [data-id]') ?? null;
 }
 
+function closestCollectionCard(target) {
+  return target?.closest?.('#collectionGrid [data-id]') ?? null;
+}
+
 export const DECK_SWIPE_PRECOMMIT_FEEDBACK = Object.freeze({
   activationPx: 10,
   thresholdPx: 56,
@@ -624,6 +664,29 @@ function resolveDeckSwipePrecommitLowPerf(doc) {
       || root?.dataset?.lowPerf === 'true',
   );
 }
+function resolveCardsSelectionReducedMotion(doc, win) {
+  try {
+    return Boolean(
+      win?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+        || doc?.body?.classList?.contains?.('reduceMotion')
+        || String(doc?.querySelector?.('#reduceMotion')?.textContent ?? '').includes('ON')
+        || String(doc?.querySelector?.('#lowPerf')?.textContent ?? '').includes('ON'),
+    );
+  } catch {
+    return false;
+  }
+}
+
+function resolveCardsSelectionLowPerf(doc) {
+  try {
+    return Boolean(
+      resolveDeckSwipePrecommitLowPerf(doc)
+        || String(doc?.querySelector?.('#lowPerf')?.textContent ?? '').includes('ON'),
+    );
+  } catch {
+    return false;
+  }
+}
 
 export const CARDS_SELECTION_FEEDBACK = Object.freeze({
   pressCancelPx: 7,
@@ -660,6 +723,11 @@ function installCardsSelectionFeedbackStyles(doc) {
   style.textContent = `
 .gr-cards-selection-press{translate:0 var(--gr-cards-press-y,1px);scale:var(--gr-cards-press-scale,.982);transition:translate 42ms ease-out,scale 42ms ease-out}
 .gr-cards-selection-confirm-glow{position:fixed;pointer-events:none;box-sizing:border-box;z-index:18;border:1px solid rgba(255,246,210,.96);border-radius:10px;background:radial-gradient(ellipse at 50% 50%,rgba(255,245,210,.13),transparent 68%);box-shadow:0 0 9px rgba(255,232,160,.58),0 0 20px rgba(255,203,95,.24);opacity:0;transform-origin:center center;animation:grCardsSelectionConfirm 180ms cubic-bezier(.2,.78,.24,1) forwards}
+.gr-cards-selection-confirm-glow{overflow:visible}
+.gr-cards-selection-confirm-sprite{position:absolute;inset:-14%;pointer-events:none;background-image:url("${CARDS_FINDABILITY_FOCUS_SPRITE_ASSET_URL}");background-repeat:no-repeat;background-size:400% 200%;background-position:0% 0%;mix-blend-mode:screen;opacity:0;transform-origin:center center;animation:grCardsSelectionSprite 176ms steps(1,end) forwards}
+@keyframes grCardsSelectionSprite{0%,12.49%{background-position:0% 0%;opacity:0;transform:scale(.86) rotate(-8deg)}12.5%,24.99%{background-position:33.333% 0%;opacity:.96;transform:scale(.94) rotate(-4deg)}25%,37.49%{background-position:66.667% 0%;opacity:.92;transform:scale(.99) rotate(-2deg)}37.5%,49.99%{background-position:100% 0%;opacity:.86;transform:scale(1.01) rotate(0deg)}50%,62.49%{background-position:0% 100%;opacity:.74;transform:scale(1.02) rotate(2deg)}62.5%,74.99%{background-position:33.333% 100%;opacity:.58;transform:scale(1.03) rotate(3deg)}75%,87.49%{background-position:66.667% 100%;opacity:.36;transform:scale(1.04) rotate(5deg)}87.5%,99.99%{background-position:100% 100%;opacity:.16;transform:scale(1.05) rotate(7deg)}100%{background-position:100% 100%;opacity:0;transform:scale(1.06) rotate(8deg)}}
+body.low-perf .gr-cards-selection-confirm-sprite,html.low-perf .gr-cards-selection-confirm-sprite{display:none}
+@media(prefers-reduced-motion:reduce){.gr-cards-selection-confirm-sprite{background-image:none;animation:none;opacity:0!important}.screen.cards #collectionGrid [data-id].gr-cards-selection-press{transform:none!important}}
 @keyframes grCardsSelectionConfirm{0%{opacity:0;transform:scale(.985)}32%{opacity:.92;transform:scale(1.012)}100%{opacity:0;transform:scale(1.025)}}
 body.low-perf .gr-cards-selection-confirm-glow,html.low-perf .gr-cards-selection-confirm-glow{background:transparent;box-shadow:none;animation-duration:140ms}
 @media(prefers-reduced-motion:reduce){.gr-cards-selection-press{translate:0 0!important;scale:1!important;transition:none!important}.gr-cards-selection-confirm-glow{background:transparent;box-shadow:none;animation:grCardsSelectionConfirmReduced 120ms linear forwards}@keyframes grCardsSelectionConfirmReduced{0%{opacity:0}35%{opacity:.9}100%{opacity:0}}}
@@ -680,8 +748,8 @@ export function installCardsSelectionPressReleaseFeedback({
 
   installCardsSelectionFeedbackStyles(doc);
   const profile = createCardsSelectionFeedbackProfile({
-    reducedMotion: resolveDeckSwipePrecommitReducedMotion(win),
-    lowPerf: resolveDeckSwipePrecommitLowPerf(doc),
+    reducedMotion: resolveCardsSelectionReducedMotion(doc, win),
+    lowPerf: resolveCardsSelectionLowPerf(doc),
   });
   let pressed = null;
   const glowTimers = new Map();
@@ -716,6 +784,13 @@ export function installCardsSelectionPressReleaseFeedback({
     glow.style.width = `${rect.width}px`;
     glow.style.height = `${rect.height}px`;
     glow.style.animationDuration = `${profile.confirmMs}ms`;
+    const sprite = doc.createElement('span');
+    sprite.className = 'gr-cards-selection-confirm-sprite';
+    sprite.setAttribute?.('aria-hidden', 'true');
+    sprite.setAttribute?.('data-role', 'cards-findability-focus-sprite');
+    sprite.setAttribute?.('data-asset-id', CARDS_FINDABILITY_FOCUS_SPRITE.id);
+    sprite.setAttribute?.('data-frame-count', String(CARDS_FINDABILITY_FOCUS_SPRITE.frameCount));
+    glow.appendChild?.(sprite);
     (doc.body ?? doc.documentElement)?.appendChild?.(glow);
     glowNodes.add(glow);
     const timer = win?.setTimeout?.(
@@ -729,7 +804,7 @@ export function installCardsSelectionPressReleaseFeedback({
   const onPointerDown = (event) => {
     if (event?.isPrimary === false) return;
     if (Number.isFinite(event?.button) && event.button !== 0) return;
-    const node = closestSwipeCard(event?.target);
+    const node = closestCollectionCard(event?.target);
     if (!node) return;
     clearPressed();
     const x = Number.isFinite(event?.clientX) ? event.clientX : 0;
@@ -753,10 +828,10 @@ export function installCardsSelectionPressReleaseFeedback({
   const onPointerCancel = () => clearPressed();
   const onClick = (event) => {
     if (event?.isTrusted === false) return;
-    const node = closestSwipeCard(event?.target);
+    const node = closestCollectionCard(event?.target);
     if (!node) return;
     const confirm = () => {
-      if (node?.classList?.contains?.('selected')) confirmSelection(node);
+      if (node?.classList?.contains?.('selected') || node?.classList?.contains?.('pick')) confirmSelection(node);
     };
     const enqueue = win?.queueMicrotask ?? globalThis.queueMicrotask;
     if (typeof enqueue === 'function') enqueue(confirm);

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-SWIPE-PRECOMMIT-FEEDBACK-R1-20260921T1241-SOL",
+  "taskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "workUnitKey": "CARDS_SWIPE_PRECOMMIT_TOUCH_FEEDBACK_R1",
+  "acquireKey": "CARDS-SWIPE-PRECOMMIT-FEEDBACK-R1-20260921T1241-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_CARDS_SWIPE_PRECOMMIT_GAP_20260921T1241JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_EXISTING_SWIPE_CONSUMER_PLUS_COMPOSITOR_ONLY_MOTION",
+  "proceedToken": "PROCEED|CARDS-SWIPE-PRECOMMIT-FEEDBACK-R1-20260921T1241-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|cards-swipe-precommit-touch-feedback|cards-presentation|active-lease",
+  "authorizationBaseSha": "834cc3ebe45237f695328f14dceca3016bec6503",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "leaseWorkUnitKey": "CARDS_SWIPE_PRECOMMIT_TOUCH_FEEDBACK_R1",
+  "leaseAcquireKey": "CARDS-SWIPE-PRECOMMIT-FEEDBACK-R1-20260921T1241-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 12:41 JST",
+  "leaseUntilJst": "2026-09-21 13:41 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A27:L27",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/cards-swipe-precommit-feedback-r2-20260921; browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; own transient data/preaction-authorizations/CARDS-SWIPE-PRECOMMIT-FEEDBACK-R1-20260921T1241-SOL.json only. browser/cards-deck-presentation-core.mjs, existing effect assets, browser/GAMEROAD.html, gameplay/rules/save/network READ_ONLY.",
+  "solutionSignature": "CARDS_RIGHT_SWIPE_PRECOMMIT_TOUCH_FEEDBACK_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_MAIN_ALREADY_HAS_POSTCOMMIT_LIGHT_TRAIL_BURST_BUT_NO_POINTERMOVE_FEEDBACK",
+  "solutionSearchEvidence": [
+    "Current main already contains the post-commit aura/light-trail/burst presentation, so duplicating another transfer effect is rejected.",
+    "The live Cards swipe consumer records pointerdown and resolves only at pointerup; there is no direct visual response during the human finger movement.",
+    "Use compositor-friendly transform/opacity feedback and requestAnimationFrame coalescing; do not clone cards or change layout/game state.",
+    "Horizontal-intent gating preserves vertical scroll and tap behavior; Reduced Motion keeps a non-spatial state cue."
+  ],
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ]
+}

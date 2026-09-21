@@ -68,6 +68,8 @@ figure.appendChild(characterHost);
 assert.equal(ensureSaasunaBattleMotionStyle(document), true);
 assert.equal(ensureSaasunaBattleMotionStyle(document), false);
 assert.match(document.head.children[0].textContent, /saasunaBattleLowSlide/);
+assert.match(document.head.children[0].textContent, /saasunaBattleSpin/);
+assert.match(document.head.children[0].textContent, /saasunaBattleHug/);
 assert.match(document.head.children[0].textContent, /prefers-reduced-motion/);
 
 const controller = createSaasunaBattleMotionController({

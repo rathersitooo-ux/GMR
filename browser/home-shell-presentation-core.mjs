@@ -20,6 +20,31 @@ const UPDATE_DETAILS_STYLE_ID = 'gameroad-update-details-style-r1';
 const RELEASE_COMMS_URL = './gameroad-release-comms.json';
 const UPDATE_MESSAGE = 'アップデートがあります';
 
+const SETUP_ACTION_STATE_SPRITE_STYLE_ID = 'gameroad-setup-action-state-sprite-r1';
+export const SETUP_ACTION_STATE_SPRITE_ASSET = Object.freeze({
+  id: 'setup-action-state-light-sprite-v1',
+  sourcePath: 'assets/visual/effects/setup-action-state-light-sprite-v1.png',
+  runtimePath: '../assets/visual/effects/setup-action-state-light-sprite-v1.png',
+  formal: true,
+  readOnly: true,
+  frameCount: 4,
+  frameLayout: 'horizontal-4-up',
+});
+const SETUP_ACTION_STATE_SPRITE_URL = new URL(
+  SETUP_ACTION_STATE_SPRITE_ASSET.runtimePath,
+  import.meta.url,
+).href;
+export const SETUP_ACTION_STATE_SPRITE_CSS = `
+section[data-screen="setup"] #startMatch{position:relative;isolation:isolate;overflow:hidden}
+section[data-screen="setup"] #startMatch::before{content:"";position:absolute;inset:3px;z-index:0;pointer-events:none;border-radius:inherit;background-image:url('${SETUP_ACTION_STATE_SPRITE_URL}');background-repeat:no-repeat;background-size:400% 100%;background-position:0% 50%;mix-blend-mode:screen;opacity:.18;filter:saturate(1.08) brightness(1.04);transition:opacity .12s ease,filter .12s ease,background-position .01s linear}
+section[data-screen="setup"] #startMatch:not(:disabled)::before{animation:gameroadSetupActionLightBreath 4.8s steps(1,end) infinite}
+section[data-screen="setup"] #startMatch:not(:disabled):hover::before,section[data-screen="setup"] #startMatch:not(:disabled):focus-visible::before{background-position:33.333% 50%;opacity:.64;filter:saturate(1.24) brightness(1.18);animation:none}
+section[data-screen="setup"] #startMatch:not(:disabled):active::before{background-position:66.667% 50%;opacity:.9;filter:saturate(1.3) brightness(1.24);animation:none}
+section[data-screen="setup"] #startMatch:disabled::before{background-image:none;opacity:0;visibility:hidden;animation:none}
+@keyframes gameroadSetupActionLightBreath{0%,100%{background-position:0% 50%;opacity:.14}50%{background-position:33.333% 50%;opacity:.3}}
+@media(prefers-reduced-motion:reduce){section[data-screen="setup"] #startMatch:not(:disabled)::before{animation:none;background-position:0% 50%;opacity:.16}}
+html.r10LowPerf section[data-screen="setup"] #startMatch::before,html.r10Reduced section[data-screen="setup"] #startMatch::before{animation:none!important;background-position:0% 50%;opacity:.12!important}
+`;
 const HOME_BORDER_LIGHT_OVERLAY_STYLE_ID = 'gameroad-home-border-light-overlay-r1';
 export const HOME_BORDER_LIGHT_OVERLAY_ASSET = Object.freeze({
   id: 'home-border-light-overlay-v1',
@@ -373,6 +398,13 @@ function ensureSharedShellPresentation() {
     const style = document.createElement('style');
     style.id = SETUP_STAGING_STYLE_ID;
     style.textContent = SETUP_STAGING_CSS;
+    document.head.append(style);
+    inserted = true;
+  }
+  if (!document.getElementById(SETUP_ACTION_STATE_SPRITE_STYLE_ID)) {
+    const style = document.createElement('style');
+    style.id = SETUP_ACTION_STATE_SPRITE_STYLE_ID;
+    style.textContent = SETUP_ACTION_STATE_SPRITE_CSS;
     document.head.append(style);
     inserted = true;
   }

@@ -129,6 +129,15 @@ const dependencyContract = [
 const presentationAssetContract = [
   { file: 'assets/visual/effects/screen-transition-edge-shimmer-sprite-v1.png', source: 'assets/visual/effects/screen-transition-edge-shimmer-sprite-v1.png', artifact: 'screen_transition_edge_shimmer_sprite' },
   { file: 'assets/visual/effects/records-selection-sweep-sprite-v1.png', source: 'assets/visual/effects/records-selection-sweep-sprite-v1.png', artifact: 'records_selection_sweep_sprite' },
+  { file: 'assets/visual/rank-match/waiting-bg.webp', source: 'browser/assets/visual/rank-match/waiting-bg.webp', artifact: 'rank_match_waiting_bg' },
+  { file: 'assets/visual/rank-match/ui-chrome.webp', source: 'browser/assets/visual/rank-match/ui-chrome.webp', artifact: 'rank_match_ui_chrome' },
+  { file: 'assets/visual/rank-match/partner-picker.webp', source: 'browser/assets/visual/rank-match/partner-picker.webp', artifact: 'rank_match_partner_picker' },
+  { file: 'assets/visual/rank-match/picker-modal.webp', source: 'browser/assets/visual/rank-match/picker-modal.webp', artifact: 'rank_match_picker_modal' },
+  { file: 'assets/visual/rank-match/picker-tile-selected.webp', source: 'browser/assets/visual/rank-match/picker-tile-selected.webp', artifact: 'rank_match_picker_tile_selected' },
+  { file: 'assets/visual/rank-match/button-primary.webp', source: 'browser/assets/visual/rank-match/button-primary.webp', artifact: 'rank_match_button_primary' },
+  { file: 'assets/visual/rank-match/button-secondary.webp', source: 'browser/assets/visual/rank-match/button-secondary.webp', artifact: 'rank_match_button_secondary' },
+  { file: 'assets/visual/rank-match/action-ring.webp', source: 'browser/assets/visual/rank-match/action-ring.webp', artifact: 'rank_match_action_ring' },
+  { file: 'assets/visual/rank-match/waiting-vfx.webp', source: 'browser/assets/visual/rank-match/waiting-vfx.webp', artifact: 'rank_match_waiting_vfx' },
 ];
 
 function expectedVersionManifest() { return { schema: VERSION_MANIFEST_SCHEMA, channel: VERSION_MANIFEST_CHANNEL, build_id: SOURCE_COMMIT, published_at: PUBLISHED_AT, reload_policy: VERSION_MANIFEST_RELOAD_POLICY }; }

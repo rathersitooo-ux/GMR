@@ -8,7 +8,7 @@
   "predictionStatus": "PASS",
   "predictionEvidenceId": "PUBLIC_PROVIDER_PROBE_502_WITH_PACKAGE_DEPLOY_SUCCESS",
   "rehearsalStatus": "PASS",
-  "rehearsalEvidenceId": "CURRENT_WS_GENERIC_502_COLLAPSE_AND_OFFICIAL_CONVAI_ENDPOINT_MATCH",
+  "rehearsalEvidenceId": "REQUIRED_GATE_PUBLICHOST_CLASSIFICATION_REUSES_EXISTING_PARTNER_REPORT_PROVIDER_TEST",
   "proceedToken": "PROCEED|PARTNER-PUBLIC-PROVIDER-DIAG-R1-20260922-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|provider-diagnostic|no-secret-leak",
   "authorizationBaseSha": "00966a1ef78330ebedb61671687108158aee8003",
   "stateModelVersion": "STATE_MODEL_V1",
@@ -20,24 +20,25 @@
   "leaseSnapshotReadbackAtJst": "2026-09-22 03:40 JST",
   "leaseUntilJst": "2026-09-22 04:39 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A153:L153",
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/partner-public-provider-diag-r1-20260922; deploy/cloudflare/functions/ws.js; deploy/cloudflare/tests/partner-conversation-provider.test.mjs; own transient data/preaction-authorizations/PARTNER-PUBLIC-PROVIDER-DIAG-R1-20260922T0339-SOL.json only; own fresh PR/check/readback. .github/workflows/cloudflare-public-deploy.yml READ_ONLY; deploy/cloudflare/tests/build.test.mjs READ_ONLY active owner; browser/Battle/card-flight/gameplay/rules/save/network/formal art READ_ONLY.",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/partner-public-provider-diag-r1-20260922; deploy/cloudflare/functions/ws.js; deploy/cloudflare/tests/partner-report-provider.test.mjs; own transient data/preaction-authorizations/PARTNER-PUBLIC-PROVIDER-DIAG-R1-20260922T0339-SOL.json only; own fresh PR/check/readback. .github/workflows/cloudflare-public-deploy.yml READ_ONLY; deploy/cloudflare/tests/build.test.mjs READ_ONLY active owner; browser/Battle/card-flight/gameplay/rules/save/network/formal art READ_ONLY.",
   "solutionSignature": "PARTNER_PROVIDER_BOUNDED_UPSTREAM_DIAGNOSTIC_R1",
   "reuseDisposition": "REPAIR",
   "solutionSearchStatus": "PASS",
   "reuseDecisionEvidenceId": "CURRENT_PROVIDER_PROXY_KEEP_REQUEST_SEMANTICS_ADD_SAFE_DIAGNOSTICS",
   "solutionSearchEvidence": [
     "Current Cloudflare deployment reaches package deployment successfully and fails only at the public Saasuna provider probe with HTTP 502.",
-    "Current ws.js maps every non-OK Convai response to the same provider_unavailable state, hiding whether the upstream was unauthorized, forbidden, rate-limited, or unavailable.",
+    "Current ws.js maps every non-OK Convai response to the same provider_unavailable state, hiding whether the upstream was unauthorized, forbidden, rate-limited, request-rejected, or unavailable.",
     "Current official Convai documentation still specifies POST https://api.convai.com/character/getResponse with form-data userText, charID, sessionID, voiceResponse and CONVAI-API-KEY.",
     "The Convai Interaction API is currently documented as available on the Professional plan and above, so entitlement is a material possible cause that the current generic 502 cannot distinguish.",
+    "Required Gate already classifies the existing deploy/cloudflare/tests/partner-report-provider.test.mjs as publichost; a new provider test filename would be unclassified, so the existing publichost test is reused without changing workflow/validator paths.",
     "No Battle card-flight, gameplay, save, network, formal-art, build-test, or workflow mutation is required for this diagnostic repair."
   ],
   "scope": [
     "deploy/cloudflare/functions/ws.js",
-    "deploy/cloudflare/tests/partner-conversation-provider.test.mjs"
+    "deploy/cloudflare/tests/partner-report-provider.test.mjs"
   ],
   "leaseScope": [
     "deploy/cloudflare/functions/ws.js",
-    "deploy/cloudflare/tests/partner-conversation-provider.test.mjs"
+    "deploy/cloudflare/tests/partner-report-provider.test.mjs"
   ]
 }

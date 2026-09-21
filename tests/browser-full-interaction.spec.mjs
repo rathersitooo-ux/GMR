@@ -336,6 +336,108 @@ async function playVisibleTwoPlayerToResult(page, testInfo, evidencePrefix) {
   return { battle, result, roundsSubmitted, targetConfirms, presentationAdvances, abilityConfirms, cardPresentationFallbacks, roundsText };
 }
 
+async function enterRankMatchWaitingEvidence(page) {
+  await bootCurrentBrowser(page);
+  const home = page.locator('section[data-screen="home"]');
+  await expect(home.locator('.codexBattleCrest, .codexRankLabel')).toHaveCount(0);
+
+  const setupControl = visibleHomeControl(page, 'setup');
+  await expect(setupControl).toBeVisible();
+  await setupControl.click();
+
+  const setup = page.locator('section[data-screen="setup"]');
+  await expect(setup).toBeVisible({ timeout: 10_000 });
+  const rank = setup.locator('button[data-rank-mode="rank"]');
+  await expect(rank).toBeVisible();
+  await rank.click();
+  await expect(rank).toHaveAttribute('aria-pressed', 'true');
+
+  const startMatch = setup.locator('#startMatch');
+  await expect(startMatch).toHaveText('ランクマッチ待機へ');
+  await startMatch.click();
+
+  const battle = page.locator('section[data-screen="battle"]');
+  await expect(battle).toBeVisible({ timeout: 10_000 });
+  await expect(battle).toHaveAttribute('data-rank-waiting', 'true', { timeout: 10_000 });
+
+  const waiting = page.locator('#gameroad-rank-match-waiting-surface');
+  await expect(waiting).toBeVisible();
+  await expect(battle.locator('#battleRuntime')).toBeHidden();
+  return { setup, battle, waiting };
+}
+
+test('RANK-MATCH-R5 reaches waiting, loads generated chrome, and edits only the Advice partner', async ({ page }, testInfo) => {
+  const observer = observeRuntimeErrors(page);
+  const assetStatuses = new Map();
+  page.on('response', (response) => {
+    const url = new URL(response.url());
+    if (url.pathname.includes('/assets/visual/rank-match/')) {
+      assetStatuses.set(url.pathname.split('/').pop(), response.status());
+    }
+  });
+
+  const { setup, battle, waiting } = await enterRankMatchWaitingEvidence(page);
+  await attachStateScreenshot(page, testInfo, 'rank-waiting-surface');
+
+  for (const asset of [
+    'waiting-bg.webp',
+    'ui-chrome.webp',
+    'partner-picker.webp',
+    'picker-modal.webp',
+    'picker-tile-selected.webp',
+    'button-primary.webp',
+    'button-secondary.webp',
+    'action-ring.webp',
+    'waiting-vfx.webp',
+  ]) {
+    expect(assetStatuses.get(asset), `generated rank asset ${asset} loaded`).toBe(200);
+  }
+
+  const partner = waiting.locator('[data-rank-waiting-partner]');
+  await expect(partner).toBeVisible();
+  await partner.click();
+
+  const picker = page.locator('#gameroad-rank-partner-picker');
+  await expect(picker).toBeVisible();
+  const shell = picker.locator('.rankPartnerPickerShell');
+  const box = await shell.boundingBox();
+  expect(box, 'partner picker shell has layout bounds').not.toBeNull();
+  expect(Math.abs(box.width - box.height), 'partner picker shell stays square').toBeLessThan(Math.max(4, Math.min(box.width, box.height) * 0.04));
+
+  const choices = picker.locator('[data-partner-choice]');
+  await expect(choices).not.toHaveCount(0);
+  await choices.first().click();
+  await expect(picker).toBeHidden();
+  await expect(partner).toBeFocused();
+
+  await partner.click();
+  await expect(picker).toBeVisible();
+  await picker.click({ position: { x: 3, y: 3 } });
+  await expect(picker).toBeHidden();
+
+  await partner.click();
+  await expect(picker).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(picker).toBeHidden();
+  await expect(partner).toBeFocused();
+
+  await waiting.locator('[data-rank-waiting-cancel]').first().click();
+  await expect(setup).toBeVisible({ timeout: 10_000 });
+  await expect(waiting).toBeHidden();
+  await expect(battle).toHaveAttribute('data-rank-waiting', 'false');
+
+  observer.assertClean(testInfo);
+});
+
+test('RANK-MATCH-R5 honors reduced motion without losing the waiting flow', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const { waiting } = await enterRankMatchWaitingEvidence(page);
+  const vfxAnimation = await waiting.locator('.rankWaitingVfx').evaluate((node) => getComputedStyle(node).animationName);
+  const pulseAnimation = await waiting.locator('.rankWaitingStatus').evaluate((node) => getComputedStyle(node, '::before').animationName);
+  expect(vfxAnimation).toBe('none');
+  expect(pulseAnimation).toBe('none');
+});
+
 test('captures success-state screenshots for current pointer navigation', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);

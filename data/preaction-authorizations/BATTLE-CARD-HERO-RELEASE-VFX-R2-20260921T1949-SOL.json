@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CARD-HERO-RELEASE-VFX-R2-20260921T1949-SOL",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "BATTLE_CARD_RELEASE_HERO_CENTRE_AND_ORDER_RECEIPT_R1",
+  "acquireKey": "BATTLE-CARD-HERO-RELEASE-VFX-R2-20260921T1949-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR2009_SINGLE_STALE_STATIC_ASSERTION_20260921T1949JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REQUIRED_GATE_ONLY_FAILURE_IS_OLD_RELEASE_SIGNATURE_ASSERTION",
+  "proceedToken": "PROCEED|BATTLE-CARD-HERO-RELEASE-VFX-R2-20260921T1949-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-card-release|pr2009-test-repair",
+  "authorizationBaseSha": "25f9054c29bf4c769201f9dd118347e4fc17dd80",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "BATTLE_CARD_RELEASE_HERO_CENTRE_AND_ORDER_RECEIPT_R1",
+  "leaseAcquireKey": "BATTLE-CARD-HERO-RELEASE-VFX-R2-20260921T1949-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 19:49 JST",
+  "leaseUntilJst": "2026-09-21 20:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A165:L165",
+  "leaseExactMutableResources": "browser/battle-card-release-flight-motion-core.mjs; browser/battle-card-release-flight-runtime-effect.mjs; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-card-release-flight-motion-core.test.mjs; tests/battle-card-release-flight-runtime-effect.test.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; PR #2009 / branch work/battle-card-hero-release-vfx-r3-20260921; own checks/readback/merge; browser/battle-screen-runtime-mount.mjs READ_ONLY active Saasuna owner; browser/GAMEROAD.html READ_ONLY; gameplay/rules/save/network/order authority READ_ONLY; image generation PROHIBITED",
+  "solutionSignature": "PR2009_STALE_TEST_EXPECTATION_REPAIR_ONLY",
+  "reuseDisposition": "REPAIR",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REQUIRED_GATE_RUN_35585383691_JOB_106287395268",
+  "solutionSearchEvidence": [
+    "PR #2009 PRE_ACTION enforcement already passes.",
+    "Required Gate has exactly one failing Node test.",
+    "The failing assertion expects the retired four-argument capture/play signature, while current implementation intentionally carries cardId and receipt context for the corrected center-hero presentation.",
+    "All new center-hero and order-receipt tests in the same run pass; no product code change is needed for this repair."
+  ],
+  "scope": [
+    "browser/battle-card-release-flight-motion-core.mjs",
+    "browser/battle-card-release-flight-runtime-effect.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-card-release-flight-motion-core.test.mjs",
+    "tests/battle-card-release-flight-runtime-effect.test.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-card-release-flight-motion-core.mjs",
+    "browser/battle-card-release-flight-runtime-effect.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-card-release-flight-motion-core.test.mjs",
+    "tests/battle-card-release-flight-runtime-effect.test.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

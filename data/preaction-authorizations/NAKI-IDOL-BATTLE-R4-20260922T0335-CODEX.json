@@ -1,0 +1,34 @@
+{
+  "schema": "gameroad.pre-action-authority.v1",
+  "acquireKey": "NAKI-IDOL-BATTLE-R4-20260922T0335-CODEX-H3J8K2",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "NAKI_IDOL_BATTLE_LIVE_SUCCESSOR_R3",
+  "owner": "ChatGPT / GPT-5.6 Codex / current user 続けて",
+  "baseRef": "main",
+  "baseSha": "00966a1ef78330ebedb61671687108158aee8003",
+  "branch": "codex/naki-idol-battle-live-r3-20260922",
+  "targetFiles": [
+    "browser/GAMEROAD.html",
+    "browser/battle-fe-cinematic-live-adapter.mjs",
+    "browser/battle-naki-idol-sprite-runtime.mjs",
+    "browser/naki-idol-battle-assets.mjs",
+    "browser/partner-naki-advice-live-adapter.mjs",
+    "browser/partner-naki-advice-visuals.mjs",
+    "tests/battle-fe-cinematic-live-adapter.test.mjs",
+    "tests/battle-naki-idol-sprite-runtime.test.mjs",
+    "browser/assets/partners/naki-idol/advice/",
+    "browser/assets/partners/naki-idol/battle/primary-v2/",
+    "browser/assets/partners/naki-idol/battle/primary-v3/",
+    "browser/assets/partners/naki-idol/vfx/",
+    "browser/assets/partners/naki-idol/vfx/ground/"
+  ],
+  "readOnly": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    "gameplay/rules/save/network/board topology/formal art/pixel canon"
+  ],
+  "intent": "Reconnect transparent Naki battle/advice presentation to current main; extend the FE-inspired six-beat motion with body-led intermediate frames, keep hearts as the primary identity, keep crescent/moon as subordinate slash or post-impact accents, and add reusable transparent ground-running magic VFX with seven color variants. Presentation-only; no gameplay/target/winner/order/board recalculation.",
+  "imageGeneration": "allowed only for these scoped Naki motion and ground-VFX assets; preserve transparency and non-destructive versioned filenames",
+  "createdAtJst": "2026-09-22 03:35 JST",
+  "cleanupRequired": true
+}

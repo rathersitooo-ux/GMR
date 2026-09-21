@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "SCREEN-TRANSITION-EDGE-SHIMMER-PACKAGE-R2-20260921T1304-CODEX",
+  "taskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "workUnitKey": "SCREEN_TRANSITION_EDGE_SHIMMER_PACKAGE_R2",
+  "acquireKey": "SCREEN-TRANSITION-EDGE-SHIMMER-PACKAGE-R2-20260921T1304-CODEX",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_SCREEN_NAVIGATION_AND_PACKAGE_CONTRACT_ABSENCE_20260921T1304JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "SCREEN_NAVIGATION_EXISTING_PHASE_CONSUMER_ALPHA_INSPECTION_AND_BUILD_PROVENANCE_SCOPE_REHEARSAL",
+  "proceedToken": "PROCEED|SCREEN-TRANSITION-EDGE-SHIMMER-PACKAGE-R2-20260921T1304-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|screen-transition-edge-shimmer|presentation-only",
+  "authorizationBaseSha": "483f3e41ace711d6a2eff00ea834cbd025519972",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "leaseWorkUnitKey": "SCREEN_TRANSITION_EDGE_SHIMMER_PACKAGE_R2",
+  "leaseAcquireKey": "SCREEN-TRANSITION-EDGE-SHIMMER-PACKAGE-R2-20260921T1304-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 13:04 JST",
+  "leaseUntilJst": "2026-09-21 14:04 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A30:L30",
+  "leaseExactMutableResources": "browser/screen-navigation-core.mjs; tests/screen-navigation-core.test.mjs; assets/visual/effects/screen-transition-edge-shimmer-sprite-v1.png; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback/public readback",
+  "solutionSignature": "SCREEN_NAVIGATION_EXISTING_MOTION_WITH_GENERATED_EDGE_SHIMMER_AND_EXACT_PACKAGE_PROVENANCE_V2",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "SCREEN_NAVIGATION_MOTION_CONSUMER_EXISTS_AND_PACKAGE_CONTRACT_IS_THE_REQUIRED_SUCCESSOR_SCOPE_20260921T1304",
+  "solutionSearchEvidence": [
+    "Fresh main 483f3e41ace711d6a2eff00ea834cbd025519972 exports createScreenMotionPresentationDriver with the real PREPARE, EXIT, SWAP, ENTER, and SETTLE phases.",
+    "The existing driver already owns Web Animations for outgoing and incoming screen surfaces; this scope composes one pointer-events:none visual overlay and does not create a second navigation or semantic state authority.",
+    "Fresh source scan found no screen-transition-edge-shimmer asset or overlay consumer in main.",
+    "The existing card-release flight, Home-border, and setup-focus assets are different consumers with different geometry/state semantics, so they are not reused as-is.",
+    "Required Gate #3219 proved that the successor must include the exact Cloudflare build artifact/provenance contract for the changed screen-navigation blob; no unrelated package or gameplay authority is included.",
+    "The generated candidate was inspected for true alpha and four-frame layout; integration keeps reduced-motion and low-performance fallback boundaries explicit."
+  ],
+  "scope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs",
+    "assets/visual/effects/screen-transition-edge-shimmer-sprite-v1.png",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs",
+    "assets/visual/effects/screen-transition-edge-shimmer-sprite-v1.png",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

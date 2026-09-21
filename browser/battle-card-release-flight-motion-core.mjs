@@ -1,4 +1,4 @@
-export const BATTLE_CARD_RELEASE_FLIGHT_MOTION_SCHEMA = 'gameroad.battle-card-release-flight-motion.v1';
+export const BATTLE_CARD_RELEASE_FLIGHT_MOTION_SCHEMA = 'gameroad.battle-card-release-flight-motion.v2';
 
 export const BATTLE_CARD_RELEASE_FLIGHT_MODE = Object.freeze({
   FULL: 'FULL',
@@ -7,7 +7,9 @@ export const BATTLE_CARD_RELEASE_FLIGHT_MODE = Object.freeze({
 
 export const BATTLE_CARD_RELEASE_FLIGHT_DEFAULT_DURATION_MS = 560;
 export const BATTLE_CARD_RELEASE_FLIGHT_LOW_PERF_MAX_DURATION_MS = 240;
-export const BATTLE_CARD_RELEASE_FLIGHT_SAMPLE_OFFSETS = Object.freeze([0, 0.12, 0.28, 0.46, 0.64, 0.82, 1]);
+export const BATTLE_CARD_RELEASE_FLIGHT_ARRIVAL_OFFSET = 0.6;
+export const BATTLE_CARD_RELEASE_FLIGHT_HERO_HOLD_END_OFFSET = 0.88;
+export const BATTLE_CARD_RELEASE_FLIGHT_SAMPLE_OFFSETS = Object.freeze([0, 0.12, 0.28, 0.46, 0.6, 0.72, 0.88, 1]);
 
 const ROLE = Object.freeze({
   TOP: 'top',
@@ -42,10 +44,10 @@ function canonicalDuration(value) {
 
 function canonicalOffsets(values) {
   if (!Array.isArray(values) || values.length < 2) return BATTLE_CARD_RELEASE_FLIGHT_SAMPLE_OFFSETS;
-  const normalized = values
+  const normalized = [...new Set(values
     .map(Number)
     .filter(Number.isFinite)
-    .map((value) => Math.max(0, Math.min(1, value)))
+    .map((value) => Math.max(0, Math.min(1, value))))]
     .sort((a, b) => a - b);
   if (normalized.length < 2 || normalized[0] !== 0 || normalized.at(-1) !== 1) {
     return BATTLE_CARD_RELEASE_FLIGHT_SAMPLE_OFFSETS;
@@ -70,61 +72,117 @@ function fullGeometry(start, target, role) {
   const dy = target.y - start.y;
   const flightDistance = Math.max(1, Math.hypot(dx, dy));
   const outwardSign = role === ROLE.TOP ? -1 : role === ROLE.BOTTOM ? 1 : 0;
-  const spinDeg = role === ROLE.TOP ? -720 : role === ROLE.BOTTOM ? 720 : 0;
-  const bendPx = outwardSign === 0 ? 0 : Math.min(230, Math.max(96, flightDistance * 0.34));
+  const bendPx = outwardSign === 0 ? 0 : Math.min(190, Math.max(72, flightDistance * 0.26));
   return {
     dx,
     dy,
     flightDistance,
     outwardSign,
-    spinDeg,
     bendPx,
-    p1: { x: dx * 0.16, y: (dy * 0.14) + (outwardSign * bendPx) },
-    p2: { x: dx * 0.76, y: (dy * 0.76) + (outwardSign * bendPx * 0.12) },
+    p1: { x: dx * 0.18, y: (dy * 0.16) + (outwardSign * bendPx) },
+    p2: { x: dx * 0.72, y: (dy * 0.72) + (outwardSign * bendPx * 0.1) },
   };
+}
+
+function travelFrame(geometry, offset) {
+  const progress = Math.min(1, offset / BATTLE_CARD_RELEASE_FLIGHT_ARRIVAL_OFFSET);
+  const eased = smoothDepth(progress);
+  const point = cubicPoint(geometry, progress);
+  const lean = geometry.outwardSign * 14 * Math.sin(Math.PI * progress);
+  return Object.freeze({
+    offset,
+    x: point.x,
+    y: point.y,
+    rotationDeg: lean,
+    scale: 1 - (0.18 * eased),
+    opacity: 1 - (0.18 * eased),
+    blurPx: 0.55 * Math.sin(Math.PI * progress),
+    brightness: 1 + (0.42 * eased),
+  });
+}
+
+function heroFrame(geometry, offset) {
+  const heroSpan = Math.max(0.001, BATTLE_CARD_RELEASE_FLIGHT_HERO_HOLD_END_OFFSET - BATTLE_CARD_RELEASE_FLIGHT_ARRIVAL_OFFSET);
+  const heroProgress = Math.max(0, Math.min(1, (offset - BATTLE_CARD_RELEASE_FLIGHT_ARRIVAL_OFFSET) / heroSpan));
+  const settle = smoothDepth(heroProgress);
+  const heroScale = 0.82 + (0.30 * Math.min(1, heroProgress / 0.43));
+  const settledScale = heroProgress <= 0.43
+    ? heroScale
+    : 1.12 - (0.06 * smoothDepth((heroProgress - 0.43) / 0.57));
+  return Object.freeze({
+    offset,
+    x: geometry.dx,
+    y: geometry.dy,
+    rotationDeg: 0,
+    scale: settledScale,
+    opacity: 0.82 + (0.18 * settle),
+    blurPx: Math.max(0, 0.34 * (1 - settle)),
+    brightness: 1.42 - (0.32 * settle),
+  });
+}
+
+function finalDissolveFrame(geometry) {
+  return Object.freeze({
+    offset: 1,
+    x: geometry.dx,
+    y: geometry.dy,
+    rotationDeg: 0,
+    scale: 1.04,
+    opacity: 0,
+    blurPx: 0.2,
+    brightness: 1.28,
+  });
 }
 
 function projectFullFrames(geometry, offsets) {
   return offsets.map((offset) => {
-    const point = cubicPoint(geometry, offset);
-    const depth = smoothDepth(offset);
-    return Object.freeze({
-      offset,
-      x: point.x,
-      y: point.y,
-      rotationDeg: geometry.spinDeg * offset,
-      scale: 1 - (0.66 * depth),
-      opacity: 1 - (0.42 * depth),
-      blurPx: 0.7 * depth,
-      brightness: 1 - (0.12 * depth),
-    });
+    if (offset < BATTLE_CARD_RELEASE_FLIGHT_ARRIVAL_OFFSET) return travelFrame(geometry, offset);
+    if (offset < 1) return heroFrame(geometry, offset);
+    return finalDissolveFrame(geometry);
   });
 }
 
 function projectLowPerfFrames(start, target) {
   const dx = target.x - start.x;
   const dy = target.y - start.y;
-  return [0, 0.5, 1].map((offset) => {
-    const depth = smoothDepth(offset);
-    return Object.freeze({
-      offset,
-      x: dx * offset,
-      y: dy * offset,
-      rotationDeg: 0,
-      scale: 1 - (0.66 * depth),
-      opacity: 1 - (0.42 * depth),
-      blurPx: 0,
-      brightness: 1,
-    });
-  });
-}
-
-function projectReducedFrames() {
   return [
     Object.freeze({ offset: 0, x: 0, y: 0, rotationDeg: 0, scale: 1, opacity: 1, blurPx: 0, brightness: 1 }),
-    Object.freeze({ offset: 0.5, x: 0, y: 0, rotationDeg: 0, scale: 0.985, opacity: 0.86, blurPx: 0, brightness: 1 }),
-    Object.freeze({ offset: 1, x: 0, y: 0, rotationDeg: 0, scale: 0.97, opacity: 0.58, blurPx: 0, brightness: 1 }),
+    Object.freeze({ offset: 0.55, x: dx, y: dy, rotationDeg: 0, scale: 0.92, opacity: 0.88, blurPx: 0, brightness: 1 }),
+    Object.freeze({ offset: 0.78, x: dx, y: dy, rotationDeg: 0, scale: 1.06, opacity: 1, blurPx: 0, brightness: 1 }),
+    Object.freeze({ offset: 1, x: dx, y: dy, rotationDeg: 0, scale: 1.02, opacity: 0, blurPx: 0, brightness: 1 }),
   ];
+}
+
+function projectReducedFrames(start, target) {
+  const dx = target.x - start.x;
+  const dy = target.y - start.y;
+  return [
+    Object.freeze({ offset: 0, x: dx, y: dy, rotationDeg: 0, scale: 0.98, opacity: 0, blurPx: 0, brightness: 1 }),
+    Object.freeze({ offset: 0.35, x: dx, y: dy, rotationDeg: 0, scale: 1, opacity: 1, blurPx: 0, brightness: 1 }),
+    Object.freeze({ offset: 0.78, x: dx, y: dy, rotationDeg: 0, scale: 1, opacity: 1, blurPx: 0, brightness: 1 }),
+    Object.freeze({ offset: 1, x: dx, y: dy, rotationDeg: 0, scale: 1, opacity: 0, blurPx: 0, brightness: 1 }),
+  ];
+}
+
+function trailCue(start, geometry) {
+  return {
+    kind: 'PROCEDURAL_SVG_CUBIC',
+    start: { x: start.x, y: start.y },
+    control1: { x: start.x + geometry.p1.x, y: start.y + geometry.p1.y },
+    control2: { x: start.x + geometry.p2.x, y: start.y + geometry.p2.y },
+    target: { x: start.x + geometry.dx, y: start.y + geometry.dy },
+    endOffset: BATTLE_CARD_RELEASE_FLIGHT_ARRIVAL_OFFSET,
+  };
+}
+
+function heroCue(target) {
+  return {
+    kind: 'CENTER_HERO',
+    x: target.x,
+    y: target.y,
+    arrivalOffset: BATTLE_CARD_RELEASE_FLIGHT_ARRIVAL_OFFSET,
+    holdEndOffset: BATTLE_CARD_RELEASE_FLIGHT_HERO_HOLD_END_OFFSET,
+  };
 }
 
 export function projectBattleCardReleaseFlightMotion({
@@ -156,7 +214,9 @@ export function projectBattleCardReleaseFlightMotion({
       target: destination,
       spinDeg: 0,
       bendPx: 0,
-      frames: projectReducedFrames(),
+      frames: projectReducedFrames(source, destination),
+      trailCue: { kind: 'NONE' },
+      heroCue: heroCue(destination),
       destinationCue: {
         kind: 'DESTINATION_PULSE',
         x: destination.x,
@@ -177,6 +237,8 @@ export function projectBattleCardReleaseFlightMotion({
       spinDeg: 0,
       bendPx: 0,
       frames: projectLowPerfFrames(source, destination),
+      trailCue: { kind: 'NONE' },
+      heroCue: heroCue(destination),
       destinationCue: {
         kind: 'NONE',
         x: destination.x,
@@ -194,9 +256,11 @@ export function projectBattleCardReleaseFlightMotion({
     lowPerf: false,
     start: source,
     target: destination,
-    spinDeg: geometry.spinDeg,
+    spinDeg: 0,
     bendPx: geometry.bendPx,
     frames: projectFullFrames(geometry, canonicalOffsets(sampleOffsets)),
+    trailCue: trailCue(source, geometry),
+    heroCue: heroCue(destination),
     destinationCue: {
       kind: 'NONE',
       x: destination.x,

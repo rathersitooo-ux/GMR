@@ -6,6 +6,10 @@ import {
   SCREEN_NAVIGATION_FALLBACK_PARENT,
   SCREEN_NAVIGATION_REASON,
   SCREEN_MOTION_PRESENTATION_SPEC,
+  SCREEN_TRANSITION_EDGE_SHIMMER_ASSET,
+  SCREEN_TRANSITION_EDGE_SHIMMER_CSS,
+  SCREEN_TRANSITION_EDGE_SHIMMER_FRAMES,
+  ensureScreenTransitionEdgeShimmer,
   createScreenNavigationRuntimeBridge,
   createScreenMotionPresentationDriver,
   createScreenTransitionRuntimeAdapter,
@@ -24,6 +28,48 @@ function setUserActivation(isActive) {
     else delete globalThis.navigator;
   };
 }
+
+test('screen transition edge shimmer is an effect-only four-frame asset with explicit accessibility fallbacks', () => {
+  assert.deepEqual(SCREEN_TRANSITION_EDGE_SHIMMER_ASSET, {
+    id: 'screen-transition-edge-shimmer-sprite-v1',
+    sourcePath: 'assets/visual/effects/screen-transition-edge-shimmer-sprite-v1.png',
+    runtimePath: '../assets/visual/effects/screen-transition-edge-shimmer-sprite-v1.png',
+    formal: true,
+    readOnly: true,
+    frameCount: 4,
+    frameLayout: 'horizontal-4-up',
+  });
+  assert.match(SCREEN_TRANSITION_EDGE_SHIMMER_CSS, /background-size:400% 100%/);
+  assert.match(SCREEN_TRANSITION_EDGE_SHIMMER_CSS, /pointer-events:none/);
+  assert.match(SCREEN_TRANSITION_EDGE_SHIMMER_CSS, /prefers-reduced-motion/);
+  assert.match(SCREEN_TRANSITION_EDGE_SHIMMER_CSS, /r10LowPerf/);
+  assert.equal(SCREEN_TRANSITION_EDGE_SHIMMER_FRAMES.exit[1].backgroundPosition, '66.667% 50%');
+  assert.equal(SCREEN_TRANSITION_EDGE_SHIMMER_FRAMES.enter[1].backgroundPosition, '33.333% 50%');
+});
+
+test('screen transition shimmer helper creates only a non-semantic overlay on a supplied real surface', () => {
+  const nodes = [];
+  const head = {append(node) { nodes.push(node); }};
+  const documentSource = {
+    head,
+    createElement(tagName) {
+      return {tagName, dataset: {}, attributes: {}, setAttribute(name, value) { this.attributes[name] = value; }};
+    },
+    getElementById() { return null; },
+  };
+  const surface = {
+    children: [],
+    append(node) { this.children.push(node); },
+    querySelector() { return null; },
+  };
+  const overlay = ensureScreenTransitionEdgeShimmer(documentSource, surface);
+  assert.equal(nodes.length, 1);
+  assert.equal(surface.children.length, 1);
+  assert.equal(overlay.className, 'gameroadScreenTransitionEdgeShimmer');
+  assert.equal(overlay.dataset.screenTransitionEdgeShimmer, 'true');
+  assert.equal(overlay.attributes['aria-hidden'], 'true');
+  assert.equal(overlay.attributes['data-presentation-only'], 'true');
+});
 
 test('falsy requested targets preserve the current screen as a no-op', () => {
   for (const target of [undefined, null, '', 0, false, Number.NaN]) {

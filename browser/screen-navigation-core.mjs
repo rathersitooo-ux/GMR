@@ -15,12 +15,44 @@ export const SCREEN_NAVIGATION_COMMON_BUTTON_SFX = Object.freeze({
   filename: 'click_002.ogg', formalRole: 'shared-button', playbackAuthority: 'HUMAN_ACCEPTED_FORMAL_ASSET'
 });
 
+const SCREEN_TRANSITION_EDGE_SHIMMER_STYLE_ID = 'gameroad-screen-transition-edge-shimmer-r1';
+export const SCREEN_TRANSITION_EDGE_SHIMMER_ASSET = Object.freeze({
+  id: 'screen-transition-edge-shimmer-sprite-v1',
+  sourcePath: 'assets/visual/effects/screen-transition-edge-shimmer-sprite-v1.png',
+  runtimePath: '../assets/visual/effects/screen-transition-edge-shimmer-sprite-v1.png',
+  formal: true,
+  readOnly: true,
+  frameCount: 4,
+  frameLayout: 'horizontal-4-up',
+});
+const SCREEN_TRANSITION_EDGE_SHIMMER_URL = new URL(
+  SCREEN_TRANSITION_EDGE_SHIMMER_ASSET.runtimePath,
+  import.meta.url,
+).href;
+export const SCREEN_TRANSITION_EDGE_SHIMMER_CSS = `
+.gameroadScreenTransitionEdgeShimmer{position:absolute;inset:0;z-index:12;pointer-events:none;overflow:hidden;background-image:url('${SCREEN_TRANSITION_EDGE_SHIMMER_URL}');background-repeat:no-repeat;background-size:400% 100%;background-position:0% 50%;mix-blend-mode:screen;opacity:0;filter:saturate(1.02) brightness(1.06);will-change:opacity,background-position;contain:paint}
+html.r10LowPerf .gameroadScreenTransitionEdgeShimmer,html.r10Reduced .gameroadScreenTransitionEdgeShimmer{filter:saturate(.92) brightness(1.02)}
+@media(prefers-reduced-motion:reduce){.gameroadScreenTransitionEdgeShimmer{display:none!important}}
+`;
+export const SCREEN_TRANSITION_EDGE_SHIMMER_FRAMES = Object.freeze({
+  exit: Object.freeze([
+    {opacity: 0, backgroundPosition: '0% 50%', transform: 'scale(1.015)'},
+    {opacity: .34, backgroundPosition: '66.667% 50%', transform: 'scale(1.01)'},
+    {opacity: 0, backgroundPosition: '100% 50%', transform: 'scale(1)'},
+  ]),
+  enter: Object.freeze([
+    {opacity: 0, backgroundPosition: '100% 50%', transform: 'scale(1.01)'},
+    {opacity: .26, backgroundPosition: '33.333% 50%', transform: 'scale(1)'},
+    {opacity: 0, backgroundPosition: '0% 50%', transform: 'scale(1)'},
+  ]),
+});
+
 export const MENU_TRANSITION_MOTION_PROFILE = Object.freeze({NORMAL: 'normal', REDUCED: 'reduced', NONE: 'none'});
 
 export const SCREEN_MOTION_PRESENTATION_SPEC = Object.freeze({
-  [MENU_TRANSITION_MOTION_PROFILE.NORMAL]: Object.freeze({exitMs: 90, enterMs: 120, feedbackMs: 72, distancePx: 18, easing: 'cubic-bezier(.22,.72,.2,1)'}),
-  [MENU_TRANSITION_MOTION_PROFILE.REDUCED]: Object.freeze({exitMs: 36, enterMs: 45, feedbackMs: 36, distancePx: 0, easing: 'linear'}),
-  [MENU_TRANSITION_MOTION_PROFILE.NONE]: Object.freeze({exitMs: 0, enterMs: 0, feedbackMs: 0, distancePx: 0, easing: 'linear'})
+  [MENU_TRANSITION_MOTION_PROFILE.NORMAL]: Object.freeze({exitMs: 90, enterMs: 120, feedbackMs: 72, edgeShimmerMs: 120, distancePx: 18, easing: 'cubic-bezier(.22,.72,.2,1)'}),
+  [MENU_TRANSITION_MOTION_PROFILE.REDUCED]: Object.freeze({exitMs: 36, enterMs: 45, feedbackMs: 36, edgeShimmerMs: 36, distancePx: 0, easing: 'linear'}),
+  [MENU_TRANSITION_MOTION_PROFILE.NONE]: Object.freeze({exitMs: 0, enterMs: 0, feedbackMs: 0, edgeShimmerMs: 0, distancePx: 0, easing: 'linear'})
 });
 
 export const SCREEN_MOTION_FAMILY = Object.freeze({ROUTE: 'route', CARDS: 'cards', CHARACTER: 'character', ECONOMY: 'economy', BATTLE: 'battle', UTILITY: 'utility'});
@@ -291,9 +323,34 @@ function pieceEnterFrames(piece, documentSource, intent) {
   ];
 }
 
+export function ensureScreenTransitionEdgeShimmerStyle(documentSource = globalThis.document) {
+  if (!documentSource?.head || typeof documentSource.createElement !== 'function') return false;
+  if (documentSource.getElementById?.(SCREEN_TRANSITION_EDGE_SHIMMER_STYLE_ID)) return false;
+  const style = documentSource.createElement('style');
+  style.id = SCREEN_TRANSITION_EDGE_SHIMMER_STYLE_ID;
+  style.textContent = SCREEN_TRANSITION_EDGE_SHIMMER_CSS;
+  documentSource.head.append?.(style);
+  return true;
+}
+
+export function ensureScreenTransitionEdgeShimmer(documentSource, surface) {
+  if (!documentSource || !surface || typeof documentSource.createElement !== 'function' || typeof surface.append !== 'function') return null;
+  const existing = surface.querySelector?.('[data-screen-transition-edge-shimmer]');
+  if (existing) return existing;
+  ensureScreenTransitionEdgeShimmerStyle(documentSource);
+  const overlay = documentSource.createElement('span');
+  overlay.className = 'gameroadScreenTransitionEdgeShimmer';
+  overlay.dataset.screenTransitionEdgeShimmer = 'true';
+  overlay.setAttribute?.('aria-hidden', 'true');
+  overlay.setAttribute?.('data-presentation-only', 'true');
+  surface.append(overlay);
+  return overlay;
+}
+
 export function createScreenMotionPresentationDriver({document: documentSource = globalThis.document, maxEvents = 32} = {}) {
   const sessions = new Map();
   const events = [];
+  ensureScreenTransitionEdgeShimmerStyle(documentSource);
   const record = (event) => {
     events.push(Object.freeze({...event}));
     if (events.length > maxEvents) events.splice(0, events.length - maxEvents);
@@ -319,6 +376,8 @@ export function createScreenMotionPresentationDriver({document: documentSource =
     session.signal?.removeEventListener?.('abort', session.onAbort);
     for (const animation of session.animations) animation.cancel?.();
     session.animations.clear();
+    for (const shimmer of session.edgeShimmers) shimmer.remove?.();
+    session.edgeShimmers.clear();
     clearMarkers(session);
     record({revision, phase: 'CLEANUP', status});
     return true;
@@ -341,7 +400,7 @@ export function createScreenMotionPresentationDriver({document: documentSource =
     session = {
       revision: context.revision, signal: context.signal,
       outgoing, incoming: null, exitTarget,
-      pressedControl: null, animations: new Set(), onAbort: null, exitPromise: null,
+      pressedControl: null, animations: new Set(), edgeShimmers: new Set(), onAbort: null, exitPromise: null,
       intent
     };
     session.pressedControl = containsNode(session.outgoing, documentSource?.activeElement) ? documentSource.activeElement : null;
@@ -349,6 +408,12 @@ export function createScreenMotionPresentationDriver({document: documentSource =
     context.signal?.addEventListener?.('abort', session.onAbort, {once: true});
     sessions.set(context.revision, session);
     return session;
+  }
+
+  function prepareEdgeShimmer(session, surface) {
+    const shimmer = ensureScreenTransitionEdgeShimmer(documentSource, surface);
+    if (shimmer) session.edgeShimmers.add(shimmer);
+    return shimmer;
   }
 
   function mark(surface, context, phase, intent) {
@@ -360,9 +425,9 @@ export function createScreenMotionPresentationDriver({document: documentSource =
     surface.dataset.screenMotionBridge = intent.bridge;
   }
 
-  async function animateFrames(session, target, kind, context, frames, eventExtra = {}) {
+  async function animateFrames(session, target, kind, context, frames, eventExtra = {}, durationOverride = null) {
     const spec = SCREEN_MOTION_PRESENTATION_SPEC[context.motionProfile] || SCREEN_MOTION_PRESENTATION_SPEC[MENU_TRANSITION_MOTION_PROFILE.NORMAL];
-    const duration = animationDuration(kind, spec);
+    const duration = Number.isFinite(durationOverride) ? durationOverride : animationDuration(kind, spec);
     if (!target || duration === 0 || typeof target.animate !== 'function' || context.signal?.aborted) {
       record({revision: context.revision, phase: context.phase, kind, status: 'no_effect', profile: context.motionProfile, family: session.intent.family, bridge: session.intent.bridge, ...eventExtra});
       return;
@@ -394,6 +459,12 @@ export function createScreenMotionPresentationDriver({document: documentSource =
     return animateFrames(session, target, kind, context, presentationFrames(kind, spec, session.intent));
   }
 
+  async function animateEdgeShimmer(session, target, direction, context) {
+    const spec = SCREEN_MOTION_PRESENTATION_SPEC[context.motionProfile] || SCREEN_MOTION_PRESENTATION_SPEC[MENU_TRANSITION_MOTION_PROFILE.NORMAL];
+    const frames = SCREEN_TRANSITION_EDGE_SHIMMER_FRAMES[direction] || SCREEN_TRANSITION_EDGE_SHIMMER_FRAMES.exit;
+    return animateFrames(session, target, 'edge_shimmer', context, frames, {effect: 'edge_shimmer', direction}, spec.edgeShimmerMs);
+  }
+
   async function animateIncoming(session, context) {
     if (session.intent.routeVector || context.motionProfile !== MENU_TRANSITION_MOTION_PROFILE.NORMAL) {
       await animate(session, session.incoming, 'enter', context);
@@ -419,15 +490,23 @@ export function createScreenMotionPresentationDriver({document: documentSource =
         void animate(session, session.pressedControl, 'press', phaseContext);
       } else if (phase === 'EXIT') {
         mark(session.outgoing, context, phase, session.intent);
-        session.exitPromise = animate(session, session.exitTarget, 'exit', phaseContext);
+        const exitShimmer = prepareEdgeShimmer(session, session.outgoing);
+        session.exitPromise = Promise.all([
+          animate(session, session.exitTarget, 'exit', phaseContext),
+          animateEdgeShimmer(session, exitShimmer, 'exit', phaseContext),
+        ]);
       } else if (phase === 'SWAP') {
         session.incoming = screenSurface(documentSource, context.to);
         mark(session.incoming, context, phase, session.intent);
         record({revision: context.revision, phase, kind: 'surface_swap_observed', status: session.incoming ? 'completed' : 'surface_missing', profile: context.motionProfile, family: session.intent.family, bridge: session.intent.bridge});
+        prepareEdgeShimmer(session, session.incoming);
       } else if (phase === 'ENTER') {
         mark(session.incoming, context, phase, session.intent);
         const exitPromise = session.exitPromise || Promise.resolve();
-        const enterPromise = animateIncoming(session, phaseContext);
+        const enterPromise = Promise.all([
+          animateIncoming(session, phaseContext),
+          animateEdgeShimmer(session, prepareEdgeShimmer(session, session.incoming), 'enter', phaseContext),
+        ]);
         await Promise.all([exitPromise, enterPromise]);
         session.exitPromise = null;
       } else if (phase === 'SETTLE') {

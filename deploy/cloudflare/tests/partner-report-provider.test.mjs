@@ -22,6 +22,7 @@ import {
   submitStoredPartnerReport,
 } from '../relay/src/partner-report-store.mjs';
 import { onRequest as reportRoute } from '../functions/report.js';
+import { onRequest as partnerWsRoute } from '../functions/ws.js';
 
 class FakeStorage {
   constructor() { this.map = new Map(); }
@@ -176,6 +177,105 @@ test('HTTP provider returns direct authoritative read, conflict, not_found, and 
   });
   const largeRes = await handlePartnerReportRequest(storage, largeReq, new URL(largeReq.url));
   assert.equal(largeRes.status, 413);
+});
+
+function partnerConversationRequest(body = { userMessage: 'こんにちは' }) {
+  return new Request('https://example.test/ws?partnerOp=conversation', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+function partnerConversationContext(providerFetch, request = partnerConversationRequest()) {
+  return {
+    request,
+    env: {
+      CONVAI_API_KEY: 'test-api-key',
+      CONVAI_SAASUNA_CHARACTER_ID: 'partner.saasuna',
+    },
+    fetch: providerFetch,
+  };
+}
+
+test('Pages Partner conversation keeps the current Convai request contract and projects a bounded success response', async () => {
+  let captured = null;
+  const response = await partnerWsRoute(partnerConversationContext(async (url, init) => {
+    captured = {
+      url,
+      method: init.method,
+      apiKey: init.headers['CONVAI-API-KEY'],
+      userText: init.body.get('userText'),
+      charID: init.body.get('charID'),
+      sessionID: init.body.get('sessionID'),
+      voiceResponse: init.body.get('voiceResponse'),
+    };
+    return new Response(JSON.stringify({
+      charID: 'partner.saasuna',
+      text: 'こんにちは。',
+      sessionID: 'provider-session-1',
+    }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  }));
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), {
+    ok: true,
+    text: 'こんにちは。',
+    providerSessionId: 'provider-session-1',
+  });
+  assert.deepEqual(captured, {
+    url: 'https://api.convai.com/character/getResponse',
+    method: 'POST',
+    apiKey: 'test-api-key',
+    userText: 'こんにちは',
+    charID: 'partner.saasuna',
+    sessionID: '-1',
+    voiceResponse: 'false',
+  });
+});
+
+test('Pages Partner conversation classifies upstream rejection without exposing provider payload or credentials', async () => {
+  const cases = [
+    [401, 424, 'provider_auth_rejected'],
+    [403, 424, 'provider_access_rejected'],
+    [400, 424, 'provider_request_rejected'],
+    [429, 429, 'provider_rate_limited'],
+    [500, 502, 'provider_unavailable'],
+    [503, 502, 'provider_unavailable'],
+  ];
+
+  for (const [providerStatus, expectedStatus, expectedState] of cases) {
+    const response = await partnerWsRoute(partnerConversationContext(async () => new Response(JSON.stringify({
+      secret: 'UPSTREAM_PRIVATE_DETAIL',
+      message: 'do not expose provider body',
+    }), {
+      status: providerStatus,
+      headers: { 'content-type': 'application/json' },
+    })));
+    assert.equal(response.status, expectedStatus, `provider ${providerStatus}`);
+    const value = await response.json();
+    assert.deepEqual(value, { ok: false, state: expectedState });
+    const serialized = JSON.stringify(value);
+    assert.equal(serialized.includes('UPSTREAM_PRIVATE_DETAIL'), false);
+    assert.equal(serialized.includes('test-api-key'), false);
+  }
+});
+
+test('Pages Partner conversation keeps malformed provider success payload fail-closed', async () => {
+  const invalidJson = await partnerWsRoute(partnerConversationContext(async () => new Response('not-json', { status: 200 })));
+  assert.equal(invalidJson.status, 502);
+  assert.deepEqual(await invalidJson.json(), { ok: false, state: 'provider_invalid' });
+
+  const mismatchedCharacter = await partnerWsRoute(partnerConversationContext(async () => new Response(JSON.stringify({
+    charID: 'partner.someone-else',
+    text: 'hello',
+    sessionID: 'provider-session-2',
+  }), { status: 200, headers: { 'content-type': 'application/json' } })));
+  assert.equal(mismatchedCharacter.status, 502);
+  assert.deepEqual(await mismatchedCharacter.json(), { ok: false, state: 'provider_invalid' });
 });
 
 test('Pages /report route forwards to one deterministic existing Durable Object binding', async () => {

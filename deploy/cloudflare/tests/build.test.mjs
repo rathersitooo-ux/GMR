@@ -90,7 +90,7 @@ const dependencyContract = [
   { file: 'deck-save-recovery-core.mjs', source: 'browser/deck-save-recovery-core.mjs', sourceArg: 'coreSource', expectedArg: 'expectedCoreBlob', artifact: 'deck_save_recovery_core', fixture: 'globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE = Object.freeze({});\n', currentBlob: '64f87734076b57c209bb832aec2361417c4df0c2' },
   { file: 'deck-save-ack-core.mjs', source: 'browser/deck-save-ack-core.mjs', sourceArg: 'deckSaveAckCoreSource', expectedArg: 'expectedDeckSaveAckCoreBlob', artifact: 'deck_save_ack_core', fixture: 'export function createDeckMatchStartSnapshot(){ return Object.freeze({}); }\n', currentBlob: 'e62c901c2cf78d8459dd3474072c5b735ac9c449' },
   { file: 'hate-peer-presence-core.mjs', source: 'browser/hate-peer-presence-core.mjs', sourceArg: 'presenceCoreSource', expectedArg: 'expectedPresenceCoreBlob', artifact: 'hate_peer_presence_core', fixture: 'export const HATE_PEER_PRESENCE_CORE = Object.freeze({});\n', currentBlob: '522c6132e4b49c0a0df15690927da511c1e40f43' },
-  { file: 'screen-navigation-core.mjs', source: 'browser/screen-navigation-core.mjs', sourceArg: 'navigationCoreSource', expectedArg: 'expectedNavigationCoreBlob', artifact: 'screen_navigation_core', fixture: 'export function resolveScreenNavigation(){ return { ok: true }; }\n', currentBlob: '199b8d6808f24c8b6bf26e8085dbda355afaf165' },
+  { file: 'screen-navigation-core.mjs', source: 'browser/screen-navigation-core.mjs', sourceArg: 'navigationCoreSource', expectedArg: 'expectedNavigationCoreBlob', artifact: 'screen_navigation_core', fixture: 'export function resolveScreenNavigation(){ return { ok: true }; }\n', currentBlob: 'beae3c4febea3ef6e0f0e1c7ca73d58a2406a15f' },
   { file: 'result-presentation-core.mjs', source: 'browser/result-presentation-core.mjs', sourceArg: 'resultPresentationCoreSource', expectedArg: 'expectedResultPresentationCoreBlob', artifact: 'result_presentation_core', fixture: 'export function projectResultRankPresentation(){ return { ok: true, formalRank: 1, visibleLabel: \'1位\', rankColorRole: null }; }\n', currentBlob: '2fd53a38dcafbf87b22e6b9a2699a4a74aefefee' },
   { file: 'battle-replay-live-adapter.mjs', source: 'browser/battle-replay-live-adapter.mjs', sourceArg: 'replayAdapterSource', expectedArg: 'expectedReplayAdapterBlob', artifact: 'battle_replay_live_adapter', fixture: "import './battle-replay-core.mjs';\nimport './card-presentation-core.mjs';\nimport './battle-self-deck-inspect-core.mjs';\nimport './battle-conveyor-presentation-core.mjs';\nimport './partner-battle-event-log-projection.mjs';\n", currentBlob: '8b27c3867e76960f0bc90e65abf727d82bed4a22' },
   { file: 'battle-self-deck-inspect-core.mjs', source: 'browser/battle-self-deck-inspect-core.mjs', sourceArg: 'remainingDeckInspectCoreSource', expectedArg: 'expectedRemainingDeckInspectCoreBlob', artifact: 'battle_self_deck_inspect_core', fixture: "export function createAuthoritativeRemainingDeckCountSnapshot(){ return Object.freeze({}); }\nexport function projectRemainingDeckCountForViewer(){ return Object.freeze({ ok: true }); }\n", currentBlob: '78e63a6690f6846a2ce7b3538d4711ab10e4771d' },
@@ -126,6 +126,10 @@ const dependencyContract = [
   { file: 'tools/advice-collective-eval.mjs', source: 'tools/advice-collective-eval.mjs', sourceArg: 'adviceCollectiveEvalSource', expectedArg: 'expectedAdviceCollectiveEvalBlob', artifact: 'advice_collective_eval', fixture: 'export const ADVICE_COLLECTIVE_EVAL = Object.freeze({});\n', currentBlob: '3cc7eb964493eb1e7cc022c420f7d49fad1be420' },
 ];
 
+const presentationAssetContract = [
+  { file: 'assets/visual/effects/screen-transition-edge-shimmer-sprite-v1.png', source: 'assets/visual/effects/screen-transition-edge-shimmer-sprite-v1.png', artifact: 'screen_transition_edge_shimmer_sprite' },
+];
+
 function expectedVersionManifest() { return { schema: VERSION_MANIFEST_SCHEMA, channel: VERSION_MANIFEST_CHANNEL, build_id: SOURCE_COMMIT, published_at: PUBLISHED_AT, reload_policy: VERSION_MANIFEST_RELOAD_POLICY }; }
 
 test('build copies Browser, runtime dependencies, and formal version manifest deterministically', async () => {
@@ -147,6 +151,12 @@ test('build copies Browser, runtime dependencies, and formal version manifest de
     assert.equal((await readFile(path.join(dist, dep.file))).equals(expected.get(dep.file)), true);
     assert.equal(first.artifacts[dep.artifact].git_blob_sha1, options[dep.expectedArg]);
     assert.equal(first.artifacts[dep.artifact].output, dep.file);
+  }
+  for (const asset of presentationAssetContract) {
+    const expectedBytes = await readFile(path.join(repoRoot, asset.source));
+    assert.equal((await readFile(path.join(dist, asset.file))).equals(expectedBytes), true);
+    assert.equal(first.artifacts[asset.artifact].git_blob_sha1, gitBlobSha1(expectedBytes));
+    assert.equal(first.artifacts[asset.artifact].output, asset.file);
   }
   assert.deepEqual(JSON.parse(await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8')), expectedVersionManifest());
   assert.equal(await readFile(path.join(dist, '_headers'), 'utf8'), '/\n  Cache-Control: no-cache, no-store\n\n/index.html\n  Cache-Control: no-cache, no-store\n\n/gameroad-version.json\n  Cache-Control: no-store\n\n/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n');
@@ -194,6 +204,11 @@ test('build packages the exact current production Browser dependency set with ve
   assert.deepEqual(JSON.parse(await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8')), expectedVersionManifest());
   for (const dep of dependencyContract) {
     assert.equal((await readFile(path.join(dist, dep.file))).equals(currentBytes.get(dep.file)), true); assert.equal(manifest.artifacts[dep.artifact].git_blob_sha1, dep.currentBlob);
+  }
+  for (const asset of presentationAssetContract) {
+    const expectedBytes = await readFile(path.join(repoRoot, asset.source));
+    assert.equal((await readFile(path.join(dist, asset.file))).equals(expectedBytes), true);
+    assert.equal(manifest.artifacts[asset.artifact].git_blob_sha1, gitBlobSha1(expectedBytes));
   }
   const partnerConversationCoreBytes = await readFile(path.join(repoRoot, 'browser/partner-conversation-core.mjs'));
   const partnerSaasunaSourceBytes = await readFile(path.join(repoRoot, 'browser/partner-saasuna-conversation-source.mjs'));

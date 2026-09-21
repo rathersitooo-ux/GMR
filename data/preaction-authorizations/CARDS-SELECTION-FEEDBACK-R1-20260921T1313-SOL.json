@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-SELECTION-FEEDBACK-R1-20260921T1313-SOL",
+  "taskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "workUnitKey": "CARDS_SELECTION_PRESS_RELEASE_FEEDBACK_R1",
+  "acquireKey": "CARDS-SELECTION-FEEDBACK-R1-20260921T1313-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CARDS_TAP_SELECTION_FEEDBACK_GAP_FRESH_MAIN_20260921T1313JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "BOUNDED_PRESENTATION_ONLY_LISTENER_STYLE_PLUS_FOCUSED_TESTS",
+  "proceedToken": "PROCEED|CARDS-SELECTION-FEEDBACK-R1-20260921T1313-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|cards-selection-feedback|cards-deck-presentation|active-lease",
+  "authorizationBaseSha": "190f4a53375d9914dd2622ab2e3e8252b8b8094b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "leaseWorkUnitKey": "CARDS_SELECTION_PRESS_RELEASE_FEEDBACK_R1",
+  "leaseAcquireKey": "CARDS-SELECTION-FEEDBACK-R1-20260921T1313-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 13:13 JST",
+  "leaseUntilJst": "2026-09-21 14:13 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A29:L29",
+  "leaseExactMutableResources": "browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback. browser/GAMEROAD.html, browser/screen-navigation-core.mjs, gameplay/rules/save/network are READ_ONLY.",
+  "solutionSignature": "CARDS_TAP_SELECTION_PRESS_RELEASE_FEEDBACK_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_UIVIS_PLUS_FRESH_CARDS_PRESENTATION_ACTUAL",
+  "solutionSearchEvidence": [
+    "CURRENT UIVIS says frequent interactions should use short feedback and Reduced Motion must preserve semantic feedback without large spatial motion.",
+    "Fresh main browser/cards-deck-presentation.mjs already owns Cards presentation feedback for swipe and selection-adjacent UI.",
+    "Fresh source has swipe precommit/postcommit effects but no scoped normal card tap press/release confirmation feedback in this presentation consumer.",
+    "Existing selection/deck authority remains untouched; feedback will observe current selected class after normal click instead of deciding selection."
+  ],
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ]
+}

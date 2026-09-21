@@ -1,0 +1,25 @@
+{
+  "schema": "gameroad.pre-action-authorization.v1",
+  "acquireKey": "RANK-MATCH-WAITING-PRESENTATION-R1-20260921T1321-CODEX",
+  "taskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "workUnitKey": "RANK_MATCH_FLOW_AND_PARTNER_PICKER_R1",
+  "owner": "ChatGPT / GPT-5.6 Codex / current user まかせた",
+  "baseCommit": "190f4a53375d9914dd2622ab2e3e8252b8b8094b",
+  "mutableResources": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs"
+  ],
+  "readonlyResources": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "browser/partner-saasuna-bustup-visuals.mjs",
+    "gameplay/rules/save/network"
+  ],
+  "intent": "Add Battle-child rank selection and truthful presentation-only waiting surface. Remove Home rank producer through existing home runtime. Use generated textures and canonical Saasuna bust-up; no ranked backend invention.",
+  "generatedAssets": [
+    "generated_images/exec-1a6db4da-c745-402c-b9fd-79fa4b1c4a69.png",
+    "generated_images/exec-450238bd-2ba7-42c1-8fcf-2f42871e2b21.png",
+    "generated_images/exec-8d3ff6b6-b5a0-47fe-87af-db0dba9bb95e.png",
+    "generated_images/exec-ee90b924-c48e-4327-896e-15de27a04b51.png"
+  ]
+}

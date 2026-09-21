@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-PUBLIC-PROVIDER-DIAG-R4-20260922T0442-SOL",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PUBLIC_PARTNER_PROVIDER_DIAGNOSTIC_R1",
+  "acquireKey": "PARTNER-PUBLIC-PROVIDER-DIAG-R4-20260922T0442-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLIC_PROVIDER_ATTEMPT2_HTTP424_BOUNDED_PROXY_STATE_DISCARDED_BY_WORKFLOW",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R3_PRODUCT_DIFF_EXACT_ONE_WORKFLOW_FILE_PREACTION_REF_ONLY_FAILURE",
+  "proceedToken": "PROCEED|PARTNER-PUBLIC-PROVIDER-DIAG-R4-20260922T0442-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|provider-probe-state|allowlist-only",
+  "authorizationBaseSha": "7c385f22c5faf2cbfb6f8508986c2469251fe718",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PUBLIC_PARTNER_PROVIDER_DIAGNOSTIC_R1",
+  "leaseAcquireKey": "PARTNER-PUBLIC-PROVIDER-DIAG-R4-20260922T0442-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-22 04:42 JST",
+  "leaseUntilJst": "2026-09-22 05:42 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": ".github/workflows/cloudflare-public-deploy.yml; fresh branch sol/partner-public-provider-probe-state-r4-20260922; own transient data/preaction-authorizations/PARTNER-PUBLIC-PROVIDER-DIAG-R4-20260922T0442-SOL.json only; own fresh PR/check/readback. donor branch sol/partner-public-provider-probe-state-r3-20260922 READ_ONLY; PR2035 READ_ONLY; deploy/cloudflare/functions/ws.js READ_ONLY; deploy/cloudflare/tests/partner-report-provider.test.mjs READ_ONLY; deploy/cloudflare/tests/build.test.mjs READ_ONLY; browser/Battle/card-flight/gameplay/rules/save/network/formal art READ_ONLY; unrelated Remote Commander workflow READ_ONLY.",
+  "solutionSignature": "PUBLIC_PROVIDER_SAFE_FAILURE_STATE_LOG_R4",
+  "reuseDisposition": "REPAIR",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "BYTE_EXACT_REUSE_OF_R3_PRODUCT_DIFF_WITH_AUTH_WITNESS_REPAIR_ONLY",
+  "solutionSearchEvidence": [
+    "R3 changed only the public deploy workflow and produced the intended bounded state allowlist behavior.",
+    "R3 Required Gate stopped before product checks only because leaseSnapshotReadbackRef used A9:N9; validator source requires CURRENT_ACTIVE_LEASES!A<row>:L<row>.",
+    "R4 has a fresh current lease at row 8 and uses CURRENT_ACTIVE_LEASES!A8:L8 exactly.",
+    "The workflow change logs only an allowlisted GAMEROAD proxy state or unknown; no raw upstream payload, credentials, character identifiers, arbitrary response text, runtime, gameplay, or provider request behavior changes."
+  ],
+  "scope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ]
+}

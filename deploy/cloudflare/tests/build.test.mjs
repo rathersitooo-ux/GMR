@@ -128,6 +128,7 @@ const dependencyContract = [
 
 const presentationAssetContract = [
   { file: 'assets/visual/effects/screen-transition-edge-shimmer-sprite-v1.png', source: 'assets/visual/effects/screen-transition-edge-shimmer-sprite-v1.png', artifact: 'screen_transition_edge_shimmer_sprite' },
+  { file: 'assets/visual/effects/records-selection-sweep-sprite-v1.png', source: 'assets/visual/effects/records-selection-sweep-sprite-v1.png', artifact: 'records_selection_sweep_sprite' },
 ];
 
 function expectedVersionManifest() { return { schema: VERSION_MANIFEST_SCHEMA, channel: VERSION_MANIFEST_CHANNEL, build_id: SOURCE_COMMIT, published_at: PUBLISHED_AT, reload_policy: VERSION_MANIFEST_RELOAD_POLICY }; }

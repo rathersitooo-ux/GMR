@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   PROFILE_PRESENTATION_CONTRACT,
+  PROFILE_RECORDS_SELECTION_SWEEP_ASSET,
   dismissRecordsMatchDetail,
   projectHistoricalDeckText,
   projectProfilePresentation,
@@ -207,4 +208,27 @@ test('Records detail lets another rendered row switch directly while outside cli
   assert.match(source, /doc\.addEventListener\('click',[\s\S]*?panel\.contains\(event\.target\)[\s\S]*?const row = event\.target\?\.closest\?\.\('\.record'\);[\s\S]*?if \(row && list\.contains\(row\)\) return;[\s\S]*?event\.preventDefault\(\);[\s\S]*?event\.stopPropagation\(\);[\s\S]*?dismissRecordsMatchDetail\(list, panel\);[\s\S]*?}, true\);/);
   assert.match(source, /doc\.addEventListener\('keydown',[\s\S]*?event\.key !== 'Escape'[\s\S]*?dismissRecordsMatchDetail\(list, panel\);[\s\S]*?}, true\);/);
   assert.doesNotMatch(source, /localStorage|sessionStorage/);
+});
+
+
+test('Records selection feedback uses the generated four-frame effect without changing selection authority', () => {
+  assert.deepEqual(PROFILE_RECORDS_SELECTION_SWEEP_ASSET, {
+    id: 'records-selection-sweep-sprite-v1',
+    sourcePath: 'assets/visual/effects/records-selection-sweep-sprite-v1.png',
+    runtimePath: '../assets/visual/effects/records-selection-sweep-sprite-v1.png',
+    formal: true,
+    presentationOnly: true,
+    frameCount: 4,
+    frameLayout: 'horizontal-4-up',
+  });
+  const source = readFileSync(new URL('../browser/profile-presentation-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /data-records-selected="true"]::after/);
+  assert.match(source, /pointer-events:none/);
+  assert.match(source, /background-image:url\('\$\{PROFILE_RECORDS_SELECTION_SWEEP_URL\}'\)/);
+  assert.match(source, /animation:gameroadRecordsSelectionSweep/);
+  assert.match(source, /@media\(prefers-reduced-motion:reduce\)/);
+  assert.match(source, /background-position:50% 50%;opacity:\.18/);
+  assert.match(source, /html\.r10LowPerf\{--records-selection-sweep-alpha:\.44\}/);
+  assert.match(source, /html\.r10Reduced\{--records-selection-sweep-alpha:\.26\}/);
+  assert.match(source, /data-records-selectable="true"]\{position:relative/);
 });

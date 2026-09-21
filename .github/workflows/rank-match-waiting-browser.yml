@@ -35,7 +35,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run rank waiting evidence
-        run: npx playwright test tests/rank-match-waiting.browser.spec.mjs --config=playwright.full-interaction.config.mjs --project=short-landscape-667x375 --workers=1
+        run: npx playwright test tests/rank-match-waiting.browser.spec.mjs --config=playwright.rank-match.config.mjs --workers=1
 
       - name: Upload rank waiting evidence
         if: ${{ !cancelled() }}
@@ -43,7 +43,7 @@ jobs:
         with:
           name: rank-waiting-browser-${{ github.run_id }}
           path: |
-            playwright-report-full-interaction/
-            test-results/full-interaction/
+            playwright-report-rank-waiting/
+            test-results/rank-waiting/
           if-no-files-found: error
           retention-days: 14

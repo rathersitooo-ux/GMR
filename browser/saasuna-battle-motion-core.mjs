@@ -105,9 +105,9 @@ export function resolveSaasunaBattleMotionState(input = {}) {
 
   if (explicit === 'KNEE_PILLOW' || input.kneePillow === true) return 'KNEE_PILLOW';
   if (explicit === 'MATERNAL_HUG' || input.maternalHug === true) return 'MATERNAL_HUG';
-  if (transition === 'ENTRY' || phase === 'REVEAL') return 'ENTRY_SKATE';
   if (phase === 'ATTACK') return role === 'TARGET' ? 'HIT_RECOIL' : 'MAGIC_RELEASE';
   if (phase === 'ABILITY') return role === 'TARGET' ? 'HIT_RECOIL' : 'ICE_SLIDE_LOW';
+  if (transition === 'ENTRY' || phase === 'REVEAL') return 'ENTRY_SKATE';
   if (phase === 'FINISHER') return 'SKIRT_SPIN';
   if (phase === 'SETTLE' || phase === 'RESULT') return 'RESULT_GLIDE';
   if (transition.includes('IMPACT')) return role === 'TARGET' ? 'HIT_RECOIL' : 'WIND_CUT';

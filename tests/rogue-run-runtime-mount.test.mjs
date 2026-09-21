@@ -222,20 +222,20 @@ test('Rogue modal outside dismiss closes once, keeps inside clicks, and consumes
   assert.deepEqual(counts, { prevent: 1, stop: 1, immediate: 1 });
 });
 
-test('already-loaded Home runtime mounts the Rogue consumer once without rewriting production HTML', () => {
-  const homeBoot = fs.readFileSync(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
-  assert.equal((homeBoot.match(/mountRogueRunFromCurrentBrowser/g) || []).length, 2);
-  assert.match(homeBoot, /import \{ mountRogueRunFromCurrentBrowser \} from '\.\/rogue-run-runtime-mount\.mjs';/);
-  assert.match(homeBoot, /refreshHomeBootPresentation\(\);\s*mountRogueRunFromCurrentBrowser\(\);/);
+test('Home boot does not auto-mount Rogue while the standalone Rogue runtime remains packaged', () => {
+  const homeBootWrapper = fs.readFileSync(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
+  const homeBootBase = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(homeBootWrapper, /mountRogueRunFromCurrentBrowser/);
+  assert.doesNotMatch(homeBootBase, /mountRogueRunFromCurrentBrowser/);
 
   const build = fs.readFileSync(new URL('../deploy/cloudflare/scripts/build.mjs', import.meta.url), 'utf8');
-  assert.match(build, /source: 'browser\/rogue-run-core\.mjs'.*output: 'rogue-run-core\.mjs'/);
-  assert.match(build, /source: 'browser\/rogue-run-runtime-mount\.mjs'.*output: 'rogue-run-runtime-mount\.mjs'/);
+  assert.match(build, /source: 'browser\\/rogue-run-core\\.mjs'.*output: 'rogue-run-core\\.mjs'/);
+  assert.match(build, /source: 'browser\\/rogue-run-runtime-mount\\.mjs'.*output: 'rogue-run-runtime-mount\\.mjs'/);
 
   const runtimeMount = fs.readFileSync(new URL('../browser/rogue-run-runtime-mount.mjs', import.meta.url), 'utf8');
-  assert.match(runtimeMount, /documentSource\.addEventListener\('click', dismissOnOutsideClick, true\);/);
-  assert.match(runtimeMount, /documentSource\.removeEventListener\('click', dismissOnOutsideClick, true\);/);
-  assert.match(runtimeMount, /entry\.addEventListener\('click', \(\) => \{ panelDismissed = false; controller\.start\(\); render\(\); \}\);/);
+  assert.match(runtimeMount, /documentSource\\.addEventListener\\('click', dismissOnOutsideClick, true\\);/);
+  assert.match(runtimeMount, /documentSource\\.removeEventListener\\('click', dismissOnOutsideClick, true\\);/);
+  assert.match(runtimeMount, /entry\\.addEventListener\\('click', \\(\\) => \\{ panelDismissed = false; controller\\.start\\(\\); render\\(\\); \\}\\);/);
 });
 
 test('Friend Room copy accepts only the currently visible seven-character code and never fakes clipboard success', async () => {

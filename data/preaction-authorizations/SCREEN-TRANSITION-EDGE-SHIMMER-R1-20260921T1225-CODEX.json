@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "SCREEN-TRANSITION-EDGE-SHIMMER-R1-20260921T1225-CODEX",
+  "taskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "workUnitKey": "SCREEN_TRANSITION_EDGE_SHIMMER_SPRITE_R1",
+  "acquireKey": "SCREEN-TRANSITION-EDGE-SHIMMER-R1-20260921T1225-CODEX",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_SCREEN_NAVIGATION_AND_ASSET_ABSENCE_20260921T1225JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "SCREEN_NAVIGATION_EXISTING_PHASE_CONSUMER_AND_GENERATED_ASSET_ALPHA_INSPECTION",
+  "proceedToken": "PROCEED|SCREEN-TRANSITION-EDGE-SHIMMER-R1-20260921T1225-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|screen-transition-edge-shimmer|presentation-only",
+  "authorizationBaseSha": "834cc3ebe45237f695328f14dceca3016bec6503",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-PRESENTATION-FX-QUALITY-001",
+  "leaseWorkUnitKey": "SCREEN_TRANSITION_EDGE_SHIMMER_SPRITE_R1",
+  "leaseAcquireKey": "SCREEN-TRANSITION-EDGE-SHIMMER-R1-20260921T1225-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 12:25 JST",
+  "leaseUntilJst": "2026-09-21 13:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A26:L26",
+  "leaseExactMutableResources": "browser/screen-navigation-core.mjs; tests/screen-navigation-core.test.mjs; assets/visual/effects/screen-transition-edge-shimmer-sprite-v1.png; own transient PRE_ACTION witness; own fresh branch/PR/check/merge/readback; browser/GAMEROAD.html READ_ONLY active Battle owner; browser/home-shell-presentation-core.mjs READ_ONLY active Home-entry owner; browser/ui-state-feedback-core.mjs READ_ONLY existing transition director; gameplay/rules/save/network READ_ONLY",
+  "solutionSignature": "SCREEN_NAVIGATION_EXISTING_MOTION_WITH_GENERATED_EDGE_SHIMMER_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "SCREEN_NAVIGATION_MOTION_CONSUMER_EXISTS_NO_SHIMMER_ASSET_MAIN_20260921T1225",
+  "solutionSearchEvidence": [
+    "Fresh main 834cc3ebe45237f695328f14dceca3016bec6503 exports createScreenMotionPresentationDriver with the real PREPARE, EXIT, SWAP, ENTER, and SETTLE phases.",
+    "The existing driver already owns Web Animations for outgoing and incoming screen surfaces; this scope composes one pointer-events:none visual overlay and does not create a second navigation or semantic state authority.",
+    "Fresh source scan found no screen-transition-edge-shimmer asset or overlay consumer in main.",
+    "The existing card-release flight and Home-border assets are different consumers with different geometry/state semantics, so they are not reused as-is.",
+    "The generated candidate was inspected for true alpha and four-frame layout; integration keeps reduced-motion and low-performance fallback boundaries explicit."
+  ],
+  "scope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs",
+    "assets/visual/effects/screen-transition-edge-shimmer-sprite-v1.png"
+  ],
+  "leaseScope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs",
+    "assets/visual/effects/screen-transition-edge-shimmer-sprite-v1.png"
+  ]
+}

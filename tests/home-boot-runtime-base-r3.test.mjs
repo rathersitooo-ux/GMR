@@ -66,7 +66,7 @@ test('R4 rank match tactile feedback and short-landscape recompose remain presen
   assert.ok(base.includes('.rankPartnerPickerShell{width:min(92vh,92vw,680px)'));
   assert.ok(base.includes('@media(prefers-reduced-motion:reduce)'));
   assert.ok(base.includes('.rankPartnerChoice:active{transform:none!important;}'));
-  assert.ok(base.includes("style.textContent = style.textContent.replaceAll('gameroadd', 'gameroad');"));
+  assert.equal(base.includes("style.textContent = style.textContent.replaceAll('gameroadd', 'gameroad');"), false);
   assert.equal(base.includes('GAMEROAD_RANK_MATCH_SEARCH ='), false);
 });
 
@@ -87,6 +87,20 @@ test('R4B rank match observer refresh is idempotent for observed DOM writes', ()
   assert.equal(base.includes("if (runtimeNode) {\n    if (!runtimeNode.dataset.rankPreviousHidden) runtimeNode.dataset.rankPreviousHidden = runtimeNode.hidden ? 'true' : 'false';\n    runtimeNode.hidden = true;"), false);
 });
 
+
+test('R7 rank waiting motion uses direct keyframes and keeps reduced-motion static', () => {
+  const base = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
+  assert.ok(base.includes('animation:gameroadRankWaitingVfx 3.2s steps(4,end) infinite'));
+  assert.ok(base.includes('@keyframes gameroadRankWaitingVfx{'));
+  assert.ok(base.includes('animation:gameroadRankWaitingPulse 1.8s ease-in-out infinite'));
+  assert.ok(base.includes('@keyframes gameroadRankWaitingPulse{'));
+  assert.ok(base.includes('animation:gameroadRankWaitingEnter 240ms cubic-bezier(.22,.8,.24,1) both'));
+  assert.ok(base.includes('@keyframes gameroadRankWaitingEnter{'));
+  assert.ok(base.includes('animation:gameroadRankWaitingPartnerIdle 2.8s ease-in-out infinite'));
+  assert.ok(base.includes('@keyframes gameroadRankWaitingPartnerIdle{'));
+  assert.ok(base.includes('.rankWaitingStatus:before,.rankWaitingPanel,.rankWaitingPartner img{animation:none!important;}'));
+  assert.equal(base.includes('gameroadd'), false);
+});
 
 test('R5 rank match refresh observes only screen roots and keeps body bootstrap child-only', () => {
   const base = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');

@@ -19,6 +19,10 @@ import {
   planBattleConveyorEnvironmentFrame
 } from './battle-conveyor-presentation-core.mjs';
 import {
+  captureBattleCardReleaseFlightEffect,
+  playBattleCardReleaseFlightEffect
+} from './battle-card-release-flight-runtime-effect.mjs';
+import {
   PARTNER_BATTLE_EVENT_PROJECTION,
   createPartnerBattleEventLogConsumerAdapter
 } from './partner-battle-event-log-projection.mjs';
@@ -553,6 +557,93 @@ export function renderBattleReplayCardPresentationPlan(plan, environment = {}) {
   return true;
 }
 
+function rectCenter(node) {
+  const rect = node?.getBoundingClientRect?.();
+  if (!rect) return null;
+  const left = Number(rect.left);
+  const top = Number(rect.top);
+  const width = Number(rect.width);
+  const height = Number(rect.height);
+  if (![left, top, width, height].every(Number.isFinite) || width <= 0 || height <= 0) return null;
+  return { x: left + (width / 2), y: top + (height / 2) };
+}
+
+function acceptedAttackerSubmissionCard(resolution) {
+  const attackerId = maybeString(resolution?.attackerId);
+  if (!attackerId || !Array.isArray(resolution?.players)) return null;
+  const attacker = resolution.players.find(player => player?.id === attackerId) ?? null;
+  if (!attacker || !Array.isArray(attacker.cards)) return null;
+  const cards = attacker.cards.filter(card =>
+    nonEmptyString(card?.cardId) && card?.origin === 'active_submission'
+  );
+  return cards.length === 1 ? cards[0] : null;
+}
+
+function visibleBattleHandCardNode(documentRef, cardId) {
+  const hand = documentRef?.getElementById?.('hand');
+  if (!hand || typeof hand.querySelectorAll !== 'function' || !nonEmptyString(cardId)) return null;
+  const nodes = Array.from(hand.querySelectorAll('.handCard[data-card-id]') ?? []);
+  return nodes.find(node => {
+    if (node?.dataset?.cardId !== cardId) return false;
+    if (node.dataset?.jankenReserved === 'true') return false;
+    if (node.getAttribute?.('aria-hidden') === 'true') return false;
+    return rectCenter(node) !== null;
+  }) ?? null;
+}
+
+function battleCardReleaseTarget(documentRef) {
+  const surface = documentRef?.getElementById?.('battlePhaseSurface')
+    ?? documentRef?.getElementById?.('battleResolution');
+  const rect = surface?.getBoundingClientRect?.();
+  if (!rect) return null;
+  const left = Number(rect.left);
+  const top = Number(rect.top);
+  const width = Number(rect.width);
+  const height = Number(rect.height);
+  if (![left, top, width, height].every(Number.isFinite) || width <= 0 || height <= 0) return null;
+  return { x: left + (width * 0.5), y: top + (height * 0.44) };
+}
+
+export function renderBattleReplayAcceptedCardReleaseFlight(resolution, environment = {}) {
+  const documentRef = environmentValue(environment, 'document');
+  const card = acceptedAttackerSubmissionCard(resolution);
+  if (!documentRef || !card) return false;
+  const sourceNode = visibleBattleHandCardNode(documentRef, card.cardId);
+  const start = rectCenter(sourceNode);
+  const target = battleCardReleaseTarget(documentRef);
+  const host = environment.releaseFlightHost
+    ?? documentRef.body
+    ?? documentRef.getElementById?.('battlePhaseSurface');
+  if (!sourceNode || !start || !target || !host?.appendChild) return false;
+
+  const preferences = readBattleReplayCardPresentationPreferences(environment);
+  const capture = typeof environment.captureReleaseFlight === 'function'
+    ? environment.captureReleaseFlight
+    : captureBattleCardReleaseFlightEffect;
+  const play = typeof environment.playReleaseFlight === 'function'
+    ? environment.playReleaseFlight
+    : playBattleCardReleaseFlightEffect;
+  let flight = null;
+  try {
+    flight = capture({
+      sourceNode,
+      start,
+      target,
+      role: 'bottom',
+      reducedMotion: preferences.reducedMotion,
+      lowPerf: preferences.lowPerf
+    });
+  } catch {
+    return false;
+  }
+  if (!flight) return false;
+  try {
+    return play({ host, flight, documentRef }) === true;
+  } catch {
+    return false;
+  }
+}
+
 export function createBattleReplayCardPresentationBridge(environment = {}) {
   const sessions = new Map();
   const renderPlan = typeof environment.renderPlan === 'function'
@@ -561,6 +652,9 @@ export function createBattleReplayCardPresentationBridge(environment = {}) {
   const renderEnvironment = typeof environment.renderEnvironment === 'function'
     ? environment.renderEnvironment
     : (frame, eventId) => renderBattleReplayConveyorEnvironmentFrame(frame, environment, eventId);
+  const renderReleaseFlight = typeof environment.renderReleaseFlight === 'function'
+    ? environment.renderReleaseFlight
+    : resolution => renderBattleReplayAcceptedCardReleaseFlight(resolution, environment);
 
   function environmentFrame(travel, phase, preferences = readBattleReplayCardPresentationPreferences(environment)) {
     return planBattleConveyorEnvironmentFrame({
@@ -600,7 +694,7 @@ export function createBattleReplayCardPresentationBridge(environment = {}) {
     return runtime.state;
   }
 
-  function acceptAcceptedResolution({ matchId, serial }) {
+  function acceptAcceptedResolution({ matchId, serial, resolution = null }) {
     if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
     safeInteger(serial, 'RESOLUTION_SERIAL', 1);
     const preferences = readBattleReplayCardPresentationPreferences(environment);
@@ -633,10 +727,20 @@ export function createBattleReplayCardPresentationBridge(environment = {}) {
       lastEnvironmentFrame: nextEnvironmentFrame
     });
     if (!result.duplicate && result.plan) {
-      try {
-        renderPlan(result.plan);
-      } catch {
-        // Presentation is strictly fail-soft and never owns replay/gameplay success.
+      let releaseFlightPlayed = false;
+      if (resolution) {
+        try {
+          releaseFlightPlayed = renderReleaseFlight(resolution) === true;
+        } catch {
+          releaseFlightPlayed = false;
+        }
+      }
+      if (!releaseFlightPlayed) {
+        try {
+          renderPlan(result.plan);
+        } catch {
+          // Presentation is strictly fail-soft and never owns replay/gameplay success.
+        }
       }
       renderEnvironmentFailSoft(nextEnvironmentFrame, nextEnvironmentEventId);
       const setTimeoutRef = environmentValue(environment, 'setTimeout');
@@ -1027,7 +1131,8 @@ export function appendAcceptedBattleResolution(
   try {
     presentationBridge?.acceptAcceptedResolution?.({
       matchId: session.matchId,
-      serial: projected.serial
+      serial: projected.serial,
+      resolution: projected
     });
   } catch {
     // Accepted replay/gameplay state is authoritative; presentation never blocks it.

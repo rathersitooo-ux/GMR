@@ -15,6 +15,7 @@ import {
   readBattleReplayCardPresentationPreferences,
   readLiveReplay,
   projectLiveBattleRemainingDeckPresentation,
+  renderBattleReplayAcceptedCardReleaseFlight,
   renderBattleReplayCardPresentationPlan,
   renderLiveBattleRemainingDeckPresentation
 } from '../browser/battle-replay-live-adapter.mjs';
@@ -432,6 +433,102 @@ test('accepted public replay event feeds fallback-only presentation with no game
     assetAuthority: 'fallback_only',
     audio: 'silent'
   });
+});
+
+test('accepted Battle release flight uses only the visible attacker submission and targets screen center', () => {
+  const sourceNode = {
+    dataset: { cardId: 'C1' },
+    getAttribute() { return null; },
+    getBoundingClientRect() { return { left: 80, top: 520, width: 72, height: 96 }; }
+  };
+  const hand = { querySelectorAll: () => [sourceNode] };
+  const surface = { getBoundingClientRect: () => ({ left: 20, top: 40, width: 800, height: 500 }) };
+  const body = { appendChild() {} };
+  const elements = new Map([
+    ['hand', hand],
+    ['battlePhaseSurface', surface],
+    ['reduceMotion', { textContent: 'OFF' }],
+    ['lowPerf', { textContent: 'OFF' }]
+  ]);
+  const captured = [];
+  const played = [];
+  const document = { body, getElementById: id => elements.get(id) ?? null };
+  const projected = projectAcceptedBattleResolution(resolution(1));
+  const ok = renderBattleReplayAcceptedCardReleaseFlight(projected, {
+    document,
+    matchMedia: () => ({ matches: false }),
+    captureReleaseFlight: input => { captured.push(input); return { captured: true }; },
+    playReleaseFlight: input => { played.push(input); return true; }
+  });
+  assert.equal(ok, true);
+  assert.equal(captured.length, 1);
+  assert.equal(captured[0].sourceNode, sourceNode);
+  assert.deepEqual(captured[0].start, { x: 116, y: 568 });
+  assert.deepEqual(captured[0].target, { x: 420, y: 260 });
+  assert.equal(captured[0].role, 'bottom');
+  assert.equal(captured[0].reducedMotion, false);
+  assert.equal(captured[0].lowPerf, false);
+  assert.equal(played.length, 1);
+  assert.equal(played[0].host, body);
+});
+
+test('accepted Battle release flight refuses reserved janken sources to avoid duplicate launch animation', () => {
+  const sourceNode = {
+    dataset: { cardId: 'C1', jankenReserved: 'true' },
+    getAttribute() { return null; },
+    getBoundingClientRect() { return { left: 80, top: 520, width: 72, height: 96 }; }
+  };
+  const hand = { querySelectorAll: () => [sourceNode] };
+  const surface = { getBoundingClientRect: () => ({ left: 20, top: 40, width: 800, height: 500 }) };
+  const document = {
+    body: { appendChild() {} },
+    getElementById(id) {
+      if (id === 'hand') return hand;
+      if (id === 'battlePhaseSurface') return surface;
+      return null;
+    }
+  };
+  let captures = 0;
+  assert.equal(renderBattleReplayAcceptedCardReleaseFlight(
+    projectAcceptedBattleResolution(resolution(1)),
+    {
+      document,
+      matchMedia: () => ({ matches: false }),
+      captureReleaseFlight: () => { captures += 1; return {}; },
+      playReleaseFlight: () => true
+    }
+  ), false);
+  assert.equal(captures, 0);
+});
+
+test('accepted resolution prefers one-shot card flight and suppresses the old fallback pulse when flight succeeds', () => {
+  const flights = [];
+  const plans = [];
+  const bridge = createBattleReplayCardPresentationBridge({
+    document: null,
+    matchMedia: () => ({ matches: false }),
+    renderPlan: plan => plans.push(plan),
+    renderEnvironment: () => {},
+    renderReleaseFlight: projected => { flights.push(projected); return true; }
+  });
+  bridge.begin('M-FLIGHT-LIVE');
+  const projected = projectAcceptedBattleResolution(resolution(1));
+  const first = bridge.acceptAcceptedResolution({
+    matchId: 'M-FLIGHT-LIVE',
+    serial: 1,
+    resolution: projected
+  });
+  const duplicate = bridge.acceptAcceptedResolution({
+    matchId: 'M-FLIGHT-LIVE',
+    serial: 1,
+    resolution: projected
+  });
+  assert.equal(first.accepted, true);
+  assert.equal(first.duplicate, false);
+  assert.equal(duplicate.duplicate, true);
+  assert.equal(flights.length, 1);
+  assert.equal(flights[0].players[0].cards[0].cardId, 'C1');
+  assert.equal(plans.length, 0);
 });
 
 test('presentation preferences fail to static-only for user/system motion reduction and low performance', () => {

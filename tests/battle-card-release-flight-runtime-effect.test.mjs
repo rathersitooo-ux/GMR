@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   BATTLE_CARD_RELEASE_DESTINATION_PULSE_DURATION_MS,
+  BATTLE_CARD_RELEASE_FLIGHT_TRAIL_DURATION_MS,
   captureBattleCardReleaseFlightEffect,
   playBattleCardReleaseFlightEffect,
 } from '../browser/battle-card-release-flight-runtime-effect.mjs';
@@ -101,8 +102,8 @@ test('capture snapshots geometry without mutating the authoritative source node'
   assert.deepEqual(source.dataset, { armed: 'true', untouched: 'source' });
 });
 
-test('full top flight consumes the merged core trajectory and counter-clockwise spin', () => {
-  const { source, clone, host, documentRef } = fixture();
+test('full top flight consumes the merged core trajectory and adds independent trail/impact layers', () => {
+  const { source, clone, host, cues, documentRef } = fixture();
   const flight = capture(source, { role: 'top' });
 
   assert.equal(playBattleCardReleaseFlightEffect({ host, flight, documentRef }), true);
@@ -114,6 +115,13 @@ test('full top flight consumes the merged core trajectory and counter-clockwise 
   assert.equal(options.duration, 560);
   assert.equal(clone.dataset.jankenFlight, '1');
   assert.equal(clone.style.pointerEvents, 'none');
+  assert.equal(cues.length, 2);
+  const trail = cues.find(node => node.dataset.jankenFlightTrail === '1');
+  const impact = cues.find(node => node.dataset.jankenFlightImpact === '1');
+  assert.ok(trail);
+  assert.ok(impact);
+  assert.equal(trail.animationCalls[0].options.duration, BATTLE_CARD_RELEASE_FLIGHT_TRAIL_DURATION_MS);
+  assert.equal(impact.animationCalls[0].options.duration, 180);
 });
 
 test('full bottom flight mirrors the rotational direction', () => {
@@ -125,14 +133,15 @@ test('full bottom flight mirrors the rotational direction', () => {
   assert.match(frames.at(-1).transform, /rotate\(720\.00deg\)/);
 });
 
-test('low-performance flight keeps motion but removes filter work', () => {
-  const { source, clone, host, documentRef } = fixture();
+test('low-performance flight keeps motion but removes filter work and extra trail layers', () => {
+  const { source, clone, host, cues, documentRef } = fixture();
   const flight = capture(source, { role: 'top', lowPerf: true });
 
   assert.equal(playBattleCardReleaseFlightEffect({ host, flight, documentRef }), true);
   const frames = clone.animationCalls[0].frames;
   assert.ok(frames.some((frame) => !frame.transform.includes('translate3d(0.00px,0.00px,0)')));
   assert.ok(frames.every((frame) => frame.filter === 'none'));
+  assert.equal(cues.length, 0);
 });
 
 test('reduced motion avoids large travel and exposes a destination pulse', () => {
@@ -188,6 +197,21 @@ test('flight clone and reduced-motion cue are removed after completion', async (
   await flushMicrotasks();
   assert.equal(clone.removed, true);
   assert.equal(cues[0].removed, true);
+});
+
+test('full-motion trail and impact layers are removed when the main flight settles', async () => {
+  const { source, clone, host, cues, documentRef } = fixture();
+  const flight = capture(source, { role: 'bottom' });
+  assert.equal(playBattleCardReleaseFlightEffect({ host, flight, documentRef }), true);
+  const trail = cues.find(node => node.dataset.jankenFlightTrail === '1');
+  const impact = cues.find(node => node.dataset.jankenFlightImpact === '1');
+  assert.ok(trail);
+  assert.ok(impact);
+  clone.finish.resolve();
+  await flushMicrotasks();
+  assert.equal(clone.removed, true);
+  assert.equal(trail.removed, true);
+  assert.equal(impact.removed, true);
 });
 
 test('flight clone is removed when Web Animations rejects', async () => {

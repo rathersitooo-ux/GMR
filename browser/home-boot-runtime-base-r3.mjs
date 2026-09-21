@@ -2085,6 +2085,18 @@ function rankMatchSyncBattleVisibility(doc) {
   return surface;
 }
 
+function rankMatchSetPresentationScreen(doc, target) {
+  const setup = doc?.querySelector?.('section[data-screen="setup"]');
+  const battle = doc?.querySelector?.('section[data-screen="battle"]');
+  const showBattle = target === 'battle';
+  if (setup) setup.classList.toggle('active', !showBattle);
+  if (battle) {
+    battle.classList.toggle('active', showBattle);
+    battle.dataset.rankPresentationRoute = showBattle ? 'waiting' : 'setup';
+  }
+  return showBattle;
+}
+
 function exitRankMatchWaiting(doc) {
   closeRankMatchPartnerPicker(doc);
   rankMatchRuntime.waiting = false;
@@ -2093,6 +2105,7 @@ function exitRankMatchWaiting(doc) {
   if (surface && !surface.hidden) surface.hidden = true;
   if (battle) {
     battle.dataset.rankWaiting = 'false';
+    battle.dataset.rankPresentationRoute = 'setup';
     battle.removeAttribute('aria-busy');
   }
   const runtimeNode = doc.getElementById('battleRuntime');
@@ -2102,31 +2115,19 @@ function exitRankMatchWaiting(doc) {
     else if (previous === 'true' && !runtimeNode.hidden) runtimeNode.hidden = true;
     delete runtimeNode.dataset.rankPreviousHidden;
   }
-  const navigate = rankMatchWindow().GAMEROAD_APPLY_SCREEN_TRANSITION;
-  try {
-    if (typeof navigate === 'function') navigate('setup', { reason: 'rank-waiting-cancelled', from: 'battle' });
-  } catch {}
+  rankMatchSetPresentationScreen(doc, 'setup');
 }
 
 function enterRankMatchWaiting(doc) {
+  if (!doc) return;
   rankMatchRuntime.waiting = true;
   rankMatchRuntime.waitingPartnerId = rankMatchRuntime.waitingPartnerId || 'partner.saasuna';
-  const navigate = rankMatchWindow().GAMEROAD_APPLY_SCREEN_TRANSITION;
-  let result = null;
-  try {
-    if (typeof navigate === 'function') result = navigate('battle', { reason: 'rank-match-selected', from: 'setup', mode: 'rank' });
-  } catch {}
-  const mount = () => {
-    rankMatchSyncBattleVisibility(doc);
-    const battle = doc.querySelector('section[data-screen="battle"]');
-    if (battle && !battle.classList.contains('active')) {
-      doc.querySelector('section[data-screen="setup"]')?.classList.remove('active');
-      battle.classList.add('active');
-    }
-    rankMatchSyncBattleVisibility(doc);
-  };
-  if (result && typeof result.then === 'function') result.then(mount, mount);
-  else queueMicrotask(mount);
+  // Ranked matchmaking has no local match state yet. Keep the existing Battle section as
+  // the visual child surface, but do not invoke the generic Battle transition/runtime,
+  // which requires state.match.players. The registered ranked provider remains the only
+  // authority for a real queue.
+  rankMatchSetPresentationScreen(doc, 'battle');
+  rankMatchSyncBattleVisibility(doc);
 }
 
 function rankMatchHandleClick(event) {

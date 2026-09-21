@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CAUSAL-TIMELINE-R2-20260921T2343-SOL",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CINEMATIC_CAUSAL_TIMELINE_R2",
+  "acquireKey": "BATTLE-CAUSAL-TIMELINE-R2-20260921T2343-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FE8_ACTUAL_PLUS_TACTICALSLASH_CAUSAL_PHASE_EVIDENCE_AND_R1_PRODUCT_DELTA_REUSE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_PR2016_PRODUCT_DELTA_REVIEWED_BUT_PREACTION_FIRST_COMMIT_INVALID_ONLY",
+  "proceedToken": "PROCEED|BATTLE-CAUSAL-TIMELINE-R2-20260921T2343-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-cinematic-causal-timeline|runtime-test|active-lease",
+  "authorizationBaseSha": "294b7195149086eff3a4243a61a1341eae1908fe",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CINEMATIC_CAUSAL_TIMELINE_R2",
+  "leaseAcquireKey": "BATTLE-CAUSAL-TIMELINE-R2-20260921T2343-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 23:43 JST",
+  "leaseUntilJst": "2026-09-22 00:43 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A20:L20",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR fresh branch sol/battle-causal-timeline-r2-20260921; browser/battle-cinematic-causal-timeline-core.mjs; tests/battle-cinematic-causal-timeline-core.test.mjs; browser/battle-screen-runtime-mount.mjs; own transient data/preaction-authorizations/BATTLE-CAUSAL-TIMELINE-R2-20260921T2343-SOL.json only. tests/battle-screen-runtime-mount.test.mjs READ_ONLY unless current focused regression requires exact existing assertion repair; Naki/Saasuna motion files READ_ONLY; browser/GAMEROAD.html READ_ONLY; gameplay/rules/save/network/formal art READ_ONLY; image generation PROHIBITED",
+  "solutionSignature": "BATTLE_CINEMATIC_CAUSAL_PHASE_SCHEDULER_V2_RECOVERY",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R1_PR2016_PLUS_UIVIS_SRC_142_151_ART_BTL_036_CURRENT_MAIN_294B719",
+  "solutionSearchEvidence": [
+    "R1 product delta already implemented the intended presentation-only scheduler; the only Required Gate failure was invalid PRE_ACTION first-commit witness syntax.",
+    "Current main includes the independent Naki heart/mic motion core but no conflicting edits to the three product files targeted here beyond the R1 reconciled runtime content.",
+    "FE8 actual separates actor pose holds, sound/action calls, HP wait and opposite-turn transition; Tactical Slash public implementation separates wind-up, release, impact, hit-stop, reaction and recovery.",
+    "The scheduler remains presentation-only and must not recalculate battle results or mutate gameplay authority.",
+    "Reduced-motion and low-performance states preserve static readable results without spatial motion."
+  ],
+  "scope": [
+    "browser/battle-cinematic-causal-timeline-core.mjs",
+    "tests/battle-cinematic-causal-timeline-core.test.mjs",
+    "browser/battle-screen-runtime-mount.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-cinematic-causal-timeline-core.mjs",
+    "tests/battle-cinematic-causal-timeline-core.test.mjs",
+    "browser/battle-screen-runtime-mount.mjs"
+  ]
+}

@@ -13,6 +13,7 @@ import {
   DECK_SWIPE_PRECOMMIT_FEEDBACK,
   createDeckSwipePrecommitVisual,
   CARDS_SELECTION_FEEDBACK,
+  CARDS_FINDABILITY_FOCUS_SPRITE,
   createCardsSelectionFeedbackProfile,
   installCardsSelectionPressReleaseFeedback,
   isNeutralizedDeckEditorSwipe,
@@ -257,8 +258,11 @@ test('Cards tap feedback depresses only before drag and confirms only trusted se
     getBoundingClientRect() { return rect(20, 30, 100, 140); },
   };
   const createNode = () => ({
+    children: [],
     style: {},
-    setAttribute() {},
+    attributes: new Map(),
+    setAttribute(name, value) { this.attributes.set(name, value); },
+    appendChild(child) { this.children.push(child); return child; },
     remove() { this.removed = true; },
   });
   const doc = {
@@ -292,6 +296,9 @@ test('Cards tap feedback depresses only before drag and confirms only trusted se
   listeners.get('click')({ target: card, isTrusted: true });
   assert.equal(bodyChildren.length, 1);
   assert.equal(bodyChildren[0].className, 'gr-cards-selection-confirm-glow');
+  assert.equal(bodyChildren[0].children[0].className, 'gr-cards-selection-confirm-sprite');
+  assert.equal(bodyChildren[0].children[0].attributes.get('data-asset-id'), CARDS_FINDABILITY_FOCUS_SPRITE.id);
+  assert.equal(bodyChildren[0].children[0].attributes.get('data-frame-count'), '8');
 
   feedback.destroy();
   assert.equal(listeners.size, 0);
@@ -310,6 +317,32 @@ test('Cards tap feedback is auto-installed without changing click or swipe autho
   assert.equal(live.includes('preventDefault'), false);
   assert.equal(live.includes('stopPropagation'), false);
   assert.match(source, /installCardsSelectionPressReleaseFeedback\(\{ document, window: globalThis\.window \}\)/);
+});
+
+test('Cards findability focus sprite is a live 4x2 asset with distinct selected-state binding', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const asset = await readFile(new URL('../assets/visual/effects/cards-findability-focus-sprite-v1.png', import.meta.url));
+  assert.deepEqual(CARDS_FINDABILITY_FOCUS_SPRITE, {
+    id: 'cards-findability-focus-sprite-v1',
+    assetPath: 'assets/visual/effects/cards-findability-focus-sprite-v1.png',
+    frameCount: 8,
+    columns: 4,
+    rows: 2,
+    frameMs: 22,
+    totalMs: 176,
+    presentationOnly: true,
+  });
+  assert.equal(asset.toString('ascii', 1, 4), 'PNG');
+  assert.equal(asset.readUInt32BE(16), 1776);
+  assert.equal(asset.readUInt32BE(20), 888);
+  assert.match(source, /new URL\(\s*'\.\.\/assets\/visual\/effects\/cards-findability-focus-sprite-v1\.png'/);
+  assert.match(source, /background-size:400% 200%/);
+  assert.match(source, /grCardsSelectionSprite 176ms/);
+  assert.match(source, /contains\?\.\('selected'\) \|\| node\?\.classList\?\.contains\?\.\('pick'\)/);
+  assert.match(source, /data-cards-selection-low-perf="true"/);
+  assert.match(source, /data-cards-selection-low-perf', profile\.softGlow \? 'false' : 'true'/);
+  assert.match(source, /prefers-reduced-motion:reduce/);
 });
 
 test('rect normalization preserves usable centers without trusting right/bottom', () => {
@@ -1143,4 +1176,3 @@ test('vote safe-dismiss auto-installs before Cards inspector dismiss so the fron
   const inspector = source.indexOf('installCardsInspectorDismissInteractions({ document })');
   assert.ok(vote >= 0 && inspector > vote);
 });
-

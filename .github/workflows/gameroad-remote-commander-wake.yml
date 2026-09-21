@@ -1,0 +1,44 @@
+name: GAMEROAD Remote Commander Wake Recovery
+
+on:
+  push:
+    paths:
+      - '.github/workflows/gameroad-remote-commander-wake.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gameroad-remote-commander-wake
+  cancel-in-progress: false
+
+jobs:
+  wake:
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 5
+    steps:
+      - name: Start existing Remote Commander persistent task
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $name = 'GAMEROAD_RemoteCommander_Persistent'
+          $watchdog = 'C:\Users\user\.desktop-commander-device\watchdog.ps1'
+          if (-not (Test-Path -LiteralPath $watchdog -PathType Leaf)) {
+            throw "Canonical watchdog missing: $watchdog"
+          }
+          $task = Get-ScheduledTask -TaskName $name -ErrorAction Stop
+          Write-Host "BeforeState=$($task.State)"
+          Start-ScheduledTask -TaskName $name
+          Start-Sleep -Seconds 12
+          $task = Get-ScheduledTask -TaskName $name -ErrorAction Stop
+          $info = Get-ScheduledTaskInfo -TaskName $name -ErrorAction Stop
+          Write-Host "AfterState=$($task.State)"
+          Write-Host "LastRun=$($info.LastRunTime.ToString('o'))"
+          Write-Host "LastResult=$($info.LastTaskResult)"
+          $procs = Get-CimInstance Win32_Process | Where-Object {
+            $_.CommandLine -match 'desktop-commander-device|RemoteCommander|watchdog\.ps1'
+          }
+          if (-not $procs) {
+            throw 'Remote Commander/watchdog process not observed after scheduled-task start.'
+          }
+          $procs | Select-Object ProcessId, Name, CommandLine | Format-Table -AutoSize

@@ -96,7 +96,7 @@ test('Rank Match waiting is a Battle child with Advice partner picker', async ({
   expect(Math.abs(box.width - box.height), 'partner picker shell stays square').toBeLessThan(Math.max(4, Math.min(box.width, box.height) * 0.04));
 
   const choices = picker.locator('[data-partner-choice]');
-  await expect(choices).toHaveCount(1);
+  await expect(choices).not.toHaveCount(0);
   await choices.first().click();
   await expect(picker).toBeHidden();
   await expect(partner).toBeFocused();

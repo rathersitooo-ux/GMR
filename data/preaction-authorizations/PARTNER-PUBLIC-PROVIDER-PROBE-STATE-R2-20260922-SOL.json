@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-PUBLIC-PROVIDER-PROBE-STATE-R2-20260922-SOL",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PUBLIC_PARTNER_PROVIDER_DIAGNOSTIC_R1",
+  "acquireKey": "PARTNER-PUBLIC-PROVIDER-DIAG-R1-20260922T0339-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLIC_PROVIDER_ATTEMPT2_HTTP424_BOUNDED_STATE_DISCARDED",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_WORKFLOW_NON200_BRANCH_ONLY_LOGS_HTTP_CODE",
+  "proceedToken": "PROCEED|PARTNER-PUBLIC-PROVIDER-PROBE-STATE-R2-20260922-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|provider-probe-state|allowlist-only",
+  "authorizationBaseSha": "e32e51b0c7a0d6c6b0366e96cd6dec156ea09106",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PUBLIC_PARTNER_PROVIDER_DIAGNOSTIC_R1",
+  "leaseAcquireKey": "PARTNER-PUBLIC-PROVIDER-DIAG-R1-20260922T0339-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-22 04:07 JST",
+  "leaseUntilJst": "2026-09-22 04:39 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A124:L124",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR merged provider classifier main=e32e51b0c7a0d6c6b0366e96cd6dec156ea09106 READ_ONLY; fresh branch sol/partner-public-provider-probe-state-r2-20260922; .github/workflows/cloudflare-public-deploy.yml; own transient data/preaction-authorizations/PARTNER-PUBLIC-PROVIDER-PROBE-STATE-R2-20260922-SOL.json only; own fresh PR/check/readback. deploy/cloudflare/functions/ws.js READ_ONLY merged classifier authority; deploy/cloudflare/tests/partner-report-provider.test.mjs READ_ONLY merged tests; deploy/cloudflare/tests/build.test.mjs READ_ONLY; browser/Battle/card-flight/gameplay/rules/save/network/formal art READ_ONLY.",
+  "solutionSignature": "PUBLIC_PROVIDER_SAFE_FAILURE_STATE_LOG_R2",
+  "reuseDisposition": "REPAIR",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_BOUNDED_PROXY_STATE_ALREADY_AVAILABLE",
+  "solutionSearchEvidence": [
+    "Public deploy attempt2 reached /ws and returned HTTP424 after the merged bounded upstream classifier.",
+    "Current workflow captures PROBE_BODY but discards it before logging on non-200.",
+    "Current proxy body on failure is intentionally bounded to ok=false plus a fixed state token; raw upstream body and credentials are not projected.",
+    "Only allowlisted state tokens are needed to distinguish provider auth, access, request, rate-limit, unavailable, invalid, not-configured, or invalid-request classes.",
+    "No runtime, gameplay, card-flight, save/network, provider credential, or response payload logging change is required."
+  ],
+  "scope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ]
+}

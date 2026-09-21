@@ -23,6 +23,15 @@ function userText(value) {
   return text;
 }
 
+function classifyPartnerUpstreamFailure(status) {
+  const code = Number.isInteger(status) ? status : 0;
+  if (code === 401) return Object.freeze({ state: 'provider_auth_rejected', httpStatus: 424 });
+  if (code === 403) return Object.freeze({ state: 'provider_access_rejected', httpStatus: 424 });
+  if (code === 429) return Object.freeze({ state: 'provider_rate_limited', httpStatus: 429 });
+  if (code >= 400 && code < 500) return Object.freeze({ state: 'provider_request_rejected', httpStatus: 424 });
+  return Object.freeze({ state: 'provider_unavailable', httpStatus: 502 });
+}
+
 async function handlePartnerConversation(context, request) {
   const apiKey = exactToken(context?.env?.CONVAI_API_KEY, 512);
   const characterId = exactToken(context?.env?.CONVAI_SAASUNA_CHARACTER_ID);
@@ -64,7 +73,10 @@ async function handlePartnerConversation(context, request) {
       body: form,
       signal: abortController.signal,
     });
-    if (!upstream?.ok) return json({ ok: false, state: 'provider_unavailable' }, 502);
+    if (!upstream?.ok) {
+      const failure = classifyPartnerUpstreamFailure(upstream?.status);
+      return json({ ok: false, state: failure.state }, failure.httpStatus);
+    }
     try {
       payload = await upstream.json();
     } catch {

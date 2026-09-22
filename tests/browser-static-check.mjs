@@ -44,9 +44,12 @@ function collectHomeVisualShellErrors(html) {
       errors.push(`Home primary navigation target is missing: ${target}`);
     }
   }
+  if (!/class=["'][^"']*codexHomeUtilities[^"']*["']/.test(home)) {
+    errors.push('Home dynamic utility host is missing');
+  }
   for (const target of ['missions', 'gacha', 'records', 'profile', 'settings']) {
-    if (!new RegExp(`data-go=["']${target}["']`).test(home)) {
-      errors.push(`Home utility navigation target is missing: ${target}`);
+    if (new RegExp(`data-go=["']${target}["']`).test(home)) {
+      errors.push(`retired always-visible Home utility target is present: ${target}`);
     }
   }
   return errors;

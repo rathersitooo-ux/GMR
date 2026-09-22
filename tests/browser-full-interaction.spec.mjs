@@ -475,23 +475,12 @@ if (testInfo.project.name === 'short-landscape-667x375') {
   expect(padRight, 'short-landscape Home pad stays inside the viewport').toBeLessThanOrEqual(viewportWidth);
   expect(minPadTarget, 'short-landscape Home controls retain WCAG minimum target size').toBeGreaterThanOrEqual(24);
 
-  const profileButton = page.locator('button.homeUtilityBtn[data-go="profile"]:visible').first();
-  await expect(profileButton).toBeVisible();
-  await profileButton.click();
-  const profile = page.locator('section[data-screen="profile"]');
-  await expect(profile).toBeVisible();
-  const name = profile.locator('#profileCharName');
-  const partnerImage = profile.locator('#profileRuntime .grtc-image:visible').first();
-  await expect(name).toBeVisible();
-  await expect(partnerImage).toBeVisible();
-  const nameBox = await name.boundingBox();
-  const imageBox = await partnerImage.boundingBox();
-  expect(nameBox, 'short-landscape Profile name has geometry').not.toBeNull();
-  expect(imageBox, 'short-landscape Profile partner image has geometry').not.toBeNull();
-  const overlapWidth = Math.max(0, Math.min(nameBox.x + nameBox.width, imageBox.x + imageBox.width) - Math.max(nameBox.x, imageBox.x));
-  const overlapHeight = Math.max(0, Math.min(nameBox.y + nameBox.height, imageBox.y + imageBox.height) - Math.max(nameBox.y, imageBox.y));
-  expect(overlapWidth * overlapHeight, 'short-landscape Profile partner image does not cover the displayed name').toBe(0);
-  await attachStateScreenshot(page, testInfo, 'profile-short-landscape-readable');
+  for (const target of ['missions', 'gacha', 'records', 'profile', 'settings']) {
+    await expect(
+      page.locator(`section[data-screen="home"] button.homeUtilityBtn[data-go="${target}"]`),
+      `Home does not restore retired always-visible ${target} utility entry`,
+    ).toHaveCount(0);
+  }
 }
 
   let pointerTransitions = 0;

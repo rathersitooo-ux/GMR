@@ -747,12 +747,12 @@ html.r10LowPerf .setup.active .setupRuntime .grtc-image, html.r10Reduced .setup.
 .home.codexHome .codexHomeUtilities{display:none!important}
 @media(max-width:620px) and (orientation:portrait){
   .home.codexHome .codexHomeUtilities{display:grid!important;position:absolute;z-index:58;left:4%;right:4%;top:54%;width:auto;transform:none;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;pointer-events:auto}
-  .home.codexHome .codexHomeUtilities .homeUtilityBtn{display:inline-flex!important;align-items:center;justify-content:center;min-width:0;min-height:44px;height:44px;padding:0 4px;border:1px solid rgba(190,210,255,.42);border-radius:12px;background:rgba(18,28,52,.96);color:#f4f6ff;font-size:11px;font-weight:900;line-height:1.05;white-space:nowrap;pointer-events:auto}
+  .home.codexHome .codexHomeUtilities .homeUtilityBtn{display:inline-flex!important;align-items:center;justify-content:center;min-width:0;min-height:44px;height:44px;padding:0 4px;border:0;border-radius:0;background:transparent;color:#f4f6ff;font-size:11px;font-weight:900;line-height:1.05;white-space:nowrap;pointer-events:auto}
   .home.codexHome .codexHomeUtilities .homeUtilityBtn:focus-visible{outline:2px solid #ffe68e;outline-offset:2px}
 }
 @media(max-height:430px){
   .home.codexHome .codexHomeUtilities{display:grid!important;position:absolute;z-index:58;left:2%;top:42%;right:auto;width:22%;transform:none;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;pointer-events:auto}
-  .home.codexHome .codexHomeUtilities .homeUtilityBtn{display:inline-flex!important;align-items:center;justify-content:center;min-width:0;min-height:44px;height:44px;padding:0 4px;border:1px solid rgba(190,210,255,.42);border-radius:12px;background:rgba(18,28,52,.96);color:#f4f6ff;font-size:11px;font-weight:900;line-height:1.05;white-space:nowrap;pointer-events:auto}
+  .home.codexHome .codexHomeUtilities .homeUtilityBtn{display:inline-flex!important;align-items:center;justify-content:center;min-width:0;min-height:44px;height:44px;padding:0 4px;border:0;border-radius:0;background:transparent;color:#f4f6ff;font-size:11px;font-weight:900;line-height:1.05;white-space:nowrap;pointer-events:auto}
   .home.codexHome .codexHomeUtilities .homeUtilityBtn:focus-visible{outline:2px solid #ffe68e;outline-offset:2px}
 }
 </style>
@@ -985,8 +985,8 @@ html.grCodexHomeActive #home button:focus-visible{
 .home.codexHome .codexHomeFog{display:none}
 .home.codexHome .homeScene,.home.codexHome .homeCopy,.home.codexHome .homeLiveCard,.home.codexHome .homeMotionField,.home.codexHome .homeMotionMediaSlot,.home.codexHome .homeFoot{display:none!important}
 .home.codexHome .codexHomeUtilities{display:grid!important;position:absolute;z-index:58;left:25%;right:25%;top:64px;width:auto;max-width:none;transform:none;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;pointer-events:auto}
-.home.codexHome .codexHomeUtilities .homeUtilityBtn{display:inline-flex!important;align-items:center;justify-content:center;min-width:44px;min-height:38px;height:38px;padding:0 8px;border:1px solid rgba(187,219,255,.42);border-radius:11px;background:rgba(7,16,54,.72);color:#f7fbff;font-size:10px;font-weight:900;line-height:1.05;white-space:nowrap;pointer-events:auto;backdrop-filter:blur(6px);box-shadow:0 8px 20px rgba(0,0,20,.24),inset 0 0 16px rgba(123,171,255,.08)}
-.home.codexHome .codexHomeUtilities .homeUtilityBtn:hover,.home.codexHome .codexHomeUtilities .homeUtilityBtn:focus-visible{border-color:#c7e9ff;background:rgba(24,48,112,.86);outline:2px solid rgba(255,230,142,.55);outline-offset:2px}
+.home.codexHome .codexHomeUtilities .homeUtilityBtn{display:inline-flex!important;align-items:center;justify-content:center;min-width:44px;min-height:38px;height:38px;padding:0 8px;border:0;border-radius:0;background:transparent;color:#f7fbff;font-size:10px;font-weight:900;line-height:1.05;white-space:nowrap;pointer-events:auto;backdrop-filter:none;box-shadow:none}
+.home.codexHome .codexHomeUtilities .homeUtilityBtn:hover{background:transparent;color:#fff}.home.codexHome .codexHomeUtilities .homeUtilityBtn:focus-visible{background:transparent;color:#fff;outline:2px solid rgba(255,230,142,.72);outline-offset:2px}
 .home.codexHome .codexHomeCenterStage{left:23%;top:7%;width:55%;height:76%;z-index:10;pointer-events:none;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:visible}
 .home.codexHome .codexCenterEyebrow{left:5%;top:2%;font-size:9px;letter-spacing:.24em;color:rgba(230,242,255,.78);text-shadow:0 2px 10px #02051a}
 .home.codexHome .codexCenterTitle{left:5%;top:7%;font-size:clamp(17px,2.2vw,30px);color:#fff0bb;text-shadow:0 3px 16px rgba(0,0,20,.82)}
@@ -996,8 +996,8 @@ html.grCodexHomeActive #home button:focus-visible{
 .home.codexHome[data-home-transition-phase="enter"] .homeSlidePad{transform:translate(0) rotate(0) scale(1.02);transition:transform 260ms cubic-bezier(.2,.8,.2,1)}
 .home.codexHome[data-home-transition-phase="settle"] .homeSlidePad{transform:none}
 @media(max-width:620px) and (orientation:portrait){.codexHomeArtPlate[data-home-art-orientation="portrait"]{object-position:center top}.codexHomeArtFocus{left:50%;top:31%;width:64%;height:44%}.codexHomeArtScrim{background:linear-gradient(180deg,rgba(2,6,28,.18),rgba(2,7,30,.08) 44%,rgba(2,5,25,.64))}.home.codexHome .codexHomeCenterStage{left:4%;top:4%;width:92%;height:67%}.home.codexHome .codexCenterTitle{font-size:20px}.home.codexHome .codexCenterSub{font-size:9px}.home.codexHome .homeSlidePad{right:8px!important;bottom:8px!important}}
-@media(max-width:620px) and (orientation:portrait){.home.codexHome .codexHomeUtilities{left:4%!important;right:4%!important;top:54%!important;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;z-index:58!important}.home.codexHome .codexHomeUtilities .homeUtilityBtn{min-width:0;min-height:44px;height:44px;padding:0 4px;border-radius:12px;background:rgba(18,28,52,.96);font-size:11px}}
-@media(max-height:430px){.home.codexHome .codexHomeUtilities{left:2%!important;right:auto!important;top:42%!important;width:22%!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.home.codexHome .codexHomeUtilities .homeUtilityBtn{min-width:0;min-height:44px;height:44px;padding:0 4px;border-radius:12px;background:rgba(18,28,52,.96);font-size:11px}}
+@media(max-width:620px) and (orientation:portrait){.home.codexHome .codexHomeUtilities{left:4%!important;right:4%!important;top:54%!important;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;z-index:58!important}.home.codexHome .codexHomeUtilities .homeUtilityBtn{min-width:0;min-height:44px;height:44px;padding:0 4px;border-radius:0;background:transparent;font-size:11px}}
+@media(max-height:430px){.home.codexHome .codexHomeUtilities{left:2%!important;right:auto!important;top:42%!important;width:22%!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.home.codexHome .codexHomeUtilities .homeUtilityBtn{min-width:0;min-height:44px;height:44px;padding:0 4px;border-radius:0;background:transparent;font-size:11px}}
 @media(prefers-reduced-motion:reduce){.codexHomeArtPlate,.codexHomeArtScrim,.codexHomeArtFocus,.home.codexHome .homeSlidePad{transition:none!important;animation:none!important}.codexHomeArtSheen{display:none!important}}
 html.r10LowPerf .codexHomeArtSheen,html.r10Reduced .codexHomeArtSheen{display:none!important}
 </style>

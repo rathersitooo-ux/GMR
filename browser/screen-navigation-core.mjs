@@ -1,4 +1,9 @@
 import {createTransitionDirector} from './ui-state-feedback-core.mjs';
+import {
+  TEMP_REFERENCE_SFX_KEYS,
+  isTempReferenceSfxEnabled,
+  playTempReferenceSfx,
+} from './temp-sfx-reference-runtime.mjs';
 
 export const SCREEN_NAVIGATION_REASON = Object.freeze({
   EMPTY_TARGET: 'EMPTY_TARGET',
@@ -174,6 +179,12 @@ function commonButtonSfxUrl() {
 function hasActiveUserGesture() { return globalThis.navigator?.userActivation?.isActive === true; }
 function playAcceptedNavigationSfx() {
   if (!hasActiveUserGesture()) return false;
+
+  if (isTempReferenceSfxEnabled()) {
+    const temporary = playTempReferenceSfx(TEMP_REFERENCE_SFX_KEYS.CONFIRM);
+    if (temporary?.ok) return true;
+  }
+
   const AudioCtor = globalThis.Audio;
   if (typeof AudioCtor !== 'function') return false;
   try {

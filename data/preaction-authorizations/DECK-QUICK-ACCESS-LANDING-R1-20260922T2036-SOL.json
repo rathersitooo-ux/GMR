@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DECK-QUICK-ACCESS-LANDING-R1-20260922T2036-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "DECK_QUICK_ACCESS_AND_LIBRARY_LANDING_R1",
+  "acquireKey": "DECK-QUICK-ACCESS-LANDING-R1-20260922T2036-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_USER_DIRECT_DECK_FLOW_PLUS_EXISTING_12_SLOT_LIBRARY_AND_SLOT_ROLL_20260922T2036JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_MAIN_READBACK_12_SLOT_DECK_LIBRARY_SELECTED_INDEX_SETUP_QUICK_1_TO_3_AND_HOME_SLOT_ROLL",
+  "proceedToken": "PROCEED|DECK-QUICK-ACCESS-LANDING-R1-20260922T2036-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|deck-flow|reuse-existing-authorities",
+  "authorizationBaseSha": "c1461f7d9648821d47aa7998c8939e63ac6065b4",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "DECK_QUICK_ACCESS_AND_LIBRARY_LANDING_R1",
+  "leaseAcquireKey": "DECK-QUICK-ACCESS-LANDING-R1-20260922T2036-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-22 20:36 JST",
+  "leaseUntilJst": "2026-09-22 21:36 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/home-boot-runtime-base-r3.mjs; browser/cards-deck-presentation-core.mjs; browser/cards-deck-presentation.mjs; tests/home-boot-runtime-base-r3.test.mjs; tests/cards-deck-presentation-core.test.mjs; tests/cards-deck-presentation.test.mjs; GAMEROAD 全作業一覧!Y2:AB2; own transient data/preaction-authorizations/DECK-QUICK-ACCESS-LANDING-R1-20260922T2036-SOL.json; own fresh branch sol/deck-quick-access-landing-r1-20260922; own PR/check/merge/readback; CURRENT_ACTIVE_LEASES own row; R24 append-only events. browser/GAMEROAD.html READ_ONLY; deck save/rule authority and gameplay/save/economy/network/formal assets otherwise READ_ONLY.",
+  "solutionSignature": "EXISTING_12_DECK_LIBRARY_PLUS_QUICK_REF_REGISTRY_PLUS_EXISTING_SLIDEPAD_SLOT_ROLL_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_MAIN_12_SLOT_LIBRARY_AND_SETUP_QUICK_DECK_PREVIEW_AND_HOME_SLOT_ROLL",
+  "solutionSearchEvidence": [
+    "Current browser product already owns a 12-slot deck library and selectedDeckIndex; no second deck data store is needed.",
+    "Current cards-deck-presentation-core already has a read-only Setup Quick Deck projection restricted to identities 1..3.",
+    "Current Home runtime already imports and uses slidepad-slot-roll-core for cyclic drag selection and explicit cancel behavior.",
+    "Quick Deck persistence will store only unique existing deck-slot references, max three, never deck contents.",
+    "Cards landing will select by invoking the existing deckSlotPicker control so current dirty-state and selected-deck authority remain in force."
+  ],
+  "scope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "browser/cards-deck-presentation-core.mjs",
+    "browser/cards-deck-presentation.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs",
+    "tests/cards-deck-presentation-core.test.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "browser/cards-deck-presentation-core.mjs",
+    "browser/cards-deck-presentation.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs",
+    "tests/cards-deck-presentation-core.test.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "AUDIO-TEMP-SFX-R3-20260923T0555-SOL",
+  "taskId": "AUDIO-FORMAL-ASSET-CROSSMEDIA-ACCEPT-001",
+  "workUnitKey": "TEMP_REFERENCE_SFX_COVERAGE_R3",
+  "acquireKey": "AUDIO-TEMP-SFX-R3-20260923T0555-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_AUDIO_BOUNDARY_MAIN_HEAD_AND_TARGET_LEASE_READBACK_20260923T0555JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R2_REVIEWED_DIFF_PUBLIC_PACKAGE_DEPENDENCY_CHECK_AND_REQUIRED_GATE_PREACTION_FAILURE",
+  "proceedToken": "PROCEED|AUDIO-TEMP-SFX-R3-20260923T0555-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|temporary-synthesized-sfx|navigation-test-override|public-package-closure",
+  "authorizationBaseSha": "6e5f0be066c3aae062fbd36557e8f0ff30d7f23c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "AUDIO-FORMAL-ASSET-CROSSMEDIA-ACCEPT-001",
+  "leaseWorkUnitKey": "TEMP_REFERENCE_SFX_COVERAGE_R3",
+  "leaseAcquireKey": "AUDIO-TEMP-SFX-R3-20260923T0555-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-23 05:55 JST",
+  "leaseUntilJst": "2026-09-23 06:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "data/preaction-authorizations/AUDIO-TEMP-SFX-R3-20260923T0555-SOL.json; browser/temp-sfx-reference-runtime.mjs; tests/temp-sfx-reference-runtime.test.mjs; browser/screen-navigation-core.mjs; tests/screen-navigation-core.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; branch sol/temp-reference-sfx-r3-20260923; future PR for this branch; own CURRENT_ACTIVE_LEASES row; R24 events",
+  "solutionSignature": "TEMP_RUNTIME_SYNTH_SFX_WITH_EXISTING_NAVIGATION_AND_PUBLIC_PACKAGE_SEAMS_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_FORMAL_SFX_ROUTING_SCREEN_NAVIGATION_AND_CLOUDFLARE_PACKAGE_ACTUAL_20260923",
+  "solutionSearchEvidence": [
+    "Existing screen-navigation-core already owns accepted navigation sound playback and preserves the formal click fallback.",
+    "Existing Battle formal SFX vocabulary remains read-only; temporary reference cues must not be promoted into that formal provider.",
+    "Cloudflare build already uses ARTIFACT_SPECS plus runtime dependency completeness, so the new module composes into that package mechanism instead of creating a second packager.",
+    "R2 demonstrated that product commits before PRE_ACTION fail the Required Gate, so R3 reconstructs from current main with a manifest-only first commit.",
+    "No Dinosaur King, Datacraft, Sound Ideas, or other third-party audio bytes are required; Web Audio synthesis satisfies the reversible test need."
+  ],
+  "scope": [
+    "browser/temp-sfx-reference-runtime.mjs",
+    "tests/temp-sfx-reference-runtime.test.mjs",
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/temp-sfx-reference-runtime.mjs",
+    "tests/temp-sfx-reference-runtime.test.mjs",
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

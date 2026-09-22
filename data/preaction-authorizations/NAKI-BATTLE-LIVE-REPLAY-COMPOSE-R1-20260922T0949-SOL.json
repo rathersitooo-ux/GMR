@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NAKI-BATTLE-LIVE-REPLAY-COMPOSE-R1-20260922T0949-SOL",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "NAKI_BATTLE_LIVE_REPLAY_COMPOSE_R1",
+  "acquireKey": "NAKI-BATTLE-LIVE-REPLAY-COMPOSE-R1-20260922T0949-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "ACTUAL-BATTLE-REPLAY-LIVE-CONSUMER-PLUS-1280-TEMP-INJECTION-PASS",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "DESKTOP-1280x720-partner.naki-MIC_SPELLCAST-heart-microphone-singing-effect-present",
+  "proceedToken": "PROCEED|NAKI-BATTLE-LIVE-REPLAY-COMPOSE-R1-20260922T0949-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|actual-live-consumer|temporary-injection-pass|lease-readback",
+  "authorizationBaseSha": "b22046db339aaeb0e179925bc982afcbc044e67a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "NAKI_BATTLE_LIVE_REPLAY_COMPOSE_R1",
+  "leaseAcquireKey": "NAKI-BATTLE-LIVE-REPLAY-COMPOSE-R1-20260922T0949-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-22 09:49 JST",
+  "leaseUntilJst": "2026-09-22 10:49 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "browser/battle-replay-live-adapter.mjs; tests/battle-replay-live-adapter.test.mjs; own transient data/preaction-authorizations/NAKI-BATTLE-LIVE-REPLAY-COMPOSE-R1-20260922T0949-SOL.json; own fresh branch/PR/check/merge/readback. browser/naki-battle-magic-live-adapter.mjs READ_ONLY; browser/naki-battle-magic-motion-core.mjs READ_ONLY; browser/GAMEROAD.html READ_ONLY; gameplay/rules/save/network/board topology/formal art/assets READ_ONLY.",
+  "scope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs"
+  ]
+}

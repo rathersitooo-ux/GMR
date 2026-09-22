@@ -13,6 +13,12 @@ const FRIEND_ROOM_COPY_SELECTOR = '[data-friend-room-copy="r1"]';
 const FRIEND_ROOM_STYLE_ID = 'gameroad-friend-room-share-r1-style';
 const FRIEND_ROOM_REAL_CODE = /^[A-Z0-9]{7}$/;
 
+export const ROGUE_CURRENT_BROWSER_PLACEMENT = Object.freeze({
+  adopted: false,
+  homePlacementAuthorized: false,
+  status: 'PARK_UNADOPTED',
+});
+
 function cloneJson(value) {
   const text = JSON.stringify(value);
   if (text === undefined) throw new TypeError('ROGUE_RUNTIME_VALUE_REQUIRED');
@@ -306,6 +312,12 @@ export function createCurrentBrowserRogueHost({
 }
 
 export function mountRogueRunFromCurrentBrowser(options = {}) {
+  if (options?.placementAuthorized !== true) {
+    globalThis.GAMEROAD_ROGUE_RUNTIME?.destroy?.();
+    delete globalThis.GAMEROAD_ROGUE_RUNTIME;
+    delete globalThis.GAMEROAD_ROGUE_HOST;
+    return null;
+  }
   if (globalThis.GAMEROAD_ROGUE_RUNTIME?.getSnapshot) return globalThis.GAMEROAD_ROGUE_RUNTIME;
   const host = createCurrentBrowserRogueHost(options);
   if (!host) return null;

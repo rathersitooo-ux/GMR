@@ -7,6 +7,7 @@ import {
 
 export const BATTLE_CARD_RELEASE_FLIGHT_EASING = 'cubic-bezier(.16,.74,.18,1)';
 export const BATTLE_CARD_RELEASE_DESTINATION_PULSE_DURATION_MS = 160;
+export const BATTLE_CARD_RELEASE_FLIGHT_TRAIL_DURATION_MS = 180;
 
 function finitePoint(value) {
   const x = Number(value?.x);
@@ -125,6 +126,115 @@ function createDestinationPulse({ documentRef, host, target }) {
   return cue;
 }
 
+
+function flightTrailKeyframes(projection) {
+  if (!projection?.frames || !Array.isArray(projection.frames) || projection.frames.length < 2) {
+    return [];
+  }
+  return projection.frames.map((frame) => ({
+    offset: frame.offset,
+    opacity: Math.max(0, Math.min(0.94, frame.opacity * (1 - (0.16 * frame.offset)))),
+    filter: `blur(${Math.max(0.2, frame.blurPx * 0.8).toFixed(2)}px) drop-shadow(0 0 8px rgba(143,225,255,.92))`,
+    transform: `translate(-50%,-50%) translate3d(${frame.x.toFixed(2)}px,${frame.y.toFixed(2)}px,0) rotate(${frame.rotationDeg.toFixed(2)}deg) scale(${(0.78 + (frame.scale * 0.42)).toFixed(3)},.72)`,
+  }));
+}
+
+function createFlightTrail({ documentRef, host, flight, projection }) {
+  if (!documentRef?.createElement || !host?.appendChild ||
+      projection?.mode !== BATTLE_CARD_RELEASE_FLIGHT_MODE.FULL ||
+      projection.lowPerf === true) {
+    return null;
+  }
+  const trail = documentRef.createElement('span');
+  if (!trail?.style) return null;
+  trail.dataset.jankenFlightTrail = '1';
+  trail.setAttribute?.('aria-hidden', 'true');
+  const sourceRect = flight.sourceRect;
+  Object.assign(trail.style, {
+    position: 'fixed',
+    left: `${sourceRect.left + (sourceRect.width / 2)}px`,
+    top: `${sourceRect.top + (sourceRect.height / 2)}px`,
+    width: `${Math.max(48, Math.min(112, sourceRect.width * 1.45))}px`,
+    height: `${Math.max(3, Math.min(8, sourceRect.height * 0.08))}px`,
+    margin: '0',
+    opacity: '0',
+    pointerEvents: 'none',
+    zIndex: '158',
+    borderRadius: '999px',
+    background: 'linear-gradient(90deg, transparent, rgba(152,229,255,.20) 16%, rgba(255,255,255,.98) 50%, rgba(155,238,255,.20) 84%, transparent)',
+    boxShadow: '0 0 8px rgba(143,225,255,.95), 0 0 22px rgba(80,161,255,.66)',
+    mixBlendMode: 'screen',
+    transformOrigin: '50% 50%',
+    willChange: 'transform,opacity,filter',
+  });
+  try {
+    host.appendChild(trail);
+    const animation = typeof trail.animate === 'function'
+      ? trail.animate(flightTrailKeyframes(projection), {
+        duration: Math.min(projection.durationMs, BATTLE_CARD_RELEASE_FLIGHT_TRAIL_DURATION_MS),
+        easing: BATTLE_CARD_RELEASE_FLIGHT_EASING,
+        fill: 'forwards',
+      })
+      : null;
+    if (!animation) {
+      trail.style.opacity = '0.68';
+      trail.dataset.jankenFlightTrailFallback = 'static';
+    }
+    return { node: trail, animation };
+  } catch {
+    removeNode(trail);
+    return null;
+  }
+}
+
+function createFlightImpactCue({ documentRef, host, target }) {
+  if (!documentRef?.createElement || !host?.appendChild || !finitePoint(target)) return null;
+  const cue = documentRef.createElement('span');
+  if (!cue?.style) return null;
+  cue.dataset.jankenFlightImpact = '1';
+  cue.setAttribute?.('aria-hidden', 'true');
+  Object.assign(cue.style, {
+    position: 'fixed',
+    left: `${target.x}px`,
+    top: `${target.y}px`,
+    width: '30px',
+    height: '30px',
+    margin: '0',
+    border: '2px solid rgba(225,250,255,.96)',
+    borderRadius: '999px',
+    opacity: '0',
+    pointerEvents: 'none',
+    zIndex: '159',
+    transform: 'translate(-50%,-50%) scale(.42)',
+    boxShadow: '0 0 10px rgba(194,244,255,.95), 0 0 26px rgba(84,148,255,.72)',
+    mixBlendMode: 'screen',
+    willChange: 'transform,opacity',
+  });
+  try {
+    host.appendChild(cue);
+    const animation = typeof cue.animate === 'function'
+      ? cue.animate([
+        { offset: 0, opacity: 0, transform: 'translate(-50%,-50%) scale(.42)' },
+        { offset: 0.24, opacity: 0.96, transform: 'translate(-50%,-50%) scale(.94)' },
+        { offset: 1, opacity: 0, transform: 'translate(-50%,-50%) scale(1.56)' },
+      ], {
+        duration: 180,
+        easing: 'cubic-bezier(.16,.74,.18,1)',
+        fill: 'forwards',
+      })
+      : null;
+    if (!animation) {
+      cue.style.opacity = '0.72';
+      cue.style.transform = 'translate(-50%,-50%) scale(1)';
+      cue.dataset.jankenFlightImpactFallback = 'static';
+    }
+    return { node: cue, animation };
+  } catch {
+    removeNode(cue);
+    return null;
+  }
+}
+
 export function captureBattleCardReleaseFlightEffect({
   sourceNode,
   start,
@@ -190,6 +300,8 @@ export function playBattleCardReleaseFlightEffect({
   }
 
   let cue = null;
+  let trail = null;
+  let impact = null;
   try {
     host.appendChild(clone);
     const animation = clone.animate(keyframes, {
@@ -200,16 +312,23 @@ export function playBattleCardReleaseFlightEffect({
     if (projection.mode === BATTLE_CARD_RELEASE_FLIGHT_MODE.REDUCED
       && projection.destinationCue?.kind === 'DESTINATION_PULSE') {
       cue = createDestinationPulse({ documentRef, host, target: projection.destinationCue });
+    } else if (projection.mode === BATTLE_CARD_RELEASE_FLIGHT_MODE.FULL && projection.lowPerf !== true) {
+      trail = createFlightTrail({ documentRef, host, flight, projection });
+      impact = createFlightImpactCue({ documentRef, host, target: flight.target });
     }
     const cleanup = () => {
       removeNode(clone);
       removeNode(cue);
+      removeNode(trail?.node);
+      removeNode(impact?.node);
     };
     cleanupWhenFinished(animation, cleanup);
     return true;
   } catch {
     removeNode(clone);
     removeNode(cue);
+    removeNode(trail?.node);
+    removeNode(impact?.node);
     return false;
   }
 }

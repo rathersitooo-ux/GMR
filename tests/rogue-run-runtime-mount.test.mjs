@@ -6,6 +6,8 @@ import {
   createRoguePanelOutsideDismissHandler,
   createRogueRunConsumerController,
   getRogueRunEntryLabel,
+  mountRogueRunFromCurrentBrowser,
+  ROGUE_CURRENT_BROWSER_PLACEMENT,
 } from '../browser/rogue-run-runtime-mount.mjs';
 
 function hostFixture() {
@@ -141,6 +143,28 @@ test('consumer ignores an unrelated Result until the started Rogue match Result 
   assert.equal(runtime.getSnapshot().run.phase, 'AWAITING_REWARD_DECISION');
 });
 
+test('current Browser Rogue placement is fail-closed while Rogue is unadopted and Home placement is unauthorized', () => {
+  const previousRuntime = globalThis.GAMEROAD_ROGUE_RUNTIME;
+  const previousHost = globalThis.GAMEROAD_ROGUE_HOST;
+  try {
+    delete globalThis.GAMEROAD_ROGUE_RUNTIME;
+    delete globalThis.GAMEROAD_ROGUE_HOST;
+    assert.deepEqual(ROGUE_CURRENT_BROWSER_PLACEMENT, {
+      adopted: false,
+      homePlacementAuthorized: false,
+      status: 'PARK_UNADOPTED',
+    });
+    assert.equal(mountRogueRunFromCurrentBrowser(), null);
+    assert.equal(globalThis.GAMEROAD_ROGUE_RUNTIME, undefined);
+    assert.equal(globalThis.GAMEROAD_ROGUE_HOST, undefined);
+  } finally {
+    if (previousRuntime === undefined) delete globalThis.GAMEROAD_ROGUE_RUNTIME;
+    else globalThis.GAMEROAD_ROGUE_RUNTIME = previousRuntime;
+    if (previousHost === undefined) delete globalThis.GAMEROAD_ROGUE_HOST;
+    else globalThis.GAMEROAD_ROGUE_HOST = previousHost;
+  }
+});
+
 test('current Browser host projects existing deck, hand, screen, match result, and navigation only', () => {
   let shown = null;
   const documentSource = {
@@ -222,7 +246,7 @@ test('Rogue modal outside dismiss closes once, keeps inside clicks, and consumes
   assert.deepEqual(counts, { prevent: 1, stop: 1, immediate: 1 });
 });
 
-test('already-loaded Home runtime mounts the Rogue consumer once without rewriting production HTML', () => {
+test('Home runtime may reference Rogue code, while current-browser placement remains gated by the Rogue owner', () => {
   const homeBoot = fs.readFileSync(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
   assert.equal((homeBoot.match(/mountRogueRunFromCurrentBrowser/g) || []).length, 2);
   assert.match(homeBoot, /import \{ mountRogueRunFromCurrentBrowser \} from '\.\/rogue-run-runtime-mount\.mjs';/);

@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {
+  HOME_RANK_QUICK_DECK_HOLD_MS,
+  createHomeRankQuickDeckSlotRoll,
+} from '../browser/home-boot-runtime-base-r3.mjs';
+import { advanceSlotRollDrag, resolveSlotRollCommit } from '../browser/slidepad-slot-roll-core.mjs';
 
 test('R3 Home composition keeps the previous Home implementation without mounting unadopted Study', () => {
   const wrapper = fs.readFileSync(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
@@ -96,4 +101,36 @@ test('R5 rank match refresh observes only screen roots and keeps body bootstrap 
   assert.ok(base.includes("attributeFilter: ['class', 'hidden']"));
   assert.ok(base.includes('observer.observe(doc.body, { childList: true, subtree: true });'));
   assert.equal(base.includes("observer.observe(doc.body, { childList: true, subtree: true, attributes: true"), false);
+});
+
+test('Home Rank long-press reuses the cyclic slot-roll engine for registered Quick Decks', () => {
+  assert.equal(HOME_RANK_QUICK_DECK_HOLD_MS, 420);
+  const created = createHomeRankQuickDeckSlotRoll({
+    choices: [
+      { quickNumber: 1, deckIndex: 2, deckNumber: 3 },
+      { quickNumber: 2, deckIndex: 5, deckNumber: 6 },
+      { quickNumber: 3, deckIndex: 9, deckNumber: 10 },
+    ],
+    selectedDeckIndex: 5,
+    buttonWidth: 100,
+  });
+  assert.ok(created);
+  assert.equal(created.state.items[created.state.index].deckIndex, 5);
+  const advanced = advanceSlotRollDrag(created.state, {
+    deltaPx: created.detentPx,
+    detentPx: created.detentPx,
+  });
+  const commit = resolveSlotRollCommit(advanced.state);
+  assert.equal(Number.isInteger(commit.item.deckIndex), true);
+  assert.ok([2, 5, 9].includes(commit.item.deckIndex));
+});
+
+test('Home Rank long-press selects a Quick Deck without replacing the existing short-tap rank route', () => {
+  const base = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
+  assert.ok(base.includes('GAMEROAD_QUICK_DECKS'));
+  assert.ok(base.includes('HOME_RANK_QUICK_DECK_HOLD_MS'));
+  assert.ok(base.includes("api?.select?.(deckIndex) === true"));
+  assert.ok(base.includes("activateHomeRankMatchEntry(doc);"));
+  assert.ok(base.includes("if (suppressClick) {"));
+  assert.ok(base.includes("長押しでクイックデッキ選択"));
 });

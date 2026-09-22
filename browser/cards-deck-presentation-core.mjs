@@ -17,6 +17,103 @@ export const SETUP_QUICK_DECK_PREVIEW_CONTRACT = Object.freeze({
   editRoute: 'existing-deck-editor-only',
 });
 
+export const QUICK_DECK_REGISTRY_CONTRACT = Object.freeze({
+  schema: 'gameroad.quick-deck-slot-refs.v1',
+  source: 'existing-deck-library-slot-reference-only',
+  maxQuickDecks: 3,
+  defaultDeckSlotCount: 12,
+  duplicatesDeckData: false,
+  ownsDeck: false,
+  mutatesDeckRules: false,
+  autoEvictsWhenFull: false,
+});
+
+function quickDeckSlotIndex(value, deckSlotCount) {
+  return Number.isInteger(value) && value >= 0 && value < deckSlotCount ? value : null;
+}
+
+export function normalizeQuickDeckSlotRefs(
+  value,
+  { deckSlotCount = QUICK_DECK_REGISTRY_CONTRACT.defaultDeckSlotCount, maxQuickDecks = QUICK_DECK_REGISTRY_CONTRACT.maxQuickDecks } = {},
+) {
+  if (!Number.isInteger(deckSlotCount) || deckSlotCount < 1) throw new RangeError('DECK_SLOT_COUNT_INVALID');
+  if (!Number.isInteger(maxQuickDecks) || maxQuickDecks < 1) throw new RangeError('QUICK_DECK_MAX_INVALID');
+  const source = Array.isArray(value) ? value : Array.isArray(value?.slotIndices) ? value.slotIndices : [];
+  const seen = new Set();
+  const slotIndices = [];
+  for (const raw of source) {
+    const index = quickDeckSlotIndex(raw, deckSlotCount);
+    if (index == null || seen.has(index)) continue;
+    seen.add(index);
+    slotIndices.push(index);
+    if (slotIndices.length >= maxQuickDecks) break;
+  }
+  return Object.freeze(slotIndices);
+}
+
+export function toggleQuickDeckSlotRef(
+  value,
+  deckIndex,
+  { deckSlotCount = QUICK_DECK_REGISTRY_CONTRACT.defaultDeckSlotCount, maxQuickDecks = QUICK_DECK_REGISTRY_CONTRACT.maxQuickDecks } = {},
+) {
+  const index = quickDeckSlotIndex(deckIndex, deckSlotCount);
+  if (index == null) throw new RangeError('DECK_INDEX_INVALID');
+  const current = [...normalizeQuickDeckSlotRefs(value, { deckSlotCount, maxQuickDecks })];
+  const at = current.indexOf(index);
+  if (at >= 0) {
+    current.splice(at, 1);
+    return Object.freeze({
+      changed: true,
+      registered: false,
+      reason: 'QUICK_DECK_UNREGISTERED',
+      slotIndices: Object.freeze(current),
+    });
+  }
+  if (current.length >= maxQuickDecks) {
+    return Object.freeze({
+      changed: false,
+      registered: false,
+      reason: 'QUICK_DECK_LIMIT_REACHED',
+      slotIndices: Object.freeze(current),
+    });
+  }
+  current.push(index);
+  return Object.freeze({
+    changed: true,
+    registered: true,
+    reason: 'QUICK_DECK_REGISTERED',
+    slotIndices: Object.freeze(current),
+  });
+}
+
+export function projectQuickDeckChoices({
+  slotIndices,
+  deckSlots,
+  selectedDeckIndex = null,
+  deckSlotCount = QUICK_DECK_REGISTRY_CONTRACT.defaultDeckSlotCount,
+  maxQuickDecks = QUICK_DECK_REGISTRY_CONTRACT.maxQuickDecks,
+} = {}) {
+  if (!Array.isArray(deckSlots)) throw new TypeError('DECK_SLOTS_REQUIRED');
+  const refs = normalizeQuickDeckSlotRefs(slotIndices, { deckSlotCount, maxQuickDecks });
+  return Object.freeze(refs.map((deckIndex, quickIndex) => {
+    const deck = deckSlots[deckIndex] && typeof deckSlots[deckIndex] === 'object' ? deckSlots[deckIndex] : {};
+    const mainCount = Number.isInteger(deck.mainCount) && deck.mainCount >= 0
+      ? deck.mainCount
+      : (Array.isArray(deck.main) ? deck.main.length : 0);
+    const exCount = Number.isInteger(deck.exCount) && deck.exCount >= 0
+      ? deck.exCount
+      : (Array.isArray(deck.ex) ? deck.ex.length : 0);
+    return Object.freeze({
+      quickNumber: quickIndex + 1,
+      deckIndex,
+      deckNumber: deckIndex + 1,
+      selected: deckIndex === selectedDeckIndex,
+      mainCount,
+      exCount,
+    });
+  }));
+}
+
 function requireSelectedDeckNumber(value) {
   if (!Number.isInteger(value) || value < 1 || value > 3) {
     throw new RangeError('SELECTED_DECK_NUMBER_INVALID');

@@ -242,6 +242,7 @@ jobs:
 
       - name: Probe public Saasuna provider when configured
         id: partner_probe
+        continue-on-error: true
         if: steps.convai_secrets.outputs.synced == 'true'
         shell: bash
         env:

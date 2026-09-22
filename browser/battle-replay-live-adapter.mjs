@@ -22,6 +22,10 @@ import {
   PARTNER_BATTLE_EVENT_PROJECTION,
   createPartnerBattleEventLogConsumerAdapter
 } from './partner-battle-event-log-projection.mjs';
+import {
+  NAKI_BATTLE_MAGIC_LIVE_ADAPTER_RUNTIME,
+  createNakiBattleMagicLiveAdapter
+} from './naki-battle-magic-live-adapter.mjs';
 
 const LIVE_ADAPTER_SCHEMA = 'GAMEROAD_BATTLE_REPLAY_LIVE_ADAPTER_V1';
 const VERSION_KEYS = Object.freeze(['rules', 'content', 'state']);
@@ -351,6 +355,157 @@ function environmentValue(environment, name) {
   return Object.prototype.hasOwnProperty.call(environment, name)
     ? environment[name]
     : browserGlobal(name);
+}
+
+const BATTLE_REPLAY_NAKI_STAGE_TO_CAUSAL = Object.freeze({
+  focus: 'anticipation',
+  reveal: 'anticipation',
+  read: 'release',
+  compare: 'impact',
+  winner: 'return',
+  settle: 'return'
+});
+
+export function createBattleReplayNakiLivePresentationBridge(environment = {}) {
+  const documentRef = environmentValue(environment, 'document');
+  const MutationObserverRef = environmentValue(environment, 'MutationObserver');
+  const createAdapter = typeof environment.createNakiAdapter === 'function'
+    ? environment.createNakiAdapter
+    : createNakiBattleMagicLiveAdapter;
+  const nakiCharacterId = typeof environment.nakiCharacterId === 'string' && environment.nakiCharacterId.length > 0
+    ? environment.nakiCharacterId
+    : null;
+  let observer = null;
+  let adapter = null;
+  let activeMatchId = null;
+  let lastStage = null;
+
+  const getHost = () => documentRef?.getElementById?.('battlePhaseNaki') ?? null;
+  const getSurface = () => documentRef?.getElementById?.('battlePhaseSurface') ?? null;
+
+  function clearBridgeData(host = getHost()) {
+    if (!host?.dataset) return;
+    delete host.dataset.battleReplayNakiLive;
+    delete host.dataset.battleReplayNakiStage;
+    delete host.dataset.battleReplayNakiCausalPhase;
+    delete host.dataset.battleReplayNakiMatchId;
+  }
+
+  function destroyAdapter(host = getHost()) {
+    if (adapter) {
+      try { adapter.destroy?.(); } catch {}
+    }
+    adapter = null;
+    lastStage = null;
+    clearBridgeData(host);
+  }
+
+  function snapshot() {
+    const host = getHost();
+    const surface = getSurface();
+    return Object.freeze({
+      matchId: activeMatchId,
+      characterId: host?.dataset?.characterId ?? null,
+      stage: surface?.dataset?.stage ?? null,
+      causalPhase: host?.dataset?.battleReplayNakiCausalPhase ?? null,
+      live: host?.dataset?.battleReplayNakiLive === 'true',
+      adapter: adapter?.snapshot?.() ?? null,
+      presentationOnly: true
+    });
+  }
+
+  function sync() {
+    const host = getHost();
+    const surface = getSurface();
+    if (!host || !surface || !nakiCharacterId) {
+      destroyAdapter(host);
+      return snapshot();
+    }
+
+    const characterId = host.dataset?.characterId ?? null;
+    if (surface.hidden === true || characterId !== nakiCharacterId) {
+      destroyAdapter(host);
+      return snapshot();
+    }
+
+    if (adapter && typeof host.querySelector === 'function' &&
+        !host.querySelector('[data-role="naki-battle-magic-motion"]')) {
+      destroyAdapter(host);
+    }
+
+    if (!adapter) {
+      const preferences = readBattleReplayCardPresentationPreferences(environment);
+      adapter = createAdapter({
+        doc: documentRef,
+        host,
+        characterHost: host.querySelector?.('.grtc-root') ?? null,
+        characterId,
+        nakiCharacterId,
+        role: 'source',
+        motion: preferences.reducedMotion || preferences.lowPerf ? 'static_only' : 'normal',
+        phase: 'attack',
+        transition: 'CONTINUE'
+      });
+      if (!adapter) {
+        clearBridgeData(host);
+        return snapshot();
+      }
+      lastStage = null;
+    }
+
+    const stage = typeof surface.dataset?.stage === 'string' ? surface.dataset.stage : '';
+    const causalPhase = BATTLE_REPLAY_NAKI_STAGE_TO_CAUSAL[stage] ?? 'stance';
+    if (stage !== lastStage) {
+      try {
+        adapter.applyCausalPhase?.({
+          causalPhase,
+          role: 'source',
+          actionPhase: 'attack'
+        });
+      } catch {}
+      lastStage = stage;
+    }
+    if (host.dataset) {
+      host.dataset.battleReplayNakiLive = 'true';
+      host.dataset.battleReplayNakiStage = stage;
+      host.dataset.battleReplayNakiCausalPhase = causalPhase;
+      if (activeMatchId) host.dataset.battleReplayNakiMatchId = activeMatchId;
+    }
+    return snapshot();
+  }
+
+  function ensureObserver() {
+    if (observer || typeof MutationObserverRef !== 'function') return observer;
+    const surface = getSurface();
+    if (!surface) return null;
+    observer = new MutationObserverRef(() => {
+      try { sync(); } catch {}
+    });
+    observer.observe(surface, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ['data-stage', 'data-character-id', 'class', 'hidden']
+    });
+    return observer;
+  }
+
+  function begin(matchId) {
+    if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
+    activeMatchId = matchId;
+    ensureObserver();
+    return sync();
+  }
+
+  function destroy() {
+    try { observer?.disconnect?.(); } catch {}
+    observer = null;
+    destroyAdapter();
+    activeMatchId = null;
+    return true;
+  }
+
+  return Object.freeze({ begin, sync, snapshot, destroy });
 }
 
 function settingToggleOn(documentRef, id) {
@@ -959,6 +1114,9 @@ export function createPartnerBattleEventLogPresentationBridge(environment = {}) 
 
 const liveCardPresentationBridge = createBattleReplayCardPresentationBridge();
 const livePartnerBattleEventLogBridge = createPartnerBattleEventLogPresentationBridge({ partnerBattleLogIncludePublicCards: true });
+const liveNakiBattlePresentationBridge = createBattleReplayNakiLivePresentationBridge({
+  nakiCharacterId: 'partner.naki'
+});
 
 function assertSession(session) {
   if (!session || session.schema !== LIVE_ADAPTER_SCHEMA || !nonEmptyString(session.matchId)) {
@@ -975,7 +1133,8 @@ export function createLiveReplaySession(
   { matchId, versions },
   {
     presentationBridge = liveCardPresentationBridge,
-    partnerBattleEventLogBridge = livePartnerBattleEventLogBridge
+    partnerBattleEventLogBridge = livePartnerBattleEventLogBridge,
+    nakiBattlePresentationBridge = liveNakiBattlePresentationBridge
   } = {}
 ) {
   if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
@@ -997,6 +1156,11 @@ export function createLiveReplaySession(
     partnerBattleEventLogBridge?.begin?.(matchId);
   } catch {
     // Partner log is presentation-only and never owns replay/gameplay success.
+  }
+  try {
+    nakiBattlePresentationBridge?.begin?.(matchId);
+  } catch {
+    // Naki Battle presentation is fail-soft and never owns replay/gameplay success.
   }
   return session;
 }
@@ -1275,6 +1439,18 @@ export const BATTLE_REPLAY_LIVE_ADAPTER = Object.freeze({
     kind: 'vfx',
     assetAuthority: 'fallback_only',
     audio: 'silent'
+  }),
+  nakiBattleLivePresentation: Object.freeze({
+    source: 'actual_battle_phase_surface_stage',
+    actualDomSurface: 'battlePhaseNaki',
+    exactCharacterId: 'partner.naki',
+    identityPolicy: NAKI_BATTLE_MAGIC_LIVE_ADAPTER_RUNTIME.identityPolicy,
+    stageToCausalPhase: BATTLE_REPLAY_NAKI_STAGE_TO_CAUSAL,
+    presentationOnly: true,
+    gameplayAuthority: false,
+    boardAuthority: false,
+    saveAuthority: false,
+    networkAuthority: false
   }),
   battleConveyorEnvironment: Object.freeze({
   source: 'accepted_public_battle_resolution',

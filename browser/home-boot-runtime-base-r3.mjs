@@ -3,7 +3,6 @@ import {
   createHomeShellState,
   HOME_TOUCH_TARGET_MIN_PX,
 } from './home-shell-presentation-core.mjs';
-import { mountRogueRunFromCurrentBrowser } from './rogue-run-runtime-mount.mjs';
 import { SAASUNA_BUSTUP_ASSETS } from './partner-saasuna-bustup-visuals.mjs';
 import { partnerDisplayName, partnerRosterIdsFromRuntime, setAdvicePartnerId } from './partner-dialogue-source-registry.mjs';
 import {
@@ -1149,7 +1148,6 @@ export function mountHomeBootPresentation() {
   });
   runtime.mounted = true;
   refreshHomeBootPresentation();
-  mountRogueRunFromCurrentBrowser();
   return snapshot();
 }
 

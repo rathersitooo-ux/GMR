@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   composeSaasunaProviderUserMessage,
   createSaasunaEdgeProvider,
+  createSaasunaTuningSession,
   mountBoardFacilityRuntime,
   mountSaasunaConversationProductSurface,
   partnerConversationProjectionDecision,
@@ -118,6 +119,104 @@ test('provisional Saasuna visual is explicitly static and outside character prod
 test('collective product resolver stays off when no real runtime evidence source is mounted', async () => {
   assert.equal(await resolveSaasunaCollectiveContext({}), null);
 });
+
+test('Saasuna tuning session keeps fixed neutral defaults and exposes only explicit session changes', () => {
+  const tuning = createSaasunaTuningSession();
+  const initial = tuning.read();
+  assert.equal(initial.schemaVersion, 'gameroad.saasuna-conversation-tuning-session.v1');
+  assert.equal(initial.partnerId, 'partner.saasuna');
+  assert.equal(initial.revision, 0);
+  assert.deepEqual(initial.activeFields, []);
+  assert.equal(initial.values.directness, 2);
+  assert.equal(initial.persistence, 'conversation_session_only');
+  assert.equal(initial.automaticCanonMutationAllowed, false);
+
+  const changed = tuning.update('directness', 4);
+  assert.equal(changed.revision, 1);
+  assert.deepEqual(changed.activeFields, ['directness']);
+  assert.equal(changed.values.directness, 4);
+  assert.throws(() => tuning.update('unknown', 2), /SAASUNA_TUNING_FIELD_INVALID/);
+  assert.throws(() => tuning.update('directness', 9), /SAASUNA_TUNING_VALUE_INVALID/);
+
+  const reset = tuning.reset();
+  assert.equal(reset.revision, 2);
+  assert.deepEqual(reset.activeFields, []);
+  assert.equal(reset.values.directness, 2);
+});
+
+test('provider prompt carries approved persona, explicit tuning and bounded recent conversation without changing user text identity', () => {
+  const tuning = createSaasunaTuningSession({ directness: 4, explanation: 1 });
+  const composed = composeSaasunaProviderUserMessage({
+    userMessage: 'この場面どうする？',
+    personaGuidance: [
+      '冷静で戦略的だが、食べ物や妹の話では平静が崩れることがある。',
+      '人物設定にない事実・親密イベント・ゲーム結果を作らない。',
+    ],
+    tuning: tuning.read(),
+    sessionContext: {
+      turns: [{
+        turnId: 'turn-1',
+        userMessage: 'さっきは守ったよ',
+        assistantUtterance: 'ええ、その判断でよいと思います。',
+        responseOrigin: 'provider_candidate',
+      }],
+    },
+  });
+
+  assert.match(composed, /GAMEROAD正式人物指示/);
+  assert.match(composed, /人物設定にない事実/);
+  assert.match(composed, /結論を先に言う強さ: 強め/);
+  assert.match(composed, /理由を説明する量: 控えめ/);
+  assert.match(composed, /さっきは守ったよ/);
+  assert.match(composed, /ユーザー:\nこの場面どうする？/);
+  assert.ok(composed.length <= 4000);
+});
+
+test('provider prompt preserves a near-limit user message instead of overflowing when persona context does not fit', () => {
+  const userMessage = 'あ'.repeat(3999);
+  const composed = composeSaasunaProviderUserMessage({
+    userMessage,
+    personaGuidance: ['礼儀と自信を保ち、単なる無機質なクール役にはしない。'],
+    tuning: createSaasunaTuningSession({ directness: 4 }).read(),
+  });
+  assert.equal(composed, userMessage);
+  assert.equal(composed.length, 3999);
+  assert.throws(
+    () => composeSaasunaProviderUserMessage({ userMessage: 'あ'.repeat(4001) }),
+    /PARTNER_PROVIDER_INPUT_INVALID/,
+  );
+});
+
+test('edge provider reads the current tuning snapshot for each generated reply', async () => {
+  const calls = [];
+  const tuning = createSaasunaTuningSession();
+  const provider = createSaasunaEdgeProvider({
+    async fetch(url, options) {
+      calls.push({ url, body: JSON.parse(options.body) });
+      return new Response(JSON.stringify({ ok: true, text: '承知しました。', providerSessionId: 'convai-tuning-1' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    },
+  }, { getTuning: tuning.read });
+
+  const request = {
+    partnerId: 'partner.saasuna',
+    dialogueVersion: 'saasuna.dialogue.current.r1.20260810',
+    sourceId: 'SOURCE-DIALOGUE-SAASUNA-20260810',
+    userMessage: '判断して',
+    personaGuidance: ['礼儀と自信を保ち、単なる無機質なクール役にはしない。'],
+  };
+  await provider.sendMessage(request);
+  tuning.update('sharpness', 4);
+  await provider.sendMessage({ ...request, userMessage: 'もう一度' });
+
+  assert.doesNotMatch(calls[0].body.userMessage, /辛口な言い回しの強さ/);
+  assert.match(calls[1].body.userMessage, /辛口な言い回しの強さ: 強め/);
+  assert.match(calls[1].body.userMessage, /礼儀と自信/);
+  assert.equal(calls[1].body.providerSessionId, 'convai-tuning-1');
+});
+
 
 test('collective product resolver accepts only a canonical approved context from a mounted source', async () => {
   const calls = [];

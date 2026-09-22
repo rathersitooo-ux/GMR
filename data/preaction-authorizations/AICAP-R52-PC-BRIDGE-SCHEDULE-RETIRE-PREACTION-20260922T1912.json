@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "AICAP-R52-PC-BRIDGE-SCHEDULE-RETIRE-PREACTION-20260922T1912",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "PC_CURRENT_BRIDGE_RECURRING_SCHEDULE_RETIRE_R52",
+  "acquireKey": "AICAP-R52-PC-BRIDGE-SCHEDULE-RETIRE-20260922T1912-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R52-CURRENT-MAIN-SCHEDULE-PRESENT-AND-R51-DONOR-GATE-SUCCESS",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R52-EXACT-CURRENT-WORKFLOW-READBACK-PLUS-PR2000-PATCH-AND-GATE",
+  "proceedToken": "PROCEED|AICAP-R52-PC-BRIDGE-SCHEDULE-RETIRE-PREACTION-20260922T1912|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260922T1912JST",
+  "authorizationBaseSha": "02b7e26ed9846e30a7d0460e2573812165d68597",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "PC_CURRENT_BRIDGE_RECURRING_SCHEDULE_RETIRE_R52",
+  "leaseAcquireKey": "AICAP-R52-PC-BRIDGE-SCHEDULE-RETIRE-20260922T1912-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-22 19:12 JST",
+  "leaseUntilJst": "2026-09-22 20:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": ".github/workflows/gameroad-current-bridge.yml; own fresh branch/PR/check/merge/readback; CURRENT_ACTIVE_LEASES own row; R24 append-only events. PR#2000 and its branch READ_ONLY donor evidence; tools/gameroad-current-bridge.py READ_ONLY; tests/test_gameroad_current_bridge.py READ_ONLY; docs/gameroad-current-bridge.md READ_ONLY.",
+  "scope": [
+    ".github/workflows/gameroad-current-bridge.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/gameroad-current-bridge.yml"
+  ]
+}

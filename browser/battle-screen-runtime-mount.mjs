@@ -873,11 +873,9 @@ function mountCinematicDuelCharacter(global, scene, view, characterId, role, mot
       nakiCharacterId: motionContext?.nakiCharacterId ?? null,
       role,
       motion,
-      phase: motionContext?.phase,
+      phase: 'idle',
       transition: motionContext?.transition,
-      motionState: motionContext?.motionState,
-      setTimeoutFn: typeof global?.setTimeout === 'function' ? global.setTimeout.bind(global) : null,
-      clearTimeoutFn: typeof global?.clearTimeout === 'function' ? global.clearTimeout.bind(global) : null
+      motionState: motionContext?.motionState
     });
     if (motionController) {
       active.motionControllers.push(motionController);

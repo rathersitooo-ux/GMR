@@ -5,10 +5,11 @@ import {
   buildBattleLoadCardChainPresentation,
   verifyBattleLoadCommitTransition
 } from './battle-load-card-chain-presentation-core.mjs';
+import { SAASUNA_BATTLE_MOTION_RUNTIME } from './saasuna-battle-motion-core.mjs';
 import {
-  createSaasunaBattleMotionController,
-  SAASUNA_BATTLE_MOTION_RUNTIME
-} from './saasuna-battle-motion-core.mjs';
+  BATTLE_CINEMATIC_CHARACTER_MOTION_ROUTER_RUNTIME,
+  createBattleCinematicCharacterMotionRouter
+} from './battle-cinematic-character-motion-router.mjs';
 import {
   BATTLE_CINEMATIC_CAUSAL_TIMELINE,
   clearBattleCinematicCausalTimeline,
@@ -798,8 +799,19 @@ function applyCinematicTimelinePhaseToCharacters(global, active, entry) {
   if (!active || !entry) return;
   active.timelinePhase = entry.phase;
   const runtime = global?.GameRoadThreeCharRuntime;
-  if (typeof runtime?.setState !== 'function') return;
   for (const binding of active.characterBindings ?? []) {
+    if (!binding.motionStatePinned && typeof binding.motionController?.applyCausalPhase === 'function') {
+      try {
+        binding.motionController.applyCausalPhase({
+          causalPhase: entry.phase,
+          role: binding.role,
+          actionPhase: binding.actionPhase,
+          transition: binding.transition
+        });
+      } catch {}
+    }
+
+    if (typeof runtime?.setState !== 'function') continue;
     const desired = binding.role === 'source' && (entry.phase === 'release' || entry.phase === 'impact')
       ? 'attack'
       : 'idle';
@@ -853,20 +865,25 @@ function mountCinematicDuelCharacter(global, scene, view, characterId, role, mot
     view.figure.dataset.characterId = characterId;
     view.characterHost.hidden = false;
 
-    const motionController = createSaasunaBattleMotionController({
+    const motionController = createBattleCinematicCharacterMotionRouter({
       doc: global?.document,
       host: view.figure,
       characterHost: view.characterHost,
       characterId,
+      nakiCharacterId: motionContext?.nakiCharacterId ?? null,
       role,
       motion,
       phase: motionContext?.phase,
       transition: motionContext?.transition,
-      motionState: motionContext?.motionState
+      motionState: motionContext?.motionState,
+      setTimeoutFn: typeof global?.setTimeout === 'function' ? global.setTimeout.bind(global) : null,
+      clearTimeoutFn: typeof global?.clearTimeout === 'function' ? global.clearTimeout.bind(global) : null
     });
     if (motionController) {
       active.motionControllers.push(motionController);
-      view.figure.dataset.motionVisualKind = 'provisional-keyframe-sheet';
+      view.figure.dataset.motionVisualKind = motionController.route === 'naki'
+        ? 'naki-heart-mic-live-adapter'
+        : 'provisional-keyframe-sheet';
       view.figure.dataset.provisionalArt = 'true';
     }
 
@@ -876,7 +893,11 @@ function mountCinematicDuelCharacter(global, scene, view, characterId, role, mot
       role,
       facing: role === 'source' ? 'right' : 'left',
       performance: motion === 'static_only' ? 'low' : 'normal',
-      state: 'idle'
+      state: 'idle',
+      actionPhase: motionContext?.phase ?? 'attack',
+      transition: motionContext?.transition ?? 'CONTINUE',
+      motionController,
+      motionStatePinned: motionContext?.motionState != null
     };
     active.characterBindings.push(binding);
     try {
@@ -911,6 +932,7 @@ function writeCinematicDuel(global, document, scene, model, context = {}) {
   setData(scene, 'transition', null);
   setData(scene, 'motion', null);
   setData(scene, 'saasunaMotionRuntime', null);
+  setData(scene, 'characterMotionRouterRuntime', null);
   setData(scene, 'causalPhase', null);
   setData(scene, 'causalTimeline', null);
   setData(scene, 'causalTimelineMode', null);
@@ -963,12 +985,14 @@ function writeCinematicDuel(global, document, scene, model, context = {}) {
   mountCinematicDuelCharacter(global, scene, sourceView, sourceCharacterId, 'source', model.motion, {
     phase,
     transition: model.transition,
-    motionState: motionByParticipant[source.id] ?? null
+    motionState: motionByParticipant[source.id] ?? null,
+    nakiCharacterId: context?.nakiCharacterId ?? null
   });
   mountCinematicDuelCharacter(global, scene, targetView, targetCharacterId, 'target', model.motion, {
     phase,
     transition: model.transition,
-    motionState: motionByParticipant[target.id] ?? null
+    motionState: motionByParticipant[target.id] ?? null,
+    nakiCharacterId: context?.nakiCharacterId ?? null
   });
 
   const causalTimeline = createBattleCinematicCausalTimeline({
@@ -1003,6 +1027,7 @@ function writeCinematicDuel(global, document, scene, model, context = {}) {
   setData(scene, 'transition', model.transition ?? null);
   setData(scene, 'motion', model.motion ?? null);
   setData(scene, 'saasunaMotionRuntime', SAASUNA_BATTLE_MOTION_RUNTIME.schema);
+  setData(scene, 'characterMotionRouterRuntime', BATTLE_CINEMATIC_CHARACTER_MOTION_ROUTER_RUNTIME.schema);
   setData(scene, 'sourceId', source.id);
   setData(scene, 'targetId', target.id);
   setData(scene, 'sourceCharacterId', sourceCharacterId);
@@ -1469,6 +1494,9 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   for (const lane of lanes) grid.appendChild(lane.lane);
   const defaultViewerParticipantId = normalizeViewerParticipantId(options.viewerParticipantId);
   const defaultCinematicCharacterByParticipant = options.cinematicCharacterByParticipant ?? null;
+  const defaultNakiCharacterId = typeof options.nakiCharacterId === 'string' && options.nakiCharacterId.length > 0
+    ? options.nakiCharacterId
+    : null;
   const defaultCinematicEnvironment = options.cinematicEnvironment ?? null;
 
   const resolutionAnchor = ensureAnchor(document, phaseSurface, providedResolution, 'battleResolution', 'div');
@@ -1698,6 +1726,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
       viewerParticipantId: viewer.resolved,
       cinematicCharacterByParticipant: presentationContext?.cinematicCharacterByParticipant ?? defaultCinematicCharacterByParticipant,
       cinematicMotionByParticipant: presentationContext?.cinematicMotionByParticipant ?? {},
+      nakiCharacterId: presentationContext?.nakiCharacterId ?? defaultNakiCharacterId,
       cinematicEnvironment: cinematicEnvironment.root,
       cinematicShell: shell
     });
@@ -1839,8 +1868,10 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   cinematicEnvironmentNetwork: false,
   cinematicEnvironmentFormalArt: false,
   cinematicDuelAuthority: 'MODEL_LANE_ROLE_EXACT_ONE_SOURCE_EXACT_ONE_TARGET_ONLY_NO_INFERENCE',
-  cinematicDuelArt: 'EXISTING_CHARACTER_RUNTIME_PLUS_PROVISIONAL_SAASUNA_9_KEYFRAME_SHEET_NO_FORMAL_ART',
-  cinematicDuelReaction: 'EXISTING_CHARACTER_RUNTIME_PLUS_PROVISIONAL_SAASUNA_STATEFUL_REACTION_NO_GAMEPLAY_STATE',
+  cinematicCharacterMotionRouter: BATTLE_CINEMATIC_CHARACTER_MOTION_ROUTER_RUNTIME.schema,
+  cinematicCharacterMotionIdentityPolicy: 'CALLER_EXPLICIT_NAKI_ID__NO_IDENTITY_INFERENCE',
+  cinematicDuelArt: 'EXISTING_CHARACTER_RUNTIME_PLUS_NAKI_HEART_MIC_ROUTER_PLUS_PROVISIONAL_SAASUNA_NO_FORMAL_ART',
+  cinematicDuelReaction: 'EXISTING_CHARACTER_MOTION_ROUTER_STATEFUL_REACTION_NO_GAMEPLAY_STATE',
   cinematicDuelVfx: 'PROVISIONAL_ICE_WIND_IMPACT_LAYERS_PLUS_EXISTING_NEUTRAL_SHOT_NO_FORMAL_ART',
   cinematicDuelHandoff: 'ACCEPTED_CONVEYOR_TRANSITION_PLUS_CONSECUTIVE_ACCEPTED_PAIR_CONTINUITY_NO_ORDER_INFERENCE',
   cinematicDuelTimeline: BATTLE_CINEMATIC_CAUSAL_TIMELINE.schema,

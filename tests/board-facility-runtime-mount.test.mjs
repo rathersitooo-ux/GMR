@@ -383,6 +383,30 @@ test('browser edge provider composes only approved collective summaries into Con
   assert.equal(provider.status().collectiveContextTransport, 'approved_summary_in_user_text');
 });
 
+test('browser edge provider fails closed before fetch for malformed session tuning', async () => {
+  let fetchCount = 0;
+  const provider = createSaasunaEdgeProvider({
+    async fetch() {
+      fetchCount += 1;
+      throw new Error('SHOULD_NOT_FETCH');
+    },
+  }, {
+    getTuning() {
+      return {
+        schemaVersion: 'gameroad.saasuna-conversation-tuning-session.v1',
+        partnerId: 'partner.saasuna',
+        activeFields: ['sharpness'],
+        values: { sharpness: 9 },
+      };
+    },
+  });
+  await assert.rejects(
+    () => provider.sendMessage({ userMessage: '送らない' }),
+    /PARTNER_PROVIDER_TUNING_CONTEXT_INVALID/,
+  );
+  assert.equal(fetchCount, 0);
+});
+
 test('browser edge provider fails closed before fetch for unsafe collective context', async () => {
   let fetchCount = 0;
   const provider = createSaasunaEdgeProvider({

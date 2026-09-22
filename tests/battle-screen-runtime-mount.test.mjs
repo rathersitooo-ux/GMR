@@ -587,7 +587,7 @@ assert.equal(cinematicSides[0].children[0].dataset.battleCinematicMotionRoute, '
 assert.equal(cinematicSides[0].children[0].dataset.nakiBattleLiveAdapter, 'true');
 assert.equal(cinematicSides[0].children[0].dataset.nakiBattleCharacterId, 'partner.naki');
 assert.equal(cinematicSides[0].children[0].dataset.nakiBattlePrimaryMotif, 'heart');
-assert.equal(cinematicSides[0].children[0].dataset.nakiBattleSpellcasting, 'microphone-singing');
+assert.equal(cinematicSides[0].children[0].dataset.nakiBattleSpellcasting, 'none');
 assert.equal(cinematicSides[0].children[0].dataset.motionVisualKind, 'naki-layered-motion');
 assert.equal(cinematicSides[0].children[0].dataset.provisionalArt, undefined);
 assert.equal(cinematicSides[0].children[0].dataset.motionCausalPhase, 'return');

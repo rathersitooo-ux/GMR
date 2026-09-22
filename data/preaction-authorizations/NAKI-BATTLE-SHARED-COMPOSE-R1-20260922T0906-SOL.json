@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NAKI-BATTLE-SHARED-COMPOSE-R1-20260922T0906-SOL",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "NAKI_BATTLE_SHARED_RUNTIME_COMPOSE_R1",
+  "acquireKey": "NAKI-BATTLE-SHARED-COMPOSE-R1-20260922T0906-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_BATTLE_RUNTIME_DIRECT_SAASUNA_COUPLING_BLOCKS_EXISTING_NAKI_ROUTER",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_ROUTER_AND_CURRENT_P1_NAKI_P4_SAASUNA_TEST_FIXTURE_SUPPORT_MINIMAL_COMPOSE",
+  "proceedToken": "PROCEED|NAKI-BATTLE-SHARED-COMPOSE-R1-20260922T0906-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|naki-shared-runtime-compose|presentation-only",
+  "authorizationBaseSha": "b22046db339aaeb0e179925bc982afcbc044e67a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "NAKI_BATTLE_SHARED_RUNTIME_COMPOSE_R1",
+  "leaseAcquireKey": "NAKI-BATTLE-SHARED-COMPOSE-R1-20260922T0906-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-22 09:06 JST",
+  "leaseUntilJst": "2026-09-22 10:06 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; own transient data/preaction-authorizations/NAKI-BATTLE-SHARED-COMPOSE-R1-20260922T0906-SOL.json; own fresh branch/PR/check/merge/readback. browser/naki-battle-magic-motion-core.mjs READ_ONLY; browser/naki-battle-magic-live-adapter.mjs READ_ONLY; browser/battle-cinematic-character-motion-router.mjs READ_ONLY; browser/saasuna-battle-motion-core.mjs READ_ONLY; browser/GAMEROAD.html READ_ONLY; gameplay/rules/save/network/board topology/formal art/assets READ_ONLY.",
+  "solutionSignature": "NAKI_EXISTING_MOTION_ROUTER_TO_BATTLE_SCREEN_RUNTIME_COMPOSE_R1",
+  "reuseDisposition": "ADAPT_EXISTING",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_ROUTER_IS_ALREADY_CAUSAL_TIMELINE_COMPATIBLE",
+  "solutionSearchEvidence": [
+    "Current battle-screen-runtime-mount.mjs mounts ThreeChar characters then directly creates createSaasunaBattleMotionController for every cinematic character, so partner.naki never receives the already-merged Naki motion adapter.",
+    "Current battle-cinematic-character-motion-router.mjs already attempts exact Naki-ID routing first and falls back to the existing Saasuna controller without identity inference.",
+    "Current naki-battle-magic-live-adapter.mjs requires caller-explicit exact nakiCharacterId equality and exposes applyCausalPhase for the accepted stance/anticipation/release/impact/reaction/return timeline.",
+    "Current battle-screen runtime test fixture already resolves P1 as partner.naki and P4 as partner.saasuna in the same attack scene, providing focused regression coverage without new fixtures.",
+    "The repair changes presentation routing only; ThreeChar mount/state, accepted source/target/order, gameplay, board, save, network and formal-art authority remain unchanged."
+  ],
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

@@ -22,6 +22,7 @@ import {
   BATTLE_JANKEN_ORDER_SLIDEPAD_PRESENTER_SCHEMA,
   presentBattleJankenOrderMotionToSlidePad,
   projectBattleJankenOrderSlidePadPresentation,
+  pulseBattleCardOrderReceipt,
 } from '../browser/battle-janken-slidepad-runtime-mount.mjs';
 import { projectBattleJankenOrderSnapshot } from '../browser/battle-janken-order-live-adapter.mjs';
 import {
@@ -63,7 +64,8 @@ test('three input modes share one existing card-action commit path', () => {
   assert.match(source, /inputMode === BATTLE_JANKEN_INPUT_MODE\.LAUNCHER/);
   assert.match(source, /function commitSelectedHand\(selectedHand\)/);
   assert.match(source, /resolveBattleJankenSlotCardAction\(model, selectedHand, currentSourceHandIds\)/);
-  assert.match(source, /if \(cardId && clickExistingHandCard\(root, cardId\)\) playReleasedJankenCardFlight\(host, flight\);/);
+  assert.match(source, /captureReleasedJankenCardFlight\(globalRef, root, slotNodes, selectedHand, cardId\)/);
+  assert.match(source, /if \(cardId && clickExistingHandCard\(root, cardId\)\) \{[\s\S]*playReleasedJankenCardFlight\(globalRef, root, host, orderPresenterHost, flight\);/);
 });
 
 
@@ -558,8 +560,9 @@ test('dedicated focus commit keeps release flight presentation-only and invalida
   const acceptedEnd = source.indexOf('\n        },\n      });', acceptedStart);
   assert.ok(acceptedStart >= 0 && acceptedEnd > acceptedStart);
   const accepted = source.slice(acceptedStart, acceptedEnd);
-  assert.match(accepted, /captureReleasedJankenCardFlight\(globalRef, root, slotNodes, hand\)/);
-  assert.match(accepted, /playReleasedJankenCardFlight\(host, flight\)/);
+  assert.match(accepted, /const cardId = typeof readyPackage\?\.cardId === 'string' \? readyPackage\.cardId : null;/);
+  assert.match(accepted, /captureReleasedJankenCardFlight\(globalRef, root, slotNodes, hand, cardId\)/);
+  assert.match(accepted, /playReleasedJankenCardFlight\(globalRef, root, host, orderPresenterHost, flight\)/);
   assert.equal(accepted.includes('clickExistingHandCard'), false,
     'authoritative compound commit already happened inside the existing live stack');
   assert.match(source, /function openForRound\(roundId\) \{[\s\S]*closeDedicatedFocusSurface\(\);[\s\S]*lastRoundId = roundId;/);
@@ -760,19 +763,138 @@ test('presentation leaves authoritative projection untouched', () => {
 });
 
 
-test('release-flight live adapter delegates to the canonical effect and keeps success-only triggers', () => {
+test('release-flight live adapter keeps center hero presentation separate from order registration', () => {
   const source = readFileSync(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
   assert.equal(source.includes("from './battle-card-release-flight-runtime-effect.mjs';"), true);
   assert.equal(source.includes('captureBattleCardReleaseFlightEffect({'), true);
-  assert.equal(source.includes('return playBattleCardReleaseFlightEffect({ host, flight });'), true);
+  assert.match(source, /function launchTargetCenter\(battleRoot\)[\s\S]*width\) \* 0\.5[\s\S]*height\) \* 0\.44/);
+  assert.match(source, /visualNode: releaseVisualNode|const visualNode = releaseVisualNode/);
+  assert.match(source, /__GAMEROAD_BATTLE_CARD_RELEASE_VFX__/);
+  assert.match(source, /heroFrameUrl:/);
+  assert.match(source, /impactSpriteUrl:/);
+  assert.match(source, /receiptGlowUrl:/);
+  assert.match(source, /onPresentationSettled: \(payload\) => \{/);
+  assert.match(source, /pulseBattleCardOrderReceipt\(globalRef, battleRoot, orderPresenterHost/);
+  assert.match(source, /\[data-battle-cinematic-order\] \.grBattleCinematicOrderCard/);
+  assert.match(source, /\.grBattleHudPlayedCard/);
+  assert.match(source, /\.grJankenOrderItem/);
   assert.equal(source.includes('RELEASE_FLIGHT_DURATION_MS'), false);
   assert.equal(source.includes('sampleOffsets = [0, 0.12, 0.28'), false);
   assert.equal(source.includes("reducedMotion: globalRef?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true"), true);
   assert.equal(source.includes("lowPerf: battleRoot?.dataset?.lowPerf === 'true'"), true);
-  assert.equal(source.includes('if (cardId && clickExistingHandCard(root, cardId)) playReleasedJankenCardFlight(host, flight);'), true);
   assert.equal(source.includes('onAccepted: (result, readyPackage) => {'), true);
-  assert.equal(source.includes('const hand = readyPackage?.jankenHand;'), true);
-  assert.equal(source.includes('if (flight) playReleasedJankenCardFlight(host, flight);'), true);
+  assert.match(source, /const cardId = typeof readyPackage\?\.cardId === 'string' \? readyPackage\.cardId : null;/);
+  assert.match(source, /captureReleasedJankenCardFlight\(globalRef, root, slotNodes, hand, cardId\)/);
+  assert.match(source, /playReleasedJankenCardFlight\(globalRef, root, host, orderPresenterHost, flight\)/);
+  assert.doesNotMatch(source, /target.*orderPresenterHost.*captureBattleCardReleaseFlightEffect/s);
+});
+
+test('order receipt uses the already-rendered top order card and adds only a detached bottom-edge light cue', async () => {
+  const animationFinished = Promise.resolve();
+  const created = [];
+  const body = {
+    children: [],
+    appendChild(node) {
+      this.children.push(node);
+      node.parentNode = this;
+      return node;
+    },
+  };
+  const documentRef = {
+    body,
+    createElement(tagName) {
+      const node = {
+        tagName,
+        dataset: {},
+        style: {},
+        attributes: {},
+        removed: false,
+        setAttribute(name, value) { this.attributes[name] = String(value); },
+        animate(frames, options) {
+          this.animation = { frames, options };
+          return { finished: animationFinished };
+        },
+        remove() { this.removed = true; },
+      };
+      created.push(node);
+      return node;
+    },
+  };
+  const target = {
+    dataset: { cardId: 'card-order-1' },
+    getBoundingClientRect() {
+      return { left: 300, top: 20, width: 60, height: 84 };
+    },
+  };
+  const battleRoot = {
+    ownerDocument: documentRef,
+    querySelectorAll(selector) {
+      if (selector === '[data-battle-cinematic-order] .grBattleCinematicOrderCard') return [target];
+      return [];
+    },
+  };
+  const globalRef = { document: documentRef, setTimeout };
+  const before = structuredClone(target.dataset);
+  assert.equal(pulseBattleCardOrderReceipt(globalRef, battleRoot, null, {
+    cardId: 'card-order-1',
+  }), true);
+  assert.deepEqual(target.dataset, before, 'receipt presentation never mutates order authority');
+  assert.equal(body.children.length, 1);
+  const glow = body.children[0];
+  assert.equal(glow.tagName, 'span');
+  assert.equal(glow.dataset.battleOrderReceiptGlow, '1');
+  assert.equal(glow.style.left, '304.8px');
+  assert.equal(glow.style.width, '50.4px');
+  assert.equal(glow.animation.options.duration, 220);
+  assert.match(glow.style.background, /rgba\(255,255,255/);
+  await animationFinished;
+});
+
+test('order receipt accepts a per-card material strip and Reduced Motion becomes opacity-only', () => {
+  const body = {
+    children: [],
+    appendChild(node) { this.children.push(node); node.parentNode = this; return node; },
+  };
+  const documentRef = {
+    body,
+    createElement(tagName) {
+      return {
+        tagName,
+        dataset: {},
+        style: {},
+        setAttribute() {},
+        animate(frames, options) {
+          this.animation = { frames, options };
+          return { finished: Promise.resolve() };
+        },
+        remove() {},
+      };
+    },
+  };
+  const target = {
+    dataset: { cardId: 'card-order-asset' },
+    getBoundingClientRect() { return { left: 100, top: 30, width: 80, height: 100 }; },
+  };
+  const root = {
+    ownerDocument: documentRef,
+    querySelectorAll(selector) {
+      return selector === '[data-battle-cinematic-order] .grBattleCinematicOrderCard' ? [target] : [];
+    },
+  };
+  assert.equal(pulseBattleCardOrderReceipt({ document: documentRef, setTimeout }, root, null, {
+    cardId: 'card-order-asset',
+    receiptGlowUrl: '/formal/card-order-asset-receipt.webp',
+    reducedMotion: true,
+  }), true);
+  const glow = body.children[0];
+  assert.equal(glow.tagName, 'img');
+  assert.equal(glow.src, '/formal/card-order-asset-receipt.webp');
+  assert.equal(glow.animation.options.duration, 140);
+  assert.deepEqual(glow.animation.frames, [
+    { opacity: 0 },
+    { offset: 0.34, opacity: 0.92 },
+    { opacity: 0 },
+  ]);
 });
 
 

@@ -1,0 +1,31 @@
+{
+  "schema": "gameroad.preaction-authorization.v1",
+  "acquireKey": "NAKI-BATTLE-SHARED-COMPOSE-R1-20260922T0906-SOL",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "NAKI_BATTLE_SHARED_RUNTIME_COMPOSE_R1",
+  "baseCommit": "b22046db339aaeb0e179925bc982afcbc044e67a",
+  "exactMutableResources": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    "data/preaction-authorizations/NAKI-BATTLE-SHARED-COMPOSE-R1-20260922T0906-SOL.json"
+  ],
+  "readOnlyResources": [
+    "browser/naki-battle-magic-motion-core.mjs",
+    "browser/naki-battle-magic-live-adapter.mjs",
+    "browser/battle-cinematic-character-motion-router.mjs",
+    "browser/saasuna-battle-motion-core.mjs",
+    "browser/GAMEROAD.html"
+  ],
+  "intendedChange": "Battle screen uses existing cinematic character motion router, forwards caller-explicit nakiCharacterId, and applies causal timeline to routed presentation-only motion while preserving existing ThreeChar state binding and Saasuna fallback.",
+  "forbidden": [
+    "gameplay",
+    "rules",
+    "save",
+    "network",
+    "board-topology",
+    "formal-art",
+    "assets"
+  ],
+  "rollback": "close/delete unmerged branch or PR; after merge revert exact squash only on demonstrated regression",
+  "unknownMutationPolicy": "fresh-read branch, PR, main and file blobs before any retry"
+}

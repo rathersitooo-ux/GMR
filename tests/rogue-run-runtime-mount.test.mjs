@@ -247,7 +247,7 @@ test('Rogue modal outside dismiss closes once, keeps inside clicks, and consumes
 });
 
 test('Home runtime may reference Rogue code, while current-browser placement remains gated by the Rogue owner', () => {
-  const homeBoot = fs.readFileSync(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
+  const homeBoot = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
   assert.equal((homeBoot.match(/mountRogueRunFromCurrentBrowser/g) || []).length, 2);
   assert.match(homeBoot, /import \{ mountRogueRunFromCurrentBrowser \} from '\.\/rogue-run-runtime-mount\.mjs';/);
   assert.match(homeBoot, /refreshHomeBootPresentation\(\);\s*mountRogueRunFromCurrentBrowser\(\);/);

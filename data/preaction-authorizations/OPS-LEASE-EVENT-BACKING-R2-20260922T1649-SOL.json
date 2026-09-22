@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "OPS-LEASE-EVENT-BACKING-R2-20260922T1649-SOL",
+  "taskId": "OPS-STATE-SYNC-001",
+  "workUnitKey": "CURRENT_ACTIVE_LEASE_EVENT_BACKING_R2",
+  "acquireKey": "OPS-LEASE-EVENT-BACKING-R2-20260922T1649-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R37_DIRECT_ACTIVE_ROW_BYPASS_REPRODUCED_AND_EXISTING_BRIDGE_EVENT_FIRST_PATH",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR2049_FAILCLOSED_FIRST_COMMIT_ORDER_NO_MAIN_MERGE",
+  "proceedToken": "PROCEED|OPS-LEASE-EVENT-BACKING-R2-20260922T1649-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|event-backed-lease-hardening",
+  "authorizationBaseSha": "d10e267ce14b8239104d732decc0b7075cf22932",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-STATE-SYNC-001",
+  "leaseWorkUnitKey": "CURRENT_ACTIVE_LEASE_EVENT_BACKING_R2",
+  "leaseAcquireKey": "OPS-LEASE-EVENT-BACKING-R2-20260922T1649-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-22 16:49 JST",
+  "leaseUntilJst": "2026-09-22 17:49 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "CURRENT_ACTIVE_LEASES schema/guard only; GAMEROAD_現役運用規約_CURRENT direct-write hardening rule; GAMEROAD_CURRENT_ID_REGISTRY_DERIVED; tools/gameroad-current-bridge.py; tests/test_gameroad_current_bridge.py; docs/gameroad-current-bridge.md; own transient PRE_ACTION witness; own fresh branch/PR/check/readback; product/game files READ_ONLY",
+  "scope": [
+    "tools/gameroad-current-bridge.py",
+    "tests/test_gameroad_current_bridge.py"
+  ],
+  "leaseScope": [
+    "tools/gameroad-current-bridge.py",
+    "tests/test_gameroad_current_bridge.py"
+  ]
+}

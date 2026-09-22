@@ -56,6 +56,7 @@ def lease_values(*, acquire=ACQUIRE, until="2026-09-16 20:20 JST", scope=None, r
         "Note": "test",
         "Authority": "CURRENT_ACTIVE_LEASES",
         "DERIVED_NON_AUTHORITY": "PASS",
+        "AcquireEventBacking": bridge.lease_event_backing(acquire),
     }
     return [
         ["CURRENT_ACTIVE_LEASES", "LEASE AUTHORITY"],
@@ -163,12 +164,32 @@ class CurrentBridgeTests(unittest.TestCase):
         self.assertEqual(row[0], ACQUIRE)
         self.assertEqual(row[7], "ACTIVE")
         self.assertIn("browser/example.mjs", row[5])
+        self.assertEqual(len(row), 15)
+        self.assertEqual(row[14], bridge.lease_event_backing(ACQUIRE))
         event = bridge.build_acquire_event(packet(), NOW, until)
         self.assertIn(f"AcquireKey={ACQUIRE}", event)
         self.assertNotIn("GAMEROAD_Drive総合目次", event)
         release = bridge.build_release_event(packet(), NOW, "TEST", "pr:1")
         self.assertIn("EVENT=RELEASE", release)
         self.assertIn("pr:1", release)
+
+    def test_dispatch_rejects_missing_acquire_event_backing_marker(self):
+        values = lease_values()
+        values[-1][-1] = ""
+        with self.assertRaisesRegex(bridge.BridgeError, "lease_event_backing_marker_rejected"):
+            bridge.prepare_dispatch(packet(), values, NOW, MAIN, [])
+
+    def test_dispatch_rejects_marker_without_durable_acquire_event(self):
+        with self.assertRaisesRegex(bridge.BridgeError, "lease_acquire_event_missing"):
+            bridge.prepare_dispatch(packet(), lease_values(), NOW, MAIN, [], "")
+
+    def test_dispatch_accepts_matching_durable_acquire_event(self):
+        event_text = bridge.build_acquire_event(packet(), NOW, NOW + dt.timedelta(minutes=60))
+        p, lease, _ = bridge.prepare_dispatch(
+            packet(), lease_values(), NOW, MAIN, [], event_text
+        )
+        self.assertEqual(p["acquireKey"], ACQUIRE)
+        self.assertEqual(lease["AcquireEventBacking"], bridge.lease_event_backing(ACQUIRE))
 
     def test_current_event_ledger_pointer_is_resolved_from_current_sheet(self):
         self.assertEqual(bridge.current_event_ledger_id(lease_values()), "ledger-id")
@@ -201,7 +222,7 @@ class CurrentBridgeTests(unittest.TestCase):
         path, manifest = bridge.build_adoption_manifest(packet(), lease, 5, NOW, 123)
         self.assertEqual(path, f"data/preaction-authorizations/{manifest['recordId']}.json")
         self.assertEqual(manifest["authorizationBaseSha"], MAIN)
-        self.assertEqual(manifest["leaseSnapshotReadbackRef"], "CURRENT_ACTIVE_LEASES!A5:L5")
+        self.assertEqual(manifest["leaseSnapshotReadbackRef"], "CURRENT_ACTIVE_LEASES!A5:O5")
         self.assertEqual(manifest["scope"], MUTABLE)
         self.assertEqual(manifest["leaseScope"], MUTABLE)
         self.assertIn("browser/example.mjs", manifest["leaseExactMutableResources"])

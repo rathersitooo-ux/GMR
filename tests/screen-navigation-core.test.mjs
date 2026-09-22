@@ -154,6 +154,67 @@ test('accepted forward navigation with active user gesture attempts the exact fo
   }
 });
 
+test('tempSfx=1 routes accepted user navigation through synthesized confirm without constructing the formal Audio asset', () => {
+  const originalAudio = Object.getOwnPropertyDescriptor(globalThis, 'Audio');
+  const originalAudioContext = Object.getOwnPropertyDescriptor(globalThis, 'AudioContext');
+  const originalLocation = Object.getOwnPropertyDescriptor(globalThis, 'location');
+  const restoreNavigator = setUserActivation(true);
+  let formalAudioConstructed = 0;
+  let oscillatorStarts = 0;
+
+  class FakeParam {
+    setValueAtTime() {}
+    exponentialRampToValueAtTime() {}
+  }
+  class FakeOscillator {
+    constructor() { this.frequency = new FakeParam(); this.type = 'sine'; }
+    connect() {}
+    start() { oscillatorStarts += 1; }
+    stop() {}
+  }
+  class FakeGain {
+    constructor() { this.gain = new FakeParam(); }
+    connect() {}
+  }
+  class FakeAudioContext {
+    constructor() {
+      this.currentTime = 1;
+      this.state = 'running';
+      this.destination = {};
+    }
+    createOscillator() { return new FakeOscillator(); }
+    createGain() { return new FakeGain(); }
+  }
+
+  Object.defineProperty(globalThis, 'location', {
+    value: { search: '?tempSfx=1' },
+    configurable: true,
+  });
+  Object.defineProperty(globalThis, 'AudioContext', {
+    value: FakeAudioContext,
+    configurable: true,
+  });
+  globalThis.Audio = class FormalAudioShouldNotRun {
+    constructor() { formalAudioConstructed += 1; }
+    play() { return Promise.resolve(); }
+  };
+
+  try {
+    const decision = resolveScreenNavigation('home', 'setup');
+    assert.equal(decision.ok, true);
+    assert.ok(oscillatorStarts >= 2);
+    assert.equal(formalAudioConstructed, 0);
+  } finally {
+    restoreNavigator();
+    if (originalLocation) Object.defineProperty(globalThis, 'location', originalLocation);
+    else delete globalThis.location;
+    if (originalAudioContext) Object.defineProperty(globalThis, 'AudioContext', originalAudioContext);
+    else delete globalThis.AudioContext;
+    if (originalAudio) Object.defineProperty(globalThis, 'Audio', originalAudio);
+    else delete globalThis.Audio;
+  }
+});
+
 test('accepted programmatic navigation without active user gesture stays silent', () => {
   const originalAudio = globalThis.Audio;
   const restoreNavigator = setUserActivation(false);

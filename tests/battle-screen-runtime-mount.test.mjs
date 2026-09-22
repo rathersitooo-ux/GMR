@@ -155,6 +155,7 @@ const cinematicCharacterGlobal = {
 const runtime = mountBattleScreenExternalSurface(cinematicCharacterGlobal, {
   root,
   viewerParticipantId: 'P1',
+  nakiCharacterId: 'partner.naki',
   cinematicCharacterByParticipant: { P4: 'partner.saasuna' }
 });
 
@@ -556,6 +557,7 @@ assert.equal(runtime.cinematicDuel.dataset.outgoingParticipants, undefined);
 assert.equal(runtime.cinematicDuel.dataset.phase, 'attack');
 assert.equal(runtime.cinematicDuel.dataset.transition, 'ENTRY');
 assert.equal(runtime.cinematicDuel.dataset.saasunaMotionRuntime, 'gameroad.saasuna-battle-motion-core.v1');
+assert.equal(runtime.cinematicDuel.dataset.characterMotionRouterRuntime, 'gameroad.battle-cinematic-character-motion-router.v1');
 assert.equal(runtime.cinematicDuel.dataset.sourceCharacterId, 'partner.naki');
 assert.equal(runtime.cinematicDuel.dataset.targetCharacterId, 'partner.saasuna');
 assert.equal(runtime.cinematicDuel.dataset.vfx, 'provisional-neutral-compressed-shot');
@@ -578,17 +580,28 @@ assert.equal(cinematicVfx.dataset.presentationOnly, 'true');
 assert.equal(cinematicVfx.dataset.vfxKind, 'provisional-neutral-compressed-shot');
 assert.equal(cinematicSides[0].children[0].dataset.visualKind, 'character-runtime');
 assert.equal(cinematicSides[0].children[0].dataset.characterId, 'partner.naki');
+assert.equal(cinematicSides[0].children[0].dataset.battleCinematicMotionRoute, 'naki');
+assert.equal(cinematicSides[0].children[0].dataset.motionVisualKind, 'naki-heart-mic-live-adapter');
+assert.equal(cinematicSides[0].children[0].dataset.provisionalArt, 'true');
 assert.equal(cinematicSides[1].children[0].dataset.visualKind, 'character-runtime');
 assert.equal(cinematicSides[1].children[0].dataset.characterId, 'partner.saasuna');
+assert.equal(cinematicSides[1].children[0].dataset.battleCinematicMotionRoute, 'saasuna');
 assert.equal(cinematicSides[1].children[0].dataset.motionVisualKind, 'provisional-keyframe-sheet');
 assert.equal(cinematicSides[1].children[0].dataset.provisionalArt, 'true');
+const nakiMotionSurface = cinematicSides[0].children[0].children.find(
+  node => node.dataset.role === 'naki-battle-magic-motion'
+);
+assert.ok(nakiMotionSurface);
+assert.equal(cinematicSides[0].children[0].dataset.nakiBattleMotionState, 'IDLE_HEART_MOON');
+assert.equal(cinematicSides[0].children[0].dataset.nakiBattlePrimaryMotif, 'heart');
+assert.equal(cinematicSides[0].children[0].dataset.nakiBattleSpellcasting, 'none');
 const saasunaMotionSurface = cinematicSides[1].children[0].children.find(
   node => node.dataset.role === 'saasuna-battle-motion-surface'
 );
 assert.ok(saasunaMotionSurface);
-assert.equal(saasunaMotionSurface.dataset.motionState, 'HIT_RECOIL');
-assert.equal(saasunaMotionSurface.children[0].dataset.keyframeId, 'wind-cut');
-assert.equal(saasunaMotionSurface.children[3].hidden, false);
+assert.equal(saasunaMotionSurface.dataset.motionState, 'IDLE_GENTLE');
+assert.equal(saasunaMotionSurface.children[0].dataset.keyframeId, 'idle');
+assert.equal(saasunaMotionSurface.children[3].hidden, true);
 assert.equal(cinematicSides[0].children[0].children[0].getAttribute('data-battle-cinematic-character'), '');
 assert.equal(cinematicSides[1].children[0].children[0].getAttribute('data-battle-cinematic-character'), '');
 assert.deepEqual(
@@ -1108,8 +1121,10 @@ assert.deepEqual(BATTLE_SCREEN_RUNTIME.battlePhaseAllowedInputs, ['skip', 'publi
 assert.equal(BATTLE_SCREEN_RUNTIME.cinematicOrderAuthority, 'MODEL_CAUSAL_RETURN_PROCESSING_ORDER_ONLY_NO_SORT_OR_INFERENCE');
 assert.equal(BATTLE_SCREEN_RUNTIME.cinematicOrderVisibleCardIdText, false);
 assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelAuthority, 'MODEL_LANE_ROLE_EXACT_ONE_SOURCE_EXACT_ONE_TARGET_ONLY_NO_INFERENCE');
-assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelArt, 'EXISTING_CHARACTER_RUNTIME_PLUS_PROVISIONAL_SAASUNA_9_KEYFRAME_SHEET_NO_FORMAL_ART');
-assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelReaction, 'EXISTING_CHARACTER_RUNTIME_PLUS_PROVISIONAL_SAASUNA_STATEFUL_REACTION_NO_GAMEPLAY_STATE');
+assert.equal(BATTLE_SCREEN_RUNTIME.cinematicCharacterMotionRouter, 'gameroad.battle-cinematic-character-motion-router.v1');
+assert.equal(BATTLE_SCREEN_RUNTIME.cinematicCharacterMotionIdentityPolicy, 'CALLER_EXPLICIT_NAKI_ID__NO_IDENTITY_INFERENCE');
+assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelArt, 'EXISTING_CHARACTER_RUNTIME_PLUS_NAKI_HEART_MIC_ROUTER_PLUS_PROVISIONAL_SAASUNA_NO_FORMAL_ART');
+assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelReaction, 'EXISTING_CHARACTER_MOTION_ROUTER_STATEFUL_REACTION_NO_GAMEPLAY_STATE');
 assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelVfx, 'PROVISIONAL_ICE_WIND_IMPACT_LAYERS_PLUS_EXISTING_NEUTRAL_SHOT_NO_FORMAL_ART');
 assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelHandoff, 'ACCEPTED_CONVEYOR_TRANSITION_PLUS_CONSECUTIVE_ACCEPTED_PAIR_CONTINUITY_NO_ORDER_INFERENCE');
 assert.equal(BATTLE_SCREEN_RUNTIME.saasunaBattleMotion, 'PRESENTATION_ONLY_9_KEYFRAME_SHEET_PLUS_CSS_TIMELINE_NO_GAMEPLAY_AUTHORITY');

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "SAASUNA-MODE-TUNING-R2-20260922T2339-SOL",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "SAASUNA_MODE_VISIBLE_TUNING_PROVIDER_R2",
+  "acquireKey": "SAASUNA-MODE-TUNING-R2-20260922T2339-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_CURRENT_SCOPE_UNION_READBACK_20260922T2339JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_PROVIDER_DIFF_PLUS_REQUIRED_GATE_PACKAGE_PROVENANCE_FAILURE_EXACT",
+  "proceedToken": "PROCEED|SAASUNA-MODE-TUNING-R2-20260922T2339-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|saasuna-visible-tuning-provider-r2|partner-conversation|active-lease",
+  "authorizationBaseSha": "c1461f7d9648821d47aa7998c8939e63ac6065b4",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "SAASUNA_MODE_VISIBLE_TUNING_PROVIDER_R2",
+  "leaseAcquireKey": "SAASUNA-MODE-TUNING-R2-20260922T2339-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-22 23:39 JST",
+  "leaseUntilJst": "2026-09-23 00:26 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "browser/board-facility-runtime-mount.mjs; tests/board-facility-runtime-mount.test.mjs; deploy/cloudflare/tests/build.test.mjs exact board-facility-runtime-mount blob contract; own preaction authorization manifest; own branch sol/saasuna-mode-tuning-r1-20260922 and PR#2059/check/readback; CURRENT_ACTIVE_LEASES own row",
+  "solutionSignature": "SAASUNA_VISIBLE_TUNING_PROVIDER_WITH_PUBLIC_PROVENANCE_V2",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R1_EXISTING_CHARACTERS_CONVERSATION_AND_REQUIRED_GATE_EXACT_PROVENANCE",
+  "solutionSearchEvidence": [
+    "Existing Characters Saasuna conversation surface and partner-conversation-core are reused; no second AI surface is created.",
+    "R1 established the exact provider gap: approved personaGuidance and bounded sessionContext were dropped by the Convai edge transport.",
+    "Existing dialogue feedback/candidate-only mechanisms remain the feedback authority and are not replaced.",
+    "Required Gate identified the exact public-package provenance contract for browser/board-facility-runtime-mount.mjs; this R2 scope includes only that required blob identity update.",
+    "Battle decision authority is not invented; Battle state remains fail-closed outside this slice."
+  ],
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

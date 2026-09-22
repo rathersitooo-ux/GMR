@@ -9,8 +9,6 @@ on:
       - 'docs/gameroad-current-bridge.md'
       - '.github/workflows/gameroad-required-gate.yml'
   workflow_dispatch:
-  schedule:
-    - cron: '7,17,27,37,47,57 * * * *'
 
 permissions:
   contents: read
@@ -33,7 +31,7 @@ jobs:
         run: python -m unittest tests/test_gameroad_current_bridge.py -v
 
   pc-bridge:
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: [self-hosted, Windows, X64]
     timeout-minutes: 15
     steps:

@@ -20,7 +20,7 @@
   "leaseSnapshotReadbackAtJst": "2026-09-22 20:36 JST",
   "leaseUntilJst": "2026-09-22 21:36 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
-  "leaseExactMutableResources": "browser/home-boot-runtime-base-r3.mjs; browser/cards-deck-presentation-core.mjs; browser/cards-deck-presentation.mjs; tests/home-boot-runtime-base-r3.test.mjs; tests/cards-deck-presentation-core.test.mjs; tests/cards-deck-presentation.test.mjs; GAMEROAD 全作業一覧!Y2:AB2; own transient data/preaction-authorizations/DECK-QUICK-ACCESS-LANDING-R1-20260922T2036-SOL.json; own fresh branch sol/deck-quick-access-landing-r1-20260922; own PR/check/merge/readback; CURRENT_ACTIVE_LEASES own row; R24 append-only events. browser/GAMEROAD.html READ_ONLY; deck save/rule authority and gameplay/save/economy/network/formal assets otherwise READ_ONLY.",
+  "leaseExactMutableResources": "browser/home-boot-runtime-base-r3.mjs; browser/cards-deck-presentation-core.mjs; browser/cards-deck-presentation.mjs; browser/GAMEROAD.html (minimal existing deck-library bridge only); tests/home-boot-runtime-base-r3.test.mjs; tests/cards-deck-presentation-core.test.mjs; tests/cards-deck-presentation.test.mjs; GAMEROAD 全作業一覧!Y2:AB2; own transient data/preaction-authorizations/DECK-QUICK-ACCESS-LANDING-R1-20260922T2036-SOL.json; own fresh branch sol/deck-quick-access-landing-r1-20260922; own PR/check/merge/readback; CURRENT_ACTIVE_LEASES own row; R24 append-only events. deck save/rule authority and gameplay/save/economy/network/formal assets otherwise READ_ONLY.",
   "solutionSignature": "EXISTING_12_DECK_LIBRARY_PLUS_QUICK_REF_REGISTRY_PLUS_EXISTING_SLIDEPAD_SLOT_ROLL_V1",
   "reuseDisposition": "COMPOSE",
   "solutionSearchStatus": "PASS",
@@ -30,12 +30,14 @@
     "Current cards-deck-presentation-core already has a read-only Setup Quick Deck projection restricted to identities 1..3.",
     "Current Home runtime already imports and uses slidepad-slot-roll-core for cyclic drag selection and explicit cancel behavior.",
     "Quick Deck persistence will store only unique existing deck-slot references, max three, never deck contents.",
-    "Cards landing will select by invoking the existing deckSlotPicker control so current dirty-state and selected-deck authority remain in force."
+    "Cards landing will select by invoking the existing deckSlotPicker control so current dirty-state and selected-deck authority remain in force.",
+    "A minimal bridge in current browser/GAMEROAD.html is required so Home/runtime consumers call the existing private selectDeckIndex authority rather than duplicating state mutation."
   ],
   "scope": [
     "browser/home-boot-runtime-base-r3.mjs",
     "browser/cards-deck-presentation-core.mjs",
     "browser/cards-deck-presentation.mjs",
+    "browser/GAMEROAD.html",
     "tests/home-boot-runtime-base-r3.test.mjs",
     "tests/cards-deck-presentation-core.test.mjs",
     "tests/cards-deck-presentation.test.mjs"
@@ -44,6 +46,7 @@
     "browser/home-boot-runtime-base-r3.mjs",
     "browser/cards-deck-presentation-core.mjs",
     "browser/cards-deck-presentation.mjs",
+    "browser/GAMEROAD.html",
     "tests/home-boot-runtime-base-r3.test.mjs",
     "tests/cards-deck-presentation-core.test.mjs",
     "tests/cards-deck-presentation.test.mjs"

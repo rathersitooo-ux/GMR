@@ -8,6 +8,7 @@ import {
   battleReplayContentVersion,
   battleReplayRulesVersion,
   createBattleReplayCardPresentationBridge,
+  createBattleReplayNakiLivePresentationBridge,
   createBattleReplayVersionAuthority,
   createLiveReplaySession,
   createPartnerBattleEventLogPresentationBridge,
@@ -1184,4 +1185,138 @@ test('Battle details drawer safe dismiss consumes outside/Escape, preserves insi
   assert.equal(first.presentationOnly, true);
   assert.equal(first.gameplayAuthority, false);
   assert.equal(first.gameStateWrite, false);
+});
+
+
+test('Naki live Battle bridge maps actual Battle stages onto the existing exact-identity motion adapter', () => {
+  const effect = { dataset: { role: 'naki-battle-magic-motion' } };
+  const characterRoot = { dataset: {} };
+  const host = {
+    dataset: { characterId: 'partner.naki' },
+    querySelector(selector) {
+      if (selector === '.grtc-root') return characterRoot;
+      if (selector === '[data-role="naki-battle-magic-motion"]') return effect;
+      return null;
+    }
+  };
+  const surface = { dataset: { stage: 'focus' }, hidden: false };
+  const document = {
+    getElementById(id) {
+      if (id === 'battlePhaseNaki') return host;
+      if (id === 'battlePhaseSurface') return surface;
+      if (id === 'reduceMotion' || id === 'lowPerf') return { textContent: 'OFF' };
+      return null;
+    }
+  };
+  const causal = [];
+  let destroyed = 0;
+  let created = 0;
+  const bridge = createBattleReplayNakiLivePresentationBridge({
+    document,
+    MutationObserver: null,
+    matchMedia: () => ({ matches: false }),
+    nakiCharacterId: 'partner.naki',
+    createNakiAdapter(input) {
+      created += 1;
+      assert.equal(input.characterId, 'partner.naki');
+      assert.equal(input.nakiCharacterId, 'partner.naki');
+      assert.equal(input.role, 'source');
+      assert.equal(input.phase, 'attack');
+      assert.equal(input.motion, 'normal');
+      return {
+        applyCausalPhase(value) { causal.push(value); return value; },
+        snapshot() { return { state: causal.at(-1)?.causalPhase ?? null }; },
+        destroy() { destroyed += 1; }
+      };
+    }
+  });
+
+  const started = bridge.begin('M-NAKI-LIVE');
+  assert.equal(created, 1);
+  assert.equal(started.live, true);
+  assert.equal(host.dataset.battleReplayNakiLive, 'true');
+  assert.equal(host.dataset.battleReplayNakiMatchId, 'M-NAKI-LIVE');
+  assert.equal(host.dataset.battleReplayNakiCausalPhase, 'anticipation');
+  assert.equal(causal.at(-1).causalPhase, 'anticipation');
+
+  surface.dataset.stage = 'read';
+  bridge.sync();
+  assert.equal(host.dataset.battleReplayNakiCausalPhase, 'release');
+  assert.equal(causal.at(-1).causalPhase, 'release');
+
+  surface.dataset.stage = 'compare';
+  bridge.sync();
+  assert.equal(host.dataset.battleReplayNakiCausalPhase, 'impact');
+  assert.equal(causal.at(-1).causalPhase, 'impact');
+
+  surface.dataset.stage = 'winner';
+  bridge.sync();
+  assert.equal(host.dataset.battleReplayNakiCausalPhase, 'return');
+  assert.equal(causal.at(-1).causalPhase, 'return');
+
+  host.dataset.characterId = 'partner.saasuna';
+  const cleared = bridge.sync();
+  assert.equal(destroyed, 1);
+  assert.equal(cleared.live, false);
+  assert.equal(host.dataset.battleReplayNakiLive, undefined);
+  assert.equal(host.dataset.battleReplayNakiCausalPhase, undefined);
+});
+
+test('Naki live Battle bridge fails closed without caller-explicit Naki identity', () => {
+  let adapterCalls = 0;
+  const host = {
+    dataset: { characterId: 'partner.naki' },
+    querySelector() { return null; }
+  };
+  const surface = { dataset: { stage: 'focus' }, hidden: false };
+  const bridge = createBattleReplayNakiLivePresentationBridge({
+    document: {
+      getElementById(id) {
+        if (id === 'battlePhaseNaki') return host;
+        if (id === 'battlePhaseSurface') return surface;
+        return null;
+      }
+    },
+    MutationObserver: null,
+    createNakiAdapter() {
+      adapterCalls += 1;
+      return {};
+    }
+  });
+  const result = bridge.begin('M-NAKI-NO-IDENTITY');
+  assert.equal(adapterCalls, 0);
+  assert.equal(result.live, false);
+  assert.equal(host.dataset.battleReplayNakiLive, undefined);
+});
+
+test('live replay session begins Naki presentation bridge without giving it gameplay authority', () => {
+  const calls = [];
+  const session = createLiveReplaySession(
+    { matchId: 'M-NAKI-SESSION', versions },
+    {
+      presentationBridge: null,
+      partnerBattleEventLogBridge: null,
+      nakiBattlePresentationBridge: {
+        begin(matchId) { calls.push(matchId); }
+      }
+    }
+  );
+  assert.equal(session.matchId, 'M-NAKI-SESSION');
+  assert.deepEqual(calls, ['M-NAKI-SESSION']);
+  assert.equal(BATTLE_REPLAY_LIVE_ADAPTER.nakiBattleLivePresentation.actualDomSurface, 'battlePhaseNaki');
+  assert.equal(BATTLE_REPLAY_LIVE_ADAPTER.nakiBattleLivePresentation.exactCharacterId, 'partner.naki');
+  assert.equal(BATTLE_REPLAY_LIVE_ADAPTER.nakiBattleLivePresentation.identityPolicy, 'CALLER_EXPLICIT_EXACT_CHARACTER_ID_MATCH_ONLY');
+  assert.equal(BATTLE_REPLAY_LIVE_ADAPTER.nakiBattleLivePresentation.presentationOnly, true);
+  assert.equal(BATTLE_REPLAY_LIVE_ADAPTER.nakiBattleLivePresentation.gameplayAuthority, false);
+  assert.equal(BATTLE_REPLAY_LIVE_ADAPTER.nakiBattleLivePresentation.boardAuthority, false);
+  assert.equal(BATTLE_REPLAY_LIVE_ADAPTER.nakiBattleLivePresentation.saveAuthority, false);
+  assert.equal(BATTLE_REPLAY_LIVE_ADAPTER.nakiBattleLivePresentation.networkAuthority, false);
+  assert.deepEqual(BATTLE_REPLAY_LIVE_ADAPTER.nakiBattleLivePresentation.stageToCausalPhase, {
+    focus: 'anticipation',
+    reveal: 'anticipation',
+    read: 'release',
+    compare: 'impact',
+    winner: 'return',
+    settle: 'return'
+  });
 });

@@ -160,7 +160,7 @@ class CurrentBridgeTests(unittest.TestCase):
     def test_lease_row_and_events_are_bounded_and_do_not_mirror_current(self):
         until = NOW + dt.timedelta(minutes=60)
         row = bridge.build_lease_row(packet(), NOW, until)
-        self.assertEqual(len(row), 14)
+        self.assertEqual(len(row), 15)
         self.assertEqual(row[0], ACQUIRE)
         self.assertEqual(row[7], "ACTIVE")
         self.assertIn("browser/example.mjs", row[5])

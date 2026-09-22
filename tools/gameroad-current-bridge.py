@@ -27,7 +27,7 @@ from typing import Any, Iterable
 
 ROOT_DOC_ID = "14CYoFblBecfUqrnFKfdWayHsi8cnAbsrfFzNxZ0OvkY"
 LEASE_SPREADSHEET_ID = "1QKCll_T9ej6K96fRkRUESCAIYVGbsCYZILGIWMUdm2Y"
-LEASE_RANGE = "'CURRENT_ACTIVE_LEASES'!A1:N200"
+LEASE_RANGE = "'CURRENT_ACTIVE_LEASES'!A1:O200"
 DEFAULT_REPOSITORY = "rathersitooo-ux/GMR"
 JST = dt.timezone(dt.timedelta(hours=9))
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
@@ -78,6 +78,7 @@ LEASE_COLUMNS = [
     "Note",
     "Authority",
     "DERIVED_NON_AUTHORITY",
+    "AcquireEventBacking",
 ]
 
 
@@ -202,6 +203,8 @@ def resolve_live_lease_row(
         raise BridgeError("lease_authority_rejected")
     if lease.get("DERIVED_NON_AUTHORITY") and lease.get("DERIVED_NON_AUTHORITY") != "PASS":
         raise BridgeError("lease_derived_guard_rejected")
+    if lease.get("AcquireEventBacking") != lease_event_backing(acquire_key):
+        raise BridgeError("lease_event_backing_marker_rejected")
     return row, lease
 
 
@@ -220,6 +223,8 @@ def resolve_owned_lease_row(
         raise BridgeError("lease_authority_rejected")
     if lease.get("DERIVED_NON_AUTHORITY") and lease.get("DERIVED_NON_AUTHORITY") != "PASS":
         raise BridgeError("lease_derived_guard_rejected")
+    if lease.get("AcquireEventBacking") != lease_event_backing(acquire_key):
+        raise BridgeError("lease_event_backing_marker_rejected")
     return row, lease
 
 
@@ -284,6 +289,28 @@ def acquire_key_seen(event_text: str, acquire_key: str) -> bool:
     return f"AcquireKey={acquire_key}]" in event_text or f"AcquireKey={acquire_key}\n" in event_text
 
 
+
+def acquire_event_seen(event_text: str, acquire_key: str) -> bool:
+    pattern = (
+        r"\[STATE_MODEL_V1\]\[EVENT=ACQUIRE\][^\n]*"
+        + re.escape(f"[AcquireKey={acquire_key}]")
+    )
+    return re.search(pattern, event_text or "") is not None
+
+
+def lease_event_backing(acquire_key: str) -> str:
+    return f"R24_ACQUIRE_PRESENT:{acquire_key}"
+
+
+def verify_lease_event_backing(lease: dict[str, str], event_text: str) -> None:
+    acquire_key = lease.get("AcquireKey", "")
+    if not acquire_key:
+        raise BridgeError("lease_acquire_key_missing")
+    if lease.get("AcquireEventBacking") != lease_event_backing(acquire_key):
+        raise BridgeError("lease_event_backing_marker_rejected")
+    if not acquire_event_seen(event_text, acquire_key):
+        raise BridgeError("lease_acquire_event_missing")
+
 def prepare_acquire(
     packet: dict[str, Any],
     lease_values: list[list[Any]],
@@ -310,9 +337,12 @@ def prepare_dispatch(
     now: dt.datetime,
     main_sha: str,
     existing_items: Iterable[dict[str, Any]],
+    event_text: str | None = None,
 ) -> tuple[dict[str, Any], dict[str, str], int | None]:
     packet = validate_packet(dict(packet))
     _, lease = resolve_live_lease_row(parse_lease_table_rows(lease_values), packet["acquireKey"], now)
+    if event_text is not None:
+        verify_lease_event_backing(lease, event_text)
     verify_packet_against_lease(packet, lease)
     verify_main_sha(packet, main_sha)
     return packet, lease, duplicate_issue(existing_items, packet["acquireKey"])
@@ -349,6 +379,7 @@ def build_lease_row(
         "One bounded packet only; fresh CURRENT before dispatch/adoption/release; no CURRENT mirror; no gate weakening.",
         LEASE_AUTHORITY,
         "PASS",
+        lease_event_backing(packet["acquireKey"]),
     ]
 
 
@@ -612,7 +643,7 @@ def _append_event(current: dict[str, Any], text: str) -> None:
 def _write_lease_row(current: dict[str, Any], row_number: int, row: list[str]) -> None:
     if len(row) != len(LEASE_COLUMNS):
         raise BridgeError("lease_row_width")
-    range_name = f"'CURRENT_ACTIVE_LEASES'!A{row_number}:N{row_number}"
+    range_name = f"'CURRENT_ACTIVE_LEASES'!A{row_number}:O{row_number}"
     try:
         (
             current["sheets"]
@@ -642,7 +673,7 @@ def _write_lease_row(current: dict[str, Any], row_number: int, row: list[str]) -
 
 
 def _clear_lease_row(current: dict[str, Any], row_number: int) -> None:
-    range_name = f"'CURRENT_ACTIVE_LEASES'!A{row_number}:N{row_number}"
+    range_name = f"'CURRENT_ACTIVE_LEASES'!A{row_number}:O{row_number}"
     try:
         (
             current["sheets"]
@@ -685,6 +716,7 @@ def renew_lease_if_needed(
     lease: dict[str, str],
     now: dt.datetime,
 ) -> tuple[dict[str, Any], int, dict[str, str]]:
+    verify_lease_event_backing(lease, current["ledgerText"])
     until = parse_jst(lease["LeaseUntilJST"])
     if until - now.astimezone(JST) >= dt.timedelta(minutes=RENEW_BELOW_MINUTES):
         return current, row_number, lease
@@ -711,7 +743,12 @@ def ensure_executor_issue(
     items: list[dict[str, Any]],
 ) -> int:
     packet, _, duplicate = prepare_dispatch(
-        packet, current["leaseValues"], dt.datetime.now(tz=JST), main_sha, items
+        packet,
+        current["leaseValues"],
+        dt.datetime.now(tz=JST),
+        main_sha,
+        items,
+        current["ledgerText"],
     )
     if duplicate is not None:
         return duplicate
@@ -1037,6 +1074,7 @@ def release_lease(
     row_number, lease = resolve_owned_lease_row(
         parse_lease_table_rows(current["leaseValues"]), packet["acquireKey"]
     )
+    verify_lease_event_backing(lease, current["ledgerText"])
     verify_packet_against_lease(packet, lease)
     _clear_lease_row(current, row_number)
     after_clear = _google_current_read()
@@ -1164,6 +1202,7 @@ def supervise(packet_path: pathlib.Path, repository: str, token: str) -> dict[st
     row_number, lease = resolve_live_lease_row(
         parse_lease_table_rows(current["leaseValues"]), packet["acquireKey"], fresh_now
     )
+    verify_lease_event_backing(lease, current["ledgerText"])
     verify_packet_against_lease(packet, lease)
     main_sha, items = _github_context(repository, token, packet["acquireKey"])
     verify_main_sha(packet, main_sha)

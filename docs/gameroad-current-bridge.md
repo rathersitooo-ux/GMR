@@ -12,7 +12,7 @@ Windows PC を常駐実行面として使い、非公開 Google Drive の CURREN
 2. private Drive の CURRENT root、current event ledger pointer、`CURRENT_ACTIVE_LEASES` を fresh read する。
 3. packet の `AcquireKey` が未使用で、current main が `baseRef` と一致し、他の有効 lease と exact mutable resources が競合しないことを確認する。
 4. current event ledger へ ACQUIRE を strict revision 付きで先に追記する。
-5. `CURRENT_ACTIVE_LEASES` の空き行へ自分の lease を書き、同じ行を readback して完全一致を確認する。
+5. `CURRENT_ACTIVE_LEASES` の空き行へ自分の lease を書く。行には `AcquireEventBacking=R24_ACQUIRE_PRESENT:<AcquireKey>` を必須で持たせ、同じ行を readback して完全一致を確認する。ACTIVE行を利用する前はmarker一致だけでなく、current R24本文に同じAcquireKeyの `EVENT=ACQUIRE` が実在することも確認する。
 6. owner本人のローカル GitHub token で既存 `[EXECUTOR]` Issue を1件だけ作る。既存 Issue marker があれば再送しない。
 7. 既存 `GAMEROAD Executor Bus` が `FREE_LOCAL_CODER` を使い、bounded candidate、focused test、draft PR を返す。
 8. PC bridge は返却された `executor-result` の TaskID / WorkUnitKey / AcquireKey / candidate PR / commit を照合する。
@@ -93,6 +93,8 @@ repo owner本人の fine-grained token をPCだけに保存し、runnerサービ
 - AcquireKey再利用
 - active leaseの同一path競合
 - lease row write / clear のreadback不一致
+- ACTIVE lease の `AcquireEventBacking` 欠落・AcquireKey不一致
+- current R24 に対応する `EVENT=ACQUIRE` が存在しないACTIVE lease
 - TaskID / WorkUnitKey / AcquireKey / scope不一致
 - main SHA移動
 - control-plane pathを候補packetで変更しようとする

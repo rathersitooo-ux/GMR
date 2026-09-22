@@ -815,6 +815,7 @@ function applyCinematicTimelinePhaseToCharacters(global, active, entry) {
     }
   }
   for (const binding of active.motionBindings ?? []) {
+    if (binding.causalTimelineEnabled === false) continue;
     if (typeof binding.controller?.applyCausalPhase !== 'function') continue;
     try {
       binding.controller.applyCausalPhase({
@@ -886,7 +887,8 @@ function mountCinematicDuelCharacter(global, scene, view, characterId, role, mot
         host: view.figure,
         role,
         actionPhase: motionContext?.phase === 'ability' ? 'ability' : 'attack',
-        transition: motionContext?.transition
+        transition: motionContext?.transition,
+        causalTimelineEnabled: motionContext?.motionState == null
       });
       setData(
         view.figure,

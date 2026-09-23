@@ -121,3 +121,19 @@ FREE_LOCAL_CODER のdraft PRを直接mergeしない。candidateを fresh CURRENT
 実機合格は最低でも次の1件を完走して確認する。
 
 `private CURRENT fresh read → event-first acquire → lease write/readback → Executor dispatch → FREE_LOCAL_CODER returned candidate → fresh pre-adoption CURRENT → PRE_ACTION adoption PR → existing Required Gate/auto-merge → main readback → lease clear/readback → RELEASE → final readback`
+
+## Windows GUI補完lane
+
+Desktop Commanderは外さず、既存のself-hosted Windows runnerとCURRENT Bridgeへ、限定されたGUI操作laneを併設する。
+PC側は `sbroenne/mcp-windows` の `wincli` v1.3.24 を固定版として使い、取得物のSHA-256を照合してから利用する。
+
+GitHub Issueはrepo owner本人が作成した `[WINDOWS-GUI]` 要求だけを受け付ける。
+要求は `gameroad-windows-gui-v1` のJSON argvで表現し、初期版はwindow/UI/clipboard/keyboard/mouseの限定操作だけを許可する。
+任意のコマンド実行や広いOS変更はこのlaneの対象外とする。
+
+結果は同じIssueへbounded commentとして返す。送信成功と対象アプリ上の目的達成は分け、必要なら次のread/snapshotで状態を確認する。
+
+最初の実機acceptanceはwindow一覧を取得し、self-hosted runnerからinteractive desktopが見えるかを確認する。
+Windowsサービスのsession境界で見えない場合は、このlaneを完成扱いせず、既存のinteractive Scheduled Taskへの最小handoffを検討する。
+
+このlaneは既存CURRENT Bridgeの補完であり、第二CURRENT、第二task table、第二executor busは作らない。

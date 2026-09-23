@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CHARBOARD-NAKI-RUN-R3-20260923T1529-SOL",
+  "taskId": "CHARACTER-BOARD-RUNTIME-SELECT-CUTIN-001",
+  "workUnitKey": "BOARD_CONTROLLED_CHARACTER_RUNTIME_STATE_BRIDGE_R3",
+  "acquireKey": "CHARBOARD-NAKI-RUN-R3-20260923T1529-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_6e5f0be_VALID_R3_LEASE_AND_PR2065_PROVENANCE_FAILURE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR2064_DONOR_29_OF_29_PLUS_PR2065_PREACTION_NODE_PASS_AND_EXACT_PROVENANCE_ASSERTION",
+  "proceedToken": "PROCEED|CHARBOARD-NAKI-RUN-R3-20260923T1529-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|board-controlled-character-runtime-state|presentation-only|provenance-scope-r3",
+  "authorizationBaseSha": "6e5f0be066c3aae062fbd36557e8f0ff30d7f23c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "CHARACTER-BOARD-RUNTIME-SELECT-CUTIN-001",
+  "leaseWorkUnitKey": "BOARD_CONTROLLED_CHARACTER_RUNTIME_STATE_BRIDGE_R3",
+  "leaseAcquireKey": "CHARBOARD-NAKI-RUN-R3-20260923T1529-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-23 15:29 JST",
+  "leaseUntilJst": "2026-09-23 16:29 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "data/preaction-authorizations/CHARBOARD-NAKI-RUN-R3-20260923T1529-SOL.json; browser/battle-board-naki-4p-visual-binding.mjs; tests/battle-board-naki-4p-visual-binding.test.mjs; deploy/cloudflare/tests/build.test.mjs; branch sol/board-controlled-character-runtime-state-r3-20260923; future PR for this branch; own CURRENT_ACTIVE_LEASES row; R24 events",
+  "scope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "readOnly": [
+    "browser/battle-controlled-character-motion-core.mjs",
+    "browser/battle-controlled-character-4p-motion-director.mjs",
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "board gameplay/109 position/collision/save/network",
+    "PR#2064/#2065 donor evidence"
+  ],
+  "reason": "R3 preserves the proven Naki move bridge and adds only the exact Cloudflare build provenance test required by #2065 Required Gate so the dependency blob witness follows the changed runtime source."
+}

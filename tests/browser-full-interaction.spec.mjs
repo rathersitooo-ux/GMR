@@ -1093,14 +1093,10 @@ test('covers the current visible Saasuna partner conversation product surface', 
   const conversation = characters.locator('.grPartnerConversation[data-gr-partner-conversation="1"]');
   await expect(conversation).toBeVisible();
   await expect(characters.locator('#charName')).toHaveText('サースナー');
-  await expect(conversation).toHaveAttribute('data-static-visual', '0');
+  await expect(conversation).toHaveAttribute('data-static-visual', '1');
   await expect(conversation).toHaveAttribute('data-animatable', '0');
   await expect(conversation).toHaveAttribute('data-character-production-owned-here', '0');
-  await expect(conversation).toHaveAttribute('data-visual-set', 'formal-nine-pose');
-  await expect(conversation).toHaveAttribute('data-saasuna-pose', 'idle');
-  const visual = conversation.locator('.grPartnerStaticVisual');
-  await expect(visual).toHaveAttribute('data-asset-file', 'GAMEROAD_SAASUNA_NAV_05_IDLE_GENTLE_TRANSPARENT_20260915.png');
-  await expect(visual).toHaveAttribute('src', /GAMEROAD_SAASUNA_NAV_05_IDLE_GENTLE_TRANSPARENT_20260915\.png$/);
+  await expect(conversation.locator('.grPartnerStaticVisual')).toHaveAttribute('src', '/ws?partnerOp=visual');
   await expect(conversation.locator('.grPartnerConversationInput')).toBeVisible();
   await expect(conversation.locator('.grPartnerConversationSend')).toBeEnabled();
   await expect(characters.locator('.charRoleTab')).toHaveCount(0);
@@ -1110,18 +1106,14 @@ test('covers the current visible Saasuna partner conversation product surface', 
       partnerId: mounted.partnerId,
       pickerRequired: mounted.pickerRequired,
       staticVisual: mounted.staticVisual,
-      poseSwappable: mounted.poseSwappable,
-      visualSet: mounted.visualSet,
       animatable: mounted.animatable,
       characterProductionOwnedHere: mounted.characterProductionOwnedHere,
     } : null;
   });
   expect(product).toEqual({
     partnerId: 'partner.saasuna',
-    pickerRequired: true,
-    staticVisual: false,
-    poseSwappable: true,
-    visualSet: 'formal-nine-pose',
+    pickerRequired: false,
+    staticVisual: true,
     animatable: false,
     characterProductionOwnedHere: false,
   });

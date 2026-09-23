@@ -1,0 +1,36 @@
+name: Temporary Gacha Astral Ritual R1
+
+on:
+  push:
+    branches:
+      - sol/gacha-astral-ritual-r1-20260923
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply exact current HTML integration
+        run: python tools/temp-gacha-astral-ritual-r1.py
+      - name: Run focused presentation tests
+        run: node --test tests/gacha-opening-ritual.test.mjs tests/gacha-presentation-core.test.mjs
+      - name: Guard intended integration
+        run: |
+          grep -F "import('./gacha-opening-ritual.mjs')" browser/GAMEROAD.html
+          grep -F "flags.reducedMotion||flags.lowPerf" browser/GAMEROAD.html
+          grep -F "decorateCurrentGachaPreview()" browser/GAMEROAD.html
+          git diff --check
+      - name: Commit exact HTML delta
+        run: |
+          git config user.name "gameroad-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add browser/GAMEROAD.html
+          git commit -m "feat: integrate interactive gacha ritual into current preview"
+          git push origin "HEAD:$GITHUB_REF_NAME"

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GACHA-ASTRAL-RITUAL-R1-20260923T1403-SOL",
+  "taskId": "GACHA-OPENING-RITUAL-GAMEFEEL-001",
+  "workUnitKey": "GACHA_ASTRAL_REFERENCE_RITUAL_ADAPTATION_R1",
+  "acquireKey": "GACHA-ASTRAL-RITUAL-R1-20260923T1403-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "DIRECT_ARTIFACT_ACTUAL_PLUS_FRESH_MAIN_OWNER_FREE_20260923T1403JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CLAUDE_ARTIFACT_ASTRAL_SUMMON_DIRECT_CDP_SELENIUM_CAPTURE_20260923",
+  "proceedToken": "PROCEED|GACHA-ASTRAL-RITUAL-R1-20260923T1403-SOL|BRANCH_IMPLEMENTATION_ONLY|MATERIAL_STANDARD|gacha-opening-ritual|presentation-only|merge-blocked-by-overlap",
+  "authorizationBaseSha": "6e5f0be066c3aae062fbd36557e8f0ff30d7f23c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "OWNER_FREE_NO_VALID_ACTIVE_LEASE",
+  "leaseTaskId": "GACHA-OPENING-RITUAL-GAMEFEEL-001",
+  "leaseWorkUnitKey": "GACHA_ASTRAL_REFERENCE_RITUAL_ADAPTATION_R1",
+  "leaseAcquireKey": "GACHA-ASTRAL-RITUAL-R1-20260923T1403-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-23 14:03 JST",
+  "leaseUntilJst": null,
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1:Z15",
+  "leaseExactMutableResources": "Branch sol/gacha-astral-ritual-r1-20260923 only; browser/gacha-opening-ritual.mjs; tests/gacha-opening-ritual.test.mjs; browser/GAMEROAD.html; own preaction manifest. No main write. No build.mjs. No ownership/save/economy/rates/result generation mutation.",
+  "solutionSignature": "GACHA_INTERACTIVE_RITUAL_AND_STAGED_REVEAL_V1",
+  "reuseDisposition": "ADAPT_ABSTRACT_INTERACTION_NOT_EXTERNAL_ART_ASSET",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "ASTRAL_SUMMON_ACTUAL_OBSERVED_AND_CURRENT_GACHA_USE_SITE_INSPECTED",
+  "solutionSearchEvidence": [
+    "Direct browser observation confirmed layered circle, tap-to-break orb, progress gauge, escalating rarity color, peak burst, staged card backs, bulk reveal, and individual rare cut-in.",
+    "No external image/audio/video/HTML/CSS bytes are copied into GAMEROAD; only interaction timing and generic game-feel structures are adapted.",
+    "Current gacha remains preview-only: result generation, rates, ownership, save, currency and purchase semantics are unchanged.",
+    "Current gacha-presentation-core already requires immutable caller-supplied results, single skip, reduced-motion and low-performance fallback.",
+    "Open PR #2058 also changes browser/GAMEROAD.html; this branch may implement/test but must not merge until overlap is reconciled against a fresh base."
+  ],
+  "scope": [
+    "browser/gacha-opening-ritual.mjs",
+    "tests/gacha-opening-ritual.test.mjs",
+    "browser/GAMEROAD.html"
+  ],
+  "leaseScope": [
+    "browser/gacha-opening-ritual.mjs",
+    "tests/gacha-opening-ritual.test.mjs",
+    "browser/GAMEROAD.html"
+  ]
+}

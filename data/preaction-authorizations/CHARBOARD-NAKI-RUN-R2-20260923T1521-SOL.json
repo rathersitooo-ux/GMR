@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CHARBOARD-NAKI-RUN-R2-20260923T1521-SOL",
+  "taskId": "CHARACTER-BOARD-RUNTIME-SELECT-CUTIN-001",
+  "workUnitKey": "BOARD_CONTROLLED_CHARACTER_RUNTIME_STATE_BRIDGE_R2",
+  "acquireKey": "CHARBOARD-NAKI-RUN-R2-20260923T1521-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_6e5f0be_AND_VALID_LEASE_ROW5_20260923T1521JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR2064_DONOR_LOCAL_FOCUSED_29_OF_29_PLUS_CURRENT_NAKI_MOVE_MAPPING",
+  "proceedToken": "PROCEED|CHARBOARD-NAKI-RUN-R2-20260923T1521-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|board-controlled-character-runtime-state|presentation-only|valid-lease-readback",
+  "authorizationBaseSha": "6e5f0be066c3aae062fbd36557e8f0ff30d7f23c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "CHARACTER-BOARD-RUNTIME-SELECT-CUTIN-001",
+  "leaseWorkUnitKey": "BOARD_CONTROLLED_CHARACTER_RUNTIME_STATE_BRIDGE_R2",
+  "leaseAcquireKey": "CHARBOARD-NAKI-RUN-R2-20260923T1521-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-23 15:21 JST",
+  "leaseUntilJst": "2026-09-23 16:21 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "data/preaction-authorizations/CHARBOARD-NAKI-RUN-R2-20260923T1521-SOL.json; browser/battle-board-naki-4p-visual-binding.mjs; tests/battle-board-naki-4p-visual-binding.test.mjs; branch sol/board-controlled-character-runtime-state-r2-20260923; future PR for this branch; own CURRENT_ACTIVE_LEASES row; R24 events",
+  "scope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs"
+  ],
+  "readOnly": [
+    "browser/battle-controlled-character-motion-core.mjs",
+    "browser/battle-controlled-character-4p-motion-director.mjs",
+    "browser/GAMEROAD.html",
+    "board gameplay/109 position/collision/save/network",
+    "PR#2064 donor evidence"
+  ],
+  "reason": "Recover PR#2064 after invalid PRE_ACTION witness. Reuse existing GameRoadThreeCharRuntime canonical move+facing mapping so partner.naki resolves to run_left/run_right during accepted board movement without changing board authority."
+}

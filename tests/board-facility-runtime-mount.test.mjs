@@ -10,6 +10,10 @@ import {
   partnerConversationProjectionDecision,
   resolveSaasunaCollectiveContext,
   restoreSaasunaConversationRetryDraft,
+  resolveSaasunaPartnerSurfacePose,
+  SAASUNA_PARTNER_SKIN_ASSETS,
+  SAASUNA_PARTNER_SKIN_CONTRACT,
+  SAASUNA_PARTNER_SURFACE_POSES,
   SAASUNA_PROVISIONAL_VISUAL_CONTRACT,
 } from '../browser/board-facility-runtime-mount.mjs';
 import { buildPartnerConversationCollectiveContext } from '../browser/partner-conversation-collective-context.mjs';
@@ -102,18 +106,33 @@ test('Partner conversation only projects for Saasuna in the active normal Partne
   assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'partner', selectedPartnerId: 'partner.saasuna' }), 'conversation');
 });
 
-test('provisional Saasuna visual is explicitly static and outside character production', () => {
-  assert.deepEqual(SAASUNA_PROVISIONAL_VISUAL_CONTRACT, {
-    assetRole: 'provisional_visual',
-    partnerId: 'partner.saasuna',
-    static: true,
-    animatable: false,
-    characterProductionOwnedHere: false,
-    rigged: false,
-    lipSyncEnabled: false,
-    sourceKind: 'user_supplied_provisional',
-  });
-  assert.equal(Object.isFrozen(SAASUNA_PROVISIONAL_VISUAL_CONTRACT), true);
+test('formal Saasuna Partner skin reuses the approved nine-pose registry without owning character semantics', () => {
+  const expected = {
+    welcome: 'GAMEROAD_SAASUNA_NAV_01_HAPPY_WAVE_TRANSPARENT_20260915.png',
+    question: 'GAMEROAD_SAASUNA_NAV_02_CURIOUS_CONFUSED_TRANSPARENT_20260915.png',
+    caution: 'GAMEROAD_SAASUNA_NAV_03_SHH_TRANSPARENT_20260915.png',
+    guide: 'GAMEROAD_SAASUNA_NAV_04_GUIDE_PRESENT_TRANSPARENT_20260915.png',
+    idle: 'GAMEROAD_SAASUNA_NAV_05_IDLE_GENTLE_TRANSPARENT_20260915.png',
+    event: 'GAMEROAD_SAASUNA_NAV_06_SURPRISED_TRANSPARENT_20260915.png',
+    negative: 'GAMEROAD_SAASUNA_NAV_07_TOUCH_CRY_TRANSPARENT_20260915.png',
+    success: 'GAMEROAD_SAASUNA_NAV_08_HAPPY_SMILE_TRANSPARENT_20260915.png',
+    downcast: 'GAMEROAD_SAASUNA_NAV_09_SAD_DOWNCAST_TRANSPARENT_20260915.png',
+  };
+  assert.deepEqual(Object.keys(SAASUNA_PARTNER_SURFACE_POSES), Object.keys(expected));
+  for (const [pose, fileName] of Object.entries(expected)) {
+    const resolved = resolveSaasunaPartnerSurfacePose(pose);
+    assert.equal(resolved.pose, pose);
+    assert.equal(resolved.asset.fileName, fileName);
+  }
+  assert.equal(resolveSaasunaPartnerSurfacePose('unknown').pose, 'idle');
+  assert.equal(SAASUNA_PARTNER_SKIN_CONTRACT.partnerId, 'partner.saasuna');
+  assert.equal(SAASUNA_PARTNER_SKIN_CONTRACT.presentationOnly, true);
+  assert.equal(SAASUNA_PARTNER_SKIN_CONTRACT.sourceRegistry, 'SAASUNA_BUSTUP_ASSETS');
+  assert.equal(SAASUNA_PARTNER_SKIN_CONTRACT.semanticMutationAllowed, false);
+  assert.equal(SAASUNA_PARTNER_SKIN_CONTRACT.crop, 'contain-bottom-center');
+  assert.equal(SAASUNA_PROVISIONAL_VISUAL_CONTRACT, SAASUNA_PARTNER_SKIN_CONTRACT);
+  assert.match(SAASUNA_PARTNER_SKIN_ASSETS.background, /^data:image\/svg\+xml;base64,/);
+  assert.equal(Object.isFrozen(SAASUNA_PARTNER_SKIN_CONTRACT), true);
 });
 
 test('collective product resolver stays off when no real runtime evidence source is mounted', async () => {

@@ -50,6 +50,22 @@ Gitを実行できるlocal/Codex writerは、最初のmaterial Git作業前に `
 
 PRE_ACTION authorizationは、検証済みmanifestだけのfirst commitをbootstrapとして先に送り、その後のimplementationを積み、最終push前にmanifestをcleanupする。hookを実行できないGitHub API等のwriterは、同じbase/lease/scope/commit-order/path-classification/focused-test/public-package preflightをpush前に再現できる場合だけwriteする。再現できない場合はCIに失敗発見を委ねてpushせず `WRITE0` / handoffへ戻す。Required Gateは最後のserver fail-closeであり、このpre-push門で置換しない。
 
+### Remote Desktop Commander 再認証・アカウント切替門
+Remote Desktop Commanderをlocal Git writerとして使う作業で、利用者が「サブ垢に変えた」「ログインし直した」「アカウントを切り替えた」と明示した場合、その発言を再認証意図として扱う。同じ切替確認を利用者へ聞き直さず、最初に connector 自身の `who_am_i` を1回だけfresh実行して、現在認証中のaccount identityと利用可能量を確認する。ChatGPT本体のaccount切替とRemote Desktop Commander側の認証accountは別状態になり得る。
+
+`who_am_i` が利用者の切替意図と一致しない、またはremote call残量が0のままなら、旧device/sessionへの `list_devices` / process / file操作を反復しない。認証staleを一度確認した時点で、Remote Desktop Commander側のcontrol/login面から旧accountをlogoutし、利用者が指定したaccountでlogin/reconnectする工程へ進む。Plugin管理が「未インストール」等を返しても、connectorの `who_am_i` が旧accountを返す限り、再認証完了とは扱わない。
+
+再認証後は必ず `who_am_i` → `list_devices` → target device ONLINE/readable の順でreadbackする。成立したら、新Task・代替branch・GitHub上の古い類似実装を作らず、停止前の同じcheckpointから再開する。push待ちで停止していた場合の標準resumeは次の順とする。
+
+1. local repo / branch / `git status` / HEAD / origin をfresh確認する。
+2. `git config core.hooksPath .githooks` のreadbackと、対象commitがlocalに存在することを確認する。
+3. 既存pre-push gateを迂回せず、そのlocal commitを対象remoteへpushする。
+4. remote SHA readback後、同SHAのCI / Required Gate / deploymentを確認する。
+5. 公開物がある場合はproduction URLとversion/build identityを確認し、actual player route / use-siteまで検証する。
+6. terminal後は「push済み」「CI green」「deploy済み」「実URL確認済み」を別々の証拠として返す。
+
+Remote不可の間に、古いremote branchを今回local commitの代替としてmainへ送ったり、未確認local差分をGitHub APIで再構成したりしない。local commit identityを取得できない場合は `WRITE0` とし、ResumeConditionを「Remote再認証＋local SHA確認」に固定する。同じ利用者指示を再質問して作業を先頭からやり直さない。
+
 ## 6. testと完成判定
 failed / pending / skipped / unrun / unknownをPASSにしない。commit / PR / merge / green CIだけをruntime/product完成証拠にしない。player-visible変更はactual player route / use-siteで確認する。
 

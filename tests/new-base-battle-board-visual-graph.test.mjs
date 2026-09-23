@@ -16,6 +16,16 @@ const EXPECTED_LOWER_NODE_KEYS = [
   'B0','B1','B2','B3','B4','B5','B6','B7','B8',
 ];
 
+const EXPECTED_LOWER_PLACEMENT_KEYS = [
+  'T0','T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11',
+  'M0','M1','M2','M3','M4','M5','M6','M7','M8','M9','M10',
+  'L0','L1','R0','R1',
+  'L2','R2',
+  'L3','R3',
+  'L4','R4',
+  'B0','B1','B2','B3','B4','B5','B6','B7','B8',
+];
+
 const EXPECTED_LOWER_EDGES = [
   'T0-T1','T1-T2','T2-T3','T3-T4','T4-T5','T5-T6','T6-T7','T7-T8','T8-T9','T9-T10','T10-T11',
   'M0-M1','M1-M2','M2-M3','M3-M4','M4-M5','M5-M6','M6-M7','M7-M8','M8-M9','M9-M10',
@@ -94,6 +104,30 @@ test('all lower visual round nodes are retained and no rectangle/crossing is pro
   assert.equal(graph.invariants.crossingWithoutCircleCreatesNode, false);
   assert.equal(graph.invariants.cellTypeUniform, false);
   assert.equal(graph.invariants.unknownCellTypeInference, false);
+});
+
+test('lower placement identities follow temporary Japanese-style left-reading order without renumbering completed structures', () => {
+  const graph = createBattleBoardVisualGraph();
+  assert.equal(graph.lowerPlacementPolicy, 'TOP_TO_BOTTOM_LEFT_TO_RIGHT');
+  assert.deepEqual(graph.lowerPlacementSourceKeys, EXPECTED_LOWER_PLACEMENT_KEYS);
+
+  const byPlacement = [...graph.lowerNodes].sort((a, b) => a.placementOrdinal - b.placementOrdinal);
+  assert.deepEqual(byPlacement.map((node) => node.sourceKey), EXPECTED_LOWER_PLACEMENT_KEYS);
+  assert.deepEqual(
+    byPlacement.map((node) => node.placementId),
+    EXPECTED_LOWER_PLACEMENT_KEYS.map((_, index) => `lower-placement:${String(index + 1).padStart(2, '0')}`),
+  );
+  assert.equal(new Set(byPlacement.map((node) => node.placementOrdinal)).size, 42);
+  assert.equal(new Set(byPlacement.map((node) => node.placementId)).size, 42);
+  assert.ok(byPlacement.every((node) => node.placementReadOrder === 'TOP_TO_BOTTOM_LEFT_TO_RIGHT'));
+  assert.ok(byPlacement.every((node) => node.semanticType === 'UNRESOLVED_NO_INFERENCE'));
+
+  assert.equal(graph.goal.placementOrdinal, undefined);
+  for (const lane of graph.upperLanes) {
+    assert.equal(lane.gate.placementOrdinal, undefined);
+    assert.equal(lane.shield.placementOrdinal, undefined);
+    assert.ok(lane.cells.every((cell) => cell.placementOrdinal === undefined));
+  }
 });
 
 test('lower shared-field visual adjacency is exact and omission-sensitive', () => {

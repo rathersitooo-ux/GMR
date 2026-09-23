@@ -656,8 +656,17 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
   const roster = document.querySelector('#charRoster');
   if (screen || roster) {
     observer = new MutationObserverCtor(project);
-    if (screen) observer.observe(screen, { attributes: true, attributeFilter: ['class'] });
-    if (roster) observer.observe(roster, { childList: true });
+    if (screen) {
+      observer.observe(screen, {
+        attributes: true,
+        attributeFilter: ['class'],
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    } else if (roster) {
+      observer.observe(roster, { childList: true });
+    }
   }
   project();
 

@@ -99,11 +99,12 @@ test('failed Partner conversation send restores the retry draft without keeping 
   assert.equal(removals, 1);
 });
 
-test('Partner conversation only projects for Saasuna in the active normal Partner role', () => {
+test('Partner conversation projects for selected Saasuna when the current Partner surface has no role tab', () => {
   assert.equal(partnerConversationProjectionDecision({ screenActive: false, activeRole: 'partner', selectedPartnerId: 'partner.saasuna' }), 'idle');
   assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'player', selectedPartnerId: 'partner.saasuna' }), 'idle');
   assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'partner', selectedPartnerId: 'partner.honoka' }), 'idle');
   assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'partner', selectedPartnerId: 'partner.saasuna' }), 'conversation');
+  assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: null, selectedPartnerId: 'partner.saasuna' }), 'conversation');
 });
 
 test('formal Saasuna Partner skin reuses the approved nine-pose registry without owning character semantics', () => {

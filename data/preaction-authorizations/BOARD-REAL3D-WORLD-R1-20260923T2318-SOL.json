@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD-REAL3D-WORLD-R1-20260923T2318-SOL",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "BOARD_REAL_3D_WORLD_RENDERER_VERTICAL_SLICE_R1",
+  "acquireKey": "BOARD-REAL3D-WORLD-R1-20260923T2318-SOL",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_WORLD_FIELD_AND_CAMERA_SEAMS_PLUS_FREE_EXACT_RESOURCES_20260923T2318JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "READONLY_WORLD_FIELD_FAIL_CLOSED_TESTS_AND_DOM_LAYER_INSPECTION",
+  "proceedToken": "PROCEED|BOARD-REAL3D-WORLD-R1-20260923T2318-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|A7_READBACK|WORLD_FIELD_REUSE",
+  "authorizationBaseSha": "a1324de2c784e093b44d7b32999fadb2565b8b6f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "BOARD_REAL_3D_WORLD_RENDERER_VERTICAL_SLICE_R1",
+  "leaseAcquireKey": "BOARD-REAL3D-WORLD-R1-20260923T2318-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-23 23:18 JST",
+  "leaseUntilJst": "2026-09-24 00:18 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:O7",
+  "leaseExactMutableResources": "browser/battle-board-webgl-world-renderer.mjs; browser/battle-board-world-live-mount.mjs; browser/board-facility-runtime-mount.mjs; tests/battle-board-webgl-world-renderer.test.mjs; tests/battle-board-world-live-mount.test.mjs; browser/assets/world3d/quaternius/**; browser/assets/world3d/THIRD_PARTY_ASSETS.md; own PRE_ACTION witness/branch/PR/check/readback",
+  "solutionSignature": "EXISTING_WORLD_FIELD_PLUS_BABYLON_GRAPHICAL_CONSUMER_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_MAIN_REUSE_WORLD_FIELD_CAMERA_NO_SECOND_BOARD",
+  "solutionSearchEvidence": [
+    "Current main already has battle-board-world-field-renderer.mjs and caller-owned worldRenderer.replaceBoard(model).",
+    "Current main already has battle-camera-live-runtime.mjs with follow/manual inspect, pan, pinch zoom, angle, and one-action return.",
+    "Current GMR tree has no glTF/GLB/FBX/OBJ environment assets and no WebGLRenderer/GLTFLoader consumer.",
+    "User-provided reference is stored as a quality reference only; it is not topology or gameplay authority.",
+    "Overlapping current lease owns new-base-battle-board-visual-graph.mjs and deploy/cloudflare/tests/build.test.mjs, both read-only in this WorkUnit."
+  ],
+  "scope": [
+    "browser/battle-board-webgl-world-renderer.mjs",
+    "browser/battle-board-world-live-mount.mjs",
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/battle-board-webgl-world-renderer.test.mjs",
+    "tests/battle-board-world-live-mount.test.mjs",
+    "browser/assets/world3d/THIRD_PARTY_ASSETS.md"
+  ],
+  "leaseScope": [
+    "browser/battle-board-webgl-world-renderer.mjs",
+    "browser/battle-board-world-live-mount.mjs",
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/battle-board-webgl-world-renderer.test.mjs",
+    "tests/battle-board-world-live-mount.test.mjs",
+    "browser/assets/world3d/THIRD_PARTY_ASSETS.md"
+  ]
+}

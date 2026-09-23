@@ -52,6 +52,9 @@
     "allowedSelfHostedRunnerTuplesByWorkflow": {
       ".github/workflows/gameroad-current-bridge.yml": [
         "[self-hosted, Windows, X64]"
+      ],
+      ".github/workflows/gameroad-remote-commander-wake.yml": [
+        "[self-hosted, Windows, X64]"
       ]
     },
     "maxArtifactRetentionDays": 14,

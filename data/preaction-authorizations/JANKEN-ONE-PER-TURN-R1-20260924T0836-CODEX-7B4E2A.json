@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "JANKEN-ONE-PER-TURN-R1-20260924T0836-CODEX-7B4E2A",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "JANKEN_ONE_PER_TURN_HAND_REJOIN_R1",
+  "acquireKey": "JANKEN-ONE-PER-TURN-R1-20260924T0836-CODEX-7B4E2A",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_JANKEN_ASSIGNMENT_AND_EXISTING_ACTION_SEAM_20260924T0749JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_HAND3_ASSIGNMENT_AND_DOM_CLICK_PATH_READBACK_NO_INDEPENDENT_PLAYER_ORACLE",
+  "proceedToken": "PROCEED|JANKEN-ONE-PER-TURN-R1-20260924T0836-CODEX-7B4E2A|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|janken-one-per-turn|preserve-committed-card|release-remaining-hand|active-lease",
+  "authorizationBaseSha": "c1e01161b030c88ad93b68c01cd7f85bebf20fe6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "JANKEN_ONE_PER_TURN_HAND_REJOIN_R1",
+  "leaseAcquireKey": "JANKEN-ONE-PER-TURN-R1-20260924T0836-CODEX-7B4E2A",
+  "leaseSnapshotReadbackAtJst": "2026-09-24 08:37 JST",
+  "leaseUntilJst": "2026-09-24 09:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:L10",
+  "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; isolated local branch/worktree sol/janken-one-per-turn-hand-rejoin-r1-20260924 (C:\\Users\\user\\Desktop\\GAMEROAD\\_WORK\\GMR-janken-one-per-turn-r1-20260924); PRE_ACTION witness commit; this AcquireKey's R24 event and exact CURRENT_ACTIVE_LEASES row",
+  "solutionSignature": "BATTLE_JANKEN_TURN_LATCH_PRESERVE_COMMITTED_CARD_RELEASE_REMAINDER_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "SAME_SCOPE_R1_R2_CANDIDATES_REVIEWED_AND_CURRENT_MAIN_ACTION_SEAM",
+  "solutionSearchEvidence": [
+    "Current main keeps one immutable CURRENT_HAND3 assignment per round and routes each janken choice through the existing card identity and card-click path.",
+    "origin/sol/battle-janken-one-per-turn-r1-20260921 and r2-20260922 change only the leased runtime and test paths; their lifecycle helper releases every assigned card after the turn latch, including the card already selected into a plan input.",
+    "Adapt the prior projection by keeping the accepted card identity reserved when it remains in the current hand, while releasing the other assigned cards and blocking every janken input for that round.",
+    "origin/sol/battle-janken-one-per-turn-r1-20260924 contains only an earlier PRE_ACTION manifest, with no product patch to duplicate.",
+    "Fresh-main focused baseline tests pass 54/54; no separate player-flow oracle was available before the product change."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

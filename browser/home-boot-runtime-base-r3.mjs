@@ -298,6 +298,14 @@ ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SLIDEPAD_CENTER_SELECTOR}{
   touch-action:none;
   translate:var(--gameroad-home-slidepad-x, 0px) var(--gameroad-home-slidepad-y, 0px);
 }
+/* The empty center stage remains in the DOM as the established Home QA anchor.
+   Retire only its stale visual panel chrome so it cannot cover the current Home art or intercept input. */
+${HOME_SELECTOR}[data-home-shell-mounted="true"] .codexHomeCenterStage{
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  pointer-events:none!important;
+}
 /* Wide layout keeps duplicate utility navigation visually subordinate. The frameless utility
    control itself is shared by every mounted Home projection so responsive reflow cannot restore
    panel chrome or shrink the semantic touch target. */

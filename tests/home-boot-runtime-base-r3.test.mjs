@@ -12,6 +12,25 @@ test('R3 Home composition keeps the previous Home implementation without mountin
   assert.equal(wrapper.includes('GAMEROAD.html'), false);
 });
 
+test('Home keeps the center-stage QA anchor but removes its stale visible panel chrome', () => {
+  const html = fs.readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
+  const base = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
+  assert.ok(html.includes('<main class="codexHomeCenterStage">'));
+
+  const selector = '${HOME_SELECTOR}[data-home-shell-mounted="true"] .codexHomeCenterStage{';
+  const start = base.indexOf(selector);
+  assert.notEqual(start, -1);
+  const declarationStart = start + selector.length;
+  const end = base.indexOf('\n}', declarationStart);
+  assert.notEqual(end, -1);
+  const block = base.slice(declarationStart, end);
+  assert.ok(block.includes('border:0!important;'));
+  assert.ok(block.includes('background:transparent!important;'));
+  assert.ok(block.includes('box-shadow:none!important;'));
+  assert.ok(block.includes('pointer-events:none!important;'));
+  assert.equal(block.includes('display:none'), false);
+});
+
 test('R1 rank match is a Battle child and uses the generated presentation surface', () => {
   const base = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
   assert.ok(base.includes("'.codexBattleCrest'"));

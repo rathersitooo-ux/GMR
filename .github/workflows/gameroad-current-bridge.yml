@@ -9,9 +9,12 @@ on:
       - 'docs/gameroad-current-bridge.md'
       - '.github/workflows/gameroad-required-gate.yml'
   workflow_dispatch:
+  issues:
+    types: [opened, edited, reopened]
 
 permissions:
   contents: read
+  issues: write
 
 concurrency:
   group: gameroad-current-bridge-pc
@@ -73,3 +76,119 @@ jobs:
         env:
           BRIDGE_PACKET: ${{ steps.packet.outputs.path }}
         run: python tools/gameroad-current-bridge.py supervise --packet "$env:BRIDGE_PACKET" --repo "$env:GITHUB_REPOSITORY"
+
+  windows-gui:
+    if: github.event_name == 'issues' && startsWith(github.event.issue.title, '[WINDOWS-GUI]') && github.event.issue.user.login == github.repository_owner
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 10
+    env:
+      WINDOWS_GUI_VERSION: '1.3.24'
+      WINDOWS_GUI_ZIP_SHA256: '4432e34ac4f7483f1e65e4b118b6995368c6d9c323cc50986200279b95dd903f'
+      WINDOWS_GUI_ZIP_URL: 'https://github.com/sbroenne/mcp-windows/releases/download/v1.3.24/windows-mcp-server-1.3.24-win-x64.zip'
+      WINDOWS_GUI_ROOT: 'C:\\GAMEROAD\\tools\\windows-mcp\\1.3.24'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Parse bounded owner-authored request
+        id: request
+        shell: pwsh
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $marker = '<!-- GAMEROAD_WINDOWS_GUI_REQUEST_V1 -->'
+          $body = [string]$env:ISSUE_BODY
+          $idx = $body.IndexOf($marker, [StringComparison]::Ordinal)
+          if ($idx -lt 0) { throw 'WINDOWS_GUI_REQUEST_MARKER_MISSING' }
+          $json = $body.Substring($idx + $marker.Length).Trim()
+          $req = $json | ConvertFrom-Json
+          if ($req.schemaVersion -ne 'gameroad-windows-gui-v1') { throw 'WINDOWS_GUI_SCHEMA_REJECTED' }
+          $argv = @($req.argv)
+          if ($argv.Count -lt 1 -or $argv.Count -gt 40) { throw 'WINDOWS_GUI_ARGV_COUNT_REJECTED' }
+          foreach ($item in $argv) {
+            if ($item -isnot [string] -or $item.Length -gt 4096) { throw 'WINDOWS_GUI_ARGV_VALUE_REJECTED' }
+          }
+          $group = [string]$argv[0]
+          $action = ''
+          if ($argv.Count -gt 1 -and -not ([string]$argv[1]).StartsWith('--')) { $action = [string]$argv[1] }
+          $key = $group + ':' + $action
+          $allowed = @(
+            'window:list','window:find','window:activate',
+            'ui:snapshot','ui:find','ui:click','ui:type','ui:read','ui:wait','ui:batch',
+            'clipboard:get','clipboard:set',
+            'keyboard:press','keyboard:type',
+            'mouse:click','mouse:move','mouse:scroll'
+          )
+          if ($allowed -notcontains $key) { throw ('WINDOWS_GUI_ACTION_REJECTED:' + $key) }
+          $requestPath = Join-Path $env:RUNNER_TEMP 'gameroad-windows-gui-request.json'
+          $req | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestPath -Encoding utf8
+          ('request=' + $requestPath) >> $env:GITHUB_OUTPUT
+          ('action=' + $key) >> $env:GITHUB_OUTPUT
+
+      - name: Install or reuse pinned semantic Windows UI CLI
+        id: install
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Path $env:WINDOWS_GUI_ROOT -Force | Out-Null
+          $wincli = Get-ChildItem -LiteralPath $env:WINDOWS_GUI_ROOT -Filter 'wincli.exe' -File -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $wincli) {
+            $zip = Join-Path $env:RUNNER_TEMP ('windows-mcp-' + $env:WINDOWS_GUI_VERSION + '.zip')
+            Invoke-WebRequest -Uri $env:WINDOWS_GUI_ZIP_URL -OutFile $zip
+            $actual = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($actual -ne $env:WINDOWS_GUI_ZIP_SHA256) { throw ('WINDOWS_GUI_SHA256_MISMATCH:' + $actual) }
+            Expand-Archive -LiteralPath $zip -DestinationPath $env:WINDOWS_GUI_ROOT -Force
+            $wincli = Get-ChildItem -LiteralPath $env:WINDOWS_GUI_ROOT -Filter 'wincli.exe' -File -Recurse | Select-Object -First 1
+          }
+          if (-not $wincli) { throw 'WINDOWS_GUI_WINCLI_NOT_FOUND' }
+          ('wincli=' + $wincli.FullName) >> $env:GITHUB_OUTPUT
+          & $wincli.FullName --version
+
+      - name: Execute one bounded semantic UI command
+        id: execute
+        shell: pwsh
+        env:
+          REQUEST_PATH: ${{ steps.request.outputs.request }}
+          WINCLI_PATH: ${{ steps.install.outputs.wincli }}
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $req = Get-Content -LiteralPath $env:REQUEST_PATH -Raw -Encoding utf8 | ConvertFrom-Json
+          $argv = @($req.argv | ForEach-Object { [string]$_ })
+          $out = Join-Path $env:RUNNER_TEMP 'gameroad-windows-gui-result.txt'
+          $lines = & $env:WINCLI_PATH @argv 2>&1
+          $exitCode = $LASTEXITCODE
+          @($lines) | Set-Content -LiteralPath $out -Encoding utf8
+          ('exit=' + $exitCode) >> $env:GITHUB_OUTPUT
+          ('result=' + $out) >> $env:GITHUB_OUTPUT
+          if ($exitCode -ne 0) { throw ('WINDOWS_GUI_COMMAND_FAILED:' + $exitCode) }
+
+      - name: Return bounded result to the issue
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          RESULT_PATH: ${{ steps.execute.outputs.result }}
+          ACTION_NAME: ${{ steps.request.outputs.action }}
+          COMMAND_EXIT: ${{ steps.execute.outputs.exit }}
+        with:
+          script: |
+            const fs = require('fs');
+            let output = 'No result file was produced.';
+            if (process.env.RESULT_PATH && fs.existsSync(process.env.RESULT_PATH)) {
+              output = fs.readFileSync(process.env.RESULT_PATH, 'utf8');
+            }
+            if (output.length > 12000) output = output.slice(-12000);
+            const body = [
+              '<!-- GAMEROAD_WINDOWS_GUI_RESULT_V1 -->',
+              '### Windows GUI bridge result',
+              '- action: ' + (process.env.ACTION_NAME || 'unknown'),
+              '- exit: ' + (process.env.COMMAND_EXIT || 'unavailable'),
+              '- runner: self-hosted Windows',
+              '',
+              output
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });

@@ -247,6 +247,37 @@ class CurrentBridgeTests(unittest.TestCase):
         ]
         self.assertEqual(bridge.find_adoption_pr(items, ACQUIRE), 7)
 
+    def test_windows_gui_issue_lane_is_owner_only_pinned_and_bounded(self):
+        workflow = (
+            pathlib.Path(__file__).resolve().parents[1]
+            / ".github"
+            / "workflows"
+            / "gameroad-current-bridge.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("issues:\n    types: [opened, edited, reopened]", workflow)
+        self.assertIn("github.event.issue.user.login == github.repository_owner", workflow)
+        self.assertIn("startsWith(github.event.issue.title, '[WINDOWS-GUI]')", workflow)
+        self.assertIn("GAMEROAD_WINDOWS_GUI_REQUEST_V1", workflow)
+        self.assertIn("gameroad-windows-gui-v1", workflow)
+        self.assertIn("WINDOWS_GUI_VERSION: '1.3.24'", workflow)
+        self.assertIn(
+            "4432e34ac4f7483f1e65e4b118b6995368c6d9c323cc50986200279b95dd903f",
+            workflow,
+        )
+        for action in (
+            "window:list",
+            "ui:snapshot",
+            "ui:click",
+            "ui:type",
+            "clipboard:get",
+        ):
+            self.assertIn(action, workflow)
+        self.assertNotIn("Invoke-Expression", workflow)
+        self.assertNotIn("process:kill", workflow)
+        self.assertNotIn("app:launch", workflow)
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertIn("python tools/gameroad-current-bridge.py supervise", workflow)
+
 
 if __name__ == "__main__":
     unittest.main()

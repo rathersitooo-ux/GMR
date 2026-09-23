@@ -19,7 +19,7 @@
   "leaseAcquireKey": "BOARD-REAL3D-WORLD-R1-20260923T2318-SOL",
   "leaseSnapshotReadbackAtJst": "2026-09-23 23:18 JST",
   "leaseUntilJst": "2026-09-24 00:18 JST",
-  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:O7",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
   "leaseExactMutableResources": "browser/battle-board-webgl-world-renderer.mjs; browser/battle-board-world-live-mount.mjs; browser/board-facility-runtime-mount.mjs; tests/battle-board-webgl-world-renderer.test.mjs; tests/battle-board-world-live-mount.test.mjs; browser/assets/world3d/quaternius/**; browser/assets/world3d/THIRD_PARTY_ASSETS.md; own PRE_ACTION witness/branch/PR/check/readback",
   "solutionSignature": "EXISTING_WORLD_FIELD_PLUS_BABYLON_GRAPHICAL_CONSUMER_V1",
   "reuseDisposition": "COMPOSE",

@@ -317,7 +317,8 @@ export function partnerConversationProjectionDecision({
   activeRole = null,
   selectedPartnerId = null,
 } = {}) {
-  return screenActive && activeRole === 'partner' && selectedPartnerId === 'partner.saasuna'
+  const partnerRoleCompatible = activeRole == null || activeRole === 'partner';
+  return screenActive && partnerRoleCompatible && selectedPartnerId === 'partner.saasuna'
     ? 'conversation'
     : 'idle';
 }

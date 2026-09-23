@@ -20,9 +20,10 @@ test('Home keeps the center-stage QA anchor but removes its stale visible panel 
   const selector = '${HOME_SELECTOR}[data-home-shell-mounted="true"] .codexHomeCenterStage{';
   const start = base.indexOf(selector);
   assert.notEqual(start, -1);
-  const end = base.indexOf('}', start);
+  const declarationStart = start + selector.length;
+  const end = base.indexOf('\n}', declarationStart);
   assert.notEqual(end, -1);
-  const block = base.slice(start, end + 1);
+  const block = base.slice(declarationStart, end);
   assert.ok(block.includes('border:0!important;'));
   assert.ok(block.includes('background:transparent!important;'));
   assert.ok(block.includes('box-shadow:none!important;'));

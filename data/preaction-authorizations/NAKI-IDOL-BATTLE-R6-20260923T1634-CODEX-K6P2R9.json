@@ -15,6 +15,8 @@
     "browser/partner-naki-advice-visuals.mjs",
     "tests/battle-fe-cinematic-live-adapter.test.mjs",
     "tests/battle-naki-idol-sprite-runtime.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
     "browser/assets/partners/naki-idol/advice/*.png",
     "browser/assets/partners/naki-idol/battle/primary-v2/*.png",
     "browser/assets/partners/naki-idol/battle/primary-v3/*.png",

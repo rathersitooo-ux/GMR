@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-CENTER-STAGE-JUNK-REMOVE-R1-20260923T2313-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_CENTER_STAGE_JUNK_REMOVE_R1",
+  "acquireKey": "HOME-CENTER-STAGE-JUNK-REMOVE-R1-20260923T2313-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_A1324DE2_DIRECT_HOME_HTML_AND_RUNTIME_READBACK",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR2060_QA_ANCHOR_PRESERVATION_PLUS_CURRENT_TEST_CONTRACT_READBACK",
+  "proceedToken": "PROCEED|HOME-CENTER-STAGE-JUNK-REMOVE-R1-20260923T2313-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|home-center-stage-chrome-retirement|runtime-css-focused-test|active-lease",
+  "authorizationBaseSha": "a1324de2c784e093b44d7b32999fadb2565b8b6f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_CENTER_STAGE_JUNK_REMOVE_R1",
+  "leaseAcquireKey": "HOME-CENTER-STAGE-JUNK-REMOVE-R1-20260923T2313-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-23 23:13 JST",
+  "leaseUntilJst": "2026-09-24 00:13 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "browser/home-boot-runtime-base-r3.mjs; tests/home-boot-runtime-base-r3.test.mjs; branch sol/home-center-stage-junk-r1-20260923; own transient PRE_ACTION witness; own CURRENT_ACTIVE_LEASES row; R24 events",
+  "solutionSignature": "HOME_KEEP_CENTER_QA_ANCHOR_REMOVE_EMPTY_PANEL_CHROME_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR2060_PR2062_CURRENT_HOME_RUNTIME_READBACK",
+  "solutionSearchEvidence": [
+    "PR#2060 explicitly preserved the empty codexHomeCenterStage as a QA anchor while retiring other legacy Home producers.",
+    "Current main still gives that empty anchor a large border/background/shadow through stale static CSS.",
+    "Current Home runtime has no center-stage consumer and can neutralize only the chrome without mutating the static QA anchor.",
+    "PR#2062 preserved codexHomeUtilities specifically for dynamic Rank Match/contextual replay; those controls are outside this change.",
+    "Current Tutorial authority requires 操作を再確認 to remain available."
+  ],
+  "scope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs"
+  ]
+}

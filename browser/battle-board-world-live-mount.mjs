@@ -176,6 +176,7 @@ export async function mountBattleBoardWorldLive(global = globalThis, {
       canvas.remove?.();
       restoreAttr(battleMap, ROOT_ATTR, priorRootAttr);
       if (style.created) style.node?.remove?.();
+      try { delete global[RUNTIME_NAME]; } catch { /* best-effort runtime registry cleanup */ }
       return true;
     },
     presentationOnly: true,
@@ -229,7 +230,8 @@ export function installBattleBoardWorldLazyMount(global = globalThis, options = 
     ? new global.MutationObserver(() => { ensure(); })
     : null;
   observer?.observe?.(battleRoot, { attributes: true, attributeFilter: ['class', 'style', 'hidden', 'aria-hidden', 'data-active'] });
-  queueMicrotask?.(() => { ensure(); });
+  if (typeof global.queueMicrotask === 'function') global.queueMicrotask(() => { ensure(); });
+  else Promise.resolve().then(() => { ensure(); });
 
   const runtime = Object.freeze({
     schema: SCHEMA,
@@ -247,6 +249,7 @@ export function installBattleBoardWorldLazyMount(global = globalThis, options = 
       destroyed = true;
       observer?.disconnect?.();
       global[RUNTIME_NAME]?.destroy?.();
+      try { delete global[LAZY_RUNTIME_NAME]; } catch { /* best-effort lazy registry cleanup */ }
       return true;
     },
   });

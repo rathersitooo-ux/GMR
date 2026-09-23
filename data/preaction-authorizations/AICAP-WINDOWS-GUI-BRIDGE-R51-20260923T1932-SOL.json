@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "AICAP-WINDOWS-GUI-BRIDGE-R51-20260923T1932-SOL",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "WINDOWS_GUI_ALTERNATE_EXECUTOR_BRIDGE_R51",
+  "acquireKey": "AICAP-WINDOWS-GUI-BRIDGE-R51-20260923T1932-SOL",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R51_PRECHECK_PLUGIN_DIRECTORY_PLUS_EXISTING_GITHUB_RUNNER_AND_WINDOWS_MCP_COMPARISON_20260923",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R51_READONLY_REHEARSAL_EXISTING_CURRENT_BRIDGE_EXECUTOR_BUS_AND_SBROENNE_WINCLI_DOCS",
+  "proceedToken": "PROCEED|AICAP-WINDOWS-GUI-BRIDGE-R51-20260923T1932-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|CURRENT_ACTIVE_LEASES_A6_READBACK",
+  "authorizationBaseSha": "13b7ab4df9f11b31f2412c7bbf2fc9e88faf5a45",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "WINDOWS_GUI_ALTERNATE_EXECUTOR_BRIDGE_R51",
+  "leaseAcquireKey": "AICAP-WINDOWS-GUI-BRIDGE-R51-20260923T1932-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-23 19:32 JST",
+  "leaseUntilJst": "2026-09-23 20:32 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "scope": [
+    ".github/workflows/gameroad-windows-gui-bridge.yml",
+    "tools/gameroad-windows-gui-bridge.ps1",
+    "tests/windows-gui-bridge-contract.test.mjs",
+    "docs/gameroad-windows-gui-bridge.md",
+    "config/zero-cash-runtime-policy.json"
+  ],
+  "leaseScope": [
+    ".github/workflows/gameroad-windows-gui-bridge.yml",
+    "tools/gameroad-windows-gui-bridge.ps1",
+    "tests/windows-gui-bridge-contract.test.mjs",
+    "docs/gameroad-windows-gui-bridge.md",
+    "config/zero-cash-runtime-policy.json"
+  ],
+  "leaseExactMutableResources": ".github/workflows/gameroad-windows-gui-bridge.yml; tools/gameroad-windows-gui-bridge.ps1; tests/windows-gui-bridge-contract.test.mjs; docs/gameroad-windows-gui-bridge.md; config/zero-cash-runtime-policy.json exact workflow allowlist entry only; own PRE_ACTION; own branch/PR/check/merge/readback; own R24 events",
+  "solutionSignature": "windows-gui-bridge:github-self-hosted+sbroenne-wincli:v1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "existing:.github/workflows/gameroad-current-bridge.yml",
+    "existing:.github/workflows/gameroad-remote-commander-wake.yml",
+    "existing:docs/executor-bus.md",
+    "external:sbroenne/mcp-windows@v1.3.24 README+release",
+    "external:deploymenttheory/windows-mcp-server@v1.4.0 comparison",
+    "external:microsoft/UFO@v3.0.8 comparison"
+  ],
+  "reuseDecisionEvidenceId": "R51_COMPOSE_EXISTING_SELF_HOSTED_RUNNER_WITH_SEMANTIC_UI_CLI_NO_SECOND_TASK_SYSTEM"
+}

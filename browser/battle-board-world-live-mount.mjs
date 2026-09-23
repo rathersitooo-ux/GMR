@@ -194,6 +194,67 @@ export async function mountBattleBoardWorldLive(global = globalThis, {
   return global[RUNTIME_NAME];
 }
 
+
+const LAZY_RUNTIME_NAME = 'GAMEROAD_BATTLE_BOARD_WORLD_3D_LAZY_MOUNT';
+
+function battleSurfaceVisible(global, battleRoot) {
+  if (!battleRoot || battleRoot.hidden === true || battleRoot.getAttribute?.('aria-hidden') === 'true') return false;
+  if (battleRoot.classList?.contains?.('active') || battleRoot.dataset?.active === 'true') return true;
+  const style = global?.getComputedStyle?.(battleRoot);
+  return style ? style.display !== 'none' && style.visibility !== 'hidden' : false;
+}
+
+export function installBattleBoardWorldLazyMount(global = globalThis, options = {}) {
+  const document = global?.document;
+  if (!document?.querySelector) return Object.freeze({ installed: false, reason: 'DOCUMENT_REQUIRED', schema: SCHEMA });
+  const existing = global[LAZY_RUNTIME_NAME];
+  if (existing?.installed === true) return existing;
+  const battleRoot = document.querySelector('section.screen.battle[data-screen="battle"]') ?? document.querySelector('.screen.battle');
+  if (!battleRoot) return Object.freeze({ installed: false, reason: 'BATTLE_ROOT_REQUIRED', schema: SCHEMA });
+
+  let destroyed = false;
+  let pending = null;
+  let lastResult = null;
+  const ensure = () => {
+    if (destroyed || pending || !battleSurfaceVisible(global, battleRoot)) return pending;
+    pending = Promise.resolve(mountBattleBoardWorldLive(global, options))
+      .then((result) => {
+        lastResult = result;
+        return result;
+      })
+      .finally(() => { pending = null; });
+    return pending;
+  };
+  const observer = typeof global.MutationObserver === 'function'
+    ? new global.MutationObserver(() => { ensure(); })
+    : null;
+  observer?.observe?.(battleRoot, { attributes: true, attributeFilter: ['class', 'style', 'hidden', 'aria-hidden', 'data-active'] });
+  queueMicrotask?.(() => { ensure(); });
+
+  const runtime = Object.freeze({
+    schema: SCHEMA,
+    installed: true,
+    ensure,
+    snapshot: () => Object.freeze({
+      installed: !destroyed,
+      pending: Boolean(pending),
+      visible: battleSurfaceVisible(global, battleRoot),
+      mounted: global[RUNTIME_NAME]?.mounted === true,
+      lastReason: lastResult?.reason ?? null,
+    }),
+    destroy() {
+      if (destroyed) return false;
+      destroyed = true;
+      observer?.disconnect?.();
+      global[RUNTIME_NAME]?.destroy?.();
+      return true;
+    },
+  });
+  Object.defineProperty(global, LAZY_RUNTIME_NAME, { configurable: true, enumerable: true, writable: false, value: runtime });
+  ensure();
+  return runtime;
+}
+
 export const BATTLE_BOARD_WORLD_LIVE_MOUNT_CONTRACT = deepFreeze({
   schema: SCHEMA,
   runtimeName: RUNTIME_NAME,

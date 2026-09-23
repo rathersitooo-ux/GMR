@@ -31,6 +31,30 @@ const LOWER_NODE_SOURCE_POINTS = Object.freeze({
   B5: [909, 787], B6: [1068, 786], B7: [1187, 787], B8: [1335, 787],
 });
 
+// Placement/debug identity only. This deliberately does not assign gameplay or semantic
+// cell types. Read order follows the current 2D board: top-to-bottom, then left-to-right
+// inside each visual row. Completed lane/GOAL/Gate/Shield structures are outside this list.
+const LOWER_PLACEMENT_ROWS = Object.freeze([
+  Object.freeze(['T0','T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11']),
+  Object.freeze(['M0','M1','M2','M3','M4','M5','M6','M7','M8','M9','M10']),
+  Object.freeze(['L0','L1','R0','R1']),
+  Object.freeze(['L2','R2']),
+  Object.freeze(['L3','R3']),
+  Object.freeze(['L4','R4']),
+  Object.freeze(['B0','B1','B2','B3','B4','B5','B6','B7','B8']),
+]);
+const LOWER_PLACEMENT_SOURCE_KEYS = Object.freeze(LOWER_PLACEMENT_ROWS.flat());
+const LOWER_PLACEMENT_ORDINAL_BY_KEY = new Map(
+  LOWER_PLACEMENT_SOURCE_KEYS.map((sourceKey, index) => [sourceKey, index + 1]),
+);
+if (
+  LOWER_PLACEMENT_SOURCE_KEYS.length !== Object.keys(LOWER_NODE_SOURCE_POINTS).length
+  || new Set(LOWER_PLACEMENT_SOURCE_KEYS).size !== LOWER_PLACEMENT_SOURCE_KEYS.length
+  || LOWER_PLACEMENT_SOURCE_KEYS.some((sourceKey) => !(sourceKey in LOWER_NODE_SOURCE_POINTS))
+) {
+  throw new TypeError('BATTLE_BOARD_LOWER_PLACEMENT_ORDER_INVALID');
+}
+
 const LOWER_EDGE_PAIRS = Object.freeze([
   // Shared upper band: the small rectangles between circles are not cells.
   ['T0', 'T1'], ['T1', 'T2'], ['T2', 'T3'], ['T3', 'T4'], ['T4', 'T5'], ['T5', 'T6'],
@@ -75,6 +99,10 @@ function sourcePoint(x, y) {
 }
 
 function lowerNode(id, [x, y]) {
+  const placementOrdinal = LOWER_PLACEMENT_ORDINAL_BY_KEY.get(id);
+  if (!Number.isSafeInteger(placementOrdinal)) {
+    throw new TypeError(`BATTLE_BOARD_LOWER_PLACEMENT_ID_MISSING:${id}`);
+  }
   return {
     id: `lower:${id}`,
     sourceKey: id,
@@ -83,6 +111,9 @@ function lowerNode(id, [x, y]) {
     isCell: true,
     countsAsCell: true,
     semanticType: 'UNRESOLVED_NO_INFERENCE',
+    placementOrdinal,
+    placementId: `lower-placement:${String(placementOrdinal).padStart(2, '0')}`,
+    placementReadOrder: 'TOP_TO_BOTTOM_LEFT_TO_RIGHT',
     source: sourcePoint(x, y),
     movementAuthority: false,
     legalityAuthority: false,
@@ -245,6 +276,8 @@ export function createBattleBoardVisualGraph() {
     upperStructuralRoundCellCount: upperCells.length,
     lowerFieldOwnership: 'SHARED',
     lowerRoundCellCount: lowerNodes.length,
+    lowerPlacementPolicy: 'TOP_TO_BOTTOM_LEFT_TO_RIGHT',
+    lowerPlacementSourceKeys: [...LOWER_PLACEMENT_SOURCE_KEYS],
     goal,
     goalCount: 1,
     goalBranches,

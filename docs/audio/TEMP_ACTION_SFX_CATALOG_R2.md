@@ -1,42 +1,42 @@
-# Temporary action sound map (R2)
+# 仮SFX割り当て一覧（R2）
 
-This pass gives every shared screen the same small interaction vocabulary. Battle keeps its own card, target, action, and turn cues. These are temporary audio candidates; they do not replace the accepted navigation click or the existing SFX settings.
+共通画面は少数のUI音を使い回し、Battleはカード・対象・アクション・ターン用の音を分ける。音量は既存SFX設定を使い、画面遷移の正式音は現在の再生経路を維持する。
 
-## Shared screens
+## 共通画面
 
-The shared mapping applies to Home, Cards, Characters, Setup, Missions, Profile, Shop, Gacha, Records, Settings, and other screens using the common navigation runtime.
+Home、Cards、Characters、Setup、Missions、Profile、Shop、Gacha、Records、Settingsなど、共通ナビゲーションを使う画面に適用する。
 
-| Action | Runtime cue | Audio file | Relative level | Trigger |
+| 操作 | 音の分類 | 音源ファイル | 音量係数 | 再生条件 |
 | --- | --- | --- | ---: | --- |
-| Ordinary button or action | `ui_button` | `click_001.ogg` | 0.42 | Click on a generic enabled control |
-| Confirm, purchase, save, start, claim, submit | `ui_confirm` | `confirmation_001.ogg` | 0.52 | Click on a confirm-like control or submit a form |
-| Choose a card, character, item, or player | `ui_select` | `select_001.ogg` | 0.44 | Click on a selection-like control |
-| Switch tab | `ui_tab` | `switch_001.ogg` | 0.38 | Click on a tab |
-| Turn a toggle on | `ui_toggle_on` | `toggle_001.ogg` | 0.42 | Checkbox, radio, switch, or pressed control becomes on |
-| Turn a toggle off | `ui_toggle_off` | `toggle_002.ogg` | 0.40 | Checkbox, radio, switch, or pressed control becomes off |
-| Open panel, menu, or select list | `ui_open` | `open_001.ogg` | 0.38 | Click on an open/details/menu action or open a select list |
-| Close, cancel, return, or Escape | `ui_close` | `close_001.ogg` | 0.38 | Click on a close/back action or press Escape |
-| Move a range slider | `ui_slider` | `tick_001.ogg` | 0.30 | Range input; repeated slider events are rate-limited |
-| Focus a text field | Silent | — | — | Keep typing and keyboard navigation quiet instead of repeating a focus sound |
-| Rejected or unavailable action | `ui_invalid` | `error_001.ogg` | 0.48 | Click a disabled control or rejected navigation |
-| Tap an otherwise empty active screen area | `ui_empty_tap` | `click_005.ogg` | 0.18 | Short pointer tap outside controls and helper overlays |
-| Accepted screen navigation | Existing formal sound | `click_002.ogg` | Existing setting | One existing playback on accepted navigation; delegated generic playback skips it |
+| 通常ボタン・一般アクション | `ui_button` | `click_001.ogg` | 0.42 | 有効な汎用コントロールを押す |
+| 決定・購入・保存・開始・受取・送信 | `ui_confirm` | `confirmation_001.ogg` | 0.52 | 決定系コントロールまたはフォーム送信 |
+| カード・キャラ・アイテム・プレイヤー選択 | `ui_select` | `select_001.ogg` | 0.44 | 選択対象を押す |
+| タブ切替 | `ui_tab` | `switch_001.ogg` | 0.38 | タブを押す |
+| トグルをON | `ui_toggle_on` | `toggle_001.ogg` | 0.42 | チェック・ラジオ・スイッチがONになる |
+| トグルをOFF | `ui_toggle_off` | `toggle_002.ogg` | 0.40 | チェック・ラジオ・スイッチがOFFになる |
+| パネル・メニュー・選択リストを開く | `ui_open` | `open_001.ogg` | 0.38 | 詳細・メニュー操作または選択リストを開く |
+| 閉じる・取消・戻る・Escape | `ui_close` | `close_001.ogg` | 0.38 | 閉じる／戻る操作またはEscape |
+| スライダー操作 | `ui_slider` | `tick_001.ogg` | 0.30 | range入力。連続再生は間引く |
+| テキスト欄にフォーカス | 無音 | — | — | 入力中やキーボード移動では鳴らさない |
+| 無効・拒否された操作 | `ui_invalid` | `error_001.ogg` | 0.48 | 無効なコントロールまたは拒否された遷移 |
+| 操作対象のない画面部分をタップ | `ui_empty_tap` | `click_005.ogg` | 0.18 | コントロールや補助表示以外の画面面を短くタップ |
+| 成功した画面遷移 | 既存の正式音 | `click_002.ogg` | 既存設定 | 既存の遷移音を一度だけ再生。汎用音は重ねない |
 
-## Battle screen
+## Battle画面
 
-| Action | Runtime cue | Audio file | Relative level | Trigger |
+| 操作 | 音の分類 | 音源ファイル | 音量係数 | 再生条件 |
 | --- | --- | --- | ---: | --- |
-| Select a hand card | `battle_card_select` | `bookFlip1.ogg` | 0.48 | Click a Battle hand card |
-| Select a player or reachable target | `battle_target` | `metalClick.ogg` | 0.40 | Click a Battle token, target, or selectable board node |
-| Commit an action | `battle_action` | `sword.1.ogg` | 0.34 | Confirm-like Battle action or drag a hand card onto a Battle target |
-| Pass or end the turn | `battle_turn` | `bookClose.ogg` | 0.48 | Click a pass/end-turn action |
-| Battle utility control | `battle_button` | `click_003.ogg` | 0.30 | Other enabled Battle control |
-| Tap an otherwise empty Battle area | `battle_empty_tap` | `click_005.ogg` | 0.14 | Short pointer tap outside controls and helper overlays |
-| Close, cancel, or return | `ui_close` | `close_001.ogg` | 0.38 | Uses the shared close cue |
+| 手札カード選択 | `battle_card_select` | `bookFlip1.ogg` | 0.48 | Battleの手札カードを押す |
+| プレイヤー・到達可能対象の選択 | `battle_target` | `metalClick.ogg` | 0.40 | Battleトークン・対象・選択可能な盤面ノードを押す |
+| アクション確定 | `battle_action` | `sword.1.ogg` | 0.34 | 決定系Battle操作、または手札カードを対象へドラッグして確定 |
+| パス・ターン終了 | `battle_turn` | `bookClose.ogg` | 0.48 | パス／ターン終了を押す |
+| Battleのその他ボタン | `battle_button` | `click_003.ogg` | 0.30 | 上記以外の有効なBattleコントロール |
+| 操作対象のないBattle部分をタップ | `battle_empty_tap` | `click_005.ogg` | 0.14 | コントロールや補助表示以外の盤面を短くタップ |
+| 閉じる・取消・戻る | `ui_close` | `close_001.ogg` | 0.38 | 共通の閉じる音を使う |
 
-## Playback and source notes
+## 再生と音源
 
-- Temporary cue level is multiplied by the current `#sfxVolume` value. `#sfxMute` suppresses temporary cues. Playback starts only during a trusted user gesture and fails softly if the browser cannot play an asset.
-- Interface sounds (`click_001`, `confirmation_001`, `select_001`, `switch_001`, both toggles, `open_001`, `close_001`, `tick_001`, `click_003`, `error_001`, `click_005`) come from the Kenney Interface Sounds package.
-- Battle card and board cues (`bookFlip1`, `metalClick`, `bookClose`) come from Kenney RPG Audio. The Battle action cue (`sword.1`) uses the verified `drawKnife1.ogg` from that archive under the cue filename; its hash and CC0 license are verified.
-- The supplied Sacred Stones sound page informed the separate Battle action categories. Its direct sound-file route was unavailable during this pass, so the mapped playable files above come from the listed sound packages.
+- 仮SFXの音量係数に現在の `#sfxVolume` を掛ける。`#sfxMute` 中は鳴らさない。利用者の操作中だけ再生し、ブラウザー側で再生できない場合も操作を止めない。
+- `click_001`、`confirmation_001`、`select_001`、`switch_001`、トグル2種、`open_001`、`close_001`、`tick_001`、`click_003`、`error_001`、`click_005` はKenney Interface Soundsの素材。
+- Battleカード・盤面にはKenney RPG Audioの `bookFlip1`、`metalClick`、`bookClose` を割り当てる。Battleアクションには同梱の `drawKnife1.ogg` を `sword.1.ogg` として割り当てる。
+- 提供されたThe Spriters Resource「The Sacred Stones」の音一覧はBattle操作カテゴリの参考にした。今回の再生ファイルは上記音源パックから選んだ。

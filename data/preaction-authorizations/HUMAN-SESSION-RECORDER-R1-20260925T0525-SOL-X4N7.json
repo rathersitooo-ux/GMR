@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HUMAN-SESSION-RECORDER-R1-20260925T0525-SOL-X4N7",
+  "taskId": "OPS-QUALITATIVE-PLAY-RESEARCH-001",
+  "workUnitKey": "HUMAN_SESSION_RECORDER_R1",
+  "acquireKey": "HUMAN-SESSION-RECORDER-R1-20260925T0525-SOL-X4N7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_5A87386_PLUS_HUMAN_PLAY_WORKBOOK_AND_REPLAY_ACTUAL_20260925",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOCAL_FOCUSED_HUMAN_SESSION_RECORDER_TESTS_5_OF_5_PASS",
+  "proceedToken": "PROCEED|HUMAN-SESSION-RECORDER-R1-20260925T0525-SOL-X4N7|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|human-session-recorder|existing-replay-human-evidence|active-lease",
+  "authorizationBaseSha": "5a87386eec7254b95d6054fc3f0063bf90780261",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-QUALITATIVE-PLAY-RESEARCH-001",
+  "leaseWorkUnitKey": "HUMAN_SESSION_RECORDER_R1",
+  "leaseAcquireKey": "HUMAN-SESSION-RECORDER-R1-20260925T0525-SOL-X4N7",
+  "leaseSnapshotReadbackAtJst": "2026-09-25 05:25 JST",
+  "leaseUntilJst": "2026-09-25 06:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/human-session-recorder-core.mjs; tests/human-session-recorder-core.test.mjs; docs/HumanSessionRecorder_R1.md; own branch/commit/PR. Existing browser/GAMEROAD.html, Battle replay/observability modules, gameplay/rules/save/network are READ_ONLY.",
+  "solutionSignature": "HUMAN_SESSION_LOCAL_INPUT_PLUS_EXISTING_REPLAY_REFERENCE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_BATTLE_REPLAY_OBSERVABILITY_HUMAN_PLAYER_WORKBOOK_PLUS_RRWEB_RESEARCH_20260925",
+  "solutionSearchEvidence": [
+    "Existing Battle Replay already owns canonical accepted gameplay events and versioned match identity, so R1 does not create a second gameplay log.",
+    "Existing Human Player workbook already owns Session Evidence and observation protocol, so R1 only exports a session artifact reference for ingestion.",
+    "Existing observability captures errors/performance but does not record the user's real interaction sequence.",
+    "rrweb was evaluated as a future DOM replay layer; R1 keeps a provider/reference boundary instead of adding that dependency now.",
+    "Focused R1 tests prove raw input values are not captured and local-only semantics are preserved."
+  ],
+  "scope": [
+    "browser/human-session-recorder-core.mjs",
+    "tests/human-session-recorder-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/human-session-recorder-core.mjs",
+    "tests/human-session-recorder-core.test.mjs"
+  ]
+}

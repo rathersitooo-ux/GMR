@@ -17,7 +17,7 @@ The shared mapping applies to Home, Cards, Characters, Setup, Missions, Profile,
 | Open panel, menu, or select list | `ui_open` | `open_001.ogg` | 0.38 | Click on an open/details/menu action or open a select list |
 | Close, cancel, return, or Escape | `ui_close` | `close_001.ogg` | 0.38 | Click on a close/back action or press Escape |
 | Move a range slider | `ui_slider` | `tick_001.ogg` | 0.30 | Range input; repeated slider events are rate-limited |
-| Focus a text field | `ui_focus` | `click_003.ogg` | 0.30 | Focus a text, search, number, textarea, or editable field |
+| Focus a text field | Silent | — | — | Keep typing and keyboard navigation quiet instead of repeating a focus sound |
 | Rejected or unavailable action | `ui_invalid` | `error_001.ogg` | 0.48 | Click a disabled control or rejected navigation |
 | Tap an otherwise empty active screen area | `ui_empty_tap` | `click_005.ogg` | 0.18 | Short pointer tap outside controls and helper overlays |
 | Accepted screen navigation | Existing formal sound | `click_002.ogg` | Existing setting | One existing playback on accepted navigation; delegated generic playback skips it |
@@ -38,5 +38,5 @@ The shared mapping applies to Home, Cards, Characters, Setup, Missions, Profile,
 
 - Temporary cue level is multiplied by the current `#sfxVolume` value. `#sfxMute` suppresses temporary cues. Playback starts only during a trusted user gesture and fails softly if the browser cannot play an asset.
 - Interface sounds (`click_001`, `confirmation_001`, `select_001`, `switch_001`, both toggles, `open_001`, `close_001`, `tick_001`, `click_003`, `error_001`, `click_005`) come from the Kenney Interface Sounds package.
-- Battle card and board cues (`bookFlip1`, `metalClick`, `bookClose`) come from Kenney RPG Audio. The Battle action cue (`sword.1`) comes from the StarNinjas Sword Sounds attack set.
+- Battle card and board cues (`bookFlip1`, `metalClick`, `bookClose`) come from Kenney RPG Audio. The Battle action cue (`sword.1`) uses the verified `drawKnife1.ogg` from that archive under the cue filename; its hash and CC0 license are verified.
 - The supplied Sacred Stones sound page informed the separate Battle action categories. Its direct sound-file route was unavailable during this pass, so the mapped playable files above come from the listed sound packages.

@@ -203,7 +203,6 @@ export const TEMPORARY_ACTION_SFX_CATALOG = Object.freeze({
   ui_open: temporarySfxCue('Open panel or menu', 'open_001.ogg', 0.38),
   ui_close: temporarySfxCue('Close or return', 'close_001.ogg', 0.38),
   ui_slider: temporarySfxCue('Slider tick', 'tick_001.ogg', 0.30),
-  ui_focus: temporarySfxCue('Text field focus', 'click_003.ogg', 0.30),
   ui_invalid: temporarySfxCue('Unavailable or rejected action', 'error_001.ogg', 0.48),
   ui_empty_tap: temporarySfxCue('Quiet blank-screen tap', 'click_005.ogg', 0.18),
   battle_card_select: temporarySfxCue('Battle card selection', 'bookFlip1.ogg', 0.48),
@@ -225,7 +224,7 @@ export const TEMPORARY_ACTION_SFX_ASSIGNMENTS = Object.freeze({
   panelOpen: 'ui_open',
   closeOrBack: 'ui_close',
   rangeInput: 'ui_slider',
-  textFieldFocus: 'ui_focus',
+  textFieldFocus: 'silent',
   unavailableOrRejected: 'ui_invalid',
   blankActiveScreenTap: 'ui_empty_tap',
   battleCardSelection: 'battle_card_select',
@@ -248,6 +247,7 @@ const TEMPORARY_ACTION_SFX_BATTLE_CARD_SELECTOR = '.handCard[data-card-id],[data
 const TEMPORARY_ACTION_SFX_BATTLE_TARGET_SELECTOR = '.boardPlayerToken[data-player],[data-battle-target],[data-target-id],[data-player],.node.reachable,.node.path,.node.nextStep';
 const TEMPORARY_ACTION_SFX_ACTIVE_SCREEN_SELECTOR = '.screen.active[data-screen]';
 const temporaryActionSfxNavigationDecisions = new WeakMap();
+const temporaryActionSfxNavigationSoundAttempts = new WeakSet();
 let temporaryActionSfxActiveClickEvent = null;
 const temporaryActionSfxInstallations = new WeakMap();
 
@@ -429,7 +429,7 @@ export function installTemporaryActionSfxRuntime({
     hasUserGesture,
   });
   const pointerStarts = new Map();
-  const recentPointerInvalidControls = new WeakMap();
+  const recentInvalidControls = new WeakMap();
   const listeners = [];
   let lastSliderCueAt = Number.NEGATIVE_INFINITY;
   let draggedGesture = null;
@@ -456,18 +456,21 @@ export function installTemporaryActionSfxRuntime({
   function onClick(event) {
     if (!event || typeof event !== 'object') return;
     const clickControl = temporarySfxClosest(event.target, TEMPORARY_ACTION_SFX_INTERACTIVE_SELECTOR);
-    const invalidPointerAt = clickControl ? recentPointerInvalidControls.get(clickControl) : undefined;
-    const duplicateInvalidPointerCue = Number(event.detail) > 0 && Number.isFinite(invalidPointerAt)
-      && Date.now() - invalidPointerAt <= 500;
-    if (duplicateInvalidPointerCue) recentPointerInvalidControls.delete(clickControl);
+    const recentInvalid = clickControl ? recentInvalidControls.get(clickControl) : null;
+    const recentInvalidAge = Number.isFinite(recentInvalid?.at) ? Date.now() - recentInvalid.at : Number.POSITIVE_INFINITY;
+    const duplicateInvalidCue = recentInvalidAge >= 0 && recentInvalidAge <= 500
+      && ((Number(event.detail) > 0 && recentInvalid.source === 'pointer')
+        || (Number(event.detail) === 0 && recentInvalid.source === 'keyboard'));
+    if (duplicateInvalidCue) recentInvalidControls.delete(clickControl);
     if (temporaryActionSfxNavigationDecisions.has(event)) {
       const navigationDecision = temporaryActionSfxNavigationDecisions.get(event);
-      if (!navigationDecision?.ok && !duplicateInvalidPointerCue) player.play('ui_invalid', event);
+      if (!navigationDecision?.ok && !temporaryActionSfxNavigationSoundAttempts.has(event) && !duplicateInvalidCue) player.play('ui_invalid', event);
       return;
     }
-    if (duplicateInvalidPointerCue) return;
+    if (duplicateInvalidCue) return;
     if (draggedGesture && Date.now() <= draggedGesture.expiresAt
-      && clickControl && clickControl === draggedGesture.control) {
+      && Number(event.detail) > 0 && clickControl
+      && (clickControl === draggedGesture.sourceControl || clickControl === draggedGesture.targetControl)) {
       draggedGesture = null;
       return;
     }
@@ -502,7 +505,7 @@ export function installTemporaryActionSfxRuntime({
       : temporarySfxDisabled(start.control) && start.control === endControl ? start.control
         : null;
     if (disabledControl) {
-      recentPointerInvalidControls.set(disabledControl, Date.now());
+      recentInvalidControls.set(disabledControl, {at: Date.now(), source: 'pointer'});
       player.play('ui_invalid', event);
       return;
     }
@@ -517,7 +520,7 @@ export function installTemporaryActionSfxRuntime({
       const endedOnBattleTarget = String(endSurface?.dataset?.screen || '').toLowerCase() === 'battle'
         && Boolean(temporarySfxClosest(event.target, TEMPORARY_ACTION_SFX_BATTLE_TARGET_SELECTOR));
       if (startedOnBattleCard && endedOnBattleTarget) player.play('battle_action', event);
-      if (start.control) draggedGesture = {control: start.control, expiresAt: Date.now() + 500};
+      if (start.control) draggedGesture = {sourceControl: start.control, targetControl: endControl, expiresAt: Date.now() + 500};
       return;
     }
     if (elapsed > 900 || start.surface !== endSurface) return;
@@ -539,15 +542,21 @@ export function installTemporaryActionSfxRuntime({
     const cueId = resolveTemporaryActionSfxCue({target: event?.target, event, interaction: 'change'});
     if (cueId) player.play(cueId, event);
   }
-  function onFocusIn(event) {
-    const control = temporarySfxClosest(event?.target, 'input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,[contenteditable="true"]');
-    if (control) player.play('ui_focus', event);
-  }
   function onSubmit(event) {
     if (String(event?.target?.tagName || '').toLowerCase() === 'form') player.play('ui_confirm', event);
   }
   function onKeyDown(event) {
-    if (String(event?.key || '') === 'Escape' && event?.repeat !== true) player.play('ui_close', event);
+    if (event?.repeat === true) return;
+    const key = String(event?.key || '');
+    if (key === 'Enter' || key === ' ') {
+      const control = temporarySfxClosest(event?.target, TEMPORARY_ACTION_SFX_INTERACTIVE_SELECTOR);
+      if (control && temporarySfxDisabled(control)) {
+        recentInvalidControls.set(control, {at: Date.now(), source: 'keyboard'});
+        player.play('ui_invalid', event);
+        return;
+      }
+    }
+    if (key === 'Escape') player.play('ui_close', event);
   }
 
   listen('click', onClickCapture, true);
@@ -557,7 +566,6 @@ export function installTemporaryActionSfxRuntime({
   listen('pointercancel', onPointerCancel);
   listen('input', onInput);
   listen('change', onChange);
-  listen('focusin', onFocusIn);
   listen('submit', onSubmit);
   listen('keydown', onKeyDown, true);
 
@@ -579,13 +587,24 @@ export function installTemporaryActionSfxRuntime({
 }
 
 export function resolveScreenNavigation(currentScreen, requestedTarget) {
-  if (!requestedTarget) return {ok: false, from: currentScreen, to: currentScreen, reason: SCREEN_NAVIGATION_REASON.EMPTY_TARGET};
-  if (requestedTarget === currentScreen) return {ok: false, from: currentScreen, to: currentScreen, reason: SCREEN_NAVIGATION_REASON.CURRENT_SCREEN};
-  const decision = {ok: true, from: currentScreen, to: requestedTarget, reason: SCREEN_NAVIGATION_REASON.NAVIGATE};
-  if (temporaryActionSfxActiveClickEvent) {
-    temporaryActionSfxNavigationDecisions.set(temporaryActionSfxActiveClickEvent, decision);
+  let decision;
+  if (!requestedTarget) decision = {ok: false, from: currentScreen, to: currentScreen, reason: SCREEN_NAVIGATION_REASON.EMPTY_TARGET};
+  else if (requestedTarget === currentScreen) decision = {ok: false, from: currentScreen, to: currentScreen, reason: SCREEN_NAVIGATION_REASON.CURRENT_SCREEN};
+  else decision = {ok: true, from: currentScreen, to: requestedTarget, reason: SCREEN_NAVIGATION_REASON.NAVIGATE};
+
+  const clickEvent = temporaryActionSfxActiveClickEvent;
+  if (!clickEvent) {
+    if (decision.ok) playAcceptedNavigationSfx();
+    return decision;
   }
-  playAcceptedNavigationSfx();
+
+  const previousDecision = temporaryActionSfxNavigationDecisions.get(clickEvent);
+  if (previousDecision?.ok) return decision;
+  temporaryActionSfxNavigationDecisions.set(clickEvent, decision);
+  if (decision.ok && !temporaryActionSfxNavigationSoundAttempts.has(clickEvent)) {
+    temporaryActionSfxNavigationSoundAttempts.add(clickEvent);
+    playAcceptedNavigationSfx();
+  }
   return decision;
 }
 

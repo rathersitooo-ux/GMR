@@ -915,7 +915,7 @@ function temporaryCueTarget(options = {}) {
   const {
     screen = 'cards', textContent = 'Continue', id = '', tagName = 'BUTTON', type = '',
     role = '', ariaChecked = null, ariaPressed = null, checked = undefined,
-    disabled = false, interactive = true, card = false, battleTarget = false,
+    disabled = false, ariaDisabled = false, interactive = true, card = false, battleTarget = false,
     focusable = false, dataBattleAction = false, warnRailButton = false,
   } = options;
   const surface = {dataset: {screen}};
@@ -932,7 +932,7 @@ function temporaryCueTarget(options = {}) {
       return interactive && /button|a\[href\]|input|select|textarea|\[role=/.test(selector) ? node : null;
     },
     getAttribute(name) {
-      return ({role, type, 'aria-checked': ariaChecked, 'aria-pressed': ariaPressed, 'aria-label': textContent, title: ''})[name] ?? null;
+      return ({role, type, 'aria-checked': ariaChecked, 'aria-pressed': ariaPressed, 'aria-disabled': ariaDisabled ? 'true' : null, 'aria-label': textContent, title: ''})[name] ?? null;
     },
     matches(selector) {
       const candidates = selector.split(',');
@@ -960,7 +960,7 @@ test('temporary action SFX catalog groups common interactions and keeps navigati
     ui_button: 'click_001.ogg', ui_confirm: 'confirmation_001.ogg', ui_select: 'select_001.ogg',
     ui_tab: 'switch_001.ogg', ui_toggle_on: 'toggle_001.ogg', ui_toggle_off: 'toggle_002.ogg',
     ui_open: 'open_001.ogg', ui_close: 'close_001.ogg', ui_slider: 'tick_001.ogg',
-    ui_focus: 'click_003.ogg', ui_invalid: 'error_001.ogg', ui_empty_tap: 'click_005.ogg',
+    ui_invalid: 'error_001.ogg', ui_empty_tap: 'click_005.ogg',
     battle_card_select: 'bookFlip1.ogg', battle_target: 'metalClick.ogg', battle_action: 'sword.1.ogg',
     battle_turn: 'bookClose.ogg', battle_button: 'click_003.ogg', battle_empty_tap: 'click_005.ogg',
   });
@@ -1118,4 +1118,138 @@ test('accepted navigation click is excluded from delegated generic SFX', () => {
     if (oldAudio) Object.defineProperty(globalThis, 'Audio', oldAudio);
     else delete globalThis.Audio;
   }
+});
+
+test('same-screen and empty navigation attempts get one dud cue without a navigation click', () => {
+  const handlers = new Map();
+  const fakeDocument = {
+    defaultView: {},
+    addEventListener(type, handler, options) {
+      const list = handlers.get(type) || [];
+      list.push({handler, options});
+      handlers.set(type, list);
+    },
+    removeEventListener() {},
+    querySelector() { return {textContent: 'SFX OFF', value: '80'}; },
+  };
+  const audio = fakeTemporaryAudioFactory();
+  const runtime = installTemporaryActionSfxRuntime({
+    documentSource: fakeDocument, audioFactory: (url) => audio.create(url), hasUserGesture: () => true,
+  });
+  const sameScreen = {target: temporaryCueTarget({screen: 'cards', textContent: 'Cards'}), detail: 1, isTrusted: true};
+  handlers.get('click').find((entry) => entry.options === true).handler(sameScreen);
+  assert.equal(resolveScreenNavigation('cards', 'cards').reason, SCREEN_NAVIGATION_REASON.CURRENT_SCREEN);
+  handlers.get('click').find((entry) => entry.options !== true).handler(sameScreen);
+  assert.equal(audio.audios.length, 1);
+  assert.match(audio.audios[0].src, /error_001\.ogg$/);
+
+  const missingTarget = {target: temporaryCueTarget({screen: 'cards', textContent: 'Cards'}), detail: 1, isTrusted: true};
+  handlers.get('click').find((entry) => entry.options === true).handler(missingTarget);
+  assert.equal(resolveScreenNavigation('cards', '').reason, SCREEN_NAVIGATION_REASON.EMPTY_TARGET);
+  handlers.get('click').find((entry) => entry.options !== true).handler(missingTarget);
+  assert.equal(audio.audios.length, 2);
+  assert.match(audio.audios[1].src, /error_001\.ogg$/);
+  runtime.dispose();
+});
+
+test('one click can resolve navigation repeatedly without layering its formal sound', () => {
+  const handlers = new Map();
+  const fakeDocument = {
+    defaultView: {},
+    addEventListener(type, handler, options) {
+      const list = handlers.get(type) || [];
+      list.push({handler, options});
+      handlers.set(type, list);
+    },
+    removeEventListener() {},
+    querySelector() { return {textContent: 'SFX OFF', value: '80'}; },
+  };
+  const audio = fakeTemporaryAudioFactory();
+  const runtime = installTemporaryActionSfxRuntime({
+    documentSource: fakeDocument, audioFactory: (url) => audio.create(url), hasUserGesture: () => true,
+  });
+  const oldAudio = Object.getOwnPropertyDescriptor(globalThis, 'Audio');
+  const restoreActivation = setUserActivation(true);
+  let formalPlayCount = 0;
+  Object.defineProperty(globalThis, 'Audio', {
+    configurable: true,
+    value: class { play() { formalPlayCount += 1; return Promise.resolve(); } },
+  });
+  try {
+    const event = {target: temporaryCueTarget({screen: 'home', textContent: 'Cards'}), detail: 1, isTrusted: true};
+    handlers.get('click').find((entry) => entry.options === true).handler(event);
+    assert.equal(resolveScreenNavigation('home', 'cards').ok, true);
+    assert.equal(resolveScreenNavigation('home', 'cards').ok, true);
+    handlers.get('click').find((entry) => entry.options !== true).handler(event);
+    assert.equal(formalPlayCount, 1);
+    assert.equal(audio.audios.length, 0);
+  } finally {
+    runtime.dispose();
+    restoreActivation();
+    if (oldAudio) Object.defineProperty(globalThis, 'Audio', oldAudio);
+    else delete globalThis.Audio;
+  }
+});
+
+test('Battle drag and drop emits one action cue and suppresses the follow-up click cue', () => {
+  const handlers = new Map();
+  const fakeDocument = {
+    defaultView: {},
+    addEventListener(type, handler, options) {
+      const list = handlers.get(type) || [];
+      list.push({handler, options});
+      handlers.set(type, list);
+    },
+    removeEventListener() {},
+    querySelector() { return {textContent: 'SFX OFF', value: '80'}; },
+  };
+  const audio = fakeTemporaryAudioFactory();
+  const runtime = installTemporaryActionSfxRuntime({
+    documentSource: fakeDocument, audioFactory: (url) => audio.create(url), hasUserGesture: () => true,
+  });
+  const battleSurface = {dataset: {screen: 'battle'}};
+  const card = temporaryCueTarget({screen: 'battle', card: true});
+  const target = temporaryCueTarget({screen: 'battle', battleTarget: true});
+  for (const element of [card, target]) {
+    const originalClosest = element.closest.bind(element);
+    element.closest = (selector) => selector === '.screen.active[data-screen]' ? battleSurface : originalClosest(selector);
+  }
+  handlers.get('pointerdown').find((entry) => entry.options === true).handler({
+    target: card, pointerId: 7, isPrimary: true, button: 0, clientX: 10, clientY: 10, timeStamp: 1, isTrusted: true,
+  });
+  handlers.get('pointerup').find((entry) => entry.options !== true).handler({
+    target, pointerId: 7, isPrimary: true, button: 0, clientX: 64, clientY: 40, timeStamp: 90, isTrusted: true,
+  });
+  const dropClick = {target, detail: 1, isTrusted: true};
+  handlers.get('click').find((entry) => entry.options === true).handler(dropClick);
+  handlers.get('click').find((entry) => entry.options !== true).handler(dropClick);
+  assert.equal(audio.audios.length, 1);
+  assert.match(audio.audios[0].src, /sword\.1\.ogg$/);
+  runtime.dispose();
+});
+
+test('keyboard attempt on an aria-disabled button gets one dud across keydown and synthetic click', () => {
+  const handlers = new Map();
+  const fakeDocument = {
+    defaultView: {},
+    addEventListener(type, handler, options) {
+      const list = handlers.get(type) || [];
+      list.push({handler, options});
+      handlers.set(type, list);
+    },
+    removeEventListener() {},
+    querySelector() { return {textContent: 'SFX OFF', value: '80'}; },
+  };
+  const audio = fakeTemporaryAudioFactory();
+  const runtime = installTemporaryActionSfxRuntime({
+    documentSource: fakeDocument, audioFactory: (url) => audio.create(url), hasUserGesture: () => true,
+  });
+  const disabled = temporaryCueTarget({screen: 'shop', ariaDisabled: true});
+  handlers.get('keydown').find((entry) => entry.options === true).handler({target: disabled, key: 'Enter', repeat: false, isTrusted: true});
+  const click = {target: disabled, detail: 0, isTrusted: true};
+  handlers.get('click').find((entry) => entry.options === true).handler(click);
+  handlers.get('click').find((entry) => entry.options !== true).handler(click);
+  assert.equal(audio.audios.length, 1);
+  assert.match(audio.audios[0].src, /error_001\.ogg$/);
+  runtime.dispose();
 });

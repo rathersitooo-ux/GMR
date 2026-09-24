@@ -15,4 +15,4 @@ All original clips below come from Kenney's CC0 packs. They are distributed unde
 | [Digital Audio](https://kenney.nl/assets/digital-audio) | `phaseJump1`, `phaseJump3`, `phaseJump5` | Generic magical release |
 | [Digital Audio](https://kenney.nl/assets/digital-audio) | `tone1` | Soft return/settle note |
 
-Each cue selects a source clip and a small playback-rate variation from the battle event ID. The mix stays deliberately quiet under the character animation, with a short per-cue duration cap. Audio begins only after a pointer, touch, or keyboard gesture unlocks Web Audio; reduced-motion/low-performance static scenes emit no cues.
+Each cue selects a source clip and a small playback-rate variation from the battle event ID. The mix stays deliberately quiet under the character animation, with a short per-cue duration cap. Audio begins only after a pointer, touch, or keyboard gesture unlocks Web Audio. Reduced-motion and low-performance modes suppress character motion but keep the same phase-synced audio cues.

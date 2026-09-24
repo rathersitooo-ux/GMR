@@ -572,7 +572,7 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
   }
   function clearWatchdog() { clearTimer('watchdog'); }
   function emitSoundCue(cue, phase, variants, gain, maxDuration) {
-    if (!active || active.projection.staticOnly || active.playedCues.has(cue)) return false;
+    if (!active || active.playedCues.has(cue)) return false;
     const seed = String(active.eventId ?? `${active.projection.sourceId}:${active.projection.targetId}`);
     const variantHash = stableHash32(`${seed}|${cue}`);
     const sample = variants[variantHash % variants.length];
@@ -591,7 +591,7 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
   }
   function playPhaseAudio(phase) {
     const projection = active?.projection;
-    if (!projection || projection.staticOnly) return false;
+    if (!projection) return false;
     if (phase === 'stance') return emitSoundCue('stance', phase, SOUND_CUE_BANKS.stance, 0.055, 0.2);
     if (phase === 'anticipation') return emitSoundCue('anticipation', phase, SOUND_CUE_BANKS.anticipation, 0.075, 0.28);
     if (phase === 'release') {
@@ -624,7 +624,7 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
   }
   function beginReaction(currentGeneration, eventId) {
     if (destroyed || active?.generation !== currentGeneration || active?.eventId !== eventId) return;
-    scene?.setPhase?.('reaction');
+    if (!active.projection.staticOnly) scene?.setPhase?.('reaction');
     playPhaseAudio('reaction');
     active.reactionPlayed = true;
     if (active.pendingReturn) beginReturn(currentGeneration, eventId);
@@ -632,7 +632,7 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
   function beginReturn(currentGeneration, eventId) {
     if (destroyed || active?.generation !== currentGeneration || active?.eventId !== eventId) return;
     if (!active.returnPlayed) {
-      scene?.setPhase?.('return');
+      if (!active.projection.staticOnly) scene?.setPhase?.('return');
       playPhaseAudio('return');
       active.returnPlayed = true;
     }
@@ -647,7 +647,7 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
   }
   function startImpactSequence(currentGeneration, eventId) {
     if (!setTimeoutFn) {
-      scene?.setPhase?.('impact');
+      if (!active?.projection.staticOnly) scene?.setPhase?.('impact');
       playPhaseAudio('impact');
       if (active?.pendingReaction) beginReaction(currentGeneration, eventId);
       if (active?.pendingReturn) beginReturn(currentGeneration, eventId);
@@ -658,16 +658,16 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
     impactTimer = setTimeoutFn(() => {
       impactTimer = null;
       if (destroyed || active?.generation !== currentGeneration || active?.eventId !== eventId) return;
-      scene?.setPhase?.('impact');
+      if (!active.projection.staticOnly) scene?.setPhase?.('impact');
       playPhaseAudio('impact');
       hitstopStartTimer = setTimeoutFn(() => {
         hitstopStartTimer = null;
         if (destroyed || active?.generation !== currentGeneration || active?.eventId !== eventId) return;
-        scene?.setHitstop?.(true);
+        if (!active.projection.staticOnly) scene?.setHitstop?.(true);
         hitstopEndTimer = setTimeoutFn(() => {
           hitstopEndTimer = null;
           if (destroyed || active?.generation !== currentGeneration || active?.eventId !== eventId) return;
-          scene?.setHitstop?.(false);
+          if (!active.projection.staticOnly) scene?.setHitstop?.(false);
           active.impactPending = false;
           active.impactComplete = true;
           if (active.pendingReaction) beginReaction(currentGeneration, eventId);
@@ -679,9 +679,24 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
   function applyStage(projection, eventId, currentGeneration) {
     if (!scene || active?.generation !== currentGeneration) return false;
     if (projection.staticOnly) {
-      clearSequenceTimers();
-      scene.setPhase?.(projection.causalPhase === 'return' ? 'return' : 'static');
-      if (projection.stage === 'settle') closeActive();
+      scene.setPhase?.('static');
+      if (projection.stage === 'compare' || projection.stage === 'attack' || projection.stage === 'ability') {
+        active.pendingReaction = false; active.pendingReturn = false;
+        playPhaseAudio('release');
+        if (!active.impactPending && !active.impactComplete) startImpactSequence(currentGeneration, eventId);
+        return true;
+      }
+      if (projection.stage === 'winner') {
+        active.pendingReaction = true;
+        if (!active.impactPending) beginReaction(currentGeneration, eventId);
+        return true;
+      }
+      if (projection.stage === 'settle') {
+        active.pendingReturn = true;
+        if (!active.impactPending && (!active.pendingReaction || active.reactionPlayed)) beginReturn(currentGeneration, eventId);
+        return true;
+      }
+      playPhaseAudio(projection.causalPhase ?? 'stance');
       return true;
     }
     if (projection.stage === 'compare' || projection.stage === 'attack' || projection.stage === 'ability') {
@@ -790,7 +805,7 @@ export const BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT = Object.freeze({
   soundAssets: SOUND_ASSET_IDS,
   soundPhaseOrder: Object.freeze(['stance', 'anticipation', 'release', 'impact-at-148ms', 'reaction-after-62ms-hitstop', 'return']),
   soundVariation: 'STABLE_EVENT_HASH_SAMPLE_AND_MICRO_RATE_SELECTION',
-  soundStartPolicy: 'USER_GESTURE_UNLOCK_ONLY;STATIC_ONLY_SUPPRESSES_CUES;UNSUPPORTED_AUDIO_IS_NOOP',
+  soundStartPolicy: 'USER_GESTURE_UNLOCK_ONLY;MOTION_REDUCTION_PRESERVES_PHASE_AUDIO;UNSUPPORTED_AUDIO_IS_NOOP',
   impactEffectVariation: 'THREE_STABLE_EVENT_HASH_VARIANTS_HEARTS_PRIMARY_CRESCENT_ONLY_ON_VARIANT_2',
   crescentUsage: 'LOW_EMPHASIS_SLASH_OR_POST_IMPACT_ONLY',
   presentationOnly: true,

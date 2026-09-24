@@ -177,7 +177,11 @@ function makeGlobal(document) {
   const adapter = installBattleNakiFeLiveDomAdapter(globalRef, { documentRef: document, playSoundEffect(cue) { cues.push(cue); }, mountScene() { return { setPhase() {}, setHitstop() {}, destroy() {} }; } });
   document.resolution.dataset.stage = 'read'; adapter.refresh();
   document.resolution.dataset.stage = 'ability'; adapter.refresh();
-  assert.deepEqual(cues, [], 'low-performance static fallback must suppress battle audio');
+  assert.deepEqual(cues.map(cue => cue.cue), ['stance', 'anticipation', 'naki-song-release', 'magic-impact'], 'motion reduction must keep the action audio timeline');
+  document.resolution.dataset.stage = 'winner'; adapter.refresh();
+  document.resolution.dataset.stage = 'settle'; adapter.refresh();
+  assert.deepEqual(cues.map(cue => cue.cue), ['stance', 'anticipation', 'naki-song-release', 'magic-impact', 'reaction', 'return']);
+  assert.equal(adapter.snapshot().active, false, 'static audio-only sequence must settle and close');
   adapter.destroy();
 }
 
@@ -258,7 +262,7 @@ assert.equal(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.gameStateWrite, false);
 assert.deepEqual(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.staticImports, []);
 assert.deepEqual(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.soundPhaseOrder, ['stance', 'anticipation', 'release', 'impact-at-148ms', 'reaction-after-62ms-hitstop', 'return']);
 assert.ok(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.soundAssets.length >= 30);
-assert.equal(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.soundStartPolicy, 'USER_GESTURE_UNLOCK_ONLY;STATIC_ONLY_SUPPRESSES_CUES;UNSUPPORTED_AUDIO_IS_NOOP');
+assert.equal(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.soundStartPolicy, 'USER_GESTURE_UNLOCK_ONLY;MOTION_REDUCTION_PRESERVES_PHASE_AUDIO;UNSUPPORTED_AUDIO_IS_NOOP');
 
 {
   const profile = await readFile(new URL('../browser/profile-presentation-runtime-mount.mjs', import.meta.url), 'utf8');

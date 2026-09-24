@@ -43,7 +43,7 @@
   "userConstraints": {
     "naki": "dark attribute; hearts remain primary; idol-microphone singing is the incantation and should have a melodic release cue",
     "moon": "moon/crescent is subtle and must not dominate heart impacts",
-    "sound": "use distributed CC0 assets actively; quiet mix; event-seeded variation; each causal action gets its own synchronized cue; no sound when static/reduced-motion fallback is active",
+    "sound": "use distributed CC0 assets actively; quiet mix; event-seeded variation; each causal action gets its own synchronized cue; keep phase-synced sound when reduced-motion or low-performance suppresses character motion",
     "authority": "presentation only; never recalculate target, winner, order, board, save, or network state",
     "quality": "gesture-gated audio with graceful unsupported-device behavior and no cue duplication"
   },

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { removeHomeContextualTutorialReplay } from '../browser/home-boot-runtime-mount.mjs';
 
 test('R3 Home composition keeps the previous Home implementation without mounting unadopted Study or Rogue', () => {
   const wrapper = fs.readFileSync(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
@@ -10,6 +11,53 @@ test('R3 Home composition keeps the previous Home implementation without mountin
   assert.equal(base.includes('mountRogueRunFromCurrentBrowser'), false);
   assert.ok(base.includes('mountHomeBootPresentation'));
   assert.equal(wrapper.includes('GAMEROAD.html'), false);
+});
+
+test('Home removes the retired operation-recheck button and preserves the ranked-match entry', () => {
+  const originalHTMLElement = globalThis.HTMLElement;
+  class FakeHTMLElement {
+    constructor(remove = () => {}) {
+      this.removed = false;
+      this.remove = () => {
+        this.removed = true;
+        remove();
+      };
+    }
+  }
+  const triggerA = new FakeHTMLElement();
+  const triggerB = new FakeHTMLElement();
+  const style = new FakeHTMLElement();
+  const removedAttributes = [];
+  const home = new FakeHTMLElement();
+  home.removeAttribute = (name) => removedAttributes.push(name);
+  home.querySelectorAll = (selector) => {
+    assert.equal(selector, '[data-home-contextual-replay-trigger="true"]');
+    return [triggerA, triggerB];
+  };
+  home.ownerDocument = {
+    getElementById(id) {
+      assert.equal(id, 'gameroad-home-contextual-replay-style-r1');
+      return style;
+    },
+  };
+  const base = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
+
+  try {
+    globalThis.HTMLElement = FakeHTMLElement;
+    assert.equal(removeHomeContextualTutorialReplay(home), true);
+  } finally {
+    if (originalHTMLElement === undefined) delete globalThis.HTMLElement;
+    else globalThis.HTMLElement = originalHTMLElement;
+  }
+
+  assert.deepEqual(removedAttributes, ['data-home-contextual-replay-active']);
+  assert.equal(triggerA.removed, true);
+  assert.equal(triggerB.removed, true);
+  assert.equal(style.removed, true);
+  assert.ok(base.includes('removeHomeContextualTutorialReplay(home);'));
+  assert.equal(base.includes('if (active) mountHomeContextualTutorialReplay(home);'), false);
+  assert.ok(base.includes('function ensureHomeRankMatchEntry(doc)'));
+  assert.ok(base.includes("button.dataset.homeRankMatchEntry = 'true';"));
 });
 
 test('Home keeps the center-stage QA anchor but removes its stale visible panel chrome', () => {

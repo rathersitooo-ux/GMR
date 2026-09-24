@@ -90,7 +90,7 @@ const dependencyContract = [
   { file: 'deck-save-recovery-core.mjs', source: 'browser/deck-save-recovery-core.mjs', sourceArg: 'coreSource', expectedArg: 'expectedCoreBlob', artifact: 'deck_save_recovery_core', fixture: 'globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE = Object.freeze({});\n', currentBlob: '64f87734076b57c209bb832aec2361417c4df0c2' },
   { file: 'deck-save-ack-core.mjs', source: 'browser/deck-save-ack-core.mjs', sourceArg: 'deckSaveAckCoreSource', expectedArg: 'expectedDeckSaveAckCoreBlob', artifact: 'deck_save_ack_core', fixture: 'export function createDeckMatchStartSnapshot(){ return Object.freeze({}); }\n', currentBlob: 'e62c901c2cf78d8459dd3474072c5b735ac9c449' },
   { file: 'hate-peer-presence-core.mjs', source: 'browser/hate-peer-presence-core.mjs', sourceArg: 'presenceCoreSource', expectedArg: 'expectedPresenceCoreBlob', artifact: 'hate_peer_presence_core', fixture: 'export const HATE_PEER_PRESENCE_CORE = Object.freeze({});\n', currentBlob: '522c6132e4b49c0a0df15690927da511c1e40f43' },
-  { file: 'screen-navigation-core.mjs', source: 'browser/screen-navigation-core.mjs', sourceArg: 'navigationCoreSource', expectedArg: 'expectedNavigationCoreBlob', artifact: 'screen_navigation_core', fixture: 'export function resolveScreenNavigation(){ return { ok: true }; }\n', currentBlob: 'beae3c4febea3ef6e0f0e1c7ca73d58a2406a15f' },
+  { file: 'screen-navigation-core.mjs', source: 'browser/screen-navigation-core.mjs', sourceArg: 'navigationCoreSource', expectedArg: 'expectedNavigationCoreBlob', artifact: 'screen_navigation_core', fixture: 'export function resolveScreenNavigation(){ return { ok: true }; }\n', currentBlob: 'a10d63d8e3314a3f8682b213aedc5b9c19b969fb' },
   { file: 'result-presentation-core.mjs', source: 'browser/result-presentation-core.mjs', sourceArg: 'resultPresentationCoreSource', expectedArg: 'expectedResultPresentationCoreBlob', artifact: 'result_presentation_core', fixture: 'export function projectResultRankPresentation(){ return { ok: true, formalRank: 1, visibleLabel: \'1位\', rankColorRole: null }; }\n', currentBlob: '2fd53a38dcafbf87b22e6b9a2699a4a74aefefee' },
   { file: 'battle-replay-live-adapter.mjs', source: 'browser/battle-replay-live-adapter.mjs', sourceArg: 'replayAdapterSource', expectedArg: 'expectedReplayAdapterBlob', artifact: 'battle_replay_live_adapter', fixture: "import './battle-replay-core.mjs';\nimport './card-presentation-core.mjs';\nimport './battle-self-deck-inspect-core.mjs';\nimport './battle-conveyor-presentation-core.mjs';\nimport './partner-battle-event-log-projection.mjs';\nimport './battle-card-release-flight-runtime-effect.mjs';\n", currentBlob: 'e25be7f81dd52d4b30186c15e302ae3eae0212d6' },
   { file: 'battle-self-deck-inspect-core.mjs', source: 'browser/battle-self-deck-inspect-core.mjs', sourceArg: 'remainingDeckInspectCoreSource', expectedArg: 'expectedRemainingDeckInspectCoreBlob', artifact: 'battle_self_deck_inspect_core', fixture: "export function createAuthoritativeRemainingDeckCountSnapshot(){ return Object.freeze({}); }\nexport function projectRemainingDeckCountForViewer(){ return Object.freeze({ ok: true }); }\n", currentBlob: '78e63a6690f6846a2ce7b3538d4711ab10e4771d' },
@@ -140,6 +140,21 @@ const presentationAssetContract = [
   { file: 'assets/visual/rank-match/waiting-vfx.webp', source: 'browser/assets/visual/rank-match/waiting-vfx.webp', artifact: 'rank_match_waiting_vfx' },
 ];
 
+const temporaryActionSfxAssetContract = [
+  ['click_001.ogg', 'click_001'], ['confirmation_001.ogg', 'confirmation_001'],
+  ['select_001.ogg', 'select_001'], ['switch_001.ogg', 'switch_001'],
+  ['toggle_001.ogg', 'toggle_on_001'], ['toggle_002.ogg', 'toggle_off_002'],
+  ['open_001.ogg', 'open_001'], ['close_001.ogg', 'close_001'],
+  ['tick_001.ogg', 'tick_001'], ['click_003.ogg', 'click_003'],
+  ['error_001.ogg', 'error_001'], ['click_005.ogg', 'click_005'],
+  ['bookFlip1.ogg', 'book_flip_1'], ['metalClick.ogg', 'metal_click'],
+  ['bookClose.ogg', 'book_close'], ['sword.1.ogg', 'sword_1'],
+].map(([filename, artifactName]) => ({
+  file: `assets/audio/sfx/temp-action-sfx-r2/${filename}`,
+  source: `assets/audio/sfx/temp-action-sfx-r2/${filename}`,
+  artifact: `sfx_temp_action_${artifactName}`,
+}));
+
 function expectedVersionManifest() { return { schema: VERSION_MANIFEST_SCHEMA, channel: VERSION_MANIFEST_CHANNEL, build_id: SOURCE_COMMIT, published_at: PUBLISHED_AT, reload_policy: VERSION_MANIFEST_RELOAD_POLICY }; }
 
 test('build copies Browser, runtime dependencies, and formal version manifest deterministically', async () => {
@@ -163,6 +178,12 @@ test('build copies Browser, runtime dependencies, and formal version manifest de
     assert.equal(first.artifacts[dep.artifact].output, dep.file);
   }
   for (const asset of presentationAssetContract) {
+    const expectedBytes = await readFile(path.join(repoRoot, asset.source));
+    assert.equal((await readFile(path.join(dist, asset.file))).equals(expectedBytes), true);
+    assert.equal(first.artifacts[asset.artifact].git_blob_sha1, gitBlobSha1(expectedBytes));
+    assert.equal(first.artifacts[asset.artifact].output, asset.file);
+  }
+  for (const asset of temporaryActionSfxAssetContract) {
     const expectedBytes = await readFile(path.join(repoRoot, asset.source));
     assert.equal((await readFile(path.join(dist, asset.file))).equals(expectedBytes), true);
     assert.equal(first.artifacts[asset.artifact].git_blob_sha1, gitBlobSha1(expectedBytes));
@@ -216,6 +237,11 @@ test('build packages the exact current production Browser dependency set with ve
     assert.equal((await readFile(path.join(dist, dep.file))).equals(currentBytes.get(dep.file)), true); assert.equal(manifest.artifacts[dep.artifact].git_blob_sha1, dep.currentBlob);
   }
   for (const asset of presentationAssetContract) {
+    const expectedBytes = await readFile(path.join(repoRoot, asset.source));
+    assert.equal((await readFile(path.join(dist, asset.file))).equals(expectedBytes), true);
+    assert.equal(manifest.artifacts[asset.artifact].git_blob_sha1, gitBlobSha1(expectedBytes));
+  }
+  for (const asset of temporaryActionSfxAssetContract) {
     const expectedBytes = await readFile(path.join(repoRoot, asset.source));
     assert.equal((await readFile(path.join(dist, asset.file))).equals(expectedBytes), true);
     assert.equal(manifest.artifacts[asset.artifact].git_blob_sha1, gitBlobSha1(expectedBytes));

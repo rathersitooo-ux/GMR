@@ -2,6 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   MENU_TRANSITION_MOTION_PROFILE,
+  TEMPORARY_ACTION_SFX_CATALOG,
+  TEMPORARY_ACTION_SFX_ASSIGNMENTS,
+  createTemporarySfxPlayer,
+  installTemporaryActionSfxRuntime,
+  resolveTemporaryActionSfxCue,
+  resolveTemporaryEmptyTapCue,
   SCREEN_NAVIGATION_COMMON_BUTTON_SFX,
   SCREEN_NAVIGATION_FALLBACK_PARENT,
   SCREEN_NAVIGATION_REASON,
@@ -903,4 +909,213 @@ test('P5X cross-screen source uses existing Profile and Partner piece motion wit
     '.partner-shell-runtime > .partner-shell-navigation'
   ]);
   assert.equal(SCREEN_MOTION_PIECE_SELECTORS.battle, undefined);
+});
+
+function temporaryCueTarget(options = {}) {
+  const {
+    screen = 'cards', textContent = 'Continue', id = '', tagName = 'BUTTON', type = '',
+    role = '', ariaChecked = null, ariaPressed = null, checked = undefined,
+    disabled = false, interactive = true, card = false, battleTarget = false,
+    focusable = false, dataBattleAction = false, warnRailButton = false,
+  } = options;
+  const surface = {dataset: {screen}};
+  let node;
+  node = {
+    id, tagName, type, textContent, checked, disabled,
+    dataset: {action: '', sfxRole: '', ...(dataBattleAction ? {battleAction: 'true'} : {})},
+    closest(selector) {
+      if (selector === '.screen.active[data-screen]') return surface;
+      if (card && selector.includes('.handCard')) return node;
+      if (battleTarget && (selector.includes('.node.reachable') || selector.includes('.boardPlayerToken'))) return node;
+      if (focusable && selector.startsWith('input:not')) return node;
+      if (selector === 'form') return null;
+      return interactive && /button|a\[href\]|input|select|textarea|\[role=/.test(selector) ? node : null;
+    },
+    getAttribute(name) {
+      return ({role, type, 'aria-checked': ariaChecked, 'aria-pressed': ariaPressed, 'aria-label': textContent, title: ''})[name] ?? null;
+    },
+    matches(selector) {
+      const candidates = selector.split(',');
+      return candidates.some((candidate) => {
+        if (candidate === ':disabled') return disabled;
+        if (candidate === '[role="tab"]') return role === 'tab';
+        if (candidate === '[role="switch"]') return role === 'switch';
+        if (candidate === '[aria-pressed]') return ariaPressed !== null;
+        if (candidate === '[data-tab]') return false;
+        if (candidate === '#readyPlan') return id === 'readyPlan';
+        if (candidate === '[data-battle-action]') return dataBattleAction;
+        if (candidate === '.railBtn.warn') return warnRailButton;
+        return false;
+      });
+    }
+  };
+  return node;
+}
+
+test('temporary action SFX catalog groups common interactions and keeps navigation on its existing click', () => {
+  assert.equal(TEMPORARY_ACTION_SFX_ASSIGNMENTS.acceptedNavigation, 'formal:click_002.ogg');
+  assert.equal(TEMPORARY_ACTION_SFX_ASSIGNMENTS.genericButton, 'ui_button');
+  assert.equal(Object.isFrozen(TEMPORARY_ACTION_SFX_CATALOG), true);
+  assert.deepEqual(Object.fromEntries(Object.entries(TEMPORARY_ACTION_SFX_CATALOG).map(([key, cue]) => [key, cue.filename])), {
+    ui_button: 'click_001.ogg', ui_confirm: 'confirmation_001.ogg', ui_select: 'select_001.ogg',
+    ui_tab: 'switch_001.ogg', ui_toggle_on: 'toggle_001.ogg', ui_toggle_off: 'toggle_002.ogg',
+    ui_open: 'open_001.ogg', ui_close: 'close_001.ogg', ui_slider: 'tick_001.ogg',
+    ui_focus: 'click_003.ogg', ui_invalid: 'error_001.ogg', ui_empty_tap: 'click_005.ogg',
+    battle_card_select: 'bookFlip1.ogg', battle_target: 'metalClick.ogg', battle_action: 'sword.1.ogg',
+    battle_turn: 'bookClose.ogg', battle_button: 'click_003.ogg', battle_empty_tap: 'click_005.ogg',
+  });
+  assert.ok(Object.values(TEMPORARY_ACTION_SFX_CATALOG).every((cue) =>
+    Object.isFrozen(cue) && cue.filename.endsWith('.ogg') && cue.gain > 0 && cue.gain <= 0.52));
+});
+test('temporary action SFX resolves shared UI controls and Battle-specific actions', () => {
+  assert.equal(resolveTemporaryActionSfxCue({target: temporaryCueTarget({textContent: 'Buy now'})}), 'ui_confirm');
+  assert.equal(resolveTemporaryActionSfxCue({target: temporaryCueTarget({textContent: '\u6c7a\u5b9a'})}), 'ui_confirm');
+  assert.equal(resolveTemporaryActionSfxCue({target: temporaryCueTarget({textContent: 'Back'})}), 'ui_close');
+  assert.equal(resolveTemporaryActionSfxCue({target: temporaryCueTarget({textContent: '\u623b\u308b'})}), 'ui_close');
+  assert.equal(resolveTemporaryActionSfxCue({target: temporaryCueTarget({role: 'tab'})}), 'ui_tab');
+  assert.equal(resolveTemporaryActionSfxCue({target: temporaryCueTarget({type: 'checkbox', checked: true}), interaction: 'change'}), 'ui_toggle_on');
+  assert.equal(resolveTemporaryActionSfxCue({target: temporaryCueTarget({type: 'range'}), interaction: 'input'}), 'ui_slider');
+  assert.equal(resolveTemporaryActionSfxCue({target: temporaryCueTarget({type: 'text'}), interaction: 'click'}), null);
+  assert.equal(resolveTemporaryActionSfxCue({target: temporaryCueTarget({type: 'text'}), interaction: 'change'}), null);
+  assert.equal(resolveTemporaryActionSfxCue({target: temporaryCueTarget({disabled: true})}), 'ui_invalid');
+  assert.equal(resolveTemporaryActionSfxCue({target: temporaryCueTarget({screen: 'battle', card: true}), screenName: 'battle'}), 'battle_card_select');
+  assert.equal(resolveTemporaryActionSfxCue({target: temporaryCueTarget({screen: 'battle', battleTarget: true}), screenName: 'battle'}), 'battle_target');
+  assert.equal(resolveTemporaryActionSfxCue({target: temporaryCueTarget({screen: 'battle', id: 'readyPlan'}), screenName: 'battle'}), 'battle_action');
+  assert.equal(resolveTemporaryActionSfxCue({target: temporaryCueTarget({screen: 'battle', textContent: 'End Turn'}), screenName: 'battle'}), 'battle_turn');
+});
+
+test('temporary action SFX gives blank taps a quiet screen-family cue and ignores controls', () => {
+  assert.equal(resolveTemporaryEmptyTapCue(temporaryCueTarget({screen: 'shop', interactive: false})), 'ui_empty_tap');
+  assert.equal(resolveTemporaryEmptyTapCue(temporaryCueTarget({screen: 'battle', interactive: false})), 'battle_empty_tap');
+  assert.equal(resolveTemporaryEmptyTapCue(temporaryCueTarget({screen: 'battle'})), null);
+  assert.equal(resolveTemporaryEmptyTapCue(temporaryCueTarget({screen: null, interactive: false})), null);
+});
+function fakeTemporaryAudioFactory() {
+  const audios = [];
+  return {
+    audios,
+    create(url) {
+      const audio = {
+        src: url, volume: 1, currentTime: 2, preload: '', playCount: 0,
+        play() { this.playCount += 1; return Promise.resolve(); },
+      };
+      audios.push(audio);
+      return audio;
+    },
+  };
+}
+
+test('temporary SFX player uses packaged OGGs and honors gesture, mute and clamped SFX volume', () => {
+  const audio = fakeTemporaryAudioFactory();
+  const player = createTemporarySfxPlayer({
+    audioFactory: (url) => audio.create(url),
+    readSettings: () => ({muted: false, volume: 0.4}),
+    hasUserGesture: () => true,
+  });
+  assert.equal(player.play('ui_button', {isTrusted: true}), true);
+  assert.equal(audio.audios.length, 1);
+  assert.match(audio.audios[0].src, /\/assets\/audio\/sfx\/temp-action-sfx-r2\/click_001\.ogg$/);
+  assert.equal(audio.audios[0].volume, TEMPORARY_ACTION_SFX_CATALOG.ui_button.gain * 0.4);
+  assert.equal(audio.audios[0].currentTime, 0);
+  assert.equal(audio.audios[0].preload, 'auto');
+  assert.equal(audio.audios[0].playCount, 1);
+  player.dispose();
+  const mutedAudio = fakeTemporaryAudioFactory();
+  const muted = createTemporarySfxPlayer({
+    audioFactory: (url) => mutedAudio.create(url),
+    readSettings: () => ({muted: true, volume: 1}),
+    hasUserGesture: () => true,
+  });
+  assert.equal(muted.play('ui_button', {}), false);
+  assert.equal(mutedAudio.audios.length, 0);
+  const blockedAudio = fakeTemporaryAudioFactory();
+  const blocked = createTemporarySfxPlayer({
+    audioFactory: (url) => blockedAudio.create(url),
+    readSettings: () => ({muted: false, volume: 1}),
+    hasUserGesture: () => false,
+  });
+  assert.equal(blocked.play('ui_button', {}), false);
+  assert.equal(blockedAudio.audios.length, 0);
+});
+test('delegated SFX runtime is idempotent, plays blank taps and preserves one formal navigation sound', () => {
+  const handlers = new Map();
+  const settings = {mute: {textContent: 'SFX OFF'}, volume: {value: '80'}};
+  const fakeDocument = {
+    defaultView: {},
+    addEventListener(type, handler, options) {
+      const list = handlers.get(type) || [];
+      list.push({handler, options});
+      handlers.set(type, list);
+    },
+    removeEventListener(type, handler) {
+      handlers.set(type, (handlers.get(type) || []).filter((entry) => entry.handler !== handler));
+    },
+    querySelector(selector) { return selector === '#sfxMute' ? settings.mute : settings.volume; },
+  };
+  const audio = fakeTemporaryAudioFactory();
+  const options = {documentSource: fakeDocument, audioFactory: (url) => audio.create(url), hasUserGesture: () => true};
+  const runtime = installTemporaryActionSfxRuntime(options);
+  assert.equal(installTemporaryActionSfxRuntime(options), runtime);
+  const blank = temporaryCueTarget({screen: 'shop', interactive: false});
+  handlers.get('pointerdown').find((entry) => entry.options === true).handler({
+    target: blank, pointerId: 1, isPrimary: true, button: 0, clientX: 12, clientY: 15, timeStamp: 1, isTrusted: true,
+  });
+  handlers.get('pointerup').find((entry) => entry.options !== true).handler({
+    target: blank, pointerId: 1, isPrimary: true, button: 0, clientX: 12, clientY: 15, timeStamp: 30, isTrusted: true,
+  });
+  assert.equal(audio.audios.length, 1);
+  assert.match(audio.audios[0].src, /click_005\.ogg$/);
+  assert.equal(audio.audios[0].volume, TEMPORARY_ACTION_SFX_CATALOG.ui_empty_tap.gain * 0.8);
+  const disabled = temporaryCueTarget({screen: 'shop', disabled: true});
+  handlers.get('pointerdown').find((entry) => entry.options === true).handler({
+    target: disabled, pointerId: 2, isPrimary: true, button: 0, clientX: 8, clientY: 8, timeStamp: 40, isTrusted: true,
+  });
+  handlers.get('pointerup').find((entry) => entry.options !== true).handler({
+    target: disabled, pointerId: 2, isPrimary: true, button: 0, clientX: 8, clientY: 8, timeStamp: 50, isTrusted: true,
+  });
+  const disabledClick = {target: disabled, detail: 1, isTrusted: true};
+  handlers.get('click').find((entry) => entry.options === true).handler(disabledClick);
+  handlers.get('click').find((entry) => entry.options !== true).handler(disabledClick);
+  assert.equal(audio.audios.length, 2);
+  assert.match(audio.audios[1].src, /error_001\.ogg$/);
+  assert.equal(runtime.installed, true);
+  runtime.dispose();
+  assert.equal([...handlers.values()].flat().length, 0);
+});
+test('accepted navigation click is excluded from delegated generic SFX', () => {
+  const handlers = new Map();
+  const fakeDocument = {
+    defaultView: {},
+    addEventListener(type, handler, options) {
+      const list = handlers.get(type) || [];
+      list.push({handler, options});
+      handlers.set(type, list);
+    },
+    removeEventListener() {},
+    querySelector() { return {textContent: 'SFX OFF', value: '80'}; },
+  };
+  const audio = fakeTemporaryAudioFactory();
+  const runtime = installTemporaryActionSfxRuntime({
+    documentSource: fakeDocument, audioFactory: (url) => audio.create(url), hasUserGesture: () => true,
+  });
+  const oldAudio = Object.getOwnPropertyDescriptor(globalThis, 'Audio');
+  const restoreActivation = setUserActivation(true);
+  let formalPlayCount = 0;
+  Object.defineProperty(globalThis, 'Audio', {
+    configurable: true,
+    value: class { play() { formalPlayCount += 1; return Promise.resolve(); } },
+  });
+  try {
+    const event = {target: temporaryCueTarget({screen: 'home', textContent: 'Cards'}), isTrusted: true};
+    handlers.get('click').find((entry) => entry.options === true).handler(event);
+    assert.equal(resolveScreenNavigation('home', 'cards').ok, true);
+    handlers.get('click').find((entry) => entry.options !== true).handler(event);
+    assert.equal(formalPlayCount, 1);
+    assert.equal(audio.audios.length, 0);
+  } finally {
+    runtime.dispose();
+    restoreActivation();
+    if (oldAudio) Object.defineProperty(globalThis, 'Audio', oldAudio);
+    else delete globalThis.Audio;
+  }
 });

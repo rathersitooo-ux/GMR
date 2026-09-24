@@ -10,6 +10,19 @@ const ELEMENT_COLORS = Object.freeze({
   light: '#ffe899', dark: '#c28aff', arcane: '#ff9ce7'
 });
 const ELEMENT_ROWS = Object.freeze({ fire: 0, water: 1, wind: 2, earth: 3, light: 4, dark: 5, arcane: 6 });
+const SOUND_CUE_BANKS = Object.freeze({
+  stance: Object.freeze(['rpg-cloth-1', 'rpg-cloth-2', 'rpg-cloth-3', 'rpg-cloth-4']),
+  anticipation: Object.freeze(['digital-power-up-1', 'digital-power-up-5', 'digital-power-up-8', 'digital-power-up-11']),
+  nakiSongRelease: Object.freeze(['digital-three-tone-1', 'digital-three-tone-2', 'digital-two-tone-1', 'digital-two-tone-2']),
+  spellRelease: Object.freeze(['digital-phase-jump-1', 'digital-phase-jump-3', 'digital-phase-jump-5']),
+  slashRelease: Object.freeze(['rpg-knife-slice-1', 'rpg-knife-slice-2']),
+  approachStep: Object.freeze(['field-footstep-grass-000', 'field-footstep-grass-002', 'field-footstep-grass-004']),
+  physicalImpact: Object.freeze(['impact-punch-medium-000', 'impact-punch-medium-001', 'impact-punch-medium-002', 'impact-punch-medium-003', 'impact-punch-medium-004']),
+  magicImpact: Object.freeze(['impact-soft-medium-000', 'impact-soft-medium-001', 'impact-soft-medium-002', 'impact-soft-medium-003', 'impact-soft-medium-004']),
+  reaction: Object.freeze(['rpg-cloth-2', 'rpg-cloth-3', 'rpg-cloth-4']),
+  return: Object.freeze(['interface-bong-001', 'interface-pluck-001', 'digital-tone-1'])
+});
+const SOUND_ASSET_IDS = Object.freeze([...new Set(Object.values(SOUND_CUE_BANKS).flat())]);
 
 function exactString(value) {
   return typeof value === 'string' && value.length > 0 ? value : null;
@@ -249,11 +262,111 @@ function setAtlasFrame(node, url, index, columns = 3, rows = 3) {
   node.style.backgroundPosition = `${columns === 1 ? 0 : column * 100 / (columns - 1)}% ${rows === 1 ? 0 : row * 100 / (rows - 1)}%`;
 }
 
-function effectVariantForEvent(projection) {
-  const seed = String(projection.eventId ?? `${projection.sourceId}:${projection.targetId}`);
+function stableHash32(seedValue) {
+  const seed = String(seedValue ?? '');
   let hash = 2166136261;
   for (let index = 0; index < seed.length; index += 1) hash = Math.imul(hash ^ seed.charCodeAt(index), 16777619);
-  return (hash >>> 0) % 3;
+  return hash >>> 0;
+}
+
+function effectVariantForEvent(projection) {
+  const seed = projection.eventId ?? `${projection.sourceId}:${projection.targetId}`;
+  return stableHash32(seed) % 3;
+}
+
+function createBattleAudioPlayer(globalRef, doc, audioAssets) {
+  const AudioContextCtor = globalRef?.AudioContext ?? globalRef?.webkitAudioContext ?? globalThis.AudioContext ?? null;
+  if (typeof AudioContextCtor !== 'function') return Object.freeze({ play() { return false; }, destroy() { return false; } });
+
+  let context = null;
+  let unlocked = false;
+  let destroyed = false;
+  const buffers = new Map();
+  const pendingBuffers = new Map();
+  const sources = new Set();
+  const gestureOptions = { capture: true };
+  const decodeBase64 = globalRef?.atob?.bind(globalRef) ?? globalThis.atob?.bind(globalThis);
+
+  function removeGestureListeners() {
+    doc?.removeEventListener?.('pointerdown', unlock, gestureOptions);
+    doc?.removeEventListener?.('touchstart', unlock, gestureOptions);
+    doc?.removeEventListener?.('keydown', unlock, gestureOptions);
+  }
+
+  function ensureContext() {
+    if (context || destroyed) return context;
+    try { context = new AudioContextCtor(); } catch { context = null; }
+    return context;
+  }
+
+  function loadBuffer(sampleId) {
+    if (!context || !decodeBase64 || !audioAssets?.[sampleId]) return Promise.resolve(null);
+    if (buffers.has(sampleId)) return Promise.resolve(buffers.get(sampleId));
+    if (pendingBuffers.has(sampleId)) return pendingBuffers.get(sampleId);
+    const match = /^data:audio\/[^;,]+;base64,([A-Za-z0-9+/=]+)$/.exec(audioAssets[sampleId]);
+    if (!match) return Promise.resolve(null);
+    let promise;
+    try {
+      const binary = decodeBase64(match[1]);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+      promise = context.decodeAudioData(bytes.buffer.slice(0));
+    } catch { return Promise.resolve(null); }
+    const pending = Promise.resolve(promise).then(buffer => {
+      if (!destroyed && buffer) buffers.set(sampleId, buffer);
+      return buffer ?? null;
+    }).catch(() => null).finally(() => pendingBuffers.delete(sampleId));
+    pendingBuffers.set(sampleId, pending);
+    return pending;
+  }
+
+  function unlock() {
+    if (destroyed) return;
+    const audioContext = ensureContext();
+    if (!audioContext) { removeGestureListeners(); return; }
+    unlocked = true;
+    try { Promise.resolve(audioContext.resume?.()).catch(() => {}); } catch {}
+    for (const sampleId of Object.keys(audioAssets ?? {})) void loadBuffer(sampleId);
+    removeGestureListeners();
+  }
+
+  function play(cue) {
+    if (destroyed || !unlocked || !context || context.state !== 'running') return false;
+    const buffer = buffers.get(cue.sample);
+    if (!buffer) return false;
+    try {
+      if (sources.size >= 6) sources.values().next().value?.stop?.();
+      const source = context.createBufferSource();
+      const gain = context.createGain();
+      source.buffer = buffer;
+      source.playbackRate.value = cue.playbackRate;
+      gain.gain.setValueAtTime(cue.gain * 0.72, context.currentTime);
+      gain.gain.linearRampToValueAtTime(0, context.currentTime + cue.maxDuration);
+      source.connect(gain);
+      gain.connect(context.destination);
+      source.onended = () => { sources.delete(source); try { source.disconnect(); gain.disconnect(); } catch {} };
+      sources.add(source);
+      source.start();
+      source.stop(context.currentTime + cue.maxDuration + 0.01);
+      return true;
+    } catch { return false; }
+  }
+
+  function destroy() {
+    if (destroyed) return false;
+    destroyed = true;
+    removeGestureListeners();
+    for (const source of sources) { try { source.stop(); } catch {} }
+    sources.clear(); buffers.clear(); pendingBuffers.clear();
+    try { Promise.resolve(context?.close?.()).catch(() => {}); } catch {}
+    context = null;
+    return true;
+  }
+
+  doc?.addEventListener?.('pointerdown', unlock, gestureOptions);
+  doc?.addEventListener?.('touchstart', unlock, gestureOptions);
+  doc?.addEventListener?.('keydown', unlock, gestureOptions);
+  return Object.freeze({ play, destroy });
 }
 
 function makeBorrowedVisual(doc, marker, spriteNode) {
@@ -420,6 +533,9 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
   if (existing?.ok === true && typeof existing.refresh === 'function') return existing;
   const mountScene = options.mountScene ?? ((projection, assets) => createBattleScene(doc, globalRef, projection, assets));
   const assets = options.assets ?? Object.freeze({});
+  const audioRuntime = typeof options.playSoundEffect === 'function'
+    ? Object.freeze({ play: options.playSoundEffect, destroy() { return false; } })
+    : createBattleAudioPlayer(globalRef, doc, assets.audio);
   const setTimeoutFn = options.setTimeoutFn ?? globalRef?.setTimeout?.bind(globalRef) ?? null;
   const clearTimeoutFn = options.clearTimeoutFn ?? globalRef?.clearTimeout?.bind(globalRef) ?? null;
   const timeoutForPhase = options.timeoutForPhase ?? (() => ACTION_FAILSAFE_MS);
@@ -455,6 +571,50 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
     scene?.setHitstop?.(false);
   }
   function clearWatchdog() { clearTimer('watchdog'); }
+  function emitSoundCue(cue, phase, variants, gain, maxDuration) {
+    if (!active || active.projection.staticOnly || active.playedCues.has(cue)) return false;
+    const seed = String(active.eventId ?? `${active.projection.sourceId}:${active.projection.targetId}`);
+    const variantHash = stableHash32(`${seed}|${cue}`);
+    const sample = variants[variantHash % variants.length];
+    const rateHash = stableHash32(`${seed}|${cue}|rate`);
+    const descriptor = Object.freeze({
+      eventId: active.eventId, phase, cue, sample,
+      asset: assets.audio?.[sample] ?? null,
+      gain, playbackRate: 0.98 + (rateHash % 5) * 0.01, maxDuration,
+      sourceCharacter: active.projection.sourceCharacter ?? null,
+      targetCharacter: active.projection.targetCharacter ?? null,
+      sourceElement: active.projection.sourceElement ?? null
+    });
+    active.playedCues.add(cue);
+    try { audioRuntime.play(descriptor); } catch {}
+    return true;
+  }
+  function playPhaseAudio(phase) {
+    const projection = active?.projection;
+    if (!projection || projection.staticOnly) return false;
+    if (phase === 'stance') return emitSoundCue('stance', phase, SOUND_CUE_BANKS.stance, 0.055, 0.2);
+    if (phase === 'anticipation') return emitSoundCue('anticipation', phase, SOUND_CUE_BANKS.anticipation, 0.075, 0.28);
+    if (phase === 'release') {
+      if (projection.sourceCharacter === 'partner.naki') {
+        return emitSoundCue('naki-song-release', phase, SOUND_CUE_BANKS.nakiSongRelease, 0.11, 0.42);
+      }
+      if (projection.phase === 'ability') {
+        return emitSoundCue('spell-release', phase, SOUND_CUE_BANKS.spellRelease, 0.105, 0.3);
+      }
+      const slash = emitSoundCue('slash-release', phase, SOUND_CUE_BANKS.slashRelease, 0.12, 0.24);
+      const step = emitSoundCue('approach-step', phase, SOUND_CUE_BANKS.approachStep, 0.045, 0.14);
+      return slash || step;
+    }
+    if (phase === 'impact') {
+      const magic = projection.sourceCharacter === 'partner.naki' || projection.phase === 'ability';
+      return magic
+        ? emitSoundCue('magic-impact', phase, SOUND_CUE_BANKS.magicImpact, 0.16, 0.2)
+        : emitSoundCue('physical-impact', phase, SOUND_CUE_BANKS.physicalImpact, 0.17, 0.24);
+    }
+    if (phase === 'reaction') return emitSoundCue('reaction', phase, SOUND_CUE_BANKS.reaction, 0.045, 0.16);
+    if (phase === 'return') return emitSoundCue('return', phase, SOUND_CUE_BANKS.return, 0.055, 0.18);
+    return false;
+  }
   function closeActive() {
     clearWatchdog(); clearSequenceTimers(); active = null;
     if (!scene) return false;
@@ -465,6 +625,7 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
   function beginReaction(currentGeneration, eventId) {
     if (destroyed || active?.generation !== currentGeneration || active?.eventId !== eventId) return;
     scene?.setPhase?.('reaction');
+    playPhaseAudio('reaction');
     active.reactionPlayed = true;
     if (active.pendingReturn) beginReturn(currentGeneration, eventId);
   }
@@ -472,6 +633,7 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
     if (destroyed || active?.generation !== currentGeneration || active?.eventId !== eventId) return;
     if (!active.returnPlayed) {
       scene?.setPhase?.('return');
+      playPhaseAudio('return');
       active.returnPlayed = true;
     }
     if (!setTimeoutFn) { expiredSignature = null; closeActive(); return; }
@@ -486,6 +648,7 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
   function startImpactSequence(currentGeneration, eventId) {
     if (!setTimeoutFn) {
       scene?.setPhase?.('impact');
+      playPhaseAudio('impact');
       if (active?.pendingReaction) beginReaction(currentGeneration, eventId);
       if (active?.pendingReturn) beginReturn(currentGeneration, eventId);
       return;
@@ -496,6 +659,7 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
       impactTimer = null;
       if (destroyed || active?.generation !== currentGeneration || active?.eventId !== eventId) return;
       scene?.setPhase?.('impact');
+      playPhaseAudio('impact');
       hitstopStartTimer = setTimeoutFn(() => {
         hitstopStartTimer = null;
         if (destroyed || active?.generation !== currentGeneration || active?.eventId !== eventId) return;
@@ -523,6 +687,7 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
     if (projection.stage === 'compare' || projection.stage === 'attack' || projection.stage === 'ability') {
       active.pendingReaction = false; active.pendingReturn = false;
       scene.setPhase?.('release');
+      playPhaseAudio('release');
       if (!active.impactPending && !active.impactComplete) startImpactSequence(currentGeneration, eventId);
       return true;
     }
@@ -536,7 +701,9 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
       if (!active.impactPending && (!active.pendingReaction || active.reactionPlayed)) beginReturn(currentGeneration, eventId);
       return true;
     }
-    scene.setPhase?.(projection.causalPhase ?? 'stance');
+    const causalPhase = projection.causalPhase ?? 'stance';
+    scene.setPhase?.(causalPhase);
+    playPhaseAudio(causalPhase);
     return true;
   }
   function refresh() {
@@ -559,7 +726,7 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
     const currentGeneration = ++generation;
     try { scene = mountScene(projection, assets); } catch { scene = null; }
     if (!scene) return Object.freeze({ ok: false, reason: 'battle_scene_mount_failed' });
-    active = { signature, generation: currentGeneration, projection, eventId, lastStage: projection.stage, pendingReaction: false, pendingReturn: false, impactPending: false, impactComplete: false, reactionPlayed: false, returnPlayed: false };
+    active = { signature, generation: currentGeneration, projection, eventId, lastStage: projection.stage, pendingReaction: false, pendingReturn: false, impactPending: false, impactComplete: false, reactionPlayed: false, returnPlayed: false, playedCues: new Set() };
     applyStage(projection, eventId, currentGeneration);
     if (setTimeoutFn) {
       watchdog = setTimeoutFn(() => {
@@ -589,13 +756,14 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
   }
   doc.addEventListener?.('change', onInput); doc.addEventListener?.('input', onInput); globalRef?.addEventListener?.('pageshow', onInput);
   const controller = Object.freeze({
-    ok: true, version: 'BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_R2', presentationOnly: true, gameStateWrite: false,
+    ok: true, version: 'BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_R3', presentationOnly: true, gameStateWrite: false,
     refresh,
     snapshot: () => Object.freeze({ mounted: Boolean(scene), active: Boolean(active), eventId: active?.eventId ?? null, stage: active?.projection?.stage ?? null, sourceId: active?.projection?.sourceId ?? null, targetId: active?.projection?.targetId ?? null }),
     destroy() {
       if (destroyed) return false;
       destroyed = true; observer?.disconnect?.(); clearWatchdog(); closeActive();
       doc.removeEventListener?.('change', onInput); doc.removeEventListener?.('input', onInput); globalRef?.removeEventListener?.('pageshow', onInput);
+      audioRuntime.destroy?.();
       if (globalRef?.[GLOBAL_KEY] === controller) delete globalRef[GLOBAL_KEY];
       return true;
     }
@@ -606,7 +774,7 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
 }
 
 export const BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT = Object.freeze({
-  schema: 'gameroad.battle-naki-fe-live-dom-adapter.v2',
+  schema: 'gameroad.battle-naki-fe-live-dom-adapter.v3',
   trigger: 'ACTIVE_BATTLE_SCREEN_PLUS_BATTLE_PHASE_LIVE_FOCUS_REVEAL_READ_COMPARE_WINNER_SETTLE',
   stageAuthority: '#battleResolution[data-stage] + .battlePhaseLive',
   stageMapping: Object.freeze({ focus: 'stance', reveal: 'stance', read: 'anticipation', compare: 'release-impact', winner: 'reaction', settle: 'return' }),
@@ -619,6 +787,10 @@ export const BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT = Object.freeze({
   returnGraceMs: RETURN_GRACE_MS,
   actionFailsafeMs: ACTION_FAILSAFE_MS,
   animationAssets: Object.freeze({ nakiIdleFrames: 9, nakiSongAttackFrames: 9, elementalGroundRun: '7-elements-x-3-frames' }),
+  soundAssets: SOUND_ASSET_IDS,
+  soundPhaseOrder: Object.freeze(['stance', 'anticipation', 'release', 'impact-at-148ms', 'reaction-after-62ms-hitstop', 'return']),
+  soundVariation: 'STABLE_EVENT_HASH_SAMPLE_AND_MICRO_RATE_SELECTION',
+  soundStartPolicy: 'USER_GESTURE_UNLOCK_ONLY;STATIC_ONLY_SUPPRESSES_CUES;UNSUPPORTED_AUDIO_IS_NOOP',
   impactEffectVariation: 'THREE_STABLE_EVENT_HASH_VARIANTS_HEARTS_PRIMARY_CRESCENT_ONLY_ON_VARIANT_2',
   crescentUsage: 'LOW_EMPHASIS_SLASH_OR_POST_IMPACT_ONLY',
   presentationOnly: true,

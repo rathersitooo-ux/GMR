@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assertBrowserRuntimeDependencyCompleteness, buildPackage } from '../scripts/build.mjs';
+import { BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT } from '../../../browser/battle-naki-fe-live-dom-adapter.mjs';
 import {
   VERSION_MANIFEST_CHANNEL,
   VERSION_MANIFEST_FILENAME,
@@ -200,7 +201,7 @@ test('dependency verifier detects inline static module imports and fails closed 
   assert.deepEqual(await assertBrowserRuntimeDependencyCompleteness(browserBytes, dist), ['deck-save-ack-core.mjs']);
 });
 
-test('the packaged profile embeds the exact tested Battle adapter and generated atlases', async () => {
+test('the packaged profile embeds the exact tested Battle adapter, generated atlases, and CC0 SFX', async () => {
   const profile = await readFile(path.join(repoRoot, 'browser/profile-presentation-runtime-mount.mjs'), 'utf8');
   const adapter = await readFile(path.join(repoRoot, 'browser/battle-naki-fe-live-dom-adapter.mjs'));
   assert.ok(profile.includes(adapter.toString('utf8')));
@@ -215,6 +216,17 @@ test('the packaged profile embeds the exact tested Battle adapter and generated 
     const bytes = await readFile(path.join(repoRoot, assetPath));
     assert.ok(profile.includes(`const ${constant} = '${bytes.toString('base64')}';`), `${assetPath} must match the bytes embedded in the already-packaged entrypoint`);
   }
+  const soundBlock = profile.match(/const BATTLE_NAKI_SFX_BASE64 = Object\.freeze\(\{([\s\S]*?)\n\}\);/);
+  assert.ok(soundBlock, 'the packaged profile must contain the SFX map');
+  const embeddedSounds = new Map([...soundBlock[1].matchAll(/'([^']+)': '([^']+)'/g)].map(match => [match[1], match[2]]));
+  for (const assetId of BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.soundAssets) {
+    const assetPath = `browser/assets/partners/naki-idol/battle/sfx/kenney-cc0/${assetId}.mp3`;
+    const bytes = await readFile(path.join(repoRoot, assetPath));
+    assert.equal(embeddedSounds.get(assetId), bytes.toString('base64'), `${assetPath} must match the audio embedded in the profile`);
+  }
+  const sources = await readFile(path.join(repoRoot, 'browser/assets/partners/naki-idol/battle/sfx/kenney-cc0/SOURCES.md'), 'utf8');
+  assert.match(sources, /CC0/);
+  assert.match(sources, /Digital Audio/);
 });
 
 test('build packages the exact current production Browser dependency set with version identity', async () => {

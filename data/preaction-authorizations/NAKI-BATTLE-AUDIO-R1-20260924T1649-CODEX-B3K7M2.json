@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NAKI-BATTLE-AUDIO-R1-20260924T1649-CODEX-B3K7M2",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "NAKI_BATTLE_CINEMATIC_CC0_AUDIO_R1",
+  "acquireKey": "NAKI-BATTLE-AUDIO-R1-20260924T1649-CODEX-B3K7M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "LIVE_BATTLE_CINEMATIC_HAS_INDEPENDENT_CAUSAL_PHASES_BUT_NO_PHASE_SFX",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "ADAPTER_AND_PROFILE_ENTRYPOINT_EXACTLY_MATCH_AT_BRANCH_HEAD_AND_CC0_PACKS_DOWNLOADED",
+  "proceedToken": "PROCEED|NAKI-BATTLE-AUDIO-R1-20260924T1649-CODEX-B3K7M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|naki-battle-cc0-audio|presentation-only",
+  "authorizationBaseSha": "c1e01161b030c88ad93b68c01cd7f85bebf20fe6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "NAKI_BATTLE_CINEMATIC_CC0_AUDIO_R1",
+  "leaseAcquireKey": "NAKI-BATTLE-AUDIO-R1-20260924T1649-CODEX-B3K7M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-24 16:49 JST",
+  "leaseUntilJst": "2026-09-24 17:39 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:O5",
+  "leaseExactMutableResources": "browser/battle-naki-fe-live-dom-adapter.mjs; browser/profile-presentation-runtime-mount.mjs; tests/battle-naki-fe-live-dom-adapter.test.mjs; deploy/cloudflare/tests/build.test.mjs; browser/assets/partners/naki-idol/battle/sfx/kenney-cc0/*.mp3 and SOURCES.md; this PRE_ACTION witness; existing branch codex/naki-battle-live-screen-r2-20260924 and draft PR #2081; CURRENT_ACTIVE_LEASES row5 A:O only with N1:N3 read-only; R24 append-only own records only",
+  "scope": [
+    "browser/battle-naki-fe-live-dom-adapter.mjs",
+    "browser/profile-presentation-runtime-mount.mjs",
+    "tests/battle-naki-fe-live-dom-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "browser/assets/partners/naki-idol/battle/sfx/kenney-cc0/*.mp3",
+    "browser/assets/partners/naki-idol/battle/sfx/kenney-cc0/SOURCES.md",
+    "data/preaction-authorizations/NAKI-BATTLE-AUDIO-R1-20260924T1649-CODEX-B3K7M2.json"
+  ],
+  "solutionSignature": "NAKI_BATTLE_PHASED_CC0_SOUND_RUNTIME_R1",
+  "reuseDisposition": "ADAPT_EXISTING",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_CAUSAL_ADAPTER_AND_PREPACKAGED_PROFILE_ENTRYPOINT_SUPPORT_AUDIO_WITHOUT_BUILD_GRAPH_CHANGES",
+  "solutionSearchEvidence": [
+    "The active adapter already separates stance, anticipation, release, impact, reaction, and return; its contact and hitstop are timed at 148ms, 26ms, and 62ms.",
+    "The production profile entrypoint embeds the exact tested adapter source and existing sprite assets, so sound buffers can be embedded without adding a runtime module import.",
+    "Kenney RPG Audio, Impact Sounds, Interface Sounds, and Digital Audio packs are distributed as CC0; selected files can supply varied cloth, footstep, slash, tone, and impact cues.",
+    "A small Web Audio buffer player can unlock only on a user gesture, schedule one event-seeded variant per phase, and fail gracefully where decoding is unavailable."
+  ],
+  "userConstraints": {
+    "naki": "dark attribute; hearts remain primary; idol-microphone singing is the incantation and should have a melodic release cue",
+    "moon": "moon/crescent is subtle and must not dominate heart impacts",
+    "sound": "use distributed CC0 assets actively; quiet mix; event-seeded variation; each causal action gets its own synchronized cue; no sound when static/reduced-motion fallback is active",
+    "authority": "presentation only; never recalculate target, winner, order, board, save, or network state",
+    "quality": "gesture-gated audio with graceful unsupported-device behavior and no cue duplication"
+  },
+  "createdAtJst": "2026-09-24 16:49 JST"
+}

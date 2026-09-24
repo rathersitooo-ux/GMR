@@ -102,7 +102,7 @@ function makeGlobal(document) {
 
 {
   const document = new FakeDocument(); const globalRef = makeGlobal(document);
-  const phases = []; const hitstops = []; const timers = []; const mounted = []; let destroys = 0;
+  const phases = []; const hitstops = []; const timers = []; const mounted = []; const cues = []; let destroys = 0;
   const assets = Object.freeze({ nakiIdle: 'idle-data', nakiAttack: 'attack-data', groundRun: 'ground-data' });
   const setTimeoutFn = (callback, ms) => { const timer = { callback, ms, cleared: false }; timers.push(timer); return timer; };
   const clearTimeoutFn = timer => { if (timer) timer.cleared = true; };
@@ -112,6 +112,7 @@ function makeGlobal(document) {
   };
   const adapter = installBattleNakiFeLiveDomAdapter(globalRef, {
     documentRef: document, assets, setTimeoutFn, clearTimeoutFn,
+    playSoundEffect(cue) { cues.push(cue); },
     mountScene(projection, sceneAssets) {
       mounted.push({ projection, sceneAssets });
       return {
@@ -133,7 +134,10 @@ function makeGlobal(document) {
   assert.deepEqual(phases.slice(-2), ['stance', 'anticipation']);
   document.resolution.dataset.stage = 'compare'; adapter.refresh();
   assert.equal(phases.at(-1), 'release');
+  adapter.refresh();
+  assert.equal(cues.filter(cue => cue.cue === 'naki-song-release').length, 1, 'one event must not play a duplicate release cue');
   fire(148); assert.equal(phases.at(-1), 'impact');
+  assert.equal(cues.at(-1).cue, 'magic-impact', 'the spell impact sound starts on the 148ms contact frame');
   fire(26); assert.equal(hitstops.at(-1), true);
   fire(62); assert.equal(hitstops.at(-1), false);
   document.resolution.dataset.stage = 'winner'; adapter.refresh();
@@ -143,7 +147,69 @@ function makeGlobal(document) {
   fire(240);
   assert.equal(destroys, 1);
   assert.equal(adapter.snapshot().active, false);
+  assert.deepEqual(cues.map(cue => cue.cue), ['stance', 'anticipation', 'naki-song-release', 'magic-impact', 'reaction', 'return']);
+  assert.ok(cues.every(cue => cue.eventId === 'event-1'));
+  assert.ok(cues.every(cue => cue.gain > 0 && cue.gain <= 0.17));
+  assert.ok(cues.find(cue => cue.cue === 'naki-song-release').sourceCharacter === 'partner.naki');
   assert.equal(adapter.destroy(), true);
+}
+
+{
+  const document = new FakeDocument(); const globalRef = makeGlobal(document); const cues = []; const timers = [];
+  document.rows[0].classList.remove('active'); document.rows[1].classList.add('active');
+  document.resolution.dataset.stage = 'focus';
+  const setTimeoutFn = (callback, ms) => { const timer = { callback, ms, cleared: false }; timers.push(timer); return timer; };
+  const clearTimeoutFn = timer => { if (timer) timer.cleared = true; };
+  const fire = ms => { const timer = [...timers].reverse().find(row => !row.cleared && row.ms === ms); assert.ok(timer); timer.cleared = true; timer.callback(); };
+  const adapter = installBattleNakiFeLiveDomAdapter(globalRef, { documentRef: document, setTimeoutFn, clearTimeoutFn, playSoundEffect(cue) { cues.push(cue); }, mountScene() { return { setPhase() {}, setHitstop() {}, destroy() {} }; } });
+  document.resolution.dataset.stage = 'read'; adapter.refresh();
+  document.resolution.dataset.stage = 'attack'; adapter.refresh();
+  assert.deepEqual(cues.map(cue => cue.cue), ['stance', 'anticipation', 'slash-release', 'approach-step']);
+  fire(148);
+  assert.equal(cues.at(-1).cue, 'physical-impact');
+  assert.notEqual(cues.find(cue => cue.cue === 'slash-release').sample, undefined);
+  adapter.destroy();
+}
+
+{
+  const document = new FakeDocument(); const globalRef = makeGlobal(document); const cues = [];
+  document.body.classList.add('low-perf');
+  const adapter = installBattleNakiFeLiveDomAdapter(globalRef, { documentRef: document, playSoundEffect(cue) { cues.push(cue); }, mountScene() { return { setPhase() {}, setHitstop() {}, destroy() {} }; } });
+  document.resolution.dataset.stage = 'read'; adapter.refresh();
+  document.resolution.dataset.stage = 'ability'; adapter.refresh();
+  assert.deepEqual(cues, [], 'low-performance static fallback must suppress battle audio');
+  adapter.destroy();
+}
+
+{
+  const document = new FakeDocument(); const globalRef = makeGlobal(document); const timers = []; const started = []; const contexts = [];
+  class FakeAudioContext {
+    constructor() { this.state = 'suspended'; this.currentTime = 4; this.destination = {}; contexts.push(this); }
+    resume() { this.state = 'running'; return Promise.resolve(); }
+    decodeAudioData(bytes) { return Promise.resolve({ byteLength: bytes.byteLength }); }
+    createBufferSource() {
+      const source = { playbackRate: { value: 1 }, connect() {}, disconnect() {}, start() { started.push(source); }, stop() {}, onended: null };
+      return source;
+    }
+    createGain() { return { gain: { setValueAtTime() {}, linearRampToValueAtTime() {} }, connect() {}, disconnect() {} }; }
+    close() { this.state = 'closed'; return Promise.resolve(); }
+  }
+  globalRef.AudioContext = FakeAudioContext;
+  const setTimeoutFn = (callback, ms) => { const timer = { callback, ms, cleared: false }; timers.push(timer); return timer; };
+  const clearTimeoutFn = timer => { if (timer) timer.cleared = true; };
+  const fire = ms => { const timer = [...timers].reverse().find(row => !row.cleared && row.ms === ms); assert.ok(timer); timer.cleared = true; timer.callback(); };
+  const audio = Object.fromEntries(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.soundAssets.map(id => [id, 'data:audio/mpeg;base64,AA==']));
+  const adapter = installBattleNakiFeLiveDomAdapter(globalRef, { documentRef: document, assets: { audio }, setTimeoutFn, clearTimeoutFn, mountScene() { return { setPhase() {}, setHitstop() {}, destroy() {} }; } });
+  assert.equal(started.length, 0, 'audio remains silent before an explicit gesture');
+  const pointerDown = document.listeners.get('pointerdown')?.[0]; assert.equal(typeof pointerDown, 'function'); pointerDown();
+  await new Promise(resolve => setImmediate(resolve));
+  document.resolution.dataset.stage = 'read'; adapter.refresh();
+  document.resolution.dataset.stage = 'compare'; adapter.refresh();
+  assert.equal(started.length, 2, 'charge and sung release play after the gesture unlock');
+  fire(148);
+  assert.equal(started.length, 3, 'impact sound starts on the delayed contact callback');
+  assert.equal(adapter.destroy(), true);
+  assert.equal(contexts[0].state, 'closed');
 }
 
 {
@@ -190,6 +256,9 @@ assert.deepEqual(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.stageMapping, { focus:
 assert.equal(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.ambiguousActorOrTarget, 'FAIL_CLOSED');
 assert.equal(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.gameStateWrite, false);
 assert.deepEqual(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.staticImports, []);
+assert.deepEqual(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.soundPhaseOrder, ['stance', 'anticipation', 'release', 'impact-at-148ms', 'reaction-after-62ms-hitstop', 'return']);
+assert.ok(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.soundAssets.length >= 30);
+assert.equal(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.soundStartPolicy, 'USER_GESTURE_UNLOCK_ONLY;STATIC_ONLY_SUPPRESSES_CUES;UNSUPPORTED_AUDIO_IS_NOOP');
 
 {
   const profile = await readFile(new URL('../browser/profile-presentation-runtime-mount.mjs', import.meta.url), 'utf8');
@@ -206,6 +275,13 @@ assert.deepEqual(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.staticImports, []);
     const match = profile.match(new RegExp(`const ${constant} = '([^']+)';`));
     assert.ok(match, `${constant} must be embedded in the prepackaged entrypoint`);
     assert.equal(match[1], asset.toString('base64'));
+  }
+  const soundBlock = profile.match(/const BATTLE_NAKI_SFX_BASE64 = Object\.freeze\(\{([\s\S]*?)\n\}\);/);
+  assert.ok(soundBlock, 'CC0 sound assets must be embedded in the prepackaged entrypoint');
+  const embeddedSounds = new Map([...soundBlock[1].matchAll(/'([^']+)': '([^']+)'/g)].map(match => [match[1], match[2]]));
+  for (const assetId of BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.soundAssets) {
+    const sound = await readFile(new URL(`../browser/assets/partners/naki-idol/battle/sfx/kenney-cc0/${assetId}.mp3`, import.meta.url));
+    assert.equal(embeddedSounds.get(assetId), sound.toString('base64'), `${assetId} must match the embedded audio bytes`);
   }
 }
 

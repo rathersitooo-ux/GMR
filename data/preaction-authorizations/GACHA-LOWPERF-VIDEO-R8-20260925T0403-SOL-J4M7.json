@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GACHA-LOWPERF-VIDEO-R8-20260925T0403-SOL-J4M7",
+  "taskId": "GACHA-OPENING-RITUAL-GAMEFEEL-001",
+  "workUnitKey": "GACHA_LOWPERF_VIDEO_BYPASS_R8",
+  "acquireKey": "GACHA-LOWPERF-VIDEO-R8-20260925T0403-SOL-J4M7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_C1E011_LOWPERF_PLAYS_A01_B01_AND_EXISTING_CORE_DISABLES_VIDEO",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_GACHA_PRESENTATION_CORE_LOWPERF_VIDEO_DISABLED_PLUS_DIRECT_HTML_BRANCH_INSPECTION",
+  "proceedToken": "PROCEED|GACHA-LOWPERF-VIDEO-R8-20260925T0403-SOL-J4M7|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|gacha-lowperf-video-bypass|html-focused-test|active-lease",
+  "authorizationBaseSha": "c1e01161b030c88ad93b68c01cd7f85bebf20fe6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GACHA-OPENING-RITUAL-GAMEFEEL-001",
+  "leaseWorkUnitKey": "GACHA_LOWPERF_VIDEO_BYPASS_R8",
+  "leaseAcquireKey": "GACHA-LOWPERF-VIDEO-R8-20260925T0403-SOL-J4M7",
+  "leaseSnapshotReadbackAtJst": "2026-09-25 04:03 JST",
+  "leaseUntilJst": "2026-09-25 05:03 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/gacha-lowperf-video-r8-20260925; browser/GAMEROAD.html; tests/gacha-presentation-core.test.mjs; own PRE_ACTION witness data/preaction-authorizations/GACHA-LOWPERF-VIDEO-R8-20260925T0403-SOL-J4M7.json; R24 own events; CURRENT_ACTIVE_LEASES exact own row",
+  "solutionSignature": "GACHA_LOWPERF_REUSE_EXISTING_PRESENTATION_EFFECT_CONTRACT_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_GACHA_PRESENTATION_CORE_LOWPERF_CONTRACT",
+  "solutionSearchEvidence": [
+    "Current browser/gacha-presentation-core.mjs already defines lowPerf as short_fade with video disabled.",
+    "Current main browser/GAMEROAD.html openPack checks only reduceMotion before playing A01 then B01.",
+    "Existing tests/gacha-presentation-core.test.mjs already asserts lowPerf video disabled; the remaining gap is the live HTML consumer."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/gacha-presentation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/gacha-presentation-core.test.mjs"
+  ]
+}

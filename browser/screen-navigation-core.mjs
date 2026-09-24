@@ -184,10 +184,437 @@ function playAcceptedNavigationSfx() {
   } catch { return false; }
 }
 
+function temporarySfxTone(wave, startHz, endHz, durationSec, gain, offsetSec = 0) {
+  return Object.freeze({wave, startHz, endHz, durationSec, gain, offsetSec});
+}
+function temporarySfxCue(description, tones) {
+  return Object.freeze({description, tones: Object.freeze(tones)});
+}
+
+export const TEMPORARY_ACTION_SFX_CATALOG = Object.freeze({
+  ui_button: temporarySfxCue('Shared soft button tap', [temporarySfxTone('triangle', 620, 480, 0.065, 0.045)]),
+  ui_confirm: temporarySfxCue('Confirm action', [
+    temporarySfxTone('triangle', 620, 760, 0.072, 0.045),
+    temporarySfxTone('triangle', 780, 980, 0.085, 0.05, 0.06),
+  ]),
+  ui_select: temporarySfxCue('Selection', [temporarySfxTone('sine', 460, 560, 0.055, 0.035)]),
+  ui_tab: temporarySfxCue('Tab switch', [temporarySfxTone('sine', 520, 680, 0.045, 0.028)]),
+  ui_toggle_on: temporarySfxCue('Toggle on', [temporarySfxTone('triangle', 550, 840, 0.07, 0.04)]),
+  ui_toggle_off: temporarySfxCue('Toggle off', [temporarySfxTone('triangle', 720, 440, 0.08, 0.038)]),
+  ui_open: temporarySfxCue('Open panel or menu', [temporarySfxTone('triangle', 380, 720, 0.11, 0.04)]),
+  ui_close: temporarySfxCue('Close or return', [temporarySfxTone('triangle', 720, 360, 0.10, 0.04)]),
+  ui_slider: temporarySfxCue('Slider tick', [temporarySfxTone('sine', 800, 730, 0.028, 0.022)]),
+  ui_focus: temporarySfxCue('Text field focus', [temporarySfxTone('sine', 490, 490, 0.035, 0.022)]),
+  ui_invalid: temporarySfxCue('Unavailable or rejected action', [temporarySfxTone('sine', 240, 180, 0.085, 0.04)]),
+  ui_empty_tap: temporarySfxCue('Quiet blank-screen tap', [temporarySfxTone('sine', 350, 260, 0.06, 0.018)]),
+  battle_card_select: temporarySfxCue('Battle card selection', [temporarySfxTone('triangle', 220, 340, 0.06, 0.05)]),
+  battle_target: temporarySfxCue('Battle target selection', [temporarySfxTone('sine', 390, 520, 0.065, 0.045)]),
+  battle_action: temporarySfxCue('Battle action commit', [
+    temporarySfxTone('triangle', 180, 360, 0.10, 0.065),
+    temporarySfxTone('triangle', 360, 520, 0.08, 0.055, 0.055),
+  ]),
+  battle_turn: temporarySfxCue('Battle turn end or pass', [temporarySfxTone('sine', 300, 190, 0.12, 0.055)]),
+  battle_button: temporarySfxCue('Battle utility button', [temporarySfxTone('triangle', 420, 320, 0.055, 0.04)]),
+  battle_empty_tap: temporarySfxCue('Quiet blank Battle-board tap', [temporarySfxTone('sine', 260, 190, 0.07, 0.016)]),
+});
+
+export const TEMPORARY_ACTION_SFX_ASSIGNMENTS = Object.freeze({
+  acceptedNavigation: 'formal:click_002.ogg',
+  genericButton: 'ui_button',
+  confirmation: 'ui_confirm',
+  selection: 'ui_select',
+  tab: 'ui_tab',
+  toggleOn: 'ui_toggle_on',
+  toggleOff: 'ui_toggle_off',
+  panelOpen: 'ui_open',
+  closeOrBack: 'ui_close',
+  rangeInput: 'ui_slider',
+  textFieldFocus: 'ui_focus',
+  unavailableOrRejected: 'ui_invalid',
+  blankActiveScreenTap: 'ui_empty_tap',
+  battleCardSelection: 'battle_card_select',
+  battleTargetSelection: 'battle_target',
+  battleActionCommit: 'battle_action',
+  battleTurnEndOrPass: 'battle_turn',
+  battleUtilityButton: 'battle_button',
+  blankBattleTap: 'battle_empty_tap',
+});
+
+const TEMPORARY_ACTION_SFX_INTERACTIVE_SELECTOR = [
+  'button', 'a[href]', 'input', 'select', 'textarea', '[role="button"]', '[role="tab"]',
+  '[role="switch"]', '[role="checkbox"]', '[role="radio"]', '[data-action]',
+  '[data-battle-action]', '[data-battle-target]', '[data-card-id]', '[data-player]',
+  '[data-target-id]', '[data-cell-id]', '[data-tile-id]', '.handCard', '.boardPlayerToken',
+  '.node.reachable', '.node.path', '.node.currentPosition', '.node.nextStep',
+  '[tabindex]:not([tabindex="-1"])', '[onclick]', '[contenteditable="true"]',
+].join(',');
+const TEMPORARY_ACTION_SFX_BATTLE_CARD_SELECTOR = '.handCard[data-card-id],[data-battle-card],[data-card-id],.battleCard';
+const TEMPORARY_ACTION_SFX_BATTLE_TARGET_SELECTOR = '.boardPlayerToken[data-player],[data-battle-target],[data-target-id],[data-player],.node.reachable,.node.path,.node.nextStep';
+const TEMPORARY_ACTION_SFX_ACTIVE_SCREEN_SELECTOR = '.screen.active[data-screen]';
+const temporaryActionSfxNavigationDecisions = new WeakMap();
+let temporaryActionSfxActiveClickEvent = null;
+const temporaryActionSfxInstallations = new WeakMap();
+
+function temporarySfxClosest(target, selector) {
+  let current = target?.nodeType === 3 ? target.parentElement : target;
+  if (typeof current?.closest === 'function') return current.closest(selector);
+  while (current) {
+    if (typeof current.matches === 'function' && current.matches(selector)) return current;
+    current = current.parentElement || current.parentNode || null;
+  }
+  return null;
+}
+function temporarySfxInputType(control) {
+  return String(control?.type || control?.getAttribute?.('type') || '').toLowerCase();
+}
+function temporarySfxRole(control) {
+  return String(control?.getAttribute?.('role') || '').toLowerCase();
+}
+function temporarySfxDisabled(control) {
+  return control?.disabled === true || control?.getAttribute?.('aria-disabled') === 'true' || Boolean(control?.matches?.(':disabled'));
+}
+function temporarySfxControlText(control) {
+  return [
+    control?.id,
+    control?.getAttribute?.('aria-label'),
+    control?.getAttribute?.('title'),
+    control?.dataset?.action,
+    control?.dataset?.sfxRole,
+    control?.textContent,
+  ].filter(Boolean).join(' ').slice(0, 180);
+}
+function temporarySfxToggleIsOn(control) {
+  if (typeof control?.checked === 'boolean') return control.checked;
+  const ariaChecked = control?.getAttribute?.('aria-checked');
+  if (ariaChecked !== null && ariaChecked !== undefined) return ariaChecked === 'true';
+  const ariaPressed = control?.getAttribute?.('aria-pressed');
+  if (ariaPressed !== null && ariaPressed !== undefined) return ariaPressed === 'true';
+  return /\bON\b/i.test(temporarySfxControlText(control));
+}
+function temporarySfxLooksLikeConfirm(text) {
+  return /\b(confirm|start|buy|purchase|claim|draw|equip|upgrade|save|submit|play|fight|attack|cast|use|accept|apply|finish|proceed|exchange)\b|決定|開始|購入|引く|開封|受取|受け取|装備|強化|保存|実行|送信|確定|攻撃|行動|使用|交換|応募|回す/i.test(text);
+}
+function temporarySfxLooksLikeClose(text) {
+  return /\b(back|close|cancel|dismiss|return|go back)\b|戻る|閉じる|キャンセル|中止|やめる/i.test(text);
+}
+function temporarySfxLooksLikeOpen(text) {
+  return /\b(open|menu|shop|profile|settings|details|more|view)\b|開く|ショップ|プロフィール|設定|詳細|見る/i.test(text);
+}
+function temporarySfxLooksLikeSelection(text) {
+  return /\b(select|choose|pick|card|character|item|player|token)\b|選択|選ぶ|カード|キャラ|対象/i.test(text);
+}
+
+export function resolveTemporaryActionSfxCue({target, event, interaction = 'click', screenName = null} = {}) {
+  if (event && typeof event === 'object' && temporaryActionSfxNavigationDecisions.has(event)) {
+    const navigationDecision = temporaryActionSfxNavigationDecisions.get(event);
+    return navigationDecision?.ok ? null : 'ui_invalid';
+  }
+  const control = temporarySfxClosest(target, TEMPORARY_ACTION_SFX_INTERACTIVE_SELECTOR);
+  if (!control) return null;
+  if (temporarySfxDisabled(control)) return 'ui_invalid';
+
+  const inputType = temporarySfxInputType(control);
+  const role = temporarySfxRole(control);
+  if (inputType === 'range' || role === 'slider') return interaction === 'input' ? 'ui_slider' : null;
+  if (inputType === 'checkbox' || inputType === 'radio' || role === 'checkbox' || role === 'radio') {
+    if (interaction !== 'change') return null;
+    return temporarySfxToggleIsOn(control) ? 'ui_toggle_on' : 'ui_toggle_off';
+  }
+  if (role === 'switch') {
+    if (interaction !== 'click') return null;
+    return temporarySfxToggleIsOn(control) ? 'ui_toggle_on' : 'ui_toggle_off';
+  }
+  if (inputType === 'submit' && temporarySfxClosest(control, 'form')) return null;
+  if (inputType === 'select-one' || inputType === 'select-multiple' || String(control?.tagName || '').toLowerCase() === 'select') {
+    if (interaction === 'change') return 'ui_select';
+    return interaction === 'click' ? 'ui_open' : null;
+  }
+
+  if (interaction !== 'click') return null;
+  if (/^(text|search|email|url|tel|password|number|date|time)$/.test(inputType)
+    || String(control?.tagName || '').toLowerCase() === 'textarea' || control?.isContentEditable === true) return null;
+  const text = temporarySfxControlText(control);
+  if (role === 'tab' || control?.matches?.('[role="tab"],[data-tab]')) return 'ui_tab';
+  if (control?.matches?.('[role="switch"],[aria-pressed]') || /(?:mute|toggle|switch)$/i.test(String(control?.id || ''))) {
+    return temporarySfxToggleIsOn(control) ? 'ui_toggle_on' : 'ui_toggle_off';
+  }
+
+  const screen = String(screenName || temporarySfxClosest(target, TEMPORARY_ACTION_SFX_ACTIVE_SCREEN_SELECTOR)?.dataset?.screen || '').toLowerCase();
+  if (screen === 'battle') {
+    if (temporarySfxClosest(target, TEMPORARY_ACTION_SFX_BATTLE_CARD_SELECTOR)) return 'battle_card_select';
+    if (temporarySfxClosest(target, TEMPORARY_ACTION_SFX_BATTLE_TARGET_SELECTOR)) return 'battle_target';
+    if (temporarySfxLooksLikeClose(text)) return 'ui_close';
+    if (/\b(pass|end turn|finish turn|turn end)\b|ターン終了|手番終了|パス/i.test(text)) return 'battle_turn';
+    if (control?.matches?.('#readyPlan,[data-battle-action]') || temporarySfxLooksLikeConfirm(text)) return 'battle_action';
+    return 'battle_button';
+  }
+
+  if (temporarySfxLooksLikeClose(text)) return 'ui_close';
+  if (temporarySfxLooksLikeConfirm(text)) return 'ui_confirm';
+  if (temporarySfxLooksLikeSelection(text)) return 'ui_select';
+  if (temporarySfxLooksLikeOpen(text)) return 'ui_open';
+  return 'ui_button';
+}
+
+export function resolveTemporaryEmptyTapCue(target) {
+  if (temporarySfxClosest(target, TEMPORARY_ACTION_SFX_INTERACTIVE_SELECTOR)) return null;
+  if (temporarySfxClosest(target, '.contextHelp,.tooltip,[data-tutorial-popover],#screenMotionBridge')) return null;
+  const surface = temporarySfxClosest(target, TEMPORARY_ACTION_SFX_ACTIVE_SCREEN_SELECTOR);
+  if (!surface?.dataset?.screen) return null;
+  return String(surface.dataset.screen).toLowerCase() === 'battle' ? 'battle_empty_tap' : 'ui_empty_tap';
+}
+
+function readTemporarySfxSettings(documentSource) {
+  const muteControl = documentSource?.querySelector?.('#sfxMute');
+  const volumeControl = documentSource?.querySelector?.('#sfxVolume');
+  const muteLabel = String(muteControl?.textContent || '');
+  const rawVolume = Number(volumeControl?.value);
+  return {
+    muted: /\bON\b/i.test(muteLabel),
+    volume: Number.isFinite(rawVolume) ? Math.max(0, Math.min(1, rawVolume / 100)) : 0.8,
+  };
+}
+
+export function createTemporarySfxPlayer({
+  audioContextFactory,
+  readSettings = () => ({muted: false, volume: 0.8}),
+  hasUserGesture = (event) => event?.isTrusted === true && hasActiveUserGesture(),
+} = {}) {
+  let context = null;
+
+  function getAudioContext() {
+    if (context) return context;
+    if (typeof audioContextFactory !== 'function') return null;
+    try { context = audioContextFactory() || null; } catch { context = null; }
+    return context;
+  }
+
+  function play(cueId, event) {
+    const cue = TEMPORARY_ACTION_SFX_CATALOG[cueId];
+    if (!cue || !hasUserGesture(event)) return false;
+    let settings;
+    try { settings = readSettings() || {}; } catch { return false; }
+    const rawVolume = Number(settings.volume);
+    if (settings.muted === true || !Number.isFinite(rawVolume) || rawVolume <= 0) return false;
+    const volume = Math.min(1, Math.max(0, rawVolume));
+
+    try {
+      const audioContext = getAudioContext();
+      if (!audioContext || typeof audioContext.createOscillator !== 'function' || typeof audioContext.createGain !== 'function') return false;
+      if (audioContext.state === 'suspended') Promise.resolve(audioContext.resume?.()).catch(() => {});
+      const now = Number(audioContext.currentTime) || 0;
+      let scheduled = 0;
+      for (const tone of cue.tones) {
+        try {
+          const when = now + tone.offsetSec;
+          const oscillator = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          oscillator.type = tone.wave;
+          oscillator.frequency?.setValueAtTime?.(Math.max(1, tone.startHz), when);
+          if (tone.endHz !== tone.startHz) oscillator.frequency?.exponentialRampToValueAtTime?.(Math.max(1, tone.endHz), when + tone.durationSec);
+          gain.gain?.setValueAtTime?.(0.0001, when);
+          gain.gain?.linearRampToValueAtTime?.(Math.max(0.0001, tone.gain * volume), when + Math.min(0.006, tone.durationSec * 0.2));
+          gain.gain?.exponentialRampToValueAtTime?.(0.0001, when + tone.durationSec);
+          oscillator.connect?.(gain);
+          gain.connect?.(audioContext.destination);
+          oscillator.start?.(when);
+          oscillator.stop?.(when + tone.durationSec + 0.015);
+          scheduled += 1;
+        } catch {}
+      }
+      return scheduled > 0;
+    } catch { return false; }
+  }
+
+  function dispose() {
+    const old = context;
+    context = null;
+    try { void old?.close?.(); } catch {}
+  }
+
+  return Object.freeze({play, dispose});
+}
+
+export function installTemporaryActionSfxRuntime({
+  documentSource = globalThis.document,
+  audioContextFactory = null,
+  hasUserGesture = (event) => event?.isTrusted === true && hasActiveUserGesture(),
+} = {}) {
+  if (!documentSource || typeof documentSource.addEventListener !== 'function') {
+    return Object.freeze({installed: false, playCue: () => false, dispose: () => {}});
+  }
+  const previous = temporaryActionSfxInstallations.get(documentSource);
+  if (previous) return previous;
+
+  const makeAudioContext = audioContextFactory || (() => {
+    const AudioContextCtor = documentSource.defaultView?.AudioContext
+      ?? documentSource.defaultView?.webkitAudioContext
+      ?? globalThis.AudioContext
+      ?? globalThis.webkitAudioContext;
+    return typeof AudioContextCtor === 'function' ? new AudioContextCtor() : null;
+  });
+  const player = createTemporarySfxPlayer({
+    audioContextFactory: makeAudioContext,
+    readSettings: () => readTemporarySfxSettings(documentSource),
+    hasUserGesture,
+  });
+  const pointerStarts = new Map();
+  const recentPointerInvalidControls = new WeakMap();
+  const listeners = [];
+  let lastSliderCueAt = Number.NEGATIVE_INFINITY;
+  let draggedGesture = null;
+  let disposed = false;
+
+  function listen(type, handler, options = false) {
+    documentSource.addEventListener(type, handler, options);
+    listeners.push([type, handler, options]);
+  }
+  function eventTime(event) {
+    const timestamp = Number(event?.timeStamp);
+    return Number.isFinite(timestamp) ? timestamp : Date.now();
+  }
+  function pointerKey(event) {
+    return event?.pointerId === undefined || event?.pointerId === null ? 1 : event.pointerId;
+  }
+  function onClickCapture(event) {
+    if (!event || typeof event !== 'object') return;
+    temporaryActionSfxActiveClickEvent = event;
+    Promise.resolve().then(() => {
+      if (temporaryActionSfxActiveClickEvent === event) temporaryActionSfxActiveClickEvent = null;
+    });
+  }
+  function onClick(event) {
+    if (!event || typeof event !== 'object') return;
+    const clickControl = temporarySfxClosest(event.target, TEMPORARY_ACTION_SFX_INTERACTIVE_SELECTOR);
+    const invalidPointerAt = clickControl ? recentPointerInvalidControls.get(clickControl) : undefined;
+    const duplicateInvalidPointerCue = Number(event.detail) > 0 && Number.isFinite(invalidPointerAt)
+      && Date.now() - invalidPointerAt <= 500;
+    if (duplicateInvalidPointerCue) recentPointerInvalidControls.delete(clickControl);
+    if (temporaryActionSfxNavigationDecisions.has(event)) {
+      const navigationDecision = temporaryActionSfxNavigationDecisions.get(event);
+      if (!navigationDecision?.ok && !duplicateInvalidPointerCue) player.play('ui_invalid', event);
+      return;
+    }
+    if (duplicateInvalidPointerCue) return;
+    if (draggedGesture && Date.now() <= draggedGesture.expiresAt
+      && clickControl && clickControl === draggedGesture.control) {
+      draggedGesture = null;
+      return;
+    }
+    draggedGesture = null;
+    const cueId = resolveTemporaryActionSfxCue({target: event.target, event, interaction: 'click'});
+    if (cueId) player.play(cueId, event);
+  }
+  function onPointerDown(event) {
+    if (event?.isPrimary === false || Number(event?.button) > 0) return;
+    const surface = temporarySfxClosest(event?.target, TEMPORARY_ACTION_SFX_ACTIVE_SCREEN_SELECTOR);
+    if (!surface) return;
+    const pointX = Number(event?.clientX);
+    const pointY = Number(event?.clientY);
+    pointerStarts.set(pointerKey(event), {
+      target: event.target,
+      control: temporarySfxClosest(event.target, TEMPORARY_ACTION_SFX_INTERACTIVE_SELECTOR),
+      surface,
+      screenName: String(surface?.dataset?.screen || '').toLowerCase(),
+      x: Number.isFinite(pointX) ? pointX : 0,
+      y: Number.isFinite(pointY) ? pointY : 0,
+      at: eventTime(event),
+    });
+  }
+  function onPointerUp(event) {
+    const start = pointerStarts.get(pointerKey(event));
+    pointerStarts.delete(pointerKey(event));
+    if (!start || event?.isPrimary === false || Number(event?.button) > 0) return;
+
+    const endSurface = temporarySfxClosest(event.target, TEMPORARY_ACTION_SFX_ACTIVE_SCREEN_SELECTOR);
+    const endControl = temporarySfxClosest(event.target, TEMPORARY_ACTION_SFX_INTERACTIVE_SELECTOR);
+    const disabledControl = temporarySfxDisabled(endControl) ? endControl
+      : temporarySfxDisabled(start.control) && start.control === endControl ? start.control
+        : null;
+    if (disabledControl) {
+      recentPointerInvalidControls.set(disabledControl, Date.now());
+      player.play('ui_invalid', event);
+      return;
+    }
+
+    const dx = (Number(event?.clientX) || 0) - start.x;
+    const dy = (Number(event?.clientY) || 0) - start.y;
+    const distance = Math.hypot(dx, dy);
+    const elapsed = Math.max(0, eventTime(event) - start.at);
+    if (distance >= 8) {
+      const startedOnBattleCard = start.screenName === 'battle'
+        && Boolean(temporarySfxClosest(start.target, TEMPORARY_ACTION_SFX_BATTLE_CARD_SELECTOR));
+      const endedOnBattleTarget = String(endSurface?.dataset?.screen || '').toLowerCase() === 'battle'
+        && Boolean(temporarySfxClosest(event.target, TEMPORARY_ACTION_SFX_BATTLE_TARGET_SELECTOR));
+      if (startedOnBattleCard && endedOnBattleTarget) player.play('battle_action', event);
+      if (start.control) draggedGesture = {control: start.control, expiresAt: Date.now() + 500};
+      return;
+    }
+    if (elapsed > 900 || start.surface !== endSurface) return;
+    const cueId = resolveTemporaryEmptyTapCue(event.target);
+    if (cueId) player.play(cueId, event);
+  }
+  function onPointerCancel(event) {
+    pointerStarts.delete(pointerKey(event));
+  }
+  function onInput(event) {
+    const cueId = resolveTemporaryActionSfxCue({target: event?.target, event, interaction: 'input'});
+    if (!cueId) return;
+    const now = Date.now();
+    if (now - lastSliderCueAt < 110) return;
+    lastSliderCueAt = now;
+    player.play(cueId, event);
+  }
+  function onChange(event) {
+    const cueId = resolveTemporaryActionSfxCue({target: event?.target, event, interaction: 'change'});
+    if (cueId) player.play(cueId, event);
+  }
+  function onFocusIn(event) {
+    const control = temporarySfxClosest(event?.target, 'input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,[contenteditable="true"]');
+    if (control) player.play('ui_focus', event);
+  }
+  function onSubmit(event) {
+    if (String(event?.target?.tagName || '').toLowerCase() === 'form') player.play('ui_confirm', event);
+  }
+  function onKeyDown(event) {
+    if (String(event?.key || '') === 'Escape' && event?.repeat !== true) player.play('ui_close', event);
+  }
+
+  listen('click', onClickCapture, true);
+  listen('click', onClick);
+  listen('pointerdown', onPointerDown, true);
+  listen('pointerup', onPointerUp);
+  listen('pointercancel', onPointerCancel);
+  listen('input', onInput);
+  listen('change', onChange);
+  listen('focusin', onFocusIn);
+  listen('submit', onSubmit);
+  listen('keydown', onKeyDown, true);
+
+  function dispose() {
+    if (disposed) return;
+    disposed = true;
+    for (const [type, handler, options] of listeners) documentSource.removeEventListener?.(type, handler, options);
+    pointerStarts.clear();
+    player.dispose();
+    temporaryActionSfxInstallations.delete(documentSource);
+  }
+  const runtime = Object.freeze({
+    installed: true,
+    playCue(cueId, event) { return player.play(cueId, event); },
+    dispose,
+  });
+  temporaryActionSfxInstallations.set(documentSource, runtime);
+  return runtime;
+}
+
 export function resolveScreenNavigation(currentScreen, requestedTarget) {
   if (!requestedTarget) return {ok: false, from: currentScreen, to: currentScreen, reason: SCREEN_NAVIGATION_REASON.EMPTY_TARGET};
   if (requestedTarget === currentScreen) return {ok: false, from: currentScreen, to: currentScreen, reason: SCREEN_NAVIGATION_REASON.CURRENT_SCREEN};
   const decision = {ok: true, from: currentScreen, to: requestedTarget, reason: SCREEN_NAVIGATION_REASON.NAVIGATE};
+  if (temporaryActionSfxActiveClickEvent) {
+    temporaryActionSfxNavigationDecisions.set(temporaryActionSfxActiveClickEvent, decision);
+  }
   playAcceptedNavigationSfx();
   return decision;
 }
@@ -196,7 +623,8 @@ export function resolveScreenBackTarget(currentScreen, historyEntry) {
   return historyEntry?.screen || SCREEN_NAVIGATION_FALLBACK_PARENT[currentScreen] || 'home';
 }
 
-export function createScreenNavigationRuntimeBridge() {
+export function createScreenNavigationRuntimeBridge(options = {}) {
+  installTemporaryActionSfxRuntime(options);
   return Object.freeze({
     resolve(currentScreen, requestedTarget) { return resolveScreenNavigation(currentScreen, requestedTarget); },
     resolveBackTarget(currentScreen, historyEntry) { return resolveScreenBackTarget(currentScreen, historyEntry); }

@@ -23,6 +23,10 @@ const SECONDARY_UTILITY_SELECTOR = '.codexHomeUtilities';
 const SECONDARY_UTILITY_BUTTON_SELECTOR = '.homeUtilityBtn';
 const HOME_RANK_MATCH_ENTRY_SELECTOR = '[data-home-rank-match-entry="true"]';
 export const HOME_RANK_MATCH_ENTRY_LABEL = 'ランクマッチ';
+export const HOME_RANK_QUICK_DECK_HOLD_MS = 420;
+const HOME_RANK_QUICK_DECK_MOVE_CANCEL_PX = 14;
+const HOME_RANK_QUICK_DECK_MIN_DETENT_PX = 44;
+const HOME_RANK_QUICK_DECK_HOST_SELECTOR = '[data-home-rank-quick-deck-roll="true"]';
 export const HOME_CONTEXTUAL_REPLAY_LABEL = '操作を再確認';
 const HOME_CONTEXTUAL_REPLAY_SCHEMA = 'gameroad.tutorial-contextual-replay-home.v1';
 const SLIDEPAD_CENTER_SELECTOR = '#homePadCenter';
@@ -1714,6 +1718,194 @@ ${HOME_SELECTOR}[data-home-contextual-replay-active="true"] ${SLIDEPAD_CENTER_SE
   return true;
 }
 
+export function createHomeRankQuickDeckSlotRoll({
+  choices = [],
+  selectedDeckIndex = null,
+  buttonWidth = 88,
+} = {}) {
+  if (!Array.isArray(choices) || choices.length === 0) return null;
+  const items = choices.map((choice) => {
+    const deckIndex = Number(choice?.deckIndex);
+    const deckNumber = Number(choice?.deckNumber);
+    if (!Number.isInteger(deckIndex) || deckIndex < 0) throw new RangeError('QUICK_DECK_INDEX_INVALID');
+    return Object.freeze({
+      id: `deck:${deckIndex}`,
+      deckIndex,
+      deckNumber: Number.isInteger(deckNumber) && deckNumber > 0 ? deckNumber : deckIndex + 1,
+      quickNumber: Number(choice?.quickNumber) || 1,
+      label: `デッキ ${Number.isInteger(deckNumber) && deckNumber > 0 ? deckNumber : deckIndex + 1}`,
+    });
+  });
+  const selectedItem = items.findIndex((item) => item.deckIndex === selectedDeckIndex);
+  const anchorIndex = selectedItem >= 0 ? selectedItem : 0;
+  const width = Number.isFinite(Number(buttonWidth)) ? Math.max(1, Number(buttonWidth)) : 88;
+  return Object.freeze({
+    state: createSlotRollState({ items, anchorIndex }),
+    detentPx: Math.max(HOME_RANK_QUICK_DECK_MIN_DETENT_PX, Math.min(92, width * 0.62)),
+  });
+}
+
+function homeRankQuickDeckApi(doc) {
+  return doc?.defaultView?.GAMEROAD_QUICK_DECKS || globalThis.GAMEROAD_QUICK_DECKS || null;
+}
+
+function ensureHomeRankQuickDeckHost(doc, home, button) {
+  let host = home.querySelector?.(HOME_RANK_QUICK_DECK_HOST_SELECTOR);
+  if (!host) {
+    host = doc.createElement('div');
+    host.dataset.homeRankQuickDeckRoll = 'true';
+    host.className = 'homeRankQuickDeckRoll';
+    host.setAttribute('role', 'status');
+    host.setAttribute('aria-live', 'polite');
+    home.appendChild?.(host);
+  }
+  const rect = button.getBoundingClientRect?.();
+  if (rect) {
+    host.style.left = `${Math.max(8, Number(rect.left) || 0)}px`;
+    host.style.top = `${Math.max(8, (Number(rect.bottom) || 0) + 8)}px`;
+  }
+  return host;
+}
+
+function renderHomeRankQuickDeckRoll(doc, home, button, state, message = '') {
+  const host = ensureHomeRankQuickDeckHost(doc, home, button);
+  host.replaceChildren?.();
+  if (!state?.items?.length) {
+    host.textContent = message || 'クイックデッキ未登録';
+    host.dataset.empty = 'true';
+    return host;
+  }
+  delete host.dataset.empty;
+  for (let index = 0; index < state.items.length; index += 1) {
+    const item = state.items[index];
+    const node = doc.createElement('span');
+    node.className = 'homeRankQuickDeckItem';
+    node.dataset.selected = index === state.index ? 'true' : 'false';
+    node.textContent = `Q${item.quickNumber}・デッキ ${item.deckNumber}`;
+    host.appendChild?.(node);
+  }
+  return host;
+}
+
+function installHomeRankQuickDeckHold(button, doc, home) {
+  if (!button || button.dataset.homeRankQuickDeckHoldBound === 'true') return;
+  button.dataset.homeRankQuickDeckHoldBound = 'true';
+  let pointerId = null;
+  let holdTimer = null;
+  let originX = 0;
+  let originY = 0;
+  let lastX = 0;
+  let rollState = null;
+  let detentPx = HOME_RANK_QUICK_DECK_MIN_DETENT_PX;
+  let holdActive = false;
+  let suppressClick = false;
+
+  const clearTimer = () => {
+    if (holdTimer != null) globalThis.clearTimeout?.(holdTimer);
+    holdTimer = null;
+  };
+  const removeHost = () => {
+    home.querySelector?.(HOME_RANK_QUICK_DECK_HOST_SELECTOR)?.remove?.();
+    delete button.dataset.rankQuickDeckActive;
+  };
+  const beginHold = () => {
+    holdTimer = null;
+    if (pointerId == null) return;
+    suppressClick = true;
+    holdActive = true;
+    const api = homeRankQuickDeckApi(doc);
+    const snapshot = api?.snapshot?.();
+    const choices = Array.isArray(snapshot?.quickChoices) ? snapshot.quickChoices : [];
+    if (!choices.length) {
+      rollState = null;
+      button.dataset.rankQuickDeckActive = 'empty';
+      renderHomeRankQuickDeckRoll(doc, home, button, null, 'クイックデッキ未登録');
+      return;
+    }
+    const created = createHomeRankQuickDeckSlotRoll({
+      choices,
+      selectedDeckIndex: snapshot?.selectedDeckIndex,
+      buttonWidth: button.getBoundingClientRect?.().width || 88,
+    });
+    rollState = created?.state || null;
+    detentPx = created?.detentPx || HOME_RANK_QUICK_DECK_MIN_DETENT_PX;
+    button.dataset.rankQuickDeckActive = 'true';
+    renderHomeRankQuickDeckRoll(doc, home, button, rollState);
+  };
+  const resetPointer = () => {
+    clearTimer();
+    pointerId = null;
+    rollState = null;
+    holdActive = false;
+  };
+
+  button.addEventListener('pointerdown', (event) => {
+    if (pointerId != null) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    pointerId = event.pointerId;
+    originX = Number(event.clientX) || 0;
+    originY = Number(event.clientY) || 0;
+    lastX = originX;
+    suppressClick = false;
+    try { button.setPointerCapture?.(event.pointerId); } catch {}
+    holdTimer = globalThis.setTimeout?.(beginHold, HOME_RANK_QUICK_DECK_HOLD_MS) ?? null;
+  });
+  button.addEventListener('pointermove', (event) => {
+    if (event.pointerId !== pointerId) return;
+    const x = Number(event.clientX) || 0;
+    const y = Number(event.clientY) || 0;
+    if (!holdActive) {
+      if (Math.hypot(x - originX, y - originY) > HOME_RANK_QUICK_DECK_MOVE_CANCEL_PX) clearTimer();
+      return;
+    }
+    if (!rollState) {
+      event.preventDefault?.();
+      return;
+    }
+    const deltaPx = x - lastX;
+    lastX = x;
+    const advanced = advanceSlotRollDrag(rollState, { deltaPx, detentPx });
+    rollState = advanced.state;
+    renderHomeRankQuickDeckRoll(doc, home, button, rollState);
+    event.preventDefault?.();
+  });
+  button.addEventListener('pointerup', (event) => {
+    if (event.pointerId !== pointerId) return;
+    clearTimer();
+    if (holdActive) {
+      event.preventDefault?.();
+      event.stopPropagation?.();
+      const commit = rollState ? resolveSlotRollCommit(rollState) : null;
+      const deckIndex = Number(commit?.item?.deckIndex);
+      const api = homeRankQuickDeckApi(doc);
+      const selected = Number.isInteger(deckIndex) && api?.select?.(deckIndex) === true;
+      if (selected) renderHomeRankQuickDeckRoll(doc, home, button, rollState, `デッキ ${deckIndex + 1} を選択`);
+      globalThis.setTimeout?.(removeHost, 360);
+    }
+    resetPointer();
+  });
+  button.addEventListener('pointercancel', (event) => {
+    if (event.pointerId !== pointerId) return;
+    resetPointer();
+    removeHost();
+  });
+  button.addEventListener('lostpointercapture', (event) => {
+    if (event.pointerId !== pointerId) return;
+    resetPointer();
+    removeHost();
+  });
+  button.addEventListener('click', (event) => {
+    if (suppressClick) {
+      suppressClick = false;
+      event.preventDefault?.();
+      event.stopPropagation?.();
+      return;
+    }
+    event.preventDefault?.();
+    activateHomeRankMatchEntry(doc);
+  });
+}
+
 export function activateHomeRankMatchEntry(documentSource = globalThis.document) {
   const home = documentSource?.querySelector?.(HOME_SELECTOR);
   if (!home?.querySelector) return false;
@@ -1728,6 +1920,7 @@ export function activateHomeRankMatchEntry(documentSource = globalThis.document)
 function ensureHomeRankMatchEntry(doc) {
   const home = doc?.querySelector?.(HOME_SELECTOR);
   if (!home?.querySelector || !doc?.createElement) return null;
+  ensureRankMatchStyle(doc);
   const host = home.querySelector(SECONDARY_UTILITY_SELECTOR) || home;
   let button = home.querySelector(HOME_RANK_MATCH_ENTRY_SELECTOR);
   if (!button) {
@@ -1737,13 +1930,10 @@ function ensureHomeRankMatchEntry(doc) {
     button.dataset.homeRankMatchEntry = 'true';
     button.textContent = HOME_RANK_MATCH_ENTRY_LABEL;
     button.title = HOME_RANK_MATCH_ENTRY_LABEL;
-    button.setAttribute('aria-label', HOME_RANK_MATCH_ENTRY_LABEL);
-    button.addEventListener('click', (event) => {
-      event.preventDefault?.();
-      activateHomeRankMatchEntry(doc);
-    });
+    button.setAttribute('aria-label', `${HOME_RANK_MATCH_ENTRY_LABEL}。長押しでクイックデッキ選択`);
     host.appendChild(button);
   }
+  installHomeRankQuickDeckHold(button, doc, home);
   const setupRoute = home.querySelector('.homePadChoice[data-home-target="setup"]');
   const enabled = Boolean(setupRoute && typeof setupRoute.click === 'function');
   button.disabled = !enabled;
@@ -1817,7 +2007,11 @@ function ensureRankMatchStyle(doc) {
     '--rank-match-button-secondary:url("', RANK_MATCH_TEXTURES.buttonSecondary, '");',
     '--rank-match-action-ring:url("', RANK_MATCH_TEXTURES.actionRing, '");',
     '--rank-match-waiting-vfx:url("', RANK_MATCH_TEXTURES.waitingVfx, '");}',
-    '.gameroadHomeRankMatchEntry{min-width:44px;min-height:44px;cursor:pointer;touch-action:manipulation;}',
+    '.gameroadHomeRankMatchEntry{min-width:44px;min-height:44px;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;}',
+    '.homeRankQuickDeckRoll{position:fixed;z-index:140;display:flex;gap:6px;align-items:center;max-width:min(92vw,420px);padding:7px;border:1px solid rgba(255,210,126,.55);border-radius:10px;background:rgba(7,23,19,.96);box-shadow:0 12px 28px rgba(0,0,0,.4);pointer-events:none;}',
+    '.homeRankQuickDeckRoll[data-empty="true"]{font-size:11px;font-weight:900;color:#ffe2a6;}',
+    '.homeRankQuickDeckItem{min-width:74px;padding:7px 9px;border:1px solid rgba(197,246,228,.24);border-radius:8px;font-size:10px;font-weight:900;text-align:center;color:#dcece6;}',
+    '.homeRankQuickDeckItem[data-selected="true"]{border-color:#ffd27e;background:rgba(112,75,20,.7);color:#fff3ca;transform:translateY(-2px);}',
     '.gameroadRankMatchSetup{display:grid;gap:7px;padding:10px 0 2px;border-top:1px solid rgba(197,246,228,.18);}',
     '.gameroadRankMatchModeRow{display:grid;grid-template-columns:1fr 1fr;gap:7px;}',
     '.gameroadRankMatchMode{min-height:54px;border:1px solid rgba(197,246,228,.28);background:rgba(8,29,24,.82);color:#f5fff9;font-weight:950;letter-spacing:.02em;cursor:pointer;transition:filter 140ms ease,transform 140ms ease,border-color 140ms ease,box-shadow 140ms ease;}',

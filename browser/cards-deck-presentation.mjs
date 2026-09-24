@@ -1,7 +1,13 @@
 export * from './cards-deck-presentation-core.mjs';
 
 import './deck-save-recovery-core.mjs';
-import { createDeckSwipePresentationController } from './cards-deck-presentation-core.mjs';
+import {
+  createDeckSwipePresentationController,
+  QUICK_DECK_REGISTRY_CONTRACT,
+  normalizeQuickDeckSlotRefs,
+  toggleQuickDeckSlotRef,
+  projectQuickDeckChoices,
+} from './cards-deck-presentation-core.mjs';
 import { resolveDeckEditorSwipe } from './deck-storage-corner-core.mjs';
 import {
   createDeckStorageCornerController,
@@ -13,6 +19,10 @@ const cardsDeckFindabilityInstallations = new WeakMap();
 const cardsInspectorDismissInstallations = new WeakMap();
 const cardsVoteUiRepairInstallations = new WeakMap();
 const cardsSelectionFeedbackInstallations = new WeakMap();
+const deckQuickAccessInstallations = new WeakMap();
+const QUICK_DECK_STORAGE_KEY = 'gameroad.cards.quickDeckSlotRefs.v1';
+const QUICK_DECK_STYLE_ID = 'gameroad-deck-quick-access-style-r1';
+const QUICK_DECK_GLOBAL_KEY = 'GAMEROAD_QUICK_DECKS';
 const CARDS_FAVORITE_STORAGE_KEY = 'gameroad.cards.favorite.v1';
 const DECK_SWIPE_DISCOVERY_STORAGE_KEY = 'gameroad.cards.deckSwipeDiscovery.v1';
 
@@ -1301,6 +1311,347 @@ if (typeof document !== 'undefined') {
   installCardsInspectorDismissInteractions({ document });
 }
 
+
+export const QUICK_DECK_RUNTIME_CONTRACT = Object.freeze({
+  schema: 'gameroad.quick-deck-runtime.v1',
+  storageKey: QUICK_DECK_STORAGE_KEY,
+  deckAuthority: 'GAMEROAD_DECK_LIBRARY',
+  registration: 'slot-reference-only',
+  maxQuickDecks: QUICK_DECK_REGISTRY_CONTRACT.maxQuickDecks,
+  cardEntry: 'deck-list-first',
+  longPressAction: 'select-deck-only',
+  startsRankQueue: false,
+  duplicatesDeckData: false,
+});
+
+export function parseQuickDeckSlotRefs(raw) {
+  if (typeof raw !== 'string' || !raw) return normalizeQuickDeckSlotRefs([]);
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed?.schema !== QUICK_DECK_REGISTRY_CONTRACT.schema) return normalizeQuickDeckSlotRefs([]);
+    return normalizeQuickDeckSlotRefs(parsed.slotIndices);
+  } catch {
+    return normalizeQuickDeckSlotRefs([]);
+  }
+}
+
+export function readQuickDeckSlotRefs({ storage, key = QUICK_DECK_STORAGE_KEY } = {}) {
+  try { return parseQuickDeckSlotRefs(storage?.getItem?.(key) ?? null); }
+  catch { return normalizeQuickDeckSlotRefs([]); }
+}
+
+export function writeQuickDeckSlotRefs({ storage, slotIndices, key = QUICK_DECK_STORAGE_KEY } = {}) {
+  const normalized = normalizeQuickDeckSlotRefs(slotIndices);
+  if (!storage?.setItem) return false;
+  try {
+    storage.setItem(key, JSON.stringify({
+      schema: QUICK_DECK_REGISTRY_CONTRACT.schema,
+      slotIndices: [...normalized],
+    }));
+    return parseQuickDeckSlotRefs(storage.getItem?.(key) ?? null).join(',') === normalized.join(',');
+  } catch {
+    return false;
+  }
+}
+
+function currentDeckLibraryBridge(globalSource = globalThis) {
+  const bridge = globalSource?.GAMEROAD_DECK_LIBRARY;
+  return bridge?.schema === 'gameroad.deck-library-bridge.v1'
+    && typeof bridge.snapshot === 'function'
+    && typeof bridge.select === 'function'
+    ? bridge
+    : null;
+}
+
+export function createDeckQuickAccessSnapshot({
+  globalSource = globalThis,
+  storage = globalSource?.localStorage,
+} = {}) {
+  const bridge = currentDeckLibraryBridge(globalSource);
+  const library = bridge?.snapshot?.();
+  if (!library || !Array.isArray(library.slots)) {
+    return Object.freeze({
+      available: false,
+      selectedDeckIndex: null,
+      slotCount: 0,
+      quickSlotIndices: Object.freeze([]),
+      quickChoices: Object.freeze([]),
+      slots: Object.freeze([]),
+    });
+  }
+  const quickSlotIndices = readQuickDeckSlotRefs({ storage });
+  const quickChoices = projectQuickDeckChoices({
+    slotIndices: quickSlotIndices,
+    deckSlots: library.slots,
+    selectedDeckIndex: library.selectedDeckIndex,
+    deckSlotCount: library.slotCount || library.slots.length,
+  });
+  return Object.freeze({
+    available: true,
+    selectedDeckIndex: library.selectedDeckIndex,
+    slotCount: library.slotCount || library.slots.length,
+    dirty: library.dirty === true,
+    quickSlotIndices,
+    quickChoices,
+    slots: Object.freeze(library.slots.map((slot) => Object.freeze({ ...slot }))),
+  });
+}
+
+export function selectDeckLibrarySlot(
+  deckIndex,
+  { globalSource = globalThis } = {},
+) {
+  const bridge = currentDeckLibraryBridge(globalSource);
+  if (!bridge) return false;
+  const before = bridge.snapshot?.();
+  const requested = Number(deckIndex);
+  if (!Number.isInteger(requested) || requested < 0 || requested >= Number(before?.slotCount || 0)) return false;
+  const selected = bridge.select(requested);
+  const after = bridge.snapshot?.();
+  return selected === true && after?.selectedDeckIndex === requested;
+}
+
+function installDeckQuickAccessStyle(doc) {
+  if (!doc?.createElement || doc.getElementById?.(QUICK_DECK_STYLE_ID)) return;
+  const style = doc.createElement('style');
+  style.id = QUICK_DECK_STYLE_ID;
+  style.textContent = [
+    '.screen.cards [data-role="deck-library-landing"]{display:none;}',
+    '.screen.cards[data-deck-library-view="list"] .cardsGrid,.screen.cards[data-deck-library-view="list"] .r4DeckTrayToggle,.screen.cards[data-deck-library-view="list"] .r4DeckBackdrop{display:none!important;}',
+    '.screen.cards[data-deck-library-view="list"] [data-role="deck-library-landing"]{display:grid;position:absolute;inset:70px 2% 18px;z-index:92;grid-template-rows:auto minmax(0,1fr);gap:10px;padding:14px;border:1px solid rgba(255,255,255,.18);background:rgba(7,22,18,.96);overflow:hidden;}',
+    '[data-role="deck-library-head"]{display:flex;align-items:center;justify-content:space-between;gap:10px;}',
+    '[data-role="deck-library-grid"]{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-content:start;overflow:auto;min-height:0;}',
+    '.grDeckLibrarySlot{min-height:88px;padding:10px;border:1px solid rgba(255,255,255,.18);background:rgba(18,42,34,.9);color:inherit;text-align:left;cursor:pointer;touch-action:manipulation;}',
+    '.grDeckLibrarySlot[aria-current="true"]{border-color:#ffd27e;box-shadow:0 0 0 2px rgba(255,210,126,.2) inset;}',
+    '.grDeckLibrarySlot b,.grDeckLibrarySlot span,.grDeckLibrarySlot small{display:block}.grDeckLibrarySlot b{font-size:15px}.grDeckLibrarySlot span{margin-top:7px;font-size:11px}.grDeckLibrarySlot small{margin-top:5px;font-size:9px;opacity:.78;}',
+    '[data-role="quick-deck-register"]{min-height:44px;}[data-role="quick-deck-register"][aria-checked="true"]{border-color:#ffd27e;}',
+    '[data-role="deck-library-open"]{min-height:44px;}',
+    '@media(max-width:720px){.screen.cards[data-deck-library-view="list"] [data-role="deck-library-landing"]{inset:52px 6px 6px;padding:10px}.screen.cards [data-role="deck-library-grid"]{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.grDeckLibrarySlot{min-height:76px;padding:8px}}',
+    '@media(max-height:470px) and (orientation:landscape){.screen.cards[data-deck-library-view="list"] [data-role="deck-library-landing"]{inset:48px 6px 6px}.screen.cards [data-role="deck-library-grid"]{grid-template-columns:repeat(4,minmax(0,1fr));}}',
+  ].join('');
+  (doc.head || doc.documentElement)?.appendChild?.(style);
+}
+
+export function installDeckQuickAccess({
+  document: doc = globalThis.document,
+  window: win = globalThis.window,
+  globalSource = globalThis,
+} = {}) {
+  if (!doc?.querySelector || !doc?.createElement) return Object.freeze({ installed: false, destroy() {} });
+  const existing = deckQuickAccessInstallations.get(doc);
+  if (existing) return existing;
+  const screen = doc.querySelector('section[data-screen="cards"]');
+  if (!screen) return Object.freeze({ installed: false, destroy() {} });
+
+  installDeckQuickAccessStyle(doc);
+  const storage = win?.localStorage ?? globalSource?.localStorage;
+  const landing = doc.createElement('section');
+  landing.dataset.role = 'deck-library-landing';
+  landing.setAttribute('aria-label', 'デッキを選ぶ');
+  const head = doc.createElement('div');
+  head.dataset.role = 'deck-library-head';
+  const title = doc.createElement('div');
+  const eyebrow = doc.createElement('small');
+  eyebrow.textContent = 'DECK LIBRARY';
+  const heading = doc.createElement('b');
+  heading.textContent = 'デッキを選ぶ';
+  title.append?.(eyebrow, heading);
+  const activeText = doc.createElement('span');
+  activeText.dataset.role = 'deck-library-active';
+  head.append?.(title, activeText);
+  const grid = doc.createElement('div');
+  grid.dataset.role = 'deck-library-grid';
+  landing.append?.(head, grid);
+  screen.appendChild?.(landing);
+
+  const editorActions = screen.querySelector?.('.deckActions');
+  const deckHeader = screen.querySelector?.('.deckHeader');
+  const quickToggle = doc.createElement('button');
+  quickToggle.type = 'button';
+  quickToggle.className = 'btn';
+  quickToggle.dataset.role = 'quick-deck-register';
+  quickToggle.setAttribute('role', 'checkbox');
+  quickToggle.setAttribute('aria-checked', 'false');
+  quickToggle.textContent = '□ クイックデッキ登録';
+  editorActions?.appendChild?.(quickToggle);
+
+  const listButton = doc.createElement('button');
+  listButton.type = 'button';
+  listButton.className = 'btn';
+  listButton.dataset.role = 'deck-library-open';
+  listButton.textContent = 'デッキ一覧';
+  deckHeader?.appendChild?.(listButton);
+
+  let destroyed = false;
+  let wasActive = Boolean(screen.classList?.contains?.('active'));
+  let nextCardsView = 'list';
+  const onDocumentClick = (event) => {
+    if (event.target?.closest?.('#fixDeckFromSetup')) nextCardsView = 'editor';
+  };
+  doc.addEventListener?.('click', onDocumentClick, true);
+
+  const snapshot = () => createDeckQuickAccessSnapshot({ globalSource, storage });
+  const setView = (view) => {
+    screen.dataset.deckLibraryView = view === 'editor' ? 'editor' : 'list';
+    return screen.dataset.deckLibraryView;
+  };
+
+  const refreshEditorAction = () => {
+    const current = snapshot();
+    const registered = current.quickSlotIndices.includes(current.selectedDeckIndex);
+    const quickIndex = current.quickSlotIndices.indexOf(current.selectedDeckIndex);
+    quickToggle.setAttribute('aria-checked', registered ? 'true' : 'false');
+    quickToggle.dataset.registered = registered ? 'true' : 'false';
+    quickToggle.textContent = registered
+      ? `✓ クイックデッキ登録（${quickIndex + 1}）`
+      : '□ クイックデッキ登録';
+    return current;
+  };
+
+  const renderLanding = () => {
+    const current = refreshEditorAction();
+    grid.replaceChildren?.();
+    if (!current.available) {
+      activeText.textContent = 'デッキ情報を読み込めません';
+      return current;
+    }
+    activeText.textContent = `選択中：デッキ ${current.selectedDeckIndex + 1}`;
+    const quickPosition = new Map(current.quickSlotIndices.map((deckIndex, index) => [deckIndex, index + 1]));
+    for (const slot of current.slots) {
+      const button = doc.createElement('button');
+      button.type = 'button';
+      button.className = 'grDeckLibrarySlot';
+      button.dataset.deckIndex = String(slot.deckIndex);
+      button.setAttribute('aria-current', slot.deckIndex === current.selectedDeckIndex ? 'true' : 'false');
+      button.setAttribute('aria-label', `デッキ ${slot.deckNumber} を編集`);
+      const name = doc.createElement('b');
+      name.textContent = `デッキ ${slot.deckNumber}`;
+      const counts = doc.createElement('span');
+      counts.textContent = `メイン ${slot.mainCount} ・ EX ${slot.exCount}`;
+      const status = doc.createElement('small');
+      const quickNumber = quickPosition.get(slot.deckIndex);
+      status.textContent = quickNumber ? `✓ クイック ${quickNumber}` : (slot.mainCount || slot.exCount ? '保存済み枠' : '空きデッキ');
+      button.append?.(name, counts, status);
+      button.addEventListener?.('click', () => {
+        if (!selectDeckLibrarySlot(slot.deckIndex, { globalSource })) return;
+        setView('editor');
+        refreshEditorAction();
+      });
+      grid.appendChild?.(button);
+    }
+    return current;
+  };
+
+  const toggleCurrent = () => {
+    const current = snapshot();
+    if (!current.available || !Number.isInteger(current.selectedDeckIndex)) return Object.freeze({ changed: false, reason: 'DECK_LIBRARY_UNAVAILABLE' });
+    const next = toggleQuickDeckSlotRef(current.quickSlotIndices, current.selectedDeckIndex, {
+      deckSlotCount: current.slotCount,
+      maxQuickDecks: QUICK_DECK_REGISTRY_CONTRACT.maxQuickDecks,
+    });
+    if (next.changed && !writeQuickDeckSlotRefs({ storage, slotIndices: next.slotIndices })) {
+      return Object.freeze({ changed: false, reason: 'QUICK_DECK_STORAGE_WRITE_FAILED' });
+    }
+    refreshEditorAction();
+    if (screen.dataset.deckLibraryView === 'list') renderLanding();
+    if (!next.changed && next.reason === 'QUICK_DECK_LIMIT_REACHED') {
+      quickToggle.textContent = 'クイックデッキは3つまでです';
+      win?.setTimeout?.(refreshEditorAction, 1200);
+    }
+    return next;
+  };
+
+  quickToggle.addEventListener?.('click', toggleCurrent);
+  listButton.addEventListener?.('click', () => {
+    setView('list');
+    renderLanding();
+  });
+
+  const observer = typeof win?.MutationObserver === 'function'
+    ? new win.MutationObserver(() => {
+        const active = Boolean(screen.classList?.contains?.('active'));
+        if (active && !wasActive) {
+          const view = nextCardsView;
+          nextCardsView = 'list';
+          setView(view);
+          if (view === 'list') renderLanding();
+          else refreshEditorAction();
+        }
+        wasActive = active;
+      })
+    : null;
+  observer?.observe?.(screen, { attributes: true, attributeFilter: ['class'] });
+
+  if (wasActive) {
+    setView('list');
+    renderLanding();
+  } else {
+    setView('editor');
+    refreshEditorAction();
+  }
+
+  const publicApi = Object.freeze({
+    schema: QUICK_DECK_RUNTIME_CONTRACT.schema,
+    contract: QUICK_DECK_RUNTIME_CONTRACT,
+    snapshot,
+    select(deckIndex) {
+      const current = snapshot();
+      if (!current.quickSlotIndices.includes(deckIndex)) return false;
+      const ok = selectDeckLibrarySlot(deckIndex, { globalSource });
+      if (ok) refreshEditorAction();
+      return ok;
+    },
+    toggleCurrent,
+    openList() {
+      setView('list');
+      renderLanding();
+      return true;
+    },
+  });
+  try {
+    Object.defineProperty(globalSource, QUICK_DECK_GLOBAL_KEY, {
+      configurable: true,
+      enumerable: false,
+      writable: false,
+      value: publicApi,
+    });
+  } catch {
+    try { globalSource[QUICK_DECK_GLOBAL_KEY] = publicApi; } catch {}
+  }
+
+  const installation = Object.freeze({
+    installed: true,
+    contract: QUICK_DECK_RUNTIME_CONTRACT,
+    snapshot,
+    renderLanding,
+    toggleCurrent,
+    setView,
+    destroy() {
+      if (destroyed) return false;
+      destroyed = true;
+      observer?.disconnect?.();
+      doc.removeEventListener?.('click', onDocumentClick, true);
+      landing.remove?.();
+      quickToggle.remove?.();
+      listButton.remove?.();
+      if (globalSource?.[QUICK_DECK_GLOBAL_KEY] === publicApi) {
+        try { delete globalSource[QUICK_DECK_GLOBAL_KEY]; } catch {}
+      }
+      deckQuickAccessInstallations.delete(doc);
+      return true;
+    },
+  });
+  deckQuickAccessInstallations.set(doc, installation);
+  return installation;
+}
+
+function autoInstallDeckQuickAccess(doc, win) {
+  const install = () => installDeckQuickAccess({ document: doc, window: win, globalSource: globalThis });
+  if (doc?.readyState === 'loading') doc.addEventListener?.('DOMContentLoaded', install, { once: true });
+  else install();
+}
+
+
 const FANART_DB_NAME = 'gameroad_local_card_creator_v1';
 const FANART_DB_VERSION = 1;
 const FANART_ASSET_STORE = 'assets';
@@ -1633,6 +1984,7 @@ export function installFanartPublicBattleCardProjection({
   return installation;
 }
 
+
 function autoInstallFanart(doc, win) {
   const install = () => {
     installFanartLocalSkinCards({ document: doc, window: win, indexedDB: win?.indexedDB });
@@ -1641,4 +1993,7 @@ function autoInstallFanart(doc, win) {
   if (doc?.readyState === 'loading') doc.addEventListener?.('DOMContentLoaded', install, { once: true }); else install();
 }
 
-if (typeof document !== 'undefined') autoInstallFanart(document, globalThis.window);
+if (typeof document !== 'undefined') {
+  autoInstallDeckQuickAccess(document, globalThis.window);
+  autoInstallFanart(document, globalThis.window);
+}

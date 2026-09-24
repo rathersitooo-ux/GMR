@@ -6,9 +6,13 @@ import {
   DECK_SWIPE_PRESENTATION_EVENTS,
   DECK_SWIPE_EFFECT_ASSETS,
   SETUP_QUICK_DECK_PREVIEW_CONTRACT,
+  QUICK_DECK_REGISTRY_CONTRACT,
   createDeckSwipePresentationController,
   createDeckSwipeFeedbackDetail,
   createSetupQuickDeckPreview,
+  normalizeQuickDeckSlotRefs,
+  toggleQuickDeckSlotRef,
+  projectQuickDeckChoices,
 } from '../browser/cards-deck-presentation-core.mjs';
 
 const rect = (left, top, width, height) => ({ left, top, width, height });
@@ -234,4 +238,54 @@ test('Setup Quick Deck projection fails closed on malformed deck shape or opaque
     }),
     /SAVED_DECK_RULE_ID_INVALID/,
   );
+});
+
+test('Quick Deck registry stores at most three unique existing slot references and never deck data', () => {
+  assert.equal(QUICK_DECK_REGISTRY_CONTRACT.maxQuickDecks, 3);
+  assert.equal(QUICK_DECK_REGISTRY_CONTRACT.defaultDeckSlotCount, 12);
+  assert.equal(QUICK_DECK_REGISTRY_CONTRACT.duplicatesDeckData, false);
+  assert.deepEqual(
+    [...normalizeQuickDeckSlotRefs({ slotIndices: [2, 2, -1, 11, 12, 5, 7] })],
+    [2, 11, 5],
+  );
+});
+
+test('Quick Deck registration toggles without auto-evicting when all three references are occupied', () => {
+  let refs = [];
+  for (const deckIndex of [4, 1, 9]) {
+    const result = toggleQuickDeckSlotRef(refs, deckIndex);
+    assert.equal(result.changed, true);
+    assert.equal(result.registered, true);
+    refs = [...result.slotIndices];
+  }
+  assert.deepEqual(refs, [4, 1, 9]);
+
+  const full = toggleQuickDeckSlotRef(refs, 6);
+  assert.equal(full.changed, false);
+  assert.equal(full.reason, 'QUICK_DECK_LIMIT_REACHED');
+  assert.deepEqual([...full.slotIndices], [4, 1, 9]);
+
+  const removed = toggleQuickDeckSlotRef(refs, 1);
+  assert.equal(removed.changed, true);
+  assert.equal(removed.registered, false);
+  assert.deepEqual([...removed.slotIndices], [4, 9]);
+});
+
+test('Quick Deck choices preserve registration order while projecting the existing 12-slot library', () => {
+  const deckSlots = Array.from({ length: 12 }, (_, index) => ({
+    deckIndex: index,
+    deckNumber: index + 1,
+    mainCount: index === 5 ? 40 : 0,
+    exCount: index === 5 ? 3 : 0,
+  }));
+  const choices = projectQuickDeckChoices({
+    slotIndices: [5, 0, 9],
+    deckSlots,
+    selectedDeckIndex: 5,
+  });
+  assert.deepEqual(choices, [
+    { quickNumber: 1, deckIndex: 5, deckNumber: 6, selected: true, mainCount: 40, exCount: 3 },
+    { quickNumber: 2, deckIndex: 0, deckNumber: 1, selected: false, mainCount: 0, exCount: 0 },
+    { quickNumber: 3, deckIndex: 9, deckNumber: 10, selected: false, mainCount: 0, exCount: 0 },
+  ]);
 });

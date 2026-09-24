@@ -20,6 +20,12 @@ import {
   installCardsInspectorDismissInteractions,
   countCardsLocalVoteHistory,
   installCardsVoteUiRepair,
+  QUICK_DECK_RUNTIME_CONTRACT,
+  parseQuickDeckSlotRefs,
+  readQuickDeckSlotRefs,
+  writeQuickDeckSlotRefs,
+  createDeckQuickAccessSnapshot,
+  selectDeckLibrarySlot,
 } from '../browser/cards-deck-presentation.mjs';
 
 const rect = (left, top, width, height) => ({ left, top, width, height });
@@ -1142,5 +1148,80 @@ test('vote safe-dismiss auto-installs before Cards inspector dismiss so the fron
   const vote = source.indexOf('installCardsVoteUiRepair({ document, window: globalThis.window })');
   const inspector = source.indexOf('installCardsInspectorDismissInteractions({ document })');
   assert.ok(vote >= 0 && inspector > vote);
+});
+
+function quickDeckMemoryStorage() {
+  const values = new Map();
+  return {
+    getItem(key) { return values.has(key) ? values.get(key) : null; },
+    setItem(key, value) { values.set(key, String(value)); },
+  };
+}
+
+test('Quick Deck runtime persists only existing slot references and restores them strictly', () => {
+  const storage = quickDeckMemoryStorage();
+  assert.equal(QUICK_DECK_RUNTIME_CONTRACT.duplicatesDeckData, false);
+  assert.equal(writeQuickDeckSlotRefs({ storage, slotIndices: [4, 1, 9] }), true);
+  assert.deepEqual([...readQuickDeckSlotRefs({ storage })], [4, 1, 9]);
+  assert.deepEqual([...parseQuickDeckSlotRefs('{"schema":"wrong","slotIndices":[4]}')], []);
+});
+
+test('Quick Deck runtime projects the existing deck library and selects through its canonical bridge', () => {
+  const storage = quickDeckMemoryStorage();
+  writeQuickDeckSlotRefs({ storage, slotIndices: [4, 1, 9] });
+  let selectedDeckIndex = 1;
+  const slots = Array.from({ length: 12 }, (_, index) => ({
+    deckIndex: index,
+    deckNumber: index + 1,
+    mainCount: index === 4 ? 40 : 0,
+    exCount: index === 4 ? 2 : 0,
+  }));
+  const bridge = {
+    schema: 'gameroad.deck-library-bridge.v1',
+    snapshot: () => ({
+      slotCount: 12,
+      selectedDeckIndex,
+      dirty: false,
+      slots,
+    }),
+    select(index) {
+      if (!Number.isInteger(index) || index < 0 || index >= 12) return false;
+      selectedDeckIndex = index;
+      return true;
+    },
+  };
+  const globalSource = { GAMEROAD_DECK_LIBRARY: bridge, localStorage: storage };
+  const snapshot = createDeckQuickAccessSnapshot({ globalSource, storage });
+  assert.equal(snapshot.available, true);
+  assert.equal(snapshot.quickChoices.length, 3);
+  assert.deepEqual(snapshot.quickChoices.map((choice) => choice.deckIndex), [4, 1, 9]);
+  assert.equal(snapshot.quickChoices[1].selected, true);
+  assert.equal(selectDeckLibrarySlot(4, { globalSource }), true);
+  assert.equal(bridge.snapshot().selectedDeckIndex, 4);
+});
+
+test('Cards entry is deck-list-first and editor owns an accessible Quick Deck registration checkbox', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  assert.ok(source.includes("cardEntry: 'deck-list-first'"));
+  assert.ok(source.includes("landing.dataset.role = 'deck-library-landing'"));
+  assert.ok(source.includes("quickToggle.dataset.role = 'quick-deck-register'"));
+  assert.ok(source.includes("quickToggle.setAttribute('role', 'checkbox')"));
+  assert.ok(source.includes("quickToggle.setAttribute('aria-checked', 'false')"));
+  assert.ok(source.includes("setView('list');"));
+  assert.ok(source.includes("status.textContent = quickNumber ?"));
+  assert.ok(source.includes("クイックデッキは3つまでです"));
+});
+
+test('Deck Quick Access calls the existing private deck selection authority through one production bridge', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const html = await readFile(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
+  const start = html.indexOf('window.GAMEROAD_DECK_LIBRARY=Object.freeze');
+  assert.ok(start >= 0);
+  const bridge = html.slice(start, start + 1600);
+  assert.ok(bridge.includes("schema:'gameroad.deck-library-bridge.v1'"));
+  assert.ok(bridge.includes('select:(index)=>selectDeckIndex(index)'));
+  assert.ok(bridge.includes('selectedDeckIndex:state.selectedDeckIndex'));
+  assert.equal(bridge.includes('localStorage'), false);
 });
 

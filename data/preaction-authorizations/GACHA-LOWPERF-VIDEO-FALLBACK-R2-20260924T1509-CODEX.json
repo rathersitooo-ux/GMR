@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GACHA-LOWPERF-VIDEO-FALLBACK-R2-20260924T1509-CODEX",
+  "taskId": "GACHA-OPENING-RITUAL-GAMEFEEL-001",
+  "workUnitKey": "GACHA_PREVIEW_LOWP_PERF_FALLBACK_R2",
+  "acquireKey": "GACHA-LOWPERF-VIDEO-FALLBACK-R2-20260924T1509-CODEX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "GMR-main-c1e01161-browser-Gacha-openPack-reduceMotion-only; task-row-1238-R7-lowPerf RED",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "Existing presentationEffects lowPerf contract and gacha-presentation-core test specify video=disabled; live handler invokes A01→B01 without checking lowPerf.",
+  "proceedToken": "PROCEED|GACHA-LOWPERF-VIDEO-FALLBACK-R2-20260924T1509-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-24T15:09:00+09:00",
+  "authorizationBaseSha": "c1e01161b030c88ad93b68c01cd7f85bebf20fe6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GACHA-OPENING-RITUAL-GAMEFEEL-001",
+  "leaseWorkUnitKey": "GACHA_PREVIEW_LOWP_PERF_FALLBACK_R2",
+  "leaseAcquireKey": "GACHA-LOWPERF-VIDEO-FALLBACK-R2-20260924T1509-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-09-24 15:09 JST",
+  "leaseUntilJst": "2026-09-24 16:09 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:L10",
+  "leaseExactMutableResources": "browser/GAMEROAD.html Gacha #openPack handler only; tests/browser-full-interaction.spec.mjs Gacha lowPerf-only preview assertion; own PRE_ACTION witness data/preaction-authorizations/GACHA-LOWPERF-VIDEO-FALLBACK-R2-20260924T1509-CODEX.json; own branch codex/gacha-lowperf-video-fallback-r2-20260924 and PR/check/readback; CURRENT_ACTIVE_LEASES own row only; R24 append-only event history",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

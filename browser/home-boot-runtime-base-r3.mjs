@@ -21,8 +21,6 @@ const DECORATIVE_GLOBAL_BRAND_SELECTOR = '.top .brand';
 const ROUTE_SELECTOR = '.homePadChoice[data-home-target]';
 const SECONDARY_UTILITY_SELECTOR = '.codexHomeUtilities';
 const SECONDARY_UTILITY_BUTTON_SELECTOR = '.homeUtilityBtn';
-const HOME_RANK_MATCH_ENTRY_SELECTOR = '[data-home-rank-match-entry="true"]';
-export const HOME_RANK_MATCH_ENTRY_LABEL = 'ランクマッチ';
 export const HOME_CONTEXTUAL_REPLAY_LABEL = '操作を再確認';
 const HOME_CONTEXTUAL_REPLAY_SCHEMA = 'gameroad.tutorial-contextual-replay-home.v1';
 const SLIDEPAD_CENTER_SELECTOR = '#homePadCenter';
@@ -1714,46 +1712,6 @@ ${HOME_SELECTOR}[data-home-contextual-replay-active="true"] ${SLIDEPAD_CENTER_SE
   return true;
 }
 
-export function activateHomeRankMatchEntry(documentSource = globalThis.document) {
-  const home = documentSource?.querySelector?.(HOME_SELECTOR);
-  if (!home?.querySelector) return false;
-  const setupRoute = home.querySelector('.homePadChoice[data-home-target="setup"]');
-  if (!setupRoute || typeof setupRoute.click !== 'function') return false;
-  rankMatchRuntime.selectedMode = 'rank';
-  setupRoute.click();
-  scheduleRankMatchRefresh();
-  return true;
-}
-
-function ensureHomeRankMatchEntry(doc) {
-  const home = doc?.querySelector?.(HOME_SELECTOR);
-  if (!home?.querySelector || !doc?.createElement) return null;
-  const host = home.querySelector(SECONDARY_UTILITY_SELECTOR) || home;
-  let button = home.querySelector(HOME_RANK_MATCH_ENTRY_SELECTOR);
-  if (!button) {
-    button = doc.createElement('button');
-    button.type = 'button';
-    button.className = 'homeUtilityBtn gameroadHomeRankMatchEntry';
-    button.dataset.homeRankMatchEntry = 'true';
-    button.textContent = HOME_RANK_MATCH_ENTRY_LABEL;
-    button.title = HOME_RANK_MATCH_ENTRY_LABEL;
-    button.setAttribute('aria-label', HOME_RANK_MATCH_ENTRY_LABEL);
-    button.addEventListener('click', (event) => {
-      event.preventDefault?.();
-      activateHomeRankMatchEntry(doc);
-    });
-    host.appendChild(button);
-  }
-  const setupRoute = home.querySelector('.homePadChoice[data-home-target="setup"]');
-  const enabled = Boolean(setupRoute && typeof setupRoute.click === 'function');
-  button.disabled = !enabled;
-  button.setAttribute('aria-disabled', enabled ? 'false' : 'true');
-  button.hidden = false;
-  return button;
-}
-
-
-
 const RANK_MATCH_TEXTURES = Object.freeze({
   waitingBackground: './assets/visual/rank-match/waiting-bg.webp',
   uiChrome: './assets/visual/rank-match/ui-chrome.webp',
@@ -1817,7 +1775,6 @@ function ensureRankMatchStyle(doc) {
     '--rank-match-button-secondary:url("', RANK_MATCH_TEXTURES.buttonSecondary, '");',
     '--rank-match-action-ring:url("', RANK_MATCH_TEXTURES.actionRing, '");',
     '--rank-match-waiting-vfx:url("', RANK_MATCH_TEXTURES.waitingVfx, '");}',
-    '.gameroadHomeRankMatchEntry{min-width:44px;min-height:44px;cursor:pointer;touch-action:manipulation;}',
     '.gameroadRankMatchSetup{display:grid;gap:7px;padding:10px 0 2px;border-top:1px solid rgba(197,246,228,.18);}',
     '.gameroadRankMatchModeRow{display:grid;grid-template-columns:1fr 1fr;gap:7px;}',
     '.gameroadRankMatchMode{min-height:54px;border:1px solid rgba(197,246,228,.28);background:rgba(8,29,24,.82);color:#f5fff9;font-weight:950;letter-spacing:.02em;cursor:pointer;transition:filter 140ms ease,transform 140ms ease,border-color 140ms ease,box-shadow 140ms ease;}',
@@ -2239,7 +2196,6 @@ function scheduleRankMatchRefresh() {
     rankMatchRuntime.refreshScheduled = false;
     const doc = rankMatchDocument();
     rankMatchBindObserver(doc);
-    ensureHomeRankMatchEntry(doc);
     ensureRankMatchSetupControls(doc);
     rankMatchSyncBattleVisibility(doc);
   });

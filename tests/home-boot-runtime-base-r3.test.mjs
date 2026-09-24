@@ -43,6 +43,8 @@ test('R1 rank match is a Battle child and uses the generated presentation surfac
   assert.ok(base.includes('partner.saasuna'));
   assert.ok(base.includes('setAdvicePartnerId'));
   assert.ok(base.includes('GAMEROAD_RANK_MATCH_SEARCH'));
+  assert.equal(base.includes('data-home-rank-match-entry'), false);
+  assert.equal(base.includes('activateHomeRankMatchEntry'), false);
 });
 
 

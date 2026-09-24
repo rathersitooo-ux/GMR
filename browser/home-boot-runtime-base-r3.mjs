@@ -1103,12 +1103,7 @@ export function refreshHomeBootPresentation() {
   });
   unbindHomeModeSlotRoll();
   bindSlidepad(home);
-  if (active) mountHomeContextualTutorialReplay(home);
-  else {
-    home.removeAttribute('data-home-contextual-replay-active');
-    const replayTrigger = home.querySelector('[data-home-contextual-replay-trigger="true"]');
-    if (replayTrigger instanceof HTMLElement) replayTrigger.setAttribute('aria-pressed', 'false');
-  }
+  removeHomeContextualTutorialReplay(home);
 
   const entering = active && !runtime.active;
   runtime.active = active;
@@ -1663,55 +1658,22 @@ export function projectHomeContextualTutorialReplay({ routeIds = [], active = fa
   });
 }
 
-export function mountHomeContextualTutorialReplay(home) {
+export function removeHomeContextualTutorialReplay(home) {
   if (!(home instanceof HTMLElement)) return false;
-  const host = home.querySelector(SECONDARY_UTILITY_SELECTOR);
-  const ids = routeButtons(home).map(routeId).filter(Boolean);
-  const projection = projectHomeContextualTutorialReplay({ routeIds: ids });
-  if (!(host instanceof HTMLElement) || !projection.available) return false;
-
-  const styleId = 'gameroad-home-contextual-replay-style-r1';
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.textContent = `
-${HOME_SELECTOR}[data-home-contextual-replay-active="true"] ${ROUTE_SELECTOR}{
-  opacity:1!important;
-  filter:brightness(1.14) saturate(1.05)!important;
-  outline:2px solid currentColor!important;
-  outline-offset:4px!important;
-}
-${HOME_SELECTOR}[data-home-contextual-replay-active="true"] ${SLIDEPAD_CENTER_SELECTOR}{
-  outline:3px solid currentColor!important;
-  outline-offset:6px!important;
-}
-`;
-    document.head.appendChild(style);
+  home.removeAttribute('data-home-contextual-replay-active');
+  let removed = false;
+  for (const trigger of home.querySelectorAll('[data-home-contextual-replay-trigger="true"]')) {
+    if (!(trigger instanceof HTMLElement)) continue;
+    trigger.remove();
+    removed = true;
   }
+  home.ownerDocument?.getElementById?.('gameroad-home-contextual-replay-style-r1')?.remove?.();
+  return removed;
+}
 
-  let trigger = home.querySelector('[data-home-contextual-replay-trigger="true"]');
-  if (!(trigger instanceof HTMLElement)) {
-    trigger = document.createElement('button');
-    trigger.type = 'button';
-    trigger.className = 'homeUtilityBtn';
-    trigger.dataset.homeContextualReplayTrigger = 'true';
-    host.appendChild(trigger);
-  }
-  trigger.textContent = HOME_CONTEXTUAL_REPLAY_LABEL;
-  trigger.title = HOME_CONTEXTUAL_REPLAY_LABEL;
-  trigger.setAttribute('aria-label', HOME_CONTEXTUAL_REPLAY_LABEL);
-  trigger.setAttribute('aria-pressed', home.getAttribute('data-home-contextual-replay-active') === 'true' ? 'true' : 'false');
-  trigger.hidden = false;
-  trigger.onclick = () => {
-    const currentIds = routeButtons(home).map(routeId).filter(Boolean);
-    const current = projectHomeContextualTutorialReplay({ routeIds: currentIds });
-    if (!current.available) return;
-    const next = home.getAttribute('data-home-contextual-replay-active') !== 'true';
-    if (next) home.setAttribute('data-home-contextual-replay-active', 'true');
-    else home.removeAttribute('data-home-contextual-replay-active');
-    trigger.setAttribute('aria-pressed', next ? 'true' : 'false');
-  };
-  return true;
+export function mountHomeContextualTutorialReplay(home) {
+  removeHomeContextualTutorialReplay(home);
+  return false;
 }
 
 export function activateHomeRankMatchEntry(documentSource = globalThis.document) {

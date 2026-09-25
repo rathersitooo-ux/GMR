@@ -44,6 +44,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   chromium-interaction-evidence:
@@ -54,14 +55,283 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Restore matching full-interaction evidence
+      - name: Resolve visual evidence identity
+        id: evidence_identity
+        shell: bash
+        env:
+          EVIDENCE_INPUT_HASH: ${{ hashFiles('browser/GAMEROAD.html', 'browser/*presentation*.mjs', 'browser/*runtime*.mjs', 'browser/*visual*.mjs', 'browser/assets/**', 'browser/*motion*.mjs', 'browser/new-base-*.mjs', 'browser/screen-navigation-core.mjs', 'tests/browser-full-interaction.spec.mjs', 'tests/browser-full-interaction-state-sequence.spec.mjs', 'playwright.full-interaction.config.mjs', '.github/workflows/browser-full-interaction.yml') }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${EVIDENCE_INPUT_HASH:-}" ]]; then
+            echo '::error::Visual evidence input hash is empty'
+            exit 1
+          fi
+          echo "input_hash=${EVIDENCE_INPUT_HASH}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore matching full-interaction evidence cache
         id: interaction_evidence_cache
         uses: actions/cache@v4
         with:
           path: |
             playwright-report-full-interaction/
             test-results/full-interaction/
-          key: ${{ runner.os }}-browser-full-interaction-v1-${{ hashFiles('browser/GAMEROAD.html', 'browser/*presentation*.mjs', 'browser/*runtime*.mjs', 'browser/*visual*.mjs', 'browser/assets/**', 'browser/*motion*.mjs', 'browser/new-base-*.mjs', 'browser/screen-navigation-core.mjs', 'tests/browser-full-interaction.spec.mjs', 'tests/browser-full-interaction-state-sequence.spec.mjs', 'playwright.full-interaction.config.mjs', '.github/workflows/browser-full-interaction.yml') }}
+          key: ${{ runner.os }}-browser-full-interaction-v2-${{ steps.evidence_identity.outputs.input_hash }}
+
+      - name: Restore matching saved artifact evidence
+        id: interaction_evidence_artifact
+        if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVIDENCE_INPUT_HASH: ${{ steps.evidence_identity.outputs.input_hash }}
+          ARTIFACT_NAME: browser-full-interaction-latest-${{ steps.evidence_identity.outputs.input_hash }}
+        run: |
+          set -euo pipefail
+          echo 'artifact_hit=false' >> "$GITHUB_OUTPUT"
+          echo 'source_artifact_id=' >> "$GITHUB_OUTPUT"
+          workdir="$(mktemp -d)"
+          trap 'rm -rf "$workdir"' EXIT
+
+          if ! gh api --paginate \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=${ARTIFACT_NAME}&per_page=100" \
+            --jq '.artifacts[] | select(.expired == false) | [.id, .created_at] | @tsv' \
+            > "$workdir/candidates.tsv"; then
+            echo '::warning::Saved artifact lookup failed; continuing to fresh capture'
+            exit 0
+          fi
+
+          while IFS=
+      - name: Set up Node
+        if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' && steps.interaction_evidence_artifact.outputs.artifact_hit != 'true' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright test runner
+        if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' && steps.interaction_evidence_artifact.outputs.artifact_hit != 'true' }}
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium and OS dependencies
+        if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' && steps.interaction_evidence_artifact.outputs.artifact_hit != 'true' }}
+        run: npx playwright install --with-deps chromium
+
+      - name: Run GAMEROAD full interaction evidence R2
+        id: full_interaction_capture
+        if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' && steps.interaction_evidence_artifact.outputs.artifact_hit != 'true' }}
+        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
+
+      - name: Record evidence reuse identity
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          EVIDENCE_INPUT_HASH: ${{ steps.evidence_identity.outputs.input_hash }}
+          EVIDENCE_CACHE_HIT: ${{ steps.interaction_evidence_cache.outputs.cache-hit }}
+          EVIDENCE_ARTIFACT_HIT: ${{ steps.interaction_evidence_artifact.outputs.artifact_hit }}
+          EVIDENCE_SOURCE_ARTIFACT_ID: ${{ steps.interaction_evidence_artifact.outputs.source_artifact_id }}
+          CAPTURE_OUTCOME: ${{ steps.full_interaction_capture.outcome }}
+          ARTIFACT_NAME: browser-full-interaction-latest-${{ steps.evidence_identity.outputs.input_hash }}
+        run: |
+          set -euo pipefail
+          mkdir -p evidence-metadata
+          cache_hit="${EVIDENCE_CACHE_HIT:-false}"
+          artifact_hit="${EVIDENCE_ARTIFACT_HIT:-false}"
+          capture_outcome="${CAPTURE_OUTCOME:-skipped}"
+          reuse_hit=false
+          reuse_source=none
+          source_artifact_id=""
+          if [[ "$cache_hit" == 'true' ]]; then
+            reuse_hit=true
+            reuse_source=cache
+          elif [[ "$artifact_hit" == 'true' ]]; then
+            reuse_hit=true
+            reuse_source=artifact
+            source_artifact_id="${EVIDENCE_SOURCE_ARTIFACT_ID:-}"
+          fi
+          fresh_capture=true
+          reusable=false
+          if [[ "$reuse_hit" == 'true' ]]; then
+            fresh_capture=false
+            reusable=true
+          elif [[ "$capture_outcome" == 'success' ]]; then
+            reusable=true
+          fi
+          printf 'source_sha=%s\nrun_id=%s\ninput_hash=%s\nreference_checked=true\ncache_hit=%s\nartifact_hit=%s\nreuse_hit=%s\nreuse_source=%s\nsource_artifact_id=%s\nfresh_capture=%s\ncapture_outcome=%s\nreusable=%s\ncanonical_latest=true\nsaved=true\nartifact_name=%s\n' \
+            "$GITHUB_SHA" "$GITHUB_RUN_ID" "$EVIDENCE_INPUT_HASH" "$cache_hit" "$artifact_hit" \
+            "$reuse_hit" "$reuse_source" "$source_artifact_id" "$fresh_capture" "$capture_outcome" \
+            "$reusable" "$ARTIFACT_NAME" \
+            > evidence-metadata/reuse-binding.txt
+      - name: Upload canonical interaction evidence
+        id: interaction_evidence_upload
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-full-interaction-latest-${{ steps.evidence_identity.outputs.input_hash }}
+          path: |
+            playwright-report-full-interaction/
+            test-results/full-interaction/
+            evidence-metadata/
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 14
+
+      - name: Retire stale duplicate interaction evidence
+        if: ${{ success() && github.event_name != 'pull_request' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CURRENT_ARTIFACT_ID: ${{ steps.interaction_evidence_upload.outputs.artifact-id }}
+          ARTIFACT_NAME: browser-full-interaction-latest-${{ steps.evidence_identity.outputs.input_hash }}
+          CURRENT_CACHE_KEY: ${{ runner.os }}-browser-full-interaction-v2-${{ steps.evidence_identity.outputs.input_hash }}
+          CACHE_PREFIX_V1: ${{ runner.os }}-browser-full-interaction-v1-
+          CACHE_PREFIX_V2: ${{ runner.os }}-browser-full-interaction-v2-
+        run: |
+          set -euo pipefail
+          if [[ ! "${CURRENT_ARTIFACT_ID:-}" =~ ^[0-9]+$ ]]; then
+            echo '::error::Canonical interaction artifact id is missing'
+            exit 1
+          fi
+          while IFS= read -r artifact_id; do
+            [[ -n "$artifact_id" ]] || continue
+            [[ "$artifact_id" == "$CURRENT_ARTIFACT_ID" ]] && continue
+            echo "Deleting duplicate saved interaction artifact ${artifact_id}"
+            gh api --method DELETE -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28' "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}"
+          done < <(gh api --paginate -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28' "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=${ARTIFACT_NAME}&per_page=100" --jq '.artifacts[] | select(.expired == false) | .id')
+          while IFS=
+\t' read -r artifact_id created_at; do
+            [[ -n "${artifact_id:-}" ]] || continue
+            candidate="$workdir/candidate-${artifact_id}"
+            mkdir -p "$candidate"
+            if ! gh api \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2022-11-28' \
+              "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" \
+              > "$workdir/${artifact_id}.zip"; then
+              echo "::warning::Could not download saved artifact ${artifact_id}; trying next candidate"
+              continue
+            fi
+            if ! unzip -q "$workdir/${artifact_id}.zip" -d "$candidate"; then
+              echo "::warning::Could not unpack saved artifact ${artifact_id}; trying next candidate"
+              continue
+            fi
+
+            binding="$candidate/evidence-metadata/reuse-binding.txt"
+            [[ -f "$binding" ]] || continue
+            candidate_hash="$(sed -n 's/^input_hash=//p' "$binding" | head -n1)"
+            candidate_reusable="$(sed -n 's/^reusable=//p' "$binding" | head -n1)"
+            [[ "$candidate_hash" == "$EVIDENCE_INPUT_HASH" ]] || continue
+            [[ "$candidate_reusable" == 'true' ]] || continue
+            [[ -d "$candidate/playwright-report-full-interaction" ]] || continue
+            [[ -d "$candidate/test-results/full-interaction" ]] || continue
+            if ! find "$candidate/playwright-report-full-interaction" "$candidate/test-results/full-interaction" -type f -print -quit | grep -q .; then
+              continue
+            fi
+
+            rm -rf playwright-report-full-interaction test-results/full-interaction
+            cp -a "$candidate/playwright-report-full-interaction" ./playwright-report-full-interaction
+            mkdir -p test-results
+            cp -a "$candidate/test-results/full-interaction" ./test-results/full-interaction
+            echo 'artifact_hit=true' >> "$GITHUB_OUTPUT"
+            echo "source_artifact_id=${artifact_id}" >> "$GITHUB_OUTPUT"
+            echo "Reused saved interaction evidence artifact ${artifact_id} created ${created_at}"
+            exit 0
+          done < "$workdir/candidates.tsv"
+
+          echo 'No reusable exact-input saved artifact found; fresh capture required'
+
+      - name: Set up Node
+        if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright test runner
+        if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' }}
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium and OS dependencies
+        if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' }}
+        run: npx playwright install --with-deps chromium
+
+      - name: Run GAMEROAD full interaction evidence R1
+        if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' }}
+        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
+
+      - name: Record evidence reuse identity
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          EVIDENCE_INPUT_HASH: ${{ hashFiles('browser/GAMEROAD.html', 'browser/*presentation*.mjs', 'browser/*runtime*.mjs', 'browser/*visual*.mjs', 'browser/assets/**', 'browser/*motion*.mjs', 'browser/new-base-*.mjs', 'browser/screen-navigation-core.mjs', 'tests/browser-full-interaction.spec.mjs', 'tests/browser-full-interaction-state-sequence.spec.mjs', 'playwright.full-interaction.config.mjs', '.github/workflows/browser-full-interaction.yml') }}
+          EVIDENCE_CACHE_HIT: ${{ steps.interaction_evidence_cache.outputs.cache-hit }}
+        run: |
+          set -euo pipefail
+          mkdir -p evidence-metadata
+          printf 'source_sha=%s\nrun_id=%s\ninput_hash=%s\nreference_checked=true\ncache_hit=%s\nfresh_capture=%s\n' \
+            "$GITHUB_SHA" "$GITHUB_RUN_ID" "$EVIDENCE_INPUT_HASH" "${EVIDENCE_CACHE_HIT:-false}" \
+            "$([[ "${EVIDENCE_CACHE_HIT:-false}" == "true" ]] && echo false || echo true)" \
+            > evidence-metadata/reuse-binding.txt
+
+      - name: Upload interaction evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-full-interaction-${{ github.run_id }}
+          path: |
+            playwright-report-full-interaction/
+            test-results/full-interaction/
+            evidence-metadata/
+          if-no-files-found: error
+          retention-days: 14
+
+\t' read -r cache_id cache_key; do
+            [[ -n "${cache_id:-}" ]] || continue
+            if [[ "$cache_key" == "${CACHE_PREFIX_V1}"* ]] || [[ "$cache_key" == "${CACHE_PREFIX_V2}"* && "$cache_key" != "$CURRENT_CACHE_KEY" ]]; then
+              echo "Deleting stale Browser interaction cache ${cache_id} (${cache_key})"
+              gh api --method DELETE -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28' "repos/${GITHUB_REPOSITORY}/actions/caches/${cache_id}"
+            fi
+          done < <(gh api --paginate -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28' "repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100" --jq '.actions_caches[] | [.id, .key] | @tsv')
+
+\t' read -r artifact_id created_at; do
+            [[ -n "${artifact_id:-}" ]] || continue
+            candidate="$workdir/candidate-${artifact_id}"
+            mkdir -p "$candidate"
+            if ! gh api \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2022-11-28' \
+              "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" \
+              > "$workdir/${artifact_id}.zip"; then
+              echo "::warning::Could not download saved artifact ${artifact_id}; trying next candidate"
+              continue
+            fi
+            if ! unzip -q "$workdir/${artifact_id}.zip" -d "$candidate"; then
+              echo "::warning::Could not unpack saved artifact ${artifact_id}; trying next candidate"
+              continue
+            fi
+
+            binding="$candidate/evidence-metadata/reuse-binding.txt"
+            [[ -f "$binding" ]] || continue
+            candidate_hash="$(sed -n 's/^input_hash=//p' "$binding" | head -n1)"
+            candidate_reusable="$(sed -n 's/^reusable=//p' "$binding" | head -n1)"
+            [[ "$candidate_hash" == "$EVIDENCE_INPUT_HASH" ]] || continue
+            [[ "$candidate_reusable" == 'true' ]] || continue
+            [[ -d "$candidate/playwright-report-full-interaction" ]] || continue
+            [[ -d "$candidate/test-results/full-interaction" ]] || continue
+            if ! find "$candidate/playwright-report-full-interaction" "$candidate/test-results/full-interaction" -type f -print -quit | grep -q .; then
+              continue
+            fi
+
+            rm -rf playwright-report-full-interaction test-results/full-interaction
+            cp -a "$candidate/playwright-report-full-interaction" ./playwright-report-full-interaction
+            mkdir -p test-results
+            cp -a "$candidate/test-results/full-interaction" ./test-results/full-interaction
+            echo 'artifact_hit=true' >> "$GITHUB_OUTPUT"
+            echo "source_artifact_id=${artifact_id}" >> "$GITHUB_OUTPUT"
+            echo "Reused saved interaction evidence artifact ${artifact_id} created ${created_at}"
+            exit 0
+          done < "$workdir/candidates.tsv"
+
+          echo 'No reusable exact-input saved artifact found; fresh capture required'
 
       - name: Set up Node
         if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' }}

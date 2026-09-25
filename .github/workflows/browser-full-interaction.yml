@@ -54,19 +54,46 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Restore matching full-interaction evidence
+        id: interaction_evidence_cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            playwright-report-full-interaction/
+            test-results/full-interaction/
+          key: ${{ runner.os }}-browser-full-interaction-v1-${{ hashFiles('browser/GAMEROAD.html', 'browser/*presentation*.mjs', 'browser/*runtime*.mjs', 'browser/*visual*.mjs', 'browser/assets/**', 'browser/*motion*.mjs', 'browser/new-base-*.mjs', 'browser/screen-navigation-core.mjs', 'tests/browser-full-interaction.spec.mjs', 'tests/browser-full-interaction-state-sequence.spec.mjs', 'playwright.full-interaction.config.mjs', '.github/workflows/browser-full-interaction.yml') }}
+
       - name: Set up Node
+        if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' }}
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
       - name: Install Playwright test runner
+        if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' }}
         run: npm install --no-save --no-package-lock @playwright/test@1.62.0
 
       - name: Install Chromium and OS dependencies
+        if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' }}
         run: npx playwright install --with-deps chromium
 
       - name: Run GAMEROAD full interaction evidence R1
+        if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' }}
         run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
+
+      - name: Record evidence reuse identity
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          EVIDENCE_INPUT_HASH: ${{ hashFiles('browser/GAMEROAD.html', 'browser/*presentation*.mjs', 'browser/*runtime*.mjs', 'browser/*visual*.mjs', 'browser/assets/**', 'browser/*motion*.mjs', 'browser/new-base-*.mjs', 'browser/screen-navigation-core.mjs', 'tests/browser-full-interaction.spec.mjs', 'tests/browser-full-interaction-state-sequence.spec.mjs', 'playwright.full-interaction.config.mjs', '.github/workflows/browser-full-interaction.yml') }}
+          EVIDENCE_CACHE_HIT: ${{ steps.interaction_evidence_cache.outputs.cache-hit }}
+        run: |
+          set -euo pipefail
+          mkdir -p evidence-metadata
+          printf 'source_sha=%s\nrun_id=%s\ninput_hash=%s\nreference_checked=true\ncache_hit=%s\nfresh_capture=%s\n' \
+            "$GITHUB_SHA" "$GITHUB_RUN_ID" "$EVIDENCE_INPUT_HASH" "${EVIDENCE_CACHE_HIT:-false}" \
+            "$([[ "${EVIDENCE_CACHE_HIT:-false}" == "true" ]] && echo false || echo true)" \
+            > evidence-metadata/reuse-binding.txt
 
       - name: Upload interaction evidence
         if: ${{ !cancelled() }}
@@ -76,6 +103,7 @@ jobs:
           path: |
             playwright-report-full-interaction/
             test-results/full-interaction/
+            evidence-metadata/
           if-no-files-found: error
           retention-days: 14
 

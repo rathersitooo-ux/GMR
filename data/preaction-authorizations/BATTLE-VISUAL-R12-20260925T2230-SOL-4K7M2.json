@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-VISUAL-R12-20260925T2230-SOL-4K7M2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_VISUAL_REMAKE_RECOVERY_R11",
+  "acquireKey": "BATTLE-VISUAL-REMAKE-RECOVERY-R11-202609252230-SOL-4K7M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_PROGRESS_GUIDE_PRESENT_PLUS_RECOVERED_DIFF_R11",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOCAL_FOCUSED_TEST_PASS_ON_RECOVERED_DIFF_R11",
+  "proceedToken": "PROCEED|BATTLE-VISUAL-R12-20260925T2230-SOL-4K7M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-progress-guide-readability|presentation-only|active-lease",
+  "authorizationBaseSha": "7fe4b9da85fa950b0f71f2b9fc2c6f8766a21696",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_VISUAL_REMAKE_RECOVERY_R11",
+  "leaseAcquireKey": "BATTLE-VISUAL-REMAKE-RECOVERY-R11-202609252230-SOL-4K7M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-25 22:30 JST",
+  "leaseUntilJst": "2026-09-25 23:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "browser/battle-screen-runtime-mount.mjs; tests/battle-screen-progress-guide-visual.test.mjs; branch sol/battle-progress-guide-r12-20260925; own transient data/preaction-authorizations/BATTLE-VISUAL-R12-20260925T2230-SOL-4K7M2.json; own PR/check/readback",
+  "solutionSignature": "BATTLE_PROGRESS_GUIDE_READABILITY_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "RECOVER_EXISTING_UNCOMMITTED_PROGRESS_GUIDE_DIFF",
+  "solutionSearchEvidence": [
+    "Existing unfinished Battle visual worktree contained a one-rule progress-guide readability delta.",
+    "Fresh current main retains the same progress-guide selector and presentation-only runtime boundary.",
+    "The repair changes only presentation CSS and keeps gameplayAuthority=false and gameStateWrite=false.",
+    "A focused local test passed before final branch reconstruction."
+  ],
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-progress-guide-visual.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-progress-guide-visual.test.mjs"
+  ]
+}

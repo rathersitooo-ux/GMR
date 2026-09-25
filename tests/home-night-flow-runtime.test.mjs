@@ -63,7 +63,7 @@ test('Reduced Motion and LowPerf reduce particle count and animation cadence', (
 });
 
 test('runtime stays presentation-only and night audio is user-gesture-gated', () => {
-  const source = fs.readFileSync(new URL('../browser/home-night-flow-runtime.mjs', import.meta.url), 'utf8');
+  const source = fs.readFileSync(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
   assert.ok(source.includes('pointer-events:none'));
   assert.ok(source.includes("doc.addEventListener('pointerdown', gesture"));
   assert.ok(source.includes("doc.addEventListener('keydown', gesture"));

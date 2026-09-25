@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-NIGHT-FLOW-R1-20260926T0030",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_NIGHT_CURL_FLOW_AMBIENCE_R1",
+  "acquireKey": "HOME-NIGHT-FLOW-R1-20260926T0030-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "HOME-SOURCE-ART-DIRECT-INSPECTION-1536x864-CURL-AUDIO-PLAN",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOCAL-NODE-HOME-NIGHT-FLOW-6-OF-6-PASS",
+  "proceedToken": "PROCEED|HOME-NIGHT-FLOW-R1-20260926T0030|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|source-art-inspected|lease-snapshot|local-rehearsal-pass",
+  "authorizationBaseSha": "727bba16a43569f54c02a1ae82f04693d6d4837c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_NIGHT_CURL_FLOW_AMBIENCE_R1",
+  "leaseAcquireKey": "HOME-NIGHT-FLOW-R1-20260926T0030-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-26 00:30 JST",
+  "leaseUntilJst": "2026-09-26 01:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR branch sol/home-night-flow-r1-20260926 only: browser/home-night-flow-runtime.mjs; browser/home-boot-runtime-mount.mjs; tests/home-night-flow-runtime.test.mjs; data/preaction-authorizations/HOME-NIGHT-FLOW-R1-20260926T0030.json transient authorization; own PR/check/readback",
+  "scope": [
+    "browser/home-night-flow-runtime.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-night-flow-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-night-flow-runtime.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-night-flow-runtime.test.mjs"
+  ],
+  "solutionSignature": "Home uses the existing source art and adds a presentation-only canvas curl-noise tracer layer plus gesture-gated procedural night ambience without touching gameplay authority.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "HOME-NIGHT-FLOW-REUSE-20260926",
+  "solutionSearchEvidence": [
+    "Drive source art 1t-viE1VSuatsJd6rC1yuc2ctncguwOVx inspected directly",
+    "Existing HOME_BORDER_LIGHT_OVERLAY_CSS establishes presentation overlay layering",
+    "Curl-noise procedural flow literature and current browser GPU/Canvas implementation patterns reviewed"
+  ]
+}

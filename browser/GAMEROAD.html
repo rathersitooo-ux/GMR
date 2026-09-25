@@ -236,6 +236,22 @@ html.r10LowPerf .homeMotionField{display:none}html.r10LowPerf .homeMotionMediaSl
 @media(max-height:470px) and (orientation:landscape){.homeSlidePad{bottom:2%;width:min(40vw,330px);height:78vh}.homeUtilities{top:48px}.homePadCenter{width:58px}.homePadChoice{height:23%}}
 @media(max-width:540px) and (orientation:portrait){.home .homeScene{width:100%;height:62%}.homeSlidePad{left:3%;right:3%;bottom:3%;width:auto;height:35%;}.homeUtilities{left:3%;right:3%;top:48px;max-width:none;justify-content:flex-end}.homePadHint{display:none}.homePadChoice strong{font-size:10px}.homePadChoice small{display:none}.homePadCenter{width:58px}}
 
+
+/* Shop responsive fit and purchase availability clarity */
+@media(max-width:540px) and (orientation:portrait){
+  section.screen[data-screen="shop"] .simplePanel{height:100%;overflow-y:auto;overscroll-behavior:contain;padding-bottom:env(safe-area-inset-bottom)}
+  section.screen[data-screen="shop"] .shopGrid{gap:8px}
+  section.screen[data-screen="shop"] .shopCard{min-height:152px}
+  section.screen[data-screen="shop"] .shopCard h2{margin:12px 0 8px;font-size:clamp(18px,5vw,22px)}
+  section.screen[data-screen="shop"] .safeNote{font-size:13px;line-height:1.4;padding:8px 12px;margin-top:8px!important}
+}
+@media(max-height:470px) and (orientation:landscape){
+  section.screen[data-screen="shop"] .screen{padding:56px 3% 8px}
+  section.screen[data-screen="shop"] .simplePanel{height:100%;overflow-y:auto}
+  section.screen[data-screen="shop"] .shopCard{min-height:116px;padding:9px}
+  section.screen[data-screen="shop"] .shopCard h2{font-size:clamp(16px,2.6vw,19px);margin:8px 0 4px}
+  section.screen[data-screen="shop"] .safeNote{font-size:12px;line-height:1.35;padding:7px 10px;margin-top:6px!important}
+}
 </style>
 
 <style id="gameroad-codex-home-r4-shell-restore">

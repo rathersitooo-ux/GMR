@@ -329,8 +329,94 @@ export function installCardsDeckFindability({ document: doc = globalThis.documen
   if (!doc.getElementById?.('gameroad-cards-deck-findability-style')) {
     const style = doc.createElement('style');
     style.id = 'gameroad-cards-deck-findability-style';
-    style.textContent = '[data-role="cards-deck-findability"]{position:relative;z-index:2;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}[data-role="cards-deck-findability"] input{min-height:44px;min-width:min(240px,58vw);padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(10,18,30,.72);color:inherit;font:inherit}[data-role="cards-deck-findability"] button{min-height:44px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:transparent;color:inherit;font:700 13px/1 system-ui}[data-role="cards-deck-findability"] button[aria-pressed="true"]{background:rgba(255,216,74,.22);border-color:#ffd84a}[data-role="cards-deck-findability"] button[hidden]{display:none}[data-role="cards-deck-findability-count"]{font:700 12px/1 system-ui;opacity:.72;white-space:nowrap}[data-role="cards-favorite-action"]{min-height:44px;padding:8px 12px}';
-    style.textContent += '[data-role="cards-deck-findability"][data-integrated="true"]{display:contents;margin:0}.screen.cards #collectionGrid [data-cards-deck-filter-hidden="true"]{display:none!important}';
+    style.textContent = `
+[data-role="cards-deck-findability"]{
+  position:relative;z-index:2;display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0 10px;
+  padding:5px 7px;border-block:1px solid rgba(146,224,202,.18);
+  background:linear-gradient(90deg,rgba(5,18,25,.92),rgba(8,37,32,.58) 62%,rgba(5,18,25,.18));
+  box-shadow:inset 0 1px rgba(255,255,255,.035),0 8px 22px rgba(0,0,0,.12);
+}
+[data-role="cards-deck-findability"] input{
+  min-height:44px;min-width:min(240px,58vw);padding:8px 12px;
+  border-radius:3px;border:1px solid rgba(157,224,207,.34);
+  background:linear-gradient(180deg,rgba(12,31,39,.94),rgba(7,20,29,.96));color:inherit;font:inherit;
+  box-shadow:inset 3px 0 0 rgba(128,222,195,.2),inset 0 1px rgba(255,255,255,.04);
+  transition:border-color 110ms ease,box-shadow 110ms ease,background 110ms ease;
+}
+[data-role="cards-deck-findability"] input:focus-visible{
+  outline:2px solid rgba(161,239,213,.72);outline-offset:2px;border-color:rgba(184,248,229,.76);
+  box-shadow:inset 3px 0 0 rgba(161,239,213,.88),0 0 0 1px rgba(161,239,213,.12);
+}
+[data-role="cards-deck-findability"] button,
+[data-role="cards-favorite-action"]{
+  position:relative;isolation:isolate;min-height:44px;padding:8px 13px;border:0;border-radius:0;
+  background:transparent;color:inherit;font:800 12px/1 system-ui;letter-spacing:.025em;
+  text-shadow:0 1px 5px rgba(0,0,0,.5);touch-action:manipulation;
+}
+[data-role="cards-deck-findability"] button::before,
+[data-role="cards-favorite-action"]::before{
+  content:"";position:absolute;z-index:-1;inset:2px 0;
+  clip-path:polygon(7px 0,100% 0,calc(100% - 7px) 100%,0 100%);
+  background:linear-gradient(135deg,rgba(24,57,63,.9),rgba(8,27,34,.95) 58%,rgba(6,20,28,.96));
+  box-shadow:inset 0 0 0 1px rgba(174,232,216,.24),inset 3px 0 0 rgba(126,213,190,.13),0 5px 12px rgba(0,0,0,.15);
+  transform-origin:50% 70%;
+  transition:transform 90ms cubic-bezier(.22,.72,.2,1),filter 90ms ease,box-shadow 110ms ease,background 110ms ease;
+}
+[data-role="cards-deck-findability"] button:hover::before,
+[data-role="cards-favorite-action"]:hover::before{
+  filter:brightness(1.12) saturate(1.08);
+  box-shadow:inset 0 0 0 1px rgba(188,244,227,.5),inset 3px 0 0 rgba(145,230,207,.3),0 7px 16px rgba(0,0,0,.18);
+}
+[data-role="cards-deck-findability"] button:focus-visible,
+[data-role="cards-favorite-action"]:focus-visible{
+  outline:2px solid rgba(161,239,213,.78);outline-offset:1px;
+}
+[data-role="cards-deck-findability"] button:active::before,
+[data-role="cards-favorite-action"]:active::before{
+  transform:translateY(2px) scale(.985,.94);filter:brightness(.96) saturate(1.1);
+  box-shadow:inset 0 0 0 1px rgba(212,249,238,.46),inset 0 3px 5px rgba(0,0,0,.28);
+}
+[data-role="cards-deck-findability"] button[aria-pressed="true"]{
+  color:#fff3ba;
+}
+[data-role="cards-deck-findability"] button[aria-pressed="true"]::before,
+[data-role="cards-favorite-action"][aria-pressed="true"]::before{
+  background:linear-gradient(135deg,rgba(88,73,26,.96),rgba(47,48,27,.96) 55%,rgba(15,30,31,.96));
+  box-shadow:inset 0 0 0 1px rgba(255,222,106,.76),inset 4px 0 0 #ffd84a,0 7px 18px rgba(0,0,0,.2);
+}
+[data-role="cards-deck-findability"] [data-role="cards-deck-findability-reset"]{
+  color:rgba(221,237,232,.82);font-weight:750;
+}
+[data-role="cards-deck-findability"] [data-role="cards-deck-findability-reset"]::before{
+  background:linear-gradient(135deg,rgba(47,48,53,.8),rgba(19,28,34,.92));
+  box-shadow:inset 0 0 0 1px rgba(194,211,211,.18);
+}
+[data-role="cards-deck-findability"] button[hidden]{display:none}
+[data-role="cards-deck-findability-count"]{
+  min-width:46px;padding:5px 7px;border-left:2px solid rgba(161,239,213,.34);
+  background:linear-gradient(90deg,rgba(6,22,29,.68),transparent);
+  font:800 11px/1 ui-monospace,SFMono-Regular,Consolas,monospace;font-variant-numeric:tabular-nums;
+  letter-spacing:.06em;opacity:.78;white-space:nowrap;
+}
+[data-role="cards-favorite-action"]{min-height:44px;padding:8px 13px}
+[data-role="cards-deck-findability"][data-integrated="true"]{display:contents;margin:0}
+.screen.cards #collectionGrid [data-cards-deck-filter-hidden="true"]{display:none!important}
+@media(max-width:720px){
+  [data-role="cards-deck-findability"]:not([data-integrated="true"]){gap:5px;padding:5px}
+  [data-role="cards-deck-findability"] input{flex:1 1 100%;min-width:0;width:100%}
+  [data-role="cards-deck-findability"] button{flex:1 0 auto;min-width:44px;padding-inline:10px}
+  [data-role="cards-deck-findability-count"]{margin-left:auto}
+}
+html.r10LowPerf [data-role="cards-deck-findability"] button::before,
+html.r10LowPerf [data-role="cards-favorite-action"]::before{
+  box-shadow:inset 0 0 0 1px rgba(174,232,216,.24);filter:none!important;
+}
+@media(prefers-reduced-motion:reduce){
+  [data-role="cards-deck-findability"] input,
+  [data-role="cards-deck-findability"] button::before,
+  [data-role="cards-favorite-action"]::before{transition:none!important}
+}
+`;
     (doc.head ?? doc.documentElement)?.appendChild?.(style);
   }
 

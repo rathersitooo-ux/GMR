@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GITHUB-SCREENSHOT-REUSE-R1-202609260151T-SOL",
+  "taskId": "GITHUB-CI-SCREENSHOT-LOG-ARTIFACT-001",
+  "workUnitKey": "SCREENSHOT_REUSE_GATE_R1",
+  "acquireKey": "GITHUB-SCREENSHOT-REUSE-R1-202609260151T-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR2092_DIFF_READBACK_REUSE_GATE_BOUNDED_TO_BROWSER_FULL_INTERACTION_WORKFLOW",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR2092_OBSERVABILITY_SUCCESS_AND_BRANCH_WORKFLOW_READBACK",
+  "proceedToken": "PROCEED|GITHUB-SCREENSHOT-REUSE-R1-202609260151T-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260926T0151JST",
+  "authorizationBaseSha": "f6e95298c6346039bd62fcb1b08a20ee096fd3b0",
+  "scope": [
+    ".github/workflows/browser-full-interaction.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-CI-SCREENSHOT-LOG-ARTIFACT-001",
+  "leaseWorkUnitKey": "SCREENSHOT_REUSE_GATE_R1",
+  "leaseAcquireKey": "GITHUB-SCREENSHOT-REUSE-R1-202609260151T-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-26 01:51 JST",
+  "leaseUntilJst": "2026-09-26 02:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseScope": [
+    ".github/workflows/browser-full-interaction.yml"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main f6e95298c6346039bd62fcb1b08a20ee096fd3b0; mutable .github/workflows/browser-full-interaction.yml screenshot evidence reuse/cache gate only; own transient data/preaction-authorizations/GITHUB-SCREENSHOT-REUSE-R1-202609260151T-SOL.json; own branch ops/screenshot-reuse-gate-r1-20260926; own PR/check/merge/readback; own CURRENT lease/R24 event. READ_ONLY game/runtime/rules/save/economy/assets and unrelated WorkUnits.",
+  "solutionSignature": "browser-full-interaction-screenshot-evidence-reuse-cache-gate-r1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_ACTIONS_ARTIFACT_AND_VISUAL_FRESHNESS_OWNER_REUSED",
+  "solutionSearchEvidence": [
+    "Existing Browser Full Interaction workflow already owns screenshot generation and artifact upload; no second recorder is introduced.",
+    "Existing GAMEROAD visual freshness CURRENT already distinguishes exact-current build freshness from content-equivalent evidence.",
+    "The repair adapts the existing workflow by checking an input-identity cache before running Playwright, rather than creating another capture system."
+  ]
+}

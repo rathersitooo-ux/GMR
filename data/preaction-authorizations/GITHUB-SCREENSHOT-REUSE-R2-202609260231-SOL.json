@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GITHUB-SCREENSHOT-REUSE-R2-202609260231-SOL",
+  "taskId": "GITHUB-CI-SCREENSHOT-LOG-ARTIFACT-001",
+  "workUnitKey": "SCREENSHOT_REUSE_RETENTION_R2",
+  "acquireKey": "GITHUB-SCREENSHOT-REUSE-R2-202609260231-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_MAKASE_SCREENSHOT_PIPELINE_REPAIR_R2_20260926T0231JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_WORKFLOW_READBACK_AND_GITHUB_CACHE_ARTIFACT_SCOPE_AUDIT_20260926T0231JST",
+  "proceedToken": "PROCEED|GITHUB-SCREENSHOT-REUSE-R2-202609260231-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|screenshot-reuse-retention|active-lease|ci-only",
+  "authorizationBaseSha": "9734b84166259f3f80dd90ba96ce87c3e22dac64",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-CI-SCREENSHOT-LOG-ARTIFACT-001",
+  "leaseWorkUnitKey": "SCREENSHOT_REUSE_RETENTION_R2",
+  "leaseAcquireKey": "GITHUB-SCREENSHOT-REUSE-R2-202609260231-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-26 02:31 JST",
+  "leaseUntilJst": "2026-09-26 03:31 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR .github/workflows/browser-full-interaction.yml; data/preaction-authorizations/GITHUB-SCREENSHOT-REUSE-R2-202609260231-SOL.json temporary PRE_ACTION witness; own branch/PR/check/merge/readback; own CURRENT lease/R24 event",
+  "solutionSignature": "SCREENSHOT_REUSE_CROSS_RUN_CANONICAL_LATEST_RETENTION_R2",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R1_CACHE_REUSE_DONOR_PLUS_CROSS_RUN_ARTIFACT_RETENTION_GAP_20260926",
+  "solutionSearchEvidence": [
+    "R1 already restores exact visual-input cache and skips fresh Playwright capture on same-ref hits.",
+    "GitHub Actions cache ref scoping can still cause duplicate PR-to-main capture for identical visual inputs.",
+    "R2 adapts existing artifacts into an exact-hash cross-run fallback and retires stale duplicate evidence."
+  ],
+  "scope": [
+    ".github/workflows/browser-full-interaction.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/browser-full-interaction.yml"
+  ]
+}

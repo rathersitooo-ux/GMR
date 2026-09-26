@@ -178,6 +178,22 @@ const ARTIFACT_SPECS = Object.freeze([
   { option: 'clickSfxSource', source: 'assets/audio/sfx/click_002.ogg', output: 'click_002.ogg', artifact: 'sfx_click_002', label: 'Formal click SFX', formalBlob: FORMAL_SELECTED3_SFX_BLOBS.click },
   { option: 'cardSlideSfxSource', source: 'assets/audio/sfx/cardSlide6.ogg', output: 'cardSlide6.ogg', artifact: 'sfx_card_slide_6', label: 'Formal card-slide SFX', formalBlob: FORMAL_SELECTED3_SFX_BLOBS.cardSlide },
   { option: 'cardPlaceSfxSource', source: 'assets/audio/sfx/cardPlace1.ogg', output: 'cardPlace1.ogg', artifact: 'sfx_card_place_1', label: 'Formal card-place SFX', formalBlob: FORMAL_SELECTED3_SFX_BLOBS.cardPlace },
+  { source: 'assets/audio/sfx/temp-action-sfx-r2/click_001.ogg', output: 'assets/audio/sfx/temp-action-sfx-r2/click_001.ogg', artifact: 'sfx_temp_action_click_001', label: 'Temporary shared button SFX' },
+  { source: 'assets/audio/sfx/temp-action-sfx-r2/confirmation_001.ogg', output: 'assets/audio/sfx/temp-action-sfx-r2/confirmation_001.ogg', artifact: 'sfx_temp_action_confirmation_001', label: 'Temporary confirmation SFX' },
+  { source: 'assets/audio/sfx/temp-action-sfx-r2/select_001.ogg', output: 'assets/audio/sfx/temp-action-sfx-r2/select_001.ogg', artifact: 'sfx_temp_action_select_001', label: 'Temporary selection SFX' },
+  { source: 'assets/audio/sfx/temp-action-sfx-r2/switch_001.ogg', output: 'assets/audio/sfx/temp-action-sfx-r2/switch_001.ogg', artifact: 'sfx_temp_action_switch_001', label: 'Temporary tab switch SFX' },
+  { source: 'assets/audio/sfx/temp-action-sfx-r2/toggle_001.ogg', output: 'assets/audio/sfx/temp-action-sfx-r2/toggle_001.ogg', artifact: 'sfx_temp_action_toggle_on_001', label: 'Temporary toggle-on SFX' },
+  { source: 'assets/audio/sfx/temp-action-sfx-r2/toggle_002.ogg', output: 'assets/audio/sfx/temp-action-sfx-r2/toggle_002.ogg', artifact: 'sfx_temp_action_toggle_off_002', label: 'Temporary toggle-off SFX' },
+  { source: 'assets/audio/sfx/temp-action-sfx-r2/open_001.ogg', output: 'assets/audio/sfx/temp-action-sfx-r2/open_001.ogg', artifact: 'sfx_temp_action_open_001', label: 'Temporary panel-open SFX' },
+  { source: 'assets/audio/sfx/temp-action-sfx-r2/close_001.ogg', output: 'assets/audio/sfx/temp-action-sfx-r2/close_001.ogg', artifact: 'sfx_temp_action_close_001', label: 'Temporary panel-close SFX' },
+  { source: 'assets/audio/sfx/temp-action-sfx-r2/tick_001.ogg', output: 'assets/audio/sfx/temp-action-sfx-r2/tick_001.ogg', artifact: 'sfx_temp_action_tick_001', label: 'Temporary slider tick SFX' },
+  { source: 'assets/audio/sfx/temp-action-sfx-r2/click_003.ogg', output: 'assets/audio/sfx/temp-action-sfx-r2/click_003.ogg', artifact: 'sfx_temp_action_click_003', label: 'Temporary focus and Battle utility SFX' },
+  { source: 'assets/audio/sfx/temp-action-sfx-r2/error_001.ogg', output: 'assets/audio/sfx/temp-action-sfx-r2/error_001.ogg', artifact: 'sfx_temp_action_error_001', label: 'Temporary rejected-action SFX' },
+  { source: 'assets/audio/sfx/temp-action-sfx-r2/click_005.ogg', output: 'assets/audio/sfx/temp-action-sfx-r2/click_005.ogg', artifact: 'sfx_temp_action_click_005', label: 'Temporary empty-surface SFX' },
+  { source: 'assets/audio/sfx/temp-action-sfx-r2/bookFlip1.ogg', output: 'assets/audio/sfx/temp-action-sfx-r2/bookFlip1.ogg', artifact: 'sfx_temp_action_book_flip_1', label: 'Temporary Battle card-select SFX' },
+  { source: 'assets/audio/sfx/temp-action-sfx-r2/metalClick.ogg', output: 'assets/audio/sfx/temp-action-sfx-r2/metalClick.ogg', artifact: 'sfx_temp_action_metal_click', label: 'Temporary Battle target SFX' },
+  { source: 'assets/audio/sfx/temp-action-sfx-r2/bookClose.ogg', output: 'assets/audio/sfx/temp-action-sfx-r2/bookClose.ogg', artifact: 'sfx_temp_action_book_close', label: 'Temporary Battle turn SFX' },
+  { source: 'assets/audio/sfx/temp-action-sfx-r2/sword.1.ogg', output: 'assets/audio/sfx/temp-action-sfx-r2/sword.1.ogg', artifact: 'sfx_temp_action_sword_1', label: 'Temporary Battle action SFX' },
 ]);
 
 function gitBlobSha1(buffer) {

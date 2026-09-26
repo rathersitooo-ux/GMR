@@ -16,6 +16,7 @@ import {
   isBattleHandAuraLaunchArmed,
   projectBattleHandDragGhostPosition,
   projectBattleJankenSlotRollDetents,
+  projectBattleJankenTurnLifecycle,
   projectBattleLoadCardPreview,
   resolveBattleJankenSlotCardAction,
   resolveBattleJankenSlidePadGestureTarget,
@@ -63,7 +64,7 @@ test('three input modes share one existing card-action commit path', () => {
   assert.match(source, /inputMode === BATTLE_JANKEN_INPUT_MODE\.LAUNCHER/);
   assert.match(source, /function commitSelectedHand\(selectedHand\)/);
   assert.match(source, /resolveBattleJankenSlotCardAction\(model, selectedHand, currentSourceHandIds\)/);
-  assert.match(source, /if \(cardId && clickExistingHandCard\(root, cardId\)\) playReleasedJankenCardFlight\(host, flight\);/);
+  assert.match(source, /const clicked = !!cardId && clickExistingHandCard\(root, cardId\);[\s\S]*if \(clicked\) \{[\s\S]*playReleasedJankenCardFlight\(host, flight\);/);
 });
 
 
@@ -166,17 +167,65 @@ test('janken role stays secondary to the same physical card face in the live slo
   assert.match(runtimeSource, /\.grJankenSlidePadRoleBadge\{position:absolute;right:1px;bottom:1px;/);
 });
 
-test('janken slot can still reach its round-source card action without restoring ordinary-hand membership', () => {
+test('one accepted janken card ends the turn and returns only the other assigned cards to ordinary hand', () => {
   const model = buildBattleJankenSlidePadModel({ roundId: '1', hand, pickDuplicateIndex: () => 1 });
-  assert.equal(
-    resolveBattleJankenSlotCardAction(model, 'ROCK', model.assignment.sourceHandCardIds),
-    'club-b',
-  );
+  const selectedCardId = model.slots.find((slot) => slot.jankenHand === 'ROCK').cardId;
+  assert.equal(resolveBattleJankenSlotCardAction(model, 'ROCK', model.assignment.sourceHandCardIds), selectedCardId);
   assert.equal(
     resolveBattleJankenSlotCardAction(model, 'ROCK', model.ordinaryHandCardIds),
     null,
-    'ordinary hand membership is not a backdoor for a reserved janken card',
+    'before its one allowed janken use, an assigned card stays out of ordinary hand actions',
   );
+
+  const before = projectBattleJankenTurnLifecycle({
+    model,
+    currentHandCardIds: model.assignment.sourceHandCardIds,
+  });
+  assert.equal(before.usedThisTurn, false);
+  assert.equal(before.jankenUiVisible, true);
+  assert.deepEqual(before.reservedCardIds, model.assignment.selectedJankenCardIds);
+  assert.deepEqual(before.ordinaryHandCardIds, model.ordinaryHandCardIds);
+
+  const after = projectBattleJankenTurnLifecycle({
+    model,
+    currentHandCardIds: model.assignment.sourceHandCardIds,
+    committedRoundId: model.roundId,
+    committedCardId: selectedCardId,
+  });
+  assert.equal(after.usedThisTurn, true);
+  assert.equal(after.jankenUiVisible, false);
+  assert.equal(after.retainedCommittedCardId, selectedCardId);
+  assert.deepEqual(after.reservedCardIds, [selectedCardId]);
+  assert.deepEqual(
+    after.ordinaryHandCardIds,
+    model.assignment.sourceHandCardIds.filter((id) => id !== selectedCardId),
+  );
+
+  const nextTurnModel = buildBattleJankenSlidePadModel({ roundId: '2', hand, pickDuplicateIndex: () => 1 });
+  const nextTurn = projectBattleJankenTurnLifecycle({
+    model: nextTurnModel,
+    currentHandCardIds: nextTurnModel.assignment.sourceHandCardIds,
+    committedRoundId: model.roundId,
+    committedCardId: selectedCardId,
+  });
+  assert.equal(nextTurn.usedThisTurn, false);
+  assert.equal(nextTurn.jankenUiVisible, true);
+  assert.deepEqual(nextTurn.reservedCardIds, nextTurnModel.assignment.selectedJankenCardIds);
+});
+
+test('same-turn reconnect infers an assigned-card use and returns the remaining current hand', () => {
+  const model = buildBattleJankenSlidePadModel({ roundId: 'reconnect-1', hand, pickDuplicateIndex: () => 1 });
+  const playedCardId = model.slots.find((slot) => slot.jankenHand === 'ROCK').cardId;
+  const remaining = model.assignment.sourceHandCardIds.filter((id) => id !== playedCardId);
+  const lifecycle = projectBattleJankenTurnLifecycle({
+    model,
+    currentHandCardIds: remaining,
+  });
+  assert.equal(lifecycle.usedThisTurn, true);
+  assert.equal(lifecycle.jankenUiVisible, false);
+  assert.deepEqual(lifecycle.missingSelectedCardIds, [playedCardId]);
+  assert.deepEqual(lifecycle.reservedCardIds, []);
+  assert.deepEqual(lifecycle.ordinaryHandCardIds, remaining);
 });
 
 test('same-round redraw keeps the immutable slot assignment even if duplicate chooser would change', () => {
@@ -331,6 +380,25 @@ test('R75 preview fails closed for empty or disabled slots', () => {
   assert.equal(projectBattleLoadCardPreview(model, 'PAPER'), null);
 });
 
+test('live SlidePad blocks every janken input after one commit and reprojects only uncommitted cards', () => {
+  const source = readFileSync(
+    new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
+    'utf8',
+  ).replace(/\r\n/g, '\n');
+  assert.match(source, /data-janken-turn-used="true"[\s\S]*\.grJankenInputModePicker[\s\S]*\.grJankenSlidePadSlot/);
+  assert.match(source, /node\.disabled = hasUsedJankenThisRound\(\) \|\| !slot\.selectable;/);
+  assert.match(source, /turnLifecycle\?\.usedThisTurn === true/);
+  assert.match(source, /function hasUsedJankenThisRound\(\) \{[\s\S]*committedRoundId === model\.roundId/);
+  assert.match(source, /function latchJankenTurnCommit\(roundId, cardId\)[\s\S]*turnLifecycle = projectBattleJankenTurnLifecycle\([\s\S]*syncHandZoneProjection\(root, model, turnLifecycle\.reservedCardIds\);[\s\S]*for \(const node of slotNodes\.values\(\)\) node\.disabled = true;/);
+  assert.match(source, /if \(clicked\) \{\s*latchJankenTurnCommit\(model\.roundId, cardId\);[\s\S]*schedule\(\);/);
+  assert.match(source, /onAccepted:[\s\S]*latchJankenTurnCommit\(model\.roundId, acceptedSlot\.cardId\);/);
+  assert.match(source, /\[data-janken-turn-used="true"\]::before\{content:none;display:none\}/);
+  assert.match(source, /committedCardId = id;/);
+  assert.match(source, /syncHandZoneProjection\(root, model, turnLifecycle\.reservedCardIds\)/);
+  assert.match(source, /function isReservedCardId\(cardId\) \{[\s\S]*turnLifecycle\?\.reservedCardIds/);
+  assert.match(source, /if \(committedRoundId && committedRoundId !== roundId\) \{[\s\S]*committedCardId = null;/);
+});
+
 test('target-confirm proxy is layered above the expanded SlidePad only during target mode', () => {
   assert.equal(
     BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS,
@@ -459,7 +527,7 @@ test('remaining-hand row roulette live mount reuses the current playable project
   assert.match(source, /createBattlePlayableHandRowRouletteController/);
   assert.match(source, /getCandidateProjection: \(\) => currentPlayableHandAffordance\(root\)/);
   assert.match(source, /delegateHandCardAction: \(cardId\) => clickExistingHandCard\(root, cardId\)/);
-  assert.match(source, /syncHandZoneProjection\(root, model\);[\s\S]*syncPlayableHandAffordance\(root\);[\s\S]*rowRouletteRuntime\?\.refresh\?\.\(\)/);
+  assert.match(source, /syncHandZoneProjection\(root, model, turnLifecycle\.reservedCardIds\);[\s\S]*syncPlayableHandAffordance\(root\);[\s\S]*rowRouletteRuntime\?\.refresh\?\.\(\)/);
   assert.match(source, /rowRouletteRuntime\?\.destroy\?\.\(\);[\s\S]*rowRouletteHost\.remove\?\.\(\)/);
 });
 
@@ -769,7 +837,9 @@ test('release-flight live adapter delegates to the canonical effect and keeps su
   assert.equal(source.includes('sampleOffsets = [0, 0.12, 0.28'), false);
   assert.equal(source.includes("reducedMotion: globalRef?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true"), true);
   assert.equal(source.includes("lowPerf: battleRoot?.dataset?.lowPerf === 'true'"), true);
-  assert.equal(source.includes('if (cardId && clickExistingHandCard(root, cardId)) playReleasedJankenCardFlight(host, flight);'), true);
+  assert.equal(source.includes('const clicked = !!cardId && clickExistingHandCard(root, cardId);'), true);
+  assert.equal(source.includes('committedCardId = id;'), true);
+  assert.equal(source.includes('playReleasedJankenCardFlight(host, flight);'), true);
   assert.equal(source.includes('onAccepted: (result, readyPackage) => {'), true);
   assert.equal(source.includes('const hand = readyPackage?.jankenHand;'), true);
   assert.equal(source.includes('if (flight) playReleasedJankenCardFlight(host, flight);'), true);

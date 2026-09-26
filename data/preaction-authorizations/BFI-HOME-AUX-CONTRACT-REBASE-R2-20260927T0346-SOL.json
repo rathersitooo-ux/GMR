@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BFI-HOME-AUX-CONTRACT-REBASE-R2-20260927T0346-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BFI_HOME_AUX_ROUTE_CONTRACT_REBASE_R2",
+  "acquireKey": "BFI-HOME-AUX-CONTRACT-REBASE-R2-20260927T0346-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR2062_MERGED_HOME_AUX_REMOVAL_AND_BFI_STALE_HOME_DIRECT_EXPECTATIONS",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "READ_ONLY_CURRENT_MAIN_TEST_INSPECTION_PLUS_RUN36231125696_FAILURE_LOG",
+  "proceedToken": "PROCEED|BFI-HOME-AUX-CONTRACT-REBASE-R2-20260927T0346-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|bfi-home-aux-contract-rebase|two-test-files|active-lease",
+  "authorizationBaseSha": "2545b62b811690abc3ff00022d25e50274303052",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BFI_HOME_AUX_ROUTE_CONTRACT_REBASE_R2",
+  "leaseAcquireKey": "BFI-HOME-AUX-CONTRACT-REBASE-R2-20260927T0346-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-27 03:46 JST",
+  "leaseUntilJst": "2026-09-27 04:46 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "tests/browser-full-interaction-state-sequence.spec.mjs; tests/browser-full-interaction.spec.mjs",
+  "reuseDisposition": "NOT_APPLICABLE",
+  "solutionSearchStatus": "NOT_APPLICABLE",
+  "reuseNotApplicableReason": "This is a current-contract test rebase after merged PR#2062 intentionally removed persistent Home auxiliary entries; no product implementation surface is introduced.",
+  "scope": [
+    "tests/browser-full-interaction-state-sequence.spec.mjs",
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction-state-sequence.spec.mjs",
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

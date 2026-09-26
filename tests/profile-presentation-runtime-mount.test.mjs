@@ -188,7 +188,7 @@ test('Profile hierarchy keeps identity emphasis, Records priority, and bounded p
   assert.match(source, /\.profileLayout\{grid-template-columns:minmax\(280px,\.9fr\) minmax\(360px,1\.35fr\);gap:14px/);
   assert.match(source, /@media\(max-height:470px\)[\s\S]*?\.profileLayout\{grid-template-columns:minmax\(180px,\.72fr\) minmax\(0,1\.45fr\);gap:7px/);
   assert.match(source, /@media\(max-height:470px\)[\s\S]*?\.profileRecordsNote\{[^}]*font-size:9px;line-height:1\.3/);
-  assert.match(source, /@media\(max-width:540px\)[\s\S]*?\.profileLayout\{grid-template-columns:1fr;grid-template-rows:minmax\(240px,38vh\) auto/);
+  assert.match(source, /@media\(max-width:540px\)[\s\S]*?\.profileLayout\{grid-template-columns:1fr;grid-template-rows:minmax\(220px,30vh\) auto/);
   assert.match(source, /@media\(max-width:540px\)[\s\S]*?\.profileActions \[data-go="records"\]\{grid-column:1\/-1\}/);
 });
 

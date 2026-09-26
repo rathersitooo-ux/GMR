@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assertBrowserRuntimeDependencyCompleteness, buildPackage } from '../scripts/build.mjs';
+import { BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT } from '../../../browser/battle-naki-fe-live-dom-adapter.mjs';
 import {
   VERSION_MANIFEST_CHANNEL,
   VERSION_MANIFEST_FILENAME,
@@ -200,6 +201,34 @@ test('dependency verifier detects inline static module imports and fails closed 
   assert.deepEqual(await assertBrowserRuntimeDependencyCompleteness(browserBytes, dist), ['deck-save-ack-core.mjs']);
 });
 
+test('the packaged profile embeds the exact tested Battle adapter, generated atlases, and CC0 SFX', async () => {
+  const profile = await readFile(path.join(repoRoot, 'browser/profile-presentation-runtime-mount.mjs'), 'utf8');
+  const adapter = await readFile(path.join(repoRoot, 'browser/battle-naki-fe-live-dom-adapter.mjs'));
+  assert.ok(profile.includes(adapter.toString('utf8')));
+  assert.ok(profile.includes('installBattleNakiFeLiveDomAdapter(window, { documentRef: document, assets: BATTLE_NAKI_FE_LIVE_ASSETS });'));
+  assert.doesNotMatch(adapter.toString('utf8'), /(?:^|\n)\s*import\s/);
+  const embeddedAssets = [
+    ['BATTLE_NAKI_IDLE_SPRITE_BASE64', 'browser/assets/partners/naki-idol/battle/primary-r1/naki-idol-battle-idle-3x3.png'],
+    ['BATTLE_NAKI_SONG_ATTACK_SPRITE_BASE64', 'browser/assets/partners/naki-idol/battle/primary-r1/naki-idol-battle-song-attack-3x3.png'],
+    ['BATTLE_ELEMENT_GROUND_RUN_SPRITE_BASE64', 'browser/assets/partners/naki-idol/vfx/ground/elemental-ground-run-7x3.png']
+  ];
+  for (const [constant, assetPath] of embeddedAssets) {
+    const bytes = await readFile(path.join(repoRoot, assetPath));
+    assert.ok(profile.includes(`const ${constant} = '${bytes.toString('base64')}';`), `${assetPath} must match the bytes embedded in the already-packaged entrypoint`);
+  }
+  const soundBlock = profile.match(/const BATTLE_NAKI_SFX_BASE64 = Object\.freeze\(\{([\s\S]*?)\n\}\);/);
+  assert.ok(soundBlock, 'the packaged profile must contain the SFX map');
+  const embeddedSounds = new Map([...soundBlock[1].matchAll(/'([^']+)': '([^']+)'/g)].map(match => [match[1], match[2]]));
+  for (const assetId of BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.soundAssets) {
+    const assetPath = `browser/assets/partners/naki-idol/battle/sfx/kenney-cc0/${assetId}.mp3`;
+    const bytes = await readFile(path.join(repoRoot, assetPath));
+    assert.equal(embeddedSounds.get(assetId), bytes.toString('base64'), `${assetPath} must match the audio embedded in the profile`);
+  }
+  const sources = await readFile(path.join(repoRoot, 'browser/assets/partners/naki-idol/battle/sfx/kenney-cc0/SOURCES.md'), 'utf8');
+  assert.match(sources, /CC0/);
+  assert.match(sources, /Digital Audio/);
+});
+
 test('build packages the exact current production Browser dependency set with version identity', async () => {
   const dir = await mkdtemp(path.join(os.tmpdir(), 'gameroad-current-public-pack-')); const dist = path.join(dir, 'dist');
   const browserBytes = await readFile(path.join(repoRoot, 'browser/GAMEROAD.html'));
@@ -209,6 +238,9 @@ test('build packages the exact current production Browser dependency set with ve
     options[dep.expectedArg] = dep.currentBlob; currentBytes.set(dep.file, bytes);
   }
   const manifest = await buildPackage(options);
+  const profileBytes = await readFile(path.join(repoRoot, 'browser/profile-presentation-runtime-mount.mjs'));
+  assert.equal((await readFile(path.join(dist, 'profile-presentation-runtime-mount.mjs'))).equals(profileBytes), true);
+  assert.ok(manifest.artifacts.profile_presentation_runtime_mount);
   assert.equal((await readFile(path.join(dist, 'index.html'))).equals(browserBytes), true); assert.equal(manifest.source_commit, SOURCE_COMMIT);
   assert.equal(manifest.artifacts.index_html.git_blob_sha1, options.expectedBlob);
   assert.deepEqual(JSON.parse(await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8')), expectedVersionManifest());

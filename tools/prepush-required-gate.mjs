@@ -59,7 +59,13 @@ function conventionalCounterpart(relPath, fileExists = () => false) {
 function isExplicitRequiredGatePath(relPath, workflowSource) {
   if (!workflowSource) return false;
   const escaped = relPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp(`(^|[\\s'\"|])${escaped}(?=[\\s'\"|)\\\\]|$)`, 'm').test(workflowSource);
+  if (new RegExp(`(^|[\\s'\"|])${escaped}(?=[\\s'\"|)\\\\]|$)`, 'm').test(workflowSource)) {
+    return true;
+  }
+
+  const simplePrefixWildcards = [...workflowSource.matchAll(/^\s*([A-Za-z0-9._/-]+\/\*)\)\s*$/gm)]
+    .map((match) => match[1].slice(0, -1));
+  return simplePrefixWildcards.some((prefix) => relPath.startsWith(prefix));
 }
 
 export function findUnmappedExecutablePaths(

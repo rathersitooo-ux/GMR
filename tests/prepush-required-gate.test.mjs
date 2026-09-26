@@ -115,6 +115,28 @@ test('an exact Required Gate mapping is accepted', () => {
   assert.deepEqual(unmapped, []);
 });
 
+test('a simple Required Gate prefix-star case mapping accepts nested static assets', () => {
+  const asset = 'browser/assets/partners/naki-idol/battle/sfx/kenney-cc0/impact-punch-medium-000.mp3';
+  const existing = new Set([asset]);
+  const workflowSource = "              browser/assets/*)\n                browser=true";
+  const unmapped = findUnmappedExecutablePaths(
+    [asset],
+    { fileExists: (value) => existing.has(value), workflowSource },
+  );
+  assert.deepEqual(unmapped, []);
+});
+
+test('a simple Required Gate prefix-star case mapping does not match an unrelated path', () => {
+  const path = 'browser/not-assets/unmapped.bin';
+  const existing = new Set([path]);
+  const workflowSource = "              browser/assets/*)\n                browser=true";
+  const unmapped = findUnmappedExecutablePaths(
+    [path],
+    { fileExists: (value) => existing.has(value), workflowSource },
+  );
+  assert.deepEqual(unmapped, [path]);
+});
+
 test('deleted executable paths are left to the server Required Gate deletion safety', () => {
   const unmapped = findUnmappedExecutablePaths(
     ['tools/deleted.mjs', 'tests/deleted.test.mjs'],

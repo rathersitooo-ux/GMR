@@ -1191,6 +1191,9 @@ test('covers Settings reduced-motion/low-performance, volume and mute controls, 
   await settings.locator('#lowPerf').click();
   await expect(settings.locator('#reduceMotion')).toHaveText('ON');
   await expect(settings.locator('#lowPerf')).toHaveText('ON');
+  await settings.locator('#reduceMotion').click();
+  await expect(settings.locator('#reduceMotion')).toHaveText('OFF');
+  await expect(settings.locator('#lowPerf')).toHaveText('ON');
 
   await settings.locator('#musicVolume').fill('35');
   await settings.locator('#sfxVolume').fill('45');
@@ -1226,10 +1229,19 @@ test('covers Settings reduced-motion/low-performance, volume and mute controls, 
   await expect(gacha.locator('.gachaControls .safeNote')).toHaveText('演出プレビュー：所持・保存は変わりません');
   await expect(gacha.locator('#openPack')).toHaveText('7枚をプレビュー');
   await attachStateScreenshot(page, testInfo, 'gacha-idle-visible');
+  const gachaVideo = gacha.locator('#gachaVideo');
+  await gachaVideo.evaluate((video) => {
+    video.__gachaLowPerfPlayAttempts = 0;
+    video.play = () => {
+      video.__gachaLowPerfPlayAttempts += 1;
+      return Promise.resolve();
+    };
+  });
   await gacha.locator('#openPack').click();
   await expect(gacha.locator('#gachaResultsView')).not.toHaveClass(/hidden/);
   await expect(gacha.locator('.gachaResultsHead')).toContainText('演出プレビュー結果');
   await expect(gacha.locator('#packResults .packCard')).toHaveCount(7);
+  expect(await gachaVideo.evaluate((video) => video.__gachaLowPerfPlayAttempts)).toBe(0);
   const previewAriaLabels = await gacha.locator('#packResults .packCard').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('aria-label') || ''));
   expect(previewAriaLabels.every((label) => label.startsWith('プレビュー'))).toBe(true);
   await attachStateScreenshot(page, testInfo, 'gacha-seven-results-visible');

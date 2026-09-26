@@ -18,6 +18,8 @@ const REPORT_TYPES = new Set(['bug', 'defect', 'request']);
 const VERSION_KEYS = Object.freeze(['rules', 'content', 'state']);
 const MAX_REQUEST_BYTES = 4096;
 const DIALOGUE_FEEDBACK_KIND = 'dialogue_edit';
+const CONVERSATION_QUALITY_FEEDBACK_KIND = 'conversation_quality';
+const CONVERSATION_QUALITY_RESPONSE_ORIGINS = new Set(['provider_candidate', 'approved_fallback']);
 const BATTLE_RECEIPT_KINDS = new Set(['battle_resolution', 'match_ended']);
 const BATTLE_RECEIPT_MAX_REQUEST_BYTES = 16_384;
 const BATTLE_RECEIPT_MAX_EVENTS = 512;
@@ -71,16 +73,51 @@ function normalizeVoiceTuning(value) {
   return { rate, pitch, volume, pauseMs: Math.round(pauseMs), voiceURI };
 }
 
+function normalizeConversationQualityFeedback(value) {
+  const turnId = exactToken(value.turnId, 96);
+  const rating = value.rating === 'good' || value.rating === 'bad' ? value.rating : null;
+  const responseOrigin = exactToken(value.responseOrigin, 64);
+  if (
+    exactToken(value.kind, 64) !== CONVERSATION_QUALITY_FEEDBACK_KIND
+    || !turnId
+    || !rating
+    || !responseOrigin
+    || !CONVERSATION_QUALITY_RESPONSE_ORIGINS.has(responseOrigin)
+    || value.candidateOnly !== true
+    || value.canonicalWrite !== false
+    || value.rawTextStored !== false
+    || value.automaticCanonMutation !== false
+    || value.automaticRelationshipMutation !== false
+    || value.automaticRewardMutation !== false
+    || value.automaticLearning !== false
+  ) return false;
+  return {
+    kind: CONVERSATION_QUALITY_FEEDBACK_KIND,
+    turnId,
+    rating,
+    responseOrigin,
+    candidateOnly: true,
+    canonicalWrite: false,
+    rawTextStored: false,
+    automaticCanonMutation: false,
+    automaticRelationshipMutation: false,
+    automaticRewardMutation: false,
+    automaticLearning: false,
+  };
+}
+
 function normalizeFeedback(value, reportType) {
   if (value === undefined) return null;
   if (reportType !== 'request' || !value || typeof value !== 'object' || Array.isArray(value)) return false;
   const kind = exactToken(value.kind, 64);
+  if (kind === CONVERSATION_QUALITY_FEEDBACK_KIND) return normalizeConversationQualityFeedback(value);
+  if (kind !== DIALOGUE_FEEDBACK_KIND) return false;
+
   const sourceLineId = exactToken(value.sourceLineId, 160);
   const proposedText = boundedText(value.proposedText, 600);
   const voiceTuning = normalizeVoiceTuning(value.voiceTuning);
   if (
-    kind !== DIALOGUE_FEEDBACK_KIND
-    || !sourceLineId
+    !sourceLineId
     || !proposedText
     || !voiceTuning
     || value.candidateOnly !== true
@@ -143,16 +180,20 @@ function canonicalIdentity(input) {
     input.versions.state,
   ];
   if (input.feedback) {
-    base.push(
-      input.feedback.kind,
-      input.feedback.sourceLineId,
-      input.feedback.proposedText,
-      String(input.feedback.voiceTuning.rate),
-      String(input.feedback.voiceTuning.pitch),
-      String(input.feedback.voiceTuning.volume),
-      String(input.feedback.voiceTuning.pauseMs),
-      input.feedback.voiceTuning.voiceURI,
-    );
+    base.push(input.feedback.kind);
+    if (input.feedback.kind === DIALOGUE_FEEDBACK_KIND) {
+      base.push(
+        input.feedback.sourceLineId,
+        input.feedback.proposedText,
+        String(input.feedback.voiceTuning.rate),
+        String(input.feedback.voiceTuning.pitch),
+        String(input.feedback.voiceTuning.volume),
+        String(input.feedback.voiceTuning.pauseMs),
+        input.feedback.voiceTuning.voiceURI,
+      );
+    } else if (input.feedback.kind === CONVERSATION_QUALITY_FEEDBACK_KIND) {
+      base.push(input.feedback.turnId, input.feedback.rating, input.feedback.responseOrigin);
+    }
   }
   return base.join('\u001f');
 }

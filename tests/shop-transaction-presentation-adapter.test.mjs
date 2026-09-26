@@ -266,3 +266,35 @@ test('commerce boundary does not expose provider SKU, price, currency, rewards, 
 test('unsupported commerce state fails closed', () => {
   assert.throws(() => commerce({state:'PURCHASED'}), /unsupported commerce state: PURCHASED/);
 });
+
+
+test('approved CARD_SLEEVE projects explicit use-site instead of inventing a target card', () => {
+  const out = projectApprovedFanArtShopCatalog({works:[approvedFanArt({
+    targetCardId:null,
+    targetUseSite:'CARD_SLEEVE',
+    targetPartnerId:'partner.saasuna',
+    imageUrl:'../assets/shop/fanart/saasuna-sleeve-snow-blue-v1.jpg',
+    acquisition:{state:'READY', productId:'fanart:saasuna-sleeve-snow-blue:v1', currency:'MANII', price:50},
+  })]});
+  assert.equal(out.visible, true);
+  assert.equal(out.items.length, 1);
+  const item = out.items[0];
+  assert.equal(item.targetCardId, null);
+  assert.equal(item.targetUseSite, 'CARD_SLEEVE');
+  assert.equal(item.targetPartnerId, 'partner.saasuna');
+  assert.equal(item.imageUrl, '../assets/shop/fanart/saasuna-sleeve-snow-blue-v1.jpg');
+  assert.equal(item.acquisition.price, 50);
+  assert.equal(item.acquisition.currency, 'MANII');
+});
+
+test('CARD_SLEEVE fails closed when partner or image use-site evidence is missing', () => {
+  for (const work of [
+    approvedFanArt({targetCardId:null, targetUseSite:'CARD_SLEEVE', targetPartnerId:null, imageUrl:'../asset.jpg'}),
+    approvedFanArt({targetCardId:null, targetUseSite:'CARD_SLEEVE', targetPartnerId:'partner.saasuna', imageUrl:null}),
+  ]) {
+    const out = projectApprovedFanArtShopCatalog({works:[work]});
+    assert.equal(out.visible, false);
+    assert.equal(out.catalogState, 'STOPPED_INVALID_CATALOG');
+    assert.deepEqual(out.items, []);
+  }
+});

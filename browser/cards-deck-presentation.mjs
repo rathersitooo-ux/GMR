@@ -1134,7 +1134,9 @@ export function installCardsInspectorDismissInteractions({ document: doc = globa
 
   const dismiss = (event, resolved) => {
     consumeCardsInspectorDismissEvent(event);
-    resolved.screen.dataset.inspector = 'closed';
+    const close = doc.getElementById?.('r4PreviewClose') ?? doc.querySelector?.('#r4PreviewClose');
+    if (typeof close?.click !== 'function') return;
+    close.click();
     restoreCardsInspectorFocus(doc, resolved.screen);
   };
 

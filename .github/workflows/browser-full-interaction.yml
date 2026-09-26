@@ -79,6 +79,7 @@ jobs:
 
       - name: Run GAMEROAD full interaction evidence R1
         if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' }}
+        timeout-minutes: 20
         run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
 
       - name: Record evidence reuse identity

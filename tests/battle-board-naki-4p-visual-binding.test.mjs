@@ -7,6 +7,7 @@ import {
   NAKI_4P_BOARD_VISUAL_BINDING,
   projectFourParticipantControlledCharacters,
   projectFourParticipantNakiBoardMarkers,
+  projectControlledCharacterRuntimeState,
 } from '../browser/battle-board-naki-4p-visual-binding.mjs';
 
 function marker(participantId, left = '50%', top = '50%', ox = 0, oy = 0) {
@@ -139,6 +140,21 @@ test('preserves reduced-motion and low-performance projection flags without inve
   assert.equal(projected[0].motion.reducedMotion, true);
   assert.equal(projected[0].motion.lowPerformance, true);
   assert.equal(projected[0].motion.motionSerial, 8);
+});
+
+test('projects accepted board movement onto the existing character runtime move state', () => {
+  assert.deepEqual(projectControlledCharacterRuntimeState(motion({
+    phase: 'moving', facing: 'right', motionSerial: 10,
+  })), { state: 'move', facing: 'right', performance: 'normal' });
+  assert.deepEqual(projectControlledCharacterRuntimeState(motion({
+    phase: 'moving', facing: 'down-left', motionSerial: 11, lowPerformance: true,
+  })), { state: 'move', facing: 'left', performance: 'low' });
+  assert.deepEqual(projectControlledCharacterRuntimeState(motion({
+    phase: 'moving', facing: 'left', motionSerial: 12, reducedMotion: true,
+  })), { state: 'idle', facing: 'left', performance: 'normal' });
+  assert.deepEqual(projectControlledCharacterRuntimeState(motion({
+    phase: 'idle', facing: 'up-right', motionSerial: 13,
+  })), { state: 'idle', facing: 'right', performance: 'normal' });
 });
 
 test('contract separates controlled-character identity from Advice Partner and never suppresses the authoritative legacy mover', () => {

@@ -176,11 +176,20 @@ test('Historical record deck text keeps legacy entries explicitly unrecorded', (
   assert.equal(projectHistoricalDeckText({ deckStartSnapshot: {} }), '使用デッキ：この対戦履歴では未記録です。');
 });
 
-test('Profile secondary copy keeps the bounded phone legibility floor', () => {
+test('Profile hierarchy keeps identity emphasis, Records priority, and bounded phone legibility', () => {
   const source = readFileSync(new URL('../browser/profile-presentation-runtime-mount.mjs', import.meta.url), 'utf8');
   assert.match(source, /\.profileIdentityCopy span\{[^}]*font-size:11px;[^}]*line-height:1\.35/);
-  assert.match(source, /\.profileRecordsNote\{[^}]*font-size:12px;line-height:1\.45/);
-  assert.match(source, /@media\(max-height:470px\)[\s\S]*?\.profileRecordsNote\{[^}]*font-size:10px;line-height:1\.35/);
+  assert.match(source, /\.profileRecordsNote\{[^}]*font-size:12px;line-height:1\.5/);
+  assert.match(source, /\.profileIdentityCard\[data-role="player"\]\{[^}]*min-height:116px/);
+  assert.match(source, /kicker\.textContent = '本人情報'/);
+  assert.match(source, /recordsButton\.classList\.add\('primary'\);[\s\S]*?actions\?\.prepend\(recordsButton\);/);
+  assert.match(source, /partnerButton\?\.classList\.remove\('primary'\)/);
+  assert.match(source, /\.profileIdentityCopy b\{[^}]*overflow-wrap:anywhere;[^}]*-webkit-line-clamp:2/);
+  assert.match(source, /\.profileLayout\{grid-template-columns:minmax\(280px,\.9fr\) minmax\(360px,1\.35fr\);gap:14px/);
+  assert.match(source, /@media\(max-height:470px\)[\s\S]*?\.profileLayout\{grid-template-columns:minmax\(180px,\.72fr\) minmax\(0,1\.45fr\);gap:7px/);
+  assert.match(source, /@media\(max-height:470px\)[\s\S]*?\.profileRecordsNote\{[^}]*font-size:9px;line-height:1\.3/);
+  assert.match(source, /@media\(max-width:540px\)[\s\S]*?\.profileLayout\{grid-template-columns:1fr;grid-template-rows:minmax\(240px,38vh\) auto/);
+  assert.match(source, /@media\(max-width:540px\)[\s\S]*?\.profileActions \[data-go="records"\]\{grid-column:1\/-1\}/);
 });
 
 

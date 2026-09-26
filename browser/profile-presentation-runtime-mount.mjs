@@ -85,16 +85,35 @@ function ensureStyle(doc) {
   style.id = 'gameroad-profile-presentation-r1c-style';
   style.textContent = `
 [data-screen="profile"] .profileLegacyMetrics{display:none!important}
-[data-screen="profile"] .profileStats{display:flex;flex-direction:column;gap:12px}
-[data-screen="profile"] .profileIdentitySummary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-[data-screen="profile"] .profileIdentityCard{min-height:92px;border:1px solid var(--line);background:linear-gradient(145deg,rgba(14,47,39,.82),rgba(6,20,17,.86));padding:11px;display:grid;grid-template-columns:48px minmax(0,1fr);gap:10px;align-items:center}
+[data-screen="profile"] .profileLayout{grid-template-columns:minmax(280px,.9fr) minmax(360px,1.35fr);gap:14px;min-height:0}
+[data-screen="profile"] .profileStage,[data-screen="profile"] .profileStats{min-width:0;min-height:0}
+[data-screen="profile"] .profileStage{isolation:isolate;background:radial-gradient(circle at 50% 24%,rgba(154,240,213,.18),transparent 34%),linear-gradient(165deg,rgba(14,47,39,.9),rgba(5,18,16,.98))}
+[data-screen="profile"] .profileStage::before{content:"";position:absolute;inset:7%;border:1px solid rgba(154,240,213,.12);clip-path:polygon(0 0,100% 0,100% 74%,78% 100%,0 100%);pointer-events:none}
+[data-screen="profile"] .profileStage::after{content:"";position:absolute;inset:auto -18% -22% 22%;height:48%;background:radial-gradient(ellipse at center,rgba(154,240,213,.16),transparent 68%);filter:blur(18px);pointer-events:none}
+[data-screen="profile"] .profileStage .profileName{z-index:3;padding:12px 14px;background:linear-gradient(90deg,rgba(4,17,15,.92),rgba(4,17,15,.42),transparent);border-left:3px solid var(--a)}
+[data-screen="profile"] .profileStage .profileName h2{margin:4px 0 0;font-size:clamp(22px,2.6vw,34px)}
+[data-screen="profile"] .profileStats{position:relative;isolation:isolate;display:flex;flex-direction:column;gap:12px;background:linear-gradient(155deg,rgba(9,31,26,.94),rgba(5,18,16,.98));overflow:auto}
+[data-screen="profile"] .profileStats::before{content:"";position:absolute;inset:-35% -18% auto 42%;height:64%;background:radial-gradient(circle,rgba(255,208,123,.09),transparent 67%);pointer-events:none;z-index:-1}
+[data-screen="profile"] .profileOverviewHead{display:grid;gap:3px;padding:2px 2px 0}
+[data-screen="profile"] .profileOverviewHead span{color:var(--a);font-size:10px;font-weight:1000;letter-spacing:.15em}
+[data-screen="profile"] .profileOverviewHead b{font-size:clamp(18px,2.1vw,28px);letter-spacing:.01em}
+[data-screen="profile"] .profileOverviewHead small{color:var(--muted);font-size:11px;line-height:1.45}
+[data-screen="profile"] .profileIdentitySummary{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,.85fr);gap:8px}
+[data-screen="profile"] .profileIdentityCard{position:relative;min-height:92px;border:1px solid var(--line);background:linear-gradient(145deg,rgba(14,47,39,.9),rgba(6,20,17,.92));padding:11px;display:grid;grid-template-columns:48px minmax(0,1fr);gap:10px;align-items:center;overflow:hidden}
+[data-screen="profile"] .profileIdentityCard::after{content:"";position:absolute;width:90px;height:90px;border:1px solid rgba(154,240,213,.11);right:-48px;top:-42px;transform:rotate(34deg);pointer-events:none}
+[data-screen="profile"] .profileIdentityCard[data-role="player"]{min-height:116px;border-color:rgba(255,208,123,.38);background:linear-gradient(145deg,rgba(35,55,38,.92),rgba(8,27,23,.96))}
+[data-screen="profile"] .profileIdentityCard[data-role="player"] .profileIdentityMark{width:58px;height:58px;font-size:22px;box-shadow:0 0 0 5px rgba(255,208,123,.05)}
 [data-screen="profile"] .profileIdentityMark{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(255,208,123,.62);background:#0c3028;color:var(--gold);font-size:20px;font-weight:1000}
 [data-screen="profile"] .profileIdentityCard[data-role="partner"] .profileIdentityMark{border-color:rgba(154,240,213,.62);color:var(--a)}
 [data-screen="profile"] .profileIdentityCopy{min-width:0}
 [data-screen="profile"] .profileIdentityCopy span{display:block;color:var(--muted);font-size:11px;font-weight:900;letter-spacing:.08em;line-height:1.35}
-[data-screen="profile"] .profileIdentityCopy b{display:block;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px}
-[data-screen="profile"] .profileRecordsNote{border-left:3px solid var(--a);background:rgba(154,240,213,.06);padding:9px 10px;color:#c9ddd6;font-size:12px;line-height:1.45}
-[data-screen="profile"] .profileActions{margin-top:auto}
+[data-screen="profile"] .profileIdentityCopy b{display:-webkit-box;margin-top:3px;overflow:hidden;overflow-wrap:anywhere;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal;font-size:16px;line-height:1.2}
+[data-screen="profile"] .profileIdentityCard[data-role="player"] .profileIdentityCopy b{font-size:20px}
+[data-screen="profile"] .profileRecordsNote{border:1px solid rgba(154,240,213,.18);border-left:4px solid var(--a);background:rgba(154,240,213,.065);padding:10px 12px;color:#d9ebe5;font-size:12px;line-height:1.5}
+[data-screen="profile"] .profileActions{display:grid;grid-template-columns:minmax(0,1.45fr) repeat(2,minmax(0,1fr));gap:7px;margin-top:auto}
+[data-screen="profile"] .profileActions .btn{min-height:46px;width:100%;white-space:normal;line-height:1.2}
+[data-screen="profile"] .profileActions [data-go="records"]{border-color:rgba(154,240,213,.72);background:linear-gradient(180deg,rgba(24,89,72,.95),rgba(10,48,39,.95));box-shadow:0 0 0 1px rgba(154,240,213,.08) inset}
+[data-screen="profile"] .profileActions [data-go="characters"],[data-screen="profile"] .profileActions [data-go="settings"]{background:rgba(7,28,23,.86)}
 [data-screen="records"] #recordsList .record[data-records-selectable="true"]{position:relative;isolation:isolate;cursor:pointer;outline:1px solid transparent;outline-offset:2px;transition:transform .14s ease,outline-color .14s ease,background-color .14s ease}
 [data-screen="records"] #recordsList .record[data-records-selectable="true"]:focus-visible{outline:2px solid var(--a);outline-offset:3px}
 [data-screen="records"] #recordsList .record[data-records-selected="true"]{outline:2px solid var(--a);outline-offset:2px;transform:translateY(-2px);background:rgba(154,240,213,.08)}
@@ -111,8 +130,8 @@ html.r10LowPerf [data-screen="records"] .recordsMatchDetail,html.r10Reduced [dat
 [data-screen="records"] .recordsMatchDetail h3{margin:0;font-size:14px;color:var(--a);letter-spacing:.03em}
 [data-screen="records"] .recordsMatchDetailSummary{margin:0;font-size:13px;line-height:1.55;color:#eef7f3}
 [data-screen="records"] .recordsMatchDetailDeck{margin:0;padding-top:7px;border-top:1px solid rgba(255,255,255,.12);font-size:12px;line-height:1.45;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
-@media(max-width:540px) and (orientation:portrait){[data-screen="profile"] .profileIdentitySummary{grid-template-columns:1fr}[data-screen="profile"] .profileIdentityCard{min-height:72px}[data-screen="records"] .recordsMatchDetail{padding:10px}}
-@media(max-height:470px) and (orientation:landscape){[data-screen="profile"] .profileStats{gap:6px;padding:8px}[data-screen="profile"] .profileIdentityCard{min-height:58px;padding:6px;grid-template-columns:36px minmax(0,1fr);gap:7px}[data-screen="profile"] .profileIdentityMark{width:36px;height:36px;font-size:16px}[data-screen="profile"] .profileIdentityCopy b{font-size:12px}[data-screen="profile"] .profileRecordsNote{padding:5px 7px;font-size:10px;line-height:1.35}.profileActions{margin-top:0}[data-screen="records"] .recordsMatchDetail{margin-top:6px;padding:7px;gap:4px}[data-screen="records"] .recordsMatchDetail h3{font-size:11px}[data-screen="records"] .recordsMatchDetailSummary,[data-screen="records"] .recordsMatchDetailDeck{font-size:10px;line-height:1.35}}
+@media(max-width:540px) and (orientation:portrait){[data-screen="profile"] .profileLayout{grid-template-columns:1fr;grid-template-rows:minmax(240px,38vh) auto;height:auto;min-height:calc(100% - 70px);gap:9px;overflow:visible}[data-screen="profile"] .profileStage{min-height:240px}[data-screen="profile"] .profileStats{overflow:visible}[data-screen="profile"] .profileOverviewHead b{font-size:20px}[data-screen="profile"] .profileIdentitySummary{grid-template-columns:1fr}[data-screen="profile"] .profileIdentityCard,[data-screen="profile"] .profileIdentityCard[data-role="player"]{min-height:82px}[data-screen="profile"] .profileIdentityCard[data-role="player"] .profileIdentityMark{width:48px;height:48px;font-size:20px}[data-screen="profile"] .profileActions{grid-template-columns:1fr 1fr;margin-top:4px}[data-screen="profile"] .profileActions [data-go="records"]{grid-column:1/-1}[data-screen="profile"] .profileActions .btn{min-height:46px}[data-screen="records"] .recordsMatchDetail{padding:10px}}
+@media(max-height:470px) and (orientation:landscape){[data-screen="profile"] .profileLayout{grid-template-columns:minmax(180px,.72fr) minmax(0,1.45fr);gap:7px}[data-screen="profile"] .profileStats{gap:5px;padding:8px}[data-screen="profile"] .profileOverviewHead{gap:1px}[data-screen="profile"] .profileOverviewHead span{font-size:7px}[data-screen="profile"] .profileOverviewHead b{font-size:14px}[data-screen="profile"] .profileOverviewHead small{display:none}[data-screen="profile"] .profileIdentitySummary{grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:5px}[data-screen="profile"] .profileIdentityCard,[data-screen="profile"] .profileIdentityCard[data-role="player"]{min-height:58px;padding:6px;grid-template-columns:36px minmax(0,1fr);gap:7px}[data-screen="profile"] .profileIdentityMark,[data-screen="profile"] .profileIdentityCard[data-role="player"] .profileIdentityMark{width:36px;height:36px;font-size:16px;box-shadow:none}[data-screen="profile"] .profileIdentityCard[data-role="player"] .profileIdentityCopy b,[data-screen="profile"] .profileIdentityCopy b{font-size:12px}[data-screen="profile"] .profileRecordsNote{padding:5px 7px;font-size:9px;line-height:1.3}[data-screen="profile"] .profileActions{margin-top:0;gap:5px}[data-screen="profile"] .profileActions .btn{min-height:44px;font-size:9px;padding:4px 6px}[data-screen="profile"] .profileStage .profileName{padding:6px 8px}[data-screen="profile"] .profileStage .profileName h2{font-size:18px}[data-screen="records"] .recordsMatchDetail{margin-top:6px;padding:7px;gap:4px}[data-screen="records"] .recordsMatchDetail h3{font-size:11px}[data-screen="records"] .recordsMatchDetailSummary,[data-screen="records"] .recordsMatchDetailDeck{font-size:10px;line-height:1.35}}
 @media(prefers-reduced-motion:reduce){[data-screen="records"] #recordsList .record[data-records-selectable="true"]{transition:none}[data-screen="records"] #recordsList .record[data-records-selectable="true"]:active{transform:none;filter:brightness(.94)}[data-screen="records"] #recordsList .record[data-records-selected="true"]{transform:none}[data-screen="records"] #recordsList .record[data-records-selected="true"]::after{animation:none;background-position:50% 50%;opacity:.18}[data-screen="records"] .recordsMatchDetail{animation:gameroadRecordsDetailFade .09s linear both;transform:none}}
 `;
   doc.head?.appendChild(style);
@@ -339,12 +358,28 @@ export function mountProfilePresentation(doc = globalThis.document, win = global
     legacy.setAttribute('aria-hidden', 'true');
   }
 
+  let overview = stats.querySelector('.profileOverviewHead');
+  if (!overview) {
+    overview = doc.createElement('div');
+    overview.className = 'profileOverviewHead';
+    const kicker = doc.createElement('span');
+    kicker.textContent = '本人情報';
+    const title = doc.createElement('b');
+    title.textContent = '現在のプロフィール';
+    const sub = doc.createElement('small');
+    sub.textContent = '操作人物とパートナー';
+    overview.append(kicker, title, sub);
+    stats.prepend(overview);
+  }
+
   let summary = stats.querySelector('.profileIdentitySummary');
   if (!summary) {
     summary = doc.createElement('section');
     summary.className = 'profileIdentitySummary';
     summary.setAttribute('aria-label', 'プロフィールの人物');
-    stats.prepend(summary);
+    overview.insertAdjacentElement('afterend', summary);
+  } else if (summary.previousElementSibling !== overview) {
+    overview.insertAdjacentElement('afterend', summary);
   }
   summary.replaceChildren();
   const player = identityCard(doc, 'player', '操作人物', projection.identities.player);
@@ -362,8 +397,15 @@ export function mountProfilePresentation(doc = globalThis.document, win = global
   }
   note.textContent = '対戦の詳しい履歴は「対戦記録」で確認できます。';
 
+  const actions = stats.querySelector('.profileActions');
   const recordsButton = stats.querySelector('[data-go="records"]');
-  if (recordsButton) recordsButton.textContent = '対戦記録を見る';
+  const partnerButton = stats.querySelector('[data-go="characters"]');
+  if (recordsButton) {
+    recordsButton.textContent = '対戦記録を見る';
+    recordsButton.classList.add('primary');
+    actions?.prepend(recordsButton);
+  }
+  partnerButton?.classList.remove('primary');
   screen.dataset.profilePresentation = PROFILE_PRESENTATION_VERSION;
 
   return Object.freeze({

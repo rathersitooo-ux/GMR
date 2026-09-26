@@ -45,6 +45,12 @@ section[data-screen="setup"] #startMatch:disabled::before{background-image:none;
 @media(prefers-reduced-motion:reduce){section[data-screen="setup"] #startMatch:not(:disabled)::before{animation:none;background-position:0% 50%;opacity:.16}}
 html.r10LowPerf section[data-screen="setup"] #startMatch::before,html.r10Reduced section[data-screen="setup"] #startMatch::before{animation:none!important;background-position:0% 50%;opacity:.12!important}
 `;
+export const HOME_PAD_CENTER_AFFORDANCE_CSS = `
+.homePadCenter{position:relative}
+.homePadCenter::before{content:"−";position:absolute;inset:0;display:grid;place-items:center;color:#12342c;font-size:28px;font-weight:1000;line-height:1;z-index:10;pointer-events:none}
+.homePadCenter[aria-expanded="false"]::before{content:"＋";font-size:18px}
+.homePadCenter:focus-visible{outline:2px solid #fff!important;outline-offset:3px;box-shadow:0 0 0 4px rgba(160,239,213,.82),0 12px 32px rgba(0,0,0,.32)}
+`;
 const HOME_BORDER_LIGHT_OVERLAY_STYLE_ID = 'gameroad-home-border-light-overlay-r1';
 export const HOME_BORDER_LIGHT_OVERLAY_ASSET = Object.freeze({
   id: 'home-border-light-overlay-v1',
@@ -390,7 +396,7 @@ function ensureSharedShellPresentation() {
   if (!document.getElementById(HOME_BORDER_LIGHT_OVERLAY_STYLE_ID)) {
     const style = document.createElement('style');
     style.id = HOME_BORDER_LIGHT_OVERLAY_STYLE_ID;
-    style.textContent = HOME_BORDER_LIGHT_OVERLAY_CSS;
+    style.textContent = `${HOME_PAD_CENTER_AFFORDANCE_CSS}\n${HOME_BORDER_LIGHT_OVERLAY_CSS}`;
     document.head.append(style);
     inserted = true;
   }

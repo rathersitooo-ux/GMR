@@ -278,6 +278,24 @@ if (/デッキから置いたトランプカード|show-all-seven-real-mana-slot
     }
   }
 
+  const abilityHoneyPaymentRequired = [
+    'function abilityResourceAmount(value){return Math.max(0,Math.floor(Number(value)||0))}',
+    'mana+honey>=cost.due',
+    'const manaPaid=Math.min(manaBefore,cost.due),honeyPaid=cost.due-manaPaid',
+    'manaAfter:p.manaCurrent,honeyAfter:p.honey',
+    "source:'能力'",
+  ];
+  for (const required of abilityHoneyPaymentRequired) {
+    if (!html.includes(required)) errors.push(`ability Mana/Honey payment seam missing: ${required}`);
+  }
+  for (const forbidden of [
+    'function canAffordAbility(p,c){return p.manaCurrent>=effectiveAbilityCost(p,c).due}',
+    'if(p.manaCurrent<cost.due)return null;p.manaCurrent-=cost.due',
+    '能力用マナ${paid.due}を支払った',
+  ]) {
+    if (html.includes(forbidden)) errors.push(`stale Mana-only ability payment seam remains: ${forbidden}`);
+  }
+
   return errors;
 }
 

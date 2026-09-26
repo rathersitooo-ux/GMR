@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CARD-CENTER-HERO-R5-CLASSIC-R1-20260927T0419-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_CARD_CENTER_HERO_MOTION_R5",
+  "acquireKey": "BATTLE-CARD-CENTER-HERO-R5-CLASSIC-R1-20260927T0419-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_PR2021_EXACT_PATHS_UNCHANGED_20260927T0420JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR2105_FOCUSED_10_PASS_CURRENT_MAIN_REPLAY",
+  "proceedToken": "PROCEED|BATTLE-CARD-CENTER-HERO-R5-CLASSIC-R1-20260927T0419-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-card-release|center-hero-hold|reduced-lowperf-preserved|active-lease",
+  "authorizationBaseSha": "eb4d8b5b36b1f28b2d076e6eb2982e6d8f8017bc",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_CARD_CENTER_HERO_MOTION_R5",
+  "leaseAcquireKey": "BATTLE-CARD-CENTER-HERO-R5-CLASSIC-R1-20260927T0419-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-27 04:20 JST",
+  "leaseUntilJst": "2026-09-27 05:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:L9",
+  "leaseExactMutableResources": "data/preaction-authorizations/BATTLE-CARD-CENTER-HERO-R5-CLASSIC-R1-20260927T0419-SOL.json; browser/battle-card-release-flight-motion-core.mjs; tests/battle-card-release-flight-motion-core.test.mjs; own branch/PR/check/readback; own CURRENT lease/R24 event",
+  "solutionSignature": "BATTLE_CARD_RELEASE_CENTER_HERO_MOTION_R5",
+  "reuseDisposition": "REUSE_AS_IS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR2021_CURRENT_MAIN_BLOBS_IDENTICAL_AND_PR2105_FOCUSED_PASS",
+  "solutionSearchEvidence": [
+    "Current main exact product/test blobs are unchanged from the PR #2021 merge base.",
+    "PR #2021 is the existing bounded solution and changes only these two leased paths.",
+    "The same two-file delta replayed on current main and passed 10/10 focused Node tests.",
+    "R5 corrects only the frozen lease readback reference discovered by Required Gate on the prior unmerged attempt.",
+    "CURRENT_ACTIVE_LEASES shows no other writer for these exact paths; PR #2104 Janken files are untouched."
+  ],
+  "scope": [
+    "browser/battle-card-release-flight-motion-core.mjs",
+    "tests/battle-card-release-flight-motion-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-card-release-flight-motion-core.mjs",
+    "tests/battle-card-release-flight-motion-core.test.mjs"
+  ]
+}

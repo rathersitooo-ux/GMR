@@ -216,6 +216,50 @@ export function buildBattleJankenSlidePadModel({
   });
 }
 
+export function projectBattleJankenTurnLifecycle({
+  model,
+  currentHandCardIds = [],
+  committedRoundId = null,
+} = {}) {
+  const roundId = typeof model?.roundId === 'string' ? model.roundId : null;
+  const currentIds = [];
+  const currentSet = new Set();
+  for (const raw of Array.isArray(currentHandCardIds) ? currentHandCardIds : []) {
+    const id = typeof raw === 'string' ? raw.trim() : '';
+    if (!id || currentSet.has(id)) continue;
+    currentSet.add(id);
+    currentIds.push(id);
+  }
+  const selectedIds = [];
+  const selectedSet = new Set();
+  for (const raw of Array.isArray(model?.assignment?.selectedJankenCardIds)
+    ? model.assignment.selectedJankenCardIds
+    : []) {
+    const id = typeof raw === 'string' ? raw.trim() : '';
+    if (!id || selectedSet.has(id)) continue;
+    selectedSet.add(id);
+    selectedIds.push(id);
+  }
+  const missingSelectedCardIds = selectedIds.filter((id) => !currentSet.has(id));
+  const latchedByAcceptedCommit = !!roundId && committedRoundId === roundId;
+  const usedThisTurn = latchedByAcceptedCommit || missingSelectedCardIds.length > 0;
+  const reservedCardIds = usedThisTurn
+    ? []
+    : selectedIds.filter((id) => currentSet.has(id));
+  const reservedSet = new Set(reservedCardIds);
+  const ordinaryHandCardIds = currentIds.filter((id) => !reservedSet.has(id));
+  return deepFreeze({
+    schema: 'gameroad.battle-janken-turn-lifecycle.v1',
+    roundId,
+    usedThisTurn,
+    jankenUiVisible: !usedThisTurn,
+    latchedByAcceptedCommit,
+    missingSelectedCardIds: Object.freeze(missingSelectedCardIds),
+    reservedCardIds: Object.freeze(reservedCardIds),
+    ordinaryHandCardIds: Object.freeze(ordinaryHandCardIds),
+  });
+}
+
 export function projectBattleLoadCardPreview(model, jankenHand) {
   const hand = typeof jankenHand === 'string' ? jankenHand : null;
   if (!hand || !model?.slots) return null;
@@ -440,6 +484,7 @@ function addStyle(documentRef) {
 [${HOST_ATTR}="1"] .grJankenLoadPreviewCard{font-size:12px;line-height:1.12;font-weight:900;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical}
 [${HOST_ATTR}="1"] .grJankenLoadPreviewHand{font-size:12px;font-weight:950;letter-spacing:.08em}
 section[data-screen="battle"] #hand .handCard[data-janken-reserved="true"]{display:none!important}
+[${HOST_ATTR}="1"][data-janken-turn-used="true"] .grJankenInputModePicker,[${HOST_ATTR}="1"][data-janken-turn-used="true"] .grJankenSlidePadHandle,[${HOST_ATTR}="1"][data-janken-turn-used="true"] .grJankenSlidePadSlot,[${HOST_ATTR}="1"][data-janken-turn-used="true"] .grJankenLoadPreview{display:none!important}
 section[data-screen="battle"] #hand .handCard[data-hand-aura-draggable="true"]{touch-action:none}
 section[data-screen="battle"] #hand .handCard[data-hand-aura-dragging="true"]{opacity:.22!important}
 section[data-screen="battle"] #hand.grPlayableHandActionBase{position:relative;isolation:isolate}
@@ -607,10 +652,12 @@ function restoreHandNode(node) {
   }
 }
 
-function syncHandZoneProjection(battleRoot, model) {
-  const selected = new Set(Array.isArray(model?.assignment?.selectedJankenCardIds)
-    ? model.assignment.selectedJankenCardIds
-    : []);
+function syncHandZoneProjection(battleRoot, model, reservedCardIds = null) {
+  const selected = new Set(Array.isArray(reservedCardIds)
+    ? reservedCardIds
+    : (Array.isArray(model?.assignment?.selectedJankenCardIds)
+      ? model.assignment.selectedJankenCardIds
+      : []));
   const roleById = new Map((Array.isArray(model?.slots) ? model.slots : []).flatMap((slot) =>
     slot?.occupied && slot?.cardId && SLOT_ORDER.includes(slot?.jankenHand)
       ? [[slot.cardId, slot.jankenHand]]
@@ -1111,6 +1158,8 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
 
   let assignment = null;
   let model = null;
+  let turnLifecycle = null;
+  let committedRoundId = null;
   let expanded = false;
   let destroyed = false;
   let timer = null;
@@ -1179,7 +1228,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   }
 
   async function openDedicatedFocusSurface() {
-    if (!dedicatedFocus || destroyed || !model) return false;
+    if (!dedicatedFocus || destroyed || !model || turnLifecycle?.usedThisTurn === true) return false;
     if (focusSurfaceRuntime) return true;
     const version = ++focusSurfaceVersion;
     const context = await readDedicatedFocusContext();
@@ -1197,7 +1246,9 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
         onAccepted: (result, readyPackage) => {
           const hand = readyPackage?.jankenHand;
           const flight = hand ? captureReleasedJankenCardFlight(globalRef, root, slotNodes, hand) : null;
+          if (model?.roundId) committedRoundId = model.roundId;
           if (flight) playReleasedJankenCardFlight(host, flight);
+          schedule();
           const settle = () => {
             if (focusSurfaceRuntime === runtime) closeDedicatedFocusSurface();
           };
@@ -1352,7 +1403,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   }
 
   function commitSelectedHand(selectedHand) {
-    if (!selectedHand || !model) return false;
+    if (!selectedHand || !model || turnLifecycle?.usedThisTurn === true) return false;
     if (dedicatedFocus) {
       const opening = openDedicatedFocusSurface();
       void opening;
@@ -1361,8 +1412,13 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     const currentSourceHandIds = readHand(globalRef, root).map((card) => card.id);
     const cardId = resolveBattleJankenSlotCardAction(model, selectedHand, currentSourceHandIds);
     const flight = cardId ? captureReleasedJankenCardFlight(globalRef, root, slotNodes, selectedHand) : null;
-    if (cardId && clickExistingHandCard(root, cardId)) playReleasedJankenCardFlight(host, flight);
-    return !!cardId;
+    const clicked = !!cardId && clickExistingHandCard(root, cardId);
+    if (clicked) {
+      committedRoundId = model.roundId;
+      playReleasedJankenCardFlight(host, flight);
+      schedule();
+    }
+    return clicked;
   }
 
   function setArmed(nextHand) {
@@ -1577,8 +1633,8 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   }
 
   function isReservedCardId(cardId) {
-    return Array.isArray(model?.assignment?.selectedJankenCardIds)
-      && model.assignment.selectedJankenCardIds.includes(cardId);
+    return Array.isArray(turnLifecycle?.reservedCardIds)
+      && turnLifecycle.reservedCardIds.includes(cardId);
   }
 
   function updateHandDrag(event) {
@@ -1754,6 +1810,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   function openForRound(roundId) {
     if (!roundId || roundId === lastRoundId) return;
     closeDedicatedFocusSurface();
+    if (committedRoundId && committedRoundId !== roundId) committedRoundId = null;
     lastRoundId = roundId;
     setExpanded(false);
     if (roundOpenTimer !== null) globalRef.clearTimeout?.(roundOpenTimer);
@@ -1809,7 +1866,19 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       }
       return;
     }
-    syncHandZoneProjection(root, model);
+    turnLifecycle = projectBattleJankenTurnLifecycle({
+      model,
+      currentHandCardIds: hand.map((card) => card.id),
+      committedRoundId,
+    });
+    host.dataset.jankenTurnUsed = String(turnLifecycle.usedThisTurn);
+    if (turnLifecycle.usedThisTurn) {
+      setExpanded(false);
+      setArmed(null);
+      clearBattleSlotRoll();
+      closeDedicatedFocusSurface();
+    }
+    syncHandZoneProjection(root, model, turnLifecycle.reservedCardIds);
     syncPlayableHandAffordance(root);
     syncHandCardFocusPresentation();
     rowRouletteHost.hidden = rouletteEnabled !== true;
@@ -1817,7 +1886,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     for (const slot of model.slots) {
       const node = slotNodes.get(slot.jankenHand);
       const cardText = node.querySelector('.grJankenSlidePadCard');
-      node.disabled = !slot.selectable;
+      node.disabled = turnLifecycle.usedThisTurn || !slot.selectable;
       node.dataset.cardId = slot.cardId ?? '';
       node.setAttribute('aria-label', slot.occupied
         ? `${slot.symbol} ${slot.hand} ${slot.cardLabel}`
@@ -1826,6 +1895,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       syncJankenSlotPhysicalCardPresentation(root, node, slot);
       node.dataset.inputMode = inputMode;
       node.onclick = () => {
+        if (turnLifecycle?.usedThisTurn === true) return;
         if (suppressSlotClickHand === slot.jankenHand) {
           suppressSlotClickHand = null;
           return;
@@ -1850,7 +1920,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   }
 
   handle.addEventListener('pointerdown', (event) => {
-    if (inputMode !== BATTLE_JANKEN_INPUT_MODE.LAUNCHER || activePointerId !== null || handDrag) return;
+    if (turnLifecycle?.usedThisTurn === true || inputMode !== BATTLE_JANKEN_INPUT_MODE.LAUNCHER || activePointerId !== null || handDrag) return;
     const pointerId = event?.pointerId;
     if (!Number.isFinite(pointerId)) return;
     const center = elementCenter(handle);
@@ -1915,6 +1985,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   const runtime = Object.freeze({
     render,
     snapshot: () => model,
+    turnLifecycleSnapshot: () => turnLifecycle,
     rowRouletteHost,
     rowRouletteSnapshot: () => rowRouletteController.snapshot(),
     loadPreviewSnapshot: () => projectBattleLoadCardPreview(model, armedHand),

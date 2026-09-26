@@ -1,4 +1,4 @@
-﻿import test from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   SETUP_FOREST_STAGE_CONTRACT,
@@ -163,4 +163,3 @@ test('validator rejects premature media fields so this slice cannot smuggle gene
 test('unknown viewport projection fails closed', () => {
   assert.throws(() => projectSetupForestStage('tablet-mystery'), /unknown_setup_forest_viewport/);
 });
-

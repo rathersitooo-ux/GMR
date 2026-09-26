@@ -218,14 +218,14 @@ async function submitVisiblePlan(battle) {
     .flat().length;
   expect(candidateCount, 'visible plan controls expose at least two distinct cards').toBeGreaterThanOrEqual(2);
 
-  const clickCandidate = async (excludedId = null) => {
+  const clickCandidate = async (excludedIds = new Set()) => {
     for (const group of candidateGroups) {
       const ids = await group.locator.evaluateAll((nodes) => nodes
         .filter((node) => !node.disabled && node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden')
         .map((node) => node.getAttribute('data-card-id'))
         .filter(Boolean));
       for (const id of ids) {
-        if (!id || id === excludedId) continue;
+        if (!id || excludedIds.has(id)) continue;
         const candidate = battle.locator(`${group.selector}[data-card-id="${id}"]`).first();
         if (!(await candidate.isVisible()) || await candidate.isDisabled()) continue;
         await candidate.click();
@@ -235,18 +235,46 @@ async function submitVisiblePlan(battle) {
     return null;
   };
 
-  if (!(await roadSelect.inputValue())) await expect.poll(() => clickCandidate()).not.toBeNull();
-  if (!(await battleSelect.inputValue())) {
+  await expect(ready, 'explicit ready-plan decision is retired from the visible player path').toBeHidden();
+
+  const planningActive = async () => {
+    const phaseTitle = ((await battle.locator('#phaseTitle').textContent()) || '').trim();
+    return phaseTitle === '行動を計画' && await roadSelect.isEnabled() && await battleSelect.isEnabled();
+  };
+  const selectedIds = new Set();
+  for (let attempt = 0; attempt < 3 && await planningActive(); attempt += 1) {
     const roadValue = await roadSelect.inputValue();
-    await expect.poll(() => clickCandidate(roadValue)).not.toBeNull();
-    await expect(battleSelect, 'a different visible card can be reserved as Battle').not.toHaveValue('');
+    const battleValue = await battleSelect.inputValue();
+    if (roadValue) selectedIds.add(roadValue);
+    if (battleValue) selectedIds.add(battleValue);
+
+    if (roadValue && battleValue && roadValue !== battleValue) {
+      await expect.poll(() => planningActive(), {
+        message: 'a complete distinct Road/Battle plan auto-submits without an explicit ready action',
+        timeout: 3_000,
+      }).toBeFalsy();
+      break;
+    }
+
+    const candidate = await clickCandidate(selectedIds);
+    expect(candidate, 'visible player path exposes a card that can advance the current planning state').not.toBeNull();
+    selectedIds.add(candidate);
+
+    await expect.poll(async () => {
+      if (!(await planningActive())) return true;
+      const nowRoad = await roadSelect.inputValue();
+      const nowBattle = await battleSelect.inputValue();
+      return Boolean(nowRoad || nowBattle);
+    }, {
+      message: 'visible card click advances or completes the current planning state',
+      timeout: 2_500,
+    }).toBeTruthy();
   }
 
-  expect(await roadSelect.inputValue(), 'visible Road selection').not.toBe('');
-  expect(await battleSelect.inputValue(), 'visible Battle selection').not.toBe('');
-  expect(await battleSelect.inputValue(), 'Road and Battle remain distinct').not.toBe(await roadSelect.inputValue());
-  await expect(ready).toBeEnabled();
-  await ready.click();
+  await expect.poll(() => planningActive(), {
+    message: 'visible plan input auto-submits and leaves the planning decision state',
+    timeout: 7_000,
+  }).toBeFalsy();
 }
 
 async function playVisibleTwoPlayerToResult(page, testInfo, evidencePrefix) {
@@ -627,24 +655,10 @@ test('starts through visible Setup and advances the first Battle decision throug
   expect(initialHands, 'fresh match deals seven source hand cards to every participant').toEqual([7, 7]);
   const handCards = battle.locator('#hand .handCard:visible');
   expect(await handCards.count(), 'janken reservation leaves ordinary hand cards visibly playable').toBeGreaterThanOrEqual(2);
-  await handCards.nth(0).click();
-  await expect(battle.locator('#roadSelect')).not.toHaveValue('');
-  await handCards.nth(1).click();
-  await expect(battle.locator('#battleSelect')).not.toHaveValue('');
-
-  const roadValue = await battle.locator('#roadSelect').inputValue();
-  const battleValue = await battle.locator('#battleSelect').inputValue();
-  expect(roadValue, 'visible hand click selects a Road card').not.toBe('');
-  expect(battleValue, 'visible hand click selects a Battle card').not.toBe('');
-  expect(battleValue, 'Road and Battle use different visible hand cards').not.toBe(roadValue);
-
-  const ready = battle.locator('#readyPlan');
-  await expect(ready).toBeVisible();
-  await expect(ready).toBeEnabled();
-  await ready.click();
+  await submitVisiblePlan(battle);
 
   const cue = battle.locator('#first10Cue');
-  await expect(cue, 'visible first-cycle cue confirms Road decision, public reveal, and progression beyond Plan').toContainText('ロード決定 → 公開 → 次の行動まで確認 ✓', { timeout: 30_000 });
+  await expect(cue, 'visible first-cycle cue confirms Road acceptance, public reveal, and progression beyond Plan').toContainText(/ロード受理.*公開.*確認/, { timeout: 30_000 });
   await attachStateScreenshot(page, testInfo, 'battle-first-decision-progressed-visible');
 
   runtime.assertClean(testInfo);
@@ -1674,9 +1688,6 @@ test('R13 covers direct plan selectors, reachable-node click, avatar drag, real 
 
   await roadSelect.selectOption(roadId);
   await expect(roadSelect).toHaveValue(roadId);
-  await battleSelect.selectOption(battleId);
-  await expect(battleSelect).toHaveValue(battleId);
-  await expect(battle.locator('#readyPlan')).toBeEnabled();
 
   const currentEndpoint = (await battle.locator('#endpointText').textContent()) || '';
   const visibleOneSteps = battle.locator('#board .node.reachable[data-move-distance="1"]:visible');
@@ -1734,7 +1745,15 @@ test('R13 covers direct plan selectors, reachable-node click, avatar drag, real 
     await attachStateScreenshot(page, testInfo, 'r13-reachable-node-not-visible-boundary');
   }
 
-  await battle.locator('#readyPlan').click();
+  await battleSelect.selectOption(battleId);
+  await expect(battle.locator('#readyPlan'), 'explicit ready-plan decision remains retired while the completed plan auto-submits').toBeHidden();
+  await expect.poll(async () => {
+    const phaseTitle = ((await battle.locator('#phaseTitle').textContent()) || '').trim();
+    return phaseTitle !== '行動を計画' || !(await roadSelect.isEnabled()) || !(await battleSelect.isEnabled());
+  }, {
+    message: 'completing the distinct direct plan auto-submits after route interaction',
+    timeout: 7_000,
+  }).toBeTruthy();
   const targetSurface = battle.locator('#targetBox.on:visible');
   try {
     await targetSurface.waitFor({ state: 'visible', timeout: 6_000 });

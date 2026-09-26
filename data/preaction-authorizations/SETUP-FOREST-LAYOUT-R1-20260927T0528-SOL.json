@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "SETUP-FOREST-LAYOUT-R1-20260927T0528-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "SETUP_FOREST_REFERENCE_LAYOUT_CONTRACT_R1",
+  "acquireKey": "SETUP-FOREST-LAYOUT-R1-20260927T0528-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_OWNER_FREE_EXACT_PATHS_AND_CURRENT_SETUP_CONSUMER_READBACK_20260927T0528JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REFERENCE_STUDY_PLUS_EXISTING_SETUP_DOM_CSS_READBACK_NO_PRODUCT_MUTATION",
+  "proceedToken": "PROCEED|SETUP-FOREST-LAYOUT-R1-20260927T0528-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|setup-forest-layout-contract|new-exact-paths|active-lease",
+  "authorizationBaseSha": "eb4d8b5b36b1f28b2d076e6eb2982e6d8f8017bc",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "SETUP_FOREST_REFERENCE_LAYOUT_CONTRACT_R1",
+  "leaseAcquireKey": "SETUP-FOREST-LAYOUT-R1-20260927T0528-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-27 05:28 JST",
+  "leaseUntilJst": "2026-09-27 06:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "browser/setup-forest-stage-layout-core.mjs; tests/setup-forest-stage-layout-core.test.mjs; own transient PRE_ACTION witness; own branch/PR/check/readback; own CURRENT event/lease records",
+  "solutionSignature": "SETUP_FOREST_REFERENCE_DERIVED_SPATIAL_LAYOUT_CONTRACT_V1",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_SETUP_HAS_PRESENTATION_CSS_BUT_NO_FOREST_LAYER_OR_SPATIAL_ASSET_SLOT_CONTRACT",
+  "buildResidualReason": "Current Setup has generic staging CSS and controls but no dedicated reference-derived forest production/layer/viewport contract. Build only the missing pure contract on new paths; existing Setup consumer remains read-only.",
+  "solutionSearchEvidence": [
+    "Fresh origin/main Setup consumer uses browser/home-shell-presentation-core.mjs and browser/GAMEROAD.html generic staging CSS.",
+    "Current Setup has real controls and responsive states but no standalone forest layer, density-budget, quiet-zone, or production-phase contract.",
+    "Open Setup-related PRs overlap the existing consumer, so this slice isolates the missing contract on two new exact paths instead of duplicating or colliding with those changes.",
+    "Old rank-lobby generated assets are RETIRED/HISTORICAL ONLY and are explicitly not reused as current authority.",
+    "No image generation, downloaded reference bytes, copied external art, or product consumer mutation occurs in this slice."
+  ],
+  "scope": [
+    "browser/setup-forest-stage-layout-core.mjs",
+    "tests/setup-forest-stage-layout-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/setup-forest-stage-layout-core.mjs",
+    "tests/setup-forest-stage-layout-core.test.mjs"
+  ]
+}

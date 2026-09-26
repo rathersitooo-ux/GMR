@@ -59,10 +59,43 @@ function observeRuntimeErrors(page) {
 }
 
 async function attachStateScreenshot(page, testInfo, stateName) {
+  const attachmentStem = `${testInfo.project.name}-${stateName}`;
+  const pngName = `${attachmentStem}.png`;
   const png = await page.screenshot({ fullPage: true, animations: 'disabled' });
-  await testInfo.attach(`${testInfo.project.name}-${stateName}.png`, {
+  await testInfo.attach(pngName, {
     body: png,
     contentType: 'image/png',
+  });
+
+  const evidenceContract = {
+    schemaVersion: 'gameroad-bfi-visual-evidence-v1',
+    evidenceClass: 'TECHNICAL_CAPTURE_ONLY',
+    screenshotAttachment: pngName,
+    project: testInfo.project.name,
+    stateName,
+    capturedAt: new Date().toISOString(),
+    sourceShaHint: process.env.GITHUB_SHA || null,
+    expectedPublicBuildIdHint: process.env.EXPECTED_BUILD_ID || null,
+    publicOriginHint: process.env.GAMEROAD_PUBLIC_BASE_URL || null,
+    claimBoundary: {
+      technicalScreenshotCaptured: true,
+      visualMatch: false,
+      humanVisualAcceptance: false,
+      formalVisualAcceptance: false,
+      physicalDeviceAcceptance: false,
+      motionOrGameFeelAcceptance: false,
+    },
+    requiresSeparateAcceptance: [
+      'VISUAL_MATCH',
+      'HUMAN_VISUAL_ACCEPTANCE',
+      'FORMAL_VISUAL_ACCEPTANCE',
+      'PHYSICAL_DEVICE_ACCEPTANCE',
+      'MOTION_OR_GAME_FEEL_ACCEPTANCE',
+    ],
+  };
+  await testInfo.attach(`${attachmentStem}.visual-evidence.json`, {
+    body: Buffer.from(`${JSON.stringify(evidenceContract, null, 2)}\n`, 'utf8'),
+    contentType: 'application/json',
   });
 }
 

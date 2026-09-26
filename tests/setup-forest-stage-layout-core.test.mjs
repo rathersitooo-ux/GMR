@@ -126,6 +126,16 @@ test('reference constraints explicitly reject manicured parks and common AI clut
         'particle-confetti',
         'repeated-micro-leaf-noise',
         'decorative-object-spam',
+        'insect',
+        'beetle',
+        'larva',
+        'butterfly',
+        'wing',
+        'cocoon',
+        'insect-silhouette',
+        'bug-icon',
+        'spider-like-form',
+        'creature-focal-subject',
       ]) {
         assert.ok(forbidden.has(item), `${layer.id} missing ${item}`);
       }

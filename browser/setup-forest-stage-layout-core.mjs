@@ -23,6 +23,16 @@ const COMMON_FORBIDDEN = Object.freeze([
   'dense-flower-carpet',
   'repeated-micro-leaf-noise',
   'decorative-object-spam',
+  'insect',
+  'beetle',
+  'larva',
+  'butterfly',
+  'wing',
+  'cocoon',
+  'insect-silhouette',
+  'bug-icon',
+  'spider-like-form',
+  'creature-focal-subject',
 ]);
 
 function layer(id, zOrder, kind, rect, densityBudget, contrastBudget, detailScale, purpose, extraForbidden = []) {
@@ -145,7 +155,7 @@ export const SETUP_FOREST_STAGE_CONTRACT = deepFreeze({
     'Compress distant forest into deep-green masses and let warm soil/wood provide a restrained complementary floor.',
     'Use one broad light opening or shaft family; avoid glitter, sparkles and many competing rays.',
     'Treat negative visual space as intentional scenery so character and Setup controls can breathe.',
-    'Keep the forest ecologically plausible and insect-friendly rather than fantasy-biome decorative.',
+    'Keep the forest ecologically plausible and free of creature focal subjects unless a later explicit user instruction authorizes them.',
     'Nostalgia comes from scale, shade, warmth, humidity and quietness, not from a vintage filter or copied game art.',
   ],
   summerNostalgiaConstraints: [

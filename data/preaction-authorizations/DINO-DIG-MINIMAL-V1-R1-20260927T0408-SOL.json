@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DINO-DIG-MINIMAL-V1-R1-20260927T0408-SOL",
+  "taskId": "DINO-DIG-INTERACTION-MOBILE-TECH-001",
+  "workUnitKey": "DINO_DIG_MINIMAL_V1_AND_10PULL_BRIDGE_R1",
+  "acquireKey": "DINO-DIG-MINIMAL-V1-R1-20260927T0408-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_USER_MINIMAL_DIG_V1_PLUS_FREE_EXACT_RESOURCES_20260927T0408JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_DINO_WHITEBOX_R3_AND_IMMUTABLE_GACHA_PRESENTATION_CONTRACT",
+  "proceedToken": "PROCEED|DINO-DIG-MINIMAL-V1-R1-20260927T0408-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|minimal-dino-dig-v1|isolated-gacha-bonus|active-lease",
+  "authorizationBaseSha": "eb4d8b5b36b1f28b2d076e6eb2982e6d8f8017bc",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DINO-DIG-INTERACTION-MOBILE-TECH-001",
+  "leaseWorkUnitKey": "DINO_DIG_MINIMAL_V1_AND_10PULL_BRIDGE_R1",
+  "leaseAcquireKey": "DINO-DIG-MINIMAL-V1-R1-20260927T0408-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-27 04:08 JST",
+  "leaseUntilJst": "2026-09-27 05:08 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:O6",
+  "leaseExactMutableResources": "browser/fossil-dig-minigame-core.mjs; tests/fossil-dig-minigame-core.test.mjs; browser/gacha-fossil-dig-bonus-core.mjs; tests/gacha-fossil-dig-bonus-core.test.mjs; browser/dino-dig-mobile-whitebox.html; tests/dino-dig-mobile-whitebox.spec.mjs; own transient PRE_ACTION manifest only",
+  "solutionSignature": "DINO_DIG_MINIMAL_SHARED_CORE_PLUS_IMMUTABLE_10PULL_ADAPTER_V1",
+  "reuseDisposition": "ADAPT_COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_WHITEBOX_PLUS_FOSSIL_STATE_BOUNDARY_PLUS_GACHA_IDENTITY_LOCK",
+  "solutionSearchEvidence": [
+    "Current main already contains an isolated mobile dino-dig whitebox, so the work adapts it instead of introducing a second interaction prototype.",
+    "Current fossil-excavation-state-core owns board fossil issuance, restoration values, ownership and immutable restoration provenance; it remains read-only.",
+    "Current gacha-presentation-core already treats resultIdentity and ordered resultBundle as immutable presentation inputs; the 10-pull adapter must preserve them byte-for-byte/JSON-equivalent and owns no draw, rarity, ownership or save semantics.",
+    "User-approved V1 explicitly removes per-cell hardness/damage/dust/material/special-point maps, Buster/X-Ray complexity, physics fragments, upgrade tree and a second gacha digging engine."
+  ],
+  "scope": [
+    "browser/fossil-dig-minigame-core.mjs",
+    "tests/fossil-dig-minigame-core.test.mjs",
+    "browser/gacha-fossil-dig-bonus-core.mjs",
+    "tests/gacha-fossil-dig-bonus-core.test.mjs",
+    "browser/dino-dig-mobile-whitebox.html",
+    "tests/dino-dig-mobile-whitebox.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/fossil-dig-minigame-core.mjs",
+    "tests/fossil-dig-minigame-core.test.mjs",
+    "browser/gacha-fossil-dig-bonus-core.mjs",
+    "tests/gacha-fossil-dig-bonus-core.test.mjs",
+    "browser/dino-dig-mobile-whitebox.html",
+    "tests/dino-dig-mobile-whitebox.spec.mjs"
+  ]
+}

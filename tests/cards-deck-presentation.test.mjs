@@ -874,8 +874,19 @@ function makeHarness() {
       return null;
     },
   };
+  const close = {
+    clickCalls: 0,
+    click() {
+      this.clickCalls += 1;
+      screen.dataset.inspector = 'closed';
+    },
+  };
   const doc = {
+    getElementById(id) {
+      return id === 'r4PreviewClose' ? close : null;
+    },
     querySelector(selector) {
+      if (selector === '#r4PreviewClose') return close;
       if (selector === 'section[data-screen="cards"]') return screen;
       if (selector === 'section[data-screen="cards"] .cardPreview') return preview;
       if (selector === 'section[data-screen="cards"] #collectionGrid [data-id].selected') return selected;
@@ -902,7 +913,7 @@ function makeHarness() {
     for (const fn of listeners.get(`${type}:true`) ?? []) fn(event);
     return calls;
   };
-  return { doc, screen, selected, inside, preview, dispatch, listeners };
+  return { doc, screen, selected, inside, preview, close, dispatch, listeners };
 }
 
 test('outside click closes open Cards inspector, consumes input and restores selected-card focus', () => {
@@ -911,6 +922,7 @@ test('outside click closes open Cards inspector, consumes input and restores sel
   const calls = h.dispatch('click', { target: {} });
 
   assert.equal(h.screen.dataset.inspector, 'closed');
+  assert.equal(h.close.clickCalls, 1);
   assert.deepEqual(calls, { preventDefault: 1, stopPropagation: 1, stopImmediatePropagation: 1 });
   assert.equal(h.selected.focusCalls, 1);
   controller.destroy();
@@ -922,6 +934,7 @@ test('click inside Cards preview stays open and is not consumed', () => {
   const calls = h.dispatch('click', { target: h.inside });
 
   assert.equal(h.screen.dataset.inspector, 'open');
+  assert.equal(h.close.clickCalls, 0);
   assert.deepEqual(calls, { preventDefault: 0, stopPropagation: 0, stopImmediatePropagation: 0 });
   assert.equal(h.selected.focusCalls, 0);
   controller.destroy();
@@ -933,6 +946,7 @@ test('Escape closes open Cards inspector, consumes input and restores focus', ()
   const calls = h.dispatch('keydown', { key: 'Escape' });
 
   assert.equal(h.screen.dataset.inspector, 'closed');
+  assert.equal(h.close.clickCalls, 1);
   assert.deepEqual(calls, { preventDefault: 1, stopPropagation: 1, stopImmediatePropagation: 1 });
   assert.equal(h.selected.focusCalls, 1);
   controller.destroy();
@@ -944,6 +958,7 @@ test('non-Escape key does not dismiss Cards inspector', () => {
   const calls = h.dispatch('keydown', { key: 'Enter' });
 
   assert.equal(h.screen.dataset.inspector, 'open');
+  assert.equal(h.close.clickCalls, 0);
   assert.deepEqual(calls, { preventDefault: 0, stopPropagation: 0, stopImmediatePropagation: 0 });
   assert.equal(h.selected.focusCalls, 0);
   controller.destroy();

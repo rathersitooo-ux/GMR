@@ -406,16 +406,18 @@ test('Home runtime removes the retired visual layer together with duplicate lega
   const legacyLayer = { remove: () => removed.push('visual') };
   const battleCta = { remove: () => removed.push('battle') };
   const partnerChip = { remove: () => removed.push('partner') };
+  const fog = { remove: () => removed.push('fog') };
   const home = {
     querySelectorAll(selector) {
       if (selector === '#codexHomeVisualLayer' || selector === '.codexHomeVisualLayer') return [legacyLayer];
       if (selector === '#codexHomeBattleCta' || selector === '.codexBattleCta') return [battleCta];
       if (selector === '#codexHomePartnerChip' || selector === '.codexPartnerChip') return [partnerChip];
+      if (selector === '.codexHomeFog') return [fog];
       return [];
     },
   };
-  assert.equal(removeLegacyHomeNodes(home), 3);
-  assert.deepEqual(removed.sort(), ['battle', 'partner', 'visual']);
+  assert.equal(removeLegacyHomeNodes(home), 4);
+  assert.deepEqual(removed.sort(), ['battle', 'fog', 'partner', 'visual']);
 });
 
 test('Home compatibility direction map keeps the four fixed responsibilities for non-pointer input', () => {

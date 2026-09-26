@@ -50,6 +50,7 @@ const LEGACY_HOME_SELECTORS = Object.freeze([
   '.codexBattleCta',
   '.codexBattleCrest',
   '.codexRankLabel',
+  '.codexHomeFog',
 ]);
 
 const runtime = {

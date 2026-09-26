@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-FACE-READABILITY-R2-202609262328-CODEX",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "CARDS_COLLECTION_DECK_FACE_READABILITY_R2",
+  "acquireKey": "CARDS-FACE-READABILITY-R2-202609262328-CODEX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CARDS_THREE_VIEWPORT_LOCAL_SKIN_STRESS_20260926T2218JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "FOCUSED_CARDS_50_OF_50_AND_CARDS_INTERACTION_TESTS_PASS",
+  "proceedToken": "PROCEED|CARDS-FACE-READABILITY-R2-202609262328-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|cards-face-readability|browser-cards|active-lease",
+  "authorizationBaseSha": "1d5458de2ffffaaaed76f6da9e569439c1d0fabc",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "CARDS_COLLECTION_DECK_FACE_READABILITY_R2",
+  "leaseAcquireKey": "CARDS-FACE-READABILITY-R2-202609262328-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-09-26 23:29 JST",
+  "leaseUntilJst": "2026-09-27 00:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@1d5458de2ffffaaaed76f6da9e569439c1d0fabc; branch codex/card-face-layer-legibility-r1-20260924; browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; data/preaction-authorizations/CARDS-FACE-READABILITY-R2-202609262328-CODEX.json temporary PRE_ACTION witness; own branch force-update/PR/check/readback; own CURRENT_ACTIVE_LEASES row5; R24 append-only own events.",
+  "solutionSignature": "CARDS_LOCAL_SKIN_IDENTITY_LABEL_READABILITY_R2",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_CARDS_PRESENTATION_COMPONENT_AND_PR2088_ACTUAL",
+  "solutionSearchEvidence": [
+    "The current Cards surface already consumes local skin overlays and live cost, rank, ability, name, and in-Deck labels; the repair stays inside that adopted consumer.",
+    "Existing PR #2088 contains the smallest presentation-only patch and focused test, so reconstruction reuses it rather than inventing a new component or asset.",
+    "Real Edge headless mouse navigation captured Cards at 1280x720, 390x844, and 667x375 with verification-only stress overlays below the live labels and without document horizontal overflow.",
+    "The Cards-specific interaction tests for favorite persistence, search/filter/detail/mobile tray, suit filters, and deck-slot removal completed before the global Browser suite timed out on unrelated Home/Profile/Battle/Setup routes.",
+    "No generated production asset is needed because the defect is stacking, contrast, and bounded text presentation."
+  ],
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ]
+}

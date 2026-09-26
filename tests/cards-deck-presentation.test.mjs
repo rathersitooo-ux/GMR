@@ -1144,3 +1144,61 @@ test('vote safe-dismiss auto-installs before Cards inspector dismiss so the fron
   assert.ok(vote >= 0 && inspector > vote);
 });
 
+test('Cards local skins stay below identity labels and collection ability tags remain legible', async () => {
+  const { installFanartLocalSkinCards } = await import('../browser/cards-deck-presentation.mjs');
+  const styles = new Map();
+  const makeElement = (tagName) => ({
+    tagName,
+    dataset: {},
+    parentNode: null,
+    setAttribute() {},
+    addEventListener() {},
+    after(node) { node.parentNode = this; },
+    remove() { this.removed = true; },
+  });
+  const screen = {
+    children: [],
+    querySelector() { return null; },
+    querySelectorAll() { return []; },
+    appendChild(node) { this.children.push(node); node.parentNode = this; },
+    addEventListener() {},
+    removeEventListener() {},
+  };
+  const head = {
+    appendChild(node) { styles.set(node.id, node); node.parentNode = this; },
+  };
+  const doc = {
+    head,
+    documentElement: head,
+    querySelector(selector) {
+      return selector === 'section[data-screen="cards"]' ? screen : null;
+    },
+    createElement: makeElement,
+    getElementById(id) { return styles.get(id) ?? null; },
+  };
+  const win = {
+    URL: {
+      createObjectURL() { return 'blob:test'; },
+      revokeObjectURL() {},
+    },
+  };
+
+  const installation = installFanartLocalSkinCards({ document: doc, window: win, indexedDB: null });
+  await installation.refresh();
+  const css = styles.get('gameroad-fanart-local-skin-style')?.textContent ?? '';
+
+  assert.match(css, /isolation:isolate/);
+  assert.match(css, /data-role="fanart-local-skin-overlay"\]\{[^}]*pointer-events:none;z-index:0!important/);
+  assert.match(css, /\.cardCostBadge[^}]*z-index:2!important/);
+  for (const selector of ['.cardRank', '.cardAbilityTag', '.cardFaceName', '.inDeckTag']) {
+    assert.ok(css.includes(selector), `skin layer must preserve ${selector}`);
+  }
+  assert.match(css, /\.screen\.cards #collectionGrid \.cardAbilityTag\{[^}]*font-size:8px!important/);
+  assert.match(css, /text-overflow:ellipsis/);
+  assert.match(css, /background:rgba\(10,16,25,\.84\)/);
+  assert.match(css, /\[data-fanart-local-skin-host="1"\]>\.cardRank,\[data-fanart-local-skin-host="1"\]>\.cardFaceName\{[^}]*background:rgba\(255,255,245,\.92\)!important/);
+  assert.match(css, /\[data-fanart-local-skin-host="1"\]>\.cardCostBadge\{[^}]*background:rgba\(255,255,245,\.96\)!important/);
+  assert.doesNotMatch(css, /\.resolutionCard/);
+
+  installation.destroy();
+});

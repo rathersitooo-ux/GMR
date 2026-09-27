@@ -90,8 +90,33 @@ async function assertModelScreen(page, model) {
 
 function rootGo(page, target) {
   return page
-    .locator(`[data-go="${target}"]:visible, [data-home-target="${target}"]:visible, [data-root-go="${target}"]:visible`)
+    .locator(`section[data-screen="home"].active:visible [data-go="${target}"]:visible, section[data-screen="home"].active:visible [data-home-target="${target}"]:visible, section[data-screen="home"].active:visible [data-root-go="${target}"]:visible`)
     .first();
+}
+
+async function openVisibleSaasunaConversationFromHome(page) {
+  const charactersControl = rootGo(page, 'characters');
+  await expect(charactersControl, 'visible Home-to-Partner/Characters control').toBeVisible();
+  await charactersControl.click();
+
+  const characters = page.locator('section[data-screen="characters"]');
+  await expect(characters, 'Characters target reached through visible player control').toBeVisible();
+
+  const partnerRole = characters.locator('.charRoleTab[data-role="partner"]:visible').first();
+  await expect(partnerRole, 'current normal Partner role is visible').toBeVisible();
+  await partnerRole.click();
+  await expect(partnerRole).toHaveClass(/on/);
+
+  const conversation = characters.locator('[data-gr-partner-conversation="1"]');
+  if (!(await conversation.isVisible().catch(() => false))) {
+    const saasunaCard = characters.locator('.charCard:visible').filter({ hasText: 'サースナー' }).first();
+    await expect(saasunaCard, 'visible roster exposes Saasuna when another normal Partner is selected').toBeVisible();
+    await saasunaCard.click();
+  }
+
+  await expect(conversation, 'current Saasuna conversation appears after selecting the normal Partner role and Saasuna').toBeVisible({ timeout: 7_000 });
+  await expect(conversation).toHaveAttribute('aria-label', 'サースナーとの会話');
+  return { characters, conversation, partnerRole };
 }
 
 function nestedGo(page, current, target) {
@@ -286,16 +311,9 @@ test('Partner Shell is reachable through the live Saasuna conversation and stays
   await bootCurrentBrowser(page);
 
   const home = page.locator('section[data-screen="home"]');
-  const charactersControl = rootGo(page, 'characters');
   await expect(home, 'Home is the visible starting surface').toBeVisible();
-  await expect(charactersControl, 'visible Home-to-Partner/Characters control').toBeVisible();
-  await charactersControl.click();
-
-  const characters = page.locator('section[data-screen="characters"]');
-  await expect(characters, 'Characters target reached through visible player control').toBeVisible();
-  const conversation = characters.locator('[data-gr-partner-conversation="1"]');
-  await expect(conversation, 'current Saasuna conversation is projected on the live Characters screen').toBeVisible({ timeout: 7_000 });
-  await expect(conversation).toHaveAttribute('aria-label', 'サースナーとの会話');
+  const { conversation, partnerRole } = await openVisibleSaasunaConversationFromHome(page);
+  await expect(partnerRole).toHaveClass(/on/);
 
   const input = conversation.locator('.grPartnerConversationInput');
   await expect(input, 'direct conversation remains visible before opening the Partner Shell').toBeVisible();
@@ -369,7 +387,7 @@ test('Profile identity-first surface and Records bridge are visible through real
 
   const profile = page.locator('section[data-screen="profile"]');
   await expect(profile, 'Profile target reached through visible pointer navigation').toBeVisible();
-  await expect(profile).toHaveAttribute('data-profile-presentation', 'PROFILE_IDENTITY_PRESENTATION_R1B');
+  await expect(profile).toHaveAttribute('data-profile-presentation', 'PROFILE_IDENTITY_PRESENTATION_R1C');
   await expect(profile.locator('.profileIdentityCard[data-role="player"]'), 'current player identity card').toBeVisible();
   await expect(profile.locator('.profileIdentityCard[data-role="partner"]'), 'current Partner identity card').toBeVisible();
   const legacyMetrics = profile.locator('.metricGrid');

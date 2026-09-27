@@ -261,7 +261,8 @@ jobs:
         run: |
           set -euo pipefail
           LLAMA_CLI="$(cat "$RUNNER_TEMP/llama-cli-path.txt")"
-          export LD_LIBRARY_PATH="$(dirname "$LLAMA_CLI"):${LD_LIBRARY_PATH:-}"
+          LLAMA_LIB_DIR="$(dirname "$LLAMA_CLI")"
+          export LD_LIBRARY_PATH="${LLAMA_LIB_DIR}:${LD_LIBRARY_PATH:-}"
           timeout 720 "$LLAMA_CLI" \
             -m "$MODEL_FILE" \
             -f "$PROMPT_FILE" \

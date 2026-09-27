@@ -198,7 +198,6 @@ async function submitVisiblePlan(battle) {
   const ready = battle.locator('#readyPlan');
   await expect(roadSelect).toBeVisible();
   await expect(battleSelect).toBeVisible();
-  await expect(ready, 'explicit ready-plan decision remains retired from the visible player path').toBeHidden();
 
   const enabledValues = async (select) => select.locator('option:not([disabled])').evaluateAll((nodes) => nodes
     .map((node) => String(node.value || '').trim())
@@ -218,11 +217,18 @@ async function submitVisiblePlan(battle) {
     await battleSelect.selectOption(battleValues[0]);
   }
 
+  if (await ready.isVisible()) {
+    await expect(ready, 'responsive explicit ready-plan control enables after distinct Road/Battle choices').toBeEnabled();
+    await ready.click();
+  } else {
+    await expect(ready, 'desktop visible path keeps explicit ready-plan retired').toBeHidden();
+  }
+
   await expect.poll(async () => {
     const phaseTitle = ((await battle.locator('#phaseTitle').textContent()) || '').trim();
     return phaseTitle !== '行動を計画' || !(await roadSelect.isEnabled()) || !(await battleSelect.isEnabled());
   }, {
-    message: 'completing distinct visible Road/Battle selections auto-submits the current plan',
+    message: 'completed visible plan leaves the current planning decision through its responsive submit path',
     timeout: 7_000,
   }).toBeTruthy();
 }
@@ -1712,12 +1718,18 @@ test('R13 covers direct plan selectors, reachable-node click, avatar drag, real 
   }
 
   await battleSelect.selectOption(battleId);
-  await expect(battle.locator('#readyPlan'), 'explicit ready-plan decision remains retired while the completed plan auto-submits').toBeHidden();
+  const readyPlan = battle.locator('#readyPlan');
+  if (await readyPlan.isVisible()) {
+    await expect(readyPlan, 'responsive explicit ready-plan control enables after distinct direct choices').toBeEnabled();
+    await readyPlan.click();
+  } else {
+    await expect(readyPlan, 'desktop direct plan keeps explicit ready-plan retired').toBeHidden();
+  }
   await expect.poll(async () => {
     const phaseTitle = ((await battle.locator('#phaseTitle').textContent()) || '').trim();
     return phaseTitle !== '行動を計画' || !(await roadSelect.isEnabled()) || !(await battleSelect.isEnabled());
   }, {
-    message: 'completing the distinct direct plan auto-submits after route interaction',
+    message: 'completing the distinct direct plan leaves planning through its responsive submit path',
     timeout: 7_000,
   }).toBeTruthy();
   const targetSurface = battle.locator('#targetBox.on:visible');

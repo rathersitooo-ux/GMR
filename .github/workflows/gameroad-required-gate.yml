@@ -42,6 +42,11 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${EXPECTED_HEAD_SHA}"
 
+      - name: Lint GAMEROAD GitHub workflow definitions
+        uses: docker://rhysd/actionlint:1.7.7
+        with:
+          args: -color .github/workflows/gameroad-executor-bus.yml .github/workflows/gameroad-required-gate.yml .github/workflows/browser-full-interaction.yml .github/workflows/required-gate-auto-merge.yml
+
       - name: Classify changed paths
         id: classify
         shell: bash

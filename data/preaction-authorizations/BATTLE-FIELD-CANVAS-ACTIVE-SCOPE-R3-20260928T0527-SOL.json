@@ -1,0 +1,36 @@
+﻿{
+    "schemaVersion":  "gameroad-preaction-v3",
+    "recordId":  "BATTLE-FIELD-CANVAS-ACTIVE-SCOPE-R3-20260928T0527-SOL",
+    "taskId":  "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+    "workUnitKey":  "BATTLE_FIELD_CANVAS_ACTIVE_SCOPE_R3",
+    "acquireKey":  "BATTLE-FIELD-CANVAS-ACTIVE-SCOPE-R3-20260928T0527-SOL",
+    "riskClass":  "MATERIAL_STANDARD",
+    "predictionStatus":  "PASS",
+    "predictionEvidenceId":  "R11_VERIFIED_POINTER_INTERCEPTION_DONOR_PLUS_CURRENT_MAIN_MISSING_FIXES",
+    "rehearsalStatus":  "PASS",
+    "rehearsalEvidenceId":  "CURRENT_BATTLE_POINTER_ROOT_CAUSE_READBACK_FIELD_CANVAS_AND_TOP_CHROME",
+    "proceedToken":  "PROCEED|BATTLE-FIELD-CANVAS-ACTIVE-SCOPE-R3-20260928T0527-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-field-canvas-active-scope-r3|product-plus-existing-static-regression|active-lease",
+    "authorizationBaseSha":  "c50107e1c3d9b13dbe61e2c1480627867d2ac600",
+    "stateModelVersion":  "STATE_MODEL_V1",
+    "leaseAuthority":  "CURRENT_ACTIVE_LEASES",
+    "leaseState":  "ACTIVE",
+    "leaseTaskId":  "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+    "leaseWorkUnitKey":  "BATTLE_FIELD_CANVAS_ACTIVE_SCOPE_R3",
+    "leaseAcquireKey":  "BATTLE-FIELD-CANVAS-ACTIVE-SCOPE-R3-20260928T0527-SOL",
+    "leaseSnapshotReadbackAtJst":  "2026-09-28 05:27 JST",
+    "leaseUntilJst":  "2026-09-28 06:27 JST",
+    "leaseSnapshotReadbackRef":  "CURRENT_ACTIVE_LEASES!A5:L5",
+    "solutionSignature":  "BATTLE_FIELD_CANVAS_ACTIVE_SCOPE_INPUT_OWNERSHIP_R3",
+    "reuseDisposition":  "COMPOSE",
+    "solutionSearchStatus":  "PASS",
+    "reuseDecisionEvidenceId":  "R11_DONOR_CURRENT_MAIN_EXACT_GAP",
+    "scope":  [
+                  "browser/GAMEROAD.html",
+                  "tests/browser-static-check.mjs"
+              ],
+    "leaseScope":  [
+                       "browser/GAMEROAD.html",
+                       "tests/browser-static-check.mjs"
+                   ],
+    "leaseExactMutableResources":  "GitHub:rathersitooo-ux/GMR new branch work/battle-field-canvas-active-scope-r3-20260928; mutable browser/GAMEROAD.html + tests/browser-static-check.mjs + new data/preaction-authorizations/BATTLE-FIELD-CANVAS-ACTIVE-SCOPE-R3-20260928T0527-SOL.json; own PR/check/readback + own R24/current lease events."
+}

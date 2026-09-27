@@ -182,7 +182,7 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
-      actions: write
+      actions: read
     env:
       BODY_FILE: ${{ runner.temp }}/executor-free-body.txt
       PACKET_FILE: ${{ runner.temp }}/executor-free-packet.json
@@ -385,20 +385,6 @@ jobs:
               repo: context.repo.repo,
               ref: packet.baseRef,
             });
-            const commonInputs = {
-              candidate_only: 'true',
-              base_sha: baseCommit.data.sha,
-              head_sha: process.env.CANDIDATE_SHA,
-              pr_number: process.env.PR_NUMBER,
-            };
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'gameroad-required-gate.yml',
-              ref: process.env.CANDIDATE_BRANCH,
-              inputs: commonInputs,
-            });
-
             const browserEvidencePath = (p) =>
               p === 'browser/GAMEROAD.html' ||
               /^browser\/.*presentation.*\.mjs$/.test(p) ||
@@ -413,15 +399,19 @@ jobs:
               p === 'playwright.full-interaction.config.mjs' ||
               p === '.github/workflows/browser-full-interaction.yml';
             const bfiRequired = packet.exactMutableResources.some(browserEvidencePath);
-            if (bfiRequired) {
-              await github.rest.actions.createWorkflowDispatch({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                workflow_id: 'browser-full-interaction.yml',
-                ref: process.env.CANDIDATE_BRANCH,
-                inputs: commonInputs,
-              });
-            }
+            await github.rest.repos.createDispatchEvent({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              event_type: 'gameroad-candidate-evidence',
+              client_payload: {
+                candidate_only: true,
+                base_sha: baseCommit.data.sha,
+                head_sha: process.env.CANDIDATE_SHA,
+                pr_number: Number(process.env.PR_NUMBER),
+                candidate_branch: process.env.CANDIDATE_BRANCH,
+                bfi_required: bfiRequired,
+              },
+            });
             core.setOutput('bfi_required', String(bfiRequired));
       - name: Return candidate to the originating Executor issue
         if: success()

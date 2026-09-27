@@ -104,7 +104,9 @@ section[data-screen="setup"] #startMatch:focus-visible{outline:3px solid current
 @media (min-width:900px) and (min-height:520px){section[data-screen="setup"] .setupHero{display:flex;align-items:center;gap:clamp(18px,2.4vw,34px);min-height:min(62vh,448px);padding:clamp(24px,3vw,40px);border-radius:28px;background:radial-gradient(circle at 64% 46%,color-mix(in srgb,currentColor 24%,transparent),transparent 42%),linear-gradient(145deg,color-mix(in srgb,currentColor 12%,transparent),color-mix(in srgb,currentColor 3%,transparent));box-shadow:0 24px 56px rgba(0,0,0,.25),inset 0 0 0 1px color-mix(in srgb,currentColor 22%,transparent)}section[data-screen="setup"] .setupHero img{height:min(50vh,360px)!important;max-height:calc(100% - 36px)!important;width:auto!important;max-width:min(46vw,430px)!important;object-fit:contain;filter:drop-shadow(0 18px 26px rgba(0,0,0,.34))}section[data-screen="setup"] .setupBox{backdrop-filter:blur(9px);box-shadow:0 20px 48px rgba(0,0,0,.18),inset 0 0 0 1px color-mix(in srgb,currentColor 18%,transparent)}}
 @media (max-width:540px){section[data-screen="setup"]{overflow-y:auto;overscroll-behavior:contain}section[data-screen="setup"] .setupHero{padding:14px;border-radius:18px}section[data-screen="setup"] .setupBox{gap:10px;padding:12px;border-radius:18px}section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode]{min-height:48px !important}section[data-screen="setup"] [data-mode]::before{min-width:4.3em;margin-inline-end:.46em;padding-inline:.34em;font-size:.68em}section[data-screen="setup"] #startMatch{position:sticky;bottom:max(10px,env(safe-area-inset-bottom));z-index:20;min-height:64px !important;margin-top:12px}}
 @media (max-height:430px) and (orientation:landscape){section[data-screen="setup"] .setupHero{padding:9px 12px}section[data-screen="setup"] .setupBox{gap:7px;padding:9px 11px}section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode]{min-height:44px !important;padding-block:7px !important}section[data-screen="setup"] [data-mode]::before{min-width:4.15em;margin-inline-end:.42em;font-size:.66em}section[data-screen="setup"] #startMatch{min-height:50px !important;margin-top:7px}}
-section[data-screen="setup"] #${SETUP_QUICK_DECK_TRIGGER_ID}{grid-column:1/-1;min-height:44px;padding:9px 14px;border-radius:13px;border:1px solid color-mix(in srgb,currentColor 24%,transparent);background:color-mix(in srgb,currentColor 7%,transparent);color:inherit;font:inherit;font-weight:800;cursor:pointer;touch-action:manipulation}
+section[data-screen="setup"] #${SETUP_QUICK_DECK_TRIGGER_ID}{grid-column:1/-1;min-height:44px;padding:9px 14px;border-radius:13px;border:1px solid color-mix(in srgb,currentColor 24%,transparent);background:color-mix(in srgb,currentColor 7%,transparent);color:inherit;font:inherit;font-weight:800;cursor:pointer;touch-action:manipulation;transform-origin:50% 56%;transition:transform .1s ease,filter .1s ease,background-color .1s ease,box-shadow .1s ease}
+section[data-screen="setup"] #${SETUP_QUICK_DECK_TRIGGER_ID}:hover{filter:brightness(1.08);background:color-mix(in srgb,currentColor 11%,transparent);box-shadow:0 5px 14px rgba(0,0,0,.16)}
+section[data-screen="setup"] #${SETUP_QUICK_DECK_TRIGGER_ID}:active{transform:translateY(1px) scale(.986);filter:brightness(.96);background:color-mix(in srgb,currentColor 14%,transparent);box-shadow:0 2px 7px rgba(0,0,0,.14)}
 section[data-screen="setup"] #${SETUP_QUICK_DECK_TRIGGER_ID}:focus-visible{outline:3px solid currentColor;outline-offset:3px}
 #${SETUP_QUICK_DECK_DIALOG_ID}[hidden]{display:none!important}
 #${SETUP_QUICK_DECK_DIALOG_ID}{position:fixed;inset:0;z-index:2147482400;display:grid;place-items:center;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));background:rgba(2,8,12,.72)}
@@ -112,7 +114,10 @@ section[data-screen="setup"] #${SETUP_QUICK_DECK_TRIGGER_ID}:focus-visible{outli
 #${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckHead{display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;z-index:2;background:inherit;padding-bottom:10px}
 #${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckTitle{margin:0;font-size:clamp(18px,2.5vw,25px)}
 #${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckActions{display:flex;gap:8px}
-#${SETUP_QUICK_DECK_DIALOG_ID} button{min-height:44px;padding:8px 12px;border-radius:11px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:inherit;font:inherit;font-weight:800}
+#${SETUP_QUICK_DECK_DIALOG_ID} button{min-height:44px;padding:8px 12px;border-radius:11px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:inherit;font:inherit;font-weight:800;cursor:pointer;touch-action:manipulation;transform-origin:50% 56%;transition:transform .09s ease,filter .09s ease,background-color .09s ease,box-shadow .09s ease}
+#${SETUP_QUICK_DECK_DIALOG_ID} button:hover{filter:brightness(1.1);background:rgba(255,255,255,.11);box-shadow:0 4px 12px rgba(0,0,0,.18)}
+#${SETUP_QUICK_DECK_DIALOG_ID} button:active{transform:translateY(1px) scale(.982);filter:brightness(.94);background:rgba(255,255,255,.13);box-shadow:0 1px 5px rgba(0,0,0,.16)}
+#${SETUP_QUICK_DECK_DIALOG_ID} button:focus-visible{outline:3px solid currentColor;outline-offset:2px}
 #${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckSummary{margin:0 0 12px;opacity:.8;font-size:13px}
 #${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckSection+ .setupQuickDeckSection{margin-top:14px}
 #${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckSectionTitle{margin:0 0 8px;font-size:14px}
@@ -123,7 +128,9 @@ section[data-screen="setup"] #${SETUP_QUICK_DECK_TRIGGER_ID}:focus-visible{outli
 
 `;
 const UPDATE_DETAILS_CSS = `
-.${UPDATE_DETAILS_TRIGGER_CLASS}{appearance:none;border:0;background:none;color:inherit;font:inherit;font-weight:inherit;line-height:inherit;min-height:${TOUCH_TARGET_MIN_PX}px;padding:0;margin:0;text-decoration:underline;text-decoration-thickness:.08em;text-underline-offset:.18em;cursor:pointer;touch-action:manipulation}
+.${UPDATE_DETAILS_TRIGGER_CLASS}{appearance:none;border:0;background:none;color:inherit;font:inherit;font-weight:inherit;line-height:inherit;min-height:${TOUCH_TARGET_MIN_PX}px;padding:0;margin:0;text-decoration:underline;text-decoration-thickness:.08em;text-underline-offset:.18em;cursor:pointer;touch-action:manipulation;border-radius:4px;transform-origin:50% 60%;transition:transform .09s ease,filter .09s ease,background-color .09s ease}
+.${UPDATE_DETAILS_TRIGGER_CLASS}:hover{background:rgba(255,255,255,.06);filter:brightness(1.08)}
+.${UPDATE_DETAILS_TRIGGER_CLASS}:active{transform:translateY(1px) scale(.985);background:rgba(255,255,255,.09);filter:brightness(.94)}
 .${UPDATE_DETAILS_TRIGGER_CLASS}:focus-visible{outline:2px solid currentColor;outline-offset:3px;border-radius:4px}
 #${UPDATE_DETAILS_DIALOG_ID}[hidden]{display:none!important}
 #${UPDATE_DETAILS_DIALOG_ID}{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));background:rgba(6,9,18,.62);backdrop-filter:blur(8px)}
@@ -134,10 +141,14 @@ const UPDATE_DETAILS_CSS = `
 #${UPDATE_DETAILS_DIALOG_ID} h4{margin:12px 0 8px;font-size:clamp(15px,2.2vw,18px)}
 #${UPDATE_DETAILS_DIALOG_ID} ul{margin:0;padding-left:1.35em;display:grid;gap:8px}
 #${UPDATE_DETAILS_DIALOG_ID} li{line-height:1.55}
-#${UPDATE_DETAILS_DIALOG_ID} .gameroadUpdateDetailsClose{min-width:44px;min-height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:inherit;font:inherit;font-weight:700;cursor:pointer;touch-action:manipulation}
+#${UPDATE_DETAILS_DIALOG_ID} .gameroadUpdateDetailsClose{min-width:44px;min-height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:inherit;font:inherit;font-weight:700;cursor:pointer;touch-action:manipulation;transform-origin:50% 55%;transition:transform .09s ease,filter .09s ease,background-color .09s ease,box-shadow .09s ease}
+#${UPDATE_DETAILS_DIALOG_ID} .gameroadUpdateDetailsClose:hover{filter:brightness(1.12);background:rgba(255,255,255,.13);box-shadow:0 4px 12px rgba(0,0,0,.2)}
+#${UPDATE_DETAILS_DIALOG_ID} .gameroadUpdateDetailsClose:active{transform:translateY(1px) scale(.98);filter:brightness(.94);background:rgba(255,255,255,.16);box-shadow:0 1px 5px rgba(0,0,0,.16)}
 #${UPDATE_DETAILS_DIALOG_ID} .gameroadUpdateDetailsClose:focus-visible{outline:3px solid #fff;outline-offset:2px}
 #${UPDATE_DETAILS_DIALOG_ID} .gameroadUpdateDetailsStatus{margin:16px 0;line-height:1.6}
 @media (max-height:430px) and (orientation:landscape){#${UPDATE_DETAILS_DIALOG_ID}{align-items:stretch;padding:8px max(10px,env(safe-area-inset-right)) 8px max(10px,env(safe-area-inset-left))}#${UPDATE_DETAILS_DIALOG_ID} .gameroadUpdateDetailsPanel{max-height:none;border-radius:14px;padding:12px 14px 14px}#${UPDATE_DETAILS_DIALOG_ID} .gameroadUpdateDetailsHead{top:-12px;margin:-12px -14px 8px;padding:12px 14px}}
+@media(prefers-reduced-motion:reduce){section[data-screen="setup"] #${SETUP_QUICK_DECK_TRIGGER_ID},#${SETUP_QUICK_DECK_DIALOG_ID} button,.${UPDATE_DETAILS_TRIGGER_CLASS},#${UPDATE_DETAILS_DIALOG_ID} .gameroadUpdateDetailsClose{transform:none!important;transition:filter .01s linear,background-color .01s linear!important}}
+html.r10LowPerf section[data-screen="setup"] #${SETUP_QUICK_DECK_TRIGGER_ID},html.r10LowPerf #${SETUP_QUICK_DECK_DIALOG_ID} button,html.r10LowPerf #${UPDATE_DETAILS_DIALOG_ID} .gameroadUpdateDetailsClose{box-shadow:none!important}
 `;
 
 const updateDetailsRuntime = {

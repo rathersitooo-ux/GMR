@@ -103,6 +103,17 @@ test('Setup Quick Deck resolves production display_name before raw card ids', ()
   }
 });
 
+test('Setup secondary controls provide short tactile press feedback with Reduced Motion and low-perf fallbacks', () => {
+  const source = fs.readFileSync(new URL('../browser/home-shell-presentation-core.mjs', import.meta.url), 'utf8');
+  assert.match(source, /#\$\{SETUP_QUICK_DECK_TRIGGER_ID\}:active\{transform:translateY\(1px\) scale\(\.986\)/);
+  assert.match(source, /#\$\{SETUP_QUICK_DECK_DIALOG_ID\} button:active\{transform:translateY\(1px\) scale\(\.982\)/);
+  assert.match(source, /\.\$\{UPDATE_DETAILS_TRIGGER_CLASS\}:active\{transform:translateY\(1px\) scale\(\.985\)/);
+  assert.match(source, /gameroadUpdateDetailsClose:active\{transform:translateY\(1px\) scale\(\.98\)/);
+  assert.match(source, /@media\(prefers-reduced-motion:reduce\)[\s\S]*?transform:none!important;transition:filter \.01s linear,background-color \.01s linear!important/);
+  assert.match(source, /html\.r10LowPerf[\s\S]*?box-shadow:none!important/);
+  assert.doesNotMatch(source, /addEventListener\(['"]pointerdown['"]/);
+});
+
 test('Setup Quick Deck live consumer delegates to the canonical read-only preview and does not own deck state', () => {
   const source = fs.readFileSync(new URL('../browser/home-shell-presentation-core.mjs', import.meta.url), 'utf8');
   assert.match(source, /from '\.\/cards-deck-presentation-core\.mjs'/);

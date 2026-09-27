@@ -251,6 +251,42 @@ test('live consumer rejects mismatched replay identity and any private spectator
     }),
     /SPECTATOR_PUBLIC_REPLAY_PRIVATE_FIELD:privateData/,
   );
+
+  for (const [event, expectedField] of [
+    [
+      { sequence: 2, kind: 'battle_resolution', publicData: { detail: { hiddenHand: ['SECRET'] } } },
+      'hiddenHand',
+    ],
+    [
+      { sequence: 3, kind: 'battle_resolution', publicData: { detail: { hand: ['SECRET'] } } },
+      'hand',
+    ],
+    [
+      { sequence: 4, kind: 'battle_resolution', publicData: { detail: [{ deck: ['SECRET'] }] } },
+      'deck',
+    ],
+  ]) {
+    let renders = 0;
+    await assert.rejects(
+      () => consumeAuthorizedSpectatorReplay(liveResult(), {
+        readPublicReplay() {
+          return {
+            ok: true,
+            status: 'ready',
+            schema: 'GAMEROAD_BATTLE_REPLAY_V1',
+            matchId: 'MATCH-PUBLIC-1',
+            events: [event],
+          };
+        },
+        renderPublicReplay() {
+          renders += 1;
+          return true;
+        },
+      }),
+      new RegExp(`SPECTATOR_PUBLIC_REPLAY_PRIVATE_FIELD:${expectedField}`),
+    );
+    assert.equal(renders, 0);
+  }
 });
 
 test('adapter contract declares a caller-verified public presence seam with no discovery, secrets, private join, game authority, or second replay state', () => {

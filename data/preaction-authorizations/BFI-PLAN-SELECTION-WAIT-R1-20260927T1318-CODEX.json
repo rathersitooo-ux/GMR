@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BFI-PLAN-SELECTION-WAIT-R1-20260927T1318-CODEX",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BFI_PLAN_SELECTION_STATE_WAIT_R1",
+  "acquireKey": "BFI-PLAN-SELECTION-WAIT-R1-20260927T1318-CODEX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_BFI_ROAD_SELECTION_FAIL_PUBLIC_ACTUAL_SELECTION_PASS_20260927T1318JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR2041_DONOR_WAIT_PATTERN_PLUS_CURRENT_MAIN_EXACT_HELPER",
+  "proceedToken": "PROCEED|BFI-PLAN-SELECTION-WAIT-R1-20260927T1318-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|bfi-plan-state-wait|test-only|active-lease",
+  "authorizationBaseSha": "12a06c91d74cf3dc19fb30059bd4a5ad8b2b6f46",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BFI_PLAN_SELECTION_STATE_WAIT_R1",
+  "leaseAcquireKey": "BFI-PLAN-SELECTION-WAIT-R1-20260927T1318-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-09-27 13:25 JST",
+  "leaseUntilJst": "2026-09-27 14:18 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@12a06c91d74cf3dc19fb30059bd4a5ad8b2b6f46; branch codex/bfi-plan-selection-state-wait-r3-20260927; tests/browser-full-interaction.spec.mjs; own transient data/preaction-authorizations/BFI-PLAN-SELECTION-WAIT-R1-20260927T1318-CODEX.json; own branch/PR/check/readback; own CURRENT_ACTIVE_LEASES row 6; own R24 events. Product/runtime/gameplay/save/economy/network/assets and PR#2041 donor are READ_ONLY.",
+  "solutionSignature": "BFI_VISIBLE_PLAN_WAIT_FOR_STATE_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR2041_DONOR_PATTERN_CURRENT_MAIN_MINIMAL_ADAPT",
+  "solutionSearchEvidence": [
+    "Current main BFI fails after click dispatch because it checks the select value immediately.",
+    "Current public actual accepts the same visible hand-card click and fills Road selection.",
+    "Open PR #2041 contains a broader stale-base test-only donor; only the state-wait concept is reused.",
+    "No product/runtime/gameplay/save/economy/network/assets change is authorized."
+  ],
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

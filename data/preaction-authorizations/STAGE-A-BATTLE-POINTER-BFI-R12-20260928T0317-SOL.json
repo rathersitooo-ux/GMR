@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "STAGE-A-BATTLE-POINTER-BFI-R12-20260928T0317-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "STAGE_A_BATTLE_POINTER_AND_BFI_R12",
+  "acquireKey": "STAGE-A-BATTLE-POINTER-BFI-R12-20260928T0317-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR2116_BFI_RUN36326131501_PLUS_FRESH_PRODUCT_POINTER_INTERCEPTION_ROOT_CAUSE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "BATTLE_CAMERA_LIVE_RUNTIME_28_TESTS_PASS_AND_WORLD_ELEMENT_POINTER_OWNERSHIP",
+  "proceedToken": "PROCEED|STAGE-A-BATTLE-POINTER-BFI-R12-20260928T0317-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|stage-a-battle-pointer-bfi-r12|clean-main-reconstruction|active-lease",
+  "authorizationBaseSha": "12a06c91d74cf3dc19fb30059bd4a5ad8b2b6f46",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "STAGE_A_BATTLE_POINTER_AND_BFI_R12",
+  "leaseAcquireKey": "STAGE-A-BATTLE-POINTER-BFI-R12-20260928T0317-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-28 03:17 JST",
+  "leaseUntilJst": "2026-09-28 04:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:O5",
+  "solutionSignature": "STAGE_A_BATTLE_POINTER_AND_BFI_CLEAN_RECONSTRUCTION_R12",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR2116_FINAL_TEST_DIFF_AS_READ_ONLY_DONOR_PLUS_TWO_LINE_PRODUCT_HIT_TARGET_FIX",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
+  ]
+}

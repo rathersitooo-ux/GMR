@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "STAGE-A-BFI-CONTRACT-SYNC-R4-20260927T1647-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "STAGE_A_BFI_CURRENT_CONTRACT_SYNC_R4",
+  "acquireKey": "STAGE-A-BFI-CONTRACT-SYNC-R4-20260927T1647-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_BFI_MULTI_FAILURES_MATCH_STALE_CONTRACTS_20260927T1647JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR2041_READ_ONLY_DONOR_PLUS_PR2115_CURRENT_MAIN_FAILURE_LOGS",
+  "proceedToken": "PROCEED|STAGE-A-BFI-CONTRACT-SYNC-R4-20260927T1647-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|stage-a-bfi-current-contract|test-only|active-lease",
+  "authorizationBaseSha": "12a06c91d74cf3dc19fb30059bd4a5ad8b2b6f46",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "STAGE_A_BFI_CURRENT_CONTRACT_SYNC_R4",
+  "leaseAcquireKey": "STAGE-A-BFI-CONTRACT-SYNC-R4-20260927T1647-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-27 16:47 JST",
+  "leaseUntilJst": "2026-09-27 17:47 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@12a06c91d74cf3dc19fb30059bd4a5ad8b2b6f46; existing branch codex/bfi-plan-selection-state-wait-r3-20260927 expected head 885f5be27dad855ea3c344577d1ba120b7d0df7b; PR#2115; tests/browser-full-interaction.spec.mjs; tests/browser-full-interaction-state-sequence.spec.mjs; own transient data/preaction-authorizations/STAGE-A-BFI-CONTRACT-SYNC-R4-20260927T1647-SOL.json; own branch/PR/check/readback; own CURRENT_ACTIVE_LEASES exact row resolved by AcquireKey; own R24 events. Product/runtime/gameplay/save/economy/network/assets and PR#2041 donor are READ_ONLY.",
+  "solutionSignature": "BFI_CURRENT_VISIBLE_CONTRACT_SYNC_R4",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR2041_CURRENT_CONTRACT_PRINCIPLES_ADAPTED_TO_MAIN_12A06C91_AND_EXISTING_PR2115",
+  "solutionSearchEvidence": [
+    "PR#2115 exact-head Required Gate passes but Browser Full Interaction still fails the Stage A Road path and many stale UI expectations.",
+    "Fresh prior public/manual evidence on current main shows visible card click updates Road; product semantics must not be reverted to satisfy stale automation.",
+    "PR#2041 is read-only donor evidence for current active-screen navigation, Partner/Profile contracts, two-card auto-submit, and retired readyPlan.",
+    "This work changes only BFI tests; product/runtime/gameplay/save/economy/network/assets remain read-only."
+  ],
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
+  ]
+}

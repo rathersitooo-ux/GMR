@@ -235,10 +235,15 @@ async function submitVisiblePlan(battle) {
     return null;
   };
 
-  if (!(await roadSelect.inputValue())) await expect.poll(() => clickCandidate()).not.toBeNull();
+  if (!(await roadSelect.inputValue())) {
+    const roadCandidate = await clickCandidate();
+    expect(roadCandidate, 'a visible card can be clicked for Road').not.toBeNull();
+    await expect(roadSelect, 'visible Road selection reflects the click before the next decision').not.toHaveValue('');
+  }
   if (!(await battleSelect.inputValue())) {
     const roadValue = await roadSelect.inputValue();
-    await expect.poll(() => clickCandidate(roadValue)).not.toBeNull();
+    const battleCandidate = await clickCandidate(roadValue);
+    expect(battleCandidate, 'a different visible card can be clicked for Battle').not.toBeNull();
     await expect(battleSelect, 'a different visible card can be reserved as Battle').not.toHaveValue('');
   }
 

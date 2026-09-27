@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GITHUB-EVENT-CHAIN-SELF-PROPULSION-R2-20260928T0320-SOL",
+  "taskId": "OPS-WORKPOOL-SELECTION-001",
+  "workUnitKey": "GITHUB_EVENT_CHAIN_SELF_PROPULSION_R2",
+  "acquireKey": "GITHUB-EVENT-CHAIN-SELF-PROPULSION-R2-20260928T0320-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_GITHUB_EVENT_CHAIN_BREAK_CONFIRMED_20260928T0320JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "STATIC_EVENT_CHAIN_CONTRACT_PLUS_EXISTING_PULL_REQUEST_AND_WORKFLOW_RUN_BEHAVIOR",
+  "proceedToken": "PROCEED|GITHUB-EVENT-CHAIN-SELF-PROPULSION-R2-20260928T0320-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|github-event-chain-self-propulsion|workflow-chain|active-lease",
+  "authorizationBaseSha": "c50107e1c3d9b13dbe61e2c1480627867d2ac600",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-WORKPOOL-SELECTION-001",
+  "leaseWorkUnitKey": "GITHUB_EVENT_CHAIN_SELF_PROPULSION_R2",
+  "leaseAcquireKey": "GITHUB-EVENT-CHAIN-SELF-PROPULSION-R2-20260928T0320-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-28 03:20 JST",
+  "leaseUntilJst": "2026-09-28 04:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR new branch work/github-event-chain-self-propulsion-r2-20260928; mutable .github/workflows/gameroad-executor-bus.yml + .github/workflows/gameroad-required-gate.yml + .github/workflows/browser-full-interaction.yml + .github/workflows/required-gate-auto-merge.yml + own new data/preaction-authorizations/GITHUB-EVENT-CHAIN-SELF-PROPULSION-R2-20260928T0320-SOL.json; own PR/check/readback + own R24/current lease events.",
+  "scope": [
+    ".github/workflows/gameroad-executor-bus.yml",
+    ".github/workflows/gameroad-required-gate.yml",
+    ".github/workflows/browser-full-interaction.yml",
+    ".github/workflows/required-gate-auto-merge.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/gameroad-executor-bus.yml",
+    ".github/workflows/gameroad-required-gate.yml",
+    ".github/workflows/browser-full-interaction.yml",
+    ".github/workflows/required-gate-auto-merge.yml"
+  ]
+}

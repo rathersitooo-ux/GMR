@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "STAGE-A-BFI-CONTRACT-SYNC-R5-20260927T1701-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "STAGE_A_BFI_CURRENT_CONTRACT_SYNC_R5",
+  "acquireKey": "STAGE-A-BFI-CONTRACT-SYNC-R5-20260927T1701-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR2115_GATE_SCOPE_FAILURE_PLUS_CURRENT_BFI_CONTRACT_DRIFT_20260927T1701JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CLOSED_PR2115_FCE805D_READ_ONLY_CANDIDATE_PLUS_PR2041_READ_ONLY_DONOR",
+  "proceedToken": "PROCEED|STAGE-A-BFI-CONTRACT-SYNC-R5-20260927T1701-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|stage-a-bfi-current-contract|test-only|active-lease",
+  "authorizationBaseSha": "12a06c91d74cf3dc19fb30059bd4a5ad8b2b6f46",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "STAGE_A_BFI_CURRENT_CONTRACT_SYNC_R5",
+  "leaseAcquireKey": "STAGE-A-BFI-CONTRACT-SYNC-R5-20260927T1701-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-27 17:01 JST",
+  "leaseUntilJst": "2026-09-27 18:01 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@12a06c91d74cf3dc19fb30059bd4a5ad8b2b6f46; new branch sol/stage-a-bfi-current-contract-r5-20260927; tests/browser-full-interaction.spec.mjs; tests/browser-full-interaction-state-sequence.spec.mjs; own transient data/preaction-authorizations/STAGE-A-BFI-CONTRACT-SYNC-R5-20260927T1701-SOL.json; own branch/PR/check/readback; own CURRENT_ACTIVE_LEASES exact row resolved by AcquireKey; own R24 events. Closed PR#2115 head fce805dafbc1b945cf94b43e688ebca7a634b8bf and PR#2041 donor are READ_ONLY. Product/runtime/gameplay/save/economy/network/assets are READ_ONLY.",
+  "solutionSignature": "BFI_CURRENT_VISIBLE_CONTRACT_SYNC_R5",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CLOSED_PR2115_TEST_ONLY_CANDIDATE_REAPPLIED_ON_FRESH_CURRENT_MAIN",
+  "solutionSearchEvidence": [
+    "Closed PR#2115 proved the candidate diff itself was test-only; its Required Gate failure was solely old first-witness scope, not test logic.",
+    "Fresh branch is required because the validator authorizes only the first commit from PR merge-base.",
+    "PR#2041 remains read-only donor evidence for current active-screen navigation, Partner/Profile contracts, two-card auto-submit, and retired readyPlan.",
+    "Product/runtime/gameplay/save/economy/network/assets remain read-only."
+  ],
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
+  ]
+}

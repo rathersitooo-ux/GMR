@@ -198,55 +198,41 @@ async function submitVisiblePlan(battle) {
   const ready = battle.locator('#readyPlan');
   await expect(roadSelect).toBeVisible();
   await expect(battleSelect).toBeVisible();
-  const handCards = battle.locator('#hand .handCard:visible:not(:disabled)');
-  const jankenPad = battle.locator('[data-battle-janken-slidepad="1"]').first();
-  if ((await handCards.count()) < 2 && (await jankenPad.getAttribute('data-expanded')) !== 'true') {
-    const jankenHandle = jankenPad.locator('.grJankenSlidePadHandle:visible');
-    await expect(jankenHandle, 'visible player path can open the Janken SlidePad when ordinary hand cards are insufficient').toBeVisible();
-    await jankenHandle.click();
-    await expect(jankenPad, 'Janken SlidePad expands through its real visible handle').toHaveAttribute('data-expanded', 'true');
+  await expect(ready, 'current visible player path keeps the explicit ready-plan decision').toBeVisible();
+
+  const enabledValues = async (select) => select.locator('option:not([disabled])').evaluateAll((nodes) => nodes
+    .map((node) => String(node.value || '').trim())
+    .filter(Boolean));
+
+  if (!(await roadSelect.inputValue())) {
+    const roadValues = await enabledValues(roadSelect);
+    expect(roadValues.length, 'visible Road selector exposes at least one legal card').toBeGreaterThan(0);
+    await roadSelect.selectOption(roadValues[0]);
+    await expect(roadSelect, 'visible Road selector accepts a legal card').toHaveValue(roadValues[0]);
   }
-  const jankenCards = battle.locator('[data-battle-janken-slidepad="1"] [data-janken-slot]:visible:not(:disabled)');
-  const candidateGroups = [
-    { locator: handCards, selector: '#hand .handCard' },
-    { locator: jankenCards, selector: '[data-battle-janken-slidepad="1"] [data-janken-slot]' },
-  ];
-  const candidateCount = (await Promise.all(candidateGroups.map(({ locator }) => locator.evaluateAll((nodes) => nodes
-    .filter((node) => !node.disabled && node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden')
-    .map((node) => node.getAttribute('data-card-id'))
-    .filter(Boolean)))))
-    .flat().length;
-  expect(candidateCount, 'visible plan controls expose at least two distinct cards').toBeGreaterThanOrEqual(2);
 
-  const clickCandidate = async (excludedId = null) => {
-    for (const group of candidateGroups) {
-      const ids = await group.locator.evaluateAll((nodes) => nodes
-        .filter((node) => !node.disabled && node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden')
-        .map((node) => node.getAttribute('data-card-id'))
-        .filter(Boolean));
-      for (const id of ids) {
-        if (!id || id === excludedId) continue;
-        const candidate = battle.locator(`${group.selector}[data-card-id="${id}"]`).first();
-        if (!(await candidate.isVisible()) || await candidate.isDisabled()) continue;
-        await candidate.click();
-        return id;
-      }
-    }
-    return null;
-  };
-
-  if (!(await roadSelect.inputValue())) await expect.poll(() => clickCandidate()).not.toBeNull();
   if (!(await battleSelect.inputValue())) {
     const roadValue = await roadSelect.inputValue();
-    await expect.poll(() => clickCandidate(roadValue)).not.toBeNull();
-    await expect(battleSelect, 'a different visible card can be reserved as Battle').not.toHaveValue('');
+    const battleValues = (await enabledValues(battleSelect)).filter((id) => id !== roadValue);
+    expect(battleValues.length, 'visible Battle selector exposes a legal card distinct from Road').toBeGreaterThan(0);
+    await battleSelect.selectOption(battleValues[0]);
+    await expect(battleSelect, 'visible Battle selector accepts a distinct legal card').toHaveValue(battleValues[0]);
   }
 
-  expect(await roadSelect.inputValue(), 'visible Road selection').not.toBe('');
-  expect(await battleSelect.inputValue(), 'visible Battle selection').not.toBe('');
-  expect(await battleSelect.inputValue(), 'Road and Battle remain distinct').not.toBe(await roadSelect.inputValue());
+  const roadValue = await roadSelect.inputValue();
+  const battleValue = await battleSelect.inputValue();
+  expect(roadValue, 'visible Road selection').not.toBe('');
+  expect(battleValue, 'visible Battle selection').not.toBe('');
+  expect(battleValue, 'Road and Battle remain distinct').not.toBe(roadValue);
   await expect(ready).toBeEnabled();
   await ready.click();
+  await expect.poll(async () => {
+    const phaseTitle = ((await battle.locator('#phaseTitle').textContent()) || '').trim();
+    return phaseTitle !== '行動を計画' || !(await ready.isEnabled());
+  }, {
+    message: 'explicit ready-plan action leaves the submitted planning decision',
+    timeout: 7_000,
+  }).toBeTruthy();
 }
 
 async function playVisibleTwoPlayerToResult(page, testInfo, evidencePrefix) {

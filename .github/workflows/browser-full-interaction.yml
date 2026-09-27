@@ -4,24 +4,8 @@ on:
   schedule:
     - cron: '17 18 * * 2'
   workflow_dispatch:
-    inputs:
-      candidate_only:
-        description: 'Validate an unmerged candidate head only'
-        required: false
-        default: false
-        type: boolean
-      base_sha:
-        description: 'Exact comparison base SHA'
-        required: false
-        type: string
-      head_sha:
-        description: 'Exact candidate head SHA'
-        required: false
-        type: string
-      pr_number:
-        description: 'Origin candidate PR number'
-        required: false
-        type: string
+  repository_dispatch:
+    types: [gameroad-candidate-evidence]
   workflow_run:
     workflows:
       - GAMEROAD Cloudflare Public Deploy
@@ -65,20 +49,20 @@ permissions:
 
 jobs:
   chromium-interaction-evidence:
-    if: ${{ github.event_name != 'workflow_run' }}
+    if: ${{ github.event_name != 'workflow_run' && (github.event_name != 'repository_dispatch' || github.event.client_payload.bfi_required == true) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.head_sha || github.sha }}
+          ref: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.head_sha || github.sha }}
 
       - name: Verify dispatched exact head
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.head_sha != '' }}
+        if: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.head_sha != '' }}
         shell: bash
         env:
-          EXPECTED_HEAD_SHA: ${{ inputs.head_sha }}
+          EXPECTED_HEAD_SHA: ${{ github.event.client_payload.head_sha }}
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${EXPECTED_HEAD_SHA}"
@@ -138,7 +122,7 @@ jobs:
           retention-days: 14
 
   chromium-public-origin-evidence:
-    if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || (github.event_name == 'workflow_dispatch' && inputs.candidate_only != true) }}
+    if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:

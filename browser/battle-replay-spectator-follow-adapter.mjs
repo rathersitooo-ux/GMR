@@ -19,6 +19,19 @@ const ALLOWED_PRESENCE_KEYS = new Set([
   'publicAttachRef',
 ]);
 
+const FORBIDDEN_PUBLIC_REPLAY_KEYS = new Set([
+  'hand',
+  'hands',
+  'deck',
+  'decks',
+  'deckorder',
+  'deckorders',
+  'drawpile',
+  'drawpiles',
+  'draworder',
+  'draworders',
+]);
+
 function isPlainObject(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const prototype = Object.getPrototypeOf(value);
@@ -204,6 +217,33 @@ function validateAttachIntent(intent) {
   return { targetUserId, matchId, publicAttachRef, intentId, attachSerial: intent.attachSerial };
 }
 
+function assertPublicReplayValue(value) {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') return;
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) throw new TypeError('SPECTATOR_PUBLIC_REPLAY_NON_JSON_VALUE');
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) assertPublicReplayValue(item);
+    return;
+  }
+  if (!isPlainObject(value)) throw new TypeError('SPECTATOR_PUBLIC_REPLAY_NON_JSON_VALUE');
+
+  for (const [key, child] of Object.entries(value)) {
+    const normalized = key.toLowerCase();
+    if (
+      normalized.includes('private') ||
+      normalized.includes('secret') ||
+      normalized.includes('hidden') ||
+      normalized === 'authorityonly' ||
+      FORBIDDEN_PUBLIC_REPLAY_KEYS.has(normalized)
+    ) {
+      throw new TypeError(`SPECTATOR_PUBLIC_REPLAY_PRIVATE_FIELD:${key}`);
+    }
+    assertPublicReplayValue(child);
+  }
+}
+
 function assertPublicReplayProjection(replay, matchId) {
   if (!isPlainObject(replay) ||
       replay.ok !== true ||
@@ -215,13 +255,7 @@ function assertPublicReplayProjection(replay, matchId) {
   }
   for (const event of replay.events) {
     if (!isPlainObject(event)) throw new TypeError('SPECTATOR_PUBLIC_REPLAY_EVENT_INVALID');
-    for (const key of Object.keys(event)) {
-      const normalized = key.toLowerCase();
-      if (normalized.includes('private') || normalized.includes('secret') ||
-          normalized.includes('hidden') || normalized === 'authorityonly') {
-        throw new TypeError(`SPECTATOR_PUBLIC_REPLAY_PRIVATE_FIELD:${key}`);
-      }
-    }
+    assertPublicReplayValue(event);
   }
   return replay;
 }

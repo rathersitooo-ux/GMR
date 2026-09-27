@@ -182,7 +182,7 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
-      actions: read
+      actions: write
     env:
       BODY_FILE: ${{ runner.temp }}/executor-free-body.txt
       PACKET_FILE: ${{ runner.temp }}/executor-free-packet.json
@@ -363,11 +363,66 @@ jobs:
                 `Candidate commit: ${process.env.CANDIDATE_SHA}`,
                 '',
                 'Focused packet tests passed before push. This draft is not a product/game success claim and must not be merged without fresh CURRENT adoption.',
-                'This PR is created with GITHUB_TOKEN; recursive pull_request workflow dispatch is intentionally not relied on.',
+                'This PR is created with GITHUB_TOKEN. Candidate-only evidence is dispatched explicitly; it does not replace fresh CURRENT adoption or PRE_ACTION merge authorization.',
               ].join('\n'),
             });
             core.setOutput('number', String(pr.data.number));
             core.setOutput('url', pr.data.html_url);
+      - name: Dispatch candidate-only exact-head evidence
+        id: candidate_evidence
+        uses: actions/github-script@v7
+        env:
+          PACKET_FILE: ${{ env.PACKET_FILE }}
+          CANDIDATE_BRANCH: ${{ steps.candidate_publish.outputs.branch }}
+          CANDIDATE_SHA: ${{ steps.candidate_publish.outputs.commit_sha }}
+          PR_NUMBER: ${{ steps.candidate_pr.outputs.number }}
+        with:
+          script: |
+            const fs = require('fs');
+            const packet = JSON.parse(fs.readFileSync(process.env.PACKET_FILE, 'utf8'));
+            const baseCommit = await github.rest.repos.getCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: packet.baseRef,
+            });
+            const commonInputs = {
+              candidate_only: 'true',
+              base_sha: baseCommit.data.sha,
+              head_sha: process.env.CANDIDATE_SHA,
+              pr_number: process.env.PR_NUMBER,
+            };
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'gameroad-required-gate.yml',
+              ref: process.env.CANDIDATE_BRANCH,
+              inputs: commonInputs,
+            });
+
+            const browserEvidencePath = (p) =>
+              p === 'browser/GAMEROAD.html' ||
+              /^browser\/.*presentation.*\.mjs$/.test(p) ||
+              /^browser\/.*runtime.*\.mjs$/.test(p) ||
+              /^browser\/.*visual.*\.mjs$/.test(p) ||
+              p.startsWith('browser/assets/') ||
+              /^browser\/.*motion.*\.mjs$/.test(p) ||
+              /^browser\/new-base-.*\.mjs$/.test(p) ||
+              p === 'browser/screen-navigation-core.mjs' ||
+              p === 'tests/browser-full-interaction.spec.mjs' ||
+              p === 'tests/browser-full-interaction-state-sequence.spec.mjs' ||
+              p === 'playwright.full-interaction.config.mjs' ||
+              p === '.github/workflows/browser-full-interaction.yml';
+            const bfiRequired = packet.exactMutableResources.some(browserEvidencePath);
+            if (bfiRequired) {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'browser-full-interaction.yml',
+                ref: process.env.CANDIDATE_BRANCH,
+                inputs: commonInputs,
+              });
+            }
+            core.setOutput('bfi_required', String(bfiRequired));
       - name: Return candidate to the originating Executor issue
         if: success()
         uses: actions/github-script@v7
@@ -392,7 +447,7 @@ jobs:
               producedRefs: [`commit:${process.env.CANDIDATE_SHA}`, `pr:${process.env.PR_NUMBER}`, `workflow-run:${context.runId}`],
               nextAction: 'HEAD fresh CURRENT adoption and exact provider readback',
             };
-            const body = `<!-- gameroad-free-autopilot:origin-run -->\nFREE_AUTOPILOT_CANDIDATE_RETURNED\n\n\`\`\`executor-result\n${JSON.stringify(result, null, 2)}\n\`\`\`\n\nDraft PR: ${process.env.PR_URL}\nThe origin run validated the bounded patch and focused tests. Recursive workflow dispatch from GITHUB_TOKEN is not treated as evidence.`;
+            const body = `<!-- gameroad-free-autopilot:origin-run -->\nFREE_AUTOPILOT_CANDIDATE_RETURNED\n\n\`\`\`executor-result\n${JSON.stringify(result, null, 2)}\n\`\`\`\n\nDraft PR: ${process.env.PR_URL}\nThe origin run validated the bounded patch and focused tests. Candidate-only exact-head evidence was explicitly dispatched where applicable; fresh CURRENT adoption and merge authorization are still required.`;
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,

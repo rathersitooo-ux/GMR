@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-FIELD-CANVAS-ACTIVE-SCOPE-R1-20260928T0411-CODEX",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_FIELD_CANVAS_ACTIVE_SCOPE_R1",
+  "acquireKey": "BATTLE-FIELD-CANVAS-ACTIVE-SCOPE-R1-20260928T0411-CODEX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_PUBLIC_BATTLE_ACTIVE_REFERENCEERROR_20260928T0407JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PUBLIC_HOME_SETUP_BATTLE_REPRO_PLUS_EXACT_MAIN_SOURCE_SCOPE_TRACE",
+  "proceedToken": "PROCEED|BATTLE-FIELD-CANVAS-ACTIVE-SCOPE-R1-20260928T0411-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-field-canvas-fallback|html-test|active-lease",
+  "authorizationBaseSha": "c50107e1c3d9b13dbe61e2c1480627867d2ac600",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_FIELD_CANVAS_ACTIVE_SCOPE_R1",
+  "leaseAcquireKey": "BATTLE-FIELD-CANVAS-ACTIVE-SCOPE-R1-20260928T0411-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-09-28 04:11 JST",
+  "leaseUntilJst": "2026-09-28 05:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:O5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR new branch work/battle-field-canvas-active-scope-r1-20260928; mutable browser/GAMEROAD.html + new tests/battle-field-canvas-fallback-scope.test.mjs + new data/preaction-authorizations/BATTLE-FIELD-CANVAS-ACTIVE-SCOPE-R1-20260928T0411-CODEX.json; own PR/check/readback + own R24/current lease events.",
+  "solutionSignature": "BATTLE_FIELD_CANVAS_ACTIVE_SCOPE_HOIST_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_MAIN_RENDERFIELD3D_SINGLE_DECLARATION_AND_PUBLIC_STACKTRACE",
+  "solutionSearchEvidence": [
+    "The current public Home to Setup to Battle route reproduces ReferenceError: active is not defined in renderField3D.",
+    "The current main browser/GAMEROAD.html declares active only inside the no-live-world-board item-construction block.",
+    "The Canvas2D no-live-world-board lane renderer reads active later outside that declaration block.",
+    "The repair hoists the existing activeNodes result to the shared renderField3D scope and changes no game rules, topology, state, or input authority."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-field-canvas-fallback-scope.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-field-canvas-fallback-scope.test.mjs"
+  ]
+}

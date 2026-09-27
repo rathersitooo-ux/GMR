@@ -4,6 +4,24 @@ on:
   schedule:
     - cron: '17 18 * * 2'
   workflow_dispatch:
+    inputs:
+      candidate_only:
+        description: 'Validate an unmerged candidate head only'
+        required: false
+        default: false
+        type: boolean
+      base_sha:
+        description: 'Exact comparison base SHA'
+        required: false
+        type: string
+      head_sha:
+        description: 'Exact candidate head SHA'
+        required: false
+        type: string
+      pr_number:
+        description: 'Origin candidate PR number'
+        required: false
+        type: string
   workflow_run:
     workflows:
       - GAMEROAD Cloudflare Public Deploy
@@ -53,6 +71,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.head_sha || github.sha }}
+
+      - name: Verify dispatched exact head
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.head_sha != '' }}
+        shell: bash
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.head_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${EXPECTED_HEAD_SHA}"
 
       - name: Restore matching full-interaction evidence
         id: interaction_evidence_cache
@@ -109,7 +138,7 @@ jobs:
           retention-days: 14
 
   chromium-public-origin-evidence:
-    if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || github.event_name == 'workflow_dispatch' }}
+    if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || (github.event_name == 'workflow_dispatch' && inputs.candidate_only != true) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:

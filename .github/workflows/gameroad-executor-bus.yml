@@ -184,14 +184,14 @@ jobs:
       pull-requests: write
       actions: read
     env:
-      BODY_FILE: ${{ runner.temp }}/executor-free-body.txt
-      PACKET_FILE: ${{ runner.temp }}/executor-free-packet.json
-      PROMPT_FILE: ${{ runner.temp }}/executor-free-prompt.txt
-      MODEL_OUTPUT_FILE: ${{ runner.temp }}/executor-free-model-output.txt
-      DIFF_FILE: ${{ runner.temp }}/executor-free-candidate.diff
-      MODEL_FILE: ${{ runner.temp }}/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
-      LLAMA_ARCHIVE: ${{ runner.temp }}/llama-b10951-bin-ubuntu-x64.tar.gz
-      LLAMA_DIR: ${{ runner.temp }}/llama-b10951
+      BODY_FILE: /tmp/gameroad-executor-free-body-${{ github.run_id }}.txt
+      PACKET_FILE: /tmp/gameroad-executor-free-packet-${{ github.run_id }}.json
+      PROMPT_FILE: /tmp/gameroad-executor-free-prompt-${{ github.run_id }}.txt
+      MODEL_OUTPUT_FILE: /tmp/gameroad-executor-free-model-output-${{ github.run_id }}.txt
+      DIFF_FILE: /tmp/gameroad-executor-free-candidate-${{ github.run_id }}.diff
+      MODEL_FILE: /tmp/gameroad-qwen2.5-coder-1.5b-${{ github.run_id }}.gguf
+      LLAMA_ARCHIVE: /tmp/gameroad-llama-b10951-${{ github.run_id }}.tar.gz
+      LLAMA_DIR: /tmp/gameroad-llama-b10951-${{ github.run_id }}
       MODEL_URL: https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/38f6bab61d341b23a6c00226f32c0d6148bf9f43/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf?download=true
       MODEL_SHA256: cc324af070c2ecbfd324a30884d2f951a7ff756aba85cb811a6ec436933bb046
       LLAMA_URL: https://github.com/ggml-org/llama.cpp/releases/download/b10951/llama-b10951-bin-ubuntu-x64.tar.gz

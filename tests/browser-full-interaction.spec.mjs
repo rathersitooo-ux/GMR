@@ -277,15 +277,19 @@ async function playVisibleTwoPlayerToResult(page, testInfo, evidencePrefix) {
       continue;
     }
 
-    const targetConfirm = battle.locator('#targetBox.on #confirmTarget:visible');
-    if ((await targetConfirm.count()) > 0) {
+    const targetConfirm = battle.locator('#confirmTarget:visible');
+    if (await targetConfirm.isVisible().catch(() => false)) {
       await targetConfirm.click();
       targetConfirms += 1;
       continue;
     }
 
-    const roadSelect = battle.locator('#roadSelect:visible');
-    if ((await roadSelect.count()) > 0 && (await roadSelect.isEnabled())) {
+    const roadSelect = battle.locator('#roadSelect');
+    const roadSelectReady = await roadSelect.evaluateAll((nodes) => nodes.some((node) => {
+      const style = getComputedStyle(node);
+      return !node.disabled && node.getClientRects().length > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+    }));
+    if (roadSelectReady) {
       await submitVisiblePlan(battle);
       roundsSubmitted += 1;
       continue;
@@ -1871,8 +1875,8 @@ test('R19 reaches Result from visible four-player Honey Hunt and returns Home', 
       presentationAdvances += 1;
       continue;
     }
-    const targetConfirm = battle.locator('#targetBox.on #confirmTarget:visible');
-    if ((await targetConfirm.count()) > 0) {
+    const targetConfirm = battle.locator('#confirmTarget:visible');
+    if (await targetConfirm.isVisible().catch(() => false)) {
       if (!(await targetConfirm.isEnabled())) {
         for (const selector of ['#targetPlayer', '#targetLane', '#targetShield']) {
           const select = battle.locator(`${selector}:visible`);
@@ -1887,8 +1891,12 @@ test('R19 reaches Result from visible four-player Honey Hunt and returns Home', 
       targetConfirms += 1;
       continue;
     }
-    const roadSelect = battle.locator('#roadSelect:visible');
-    if ((await roadSelect.count()) > 0 && (await roadSelect.isEnabled())) {
+    const roadSelect = battle.locator('#roadSelect');
+    const roadSelectReady = await roadSelect.evaluateAll((nodes) => nodes.some((node) => {
+      const style = getComputedStyle(node);
+      return !node.disabled && node.getClientRects().length > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+    }));
+    if (roadSelectReady) {
       await submitVisiblePlan(battle);
       roundsSubmitted += 1;
       continue;

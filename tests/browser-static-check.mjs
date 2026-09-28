@@ -189,13 +189,22 @@ if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stat
     [/battleCentralWorldRuntimeR8\?\.worldFieldRenderModel\?\.\(/, 'live renderField3D does not consume the existing world-field renderer model'],
     [/requestAnimationFrame\(\(\)=>\{if\(state\.match\)renderField3D\(\)\}\)/, 'central world mount does not request a field redraw after the world-field model becomes available'],
     [/liveGoalLabel\.textContent=['\"]GOAL['\"]/, 'shared GOAL has no player-visible label in the live Battle field'],
-    [/#battleMap\[data-central-world-live=['\"]1['\"]\] #board \.node:not\(\.reachable\):not\(\.path\):not\(\.currentPosition\):not\(\.nextStep\)/, 'legacy future board scaffolding is still player-visible after the central world mount'],
-    [/if\(!liveWorldBoard\)\{const active=activeNodes\(\);for\(const id of all\)/, 'legacy 3D board geometry is still drawn underneath the new world-field map'],
-    [/if\(!liveWorldBoard\)\{ctx\.save\(\);ctx\.lineCap='round';ctx\.lineJoin='round';for\(const owner of \['P1','P2','P3','P4'\]\)/, 'legacy canvas lane scaffolding is still drawn under the new world-field map'],
+    [/#battleMap\[data-board-visual-authority=['\"]new-only['\"]\] #board \.node:not\(\.reachable\):not\(\.path\):not\(\.currentPosition\):not\(\.nextStep\)/, 'legacy passive board scaffolding is not permanently hidden under NEW_BOARD_ONLY visual authority'],
+    [/BATTLE_BOARD_NEW_VISUAL_ONLY_NO_LEGACY_FALLBACK_R20/, 'NEW_BOARD_ONLY visual fallback marker is missing'],
+    [/setAttribute\(['\"]data-board-visual-authority['\"],['\"]new-only['\"]\)/, 'Battle does not assert NEW_BOARD_ONLY visual authority before field rendering'],
   ];
   for (const [pattern, message] of centralWorldLiveContracts) {
     if (!pattern.test(html)) errors.push(message);
   }
+  if (/if\(!liveWorldBoard\)\{const active=activeNodes\(\);for\(const id of all\)/.test(html)) {
+  errors.push('legacy 3D board visual fallback remains available before the canonical world-field mount');
+}
+if (/if\(!liveWorldBoard\)\{ctx\.save\(\);ctx\.lineCap='round';ctx\.lineJoin='round';for\(const owner of \['P1','P2','P3','P4'\]\)/.test(html)) {
+  errors.push('legacy canvas lane visual fallback remains available before the canonical world-field mount');
+}
+if (/#battleMap\[data-central-world-live=['"]1['"]\] #board \.node:not\(\.reachable\):not\(\.path\):not\(\.currentPosition\):not\(\.nextStep\)/.test(html)) {
+  errors.push('legacy passive node visibility still depends on async central-world mount instead of permanent NEW_BOARD_ONLY authority');
+}
   if ((html.match(/id=["']battleCentralWorldLiveHost["']/g) ?? []).length !== 1) {
     errors.push('central Flanora live presentation host is duplicated');
   }

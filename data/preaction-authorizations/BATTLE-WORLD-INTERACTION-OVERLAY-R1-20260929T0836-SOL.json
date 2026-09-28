@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-WORLD-INTERACTION-OVERLAY-R1-20260929T0836-SOL",
+  "taskId": "BROWSER-BATTLE-SCREEN-VISUAL-REMAKE-001",
+  "workUnitKey": "BATTLE_WORLD_INTERACTION_OVERLAY_CORE_R1",
+  "acquireKey": "BATTLE-WORLD-INTERACTION-OVERLAY-R1-20260929T0836-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "LEGACY_CENTER_3X3_AUTHORITY_AND_NEW_BOARD_PRESENTATION_FIREWALL_READBACK_20260929T0836JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PURE_OVERLAY_INPUT_VALIDATION_AND_ROLE_PRECEDENCE_DESIGN_REHEARSAL_20260929T0836JST",
+  "proceedToken": "PROCEED|BATTLE-WORLD-INTERACTION-OVERLAY-R1-20260929T0836-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|A8_READBACK|PURE_PRESENTATION_OVERLAY",
+  "authorizationBaseSha": "51609516a41f54c471aca8d0e97e37acb194021d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-SCREEN-VISUAL-REMAKE-001",
+  "leaseWorkUnitKey": "BATTLE_WORLD_INTERACTION_OVERLAY_CORE_R1",
+  "leaseAcquireKey": "BATTLE-WORLD-INTERACTION-OVERLAY-R1-20260929T0836-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-29 08:36 JST",
+  "leaseUntilJst": "2026-09-29 09:36 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main 51609516a41f54c471aca8d0e97e37acb194021d; new branch chatgpt/battle-world-interaction-overlay-r1-20260929; mutable browser/battle-board-world-interaction-overlay-core.mjs; tests/battle-board-world-interaction-overlay-core.test.mjs; own data/preaction-authorizations/BATTLE-WORLD-INTERACTION-OVERLAY-R1-20260929T0836-SOL.json; own branch/PR/check/merge/readback; own CURRENT lease/R24 event",
+  "solutionSignature": "battle-board:new-world-node-interaction-overlay:v1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "NO_EXISTING_CANONICAL_WORLD_NODE_INTERACTION_OVERLAY_MODULE_FOUND_20260929",
+  "solutionSearchEvidence": [
+    "Current battle-board-world-field-renderer consumes canonical visual-graph geometry but has no CURRENT/REACHABLE/PATH/NEXT interaction overlay input.",
+    "Current battle-flanora-legacy-board-bridge projects legacy presentation roles but explicitly does not replace legacy board authority.",
+    "Repository code search found no dedicated battle-board interaction overlay module; compose existing canonical visual-graph node identity with the already-live role vocabulary instead of inventing gameplay semantics."
+  ],
+  "scope": [
+    "browser/battle-board-world-interaction-overlay-core.mjs",
+    "tests/battle-board-world-interaction-overlay-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-board-world-interaction-overlay-core.mjs",
+    "tests/battle-board-world-interaction-overlay-core.test.mjs"
+  ]
+}

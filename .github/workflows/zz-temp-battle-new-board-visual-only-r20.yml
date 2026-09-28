@@ -74,17 +74,34 @@ jobs:
               raise SystemExit("legacy Canvas fallback block anchors missing")
           html = html[:start] + "/* NEW_BOARD_ONLY: legacy canvas lane scaffolding intentionally disabled even before async board mount. */\n" + html[end:]
 
-          old_css_contract = r"""    [/#battleMap\[data-central-world-live=['"]1['"]\] #board \.node:not\(\.reachable\):not\(\.path\):not\(\.currentPosition\):not\(\.nextStep\)/, 'legacy future board scaffolding is still player-visible after the central world mount'],"""
-          new_css_contract = r"""    [/#battleMap\[data-board-visual-authority=['"]new-only['"]\] #board \.node:not\(\.reachable\):not\(\.path\):not\(\.currentPosition\):not\(\.nextStep\)/, 'legacy passive board scaffolding is not permanently hidden under NEW_BOARD_ONLY visual authority'],"""
-          test = replace_once(test, old_css_contract, new_css_contract, "static CSS contract")
+          def replace_line_with_phrase(text, phrase, replacement, label):
+              lines = text.splitlines(keepends=True)
+              hits = [i for i, line in enumerate(lines) if phrase in line]
+              if len(hits) != 1:
+                  raise SystemExit(f"{label}: expected exactly one line, got {len(hits)}")
+              idx = hits[0]
+              newline = "\n" if lines[idx].endswith("\n") else ""
+              lines[idx] = replacement + newline
+              return "".join(lines)
 
-          old_3d_contract = r"""    [/if\(!liveWorldBoard\)\{const active=activeNodes\(\);for\(const id of all\)/, 'legacy 3D board geometry is still drawn underneath the new world-field map'],"""
-          new_3d_contract = r"""    [/BATTLE_BOARD_NEW_VISUAL_ONLY_NO_LEGACY_FALLBACK_R20/, 'NEW_BOARD_ONLY visual fallback marker is missing'],"""
-          test = replace_once(test, old_3d_contract, new_3d_contract, "static WebGL fallback contract")
-
-          old_canvas_contract = r"""    [/if\(!liveWorldBoard\)\{ctx\.save\(\);ctx\.lineCap='round';ctx\.lineJoin='round';for\(const owner of \['P1','P2','P3','P4'\]\)/, 'legacy canvas lane scaffolding is still drawn under the new world-field map'],"""
-          new_canvas_contract = r"""    [/setAttribute\(['"]data-board-visual-authority['"],['"]new-only['"]\)/, 'Battle does not assert NEW_BOARD_ONLY visual authority before field rendering'],"""
-          test = replace_once(test, old_canvas_contract, new_canvas_contract, "static Canvas fallback contract")
+          test = replace_line_with_phrase(
+              test,
+              "legacy future board scaffolding is still player-visible after the central world mount",
+              r"""    [/#battleMap\[data-board-visual-authority=['\"]new-only['\"]\] #board \.node:not\(\.reachable\):not\(\.path\):not\(\.currentPosition\):not\(\.nextStep\)/, 'legacy passive board scaffolding is not permanently hidden under NEW_BOARD_ONLY visual authority'],""",
+              "static CSS contract",
+          )
+          test = replace_line_with_phrase(
+              test,
+              "legacy 3D board geometry is still drawn underneath the new world-field map",
+              r"""    [/BATTLE_BOARD_NEW_VISUAL_ONLY_NO_LEGACY_FALLBACK_R20/, 'NEW_BOARD_ONLY visual fallback marker is missing'],""",
+              "static WebGL fallback contract",
+          )
+          test = replace_line_with_phrase(
+              test,
+              "legacy canvas lane scaffolding is still drawn under the new world-field map",
+              r"""    [/setAttribute\(['\"]data-board-visual-authority['\"],['\"]new-only['\"]\)/, 'Battle does not assert NEW_BOARD_ONLY visual authority before field rendering'],""",
+              "static Canvas fallback contract",
+          )
 
           negative_anchor = """  if ((html.match(/id=["']battleCentralWorldLiveHost["']/g) ?? []).length !== 1) {"""
           negative_checks = """  if (/if\\(!liveWorldBoard\\)\\{const active=activeNodes\\(\\);for\\(const id of all\\)/.test(html)) {

@@ -24,7 +24,7 @@ function addStyle(document) {
   style.textContent = `
 #battleMap[${ROOT_ATTR}="true"]{background:linear-gradient(180deg,#6c8790 0%,#406b63 42%,#244c43 100%)!important;isolation:isolate}
 #battleMap[${ROOT_ATTR}="true"]>.grBattleWorld3dCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0;pointer-events:none;touch-action:none}
-#battleMap[${ROOT_ATTR}="true"]>#board{position:relative;z-index:2;background:transparent!important;box-shadow:none!important}
+#battleMap[${ROOT_ATTR}="true"]>#board{position:absolute;inset:0;z-index:5;background:transparent!important;box-shadow:none!important}
 #battleMap[${ROOT_ATTR}="true"]>#boardPlayers{position:relative;z-index:7}
 #battleMap[${ROOT_ATTR}="true"]>#battleRuntime{position:relative;z-index:8}
 @media(prefers-reduced-motion:reduce){#battleMap[${ROOT_ATTR}="true"]>.grBattleWorld3dCanvas{scroll-behavior:auto!important}}

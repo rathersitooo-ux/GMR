@@ -17,31 +17,29 @@
   "leaseTaskId": "BROWSER-BATTLE-SCREEN-VISUAL-REMAKE-001",
   "leaseWorkUnitKey": "BATTLE_BOARD_WORLD_ROUTE_DEPTH_R1",
   "leaseAcquireKey": "BATTLE-BOARD-WORLD-ROUTE-DEPTH-R1-20260929T0300-SOL",
-  "leaseSnapshotReadbackAtJst": "2026-09-29 03:00 JST",
+  "leaseSnapshotReadbackAtJst": "2026-09-29 03:12 JST",
   "leaseUntilJst": "2026-09-29 04:00 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:O5",
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch chatgpt/battle-board-world-route-depth-r1-20260929; mutable browser/new-base-battle-board-visual-graph.mjs; tests/new-base-battle-board-visual-graph.test.mjs; tests/battle-board-world-field-renderer.test.mjs; own data/preaction-authorizations witness; own branch/PR/check/readback; own CURRENT lease row/R24 event",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch chatgpt/battle-board-world-route-depth-r1-20260929; mutable browser/battle-board-world-field-renderer.mjs; tests/battle-board-world-field-renderer.test.mjs; own data/preaction-authorizations witness; own branch/PR/check/readback; own CURRENT lease row/R24 event",
   "scope": [
-    "browser/new-base-battle-board-visual-graph.mjs",
-    "tests/new-base-battle-board-visual-graph.test.mjs",
+    "browser/battle-board-world-field-renderer.mjs",
     "tests/battle-board-world-field-renderer.test.mjs"
   ],
   "leaseScope": [
-    "browser/new-base-battle-board-visual-graph.mjs",
-    "tests/new-base-battle-board-visual-graph.test.mjs",
+    "browser/battle-board-world-field-renderer.mjs",
     "tests/battle-board-world-field-renderer.test.mjs"
   ],
   "formalInvariants": [
     "presentation-only; gameplay/movement/legality authority unchanged",
-    "lower shared-field node IDs and exact adjacency edge set unchanged",
+    "canonical graph node IDs, source coordinates, and exact adjacency edge set unchanged",
     "no second board engine and no second environment engine",
-    "waypoints are visual route geometry only and never become cells or movement nodes",
+    "derived terrain-route waypoints are visual geometry only and never become cells or movement nodes",
     "109/current movement authority and Battle rules remain read-only"
   ],
   "acceptance": [
-    "more than the two outer edges carry intentional world-route bends",
-    "route bends survive source-to-world projection without endpoint drift",
-    "all canonical lower nodes and 71 adjacency edges remain byte-for-byte identical in identity/order",
+    "canonical straight lower-field edges receive deterministic gentle world-route bends only in renderer output",
+    "existing explicit source waypoints remain exact and are not overwritten",
+    "route bends survive world projection without endpoint or canonical edge identity drift",
     "focused tests prove no movement or legality authority is introduced"
   ]
 }

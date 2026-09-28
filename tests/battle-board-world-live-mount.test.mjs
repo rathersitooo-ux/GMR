@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 
 import {
   BATTLE_BOARD_WORLD_LIVE_MOUNT_CONTRACT,
@@ -116,6 +117,13 @@ test('live mount fails closed when the graphics renderer cannot be created', asy
   });
   assert.equal(result.mounted, false);
   assert.equal(result.reason, 'WORLD_RENDERER_CREATE_FAILED');
+});
+
+test('live mount preserves the existing absolute board layout above the 3D canvas', () => {
+  const source = fs.readFileSync(new URL('../browser/battle-board-world-live-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, />#board\{position:absolute;inset:0;z-index:5;background:transparent!important/);
+  assert.doesNotMatch(source, />#board\{position:relative/);
+  assert.match(source, />\.grBattleWorld3dCanvas\{[^}]*z-index:0;pointer-events:none/);
 });
 
 test('live mount contract preserves the existing board as interaction authority', () => {

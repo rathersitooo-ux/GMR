@@ -1,0 +1,55 @@
+name: D Setup Default Patch
+on:
+  push:
+    branches:
+      - chatgpt/setup-default-authority-d-r1-20260928
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply bounded Setup default authority patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("browser/GAMEROAD.html")
+          s=p.read_text(encoding="utf-8")
+          reps=[
+            ("const state={","const SETUP_DEFAULTS=Object.freeze({mode:'4p',content:'honey_hunt'});\nconst state={"),
+            ("setupMode:'2p',setupContent:'road_shield'","setupMode:SETUP_DEFAULTS.mode,setupContent:SETUP_DEFAULTS.content"),
+            ("state.setupMode='2p';state.setupContent='road_shield';","state.setupMode=SETUP_DEFAULTS.mode;state.setupContent=SETUP_DEFAULTS.content;"),
+            ('<div class="contentRow"><button class="contentBtn on" data-content="road_shield">ロード・シールド</button><button class="contentBtn" data-content="honey_hunt">ハニーハント</button></div><div class="k">FORMAT</div><div class="modeRow"><button class="modeBtn on" data-mode="2p">二人</button><button class="modeBtn" data-mode="4p">四人</button><button class="modeBtn" data-mode="2v2">二対二</button></div>',
+             '<div class="contentRow"><button class="contentBtn on" data-content="honey_hunt" aria-pressed="true">ハニーハント</button><button class="contentBtn" data-content="road_shield" aria-pressed="false">ロード・シールド</button></div><div class="k">FORMAT</div><div class="modeRow"><button class="modeBtn on" data-mode="4p" aria-pressed="true">四人</button><button class="modeBtn" data-mode="2p" aria-pressed="false">二人</button><button class="modeBtn" data-mode="2v2" aria-pressed="false">二対二</button></div>')
+          ]
+          for old,new in reps:
+              n=s.count(old)
+              if n != 1:
+                  raise SystemExit(f"target count {n}, expected 1: {old[:90]}")
+              s=s.replace(old,new,1)
+          assert s.count("const SETUP_DEFAULTS=Object.freeze({mode:'4p',content:'honey_hunt'});")==1
+          assert s.count("setupMode:SETUP_DEFAULTS.mode,setupContent:SETUP_DEFAULTS.content")==1
+          assert s.count("state.setupMode=SETUP_DEFAULTS.mode;state.setupContent=SETUP_DEFAULTS.content;")==1
+          assert "if(['2p','4p','2v2'].includes(d.setupMode))state.setupMode=d.setupMode" in s
+          assert "if(['road_shield','honey_hunt'].includes(d.setupContent))state.setupContent=d.setupContent" in s
+          assert "data-content=\"honey_hunt\" aria-pressed=\"true\"" in s
+          assert "data-mode=\"4p\" aria-pressed=\"true\"" in s
+          p.write_text(s,encoding="utf-8")
+          PY
+      - name: Static browser check
+        run: node tests/browser-static-check.mjs
+      - name: Commit bounded patch and remove transient workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/d-setup-default-patch.yml
+          git add browser/GAMEROAD.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Setup: default fresh battles to Honey Hunt and 4-player"
+          git push origin HEAD:${GITHUB_REF_NAME}

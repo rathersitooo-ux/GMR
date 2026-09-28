@@ -180,6 +180,414 @@ function createReadyPlanMaterialPainter(target) {
   return Object.freeze({apply,destroy});
 }
 
+
+export const SETUP_CHOICE_FEEDBACK_BINDING_SCHEMA = 'gameroad.ui-state-feedback.setup-choice-binding.v1';
+
+const SETUP_CHOICE_STYLE_ID = 'gameroad-setup-choice-feedback-c-r1';
+const SETUP_CHOICE_SELECTOR = 'section[data-screen="setup"]';
+const SETUP_CHOICE_CONTROL_SELECTOR = '.contentBtn, .modeBtn';
+const SETUP_CHOICE_MATERIAL = MATERIAL_FEEDBACK_MATERIALS.HARD;
+const SETUP_CHOICE_STYLE = `
+section[data-screen="setup"] .contentBtn,
+section[data-screen="setup"] .modeBtn{
+  position:relative;
+  isolation:isolate;
+  transform-origin:50% 50%;
+  transform:
+    translate(var(--mf-translate-x,0),var(--mf-translate-y,0))
+    rotate(var(--mf-rotate,0deg))
+    scale(var(--mf-scale-x,1),var(--mf-scale-y,1));
+  transition:
+    transform var(--mf-duration,90ms) var(--mf-easing,ease-out),
+    filter var(--mf-duration,90ms) var(--mf-easing,ease-out),
+    box-shadow 120ms ease-out;
+  will-change:transform,filter;
+}
+section[data-screen="setup"] .contentBtn[data-gmr-setup-selected="1"],
+section[data-screen="setup"] .modeBtn[data-gmr-setup-selected="1"]{
+  box-shadow:
+    inset 0 0 0 1px rgba(226,255,244,.24),
+    inset 0 0 14px rgba(160,239,213,.13),
+    0 0 0 1px rgba(160,239,213,.62),
+    0 0 14px rgba(160,239,213,.42),
+    0 0 24px rgba(255,210,126,.13);
+}
+section[data-screen="setup"] .contentBtn[data-gmr-setup-feedback="pressed"],
+section[data-screen="setup"] .modeBtn[data-gmr-setup-feedback="pressed"]{
+  filter:brightness(.94) saturate(.96) contrast(1.03);
+}
+section[data-screen="setup"] .contentBtn[data-gmr-setup-feedback="committed"],
+section[data-screen="setup"] .modeBtn[data-gmr-setup-feedback="committed"]{
+  filter:brightness(1.07) saturate(1.05);
+}
+section[data-screen="setup"] .contentBtn:focus-visible,
+section[data-screen="setup"] .modeBtn:focus-visible{
+  outline:2px solid rgba(223,255,246,.94);
+  outline-offset:3px;
+}
+@media (hover:hover) and (pointer:fine){
+  section[data-screen="setup"] .contentBtn:hover:not([data-gmr-setup-feedback="pressed"]),
+  section[data-screen="setup"] .modeBtn:hover:not([data-gmr-setup-feedback="pressed"]){
+    filter:brightness(1.055) saturate(1.03);
+  }
+}
+section[data-screen="setup"] .contentBtn::before,
+section[data-screen="setup"] .modeBtn::before{
+  content:"";
+  position:absolute;
+  inset:-9px;
+  border-radius:inherit;
+  pointer-events:none;
+  opacity:0;
+  transform:scale(.72);
+  background:
+    radial-gradient(circle at 13% 35%,rgba(238,255,249,.92) 0 1.2px,transparent 1.8px),
+    radial-gradient(circle at 26% 78%,rgba(160,239,213,.78) 0 1.4px,transparent 2px),
+    radial-gradient(circle at 71% 18%,rgba(255,222,150,.72) 0 1.2px,transparent 1.9px),
+    radial-gradient(circle at 88% 62%,rgba(192,255,234,.82) 0 1.3px,transparent 2px),
+    radial-gradient(ellipse at var(--mf-contact-x,50%) var(--mf-contact-y,50%),rgba(190,255,234,.28),transparent 46%);
+}
+section[data-screen="setup"] .contentBtn[data-gmr-setup-burst="1"]::before,
+section[data-screen="setup"] .modeBtn[data-gmr-setup-burst="1"]::before{
+  animation:gmrSetupChoiceBurst 190ms ease-out both;
+}
+@keyframes gmrSetupChoiceBurst{
+  0%{opacity:.08;transform:scale(.70)}
+  34%{opacity:.78}
+  100%{opacity:0;transform:scale(1.08)}
+}
+body.lowPerf section[data-screen="setup"] .contentBtn::before,
+body.lowPerf section[data-screen="setup"] .modeBtn::before{
+  display:none!important;
+}
+@media (prefers-reduced-motion:reduce){
+  section[data-screen="setup"] .contentBtn,
+  section[data-screen="setup"] .modeBtn{
+    transition-duration:0ms!important;
+  }
+  section[data-screen="setup"] .contentBtn[data-gmr-setup-burst="1"]::before,
+  section[data-screen="setup"] .modeBtn[data-gmr-setup-burst="1"]::before{
+    animation:none!important;
+    opacity:0!important;
+  }
+}
+`;
+
+function ensureSetupChoiceFeedbackStyle(document) {
+  if (!document || typeof document.createElement !== 'function' || !document.head || typeof document.head.appendChild !== 'function') return null;
+  const existing = document.getElementById?.(SETUP_CHOICE_STYLE_ID);
+  if (existing) return existing;
+  const style = document.createElement('style');
+  style.id = SETUP_CHOICE_STYLE_ID;
+  style.textContent = SETUP_CHOICE_STYLE;
+  document.head.appendChild(style);
+  return style;
+}
+
+function defaultSetupChoiceUiMode(document) {
+  let runtime = null;
+  try {
+    runtime = globalThis.GAMEROAD_READ_UI_MODE?.() || null;
+  } catch {
+    runtime = null;
+  }
+  return Object.freeze({
+    reducedMotion: Boolean(runtime?.reducedMotion || globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches),
+    lowPerf: Boolean(runtime?.lowPerf || document?.body?.classList?.contains?.('lowPerf')),
+  });
+}
+
+function setupChoiceScreen(root) {
+  if (!root) return null;
+  if (root.matches?.(SETUP_CHOICE_SELECTOR)) return root;
+  return root.querySelector?.(SETUP_CHOICE_SELECTOR) || null;
+}
+
+function setupChoiceIsSelected(control) {
+  if (typeof control?.classList?.contains === 'function') return control.classList.contains('on');
+  return control?.getAttribute?.('aria-pressed') === 'true';
+}
+
+function setupChoiceControlContact(control, event) {
+  if (!event || typeof event.clientX !== 'number' || typeof event.clientY !== 'number') return Object.freeze({x:.5,y:.5});
+  return materialContactForEvent(control, event);
+}
+
+function setupChoiceCaptureBaseline(control) {
+  return {
+    ariaPressed: control.getAttribute?.('aria-pressed'),
+    feedback: control.dataset?.gmrSetupFeedback,
+    selected: control.dataset?.gmrSetupSelected,
+    burst: control.dataset?.gmrSetupBurst,
+    material: control.dataset?.gmrMaterial,
+    materialPhase: control.dataset?.gmrMaterialPhase,
+    vars: new Map(),
+  };
+}
+
+function setupChoiceRestoreDataset(dataset, key, value) {
+  if (!dataset) return;
+  if (value === undefined) delete dataset[key];
+  else dataset[key] = value;
+}
+
+export function bindSetupChoiceFeedbackControls({
+  root = globalThis.document,
+  readUiMode,
+  schedule = (fn, ms) => setTimeout(fn, ms),
+  cancelSchedule = (handle) => clearTimeout(handle),
+  enqueue = (fn) => (globalThis.queueMicrotask || ((task) => Promise.resolve().then(task)))(fn),
+} = {}) {
+  const screen = setupChoiceScreen(root);
+  if (!screen || typeof screen.querySelectorAll !== 'function') return null;
+  const controls = [...screen.querySelectorAll(SETUP_CHOICE_CONTROL_SELECTOR)];
+  if (controls.length === 0) return null;
+  const document = screen.ownerDocument || root?.ownerDocument || (root?.createElement ? root : null);
+  ensureSetupChoiceFeedbackStyle(document);
+
+  const modeReader = typeof readUiMode === 'function'
+    ? readUiMode
+    : () => defaultSetupChoiceUiMode(document);
+  const baselines = new Map(controls.map((control) => [control, setupChoiceCaptureBaseline(control)]));
+  const activePointers = new Map();
+  const contacts = new Map(controls.map((control) => [control, Object.freeze({x:.5,y:.5})]));
+  const phaseTimers = new Map();
+  const burstTimers = new Map();
+  const listeners = [];
+  let destroyed = false;
+  let queuedSync = false;
+
+  const currentMode = () => {
+    let value = null;
+    try { value = modeReader() || null; } catch { value = null; }
+    return Object.freeze({
+      reducedMotion: Boolean(value?.reducedMotion),
+      lowPerf: Boolean(value?.lowPerf),
+    });
+  };
+
+  const clearTimer = (map, control) => {
+    const handle = map.get(control);
+    if (handle === undefined) return;
+    cancelSchedule(handle);
+    map.delete(control);
+  };
+
+  const applyPhase = (control, phase, event = null) => {
+    const contact = event ? setupChoiceControlContact(control, event) : (contacts.get(control) || Object.freeze({x:.5,y:.5}));
+    contacts.set(control, contact);
+    const mode = currentMode();
+    const projection = projectMaterialFeedback({
+      material: SETUP_CHOICE_MATERIAL,
+      phase,
+      localX: contact.x,
+      localY: contact.y,
+      reducedMotion: mode.reducedMotion,
+      lowPerf: mode.lowPerf,
+    });
+    const vars = materialFeedbackCssVars(projection);
+    const baseline = baselines.get(control);
+    for (const [name, value] of Object.entries(vars)) {
+      if (!baseline.vars.has(name)) baseline.vars.set(name, control.style?.getPropertyValue?.(name) || '');
+      control.style?.setProperty?.(name, value);
+    }
+    if (control.dataset) {
+      control.dataset.gmrSetupFeedback = projection.phase;
+      control.dataset.gmrMaterial = projection.material;
+      control.dataset.gmrMaterialPhase = projection.phase;
+    }
+    return projection;
+  };
+
+  const syncControl = (control) => {
+    const selected = setupChoiceIsSelected(control);
+    if (control.dataset) control.dataset.gmrSetupSelected = selected ? '1' : '0';
+    control.setAttribute?.('aria-pressed', String(selected));
+    if (control.disabled === true) {
+      applyPhase(control, MATERIAL_FEEDBACK_PHASES.DISABLED);
+    } else if (!activePointers.has(control) && !phaseTimers.has(control)) {
+      applyPhase(control, MATERIAL_FEEDBACK_PHASES.NORMAL);
+    }
+    return Object.freeze({selected, disabled: control.disabled === true});
+  };
+
+  const sync = () => {
+    if (destroyed) return Object.freeze([]);
+    return Object.freeze(controls.map((control) => syncControl(control)));
+  };
+
+  const scheduleSync = () => {
+    if (destroyed || queuedSync) return false;
+    queuedSync = true;
+    enqueue(() => {
+      queuedSync = false;
+      if (!destroyed) sync();
+    });
+    return true;
+  };
+
+  const settlePhase = (control, phase, event = null) => {
+    clearTimer(phaseTimers, control);
+    const projection = applyPhase(control, phase, event);
+    const mode = currentMode();
+    const settleAfterMs = mode.reducedMotion ? 0 : Math.max(80, Number(projection.motion?.durationMs) || 0);
+    const handle = schedule(() => {
+      if (destroyed) return;
+      phaseTimers.delete(control);
+      if (!activePointers.has(control)) syncControl(control);
+    }, settleAfterMs);
+    phaseTimers.set(control, handle);
+    handle?.unref?.();
+    return projection;
+  };
+
+  const emitBurst = (control) => {
+    clearTimer(burstTimers, control);
+    const mode = currentMode();
+    if (mode.reducedMotion || mode.lowPerf || !control.dataset) {
+      if (control.dataset) delete control.dataset.gmrSetupBurst;
+      return false;
+    }
+    delete control.dataset.gmrSetupBurst;
+    if (typeof control.offsetWidth === 'number') void control.offsetWidth;
+    control.dataset.gmrSetupBurst = '1';
+    const handle = schedule(() => {
+      if (control.dataset) delete control.dataset.gmrSetupBurst;
+      burstTimers.delete(control);
+    }, 190);
+    burstTimers.set(control, handle);
+    handle?.unref?.();
+    return true;
+  };
+
+  const cancelPointer = (control, reason, event = null) => {
+    const pointerId = activePointers.get(control);
+    if (pointerId === undefined) return false;
+    activePointers.delete(control);
+    try {
+      settlePhase(control, MATERIAL_FEEDBACK_PHASES.CANCELLED, event);
+      if (control.dataset) control.dataset.gmrSetupCancelReason = reason;
+    } finally {
+      releasePointerCaptureIfHeld(control, pointerId);
+    }
+    return true;
+  };
+
+  const on = (control, type, handler) => {
+    control.addEventListener(type, handler);
+    listeners.push([control, type, handler]);
+  };
+
+  for (const control of controls) {
+    requireBindingTarget(control);
+    on(control, 'pointerdown', (event) => {
+      if (destroyed || control.disabled === true || activePointers.has(control)) return;
+      if (typeof event?.button === 'number' && event.button !== 0) return;
+      clearTimer(phaseTimers, control);
+      const pointerId = pointerIdOf(event);
+      capturePointerIfSupported(control, pointerId);
+      activePointers.set(control, pointerId);
+      applyPhase(control, MATERIAL_FEEDBACK_PHASES.PRESSED, event);
+    });
+    on(control, 'pointermove', (event) => {
+      if (destroyed || activePointers.get(control) !== pointerIdOf(event)) return;
+      contacts.set(control, setupChoiceControlContact(control, event));
+      if (!pointerPointInsideTarget(control, event)) cancelPointer(control, 'pointer_left_target', event);
+    });
+    on(control, 'pointerup', (event) => {
+      if (destroyed || activePointers.get(control) !== pointerIdOf(event)) return;
+      if (!pointerPointInsideTarget(control, event)) {
+        cancelPointer(control, 'pointer_release_outside', event);
+        return;
+      }
+      const pointerId = activePointers.get(control);
+      activePointers.delete(control);
+      try {
+        settlePhase(control, MATERIAL_FEEDBACK_PHASES.COMMITTED, event);
+      } finally {
+        releasePointerCaptureIfHeld(control, pointerId);
+      }
+    });
+    on(control, 'pointercancel', (event) => {
+      if (destroyed || activePointers.get(control) !== pointerIdOf(event)) return;
+      cancelPointer(control, 'pointer_cancelled', event);
+    });
+    on(control, 'lostpointercapture', (event) => {
+      if (destroyed || activePointers.get(control) !== pointerIdOf(event)) return;
+      activePointers.delete(control);
+      settlePhase(control, MATERIAL_FEEDBACK_PHASES.CANCELLED, event);
+    });
+    on(control, 'keydown', (event) => {
+      if (destroyed || control.disabled === true || (event?.key !== 'Enter' && event?.key !== ' ') || event?.repeat === true) return;
+      clearTimer(phaseTimers, control);
+      applyPhase(control, MATERIAL_FEEDBACK_PHASES.PRESSED);
+    });
+    on(control, 'keyup', (event) => {
+      if (destroyed || control.disabled === true || (event?.key !== 'Enter' && event?.key !== ' ')) return;
+      settlePhase(control, MATERIAL_FEEDBACK_PHASES.COMMITTED);
+    });
+    on(control, 'click', () => {
+      if (destroyed || control.disabled === true) return;
+      emitBurst(control);
+      scheduleSync();
+    });
+    on(control, 'blur', () => {
+      if (destroyed) return;
+      if (activePointers.has(control)) {
+        cancelPointer(control, 'control_blur');
+        return;
+      }
+      if (control.dataset?.gmrSetupFeedback === MATERIAL_FEEDBACK_PHASES.PRESSED) {
+        settlePhase(control, MATERIAL_FEEDBACK_PHASES.CANCELLED);
+      }
+    });
+  }
+
+  const MutationObserverCtor = document?.defaultView?.MutationObserver || globalThis.MutationObserver;
+  let observer = null;
+  if (typeof MutationObserverCtor === 'function') {
+    observer = new MutationObserverCtor(() => scheduleSync());
+    observer.observe(screen, {subtree:true, attributes:true, attributeFilter:['class']});
+  }
+
+  sync();
+
+  const destroy = () => {
+    if (destroyed) return false;
+    destroyed = true;
+    observer?.disconnect?.();
+    for (const [control, pointerId] of activePointers) releasePointerCaptureIfHeld(control, pointerId);
+    activePointers.clear();
+    for (const [control, type, handler] of listeners) control.removeEventListener(type, handler);
+    for (const control of controls) {
+      clearTimer(phaseTimers, control);
+      clearTimer(burstTimers, control);
+      const baseline = baselines.get(control);
+      for (const [name, value] of baseline.vars) {
+        if (value) control.style?.setProperty?.(name, value);
+        else control.style?.removeProperty?.(name);
+      }
+      setupChoiceRestoreDataset(control.dataset, 'gmrSetupFeedback', baseline.feedback);
+      setupChoiceRestoreDataset(control.dataset, 'gmrSetupSelected', baseline.selected);
+      setupChoiceRestoreDataset(control.dataset, 'gmrSetupBurst', baseline.burst);
+      setupChoiceRestoreDataset(control.dataset, 'gmrMaterial', baseline.material);
+      setupChoiceRestoreDataset(control.dataset, 'gmrMaterialPhase', baseline.materialPhase);
+      if (control.dataset) delete control.dataset.gmrSetupCancelReason;
+      if (baseline.ariaPressed === null || baseline.ariaPressed === undefined) control.removeAttribute?.('aria-pressed');
+      else control.setAttribute?.('aria-pressed', baseline.ariaPressed);
+    }
+    return true;
+  };
+
+  return Object.freeze({
+    schema: SETUP_CHOICE_FEEDBACK_BINDING_SCHEMA,
+    controls: Object.freeze([...controls]),
+    sync,
+    destroy,
+  });
+}
+
+
 function requireEvent(event) {
   if (!event || typeof event !== 'object' || Array.isArray(event)) throw new Error('event must be an object');
   if (typeof event.type !== 'string' || event.type.trim() === '') throw new Error('event.type must be a non-empty string');
@@ -863,3 +1271,30 @@ bindReadyPlanFeedbackControl = function bindReadyPlanFeedbackControlWithAuto(opt
     },
   });
 };
+
+
+function autoMountSetupChoiceFeedback() {
+  const document = globalThis.document;
+  if (!document || typeof document.querySelector !== 'function') return false;
+  const mount = () => {
+    if (globalThis.GAMEROAD_SETUP_CHOICE_FEEDBACK_BINDING) return false;
+    const binding = bindSetupChoiceFeedbackControls({root:document});
+    if (!binding) return false;
+    globalThis.GAMEROAD_SETUP_CHOICE_FEEDBACK_BINDING = binding;
+    globalThis.addEventListener?.('pagehide', () => {
+      binding.destroy();
+      if (globalThis.GAMEROAD_SETUP_CHOICE_FEEDBACK_BINDING === binding) {
+        try { delete globalThis.GAMEROAD_SETUP_CHOICE_FEEDBACK_BINDING; } catch {}
+      }
+    }, {once:true});
+    return true;
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener?.('DOMContentLoaded', mount, {once:true});
+    return true;
+  }
+  (globalThis.queueMicrotask || ((fn) => Promise.resolve().then(fn)))(mount);
+  return true;
+}
+
+autoMountSetupChoiceFeedback();

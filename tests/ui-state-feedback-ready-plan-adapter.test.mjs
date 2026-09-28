@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   bindBattlePlanAutoCommit,
   bindReadyPlanFeedbackControl,
+  bindSetupChoiceFeedbackControls,
   createReadyPlanFeedbackAdapter,
 } from '../browser/ui-state-feedback-ready-plan-adapter.mjs';
 
@@ -591,4 +592,225 @@ test('retired decision cue tells player to move before choosing the last card',(
   h.battle.emit('change');
   assert.equal(cue.textContent,'必要札が揃ったため自動確定中');
   assert.equal(h.calls.length,1);
+});
+
+
+class FakeSetupClassList {
+  constructor(values=[]){ this.values=new Set(values); }
+  contains(value){ return this.values.has(value); }
+  add(...values){ for (const value of values) this.values.add(value); }
+  remove(...values){ for (const value of values) this.values.delete(value); }
+  toggle(value,force){
+    if (force === true) { this.values.add(value); return true; }
+    if (force === false) { this.values.delete(value); return false; }
+    if (this.values.has(value)) { this.values.delete(value); return false; }
+    this.values.add(value); return true;
+  }
+}
+
+class FakeSetupControl extends FakeTarget {
+  constructor(document,{kind,value,selected=false}={}){
+    super(document);
+    this.classList=new FakeSetupClassList([kind, ...(selected?['on']:[])]);
+    this.attributes=new Map();
+    this.disabled=false;
+    this.offsetWidth=100;
+    this.rect={left:0,top:0,right:100,bottom:44,width:100,height:44};
+    if(kind==='contentBtn') this.dataset.content=value;
+    if(kind==='modeBtn') this.dataset.mode=value;
+  }
+  setAttribute(name,value){ this.attributes.set(name,String(value)); }
+  getAttribute(name){ return this.attributes.has(name) ? this.attributes.get(name) : null; }
+  removeAttribute(name){ this.attributes.delete(name); }
+}
+
+class FakeSetupScreen {
+  constructor(document,controls){
+    this.ownerDocument=document;
+    this.controls=controls;
+  }
+  matches(selector){ return selector==='section[data-screen="setup"]'; }
+  querySelectorAll(selector){
+    if(selector==='.contentBtn, .modeBtn') return this.controls;
+    return [];
+  }
+}
+
+class FakeSetupDocument extends FakeDocument {
+  constructor(){
+    super();
+    this.body={classList:new FakeSetupClassList()};
+    this.defaultView={};
+    this.readyState='complete';
+    this.screen=null;
+  }
+  querySelector(selector){
+    return selector==='section[data-screen="setup"]' ? this.screen : null;
+  }
+}
+
+function makeSetupBinding({reducedMotion=false,lowPerf=false}={}){
+  const document=new FakeSetupDocument();
+  const road=new FakeSetupControl(document,{kind:'contentBtn',value:'road_shield'});
+  const honey=new FakeSetupControl(document,{kind:'contentBtn',value:'honey_hunt',selected:true});
+  const two=new FakeSetupControl(document,{kind:'modeBtn',value:'2p'});
+  const four=new FakeSetupControl(document,{kind:'modeBtn',value:'4p',selected:true});
+  const duo=new FakeSetupControl(document,{kind:'modeBtn',value:'2v2'});
+  const controls=[road,honey,two,four,duo];
+  const screen=new FakeSetupScreen(document,controls);
+  document.screen=screen;
+  const timers=[];
+  const schedule=(fn,ms)=>{
+    const timer={fn,ms,cancelled:false,unref(){}};
+    timers.push(timer);
+    return timer;
+  };
+  const cancelSchedule=(timer)=>{timer.cancelled=true;};
+  const binding=bindSetupChoiceFeedbackControls({
+    root:document,
+    readUiMode:()=>({reducedMotion,lowPerf}),
+    schedule,
+    cancelSchedule,
+    enqueue:(fn)=>fn(),
+  });
+  return {document,screen,controls,road,honey,two,four,duo,timers,binding};
+}
+
+test('setup choice binding projects existing .on authority without changing setup values',()=>{
+  const h=makeSetupBinding();
+  assert.ok(h.binding);
+  assert.equal(h.binding.schema,'gameroad.ui-state-feedback.setup-choice-binding.v1');
+  assert.equal(h.honey.dataset.gmrSetupSelected,'1');
+  assert.equal(h.four.dataset.gmrSetupSelected,'1');
+  assert.equal(h.road.dataset.gmrSetupSelected,'0');
+  assert.equal(h.two.dataset.gmrSetupSelected,'0');
+  assert.equal(h.honey.getAttribute('aria-pressed'),'true');
+  assert.equal(h.four.getAttribute('aria-pressed'),'true');
+  assert.equal(h.road.getAttribute('aria-pressed'),'false');
+  assert.equal(h.honey.dataset.content,'honey_hunt');
+  assert.equal(h.four.dataset.mode,'4p');
+
+  h.honey.classList.remove('on');
+  h.road.classList.add('on');
+  h.road.emit('click');
+  assert.equal(h.road.dataset.gmrSetupSelected,'1');
+  assert.equal(h.honey.dataset.gmrSetupSelected,'0');
+  assert.equal(h.road.dataset.content,'road_shield');
+  assert.equal(h.honey.dataset.content,'honey_hunt');
+});
+
+test('setup pointer press reuses HARD material compression and release never owns game state',()=>{
+  const h=makeSetupBinding();
+  h.honey.emit('pointerdown',{pointerId:31,button:0,clientX:70,clientY:20});
+  assert.equal(h.honey.dataset.gmrSetupFeedback,'pressed');
+  assert.equal(h.honey.dataset.gmrMaterial,'hard');
+  assert.equal(h.honey.style.getPropertyValue('--mf-scale-x'),'0.992');
+  assert.equal(h.honey.style.getPropertyValue('--mf-scale-y'),'0.965');
+  assert.equal(h.honey.hasPointerCapture(31),true);
+
+  h.honey.emit('pointerup',{pointerId:31,button:0,clientX:70,clientY:20});
+  assert.equal(h.honey.dataset.gmrSetupFeedback,'committed');
+  assert.equal(h.honey.hasPointerCapture(31),false);
+  assert.equal(h.honey.classList.contains('on'),true);
+  assert.equal(h.honey.dataset.gmrSetupBurst,undefined);
+
+  h.honey.emit('click');
+  assert.equal(h.honey.dataset.gmrSetupBurst,'1');
+  assert.equal(h.honey.classList.contains('on'),true);
+});
+
+test('setup feedback keeps hover focus selected and pressed as separate visual channels',()=>{
+  const h=makeSetupBinding();
+  assert.equal(h.document.head.children.length,1);
+  const css=h.document.head.children[0].textContent;
+  assert.match(css,/\[data-gmr-setup-selected="1"\]/);
+  assert.match(css,/:focus-visible/);
+  assert.match(css,/@media \(hover:hover\) and \(pointer:fine\)/);
+  assert.match(css,/\[data-gmr-setup-feedback="pressed"\]/);
+  assert.match(css,/scale\(var\(--mf-scale-x,1\),var\(--mf-scale-y,1\)\)/);
+  assert.match(css,/\.contentBtn::before/);
+  assert.doesNotMatch(css,/\.contentBtn::after/);
+});
+
+test('setup reduced-motion keeps instant press identity and suppresses decorative burst',()=>{
+  const h=makeSetupBinding({reducedMotion:true});
+  h.four.emit('pointerdown',{pointerId:32,button:0,clientX:50,clientY:22});
+  assert.equal(h.four.dataset.gmrSetupFeedback,'pressed');
+  assert.equal(h.four.style.getPropertyValue('--mf-scale-y'),'0.965');
+  assert.equal(h.four.style.getPropertyValue('--mf-duration'),'0ms');
+  h.four.emit('pointerup',{pointerId:32,button:0,clientX:50,clientY:22});
+  h.four.emit('click');
+  assert.equal(h.four.dataset.gmrSetupBurst,undefined);
+  assert.equal(h.four.dataset.gmrSetupSelected,'1');
+});
+
+test('setup low-performance path suppresses burst while preserving press feedback',()=>{
+  const h=makeSetupBinding({lowPerf:true});
+  h.four.emit('pointerdown',{pointerId:33,button:0,clientX:40,clientY:20});
+  assert.equal(h.four.dataset.gmrSetupFeedback,'pressed');
+  assert.equal(h.four.style.getPropertyValue('--mf-scale-y'),'0.965');
+  assert.equal(h.four.style.getPropertyValue('--mf-refraction'),'0');
+  h.four.emit('pointerup',{pointerId:33,button:0,clientX:40,clientY:20});
+  h.four.emit('click');
+  assert.equal(h.four.dataset.gmrSetupBurst,undefined);
+});
+
+test('setup keyboard feedback does not prevent native button activation',()=>{
+  const h=makeSetupBinding();
+  const down={key:'Enter',repeat:false,prevented:false,preventDefault(){this.prevented=true;}};
+  h.honey.emit('keydown',down);
+  assert.equal(down.prevented,false);
+  assert.equal(h.honey.dataset.gmrSetupFeedback,'pressed');
+  const up={key:'Enter',prevented:false,preventDefault(){this.prevented=true;}};
+  h.honey.emit('keyup',up);
+  assert.equal(up.prevented,false);
+  assert.equal(h.honey.dataset.gmrSetupFeedback,'committed');
+  h.honey.emit('click');
+  assert.equal(h.honey.dataset.gmrSetupBurst,'1');
+});
+
+test('setup pointer leaving the hitbox cancels without decorative commit burst',()=>{
+  const h=makeSetupBinding();
+  h.road.emit('pointerdown',{pointerId:34,button:0,clientX:20,clientY:20});
+  assert.equal(h.road.hasPointerCapture(34),true);
+  h.road.emit('pointermove',{pointerId:34,button:0,clientX:101,clientY:20});
+  assert.equal(h.road.hasPointerCapture(34),false);
+  assert.equal(h.road.dataset.gmrSetupFeedback,'cancelled');
+  assert.equal(h.road.dataset.gmrSetupCancelReason,'pointer_left_target');
+  assert.equal(h.road.dataset.gmrSetupBurst,undefined);
+});
+
+test('setup rapid activation restarts one bounded burst timer without duplicating listeners',()=>{
+  const h=makeSetupBinding();
+  assert.equal(h.honey.listeners.get('click')?.size,1);
+  h.honey.emit('click');
+  const firstTimer=h.timers.at(-1);
+  assert.equal(h.honey.dataset.gmrSetupBurst,'1');
+  h.honey.emit('click');
+  assert.equal(firstTimer.cancelled,true);
+  assert.equal(h.honey.listeners.get('click')?.size,1);
+  assert.equal(h.honey.dataset.gmrSetupBurst,'1');
+});
+
+test('setup destroy restores pre-existing projection attributes and removes listeners',()=>{
+  const document=new FakeSetupDocument();
+  const honey=new FakeSetupControl(document,{kind:'contentBtn',value:'honey_hunt',selected:true});
+  honey.setAttribute('aria-pressed','legacy');
+  honey.dataset.gmrSetupSelected='legacy-selected';
+  honey.style.setProperty('--mf-scale-y','legacy-scale');
+  const screen=new FakeSetupScreen(document,[honey]);
+  document.screen=screen;
+  const binding=bindSetupChoiceFeedbackControls({
+    root:document,
+    readUiMode:()=>({reducedMotion:false,lowPerf:false}),
+    enqueue:(fn)=>fn(),
+  });
+  assert.equal(honey.getAttribute('aria-pressed'),'true');
+  assert.equal(honey.listeners.get('click')?.size,1);
+  assert.equal(binding.destroy(),true);
+  assert.equal(binding.destroy(),false);
+  assert.equal(honey.getAttribute('aria-pressed'),'legacy');
+  assert.equal(honey.dataset.gmrSetupSelected,'legacy-selected');
+  assert.equal(honey.style.getPropertyValue('--mf-scale-y'),'legacy-scale');
+  assert.equal(honey.listeners.get('click')?.size,0);
 });

@@ -267,7 +267,7 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="partner"\]\{[^}]*bottom:calc\(28vh \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\) \+ 92px\)!important/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="partner-visual"\]\{width:96px!important;height:154px!important\}/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\.battleRail\{[^}]*top:158px!important[^}]*max-width:none!important/);
-  assert.equal(styleText.includes('.battleRail{top:144px!important;bottom:auto!important;max-width:168px!important}'), true);
+  assert.equal(styleText.includes('.battleRail{top:144px!important;bottom:auto!important;max-width:168px!important;overflow:visible!important}'), true);
 
   assert.match(styleText, /@media\(max-width:520px\) and \(orientation:portrait\)\{[\s\S]*?\[data-gr-current-ui-zone="current-action"\]\{[^}]*top:108px!important[^}]*left:8px!important[^}]*right:8px!important[^}]*transform:translateY\(6px\)!important\}/);
   const snapshot = runtime.inspect();

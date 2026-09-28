@@ -185,6 +185,8 @@ if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stat
     [/syncBattleCentralWorldPresentation\(m\);renderBoardPlayers\(\);renderRouteLine\(\)/, 'legacy renderBoard cadence does not sync the existing central world presentation'],
     [/authority:Object\.freeze\(\{gameplay:false,movement:false,target:false,legality:false,result:false,stateWrite:false\}\)/, 'central world live mount lost its gameplay authority firewall'],
     [/\.battleCentralWorldLiveHost\{position:absolute;inset:3% 3% 18%;pointer-events:none;/, 'central world presentation host can take Battle input ownership'],
+    [/#fieldCanvas\{[^}]*pointer-events:none/, 'field canvas can take Battle input ownership'],
+    [/html body:has\(\.battle\.active\) \.top\{[^}]*pointer-events:none!important/, 'Battle top chrome can take board input ownership'],
     [/BATTLE_BOARD_WORLD_FIELD_LIVE_HTML_R19/, 'live Battle field does not declare the R19 world-field handoff'],
     [/battleCentralWorldRuntimeR8\?\.worldFieldRenderModel\?\.\(/, 'live renderField3D does not consume the existing world-field renderer model'],
     [/requestAnimationFrame\(\(\)=>\{if\(state\.match\)renderField3D\(\)\}\)/, 'central world mount does not request a field redraw after the world-field model becomes available'],

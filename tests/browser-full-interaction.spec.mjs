@@ -661,21 +661,7 @@ test('starts through visible Setup and advances the first Battle decision throug
   expect(initialHands, 'fresh match deals seven source hand cards to every participant').toEqual([7, 7]);
   const handCards = battle.locator('#hand .handCard:visible');
   expect(await handCards.count(), 'janken reservation leaves ordinary hand cards visibly playable').toBeGreaterThanOrEqual(2);
-  await handCards.nth(0).click();
-  await expect(battle.locator('#roadSelect')).not.toHaveValue('');
-  await handCards.nth(1).click();
-  await expect(battle.locator('#battleSelect')).not.toHaveValue('');
-
-  const roadValue = await battle.locator('#roadSelect').inputValue();
-  const battleValue = await battle.locator('#battleSelect').inputValue();
-  expect(roadValue, 'visible hand click selects a Road card').not.toBe('');
-  expect(battleValue, 'visible hand click selects a Battle card').not.toBe('');
-  expect(battleValue, 'Road and Battle use different visible hand cards').not.toBe(roadValue);
-
-  const ready = battle.locator('#readyPlan');
-  await expect(ready).toBeVisible();
-  await expect(ready).toBeEnabled();
-  await ready.click();
+  await submitVisiblePlan(battle);
 
   const cue = battle.locator('#first10Cue');
   await expect(cue, 'visible first-cycle cue confirms Road decision, public reveal, and progression beyond Plan').toContainText('ロード決定 → 公開 → 次の行動まで確認 ✓', { timeout: 30_000 });

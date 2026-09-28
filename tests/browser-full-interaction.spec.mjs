@@ -218,6 +218,16 @@ async function submitVisiblePlan(battle) {
     .flat().length;
   expect(candidateCount, 'visible plan controls expose at least two distinct cards').toBeGreaterThanOrEqual(2);
 
+  const currentHumanPlan = () => battle.evaluate(() => {
+    const match = window.__GAMEROAD_TEST__?.state?.match ?? null;
+    const player = match?.players?.find((candidate) => candidate?.human) ?? match?.players?.[0] ?? null;
+    return {
+      phase: match?.phase ?? null,
+      roadId: player?.plan?.roadId ?? null,
+      battleId: player?.plan?.battleId ?? null,
+    };
+  });
+
   const clickCandidate = async (excludedId = null) => {
     for (const group of candidateGroups) {
       const ids = await group.locator.evaluateAll((nodes) => nodes
@@ -235,19 +245,42 @@ async function submitVisiblePlan(battle) {
     return null;
   };
 
-  if (!(await roadSelect.inputValue())) await expect.poll(() => clickCandidate()).not.toBeNull();
-  if (!(await battleSelect.inputValue())) {
-    const roadValue = await roadSelect.inputValue();
-    await expect.poll(() => clickCandidate(roadValue)).not.toBeNull();
-    await expect(battleSelect, 'a different visible card can be reserved as Battle').not.toHaveValue('');
+  let plan = await currentHumanPlan();
+  if (!plan.roadId) {
+    const clickedRoad = await clickCandidate();
+    expect(clickedRoad, 'visible Road card click was available').not.toBeNull();
+    await expect.poll(async () => (await currentHumanPlan()).roadId, {
+      message: 'visible Road card click writes the authoritative human plan',
+    }).not.toBeNull();
   }
 
-  expect(await roadSelect.inputValue(), 'visible Road selection').not.toBe('');
-  expect(await battleSelect.inputValue(), 'visible Battle selection').not.toBe('');
-  expect(await battleSelect.inputValue(), 'Road and Battle remain distinct').not.toBe(await roadSelect.inputValue());
+  plan = await currentHumanPlan();
+  if (!plan.battleId) {
+    const clickedBattle = await clickCandidate(plan.roadId);
+    expect(clickedBattle, 'a distinct visible Battle card click was available').not.toBeNull();
+    await expect.poll(async () => (await currentHumanPlan()).battleId, {
+      message: 'visible Battle card click writes the authoritative human plan',
+    }).not.toBeNull();
+  }
+
+  plan = await currentHumanPlan();
+  expect(plan.roadId, 'authoritative Road reservation').not.toBeNull();
+  expect(plan.battleId, 'authoritative Battle reservation').not.toBeNull();
+  expect(plan.battleId, 'Road and Battle remain distinct').not.toBe(plan.roadId);
+
+  const roadCard = battle.locator(`#hand .handCard[data-card-id="${plan.roadId}"]`).first();
+  if (await roadCard.count()) {
+    await expect(roadCard, 'visible Road reservation mark').toHaveAttribute('data-plan-role', 'ロード');
+  }
+  const battleCard = battle.locator(`#hand .handCard[data-card-id="${plan.battleId}"]`).first();
+  if (await battleCard.count()) {
+    await expect(battleCard, 'visible Battle reservation mark').toHaveAttribute('data-plan-role', 'バトル');
+  }
+
   await expect(ready).toBeEnabled();
   await ready.click();
 }
+
 
 async function playVisibleTwoPlayerToResult(page, testInfo, evidencePrefix) {
   const battle = await beginVisibleTwoPlayerRoadShield(page, testInfo, evidencePrefix);

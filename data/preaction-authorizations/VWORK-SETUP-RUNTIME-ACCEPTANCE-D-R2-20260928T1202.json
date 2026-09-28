@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-SETUP-RUNTIME-ACCEPTANCE-D-R2-20260928T1202",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "SETUP_RUNTIME_ACCEPTANCE_D_R1",
+  "acquireKey": "SETUP-RUNTIME-ACCEPTANCE-D-R1-20260928T1201-SOL-D",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "D-RUNTIME-CURRENT-PUBLIC-3VIEWPORT-20260928T1109",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "D-LIVE-CSS-INJECTION-844X390-390X844-AND-QUICKDECK-NAV-ROOTCAUSE",
+  "proceedToken": "PROCEED|VWORK-SETUP-RUNTIME-ACCEPTANCE-D-R2-20260928T1202|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|reuse-existing-runtime-seams|current-lease-row7",
+  "authorizationBaseSha": "5358ef3342f913de6e9e5524909709f6a31f2665",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "SETUP_RUNTIME_ACCEPTANCE_D_R1",
+  "leaseAcquireKey": "SETUP-RUNTIME-ACCEPTANCE-D-R1-20260928T1201-SOL-D",
+  "leaseSnapshotReadbackAtJst": "2026-09-28 12:01 JST",
+  "leaseUntilJst": "2026-09-28 12:56 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR replacement branch chatgpt/setup-runtime-acceptance-d-r2-20260928; mutable browser/GAMEROAD.html; browser/home-shell-presentation-core.mjs; tests/home-boot-presentation.test.mjs; .github/workflows/d-setup-acceptance-patch-r1.yml transient runner; own transient PRE_ACTION witness; own branch/PR/check/merge/readback; Setup defaults Honey+4P, Start initial visibility, Quick Deck contextual return only; Battle rules/input ownership remain read-only",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    ".github/workflows/d-setup-acceptance-patch-r1.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    ".github/workflows/d-setup-acceptance-patch-r1.yml"
+  ]
+}

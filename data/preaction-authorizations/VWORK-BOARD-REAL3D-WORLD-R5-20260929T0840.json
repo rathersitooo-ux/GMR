@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-BOARD-REAL3D-WORLD-R5-20260929T0840",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "BOARD_REAL_3D_WORLD_RENDERER_VERTICAL_SLICE_R1",
+  "acquireKey": "BOARD-REAL3D-WORLD-R5-20260929T0840-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R4_IMPLEMENTATION_DONOR_PLUS_PR2078_PLUS_CURRENT_TERRAIN_BENT_WORLD_FIELD",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R4_IMPLEMENTATION_DIFF_AND_PR2078_FOCUSED_TESTS",
+  "proceedToken": "PROCEED|VWORK-BOARD-REAL3D-WORLD-R5-20260929T0840|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|presentation-only-real-3d-world-recovery|validator-readback-format-correct",
+  "authorizationBaseSha": "51609516a41f54c471aca8d0e97e37acb194021d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "BOARD_REAL_3D_WORLD_RENDERER_VERTICAL_SLICE_R1",
+  "leaseAcquireKey": "BOARD-REAL3D-WORLD-R5-20260929T0840-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-29 08:40 JST",
+  "leaseUntilJst": "2026-09-29 09:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch chatgpt/board-real3d-world-r5-20260929; mutable browser/battle-board-webgl-world-renderer.mjs; browser/battle-board-world-live-mount.mjs; browser/board-facility-runtime-mount.mjs; tests/battle-board-webgl-world-renderer.test.mjs; tests/battle-board-world-live-mount.test.mjs; browser/assets/world3d/THIRD_PARTY_ASSETS.md; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; own data/preaction-authorizations witness; own branch/PR/check/merge/readback; own CURRENT lease row/R24 event",
+  "solutionSignature": "R4_AND_PR2078_BABYLON_WORLD_RENDERER_DONOR_ADAPTED_TO_CURRENT_TERRAIN_BENT_WORLD_FIELD",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R4_CURRENT_MAIN_IMPLEMENTATION_DONOR_AND_PR2078_PROVEN_VERTICAL_SLICE",
+  "solutionSearchEvidence": [
+    "R4 already contains the current-main-adapted real-3D implementation; R5 reuses it byte-for-byte except the corrected authorization lineage.",
+    "PR#2078 remains the original Babylon.js donor and proves the renderer/live-mount architecture.",
+    "Current WORLD_FIELD terrain-bent lower-route waypoints are consumed generically by the renderer without canonical topology mutation.",
+    "No gameplay or canonical world-field files are in the mutable scope."
+  ],
+  "scope": [
+    "browser/battle-board-webgl-world-renderer.mjs",
+    "browser/battle-board-world-live-mount.mjs",
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/battle-board-webgl-world-renderer.test.mjs",
+    "tests/battle-board-world-live-mount.test.mjs",
+    "browser/assets/world3d/THIRD_PARTY_ASSETS.md",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-board-webgl-world-renderer.mjs",
+    "browser/battle-board-world-live-mount.mjs",
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/battle-board-webgl-world-renderer.test.mjs",
+    "tests/battle-board-world-live-mount.test.mjs",
+    "browser/assets/world3d/THIRD_PARTY_ASSETS.md",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "formalInvariants": [
+    "presentation-only WORLD_FIELD consumer; no second board engine",
+    "no gameplay, movement, legality, save, economy, network, card-data, or canonical topology authority mutation",
+    "current world-field renderer and canonical visual graph remain read-only",
+    "existing DOM board remains interactive authority above the graphical canvas",
+    "remote CC0 preview is proof-only and never formal art"
+  ],
+  "acceptance": [
+    "Battle mounts actual graphical terrain elevation, water, routes, nodes, and landmarks behind the interactive board DOM",
+    "current terrain-bent lower-route waypoints are consumed without changing edge endpoints or adjacency",
+    "routes and nodes are terrain-height-clamped rather than floating on a flat CSS plane",
+    "focused renderer/live-mount tests and GAMEROAD Required Gate pass",
+    "visual acceptance is not claimed without runtime screenshot evidence"
+  ]
+}

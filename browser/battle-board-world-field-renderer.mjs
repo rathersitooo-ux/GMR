@@ -26,11 +26,64 @@ function projectSourcePoint(source, projection) {
     sourceV: source.v,
   };
 }
+function stableBendSign(id) {
+  let hash = 2166136261;
+  for (const char of String(id ?? '')) {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 16777619) >>> 0;
+  }
+  return (hash & 1) === 0 ? 1 : -1;
+}
+function deriveTerrainRouteWaypoints(edge, from, to, sourceWaypoints) {
+  if (sourceWaypoints.length > 0) {
+    return { waypoints: sourceWaypoints, routePresentation: 'SOURCE_REFERENCE_WAYPOINTS' };
+  }
+  if (edge.region !== 'LOWER_SHARED_FIELD') {
+    return { waypoints: sourceWaypoints, routePresentation: 'STRAIGHT_CANONICAL' };
+  }
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const dz = to.z - from.z;
+  const distance = Math.hypot(dx, dz);
+  if (!Number.isFinite(distance) || distance <= Number.EPSILON) {
+    return { waypoints: sourceWaypoints, routePresentation: 'STRAIGHT_CANONICAL' };
+  }
+  const normalX = -dz / distance;
+  const normalZ = dx / distance;
+  const direction = stableBendSign(edge.id);
+  const amplitude = Math.min(0.34, Math.max(0.10, distance * 0.09));
+  const waypoints = [0.25, 0.5, 0.75].map((t) => {
+    const bend = Math.sin(Math.PI * t) * amplitude * direction;
+    return {
+      x: from.x + dx * t + normalX * bend,
+      y: from.y + dy * t,
+      z: from.z + dz * t + normalZ * bend,
+      derivedTerrainRoute: true,
+    };
+  });
+  return { waypoints, routePresentation: 'DERIVED_TERRAIN_BOW' };
+}
 function edgePrimitive(edge, nodes, projection) {
   const from = point(nodes, edge.fromId);
   const to = point(nodes, edge.toId);
-  const waypoints = (edge.waypoints ?? []).map((source) => projectSourcePoint(source, projection));
-  return { id: edge.id, kind: edge.kind, region: edge.region, fromId: edge.fromId, toId: edge.toId, from, to, waypoints, gameplayAuthority: false };
+  const sourceWaypoints = (edge.waypoints ?? []).map((source) => projectSourcePoint(source, projection));
+  const route = deriveTerrainRouteWaypoints(edge, from, to, sourceWaypoints);
+  return {
+    id: edge.id,
+    kind: edge.kind,
+    region: edge.region,
+    fromId: edge.fromId,
+    toId: edge.toId,
+    from,
+    to,
+    sourceWaypoints,
+    waypoints: route.waypoints,
+    routePresentation: route.routePresentation,
+    canonicalVisualEdge: true,
+    gameplayAuthority: false,
+    movementAuthority: false,
+    legalityAuthority: false,
+  };
 }
 
 export function createBattleBoardWorldFieldRenderModel({
@@ -78,7 +131,8 @@ export function createBattleBoardWorldFieldRenderModel({
   const gateConnections = graph.gateConnections
     .filter((edge) => edge.id.endsWith(':lower') || visibleUpperIds.has(edge.fromId))
     .map((edge) => edgePrimitive(edge, nodes, projection));
-  const edges = [...upperLaneEdges, ...gateConnections, ...graph.lowerEdges.map((edge) => edgePrimitive(edge, nodes, projection))];
+  const lowerEdges = graph.lowerEdges.map((edge) => edgePrimitive(edge, nodes, projection));
+  const edges = [...upperLaneEdges, ...gateConnections, ...lowerEdges];
   return deepFreeze({
     schema: SCHEMA,
     renderSpace: 'WORLD_FIELD',
@@ -98,6 +152,8 @@ export function createBattleBoardWorldFieldRenderModel({
       roundCells: roundCells.length,
       gates: gates.length,
       shields: shields.length,
+      terrainBentLowerEdges: lowerEdges.filter((edge) => edge.routePresentation === 'DERIVED_TERRAIN_BOW').length,
+      sourceWaypointLowerEdges: lowerEdges.filter((edge) => edge.routePresentation === 'SOURCE_REFERENCE_WAYPOINTS').length,
     },
   });
 }
@@ -129,6 +185,9 @@ export const BATTLE_BOARD_WORLD_FIELD_RENDERER_CONTRACT = deepFreeze({
   routeGateAndShieldPreserved: true,
   upperProgressionVisibility: 'ACTUAL_BUILT_CARDS_ONLY',
   visibleFutureUpperSlots: 0,
+  lowerSharedFieldRoutePresentation: 'DERIVED_TERRAIN_BOW_WITH_SOURCE_WAYPOINT_PRESERVATION',
+  canonicalAdjacencyUnchanged: true,
+  renderWaypointsAreMovementNodes: false,
   secondBoardEngine: false,
   gameplayAuthority: false,
   movementAuthority: false,

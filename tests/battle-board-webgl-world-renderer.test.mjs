@@ -24,6 +24,22 @@ test('real 3D renderer consumes the existing WORLD_FIELD model without taking ga
   assert.ok(normalized.edges.length > 0);
 });
 
+test('terrain-bent lower routes survive into the WebGL consumer without becoming movement authority', () => {
+  const model = createBattleBoardWorldFieldRenderModel({
+    worldBounds: { centerX: 0, centerZ: 0, width: 24, depth: 13.5, y: 0 },
+  });
+  const source = model.edges.find((edge) => edge.id === 'lower-edge:T1-T2');
+  const normalized = normalizeBattleWorldModel(model);
+  const rendered = normalized.edges.find((edge) => edge.id === 'lower-edge:T1-T2');
+
+  assert.equal(source.routePresentation, 'DERIVED_TERRAIN_BOW');
+  assert.equal(source.waypoints.length, 3);
+  assert.equal(rendered.waypoints.length, 3);
+  assert.deepEqual(rendered.waypoints, source.waypoints);
+  assert.equal(normalized.movementAuthority, false);
+  assert.equal(normalized.legalityAuthority, false);
+});
+
 test('terrain height is deterministic, finite, and produces actual elevation variation', () => {
   const samples = [
     battleWorldTerrainHeight(0, 0),

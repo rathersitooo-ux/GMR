@@ -22,6 +22,9 @@ test('real 3D renderer consumes the existing WORLD_FIELD model without taking ga
   assert.equal(normalized.legalityAuthority, false);
   assert.ok(normalized.nodes.length >= 43);
   assert.ok(normalized.edges.length > 0);
+  const terrainBentRoutes = normalized.edges.filter((edge) => Array.isArray(edge.waypoints) && edge.waypoints.length >= 3);
+  assert.ok(terrainBentRoutes.length > 0);
+  assert.ok(terrainBentRoutes.every((edge) => typeof edge.from === 'object' && typeof edge.to === 'object'));
 });
 
 test('terrain height is deterministic, finite, and produces actual elevation variation', () => {

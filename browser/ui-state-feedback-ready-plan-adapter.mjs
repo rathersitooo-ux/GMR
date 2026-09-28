@@ -304,7 +304,7 @@ function setupChoiceScreen(root) {
 }
 
 function setupChoiceIsSelected(control) {
-  if (control?.classList?.contains?.('on')) return true;
+  if (typeof control?.classList?.contains === 'function') return control.classList.contains('on');
   return control?.getAttribute?.('aria-pressed') === 'true';
 }
 
@@ -533,7 +533,13 @@ export function bindSetupChoiceFeedbackControls({
     });
     on(control, 'blur', () => {
       if (destroyed) return;
-      if (activePointers.has(control)) cancelPointer(control, 'control_blur');
+      if (activePointers.has(control)) {
+        cancelPointer(control, 'control_blur');
+        return;
+      }
+      if (control.dataset?.gmrSetupFeedback === MATERIAL_FEEDBACK_PHASES.PRESSED) {
+        settlePhase(control, MATERIAL_FEEDBACK_PHASES.CANCELLED);
+      }
     });
   }
 

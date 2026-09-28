@@ -3,6 +3,7 @@ import {
   BATTLE_CURRENT_PLAYER_UI_LIVE_ADAPTER_SCHEMA,
   mountBattleCurrentPlayerUiLiveAdapter,
   projectBattleCurrentActionLiveDom,
+  projectBattlePrimaryActionPresentationState,
   readBattleCurrentActionPublicDomFacts,
 } from '../browser/battle-current-player-ui-live-adapter.mjs';
 
@@ -46,6 +47,7 @@ function makeBattleHarness() {
   const phase = makeElement({ dataset: { ph: 'target' }, classes: ['on'] });
   const readyPlan = makeElement({ disabled: true });
   const targetBox = makeElement();
+  const jankenSlidePad = makeElement({ dataset: { expanded: 'false', handAuraActive: 'false', handAuraArmed: 'false', jankenTurnUsed: 'false' } });
   const boardPlayers = makeElement();
   const publicPlayerStrip = makeElement();
   const tokens = [
@@ -68,6 +70,7 @@ function makeBattleHarness() {
     if (selector === '#phaseBar') return phase;
     if (selector === '#readyPlan') return readyPlan;
     if (selector === '#targetBox') return targetBox;
+    if (selector === '[data-battle-janken-slidepad="1"]') return jankenSlidePad;
     if (selector === '#boardPlayers') return boardPlayers;
     if (selector === '#publicPlayerStrip') return publicPlayerStrip;
     return null;
@@ -96,7 +99,7 @@ function makeBattleHarness() {
     getElementById(id) { return head.children.find((node) => node.id === id) ?? null; },
     querySelector(selector) { return selector.includes('battle') ? root : null; },
   };
-  return { root, documentRef, phaseTitle, phase, readyPlan, targetBox, tokens, chips, getCurrentActionSurface: () => currentActionSurface };
+  return { root, documentRef, phaseTitle, phase, readyPlan, targetBox, jankenSlidePad, tokens, chips, getCurrentActionSurface: () => currentActionSurface };
 }
 
 {
@@ -109,6 +112,21 @@ function makeBattleHarness() {
   const projected = projectBattleCurrentActionLiveDom(h.root);
   assert.equal(projected.ownerRelation, 'OTHER');
   assert.equal(projected.text, '今：攻撃先を選択 / 待ち：P2 / 理由：攻撃先を決定');
+  assert.deepEqual(
+    projectBattlePrimaryActionPresentationState(h.root, projected),
+    {
+      decisionActive: false,
+      jankenActive: false,
+      waitingForOthers: true,
+      focus: 'waiting',
+      activePhase: 'target',
+      targetOpen: false,
+      source: 'existing-public-live-dom',
+      presentationOnly: true,
+      gameplayAuthority: false,
+      gameStateWrite: false,
+    }
+  );
 
   h.phase.dataset.ph = 'plan';
   h.phaseTitle.textContent = '行動を計画';
@@ -119,6 +137,20 @@ function makeBattleHarness() {
   assert.equal(selfPlan.waitingFor, null);
   assert.equal(selfPlan.waitReason, null);
   assert.equal(selfPlan.text, '今：行動を計画');
+  assert.equal(projectBattlePrimaryActionPresentationState(h.root, selfPlan).focus, 'plan');
+  assert.equal(projectBattlePrimaryActionPresentationState(h.root, selfPlan).decisionActive, true);
+
+  h.phase.dataset.ph = 'target';
+  h.phaseTitle.textContent = '攻撃先を選択';
+  h.readyPlan.disabled = true;
+  h.tokens[1].classList.remove('active');
+  h.tokens[0].classList.add('active');
+  h.targetBox.classList.add('on');
+  const selfTarget = projectBattleCurrentActionLiveDom(h.root);
+  assert.equal(selfTarget.ownerRelation, 'SELF');
+  const targetAttention = projectBattlePrimaryActionPresentationState(h.root, selfTarget);
+  assert.equal(targetAttention.focus, 'target');
+  assert.equal(targetAttention.targetOpen, true);
 
   h.phase.dataset.ph = 'move';
   h.phaseTitle.textContent = '移動を解決';
@@ -128,6 +160,12 @@ function makeBattleHarness() {
   assert.equal(resolving.inputOwner, null);
   assert.equal(resolving.waitReason, null);
   assert.equal(resolving.text, '今：移動を解決');
+  h.jankenSlidePad.dataset.expanded = 'true';
+  const jankenAttention = projectBattlePrimaryActionPresentationState(h.root, resolving);
+  assert.equal(jankenAttention.jankenActive, true);
+  assert.equal(jankenAttention.focus, 'janken');
+  h.jankenSlidePad.dataset.jankenTurnUsed = 'true';
+  assert.equal(projectBattlePrimaryActionPresentationState(h.root, resolving).jankenActive, false);
 
   h.tokens.push(makeElement({ dataset: { player: 'P5' }, classes: ['boardPlayerToken', 'human'] }));
   assert.equal(readBattleCurrentActionPublicDomFacts(h.root), null, 'ambiguous viewer identity must fail closed');
@@ -137,12 +175,13 @@ function makeBattleHarness() {
   const h = makeBattleHarness();
   const globalRef = { document: h.documentRef, queueMicrotask: (fn) => fn() };
   const mounts = [];
+  const syncSnapshots = [];
   let destroyCount = 0;
   const fakeMount = (receivedGlobal, options) => {
     mounts.push({ receivedGlobal, root: options.root, currentActionAtMount: h.getCurrentActionSurface() });
     return {
       inspect: () => ({ rootDecorated: true, presentationOnly: true }),
-      sync: (snapshot) => ({ snapshot }),
+      sync: (snapshot) => { syncSnapshots.push(snapshot); return { snapshot }; },
       destroy: () => { destroyCount += 1; return true; },
     };
   };
@@ -164,6 +203,14 @@ function makeBattleHarness() {
   assert.equal(first.currentActionSurface.textContent, first.currentAction().text);
   assert.equal(first.currentActionSurface.dataset.ownerRelation, 'OTHER');
   assert.equal(first.currentActionSurface.dataset.waitingForParticipantId, 'P2');
+  assert.equal(first.primaryActionAttention().focus, 'waiting');
+  assert.equal(first.primaryActionAttention().waitingForOthers, true);
+  assert.deepEqual(syncSnapshots.at(-1), {
+    decisionActive: false,
+    jankenActive: false,
+    waitingForOthers: true,
+    focus: 'waiting',
+  });
 
   assert.deepEqual(first.sync({ reducedMotion: true }), { snapshot: { reducedMotion: true } });
   assert.equal(first.currentAction().text, '今：攻撃先を選択 / 待ち：P2 / 理由：攻撃先を決定');

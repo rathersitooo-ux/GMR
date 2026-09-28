@@ -7,6 +7,18 @@ const GLOBAL_RUNTIME_PROP = '__GAMEROAD_BATTLE_CURRENT_PLAYER_UI_LIVE__';
 const CURRENT_ACTION_ATTR = 'data-battle-current-action';
 const CURRENT_ACTION_STYLE_ID = 'gameroad-battle-current-action-live-r2-style';
 const AUTHORITY_BOUNDARY = 'caller_authoritative_public_state';
+const PRIMARY_ACTION_ATTENTION_KEYS = Object.freeze(['decisionActive', 'jankenActive', 'waitingForOthers', 'focus']);
+const COMPOSITOR_BOOLEAN_DATASETS = Object.freeze({
+  decisionActive: 'grDecisionActive',
+  jankenActive: 'grJankenActive',
+  rouletteEnabled: 'grRouletteEnabled',
+  adviceActive: 'grAdviceActive',
+  waitingForOthers: 'grWaitingForOthers',
+  stale: 'grStale',
+  reconnecting: 'grReconnecting',
+  reducedMotion: 'grReducedMotion',
+  lowPerf: 'grLowPerf',
+});
 
 function resolveBattleRoot(documentRef) {
   return documentRef?.querySelector?.('section.screen.battle[data-screen="battle"]')
@@ -113,6 +125,66 @@ export function projectBattleCurrentActionLiveDom(root) {
   }
 }
 
+function datasetBoolean(node, key) {
+  const value = node?.dataset?.[key];
+  return value === 'true' ? true : value === 'false' ? false : null;
+}
+
+function readCurrentCompositorSnapshot(root) {
+  const snapshot = {};
+  for (const [field, datasetKey] of Object.entries(COMPOSITOR_BOOLEAN_DATASETS)) {
+    const value = datasetBoolean(root, datasetKey);
+    if (value !== null) snapshot[field] = value;
+  }
+  const focus = nonEmptyText(root?.dataset?.grFocus);
+  if (focus) snapshot.focus = focus;
+  return snapshot;
+}
+
+/**
+ * Projects only already-visible/public Battle presentation facts into attention
+ * state. This never decides legality, turn ownership, targets, or gameplay.
+ */
+export function projectBattlePrimaryActionPresentationState(root, currentActionModel = null) {
+  const activePhase = nonEmptyText(root?.querySelector?.('#phaseBar [data-ph].on')?.dataset?.ph)?.toLowerCase() ?? null;
+  const targetBox = root?.querySelector?.('#targetBox') ?? null;
+  const targetOpen = hasClass(targetBox, 'on') || hasClass(targetBox, 'vfTargetProxyOn');
+  const jankenSurface = root?.querySelector?.('[data-battle-janken-slidepad="1"]') ?? null;
+  const jankenAvailable = Boolean(
+    jankenSurface
+      && jankenSurface.hidden !== true
+      && jankenSurface.getAttribute?.('aria-hidden') !== 'true'
+      && jankenSurface.dataset?.jankenTurnUsed !== 'true'
+  );
+  const jankenActive = Boolean(jankenAvailable && (
+    jankenSurface.dataset?.expanded === 'true'
+      || jankenSurface.dataset?.handAuraActive === 'true'
+      || jankenSurface.dataset?.handAuraArmed === 'true'
+  ));
+  const decisionActive = currentActionModel?.ownerRelation === 'SELF';
+  const waitingForOthers = currentActionModel?.ownerRelation === 'OTHER';
+
+  let focus = null;
+  if (waitingForOthers) focus = 'waiting';
+  else if (decisionActive && targetOpen) focus = 'target';
+  else if (jankenActive) focus = 'janken';
+  else if (decisionActive && activePhase) focus = activePhase;
+  else if (decisionActive) focus = 'decision';
+
+  return Object.freeze({
+    decisionActive,
+    jankenActive,
+    waitingForOthers,
+    focus,
+    activePhase,
+    targetOpen,
+    source: 'existing-public-live-dom',
+    presentationOnly: true,
+    gameplayAuthority: false,
+    gameStateWrite: false,
+  });
+}
+
 function ensureCurrentActionStyle(documentRef) {
   if (!documentRef?.createElement) return { node: null, created: false };
   const prior = documentRef.getElementById?.(CURRENT_ACTION_STYLE_ID);
@@ -212,6 +284,8 @@ export function mountBattleCurrentPlayerUiLiveAdapter(globalRef = globalThis, {
   let runtime = null;
   let explicitCurrentActionContext = null;
   let lastCurrentAction = null;
+  let lastPrimaryActionAttention = null;
+  let manualAttentionOwned = false;
   let scheduled = false;
 
   function refreshCurrentAction() {
@@ -224,15 +298,26 @@ export function mountBattleCurrentPlayerUiLiveAdapter(globalRef = globalThis, {
       model,
       explicitCurrentActionContext ? 'explicit-caller' : 'existing-public-live-dom',
     );
+    lastPrimaryActionAttention = projectBattlePrimaryActionPresentationState(root, model);
+    if (!manualAttentionOwned) {
+      const preserved = readCurrentCompositorSnapshot(root);
+      compositor.sync?.({
+        ...preserved,
+        decisionActive: lastPrimaryActionAttention.decisionActive,
+        jankenActive: lastPrimaryActionAttention.jankenActive,
+        waitingForOthers: lastPrimaryActionAttention.waitingForOthers,
+        focus: lastPrimaryActionAttention.focus,
+      });
+    }
     return lastCurrentAction;
   }
 
   function scheduleCurrentActionRefresh() {
-    if (destroyed || explicitCurrentActionContext || scheduled) return;
+    if (destroyed || scheduled) return;
     scheduled = true;
     const run = () => {
       scheduled = false;
-      if (!destroyed && !explicitCurrentActionContext) refreshCurrentAction();
+      if (!destroyed) refreshCurrentAction();
     };
     if (typeof globalRef.queueMicrotask === 'function') globalRef.queueMicrotask(run);
     else Promise.resolve().then(run);
@@ -252,6 +337,7 @@ export function mountBattleCurrentPlayerUiLiveAdapter(globalRef = globalThis, {
     observe(root.querySelector?.('#targetBox'), { attributes: true, attributeFilter: ['class'] });
     observe(root.querySelector?.('#boardPlayers'), { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'data-player'] });
     observe(root.querySelector?.('#publicPlayerStrip'), { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'data-player-id', 'data-public-state'] });
+    observe(root.querySelector?.('[data-battle-janken-slidepad="1"]'), { attributes: true, attributeFilter: ['data-expanded', 'data-hand-aura-active', 'data-hand-aura-armed', 'data-janken-turn-used', 'hidden', 'aria-hidden'] });
   }
 
   refreshCurrentAction();
@@ -267,12 +353,16 @@ export function mountBattleCurrentPlayerUiLiveAdapter(globalRef = globalThis, {
     mounted: () => !destroyed && root[ROOT_RUNTIME_PROP] === runtime,
     inspect: () => compositor.inspect?.() ?? null,
     currentAction: () => lastCurrentAction,
+    primaryActionAttention: () => lastPrimaryActionAttention,
     refreshCurrentAction,
     syncCurrentActionContext(raw = null) {
       explicitCurrentActionContext = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : null;
       return refreshCurrentAction();
     },
     sync(snapshot = {}) {
+      if (snapshot && typeof snapshot === 'object' && PRIMARY_ACTION_ATTENTION_KEYS.some((key) => Object.prototype.hasOwnProperty.call(snapshot, key))) {
+        manualAttentionOwned = true;
+      }
       const compositorResult = compositor.sync?.(snapshot) ?? null;
       if (snapshot && typeof snapshot === 'object' && Object.prototype.hasOwnProperty.call(snapshot, 'currentActionContext')) {
         explicitCurrentActionContext = snapshot.currentActionContext && typeof snapshot.currentActionContext === 'object'

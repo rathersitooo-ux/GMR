@@ -1,4 +1,5 @@
 name: TEMP Battle New Board Visual Only R20B
+# trigger after workflow exists on latest-main branch
 
 on:
   push:

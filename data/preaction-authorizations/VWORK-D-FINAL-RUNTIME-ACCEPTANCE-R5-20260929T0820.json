@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-D-FINAL-RUNTIME-ACCEPTANCE-R5-20260929T0820",
+  "taskId": "BROWSER-SETUP-BATTLE-RUNTIME-ACCEPTANCE-001",
+  "workUnitKey": "D_FINAL_RUNTIME_ACCEPTANCE_R5",
+  "acquireKey": "D-FINAL-RUNTIME-ACCEPTANCE-R5-20260929T0820-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "D-CURRENT-PUBLIC-23B9242-PLUS-PR2140-DONOR-AND-LIVE-HITTEST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "LIVE-CSS-INJECTION-ROOT-CAUSE-AND-PR2140-REQUIRED-GATE",
+  "proceedToken": "PROCEED|VWORK-D-FINAL-RUNTIME-ACCEPTANCE-R5-20260929T0820|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|d-final-runtime-acceptance-bounded-repair|current-lease",
+  "authorizationBaseSha": "23b924261c078f22c6c04c8153ddabb815f33dbd",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-SETUP-BATTLE-RUNTIME-ACCEPTANCE-001",
+  "leaseWorkUnitKey": "D_FINAL_RUNTIME_ACCEPTANCE_R5",
+  "leaseAcquireKey": "D-FINAL-RUNTIME-ACCEPTANCE-R5-20260929T0820-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-29 08:20 JST",
+  "leaseUntilJst": "2026-09-29 09:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch chatgpt/d-final-runtime-acceptance-r5-20260929; mutable browser/GAMEROAD.html; tests/browser-static-check.mjs; browser/home-shell-presentation-core.mjs; tests/home-boot-presentation.test.mjs; own data/preaction-authorizations witness; own branch/PR/check/merge/readback; own CURRENT lease row/R24 event",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "formalInvariants": [
+    "no gameplay/rules/save/deck/economy/network authority changes",
+    "preserve current Honey Hunt + 4P defaults and current Quick Deck behavior",
+    "reuse PR #2140 pointer-ownership repair rather than creating a second Battle input authority",
+    "keep #battleMap interactive; repair short-landscape leave hit ownership without globally disabling the world surface",
+    "Setup action-light presentation must not override Start CTA positioning authority"
+  ],
+  "acceptance": [
+    "final classified diff is limited to the four authorized existing files",
+    "1280x720, 844x390, 390x844 Start is initially visible",
+    "Battle #leaveMatch is hit-test/click reachable at 1280x720, 844x390, 390x844, and 667x375 canary",
+    "#fieldCanvas and Battle-active top chrome do not intercept Battle controls while #battleMap remains pointer-enabled",
+    "normal top chrome interaction is restored after leaving Battle",
+    "Honey/4P, Quick Deck, Start->Battle, Road/Battle card selection remain passing"
+  ]
+}

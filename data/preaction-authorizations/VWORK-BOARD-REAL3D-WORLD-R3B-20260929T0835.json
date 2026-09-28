@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-BOARD-REAL3D-WORLD-R3B-20260929T0835",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "BOARD_REAL_3D_WORLD_RENDERER_VERTICAL_SLICE_R1",
+  "acquireKey": "BOARD-REAL3D-WORLD-R3-20260929T0830-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR2078-DONOR-PLUS-CURRENT-WORLD-FIELD-ROUTE-DEPTH",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR2078-DONOR-FOCUSED-TESTS-AND-CURRENT-RENDERER-CONTRACT",
+  "proceedToken": "PROCEED|VWORK-BOARD-REAL3D-WORLD-R3B-20260929T0835|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|presentation-only-real-3d-world-recovery|current-lease",
+  "authorizationBaseSha": "51609516a41f54c471aca8d0e97e37acb194021d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "BOARD_REAL_3D_WORLD_RENDERER_VERTICAL_SLICE_R1",
+  "leaseAcquireKey": "BOARD-REAL3D-WORLD-R3-20260929T0830-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-29 08:35 JST",
+  "leaseUntilJst": "2026-09-29 09:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch chatgpt/board-real3d-world-r3b-20260929; mutable browser/battle-board-webgl-world-renderer.mjs; browser/battle-board-world-live-mount.mjs; browser/board-facility-runtime-mount.mjs; tests/battle-board-webgl-world-renderer.test.mjs; tests/battle-board-world-live-mount.test.mjs; browser/assets/world3d/**; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; own data/preaction-authorizations witness; own branch/PR/check/merge/readback; own CURRENT lease row/R24 event",
+  "scope": [
+    "browser/battle-board-webgl-world-renderer.mjs",
+    "browser/battle-board-world-live-mount.mjs",
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/battle-board-webgl-world-renderer.test.mjs",
+    "tests/battle-board-world-live-mount.test.mjs",
+    "browser/assets/world3d/THIRD_PARTY_ASSETS.md",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-board-webgl-world-renderer.mjs",
+    "browser/battle-board-world-live-mount.mjs",
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/battle-board-webgl-world-renderer.test.mjs",
+    "tests/battle-board-world-live-mount.test.mjs",
+    "browser/assets/world3d/THIRD_PARTY_ASSETS.md",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "formalInvariants": [
+    "presentation-only WORLD_FIELD consumer; no second board engine",
+    "no gameplay, movement, legality, save, economy, network, or card-data authority mutation",
+    "existing current world-field renderer and canonical visual graph remain read-only",
+    "existing DOM board remains interactive authority above the graphical canvas",
+    "remote CC0 preview is proof-only and never formal art"
+  ],
+  "acceptance": [
+    "Battle mounts actual graphical terrain elevation, water, routes, nodes, and landmarks behind the interactive board DOM",
+    "current renderer waypoints including terrain-bent lower routes are consumed without changing edge endpoints or adjacency",
+    "routes and nodes are terrain-height-clamped rather than floating on a flat CSS plane",
+    "focused renderer/live-mount tests and GAMEROAD Required Gate pass",
+    "visual acceptance is not claimed without runtime screenshot evidence"
+  ]
+}

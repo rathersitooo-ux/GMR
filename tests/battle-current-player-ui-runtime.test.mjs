@@ -170,7 +170,8 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.jankenSlidePad[0], '[data-battle
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.roulette[0], '[data-battle-playable-hand-row-roulette-live="1"]');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.supportEntry[0], '#detailsBtn');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.supportEntryPolicy, 'EXISTING_DETAILS_HISTORY_DECK_ENTRY_LOWER_LEFT');
-assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.attentionPolicy, 'ADVICE_WEAK_UNTIL_ACTIVE_WAITING_STRONG_ONLY_WHILE_WAITING_DETAILS_ON_DEMAND');
+assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.attentionPolicy, 'PRIMARY_ACTION_STRONG_SECONDARY_RECEDES_ADVICE_WEAK_UNTIL_ACTIVE_WAITING_STRONG_ONLY_WHILE_WAITING');
+assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.primaryActionPolicy, 'CENTERED_COMMAND_BAR_WITH_LOWER_DECISION_FAMILY_PUBLIC_STATE_ONLY');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.boardProtagonistPolicy, 'BOUND_EXISTING_PARTNER_VISUAL_WITH_BLUE_MANA_ART_HIDDEN');
 assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_COMPOSITION_KEEP_NUMERIC_MANA_STATE');
 
@@ -244,6 +245,11 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
   assert.match(styleText, /data-gr-advice-active="true"[\s\S]*?\[data-gr-current-ui-zone="partner"\]\{opacity:1;pointer-events:auto!important\}/);
   assert.match(styleText, /data-gr-waiting-for-others="true"[\s\S]*?#publicTurnHud\{opacity:1;filter:brightness\(1\.08\)\}/);
   assert.match(styleText, /data-gr-waiting-for-others="true"[\s\S]*?\[data-gr-current-ui-zone="current-action"\]\{[^}]*border-color:/);
+  assert.match(styleText, /\[data-gr-current-ui-zone="current-action"\]\{[^}]*left:50%!important[^}]*max-width:var\(--gr-action-max\)!important[^}]*translateX\(-50%\)!important/);
+  assert.match(styleText, /data-gr-decision-active="true"[\s\S]*?\.battleInfo\{[^}]*linear-gradient[^}]*box-shadow:/);
+  assert.match(styleText, /data-gr-focus="target"[\s\S]*?#targetBox\{[^}]*brightness\(1\.08\)[^}]*box-shadow:/);
+  assert.match(styleText, /data-gr-janken-active="true"[\s\S]*?\[data-battle-janken-slidepad="1"\]\{[^}]*brightness\(1\.08\)[^}]*box-shadow:/);
+  assert.match(styleText, /data-gr-decision-active="true"[\s\S]*?\.battleRail,[\s\S]*?opacity:\.22!important/);
   assert.match(styleText, /\[data-gr-current-ui-zone="details-on-demand"\]\[hidden\]\{display:none!important\}/);
   assert.match(styleText, /\[data-gr-current-ui-zone="partner-visual"\]\{width:clamp\(132px,15vw,190px\)!important;height:min\(34vh,245px\)!important\}/);
   assert.match(styleText, /#battleManaArtR8[^}]*display:none!important/);
@@ -260,10 +266,10 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="support-entry"\]\{[^}]*bottom:calc\(28vh \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\) \+ 46px\)!important/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="partner"\]\{[^}]*bottom:calc\(28vh \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\) \+ 92px\)!important/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="partner-visual"\]\{width:96px!important;height:154px!important\}/);
-  assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\.battleRail\{[^}]*top:118px!important[^}]*max-width:none!important/);
+  assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\.battleRail\{[^}]*top:158px!important[^}]*max-width:none!important/);
   assert.equal(styleText.includes('.battleRail{top:144px!important;bottom:auto!important;max-width:168px!important}'), true);
 
-  assert.match(styleText, /@media\(max-width:520px\) and \(orientation:portrait\)\{[\s\S]*?\[data-gr-current-ui-zone="current-action"\]\{transform:translateY\(6px\)!important\}/);
+  assert.match(styleText, /@media\(max-width:520px\) and \(orientation:portrait\)\{[\s\S]*?\[data-gr-current-ui-zone="current-action"\]\{[^}]*top:108px!important[^}]*left:8px!important[^}]*right:8px!important[^}]*transform:translateY\(6px\)!important\}/);
   const snapshot = runtime.inspect();
   assert.equal(snapshot.boardProtagonist, true);
   assert.deepEqual(snapshot.resolvedLiveConsumers, {
@@ -291,6 +297,8 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
     adviceDefaultWeak: true,
     fourPlayerPublicDefaultWeak: true
   });
+  assert.equal(root.dataset.grDecisionActive, 'false');
+  assert.equal(root.dataset.grJankenActive, 'true');
   assert.equal(root.dataset.grRouletteEnabled, 'true');
   assert.equal(root.dataset.grAdviceActive, 'false');
   assert.equal(root.dataset.grWaitingForOthers, 'false');

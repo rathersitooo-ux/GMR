@@ -153,6 +153,34 @@ test('hands the current NEW_BOARD_ONLY world-field model to the live renderer se
   assert.equal(model.gameplayAuthority, false);
   assert.equal(model.movementAuthority, false);
   assert.equal(BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT.worldFieldGeometryAuthority, 'EXISTING_BATTLE_BOARD_WORLD_FIELD_RENDERER');
+  assert.equal(BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT.worldInteractionOverlayAuthority, 'EXISTING_BATTLE_BOARD_WORLD_INTERACTION_OVERLAY_CORE');
+  assert.equal(BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT.ownsInteractionAuthority, false);
+});
+
+test('exposes canonical CURRENT/NEXT/PATH/REACHABLE overlay through the live composer without owning interaction authority', () => {
+  const { runtime } = mount();
+  const overlay = runtime.worldInteractionOverlay({
+    currentNodeId: 'lower:M5',
+    nextNodeId: 'lower:M6',
+    reachableNodeIds: ['lower:M4', 'lower:M5', 'lower:M6'],
+    pathNodeIds: ['lower:M5', 'lower:M6'],
+  });
+
+  assert.equal(overlay.presentationOnly, true);
+  assert.equal(overlay.callerOwnsInteractionAuthority, true);
+  assert.equal(overlay.gameplayAuthority, false);
+  assert.equal(overlay.movementAuthority, false);
+  assert.equal(overlay.legalityAuthority, false);
+  assert.equal(overlay.stateWrite, false);
+  assert.deepEqual(overlay.overlayByNodeId['lower:M5'].roles, ['CURRENT', 'PATH', 'REACHABLE']);
+  assert.deepEqual(overlay.overlayByNodeId['lower:M6'].roles, ['NEXT', 'PATH', 'REACHABLE']);
+
+  assert.throws(
+    () => runtime.worldInteractionOverlay({ currentNodeId: 'C:0:0' }),
+    /BATTLE_BOARD_INTERACTION_NODE_NOT_CANONICAL:C:0:0/,
+  );
+  assert.equal(runtime.snapshot().openGoalPathCount, 0);
+  assert.equal(runtime.snapshot().progressionBuiltStageCount, 0);
 });
 
 test('1..6 established cards become BUILT while future stages stay logical-only and GOAL remains closed', () => {

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "SETUP-DEFAULT-AUTHORITY-R1-20260928T1029-SOL-A",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "SETUP_DEFAULT_HONEY_4P_AUTHORITY_R1",
+  "acquireKey": "SETUP-DEFAULT-AUTHORITY-R1-20260928T1029-SOL-A",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_DIRECT_DEFAULT_HONEY_4P_PLUS_CURRENT_STATE_TRACE_20260928",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_HTML_STATIC_TRACE_STATE_DOM_RESET_STARTMATCH_20260928",
+  "proceedToken": "PROCEED|SETUP-DEFAULT-AUTHORITY-R1-20260928T1029-SOL-A|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|USER_DIRECT",
+  "authorizationBaseSha": "c50107e1c3d9b13dbe61e2c1480627867d2ac600",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "SETUP_DEFAULT_HONEY_4P_AUTHORITY_R1",
+  "leaseAcquireKey": "SETUP-DEFAULT-AUTHORITY-R1-20260928T1029-SOL-A",
+  "leaseSnapshotReadbackAtJst": "2026-09-28 10:29 JST",
+  "leaseUntilJst": "2026-09-28 11:29 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch chatgpt/setup-default-authority-a-r1-20260928; mutable browser/GAMEROAD.html; focused tests only if needed; own transient PRE_ACTION witness; own branch/PR/check/merge/readback; own CURRENT lease/R24 event",
+  "scope": [
+    "browser/GAMEROAD.html"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html"
+  ],
+  "solutionSignature": "setup-default-honey-4p-existing-state-projection",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_HTML_EXISTING_STATE_RENDER_STARTMATCH_AUTHORITY",
+  "solutionSearchEvidence": [
+    "browser/GAMEROAD.html current state setupMode/setupContent",
+    "renderSetupShell already projects state to .on and aria-pressed",
+    "startMatch already snapshots setupMode/setupContent"
+  ]
+}

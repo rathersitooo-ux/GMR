@@ -227,6 +227,8 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
   assert.match(document.head.children[0].textContent, /data-gr-current-ui-zone="partner-visual"/);
   assert.match(document.head.children[0].textContent, /data-gr-current-ui-zone="mana-art"/);
   assert.match(document.head.children[0].textContent, /backdrop-filter:none/);
+  assert.match(document.head.children[0].textContent, /#fieldCanvas\{pointer-events:none!important\}/);
+  assert.match(document.head.children[0].textContent, /body:has\(\.screen\.battle\[[^\]]+\]\.active\) \.top\{pointer-events:none!important\}/);
   const styleText = document.head.children[0].textContent;
   const roulettePlacementRules = [...styleText.matchAll(/\[data-battle-playable-hand-row-roulette-live="1"\]\{([^}]*)\}/g)]
     .map((match) => match[1]);

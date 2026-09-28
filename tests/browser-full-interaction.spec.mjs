@@ -277,8 +277,9 @@ async function submitVisiblePlan(battle) {
     await expect(battleCard, 'visible Battle reservation mark').toHaveAttribute('data-plan-role', 'バトル');
   }
 
-  await expect(ready).toBeEnabled();
-  await ready.click();
+  await expect.poll(async () => (await currentHumanPlan()).phase, {
+    message: 'Road + Battle visible reservations auto-commit without the retired Ready action',
+  }).not.toBe('plan');
 }
 
 

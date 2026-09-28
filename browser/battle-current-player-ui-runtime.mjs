@@ -31,18 +31,18 @@ const SELECTOR_CANDIDATES = Object.freeze({
 });
 
 const STYLE_TEXT = `
-.screen.battle[${ROOT_ATTR}="1"]{--gr-ui-edge:clamp(6px,1.2vw,12px);--gr-ui-gap:clamp(4px,.9vw,9px);--gr-thumb-w:clamp(208px,31vw,248px);--gr-thumb-h:clamp(160px,29vh,196px);--gr-bottom-h:clamp(86px,25vh,124px);isolation:isolate;overflow:hidden}
+.screen.battle[${ROOT_ATTR}="1"]{--gr-ui-edge:clamp(6px,1.2vw,12px);--gr-ui-gap:clamp(4px,.9vw,9px);--gr-thumb-w:clamp(208px,31vw,248px);--gr-thumb-h:clamp(160px,29vh,196px);--gr-bottom-h:clamp(86px,25vh,124px);--gr-action-max:min(62vw,620px);isolation:isolate;overflow:hidden}
 .screen.battle[${ROOT_ATTR}="1"] #battleMap{position:absolute!important;inset:0!important;overflow:hidden!important}
 .screen.battle[${ROOT_ATTR}="1"] #board{z-index:2}
 .screen.battle[${ROOT_ATTR}="1"] #boardPlayers{z-index:7}
 .screen.battle[${ROOT_ATTR}="1"] #battleRuntime{z-index:8}
 .screen.battle[${ROOT_ATTR}="1"] #phaseBar{display:none!important}
 .screen.battle[${ROOT_ATTR}="1"] [data-battle-r75-hud="1"]{z-index:33!important}
-.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="current-action"]{position:absolute!important;z-index:32!important;top:calc(var(--gr-ui-edge) + clamp(42px,9vh,72px))!important;left:var(--gr-ui-edge)!important;right:auto!important;bottom:auto!important;max-width:min(38vw,310px)!important;transform:none!important;margin:0!important;pointer-events:none!important}
+.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="current-action"]{position:absolute!important;z-index:32!important;top:calc(var(--gr-ui-edge) + clamp(42px,9vh,72px))!important;left:50%!important;right:auto!important;bottom:auto!important;width:max-content!important;min-width:min(32vw,280px)!important;max-width:var(--gr-action-max)!important;transform:translateX(-50%)!important;margin:0!important;text-align:center!important;pointer-events:none!important;transition:opacity 120ms ease,filter 120ms ease,box-shadow 120ms ease!important}
 .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud{position:absolute!important;z-index:31!important;top:var(--gr-ui-edge)!important;left:50%!important;right:auto!important;bottom:auto!important;transform:translateX(-50%)!important;width:min(48vw,500px)!important;max-height:54px!important;overflow:hidden!important;padding:3px 6px!important;pointer-events:none!important;opacity:.68;transition:opacity 120ms ease,filter 120ms ease}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{position:absolute!important;z-index:32!important;left:var(--gr-ui-edge)!important;right:auto!important;top:auto!important;bottom:var(--gr-ui-edge)!important;width:auto!important;max-width:min(22vw,170px)!important;pointer-events:none!important}
-.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="support-entry"]{position:absolute!important;z-index:33!important;left:var(--gr-ui-edge)!important;right:auto!important;top:auto!important;bottom:calc(var(--gr-ui-edge) + 46px)!important;min-width:44px!important;min-height:36px!important;width:auto!important;height:36px!important;max-height:36px!important;padding:5px 8px!important;margin:0!important;transform:none!important;box-sizing:border-box!important;font-size:9px!important;pointer-events:auto!important}
-.screen.battle[${ROOT_ATTR}="1"] .battleInfo{position:absolute!important;z-index:25!important;left:clamp(104px,16vw,190px)!important;right:calc(var(--gr-thumb-w) + var(--gr-ui-edge) + var(--gr-ui-gap))!important;top:auto!important;bottom:var(--gr-ui-edge)!important;height:var(--gr-bottom-h)!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(138px,28%)!important;align-items:end!important;gap:var(--gr-ui-gap)!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important;pointer-events:none!important}
+.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="support-entry"]{position:absolute!important;z-index:33!important;left:var(--gr-ui-edge)!important;right:auto!important;top:auto!important;bottom:calc(var(--gr-ui-edge) + 46px)!important;min-width:44px!important;min-height:36px!important;width:auto!important;height:36px!important;max-height:36px!important;padding:5px 8px!important;margin:0!important;transform:none!important;box-sizing:border-box!important;font-size:9px!important;pointer-events:auto!important;transition:opacity 120ms ease,filter 120ms ease!important}
+.screen.battle[${ROOT_ATTR}="1"] .battleInfo{position:absolute!important;z-index:25!important;left:clamp(104px,16vw,190px)!important;right:calc(var(--gr-thumb-w) + var(--gr-ui-edge) + var(--gr-ui-gap))!important;top:auto!important;bottom:var(--gr-ui-edge)!important;height:var(--gr-bottom-h)!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(138px,28%)!important;align-items:end!important;gap:var(--gr-ui-gap)!important;padding:0!important;background:none!important;border:0!important;border-radius:16px!important;box-shadow:none!important;pointer-events:none!important;transition:opacity 120ms ease,filter 120ms ease,background 120ms ease,box-shadow 120ms ease!important}
 .screen.battle[${ROOT_ATTR}="1"] #hand{position:relative!important;inset:auto!important;min-width:0!important;max-width:none!important;height:100%!important;display:flex!important;align-items:flex-end!important;justify-content:flex-end!important;gap:clamp(2px,.45vw,6px)!important;padding:0 clamp(4px,.8vw,10px) 0 0!important;overflow:visible!important;pointer-events:auto!important;transform-origin:right bottom!important}
 .screen.battle[${ROOT_ATTR}="1"] #hand .handCard{transform-origin:50% 100%!important}
 .screen.battle[${ROOT_ATTR}="1"] #hand .handCard:nth-child(1){transform:translateY(7px) rotate(-7deg)}
@@ -54,17 +54,36 @@ const STYLE_TEXT = `
 .screen.battle[${ROOT_ATTR}="1"] .planBox .planSelect{min-width:0!important}
 .screen.battle[${ROOT_ATTR}="1"] .planBox select{width:100%!important;min-width:0!important}
 .screen.battle[${ROOT_ATTR}="1"] .planBox .quickReadyGroup{grid-column:1/-1!important;justify-self:end!important;display:flex!important;align-items:center!important;gap:5px!important}
-.screen.battle[${ROOT_ATTR}="1"] [data-battle-janken-slidepad="1"]{position:absolute!important;z-index:44!important;width:var(--gr-thumb-w)!important;height:var(--gr-thumb-h)!important;right:var(--gr-ui-edge)!important;left:auto!important;bottom:var(--gr-ui-edge)!important;top:auto!important;transform:none!important;margin:0!important;box-sizing:border-box!important}
+.screen.battle[${ROOT_ATTR}="1"] [data-battle-janken-slidepad="1"]{position:absolute!important;z-index:44!important;width:var(--gr-thumb-w)!important;height:var(--gr-thumb-h)!important;right:var(--gr-ui-edge)!important;left:auto!important;bottom:var(--gr-ui-edge)!important;top:auto!important;transform:none!important;margin:0!important;box-sizing:border-box!important;transition:opacity 120ms ease,filter 120ms ease,box-shadow 120ms ease!important}
 .screen.battle[${ROOT_ATTR}="1"] [data-battle-playable-hand-row-roulette-live="1"]{position:absolute!important;z-index:43!important;max-width:min(236px,36vw)!important}
 .screen.battle[${ROOT_ATTR}="1"][data-gr-roulette-enabled="false"] [data-battle-playable-hand-row-roulette-live="1"]{display:none!important}
-.screen.battle[${ROOT_ATTR}="1"] #targetBox{position:absolute!important;z-index:45!important;right:calc(var(--gr-thumb-w) + var(--gr-ui-edge) + var(--gr-ui-gap))!important;left:auto!important;bottom:var(--gr-ui-edge)!important;top:auto!important;width:min(34vw,280px)!important;max-height:44vh!important;overflow:auto!important}
-.screen.battle[${ROOT_ATTR}="1"] .battleRail{position:absolute!important;z-index:34!important;top:var(--gr-ui-edge)!important;right:var(--gr-ui-edge)!important;left:auto!important;bottom:auto!important;width:auto!important;height:auto!important;max-width:min(28vw,340px)!important;max-height:44px!important;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:flex-end!important;gap:4px!important;padding:0!important;margin:0!important;transform:none!important;overflow-x:auto!important;overflow-y:hidden!important;white-space:nowrap!important;background:none!important;border:0!important;pointer-events:auto!important;scrollbar-width:none!important}
+.screen.battle[${ROOT_ATTR}="1"] #targetBox{position:absolute!important;z-index:45!important;right:calc(var(--gr-thumb-w) + var(--gr-ui-edge) + var(--gr-ui-gap))!important;left:auto!important;bottom:var(--gr-ui-edge)!important;top:auto!important;width:min(34vw,280px)!important;max-height:44vh!important;overflow:auto!important;transition:opacity 120ms ease,filter 120ms ease,box-shadow 120ms ease!important}
+.screen.battle[${ROOT_ATTR}="1"] .battleRail{position:absolute!important;z-index:34!important;top:var(--gr-ui-edge)!important;right:var(--gr-ui-edge)!important;left:auto!important;bottom:auto!important;width:auto!important;height:auto!important;max-width:min(28vw,340px)!important;max-height:44px!important;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:flex-end!important;gap:4px!important;padding:0!important;margin:0!important;transform:none!important;overflow-x:auto!important;overflow-y:hidden!important;white-space:nowrap!important;background:none!important;border:0!important;pointer-events:auto!important;scrollbar-width:none!important;transition:opacity 120ms ease,filter 120ms ease!important}
 .screen.battle[${ROOT_ATTR}="1"] .battleRail .railBtn{min-width:44px!important;min-height:36px!important;width:auto!important;height:36px!important;max-height:36px!important;padding:5px 8px!important;margin:0!important;transform:none!important;box-sizing:border-box!important;flex:0 0 auto!important;font-size:9px!important}
 .screen.battle[${ROOT_ATTR}="1"][data-gr-decision-active="false"] #quickCoil{display:none!important}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner"]{position:absolute!important;z-index:30!important;left:var(--gr-ui-edge)!important;right:auto!important;bottom:calc(var(--gr-ui-edge) + 92px)!important;width:min(23vw,170px)!important;max-height:30vh!important;overflow:hidden!important;opacity:.22;pointer-events:none!important;transition:opacity 120ms ease,filter 120ms ease}
 .screen.battle[${ROOT_ATTR}="1"][data-gr-advice-active="true"] [${ZONE_ATTR}="partner"]{opacity:1;pointer-events:auto!important}
 .screen.battle[${ROOT_ATTR}="1"][data-gr-waiting-for-others="true"] #publicTurnHud{opacity:1;filter:brightness(1.08)}
 .screen.battle[${ROOT_ATTR}="1"][data-gr-waiting-for-others="true"] [${ZONE_ATTR}="current-action"]{border-color:rgba(255,239,170,.76)!important;background:rgba(4,28,24,.92)!important;box-shadow:0 6px 18px rgba(0,0,0,.28),0 0 0 1px rgba(255,239,170,.12)!important}
+.screen.battle[${ROOT_ATTR}="1"][data-gr-decision-active="true"] [${ZONE_ATTR}="current-action"],
+.screen.battle[${ROOT_ATTR}="1"][data-gr-janken-active="true"] [${ZONE_ATTR}="current-action"],
+.screen.battle[${ROOT_ATTR}="1"][data-gr-waiting-for-others="true"] [${ZONE_ATTR}="current-action"]{opacity:1!important;filter:brightness(1.08)!important;box-shadow:0 8px 24px rgba(0,0,0,.34),0 0 0 1px rgba(244,238,174,.2)!important}
+.screen.battle[${ROOT_ATTR}="1"][data-gr-decision-active="true"] .battleInfo{background:linear-gradient(180deg,rgba(7,31,30,.18),rgba(4,23,22,.76))!important;box-shadow:0 0 0 1px rgba(232,243,218,.22),0 10px 24px rgba(0,0,0,.22)!important}
+.screen.battle[${ROOT_ATTR}="1"][data-gr-focus="target"] #targetBox{opacity:1!important;filter:brightness(1.08)!important;box-shadow:0 0 0 2px rgba(246,234,160,.62),0 10px 28px rgba(0,0,0,.32)!important}
+.screen.battle[${ROOT_ATTR}="1"][data-gr-focus="target"] .battleInfo{opacity:.48!important;filter:saturate(.72)!important;background:none!important;box-shadow:none!important}
+.screen.battle[${ROOT_ATTR}="1"][data-gr-janken-active="true"] [data-battle-janken-slidepad="1"]{opacity:1!important;filter:brightness(1.08)!important;box-shadow:0 0 0 2px rgba(246,234,160,.58),0 10px 30px rgba(0,0,0,.3)!important}
+.screen.battle[${ROOT_ATTR}="1"][data-gr-janken-active="true"] .battleInfo{opacity:.48!important;filter:saturate(.72)!important}
+.screen.battle[${ROOT_ATTR}="1"][data-gr-decision-active="true"] .battleRail,
+.screen.battle[${ROOT_ATTR}="1"][data-gr-janken-active="true"] .battleRail,
+.screen.battle[${ROOT_ATTR}="1"][data-gr-waiting-for-others="true"] .battleRail{opacity:.22!important;filter:saturate(.55) brightness(.8)!important}
+.screen.battle[${ROOT_ATTR}="1"][data-gr-decision-active="true"] [${ZONE_ATTR}="support-entry"],
+.screen.battle[${ROOT_ATTR}="1"][data-gr-janken-active="true"] [${ZONE_ATTR}="support-entry"],
+.screen.battle[${ROOT_ATTR}="1"][data-gr-waiting-for-others="true"] [${ZONE_ATTR}="support-entry"]{opacity:.48!important;filter:saturate(.7)!important}
+.screen.battle[${ROOT_ATTR}="1"][data-gr-decision-active="true"] #publicTurnHud,
+.screen.battle[${ROOT_ATTR}="1"][data-gr-janken-active="true"] #publicTurnHud{opacity:.42!important}
+.screen.battle[${ROOT_ATTR}="1"][data-gr-waiting-for-others="true"] .battleInfo,
+.screen.battle[${ROOT_ATTR}="1"][data-gr-waiting-for-others="true"] [data-battle-janken-slidepad="1"],
+.screen.battle[${ROOT_ATTR}="1"][data-gr-waiting-for-others="true"] #targetBox{opacity:.38!important;filter:saturate(.62)!important}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="details-on-demand"][hidden]{display:none!important}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner-visual"]{width:clamp(132px,15vw,190px)!important;height:min(34vh,245px)!important}
 .screen.battle[${ROOT_ATTR}="1"] #battleManaArtR8,.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="mana-art"]{display:none!important}
@@ -87,7 +106,7 @@ const STYLE_TEXT = `
 }
 @media(max-height:430px) and (orientation:landscape){
   .screen.battle[${ROOT_ATTR}="1"]{--gr-thumb-w:208px;--gr-thumb-h:160px;--gr-bottom-h:clamp(82px,26vh,106px)}
-  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="current-action"]{top:46px!important;max-width:32vw!important}
+  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="current-action"]{top:46px!important;min-width:0!important;max-width:46vw!important}
   .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud{width:min(44vw,400px)!important;max-height:44px!important;padding:2px 4px!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{max-width:104px!important;font-size:8px!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="support-entry"]{min-height:32px!important;height:32px!important;max-height:32px!important;padding:3px 6px!important;font-size:8px!important}
@@ -101,7 +120,7 @@ const STYLE_TEXT = `
   .screen.battle[${ROOT_ATTR}="1"] #targetBox{width:min(30vw,230px)!important}
 }
 @media(max-width:520px) and (orientation:portrait){
-  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="current-action"]{transform:translateY(6px)!important}
+  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="current-action"]{top:108px!important;left:8px!important;right:8px!important;width:auto!important;min-width:0!important;max-width:none!important;transform:translateY(6px)!important}
   .screen.battle[${ROOT_ATTR}="1"]{--gr-thumb-w:176px;--gr-thumb-h:172px;--gr-bottom-h:28vh}
   .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud{top:48px!important;width:76vw!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{max-width:30vw!important;bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap))!important}
@@ -112,7 +131,7 @@ const STYLE_TEXT = `
   .screen.battle[${ROOT_ATTR}="1"] .planBox{max-width:none!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}
   .screen.battle[${ROOT_ATTR}="1"] [data-battle-janken-slidepad="1"]{width:var(--gr-thumb-w)!important;height:var(--gr-thumb-h)!important;right:var(--gr-ui-edge)!important;bottom:var(--gr-ui-edge)!important}
   .screen.battle[${ROOT_ATTR}="1"] [data-battle-playable-hand-row-roulette-live="1"]{max-width:min(164px,42vw)!important}
-  .screen.battle[${ROOT_ATTR}="1"] .battleRail{left:var(--gr-ui-edge)!important;right:var(--gr-ui-edge)!important;top:118px!important;width:auto!important;max-width:none!important;justify-content:flex-start!important}
+  .screen.battle[${ROOT_ATTR}="1"] .battleRail{left:var(--gr-ui-edge)!important;right:var(--gr-ui-edge)!important;top:158px!important;width:auto!important;max-width:none!important;justify-content:flex-start!important}
   .screen.battle[${ROOT_ATTR}="1"] #targetBox{width:96vw!important;right:2vw!important;bottom:30vh!important}
 }
 `;
@@ -383,7 +402,8 @@ export const BATTLE_CURRENT_PLAYER_UI_RUNTIME = Object.freeze({
   legacyPhaseStripPolicy: 'HIDDEN_BY_CURRENT_COMPOSITION',
   secondaryActionPolicy: 'COMPACT_RANGE_EXIT_RAIL_SUPPORT_ENTRY_LOWER_LEFT',
   supportEntryPolicy: 'EXISTING_DETAILS_HISTORY_DECK_ENTRY_LOWER_LEFT',
-  attentionPolicy: 'ADVICE_WEAK_UNTIL_ACTIVE_WAITING_STRONG_ONLY_WHILE_WAITING_DETAILS_ON_DEMAND',
+  attentionPolicy: 'PRIMARY_ACTION_STRONG_SECONDARY_RECEDES_ADVICE_WEAK_UNTIL_ACTIVE_WAITING_STRONG_ONLY_WHILE_WAITING',
+  primaryActionPolicy: 'CENTERED_COMMAND_BAR_WITH_LOWER_DECISION_FAMILY_PUBLIC_STATE_ONLY',
   boardProtagonistPolicy: 'BOUND_EXISTING_PARTNER_VISUAL_WITH_BLUE_MANA_ART_HIDDEN',
   manaArtPolicy: 'HIDDEN_BY_CURRENT_COMPOSITION_KEEP_NUMERIC_MANA_STATE',
   lowPerfPolicy: 'REMOVE_COMPOSITOR_BACKDROP_FILTER_ONLY',

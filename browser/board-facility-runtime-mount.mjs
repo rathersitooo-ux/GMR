@@ -2,6 +2,7 @@ import { createSaasunaConversationEntry } from './partner-conversation-core.mjs'
 import { getSaasunaConversationSource } from './partner-saasuna-conversation-source.mjs';
 import { projectPartnerTeaQuickChoices } from './partner-tea-runtime-mount.mjs';
 import './battle-board-visual-explanation-runtime-mount.mjs';
+import { installBattleBoardWorldLazyMount } from './battle-board-world-live-mount.mjs';
 
 const CLASSIC_BRIDGE_NAME = 'GAMEROAD_BOARD_FACILITY_STATE_CORE';
 const RUNTIME_NAME = 'GAMEROAD_BOARD_FACILITY_RUNTIME';
@@ -629,6 +630,8 @@ export async function mountBoardFacilityRuntime(global = globalThis) {
 
   await bridge.ready;
   const contract = requireObject(bridge.BOARD_FACILITY_STATE_CORE, 'BOARD_FACILITY_SYNC_PROXY_UNAVAILABLE');
+
+  installBattleBoardWorldLazyMount(global);
 
   const existing = global[RUNTIME_NAME];
   if (existing) {

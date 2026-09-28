@@ -112,6 +112,8 @@ test('Setup Quick Deck live consumer delegates to the canonical read-only previe
   assert.match(source, /SETUP_QUICK_DECK_PREVIEW_CONTRACT\.mutatesSelection !== false/);
   assert.doesNotMatch(source, /createSetupQuickDeckModel/);
   assert.match(source, /savedDeck:\s*state\?\.savedDeck/);
+  assert.match(source, /GAMEROAD_SCREEN_TRANSITION/);
+  assert.match(source, /transition\.navigate\('cards', \{ reason: 'detail' \}\)/);
   assert.match(source, /api\.show\('cards'\)/);
   assert.match(source, /event\?\.key !== 'Escape'/);
   assert.match(source, /event\?\.target === dialog/);
@@ -130,6 +132,9 @@ test('Setup Quick Deck keeps the Start CTA separate and preserves all explicit d
   assert.match(source, /startMatch\.insertAdjacentElement\('beforebegin', trigger\)/);
   assert.match(source, /if \(restoreFocus\) trigger\.focus\?\.\(\)/);
   assert.match(source, /dialog\.hidden = true/);
+  assert.match(source, /position:fixed!important/);
+  assert.match(source, /scroll-margin-bottom:104px/);
+  assert.match(source, /position:sticky!important;bottom:7px!important/);
 });
 
 const landscapeProjection = Object.freeze({

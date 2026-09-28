@@ -37,6 +37,10 @@ test('bent lower-field source waypoints survive source-to-world projection inste
 
   assert.equal(left.waypoints.length, 1);
   assert.equal(right.waypoints.length, 1);
+  assert.equal(left.sourceWaypoints.length, 1);
+  assert.equal(right.sourceWaypoints.length, 1);
+  assert.equal(left.routePresentation, 'SOURCE_REFERENCE_WAYPOINTS');
+  assert.equal(right.routePresentation, 'SOURCE_REFERENCE_WAYPOINTS');
 
   const leftExpected = {
     x: bounds.centerX + ((110 / 1536) - 0.5) * bounds.width,
@@ -57,6 +61,42 @@ test('bent lower-field source waypoints survive source-to-world projection inste
   assert.ok(Math.abs(right.waypoints[0].z - rightExpected.z) < 1e-9);
   assert.notEqual(left.waypoints[0].z, left.from.z);
   assert.notEqual(right.waypoints[0].z, right.from.z);
+});
+
+test('straight canonical lower edges gain deterministic terrain bows without changing edge identity or endpoints', () => {
+  const model = createBattleBoardWorldFieldRenderModel({
+    worldBounds: { centerX: 0, centerZ: 0, width: 24, depth: 13.5, y: 0.15 },
+  });
+  const lowerEdges = model.edges.filter((edge) => edge.region === 'LOWER_SHARED_FIELD');
+  const terrainBent = lowerEdges.filter((edge) => edge.routePresentation === 'DERIVED_TERRAIN_BOW');
+  const sourceBent = lowerEdges.filter((edge) => edge.routePresentation === 'SOURCE_REFERENCE_WAYPOINTS');
+
+  assert.equal(lowerEdges.length, 71);
+  assert.equal(terrainBent.length, 69);
+  assert.equal(sourceBent.length, 2);
+  assert.equal(model.counts.terrainBentLowerEdges, 69);
+  assert.equal(model.counts.sourceWaypointLowerEdges, 2);
+  assert.ok(terrainBent.every((edge) => edge.sourceWaypoints.length === 0));
+  assert.ok(terrainBent.every((edge) => edge.waypoints.length === 3));
+  assert.ok(terrainBent.every((edge) => edge.waypoints.every((point) => point.derivedTerrainRoute === true)));
+  assert.ok(lowerEdges.every((edge) => edge.canonicalVisualEdge === true));
+  assert.ok(lowerEdges.every((edge) => edge.gameplayAuthority === false));
+  assert.ok(lowerEdges.every((edge) => edge.movementAuthority === false));
+  assert.ok(lowerEdges.every((edge) => edge.legalityAuthority === false));
+
+  const sample = lowerEdges.find((edge) => edge.id === 'lower-edge:T1-T2');
+  const fromCell = model.roundCells.find((cell) => cell.id === 'lower:T1');
+  const toCell = model.roundCells.find((cell) => cell.id === 'lower:T2');
+  assert.equal(sample.fromId, 'lower:T1');
+  assert.equal(sample.toId, 'lower:T2');
+  assert.deepEqual(sample.from, fromCell.world);
+  assert.deepEqual(sample.to, toCell.world);
+
+  const dx = sample.to.x - sample.from.x;
+  const dz = sample.to.z - sample.from.z;
+  const midpoint = sample.waypoints[1];
+  const cross = (midpoint.x - sample.from.x) * dz - (midpoint.z - sample.from.z) * dx;
+  assert.ok(Math.abs(cross) > 1e-6, 'derived route should visibly bow away from its canonical straight chord');
 });
 
 test('Gate and GOAL branch visual state opens only for the exact lane at seven actual cards', () => {

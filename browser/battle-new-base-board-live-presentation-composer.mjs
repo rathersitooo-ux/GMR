@@ -20,6 +20,9 @@ import {
 import {
   createBattleBoardWorldFieldRenderModel,
 } from './battle-board-world-field-renderer.mjs';
+import {
+  createBattleBoardWorldInteractionOverlay,
+} from './battle-board-world-interaction-overlay-core.mjs';
 
 const SCHEMA = 'gameroad.battle-new-base-board-live-presentation-composer.v1';
 
@@ -260,6 +263,9 @@ export function mountBattleNewBaseBoardLivePresentation({
         builtCountByLaneKey: builtCountByVisualLaneKey(currentProgressionPresentation),
       });
     },
+    worldInteractionOverlay(interactionSnapshot = {}) {
+      return createBattleBoardWorldInteractionOverlay(interactionSnapshot);
+    },
     snapshot() {
       return snapshotState();
     },
@@ -286,6 +292,8 @@ export const BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT = deepFre
   boardSurfaceAuthority: 'EXISTING_FLANORA_PRESENTATION_RUNTIME',
   goalEntryCueAuthority: 'EXISTING_STATEFUL_GOAL_ENTRY_GATE_CUE_RUNTIME',
   worldFieldGeometryAuthority: 'EXISTING_BATTLE_BOARD_WORLD_FIELD_RENDERER',
+  worldInteractionOverlayAuthority: 'EXISTING_BATTLE_BOARD_WORLD_INTERACTION_OVERLAY_CORE',
+  ownsInteractionAuthority: false,
   participantColorAuthority: 'CALLER',
   ownsSevenCardRule: false,
   ownsProgressionRule: false,

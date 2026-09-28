@@ -324,6 +324,8 @@ test('Home setup action sprite maps light states without replacing the real butt
   assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /#startMatch:disabled::before\{[^}]*opacity:0/);
   assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /pointer-events:none/);
   assert.equal(SETUP_ACTION_STATE_SPRITE_CSS.includes('#startMatch{position:'), false);
+  const setupPresentationSource = fs.readFileSync(new URL('../browser/home-shell-presentation-core.mjs', import.meta.url), 'utf8');
+  assert.match(setupPresentationSource, /@media \(min-width:900px\) and \(min-height:520px\)\{section\[data-screen="setup"\] #startMatch\{position:sticky!important;bottom:12px!important;z-index:20!important\}/);
   assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /gameroadSetupActionLightBreath/);
   assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /prefers-reduced-motion/);
   assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /r10LowPerf/);

@@ -1,3 +1,4 @@
+import './battle-current-player-ui-live-adapter.mjs';
 import { projectBattleBoardVisualExplanation } from './battle-board-visual-explanation-core.mjs';
 import { projectPartnerAdviceBoardEmphasis } from './partner-advice-runtime-mount.mjs';
 

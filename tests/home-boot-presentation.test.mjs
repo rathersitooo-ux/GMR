@@ -132,6 +132,8 @@ test('Setup Quick Deck keeps the Start CTA separate and preserves all explicit d
   assert.match(source, /startMatch\.insertAdjacentElement\('beforebegin', trigger\)/);
   assert.match(source, /if \(restoreFocus\) trigger\.focus\?\.\(\)/);
   assert.match(source, /dialog\.hidden = true/);
+  assert.match(source, /position:sticky;bottom:12px;z-index:20/);
+  assert.match(source, /scroll-padding-bottom:80px/);
   assert.match(source, /position:fixed!important/);
   assert.match(source, /scroll-margin-bottom:104px/);
   assert.match(source, /position:sticky!important;bottom:7px!important/);

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-BATTLE-BOARD-WORLD-ROUTE-DEPTH-R1D-20260929T0317",
+  "taskId": "BROWSER-BATTLE-SCREEN-VISUAL-REMAKE-001",
+  "workUnitKey": "BATTLE_BOARD_WORLD_ROUTE_DEPTH_R1",
+  "acquireKey": "BATTLE-BOARD-WORLD-ROUTE-DEPTH-R1-20260929T0300-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R1C-PREACTION-PASS-RENDERER-TEST-6OF6-PASS-PUBLIC-PACKAGE-BLOB-WITNESS-ONLY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R1C-REQUIRED-GATE-36463810528-CONVENTIONAL-NODE-PASS",
+  "proceedToken": "PROCEED|VWORK-BATTLE-BOARD-WORLD-ROUTE-DEPTH-R1D-20260929T0317|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-renderer-plus-public-package-provenance-witness|current-lease",
+  "authorizationBaseSha": "5641cb9992cf7b5f11a4893822cf36fa603f2829",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-SCREEN-VISUAL-REMAKE-001",
+  "leaseWorkUnitKey": "BATTLE_BOARD_WORLD_ROUTE_DEPTH_R1",
+  "leaseAcquireKey": "BATTLE-BOARD-WORLD-ROUTE-DEPTH-R1-20260929T0300-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-29 03:17 JST",
+  "leaseUntilJst": "2026-09-29 04:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch chatgpt/battle-board-world-route-depth-r1d-20260929; mutable browser/battle-board-world-field-renderer.mjs; tests/battle-board-world-field-renderer.test.mjs; deploy/cloudflare/tests/build.test.mjs; own data/preaction-authorizations witness; own branch/PR/check/readback; own CURRENT lease row/R24 event",
+  "scope": [
+    "browser/battle-board-world-field-renderer.mjs",
+    "tests/battle-board-world-field-renderer.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-board-world-field-renderer.mjs",
+    "tests/battle-board-world-field-renderer.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "formalInvariants": [
+    "presentation-only; gameplay/movement/legality authority unchanged",
+    "canonical graph node IDs, source coordinates, and exact adjacency edge set unchanged",
+    "no second board engine and no second environment engine",
+    "derived terrain-route waypoints are visual geometry only and never become cells or movement nodes",
+    "Cloudflare build logic remains unchanged; only its exact dependency blob witness follows the changed renderer",
+    "109/current movement authority and Battle rules remain read-only"
+  ],
+  "acceptance": [
+    "canonical straight lower-field edges receive deterministic gentle world-route bends only in renderer output",
+    "existing explicit source waypoints remain exact and are not overwritten",
+    "route bends survive world projection without endpoint or canonical edge identity drift",
+    "renderer focused tests remain 6/6 passing",
+    "Cloudflare public-package provenance expects exact renderer blob 8efc31242e0ff341c44a6f133c354cba48705eda and passes without weakening checks"
+  ]
+}

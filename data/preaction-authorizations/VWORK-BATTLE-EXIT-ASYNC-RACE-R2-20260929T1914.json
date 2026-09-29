@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-BATTLE-EXIT-ASYNC-RACE-R2-20260929T1914",
+  "taskId": "BROWSER-BATTLE-RUNTIME-RACE-FIX-002",
+  "workUnitKey": "BATTLE_EXIT_ASYNC_RACE_GUARD_R2",
+  "acquireKey": "BATTLE-EXIT-ASYNC-RACE-R2-20260929T1914-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-MAIN-35ADC120-844X390-IMMEDIATE-EXIT-LEGALOPPONENTS-NULL-MATCH-RACE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "LIVE-PLAYWRIGHT-REPRO-PLUS-STATIC-GUARD",
+  "proceedToken": "PROCEED|VWORK-BATTLE-EXIT-ASYNC-RACE-R2-20260929T1914|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-exit-async-race-bounded-guard-r2|current-lease",
+  "authorizationBaseSha": "35adc12003b9d0b9bccbd9d5aef980052e842732",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-RUNTIME-RACE-FIX-002",
+  "leaseWorkUnitKey": "BATTLE_EXIT_ASYNC_RACE_GUARD_R2",
+  "leaseAcquireKey": "BATTLE-EXIT-ASYNC-RACE-R2-20260929T1914-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-29 19:14 JST",
+  "leaseUntilJst": "2026-09-29 20:14 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A12:O12",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main 35adc12003b9d0b9bccbd9d5aef980052e842732; new branch chatgpt/battle-exit-async-race-r2-20260929; mutable browser/GAMEROAD.html; tests/battle-exit-async-race-guard.test.mjs; tests/browser-static-check.mjs; own data/preaction-authorizations/VWORK-BATTLE-EXIT-ASYNC-RACE-R2-20260929T1914.json; own branch/PR/check/merge/readback; own CURRENT lease/R24 event",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-exit-async-race-guard.test.mjs",
+    "tests/browser-static-check.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-exit-async-race-guard.test.mjs",
+    "tests/browser-static-check.mjs"
+  ],
+  "formalInvariants": [
+    "no gameplay/rules/movement/legality/save/economy/network authority changes",
+    "#battleMap pointer ownership remains unchanged",
+    "Battle exit continues to return Home",
+    "stale async commitPlans continuation after match release must fail closed",
+    "normal in-match target selection and legalOpponents behavior remain unchanged"
+  ],
+  "acceptance": [
+    "browser-static-check passes",
+    "844x390 immediate exit during auto-submit produces no page/console error after stale callback window",
+    "1280x720, 390x844 and 667x375 Battle exit paths remain usable",
+    "Required Gate passes and merged-main readback contains the guard"
+  ]
+}

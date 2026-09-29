@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-BATTLE-WORLD3D-SEMANTICS-R2-20260929T2131",
+  "taskId": "BROWSER-BATTLE-SCREEN-VISUAL-REMAKE-001",
+  "workUnitKey": "BATTLE_WORLD3D_SEMANTICS_R2",
+  "acquireKey": "BATTLE-WORLD3D-SEMANTICS-R2-20260929T2131-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-MAIN-1EC5D8E-FIELDCANVAS-WORLD-FIELD-RESIDUAL-READBACK",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "STATIC-FOCUSED-SEMANTICS-REGRESSION-PLUS-EXISTING-BROWSER-GATES",
+  "proceedToken": "PROCEED|VWORK-BATTLE-WORLD3D-SEMANTICS-R2-20260929T2131|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-renderer-residual-only|current-lease",
+  "authorizationBaseSha": "1ec5d8efc30c1933066a746bc087a0d25cee653f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-SCREEN-VISUAL-REMAKE-001",
+  "leaseWorkUnitKey": "BATTLE_WORLD3D_SEMANTICS_R2",
+  "leaseAcquireKey": "BATTLE-WORLD3D-SEMANTICS-R2-20260929T2131-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-29 21:31 JST",
+  "leaseUntilJst": "2026-09-29 22:31 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main 1ec5d8efc30c1933066a746bc087a0d25cee653f; new branch chatgpt/battle-world3d-semantics-r2-20260929; mutable browser/GAMEROAD.html; tests/battle-world3d-current-renderer-semantics.test.mjs; own data/preaction-authorizations/VWORK-BATTLE-WORLD3D-SEMANTICS-R2-20260929T2131.json; own branch/PR/check/merge/readback; own CURRENT event/lease records",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-world3d-current-renderer-semantics.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-world3d-current-renderer-semantics.test.mjs"
+  ],
+  "formalInvariants": [
+    "reuse current fieldCanvas WORLD_FIELD renderer and fieldProjection hit-testing",
+    "no new renderer/state machine/dependency or legacy-to-canonical mapping",
+    "no gameplay/rules/movement/legality/save/economy/network/card authority changes",
+    "legacy DOM remains input-compatible while visual square leakage is removed"
+  ],
+  "acceptance": [
+    "ACTUAL_BUILT_CARD is visually distinct from generic round cells",
+    "OPEN_PASSABLE_FRAME renders as an open frame while closed gates remain solid",
+    "legacy DOM person-node square shadow does not leak above the world",
+    "passive legacy topology stays suppressed under current central-world mount",
+    "focused test and repository Required Gate pass; Human same-build visual acceptance remains separate"
+  ]
+}

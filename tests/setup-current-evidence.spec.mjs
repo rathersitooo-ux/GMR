@@ -76,6 +76,47 @@ test('captures exact-current fresh Setup defaults and Quick Deck', async ({ brow
       scrollHeight: node.scrollHeight,
       clientHeight: node.clientHeight,
     }));
+    const diagnostics = await page.evaluate(() => {
+      const record = (el) => {
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        const cs = getComputedStyle(el);
+        return {
+          tag: el.tagName,
+          id: el.id || null,
+          className: typeof el.className === 'string' ? el.className : null,
+          text: (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 180),
+          rect: { x: r.x, y: r.y, width: r.width, height: r.height, bottom: r.bottom, right: r.right },
+          position: cs.position,
+          display: cs.display,
+          visibility: cs.visibility,
+          zIndex: cs.zIndex,
+          overflow: cs.overflow,
+        };
+      };
+      const setup = document.querySelector('section[data-screen="setup"]');
+      const box = setup?.querySelector('.setupBox');
+      const start = setup?.querySelector('#startMatch');
+      const quick = document.querySelector('#gameroadSetupQuickDeckTrigger');
+      const unavailable = [...document.querySelectorAll('body *')]
+        .filter((el) => (el.textContent || '').trim() === 'この機能は現在利用できません。')
+        .filter((el) => {
+          const cs = getComputedStyle(el);
+          const r = el.getBoundingClientRect();
+          return cs.display !== 'none' && cs.visibility !== 'hidden' && r.width > 0 && r.height > 0;
+        })
+        .map(record);
+      return {
+        start: record(start),
+        startText: start?.textContent?.trim() ?? null,
+        startBeforeContent: start ? getComputedStyle(start, '::before').content : null,
+        startAfterContent: start ? getComputedStyle(start, '::after').content : null,
+        quick: record(quick),
+        setupChildren: setup ? [...setup.children].map(record) : [],
+        boxChildren: box ? [...box.children].map(record) : [],
+        unavailable,
+      };
+    });
 
     const pngPath = path.join(OUT, view.name + '-setup.png');
     await page.screenshot({ path: pngPath, fullPage: false, animations: 'disabled' });
@@ -85,6 +126,7 @@ test('captures exact-current fresh Setup defaults and Quick Deck', async ({ brow
       state,
       startBox,
       setupMetrics,
+      diagnostics,
       pageErrors: [...pageErrors],
       quickDeck: null,
     };

@@ -94,6 +94,21 @@ function rootGo(page, target) {
     .first();
 }
 
+async function selectVisibleSaasunaPartner(page) {
+  const characters = page.locator('section[data-screen="characters"]');
+  await expect(characters).toBeVisible();
+  const partnerRole = characters.locator('.charRoleTab[data-role="partner"]');
+  await expect(partnerRole, 'current Characters exposes the Partner role selector').toBeVisible();
+  await partnerRole.click();
+  const saasuna = characters.locator('.charCard').filter({ hasText: 'サースナー' }).first();
+  await expect(saasuna, 'Saasuna is reachable through the visible Partner roster').toBeVisible();
+  await saasuna.click();
+  await expect(characters.locator('#charName')).toHaveText('サースナー');
+  await expect(partnerRole).toHaveClass(/on/);
+  expect(await page.evaluate(() => window.GAMEROAD_PARTNER_STATE?.partner?.()?.id ?? null)).toBe('partner.saasuna');
+  return characters;
+}
+
 function nestedGo(page, current, target) {
   return page.locator(`section[data-screen="${current}"] [data-go="${target}"]:visible`).first();
 }
@@ -293,8 +308,9 @@ test('Partner Shell is reachable through the live Saasuna conversation and stays
 
   const characters = page.locator('section[data-screen="characters"]');
   await expect(characters, 'Characters target reached through visible player control').toBeVisible();
+  await selectVisibleSaasunaPartner(page);
   const conversation = characters.locator('[data-gr-partner-conversation="1"]');
-  await expect(conversation, 'current Saasuna conversation is projected on the live Characters screen').toBeVisible({ timeout: 7_000 });
+  await expect(conversation, 'current Saasuna conversation is projected after visible Partner selection').toBeVisible({ timeout: 7_000 });
   await expect(conversation).toHaveAttribute('aria-label', 'サースナーとの会話');
 
   const input = conversation.locator('.grPartnerConversationInput');
@@ -352,7 +368,7 @@ test('Partner Shell is reachable through the live Saasuna conversation and stays
   runtime.assertClean(testInfo);
   testInfo.annotations.push({
     type: 'partner-shell-live-reachability',
-    description: `visible Home→Characters→Saasuna conversation→Partner Shell→detail→hub→conversation passed on ${testInfo.project.name}; approved idle content visible; unsupported costume/list actions absent; product/runtime/save/economy unchanged`,
+    description: `visible Home→Characters→Partner roster→Saasuna→conversation→Partner Shell→detail→hub→conversation passed on ${testInfo.project.name}; approved idle content visible; unsupported costume/list actions absent; product/runtime/save/economy unchanged`,
   });
 });
 

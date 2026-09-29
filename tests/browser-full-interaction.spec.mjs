@@ -235,16 +235,40 @@ async function submitVisiblePlan(battle) {
     return null;
   };
 
-  if (!(await roadSelect.inputValue())) await expect.poll(() => clickCandidate()).not.toBeNull();
-  if (!(await battleSelect.inputValue())) {
-    const roadValue = await roadSelect.inputValue();
-    await expect.poll(() => clickCandidate(roadValue)).not.toBeNull();
-    await expect(battleSelect, 'a different visible card can be reserved as Battle').not.toHaveValue('');
+  let roadId = await roadSelect.inputValue();
+  if (!roadId) {
+    roadId = await clickCandidate();
+    expect(roadId, 'visible Road candidate click').toBeTruthy();
+    await expect.poll(async () => {
+      const selected = await roadSelect.inputValue();
+      const phase = (await battle.locator('#phaseTitle').textContent()) ?? '';
+      return selected === roadId || !phase.includes('行動を計画');
+    }, { message: 'visible Road click is reflected before plan progression' }).toBeTruthy();
   }
 
-  expect(await roadSelect.inputValue(), 'visible Road selection').not.toBe('');
-  expect(await battleSelect.inputValue(), 'visible Battle selection').not.toBe('');
-  expect(await battleSelect.inputValue(), 'Road and Battle remain distinct').not.toBe(await roadSelect.inputValue());
+  let battleId = await battleSelect.inputValue();
+  if (!battleId) {
+    const excludedId = (await roadSelect.inputValue()) || roadId;
+    battleId = await clickCandidate(excludedId);
+    expect(battleId, 'visible Battle candidate click').toBeTruthy();
+    expect(battleId, 'Road and Battle candidate clicks remain distinct').not.toBe(excludedId);
+  }
+
+  await expect.poll(async () => {
+    const roadValue = await roadSelect.inputValue();
+    const battleValue = await battleSelect.inputValue();
+    const phase = (await battle.locator('#phaseTitle').textContent()) ?? '';
+    return (roadValue !== '' && battleValue !== '' && battleValue !== roadValue) || !phase.includes('行動を計画');
+  }, { message: 'visible plan either remains ready for explicit submit or FIRST10 has already progressed it' }).toBeTruthy();
+
+  const phase = (await battle.locator('#phaseTitle').textContent()) ?? '';
+  if (!phase.includes('行動を計画')) return;
+
+  const roadValue = await roadSelect.inputValue();
+  const battleValue = await battleSelect.inputValue();
+  expect(roadValue, 'visible Road selection').not.toBe('');
+  expect(battleValue, 'visible Battle selection').not.toBe('');
+  expect(battleValue, 'Road and Battle remain distinct').not.toBe(roadValue);
   await expect(ready).toBeEnabled();
   await ready.click();
 }

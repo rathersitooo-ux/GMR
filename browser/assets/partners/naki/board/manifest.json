@@ -1,0 +1,1402 @@
+{
+  "package": "NAKI_BOARD_LOCOMOTION_R2",
+  "status": "candidate package; direct product work WIP",
+  "formalArt": false,
+  "humanAccepted": false,
+  "scope": [
+    "BOARD_IDLE",
+    "WALK_LEFT",
+    "WALK_RIGHT",
+    "ARRIVE"
+  ],
+  "explicitExclusions": [
+    "ground VFX and seven color variants",
+    "Battle idle/song sprites",
+    "Browser assets",
+    "runtime/adapters",
+    "game code",
+    "Shop assets"
+  ],
+  "source": {
+    "primaryReadOnlyFileId": "file_00000000eda481f5bf56a8d4d39c05a5",
+    "primaryReadOnlyFilename": "1000011404(2).png",
+    "primaryReadOnlySha256": "0eb53682d6aacc315da4a9379227d0051697fe4a0266f67978b28cbc52b553b8",
+    "primaryReadOnlySizeBytes": 387277,
+    "generatedMovementBinariesPreviouslyFound": false,
+    "generatedInputSheets": {
+      "BOARD_IDLE": "exec-bacf7726-9c11-4d6a-b5de-f57a92903282.png",
+      "WALK_LEFT": "exec-d2cae46f-181c-4363-afd5-f25375dbfae1.png",
+      "WALK_RIGHT": "exec-f68b8401-5eb5-4ebd-a248-2856b6375be3.png",
+      "ARRIVE": "exec-a322cfb2-ef1b-476b-987f-c44e981612c2.png"
+    },
+    "sourceSheetsOnlyUsedAsGeneratedBuildInputs": true
+  },
+  "spriteFormat": {
+    "canvasPx": [
+      128,
+      128
+    ],
+    "rgbaPng": true,
+    "transparentBackground": true,
+    "resampling": "nearest-neighbor",
+    "normalizationScale": 0.227273,
+    "anchorPx": {
+      "x": 64,
+      "y": 116
+    },
+    "anchorConvention": "character visual pivot x=64; common grounded baseline at y=116; all frame content bottom aligns to y=116"
+  },
+  "states": {
+    "BOARD_IDLE": {
+      "frames": [
+        "FRAME__BOARD_IDLE__board_idle_01.png",
+        "FRAME__BOARD_IDLE__board_idle_02.png",
+        "FRAME__BOARD_IDLE__board_idle_03.png",
+        "FRAME__BOARD_IDLE__board_idle_04.png",
+        "FRAME__BOARD_IDLE__board_idle_05.png",
+        "FRAME__BOARD_IDLE__board_idle_06.png",
+        "FRAME__BOARD_IDLE__board_idle_07.png",
+        "FRAME__BOARD_IDLE__board_idle_08.png"
+      ],
+      "frameCount": 8,
+      "order": "left-to-right top row, then left-to-right bottom row",
+      "frameDurationMs": 125,
+      "loop": true,
+      "reducedMotionFallback": "QA__reduced-motion-fallback.json"
+    },
+    "WALK_LEFT": {
+      "frames": [
+        "FRAME__WALK_LEFT__walk_left_01.png",
+        "FRAME__WALK_LEFT__walk_left_02.png",
+        "FRAME__WALK_LEFT__walk_left_03.png",
+        "FRAME__WALK_LEFT__walk_left_04.png",
+        "FRAME__WALK_LEFT__walk_left_05.png",
+        "FRAME__WALK_LEFT__walk_left_06.png",
+        "FRAME__WALK_LEFT__walk_left_07.png",
+        "FRAME__WALK_LEFT__walk_left_08.png"
+      ],
+      "frameCount": 8,
+      "order": "left-to-right top row, then left-to-right bottom row",
+      "frameDurationMs": 100,
+      "loop": true,
+      "facing": "left",
+      "mirrorPolicy": "not mirrored"
+    },
+    "WALK_RIGHT": {
+      "frames": [
+        "FRAME__WALK_RIGHT__walk_right_01.png",
+        "FRAME__WALK_RIGHT__walk_right_02.png",
+        "FRAME__WALK_RIGHT__walk_right_03.png",
+        "FRAME__WALK_RIGHT__walk_right_04.png",
+        "FRAME__WALK_RIGHT__walk_right_05.png",
+        "FRAME__WALK_RIGHT__walk_right_06.png",
+        "FRAME__WALK_RIGHT__walk_right_07.png",
+        "FRAME__WALK_RIGHT__walk_right_08.png"
+      ],
+      "frameCount": 8,
+      "order": "left-to-right top row, then left-to-right bottom row",
+      "frameDurationMs": 100,
+      "loop": true,
+      "facing": "right",
+      "mirrorPolicy": "separately drawn; never mirror WALK_LEFT"
+    },
+    "ARRIVE": {
+      "frames": [
+        "FRAME__ARRIVE__arrive_01.png",
+        "FRAME__ARRIVE__arrive_02.png",
+        "FRAME__ARRIVE__arrive_03.png",
+        "FRAME__ARRIVE__arrive_04.png",
+        "FRAME__ARRIVE__arrive_05.png",
+        "FRAME__ARRIVE__arrive_06.png",
+        "FRAME__ARRIVE__arrive_07.png",
+        "FRAME__ARRIVE__arrive_08.png"
+      ],
+      "frameCount": 8,
+      "order": "left-to-right top row, then left-to-right bottom row",
+      "frameDurationMs": 115,
+      "loop": false,
+      "terminalFrame": "FRAME__ARRIVE__arrive_08.png"
+    }
+  },
+  "sheets": {
+    "BOARD_IDLE": "SHEET__BOARD_IDLE.png",
+    "WALK_LEFT": "SHEET__WALK_LEFT.png",
+    "WALK_RIGHT": "SHEET__WALK_RIGHT.png",
+    "ARRIVE": "SHEET__ARRIVE.png"
+  },
+  "previews": {
+    "BOARD_IDLE": {
+      "path": "PREVIEW__BOARD_IDLE.gif",
+      "format": "GIF checkerboard preview",
+      "durationsMs": [
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120
+      ],
+      "previewLoops": true,
+      "runtimeLoop": true
+    },
+    "WALK_LEFT": {
+      "path": "PREVIEW__WALK_LEFT.gif",
+      "format": "GIF checkerboard preview",
+      "durationsMs": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100
+      ],
+      "previewLoops": true,
+      "runtimeLoop": true
+    },
+    "WALK_RIGHT": {
+      "path": "PREVIEW__WALK_RIGHT.gif",
+      "format": "GIF checkerboard preview",
+      "durationsMs": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100
+      ],
+      "previewLoops": true,
+      "runtimeLoop": true
+    },
+    "ARRIVE": {
+      "path": "PREVIEW__ARRIVE.gif",
+      "format": "GIF checkerboard preview",
+      "durationsMs": [
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110,
+        110
+      ],
+      "previewLoops": true,
+      "runtimeLoop": false
+    }
+  },
+  "contactSheet": "contact-sheet.png",
+  "reducedMotion": {
+    "staticFrame": "FRAME__BOARD_IDLE__board_idle_01.png",
+    "silhouette24px": "QA__reduced-silhouette-24px.png",
+    "fallbackLoopingDisabled": true
+  },
+  "frameFiles": [
+    {
+      "state": "BOARD_IDLE",
+      "index": 1,
+      "path": "FRAME__BOARD_IDLE__board_idle_01.png",
+      "sourceSheet": "exec-bacf7726-9c11-4d6a-b5de-f57a92903282.png",
+      "sourceBBoxPx": [
+        27,
+        18,
+        358,
+        502
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        27,
+        7,
+        102,
+        117
+      ],
+      "sizePx": [
+        75,
+        110
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4980,
+      "sha256": "9de807940bc78d5cd23cc6af4e07da6a94ccc6908e5f06ce2c5f73258622358c",
+      "bytes": 17413
+    },
+    {
+      "state": "BOARD_IDLE",
+      "index": 2,
+      "path": "FRAME__BOARD_IDLE__board_idle_02.png",
+      "sourceSheet": "exec-bacf7726-9c11-4d6a-b5de-f57a92903282.png",
+      "sourceBBoxPx": [
+        396,
+        19,
+        729,
+        502
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        26,
+        7,
+        102,
+        117
+      ],
+      "sizePx": [
+        76,
+        110
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 5060,
+      "sha256": "1744d2a8a94a5345befc1794df4de2b30826b3e1f76c8d3b9519473bb309f0bd",
+      "bytes": 17736
+    },
+    {
+      "state": "BOARD_IDLE",
+      "index": 3,
+      "path": "FRAME__BOARD_IDLE__board_idle_03.png",
+      "sourceSheet": "exec-bacf7726-9c11-4d6a-b5de-f57a92903282.png",
+      "sourceBBoxPx": [
+        754,
+        35,
+        1128,
+        502
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        22,
+        11,
+        107,
+        117
+      ],
+      "sizePx": [
+        85,
+        106
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 5407,
+      "sha256": "d855abf5ad967dc519157d5c67d5e8b34ea1f76641eb9ecbb7d2c101b59eb322",
+      "bytes": 19063
+    },
+    {
+      "state": "BOARD_IDLE",
+      "index": 4,
+      "path": "FRAME__BOARD_IDLE__board_idle_04.png",
+      "sourceSheet": "exec-bacf7726-9c11-4d6a-b5de-f57a92903282.png",
+      "sourceBBoxPx": [
+        1154,
+        29,
+        1510,
+        502
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        24,
+        9,
+        105,
+        117
+      ],
+      "sizePx": [
+        81,
+        108
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 5096,
+      "sha256": "64deae84f5e78b53c8622f1c8e73299161b3a289e89a164d444430c89c48b0e8",
+      "bytes": 17857
+    },
+    {
+      "state": "BOARD_IDLE",
+      "index": 5,
+      "path": "FRAME__BOARD_IDLE__board_idle_05.png",
+      "sourceSheet": "exec-bacf7726-9c11-4d6a-b5de-f57a92903282.png",
+      "sourceBBoxPx": [
+        26,
+        517,
+        368,
+        994
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        25,
+        9,
+        103,
+        117
+      ],
+      "sizePx": [
+        78,
+        108
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 5119,
+      "sha256": "b0cca1d20c8df20029da46aa4d5583b1f6be9aa4f5b085c331f244166a8ee843",
+      "bytes": 18131
+    },
+    {
+      "state": "BOARD_IDLE",
+      "index": 6,
+      "path": "FRAME__BOARD_IDLE__board_idle_06.png",
+      "sourceSheet": "exec-bacf7726-9c11-4d6a-b5de-f57a92903282.png",
+      "sourceBBoxPx": [
+        399,
+        518,
+        735,
+        994
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        26,
+        9,
+        102,
+        117
+      ],
+      "sizePx": [
+        76,
+        108
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4977,
+      "sha256": "872d74be9e08a01bd7e8f5035c8cced4b37f132854dbcb31fedc6305e5057f02",
+      "bytes": 17349
+    },
+    {
+      "state": "BOARD_IDLE",
+      "index": 7,
+      "path": "FRAME__BOARD_IDLE__board_idle_07.png",
+      "sourceSheet": "exec-bacf7726-9c11-4d6a-b5de-f57a92903282.png",
+      "sourceBBoxPx": [
+        749,
+        517,
+        1130,
+        994
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        21,
+        9,
+        108,
+        117
+      ],
+      "sizePx": [
+        87,
+        108
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 5467,
+      "sha256": "da07168aa232921b6d1f3e9b382263633031e97c2580bd2f10188fa9765efd50",
+      "bytes": 19078
+    },
+    {
+      "state": "BOARD_IDLE",
+      "index": 8,
+      "path": "FRAME__BOARD_IDLE__board_idle_08.png",
+      "sourceSheet": "exec-bacf7726-9c11-4d6a-b5de-f57a92903282.png",
+      "sourceBBoxPx": [
+        1158,
+        517,
+        1492,
+        994
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        26,
+        9,
+        102,
+        117
+      ],
+      "sizePx": [
+        76,
+        108
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4920,
+      "sha256": "34737dcbddbab9cced6daa364d7342fcc4b4e4a991a13ad3b533542ddcaa4fe3",
+      "bytes": 17222
+    },
+    {
+      "state": "WALK_LEFT",
+      "index": 1,
+      "path": "FRAME__WALK_LEFT__walk_left_01.png",
+      "sourceSheet": "exec-d2cae46f-181c-4363-afd5-f25375dbfae1.png",
+      "sourceBBoxPx": [
+        53,
+        50,
+        415,
+        504
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        23,
+        14,
+        105,
+        117
+      ],
+      "sizePx": [
+        82,
+        103
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4932,
+      "sha256": "18d4af473172098751f02c5501233bce909c80ef045af3e62e257e4d497f8222",
+      "bytes": 17195
+    },
+    {
+      "state": "WALK_LEFT",
+      "index": 2,
+      "path": "FRAME__WALK_LEFT__walk_left_02.png",
+      "sourceSheet": "exec-d2cae46f-181c-4363-afd5-f25375dbfae1.png",
+      "sourceBBoxPx": [
+        448,
+        53,
+        791,
+        504
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        25,
+        15,
+        103,
+        117
+      ],
+      "sizePx": [
+        78,
+        102
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        253
+      ],
+      "alphaPixelCount": 4775,
+      "sha256": "9abee261c91d7ba826eb9992fe2cdc811abb2a6c2ee5e3d928beabf61dcb667b",
+      "bytes": 16665
+    },
+    {
+      "state": "WALK_LEFT",
+      "index": 3,
+      "path": "FRAME__WALK_LEFT__walk_left_03.png",
+      "sourceSheet": "exec-d2cae46f-181c-4363-afd5-f25375dbfae1.png",
+      "sourceBBoxPx": [
+        814,
+        53,
+        1165,
+        504
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        24,
+        15,
+        104,
+        117
+      ],
+      "sizePx": [
+        80,
+        102
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        253
+      ],
+      "alphaPixelCount": 4744,
+      "sha256": "f6b793b91fbd500e30c5e9d7e5c87b103b05962142c3bace9bd2d14292b311a5",
+      "bytes": 16501
+    },
+    {
+      "state": "WALK_LEFT",
+      "index": 4,
+      "path": "FRAME__WALK_LEFT__walk_left_04.png",
+      "sourceSheet": "exec-d2cae46f-181c-4363-afd5-f25375dbfae1.png",
+      "sourceBBoxPx": [
+        1192,
+        50,
+        1517,
+        504
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        27,
+        14,
+        101,
+        117
+      ],
+      "sizePx": [
+        74,
+        103
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4698,
+      "sha256": "ceb6695a87aede76dacd60cad975ec947c1a0847937d1c9c48ac25c4072e1a64",
+      "bytes": 16356
+    },
+    {
+      "state": "WALK_LEFT",
+      "index": 5,
+      "path": "FRAME__WALK_LEFT__walk_left_05.png",
+      "sourceSheet": "exec-d2cae46f-181c-4363-afd5-f25375dbfae1.png",
+      "sourceBBoxPx": [
+        52,
+        539,
+        411,
+        981
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        23,
+        17,
+        105,
+        117
+      ],
+      "sizePx": [
+        82,
+        100
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4781,
+      "sha256": "c7282636dc36bc7f2580d44dc065c1696726ff0fd506e42709a6936a8f30af7d",
+      "bytes": 16616
+    },
+    {
+      "state": "WALK_LEFT",
+      "index": 6,
+      "path": "FRAME__WALK_LEFT__walk_left_06.png",
+      "sourceSheet": "exec-d2cae46f-181c-4363-afd5-f25375dbfae1.png",
+      "sourceBBoxPx": [
+        429,
+        540,
+        775,
+        981
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        25,
+        17,
+        104,
+        117
+      ],
+      "sizePx": [
+        79,
+        100
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4759,
+      "sha256": "c015e2ac078860d1a0b412a87e9640c6a58cd323097c2b26c9d590c0aaa87ac7",
+      "bytes": 16451
+    },
+    {
+      "state": "WALK_LEFT",
+      "index": 7,
+      "path": "FRAME__WALK_LEFT__walk_left_07.png",
+      "sourceSheet": "exec-d2cae46f-181c-4363-afd5-f25375dbfae1.png",
+      "sourceBBoxPx": [
+        807,
+        542,
+        1147,
+        981
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        26,
+        17,
+        103,
+        117
+      ],
+      "sizePx": [
+        77,
+        100
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4644,
+      "sha256": "317aee17fdc8574a0bff26d2b61523d56894a87b2abd6b4ab2c03355da485095",
+      "bytes": 16099
+    },
+    {
+      "state": "WALK_LEFT",
+      "index": 8,
+      "path": "FRAME__WALK_LEFT__walk_left_08.png",
+      "sourceSheet": "exec-d2cae46f-181c-4363-afd5-f25375dbfae1.png",
+      "sourceBBoxPx": [
+        1178,
+        531,
+        1515,
+        979
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        26,
+        15,
+        103,
+        117
+      ],
+      "sizePx": [
+        77,
+        102
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4685,
+      "sha256": "79186dd82efc11cfff8e253533bb44c2f8bdc8b72a52c3fba08a92f842908366",
+      "bytes": 16358
+    },
+    {
+      "state": "WALK_RIGHT",
+      "index": 1,
+      "path": "FRAME__WALK_RIGHT__walk_right_01.png",
+      "sourceSheet": "exec-f68b8401-5eb5-4ebd-a248-2856b6375be3.png",
+      "sourceBBoxPx": [
+        31,
+        42,
+        381,
+        502
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        24,
+        12,
+        104,
+        117
+      ],
+      "sizePx": [
+        80,
+        105
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        253
+      ],
+      "alphaPixelCount": 4850,
+      "sha256": "0c566e3a2a6d5870215c4447c68073970a771a7543c587be346d6ee27c790839",
+      "bytes": 17022
+    },
+    {
+      "state": "WALK_RIGHT",
+      "index": 2,
+      "path": "FRAME__WALK_RIGHT__walk_right_02.png",
+      "sourceSheet": "exec-f68b8401-5eb5-4ebd-a248-2856b6375be3.png",
+      "sourceBBoxPx": [
+        403,
+        63,
+        749,
+        503
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        25,
+        17,
+        104,
+        117
+      ],
+      "sizePx": [
+        79,
+        100
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4500,
+      "sha256": "9c5c4765fd781c5509a16eb0449e2c3623b3fec16d03713f2298ffd365ecaedd",
+      "bytes": 15954
+    },
+    {
+      "state": "WALK_RIGHT",
+      "index": 3,
+      "path": "FRAME__WALK_RIGHT__walk_right_03.png",
+      "sourceSheet": "exec-f68b8401-5eb5-4ebd-a248-2856b6375be3.png",
+      "sourceBBoxPx": [
+        780,
+        62,
+        1122,
+        503
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        25,
+        17,
+        103,
+        117
+      ],
+      "sizePx": [
+        78,
+        100
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4599,
+      "sha256": "cb0eefbe93e987bfd483e450b8a16e8900a0b920c8d83b555563f6d5ab1a42e8",
+      "bytes": 16418
+    },
+    {
+      "state": "WALK_RIGHT",
+      "index": 4,
+      "path": "FRAME__WALK_RIGHT__walk_right_04.png",
+      "sourceSheet": "exec-f68b8401-5eb5-4ebd-a248-2856b6375be3.png",
+      "sourceBBoxPx": [
+        1155,
+        63,
+        1505,
+        505
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        24,
+        17,
+        104,
+        117
+      ],
+      "sizePx": [
+        80,
+        100
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4578,
+      "sha256": "8c29498c8bdb5494189f278d3caa52d3e2940d13166f79b4ec7470f6102476c9",
+      "bytes": 16231
+    },
+    {
+      "state": "WALK_RIGHT",
+      "index": 5,
+      "path": "FRAME__WALK_RIGHT__walk_right_05.png",
+      "sourceSheet": "exec-f68b8401-5eb5-4ebd-a248-2856b6375be3.png",
+      "sourceBBoxPx": [
+        28,
+        531,
+        383,
+        980
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        24,
+        15,
+        105,
+        117
+      ],
+      "sizePx": [
+        81,
+        102
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4762,
+      "sha256": "188522f789ad619856cb9edb99e2b571296ea3519d61273f78f0089523e1d926",
+      "bytes": 17040
+    },
+    {
+      "state": "WALK_RIGHT",
+      "index": 6,
+      "path": "FRAME__WALK_RIGHT__walk_right_06.png",
+      "sourceSheet": "exec-f68b8401-5eb5-4ebd-a248-2856b6375be3.png",
+      "sourceBBoxPx": [
+        407,
+        538,
+        754,
+        981
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        25,
+        16,
+        104,
+        117
+      ],
+      "sizePx": [
+        79,
+        101
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4676,
+      "sha256": "4ba305f424469f271447cc4a49c724a0d059cfc06a42bab64b4105a49aeb846f",
+      "bytes": 16471
+    },
+    {
+      "state": "WALK_RIGHT",
+      "index": 7,
+      "path": "FRAME__WALK_RIGHT__walk_right_07.png",
+      "sourceSheet": "exec-f68b8401-5eb5-4ebd-a248-2856b6375be3.png",
+      "sourceBBoxPx": [
+        785,
+        538,
+        1127,
+        982
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        25,
+        16,
+        103,
+        117
+      ],
+      "sizePx": [
+        78,
+        101
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        253
+      ],
+      "alphaPixelCount": 4548,
+      "sha256": "13c0b92e549128e07e20cd3508c015ad4e341ef95863bb2409dd2e8506e88d75",
+      "bytes": 16190
+    },
+    {
+      "state": "WALK_RIGHT",
+      "index": 8,
+      "path": "FRAME__WALK_RIGHT__walk_right_08.png",
+      "sourceSheet": "exec-f68b8401-5eb5-4ebd-a248-2856b6375be3.png",
+      "sourceBBoxPx": [
+        1166,
+        533,
+        1509,
+        980
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        25,
+        15,
+        103,
+        117
+      ],
+      "sizePx": [
+        78,
+        102
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4624,
+      "sha256": "bb40cf21b84971a1a2aaa47f878d8dfe650cadb669d0e3dcf8930dab13fec0c3",
+      "bytes": 16424
+    },
+    {
+      "state": "ARRIVE",
+      "index": 1,
+      "path": "FRAME__ARRIVE__arrive_01.png",
+      "sourceSheet": "exec-a322cfb2-ef1b-476b-987f-c44e981612c2.png",
+      "sourceBBoxPx": [
+        29,
+        59,
+        382,
+        502
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        24,
+        16,
+        104,
+        117
+      ],
+      "sizePx": [
+        80,
+        101
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4795,
+      "sha256": "47b6eb43113d54b36a5183d94915ef099ae3f1cabb954d063eca5af786d4fcba",
+      "bytes": 17100
+    },
+    {
+      "state": "ARRIVE",
+      "index": 2,
+      "path": "FRAME__ARRIVE__arrive_02.png",
+      "sourceSheet": "exec-a322cfb2-ef1b-476b-987f-c44e981612c2.png",
+      "sourceBBoxPx": [
+        410,
+        62,
+        751,
+        508
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        25,
+        16,
+        103,
+        117
+      ],
+      "sizePx": [
+        78,
+        101
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4496,
+      "sha256": "9cac7717b30f3e5ce0b210fccde3d483c30732ed98f30f2935519de844d39114",
+      "bytes": 16027
+    },
+    {
+      "state": "ARRIVE",
+      "index": 3,
+      "path": "FRAME__ARRIVE__arrive_03.png",
+      "sourceSheet": "exec-a322cfb2-ef1b-476b-987f-c44e981612c2.png",
+      "sourceBBoxPx": [
+        768,
+        62,
+        1119,
+        509
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        24,
+        15,
+        104,
+        117
+      ],
+      "sizePx": [
+        80,
+        102
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4785,
+      "sha256": "070c03ae581b8d40257f9186ee5a08df965aa2e27e2713b669d3cac1ef20b93a",
+      "bytes": 17004
+    },
+    {
+      "state": "ARRIVE",
+      "index": 4,
+      "path": "FRAME__ARRIVE__arrive_04.png",
+      "sourceSheet": "exec-a322cfb2-ef1b-476b-987f-c44e981612c2.png",
+      "sourceBBoxPx": [
+        1147,
+        64,
+        1502,
+        508
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        24,
+        16,
+        105,
+        117
+      ],
+      "sizePx": [
+        81,
+        101
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4947,
+      "sha256": "90801563c906847454c4b596dfe12a7d7111edfabe7207bf0deded32ff12d7aa",
+      "bytes": 17504
+    },
+    {
+      "state": "ARRIVE",
+      "index": 5,
+      "path": "FRAME__ARRIVE__arrive_05.png",
+      "sourceSheet": "exec-a322cfb2-ef1b-476b-987f-c44e981612c2.png",
+      "sourceBBoxPx": [
+        19,
+        545,
+        363,
+        993
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        25,
+        15,
+        103,
+        117
+      ],
+      "sizePx": [
+        78,
+        102
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4806,
+      "sha256": "a0f70d4111655e6ecbc1e8e314b9da8608563e185a1a5e8ac9aadacfcb07f472",
+      "bytes": 17182
+    },
+    {
+      "state": "ARRIVE",
+      "index": 6,
+      "path": "FRAME__ARRIVE__arrive_06.png",
+      "sourceSheet": "exec-a322cfb2-ef1b-476b-987f-c44e981612c2.png",
+      "sourceBBoxPx": [
+        416,
+        544,
+        763,
+        996
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        25,
+        14,
+        104,
+        117
+      ],
+      "sizePx": [
+        79,
+        103
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4710,
+      "sha256": "d37916c3b534e8c591f0336808fa3eb965601b57479bbb46e7b7347615acb9d1",
+      "bytes": 16810
+    },
+    {
+      "state": "ARRIVE",
+      "index": 7,
+      "path": "FRAME__ARRIVE__arrive_07.png",
+      "sourceSheet": "exec-a322cfb2-ef1b-476b-987f-c44e981612c2.png",
+      "sourceBBoxPx": [
+        797,
+        536,
+        1118,
+        997
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        28,
+        12,
+        101,
+        117
+      ],
+      "sizePx": [
+        73,
+        105
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4492,
+      "sha256": "3f7fc5416a37ce2ebcc04fafa8f27774a62fe42299a6ad9db2f85520966b9dff",
+      "bytes": 15908
+    },
+    {
+      "state": "ARRIVE",
+      "index": 8,
+      "path": "FRAME__ARRIVE__arrive_08.png",
+      "sourceSheet": "exec-a322cfb2-ef1b-476b-987f-c44e981612c2.png",
+      "sourceBBoxPx": [
+        1166,
+        536,
+        1503,
+        997
+      ],
+      "canvasPx": [
+        128,
+        128
+      ],
+      "contentBBoxPx": [
+        26,
+        12,
+        103,
+        117
+      ],
+      "sizePx": [
+        77,
+        105
+      ],
+      "anchorPx": {
+        "x": 64,
+        "y": 116
+      },
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "alphaPixelCount": 4602,
+      "sha256": "73a46973aae6146889fd8acfcccd39253750ef76123778800863a6784f0fe782",
+      "bytes": 16156
+    }
+  ],
+  "qaSummary": {
+    "frameCount": 32,
+    "allCanvasSize128x128": true,
+    "allAlphaRGBA": true,
+    "allTransparentBackground": true,
+    "allFramesBottomAlignedToY116": true,
+    "allOuterEdgesTransparent": true,
+    "leftRightSeparatelyDrawn": true,
+    "smallSilhouetteIncluded": true,
+    "loopMetrics": "QA__qa-report.json",
+    "visualAcceptance": "not represented; candidate only"
+  },
+  "libraryLayout": {
+    "destinationFolder": "/GAMEROAD/PIXEL_MOTION_STUDIO/NAKI_BOARD_LOCOMOTION_R2",
+    "physicalFiles": "all package files are directly in this folder",
+    "naming": "FRAME__STATE__name.png, SHEET__STATE.png, PREVIEW__STATE.gif, QA__name"
+  }
+}

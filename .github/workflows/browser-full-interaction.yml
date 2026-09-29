@@ -233,3 +233,48 @@ jobs:
             public-origin-metadata/
           if-no-files-found: error
           retention-days: 14
+
+
+  setup-current-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Capture exact-current Setup evidence
+        run: npx playwright test --config=playwright.setup-evidence.config.mjs --workers=1
+
+      - name: Record exact product binding
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p setup-current-evidence
+          {
+            echo "run_id=$GITHUB_RUN_ID"
+            echo "workflow_sha=$GITHUB_SHA"
+            echo "product_blob=$(git hash-object browser/GAMEROAD.html)"
+            echo "home_shell_blob=$(git hash-object browser/home-shell-presentation-core.mjs)"
+            echo "product_code_changed_in_evidence_pr=false"
+          } > setup-current-evidence/binding.txt
+
+      - name: Upload Setup current evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: setup-current-evidence-${{ github.run_id }}
+          path: setup-current-evidence/
+          if-no-files-found: error
+          retention-days: 14

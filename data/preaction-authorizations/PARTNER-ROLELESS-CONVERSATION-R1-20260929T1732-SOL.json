@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-PARTNER-ROLELESS-CONVERSATION-R1-20260929T1732",
+  "taskId": "PARTNER-FIRST-RELEASE-FORMAL-ASSET-RUNTIME-ACCEPT-001",
+  "workUnitKey": "PARTNER_ROLELESS_CONVERSATION_SURFACE_RECOVERY_R1",
+  "acquireKey": "PARTNER-ROLELESS-CONVERSATION-R1-20260929T1732-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-MAIN-5A1D4F6-ROLELESS-CHARACTERS-VS-BFI-SAASUNA-CONTRACT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT-SOURCE-READBACK-PLUS-EXISTING-BFI-CONSUMER-EXPECTATION",
+  "proceedToken": "PROCEED|VWORK-PARTNER-ROLELESS-CONVERSATION-R1-20260929T1732|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-roleless-conversation-surface-recovery|current-lease",
+  "authorizationBaseSha": "5a1d4f6e0711a8214c3021727c81f3d23fd6e9e1",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-FIRST-RELEASE-FORMAL-ASSET-RUNTIME-ACCEPT-001",
+  "leaseWorkUnitKey": "PARTNER_ROLELESS_CONVERSATION_SURFACE_RECOVERY_R1",
+  "leaseAcquireKey": "PARTNER-ROLELESS-CONVERSATION-R1-20260929T1732-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-29 17:32 JST",
+  "leaseUntilJst": "2026-09-29 18:32 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:L9",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch chatgpt/partner-roleless-conversation-r1-20260929; mutable browser/board-facility-runtime-mount.mjs; tests/board-facility-runtime-mount.test.mjs; deploy/cloudflare/tests/build.test.mjs; own data/preaction-authorizations/PARTNER-ROLELESS-CONVERSATION-R1-20260929T1732-SOL.json; own branch/PR/check/merge/readback; own CURRENT lease/R24 event",
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "formalInvariants": [
+    "explicit non-Partner role selection continues to suppress the Partner conversation surface",
+    "only selected partner.saasuna can project the current conversation product surface",
+    "existing Partner hub and Tea quick-choice runtime are reused without new relationship/reward/save/gameplay authority",
+    "browser/GAMEROAD.html and tests/browser-full-interaction.spec.mjs remain read-only",
+    "no gameplay/rules/save/economy/network semantics change"
+  ],
+  "acceptance": [
+    "focused board-facility unit tests pass including roleless Characters projection and explicit non-Partner rejection",
+    "existing Browser Full Interaction Saasuna route requires no test weakening",
+    "Cloudflare package provenance pin matches the new board-facility runtime blob",
+    "Required Gate passes before merge",
+    "merged-main readback retains the roleless projection contract and pickerRequired=false"
+  ]
+}

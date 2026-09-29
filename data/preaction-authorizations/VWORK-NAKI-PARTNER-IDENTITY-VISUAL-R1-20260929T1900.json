@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-NAKI-PARTNER-IDENTITY-VISUAL-R1-20260929T1900",
+  "taskId": "PARTNER-VISUALSET-MANIFEST-001",
+  "workUnitKey": "NAKI_PARTNER_IDENTITY_VISUAL_SURFACE_RECOVERY_R1",
+  "acquireKey": "NAKI-PARTNER-IDENTITY-VISUAL-R1-20260929T1900-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-MAIN-PARTNER-SAASUNA-HARDCODE-PLUS-CURRENT-NAKI-VISUAL-CORRECTION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "SOURCE-READBACK-PLUS-CURRENT-LIBRARY-NAKI-IDENTITY-AND-READONLY-BATTLE-ASSET",
+  "proceedToken": "PROCEED|VWORK-NAKI-PARTNER-IDENTITY-VISUAL-R1-20260929T1900|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|naki-partner-identity-visual-recovery|current-lease",
+  "authorizationBaseSha": "35adc12003b9d0b9bccbd9d5aef980052e842732",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-VISUALSET-MANIFEST-001",
+  "leaseWorkUnitKey": "NAKI_PARTNER_IDENTITY_VISUAL_SURFACE_RECOVERY_R1",
+  "leaseAcquireKey": "NAKI-PARTNER-IDENTITY-VISUAL-R1-20260929T1900-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-29 19:00 JST",
+  "leaseUntilJst": "2026-09-29 20:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:L9",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch chatgpt/naki-partner-identity-visual-r1-20260929; mutable browser/partner-tea-runtime-mount.mjs; tests/partner-tea-runtime-mount.test.mjs; browser/partner-shell-runtime-mount.mjs; tests/partner-shell-runtime-mount.test.mjs; own data/preaction-authorizations/VWORK-NAKI-PARTNER-IDENTITY-VISUAL-R1-20260929T1900.json; own branch/PR/check/merge/readback; own CURRENT lease/R24 event",
+  "scope": [
+    "browser/partner-tea-runtime-mount.mjs",
+    "tests/partner-tea-runtime-mount.test.mjs",
+    "browser/partner-shell-runtime-mount.mjs",
+    "tests/partner-shell-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-tea-runtime-mount.mjs",
+    "tests/partner-tea-runtime-mount.test.mjs",
+    "browser/partner-shell-runtime-mount.mjs",
+    "tests/partner-shell-runtime-mount.test.mjs"
+  ],
+  "formalInvariants": [
+    "GAMEROAD_PARTNER_STATE remains the active Partner identity authority; this patch creates no second selection state",
+    "browser/GAMEROAD.html, board-facility runtime, build scripts/tests, and active Battle-owned Naki files remain read-only",
+    "Naki Partner projection uses current black/purple chibi identity direction and marks derivative visual provisional with formalArt=false and humanAccepted=false",
+    "Naki receives no fabricated dialogue, Tea, relationship, reward, save, gameplay, or canon mutation authority",
+    "Saasuna current conversation and Tea behavior remain unchanged"
+  ],
+  "acceptance": [
+    "selected partner.naki produces 緋累ナキ identity and current Naki provisional portrait without Saasuna leakage",
+    "generic Partner shell renders portraitRef on hub/list/detail and omits image when absent",
+    "Naki exposes no approved idle/dialogue/Tea content that is not in current source registry",
+    "focused Partner tea/shell tests pass",
+    "Required Gate passes before merge",
+    "merged-main/public package readback shows the shipped Naki Partner visual correction",
+    "formalArt and humanAccepted remain false until Human visual acceptance"
+  ]
+}

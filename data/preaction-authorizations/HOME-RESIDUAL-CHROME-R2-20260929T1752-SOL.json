@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-RESIDUAL-CHROME-R2-20260929T1752-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_RESIDUAL_CHROME_REMOVAL_R2",
+  "acquireKey": "HOME-RESIDUAL-CHROME-R2-20260929T1752-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLIC_HOME_DOM_RESIDUAL_PLUS_CURRENT_MAIN_TARGET_SCAN_20260929T1752JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R1_DONOR_DIFF_READBACK_AND_REQUIRED_GATE_FAIL_CLOSED_BEFORE_PRODUCT_TESTS",
+  "proceedToken": "PROCEED|HOME-RESIDUAL-CHROME-R2-20260929T1752-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|home-residual-chrome|runtime-test|active-lease",
+  "authorizationBaseSha": "35adc12003b9d0b9bccbd9d5aef980052e842732",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_RESIDUAL_CHROME_REMOVAL_R2",
+  "leaseAcquireKey": "HOME-RESIDUAL-CHROME-R2-20260929T1752-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-29 17:52 JST",
+  "leaseUntilJst": "2026-09-29 18:52 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main 35adc12003b9d0b9bccbd9d5aef980052e842732; new branch chatgpt/home-residual-chrome-r2-20260929; mutable browser/home-boot-runtime-base-r3.mjs; tests/home-boot-presentation.test.mjs; create transient data/preaction-authorizations/HOME-RESIDUAL-CHROME-R2-20260929T1752-SOL.json; own branch/PR/check/merge/readback; own CURRENT lease/R24 event",
+  "scope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ]
+}

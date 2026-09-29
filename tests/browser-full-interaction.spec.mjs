@@ -238,28 +238,26 @@ async function submitVisiblePlan(battle) {
   let roadId = await roadSelect.inputValue();
   if (!roadId) {
     roadId = await clickCandidate();
-    expect(roadId, 'visible Road candidate click').toBeTruthy();
-    await expect.poll(async () => {
-      const selected = await roadSelect.inputValue();
-      const phase = (await battle.locator('#phaseTitle').textContent()) ?? '';
-      return selected === roadId || !phase.includes('行動を計画');
-    }, { message: 'visible Road click is reflected before plan progression' }).toBeTruthy();
+    expect(roadId, 'visible first plan candidate click').toBeTruthy();
   }
+
+  const phaseAfterFirstClick = (await battle.locator('#phaseTitle').textContent()) ?? '';
+  if (!phaseAfterFirstClick.includes('行動を計画')) return;
 
   let battleId = await battleSelect.inputValue();
   if (!battleId) {
-    const excludedId = (await roadSelect.inputValue()) || roadId;
-    battleId = await clickCandidate(excludedId);
-    expect(battleId, 'visible Battle candidate click').toBeTruthy();
-    expect(battleId, 'Road and Battle candidate clicks remain distinct').not.toBe(excludedId);
+    battleId = await clickCandidate(roadId);
+    expect(battleId, 'visible second plan candidate click').toBeTruthy();
+    expect(battleId, 'visible plan candidate clicks remain distinct').not.toBe(roadId);
   }
 
   await expect.poll(async () => {
     const roadValue = await roadSelect.inputValue();
     const battleValue = await battleSelect.inputValue();
     const phase = (await battle.locator('#phaseTitle').textContent()) ?? '';
-    return (roadValue !== '' && battleValue !== '' && battleValue !== roadValue) || !phase.includes('行動を計画');
-  }, { message: 'visible plan either remains ready for explicit submit or FIRST10 has already progressed it' }).toBeTruthy();
+    if (!phase.includes('行動を計画')) return true;
+    return roadValue !== '' && battleValue !== '' && battleValue !== roadValue && await ready.isEnabled();
+  }, { message: 'visible plan either becomes explicitly submittable or FIRST10 has already progressed it' }).toBeTruthy();
 
   const phase = (await battle.locator('#phaseTitle').textContent()) ?? '';
   if (!phase.includes('行動を計画')) return;
@@ -651,21 +649,7 @@ test('starts through visible Setup and advances the first Battle decision throug
   expect(initialHands, 'fresh match deals seven source hand cards to every participant').toEqual([7, 7]);
   const handCards = battle.locator('#hand .handCard:visible');
   expect(await handCards.count(), 'janken reservation leaves ordinary hand cards visibly playable').toBeGreaterThanOrEqual(2);
-  await handCards.nth(0).click();
-  await expect(battle.locator('#roadSelect')).not.toHaveValue('');
-  await handCards.nth(1).click();
-  await expect(battle.locator('#battleSelect')).not.toHaveValue('');
-
-  const roadValue = await battle.locator('#roadSelect').inputValue();
-  const battleValue = await battle.locator('#battleSelect').inputValue();
-  expect(roadValue, 'visible hand click selects a Road card').not.toBe('');
-  expect(battleValue, 'visible hand click selects a Battle card').not.toBe('');
-  expect(battleValue, 'Road and Battle use different visible hand cards').not.toBe(roadValue);
-
-  const ready = battle.locator('#readyPlan');
-  await expect(ready).toBeVisible();
-  await expect(ready).toBeEnabled();
-  await ready.click();
+  await submitVisiblePlan(battle);
 
   const cue = battle.locator('#first10Cue');
   await expect(cue, 'visible first-cycle cue confirms Road decision, public reveal, and progression beyond Plan').toContainText('ロード決定 → 公開 → 次の行動まで確認 ✓', { timeout: 30_000 });

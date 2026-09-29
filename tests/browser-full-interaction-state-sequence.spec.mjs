@@ -337,13 +337,28 @@ test('Partner Shell is reachable through the live Saasuna conversation and stays
   const visibleActions = await overlay.locator('[data-partner-shell-action]:visible').evaluateAll((nodes) =>
     nodes.map((node) => node.dataset.partnerShellAction),
   );
-  expect(visibleActions, 'only current live actions are exposed').toEqual(['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION']);
+  expect(visibleActions, 'only current live actions are exposed').toEqual(['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'OPEN_TEA']);
   await expect(overlay.locator('[data-partner-shell-action="OPEN_COSTUME"]'), 'costume stays hidden without authoritative ownership/catalog/load/save provider').toHaveCount(0);
   await expect(overlay.locator('[data-partner-shell-action="OPEN_LIST"]'), 'unconnected roster action stays hidden').toHaveCount(0);
   await expect(input, 'direct conversation DOM is preserved behind the secondary overlay').toHaveValue('導線QAの下書き');
 
   const hubPng = await page.screenshot({ fullPage: true, animations: 'disabled' });
   await testInfo.attach(`${testInfo.project.name}-partner-shell-hub.png`, { body: hubPng, contentType: 'image/png' });
+
+  const teaBar = conversation.locator('[data-gr-partner-tea-quick-choice="1"]');
+  await expect(teaBar, 'current inline Tea quick choices are available beside the conversation').toBeVisible();
+  const teaAction = overlay.locator('[data-partner-shell-action="OPEN_TEA"]');
+  await expect(teaAction, 'Partner Shell exposes the current Tea shortcut').toBeVisible();
+  await teaAction.click();
+  await expect(overlay, 'Tea shortcut returns to the direct conversation instead of inventing a standalone Tea view').toBeHidden();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  const firstTeaChoice = teaBar.locator('.grPartnerTeaQuickChoiceButton').first();
+  await expect(firstTeaChoice, 'Tea shortcut focuses the existing inline quick-choice surface').toBeFocused();
+  await expect(input, 'Tea shortcut preserves the conversation draft').toHaveValue('導線QAの下書き');
+
+  await trigger.click();
+  await expect(overlay, 'Partner Shell can reopen after visiting the inline Tea shortcut').toBeVisible();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true');
 
   const detailAction = overlay.locator('[data-partner-shell-action="OPEN_ACTIVE_DETAIL"]');
   await expect(detailAction).toBeVisible();
@@ -368,7 +383,7 @@ test('Partner Shell is reachable through the live Saasuna conversation and stays
   runtime.assertClean(testInfo);
   testInfo.annotations.push({
     type: 'partner-shell-live-reachability',
-    description: `visible Home→Characters→Partner roster→Saasuna→conversation→Partner Shell→detail→hub→conversation passed on ${testInfo.project.name}; approved idle content visible; unsupported costume/list actions absent; product/runtime/save/economy unchanged`,
+    description: `visible Home→Characters→Partner roster→Saasuna→conversation→Partner Shell→inline Tea shortcut→Partner Shell→detail→hub→conversation passed on ${testInfo.project.name}; approved idle content visible; unsupported costume/list actions absent; Tea reuses the current inline quick-choice surface; product/runtime/save/economy unchanged`,
   });
 });
 

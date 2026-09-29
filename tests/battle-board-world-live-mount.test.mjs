@@ -22,7 +22,8 @@ function node(tag = 'div') {
     classList: {
       values: new Set(),
       contains(value) { return this.values.has(value); },
-      add(value) { this.values.add(value); },
+      add(...values) { values.forEach((value) => this.values.add(value)); },
+      remove(...values) { values.forEach((value) => this.values.delete(value)); },
     },
     setAttribute(name, value) { attrs.set(name, String(value)); },
     getAttribute(name) { return attrs.has(name) ? attrs.get(name) : null; },

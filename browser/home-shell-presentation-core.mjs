@@ -120,6 +120,31 @@ section[data-screen="setup"] #${SETUP_QUICK_DECK_TRIGGER_ID}:focus-visible{outli
 #${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckCard{min-height:54px;display:flex;align-items:center;padding:8px 9px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.045);font-size:12px;overflow-wrap:anywhere}
 #${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckEmpty{margin:0;padding:10px;opacity:.68}
 @media (max-height:430px) and (orientation:landscape){#${SETUP_QUICK_DECK_DIALOG_ID}{place-items:stretch;padding:7px}#${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckPanel{width:100%;max-height:100%;border-radius:13px;padding:10px}#${SETUP_QUICK_DECK_DIALOG_ID} .setupQuickDeckGrid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}}
+/* Setup primary-action flow authority: the Start CTA must never occlude sibling controls. */
+section[data-screen="setup"] .setupBox>#startMatch{
+  position:static!important;
+  left:auto!important;
+  right:auto!important;
+  bottom:auto!important;
+  z-index:1!important;
+  order:50;
+  grid-column:1/-1;
+  width:100%!important;
+  min-height:54px!important;
+  margin-top:clamp(8px,1.6vh,14px)!important;
+}
+section[data-screen="setup"] .setupBox>#${SETUP_QUICK_DECK_TRIGGER_ID}{order:60}
+section[data-screen="setup"] .setupBox>#friendRoomEntry{order:70}
+section[data-screen="setup"] .setupBox>#gameroadBattleFieldSelection{order:80}
+section[data-screen="setup"] .setupBox>.gameroadRankMatchSetup{order:90}
+section[data-screen="setup"] #startMatch::before{content:""!important}
+@media (max-width:540px){
+  section[data-screen="setup"]{padding-bottom:18px!important}
+  section[data-screen="setup"] .setupBox{padding-bottom:18px!important}
+}
+@media (max-height:430px) and (orientation:landscape){
+  section[data-screen="setup"] .setupBox{scroll-padding-bottom:12px}
+}
 
 `;
 const UPDATE_DETAILS_CSS = `

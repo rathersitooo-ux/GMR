@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-NAKI-BATTLE-LIVE-SCREEN-R10-20260930T2311",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "NAKI_BATTLE_LIVE_SCREEN_INTEGRATION_R10",
+  "acquireKey": "NAKI-BATTLE-LIVE-SCREEN-R10-20260930T2311-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R9_BFI_RETURN_OVERLAY_POINTER_INTERCEPT_PLUS_ACTUAL_R9_ADAPTER_REPRO",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R9_REQUIRED_GATE_GREEN_AND_PATCHED_ACTUAL_ADAPTER_SETTLE_TO_NEXT_FOCUS_REGRESSION_PASS",
+  "proceedToken": "PROCEED|VWORK-NAKI-BATTLE-LIVE-SCREEN-R10-20260930T2311|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|naki-return-scene-handoff-recovery|r9-donor|active-lease",
+  "authorizationBaseSha": "1b13b7334f60b006a7bfb141a7cb4e6fdd67c9b7",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "NAKI_BATTLE_LIVE_SCREEN_INTEGRATION_R10",
+  "leaseAcquireKey": "NAKI-BATTLE-LIVE-SCREEN-R10-20260930T2311-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-30 23:11 JST",
+  "leaseUntilJst": "2026-10-01 00:11 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main c6fd32271c245552dcf932c44281db8990882b79; donor branch chatgpt/naki-battle-live-screen-r9-20260930 head 1b13b7334f60b006a7bfb141a7cb4e6fdd67c9b7; new branch chatgpt/naki-battle-live-screen-r10-20260930; mutable exact paths: browser/battle-naki-fe-live-dom-adapter.mjs; browser/profile-presentation-runtime-mount.mjs; tests/battle-naki-fe-live-dom-adapter.test.mjs; data/preaction-authorizations/VWORK-NAKI-BATTLE-LIVE-SCREEN-R10-20260930T2311.json; own branch/PR/check/merge/readback; own CURRENT event/lease records. Read-only: browser/GAMEROAD.html; deploy/cloudflare/tests/build.test.mjs; all Naki binary assets; battle gameplay/rules/target/winner/order/board/save/economy/network; public deploy.",
+  "solutionSignature": "NAKI_RETURN_SCENE_HANDOFF_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R9_PRODUCT_DONOR_PLUS_R9_BFI_POINTER_INTERCEPT_ROOT_CAUSE",
+  "solutionSearchEvidence": [
+    "R9 branch is a clean fast-forward donor from current main and Required Gate succeeded at head 1b13b7334f60b006a7bfb141a7cb4e6fdd67c9b7.",
+    "Browser Full Interaction R19 reached the next-round Janken slot but an old gmrBattleLive return panel intercepted pointer events.",
+    "Executing the exact R9 adapter reproduces settle->next focus with mounts=2 and destroys=0; the bounded handoff patch produces mounts=2 and destroys=1."
+  ],
+  "scope": [
+    "browser/battle-naki-fe-live-dom-adapter.mjs",
+    "browser/profile-presentation-runtime-mount.mjs",
+    "tests/battle-naki-fe-live-dom-adapter.test.mjs",
+    "data/preaction-authorizations/VWORK-NAKI-BATTLE-LIVE-SCREEN-R10-20260930T2311.json"
+  ],
+  "leaseScope": [
+    "browser/battle-naki-fe-live-dom-adapter.mjs",
+    "browser/profile-presentation-runtime-mount.mjs",
+    "tests/battle-naki-fe-live-dom-adapter.test.mjs",
+    "data/preaction-authorizations/VWORK-NAKI-BATTLE-LIVE-SCREEN-R10-20260930T2311.json"
+  ],
+  "formalInvariants": [
+    "browser/GAMEROAD.html remains unchanged",
+    "deploy/cloudflare/tests/build.test.mjs remains unchanged",
+    "all Naki binary art/audio assets remain byte-identical to R9 donor",
+    "existing cutinHold privacy gate remains authoritative",
+    "Battle gameplay/rules/target/winner/order/board/save/economy/network remain read-only",
+    "starting a new Battle action destroys any prior FE scene before mounting the next scene",
+    "return phase stops intercepting gameplay input during its visual grace period"
+  ],
+  "acceptance": [
+    "PRE_ACTION exact-scope validator passes",
+    "exact R9 adapter regression fails before patch and passes after patch for settle-to-next-focus handoff",
+    "focused Naki adapter tests cover old-scene destruction and return input transparency",
+    "profile entrypoint embeds the exact patched adapter bytes",
+    "Required Gate passes on exact R10 head",
+    "Browser Full Interaction no longer reports gmrBattleLive return subtree intercepting next-round Janken",
+    "actual four-player Battle path still fires Naki scene after entry cut-in"
+  ]
+}

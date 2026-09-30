@@ -242,7 +242,7 @@ function ensureSceneStyle(doc) {
 .gmrBattleLive[data-causal-phase="impact"] .gmrBattleLive__fighter--target{animation:gmrBattleRecoil .17s steps(2,end) 2}
 .gmrBattleLive[data-causal-phase="reaction"] .gmrBattleLive__fighter--target{animation:gmrBattleRecoil .17s steps(2,end) both}
 .gmrBattleLive[data-causal-phase="impact"] .gmrBattleLive__arena{animation:gmrBattleCameraHit .14s steps(2,end)}
-.gmrBattleLive[data-causal-phase="return"]{animation:gmrBattleReturn .24s steps(3,end) both}
+.gmrBattleLive[data-causal-phase="return"]{animation:gmrBattleReturn .24s steps(3,end) both;pointer-events:none}
 .gmrBattleLive[data-hitstop="true"] .gmrBattleLive__fighter,.gmrBattleLive[data-hitstop="true"] .gmrBattleLive__arena,.gmrBattleLive[data-hitstop="true"] .gmrBattleLive__ground-run,.gmrBattleLive[data-hitstop="true"] .gmrBattleLive__impact,.gmrBattleLive[data-hitstop="true"] .gmrBattleLive__crescent{animation-play-state:paused!important}
 @keyframes gmrBattleEnter{0%{opacity:0;transform:scale(1.035);filter:brightness(1.8)}100%{opacity:1;transform:scale(1);filter:none}}
 @keyframes gmrBattleAnticipate{to{transform:translateY(5px) scaleX(.98)}}@keyframes gmrBattleRelease{to{transform:translate(20px,-6px) scale(1.04)}}@keyframes gmrBattleRecoil{25%{transform:translateX(7px) rotate(2deg)}60%{transform:translateX(-4px) rotate(-1deg)}}@keyframes gmrBattleCameraHit{25%{transform:translateX(4px)}60%{transform:translateX(-3px)}}
@@ -741,7 +741,7 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
       applyStage(projection, eventId, active.generation);
       return Object.freeze({ ok: true, eventId, stage: projection.stage, signature, presentationOnly: true });
     }
-    clearWatchdog(); clearSequenceTimers();
+    closeActive();
     const currentGeneration = ++generation;
     try { scene = mountScene(projection, assets); } catch { scene = null; }
     if (!scene) return Object.freeze({ ok: false, reason: 'battle_scene_mount_failed' });

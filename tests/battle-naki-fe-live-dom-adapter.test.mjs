@@ -277,6 +277,29 @@ function makeGlobal(document) {
   assert.equal(readBattleNakiFeLiveDomProjection(makeGlobal(document)).ok, true);
 }
 
+{
+  const document = new FakeDocument(); const globalRef = makeGlobal(document);
+  delete document.resolution.dataset.eventId;
+  const timers = []; let mounts = 0; let destroys = 0;
+  const setTimeoutFn = (callback, ms) => { const timer = { callback, ms, cleared: false }; timers.push(timer); return timer; };
+  const clearTimeoutFn = timer => { if (timer) timer.cleared = true; };
+  const adapter = installBattleNakiFeLiveDomAdapter(globalRef, {
+    documentRef: document, setTimeoutFn, clearTimeoutFn, playSoundEffect() {},
+    mountScene() {
+      mounts += 1;
+      return { setPhase() {}, setHitstop() {}, destroy() { destroys += 1; } };
+    }
+  });
+  document.resolution.dataset.stage = 'settle'; adapter.refresh();
+  const returnTimer = [...timers].reverse().find(row => !row.cleared && row.ms === 240);
+  assert.ok(returnTimer, 'return grace timer must exist before the next Battle action');
+  document.resolution.dataset.stage = 'focus'; adapter.refresh();
+  assert.equal(destroys, 1, 'next Battle action must destroy the prior return scene before mounting');
+  assert.equal(mounts, 2, 'next Battle action mounts exactly one replacement scene');
+  assert.equal(returnTimer.cleared, true, 'prior return timer is cleared with the prior scene');
+  adapter.destroy();
+}
+
 assert.equal(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.participantCount, 4);
 assert.equal(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.stageAuthority, '#battleResolution[data-stage] + .battlePhaseLive');
 assert.equal(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.cutinHoldPolicy, 'EXISTING_DEDICATED_CUTIN_HOLD_BLOCKS_FE_SCENE_AND_SOURCE_TARGET_DISCLOSURE');
@@ -291,6 +314,7 @@ assert.equal(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.soundStartPolicy, 'USER_GE
 {
   const profile = await readFile(new URL('../browser/profile-presentation-runtime-mount.mjs', import.meta.url), 'utf8');
   const adapterBytes = await readFile(new URL('../browser/battle-naki-fe-live-dom-adapter.mjs', import.meta.url));
+  assert.match(adapterBytes.toString('utf8'), /gmrBattleLive\\\[data-causal-phase="return"\\\]\\\{[^}]*pointer-events:none/, 'return grace must never intercept the next gameplay input');
   assert.ok(profile.includes(adapterBytes.toString('utf8')), 'prepackaged profile entrypoint must carry the exact tested Battle adapter source');
   assert.ok(profile.includes('installBattleNakiFeLiveDomAdapter(window, { documentRef: document, assets: BATTLE_NAKI_FE_LIVE_ASSETS });'));
   const assets = [

@@ -314,7 +314,7 @@ assert.equal(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.soundStartPolicy, 'USER_GE
 {
   const profile = await readFile(new URL('../browser/profile-presentation-runtime-mount.mjs', import.meta.url), 'utf8');
   const adapterBytes = await readFile(new URL('../browser/battle-naki-fe-live-dom-adapter.mjs', import.meta.url));
-  assert.match(adapterBytes.toString('utf8'), /gmrBattleLive\\\[data-causal-phase="return"\\\]\\\{[^}]*pointer-events:none/, 'return grace must never intercept the next gameplay input');
+  assert.match(adapterBytes.toString('utf8'), /\.gmrBattleLive\[data-causal-phase="return"\]\{[^}]*pointer-events:none/, 'return grace must never intercept the next gameplay input');
   assert.ok(profile.includes(adapterBytes.toString('utf8')), 'prepackaged profile entrypoint must carry the exact tested Battle adapter source');
   assert.ok(profile.includes('installBattleNakiFeLiveDomAdapter(window, { documentRef: document, assets: BATTLE_NAKI_FE_LIVE_ASSETS });'));
   const assets = [

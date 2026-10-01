@@ -932,6 +932,7 @@ async function backOperationVisible(page) {
 test('covers current Home center input semantics and retired Home auxiliary boundary', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
+  await assertRetiredHomeAuxiliaryEntries(page, testInfo);
 
   let center = page.locator('#homePadCenter:visible');
   if ((await center.count()) > 0) {
@@ -991,7 +992,6 @@ test('covers current Home center input semantics and retired Home auxiliary boun
     testInfo.annotations.push({ type: 'not-visible-in-viewport', description: 'Home center collapse/expand control is not exposed in this viewport.' });
   }
 
-  await assertRetiredHomeAuxiliaryEntries(page, testInfo);
   await expect(page.locator('section[data-screen="settings"]')).toBeHidden();
   runtime.assertClean(testInfo);
 });

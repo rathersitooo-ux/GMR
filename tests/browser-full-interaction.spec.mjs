@@ -1250,7 +1250,17 @@ test('classifies retired Home Settings entry, then covers current Shop-to-Gacha 
   await expect(gacha.locator('.gachaControls .safeNote')).toHaveText('演出プレビュー：所持・保存は変わりません');
   await expect(gacha.locator('#openPack')).toHaveText('7枚をプレビュー');
   await attachStateScreenshot(page, testInfo, 'gacha-idle-visible');
+  await page.evaluate(() => {
+    HTMLMediaElement.prototype.play = function () { return new Promise(() => {}); };
+  });
+  testInfo.annotations.push({
+    type: 'deterministic-precondition',
+    description: 'The retired Settings route no longer pre-enables reduced motion, so media completion is held only to expose the real visible pack-animation Skip control; no GAMEROAD state or pack result is injected.',
+  });
   await gacha.locator('#openPack').click();
+  const skip = gacha.locator('#skipPack:visible');
+  await expect(skip).toBeVisible();
+  await skip.click();
   await expect(gacha.locator('#gachaResultsView')).not.toHaveClass(/hidden/);
   await expect(gacha.locator('.gachaResultsHead')).toContainText('演出プレビュー結果');
   await expect(gacha.locator('#packResults .packCard')).toHaveCount(7);

@@ -1469,15 +1469,25 @@ export function installFanartLocalSkinCards({ document: doc = globalThis.documen
   let selected = null; let destroyed = false; let ticket = 0;
   const urls = new Map();
   const button = doc.createElement('button');
-  button.type = 'button'; button.dataset.role = 'fanart-local-skin-button'; button.textContent = '自分用スキン';
-  button.setAttribute('aria-label', '選択したカードへ端末内画像スキンを設定');
+  button.type = 'button'; button.dataset.role = 'fanart-local-skin-button'; button.textContent = '画像を設定'; button.disabled = true;
+  button.setAttribute('aria-label', 'カードを選択すると端末内画像を設定できます');
+  const removeButton = doc.createElement('button');
+  removeButton.type = 'button'; removeButton.dataset.role = 'fanart-local-skin-remove-button'; removeButton.textContent = '画像を削除'; removeButton.hidden = true; removeButton.disabled = true;
+  removeButton.setAttribute('aria-label', '選択したカードの端末内画像を削除');
   const input = doc.createElement('input'); input.type = 'file'; input.accept = 'image/png,image/jpeg'; input.hidden = true;
-  const anchor = doc.querySelector('#r4DeckTrayToggle') || screen.querySelector('button') || screen;
-  anchor.after?.(button); if (!button.parentNode) screen.appendChild(button);
-  button.after?.(input); if (!input.parentNode) screen.appendChild(input);
+  const searchAnchor = doc.querySelector('#cardSearch');
+  const collectionTools = screen.querySelector?.('.r4CollectionTools') ?? doc.querySelector('.r4CollectionTools');
+  if (searchAnchor?.after) searchAnchor.after(button);
+  else if (collectionTools?.appendChild) collectionTools.appendChild(button);
+  else {
+    const fallback = screen.querySelector?.('button') ?? screen;
+    fallback.after?.(button); if (!button.parentNode) screen.appendChild(button);
+  }
+  button.after?.(removeButton); if (!removeButton.parentNode) screen.appendChild(removeButton);
+  removeButton.after?.(input); if (!input.parentNode) screen.appendChild(input);
   if (!doc.getElementById('gameroad-fanart-local-skin-style')) {
     const style = doc.createElement('style'); style.id = 'gameroad-fanart-local-skin-style';
-    style.textContent = '[data-fanart-local-skin-host="1"]{position:relative!important;isolation:isolate;overflow:hidden}[data-role="fanart-local-skin-overlay"]{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;pointer-events:none;z-index:0!important}[data-fanart-local-skin-host="1"]>.cardCostBadge,[data-fanart-local-skin-host="1"]>.cardRank,[data-fanart-local-skin-host="1"]>.cardAbilityTag,[data-fanart-local-skin-host="1"]>.cardFaceName,[data-fanart-local-skin-host="1"]>.inDeckTag{z-index:2!important;text-shadow:0 1px 2px rgba(0,0,0,.95)}[data-fanart-local-skin-host="1"]>.cardCostBadge{background:rgba(255,255,245,.96)!important;border-radius:6px}[data-fanart-local-skin-host="1"]>.cardRank,[data-fanart-local-skin-host="1"]>.cardFaceName{box-sizing:border-box;border-radius:4px!important;padding:0 3px!important;background:rgba(255,255,245,.92)!important;box-shadow:0 1px 3px rgba(0,0,0,.24)}.screen.cards #collectionGrid .cardAbilityTag{box-sizing:border-box;max-width:calc(100% - 14px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:2px 4px;border-radius:999px;background:rgba(10,16,25,.84);color:#fff;font-size:8px!important;line-height:1.15!important;text-shadow:0 1px 2px rgba(0,0,0,.95)}[data-role="fanart-local-skin-button"]{min-height:44px}';
+    style.textContent = '[data-fanart-local-skin-host="1"]{position:relative!important;isolation:isolate;overflow:hidden}[data-role="fanart-local-skin-overlay"]{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;pointer-events:none;z-index:0!important}[data-fanart-local-skin-host="1"]>.cardCostBadge,[data-fanart-local-skin-host="1"]>.cardRank,[data-fanart-local-skin-host="1"]>.cardAbilityTag,[data-fanart-local-skin-host="1"]>.cardFaceName,[data-fanart-local-skin-host="1"]>.inDeckTag{z-index:2!important;text-shadow:0 1px 2px rgba(0,0,0,.95)}[data-fanart-local-skin-host="1"]>.cardCostBadge{background:rgba(255,255,245,.96)!important;border-radius:6px}[data-fanart-local-skin-host="1"]>.cardRank,[data-fanart-local-skin-host="1"]>.cardFaceName{box-sizing:border-box;border-radius:4px!important;padding:0 3px!important;background:rgba(255,255,245,.92)!important;box-shadow:0 1px 3px rgba(0,0,0,.24)}.screen.cards #collectionGrid .cardAbilityTag{box-sizing:border-box;max-width:calc(100% - 14px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:2px 4px;border-radius:999px;background:rgba(10,16,25,.84);color:#fff;font-size:8px!important;line-height:1.15!important;text-shadow:0 1px 2px rgba(0,0,0,.95)}[data-role="fanart-local-skin-button"],[data-role="fanart-local-skin-remove-button"]{min-height:44px}[data-role="fanart-local-skin-button"][disabled],[data-role="fanart-local-skin-remove-button"][disabled]{opacity:.56;cursor:not-allowed}';
     (doc.head || doc.documentElement)?.appendChild(style);
   }
   const revoke = (id) => { const url = urls.get(id); if (url) { win.URL.revokeObjectURL(url); urls.delete(id); } };
@@ -1495,17 +1505,30 @@ export function installFanartLocalSkinCards({ document: doc = globalThis.documen
     const currentTicket = ++ticket;
     const nodes = [...screen.querySelectorAll('#collectionGrid [data-id], #deckSlots [data-id], #exDeckSlots [data-id]')];
     await Promise.all(nodes.map((node) => renderNode(node, currentTicket)));
-    if (selected) { let record = null; try { record = await fanartReadSkin(idb, selected); } catch {} if (!destroyed && currentTicket === ticket) button.textContent = record ? 'スキン解除' : '自分用スキン'; }
+    let selectedRecord = null;
+    if (selected) { try { selectedRecord = await fanartReadSkin(idb, selected); } catch {} }
+    if (destroyed || currentTicket !== ticket) return;
+    button.disabled = !selected;
+    const nextButtonText = selectedRecord ? '画像を変更' : '画像を設定';
+    if (button.textContent !== nextButtonText) button.textContent = nextButtonText;
+    button.setAttribute('aria-label', selected ? (selectedRecord ? '選択したカードの端末内画像を変更' : '選択したカードへ端末内画像を設定') : 'カードを選択すると端末内画像を設定できます');
+    removeButton.hidden = !selectedRecord;
+    removeButton.disabled = !selectedRecord;
   };
   const select = (event) => {
     const node = event.target?.closest?.('#collectionGrid [data-id], #deckSlots [data-id], #exDeckSlots [data-id]');
     if (!node) return; selected = normalizeLocalSkinCardId(String(node.dataset?.id ?? '')); if (selected) refresh().catch(() => {});
   };
   const choose = async () => {
-    if (!selected) { button.textContent = '先にカードを選択'; return; }
-    let current = null; try { current = await fanartReadSkin(idb, selected); } catch {}
-    if (current) { await fanartDeleteSkin(idb, selected); await refresh(); return; }
+    if (!selected) return;
     input.click();
+  };
+  const remove = async () => {
+    if (!selected) return;
+    let current = null; try { current = await fanartReadSkin(idb, selected); } catch {}
+    if (!current) return;
+    await fanartDeleteSkin(idb, selected);
+    await refresh();
   };
   const save = async () => {
     const file = input.files?.[0]; input.value = ''; if (!file || !selected) return;
@@ -1514,12 +1537,13 @@ export function installFanartLocalSkinCards({ document: doc = globalThis.documen
     await refresh();
   };
   screen.addEventListener('pointerdown', select, true);
-  button.addEventListener('click', () => choose().catch(() => { button.textContent = '端末保存を確認できません'; }));
+  button.addEventListener('click', () => choose().catch(() => { button.textContent = '画像を選択できません'; }));
+  removeButton.addEventListener('click', () => remove().catch(() => { button.textContent = '端末保存を確認できません'; }));
   input.addEventListener('change', () => save().catch(() => { button.textContent = '画像を確認できません'; }));
   const observer = typeof win.MutationObserver === 'function' ? new win.MutationObserver(() => refresh().catch(() => {})) : null;
   observer?.observe(screen, { childList: true, subtree: true }); refresh().catch(() => {});
   const installation = Object.freeze({ contract: FANART_LOCAL_SKIN_CONTRACT, refresh, selectedCardId: () => selected, destroy() {
-    if (destroyed) return; destroyed = true; observer?.disconnect?.(); screen.removeEventListener('pointerdown', select, true); for (const id of [...urls.keys()]) revoke(id); button.remove?.(); input.remove?.(); fanartInstallations.delete(doc);
+    if (destroyed) return; destroyed = true; observer?.disconnect?.(); screen.removeEventListener('pointerdown', select, true); for (const id of [...urls.keys()]) revoke(id); button.remove?.(); removeButton.remove?.(); input.remove?.(); fanartInstallations.delete(doc);
   } });
   fanartInstallations.set(doc, installation); return installation;
 }

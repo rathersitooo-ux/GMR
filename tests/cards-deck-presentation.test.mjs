@@ -535,6 +535,31 @@ test('Cards local skin consumer fails closed without a Cards document and has no
   }
 });
 
+test('Cards local skin image controls stay discoverable and separate replace from delete', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('export function installFanartLocalSkinCards');
+  const end = source.indexOf('const fanartPublicBattleProjectionInstallations', start);
+  const slice = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.ok(slice.includes("const searchAnchor = doc.querySelector('#cardSearch')"));
+  assert.equal(slice.includes("doc.querySelector('#r4DeckTrayToggle')"), false);
+  assert.ok(slice.includes("const nextButtonText = selectedRecord ? '画像を変更' : '画像を設定'"));
+  assert.ok(slice.includes('if (button.textContent !== nextButtonText) button.textContent = nextButtonText'));
+  assert.ok(slice.includes("removeButton.textContent = '画像を削除'"));
+  assert.ok(slice.includes('button.disabled = !selected'));
+  assert.ok(slice.includes('removeButton.hidden = !selectedRecord'));
+
+  const chooseStart = slice.indexOf('const choose = async () => {');
+  const removeStart = slice.indexOf('const remove = async () => {', chooseStart);
+  const saveStart = slice.indexOf('const save = async () => {', removeStart);
+  const chooseSlice = slice.slice(chooseStart, removeStart);
+  const removeSlice = slice.slice(removeStart, saveStart);
+  assert.ok(chooseSlice.includes('input.click()'));
+  assert.equal(chooseSlice.includes('fanartDeleteSkin'), false);
+  assert.ok(removeSlice.includes('fanartDeleteSkin'));
+});
+
 test('Cards findability contract adds favorite without taking Deck or ownership authority', async () => {
   const mod = await import('../browser/cards-deck-presentation.mjs');
   assert.equal(mod.CARDS_DECK_FINDABILITY_CONTRACT.schema, 'gameroad.cards-deck-findability.v2');

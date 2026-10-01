@@ -544,7 +544,8 @@ test('Cards local skin image controls stay discoverable and separate replace fro
   assert.ok(start >= 0 && end > start);
   assert.ok(slice.includes("const searchAnchor = doc.querySelector('#cardSearch')"));
   assert.equal(slice.includes("doc.querySelector('#r4DeckTrayToggle')"), false);
-  assert.ok(slice.includes("button.textContent = selectedRecord ? '画像を変更' : '画像を設定'"));
+  assert.ok(slice.includes("const nextButtonText = selectedRecord ? '画像を変更' : '画像を設定'"));
+  assert.ok(slice.includes('if (button.textContent !== nextButtonText) button.textContent = nextButtonText'));
   assert.ok(slice.includes("removeButton.textContent = '画像を削除'"));
   assert.ok(slice.includes('button.disabled = !selected'));
   assert.ok(slice.includes('removeButton.hidden = !selectedRecord'));

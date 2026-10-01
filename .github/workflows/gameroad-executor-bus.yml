@@ -184,14 +184,14 @@ jobs:
       pull-requests: write
       actions: read
     env:
-      BODY_FILE: ${{ runner.temp }}/executor-free-body.txt
-      PACKET_FILE: ${{ runner.temp }}/executor-free-packet.json
-      PROMPT_FILE: ${{ runner.temp }}/executor-free-prompt.txt
-      MODEL_OUTPUT_FILE: ${{ runner.temp }}/executor-free-model-output.txt
-      DIFF_FILE: ${{ runner.temp }}/executor-free-candidate.diff
-      MODEL_FILE: ${{ runner.temp }}/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
-      LLAMA_ARCHIVE: ${{ runner.temp }}/llama-b10951-bin-ubuntu-x64.tar.gz
-      LLAMA_DIR: ${{ runner.temp }}/llama-b10951
+      BODY_FILE: /tmp/gameroad-executor-free-body-${{ github.run_id }}.txt
+      PACKET_FILE: /tmp/gameroad-executor-free-packet-${{ github.run_id }}.json
+      PROMPT_FILE: /tmp/gameroad-executor-free-prompt-${{ github.run_id }}.txt
+      MODEL_OUTPUT_FILE: /tmp/gameroad-executor-free-model-output-${{ github.run_id }}.txt
+      DIFF_FILE: /tmp/gameroad-executor-free-candidate-${{ github.run_id }}.diff
+      MODEL_FILE: /tmp/gameroad-qwen2.5-coder-1.5b-${{ github.run_id }}.gguf
+      LLAMA_ARCHIVE: /tmp/gameroad-llama-b10951-${{ github.run_id }}.tar.gz
+      LLAMA_DIR: /tmp/gameroad-llama-b10951-${{ github.run_id }}
       MODEL_URL: https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/38f6bab61d341b23a6c00226f32c0d6148bf9f43/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf?download=true
       MODEL_SHA256: cc324af070c2ecbfd324a30884d2f951a7ff756aba85cb811a6ec436933bb046
       LLAMA_URL: https://github.com/ggml-org/llama.cpp/releases/download/b10951/llama-b10951-bin-ubuntu-x64.tar.gz
@@ -261,7 +261,8 @@ jobs:
         run: |
           set -euo pipefail
           LLAMA_CLI="$(cat "$RUNNER_TEMP/llama-cli-path.txt")"
-          export LD_LIBRARY_PATH="$(dirname "$LLAMA_CLI"):${LD_LIBRARY_PATH:-}"
+          LLAMA_LIB_DIR="$(dirname "$LLAMA_CLI")"
+          export LD_LIBRARY_PATH="${LLAMA_LIB_DIR}:${LD_LIBRARY_PATH:-}"
           timeout 720 "$LLAMA_CLI" \
             -m "$MODEL_FILE" \
             -f "$PROMPT_FILE" \
@@ -363,11 +364,56 @@ jobs:
                 `Candidate commit: ${process.env.CANDIDATE_SHA}`,
                 '',
                 'Focused packet tests passed before push. This draft is not a product/game success claim and must not be merged without fresh CURRENT adoption.',
-                'This PR is created with GITHUB_TOKEN; recursive pull_request workflow dispatch is intentionally not relied on.',
+                'This PR is created with GITHUB_TOKEN. Candidate-only evidence is dispatched explicitly; it does not replace fresh CURRENT adoption or PRE_ACTION merge authorization.',
               ].join('\n'),
             });
             core.setOutput('number', String(pr.data.number));
             core.setOutput('url', pr.data.html_url);
+      - name: Dispatch candidate-only exact-head evidence
+        id: candidate_evidence
+        uses: actions/github-script@v7
+        env:
+          PACKET_FILE: ${{ env.PACKET_FILE }}
+          CANDIDATE_BRANCH: ${{ steps.candidate_publish.outputs.branch }}
+          CANDIDATE_SHA: ${{ steps.candidate_publish.outputs.commit_sha }}
+          PR_NUMBER: ${{ steps.candidate_pr.outputs.number }}
+        with:
+          script: |
+            const fs = require('fs');
+            const packet = JSON.parse(fs.readFileSync(process.env.PACKET_FILE, 'utf8'));
+            const baseCommit = await github.rest.repos.getCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: packet.baseRef,
+            });
+            const browserEvidencePath = (p) =>
+              p === 'browser/GAMEROAD.html' ||
+              /^browser\/.*presentation.*\.mjs$/.test(p) ||
+              /^browser\/.*runtime.*\.mjs$/.test(p) ||
+              /^browser\/.*visual.*\.mjs$/.test(p) ||
+              p.startsWith('browser/assets/') ||
+              /^browser\/.*motion.*\.mjs$/.test(p) ||
+              /^browser\/new-base-.*\.mjs$/.test(p) ||
+              p === 'browser/screen-navigation-core.mjs' ||
+              p === 'tests/browser-full-interaction.spec.mjs' ||
+              p === 'tests/browser-full-interaction-state-sequence.spec.mjs' ||
+              p === 'playwright.full-interaction.config.mjs' ||
+              p === '.github/workflows/browser-full-interaction.yml';
+            const bfiRequired = packet.exactMutableResources.some(browserEvidencePath);
+            await github.rest.repos.createDispatchEvent({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              event_type: 'gameroad-candidate-evidence',
+              client_payload: {
+                candidate_only: true,
+                base_sha: baseCommit.data.sha,
+                head_sha: process.env.CANDIDATE_SHA,
+                pr_number: Number(process.env.PR_NUMBER),
+                candidate_branch: process.env.CANDIDATE_BRANCH,
+                bfi_required: bfiRequired,
+              },
+            });
+            core.setOutput('bfi_required', String(bfiRequired));
       - name: Return candidate to the originating Executor issue
         if: success()
         uses: actions/github-script@v7
@@ -392,7 +438,7 @@ jobs:
               producedRefs: [`commit:${process.env.CANDIDATE_SHA}`, `pr:${process.env.PR_NUMBER}`, `workflow-run:${context.runId}`],
               nextAction: 'HEAD fresh CURRENT adoption and exact provider readback',
             };
-            const body = `<!-- gameroad-free-autopilot:origin-run -->\nFREE_AUTOPILOT_CANDIDATE_RETURNED\n\n\`\`\`executor-result\n${JSON.stringify(result, null, 2)}\n\`\`\`\n\nDraft PR: ${process.env.PR_URL}\nThe origin run validated the bounded patch and focused tests. Recursive workflow dispatch from GITHUB_TOKEN is not treated as evidence.`;
+            const body = `<!-- gameroad-free-autopilot:origin-run -->\nFREE_AUTOPILOT_CANDIDATE_RETURNED\n\n\`\`\`executor-result\n${JSON.stringify(result, null, 2)}\n\`\`\`\n\nDraft PR: ${process.env.PR_URL}\nThe origin run validated the bounded patch and focused tests. Candidate-only exact-head evidence was explicitly dispatched where applicable; fresh CURRENT adoption and merge authorization are still required.`;
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,

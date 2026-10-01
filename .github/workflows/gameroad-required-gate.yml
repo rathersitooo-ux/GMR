@@ -1,6 +1,9 @@
 name: GAMEROAD Required Gate
 
 on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [gameroad-candidate-evidence]
   pull_request:
     branches:
       - main
@@ -27,14 +30,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.head_sha || github.sha }}
           fetch-depth: 0
+
+      - name: Verify dispatched exact head
+        if: ${{ github.event_name == 'repository_dispatch' }}
+        shell: bash
+        env:
+          EXPECTED_HEAD_SHA: ${{ github.event.client_payload.head_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${EXPECTED_HEAD_SHA}"
+
+      - name: Lint GAMEROAD GitHub workflow definitions
+        uses: docker://rhysd/actionlint:1.7.7
+        with:
+          args: -color .github/workflows/gameroad-executor-bus.yml .github/workflows/gameroad-required-gate.yml .github/workflows/browser-full-interaction.yml .github/workflows/required-gate-auto-merge.yml
 
       - name: Classify changed paths
         id: classify
         shell: bash
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+          BASE_SHA: ${{ github.event.client_payload.base_sha || github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.client_payload.head_sha || github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
         run: |
           set -euo pipefail
           if [[ -z "${BASE_SHA}" || -z "${HEAD_SHA}" ]]; then
@@ -497,10 +515,10 @@ jobs:
           node-version: '22'
 
       - name: Enforce PRE_ACTION authorization before material PR merge
-        if: github.event_name == 'pull_request'
+        if: ${{ github.event_name == 'pull_request' || (github.event_name == 'repository_dispatch' && github.event.client_payload.candidate_only != true) }}
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.client_payload.base_sha || github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.client_payload.head_sha || github.event.pull_request.head.sha }}
         run: |
           node --test tests/preaction-authorization-validator.test.mjs
           node tools/preaction-authorization-validator.mjs --base "${BASE_SHA}" --head "${HEAD_SHA}" --changed /tmp/gameroad-changed.txt

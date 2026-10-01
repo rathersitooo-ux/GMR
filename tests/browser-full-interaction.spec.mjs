@@ -929,7 +929,7 @@ async function backOperationVisible(page) {
   await back.click();
 }
 
-test('covers current Home center input semantics plus auxiliary Settings navigation without claiming hidden controls', async ({ page }, testInfo) => {
+test('covers current Home center input semantics and retired Home auxiliary boundary', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
 

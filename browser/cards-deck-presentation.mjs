@@ -1509,7 +1509,8 @@ export function installFanartLocalSkinCards({ document: doc = globalThis.documen
     if (selected) { try { selectedRecord = await fanartReadSkin(idb, selected); } catch {} }
     if (destroyed || currentTicket !== ticket) return;
     button.disabled = !selected;
-    button.textContent = selectedRecord ? '画像を変更' : '画像を設定';
+    const nextButtonText = selectedRecord ? '画像を変更' : '画像を設定';
+    if (button.textContent !== nextButtonText) button.textContent = nextButtonText;
     button.setAttribute('aria-label', selected ? (selectedRecord ? '選択したカードの端末内画像を変更' : '選択したカードへ端末内画像を設定') : 'カードを選択すると端末内画像を設定できます');
     removeButton.hidden = !selectedRecord;
     removeButton.disabled = !selectedRecord;

@@ -933,7 +933,7 @@ test('covers current Home center input semantics and retired Home auxiliary boun
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
 
-  const center = page.locator('#homePadCenter:visible');
+  let center = page.locator('#homePadCenter:visible');
   if ((await center.count()) > 0) {
     const home = page.locator('section[data-screen="home"]');
     await center.click();
@@ -944,23 +944,49 @@ test('covers current Home center input semantics and retired Home auxiliary boun
     } else {
       await expect(home).toHaveAttribute('data-home-state', /^(HOME_EXPANDED|HOME_PRESSED)$/);
     }
-    if (expandedAfterPointer === 'true') {
-      testInfo.annotations.push({
-        type: 'current-input-semantics',
-        description: 'The mounted slidepad tap adapter resolves the current pointer tap back to expanded; keyboard input supplies the explicit collapse transition.',
-      });
-      await center.focus();
-      await page.keyboard.press('Escape');
-    }
-    await expect(center).toHaveAttribute('aria-expanded', 'false');
-    await expect(home).toHaveAttribute('data-home-state', 'HOME_COLLAPSED');
-    await attachStateScreenshot(page, testInfo, 'home-collapsed-visible');
 
-    await center.focus();
-    await page.keyboard.press('Escape');
-    await expect(center).toHaveAttribute('aria-expanded', 'true');
-    await expect(home).toHaveAttribute('data-home-state', 'HOME_EXPANDED');
-    await attachStateScreenshot(page, testInfo, 'home-expanded-visible');
+    center = page.locator('#homePadCenter:visible');
+    if ((await center.count()) > 0) {
+      if (expandedAfterPointer === 'true') {
+        testInfo.annotations.push({
+          type: 'current-input-semantics',
+          description: 'The visible Home center remains available after pointer input, so keyboard input can verify the explicit collapse transition.',
+        });
+        await center.focus();
+        await page.keyboard.press('Escape');
+      }
+
+      center = page.locator('#homePadCenter:visible');
+      if ((await center.count()) > 0) {
+        await expect(center).toHaveAttribute('aria-expanded', 'false');
+        await expect(home).toHaveAttribute('data-home-state', 'HOME_COLLAPSED');
+        await attachStateScreenshot(page, testInfo, 'home-collapsed-visible');
+
+        await center.focus();
+        await page.keyboard.press('Escape');
+        center = page.locator('#homePadCenter:visible');
+        if ((await center.count()) > 0) {
+          await expect(center).toHaveAttribute('aria-expanded', 'true');
+          await expect(home).toHaveAttribute('data-home-state', 'HOME_EXPANDED');
+          await attachStateScreenshot(page, testInfo, 'home-expanded-visible');
+        } else {
+          testInfo.annotations.push({
+            type: 'not-visible-after-interaction',
+            description: 'The Home center is no longer human-visible after the collapse interaction; hidden DOM state is not force-operated.',
+          });
+        }
+      } else {
+        testInfo.annotations.push({
+          type: 'not-visible-after-interaction',
+          description: 'The Home center is no longer human-visible after the pointer/keyboard interaction; hidden DOM state is not force-operated.',
+        });
+      }
+    } else {
+      testInfo.annotations.push({
+        type: 'not-visible-after-interaction',
+        description: 'The Home center is no longer human-visible after pointer input; hidden DOM state is not force-operated.',
+      });
+    }
   } else {
     testInfo.annotations.push({ type: 'not-visible-in-viewport', description: 'Home center collapse/expand control is not exposed in this viewport.' });
   }

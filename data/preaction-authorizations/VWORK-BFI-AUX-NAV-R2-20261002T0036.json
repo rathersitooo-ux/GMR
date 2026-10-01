@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-BFI-AUX-NAV-R2-20261002T0036",
+  "taskId": "BROWSER-BFI-AUX-NAV-CONTRACT-001",
+  "workUnitKey": "BFI_AUXILIARY_NAVIGATION_CURRENT_CONTRACT_R2",
+  "acquireKey": "BFI-AUX-NAV-R2-20261002T0036-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR2174-REQUIRED-GATE-FIRST-COMMIT-NOT-MANIFEST-ONLY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR2174-DIFF-PLUS-RETIRED-HOME-AUX-CURRENT-CONTRACT",
+  "proceedToken": "PROCEED|VWORK-BFI-AUX-NAV-R2-20261002T0036|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|bfi-aux-nav-retired-home-contract-r2|current-lease",
+  "authorizationBaseSha": "c6fd32271c245552dcf932c44281db8990882b79",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BFI-AUX-NAV-CONTRACT-001",
+  "leaseWorkUnitKey": "BFI_AUXILIARY_NAVIGATION_CURRENT_CONTRACT_R2",
+  "leaseAcquireKey": "BFI-AUX-NAV-R2-20261002T0036-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-02 00:36 JST",
+  "leaseUntilJst": "2026-10-02 01:36 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "tests/browser-full-interaction.spec.mjs; own data/preaction-authorizations/VWORK-BFI-AUX-NAV-R2-20261002T0036.json; own successor branch/PR/check/merge/readback; own CURRENT event/lease records. Read-only product runtime.",
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "formalInvariants": [
+    "browser/GAMEROAD.html and all product runtime remain read-only",
+    "the five retired always-visible Home auxiliary entries missions/gacha/records/profile/settings must not be restored or force-navigated",
+    "current visible navigation coverage remains grounded in visible owners such as Home to Shop and Shop to Gacha/Characters/Cards",
+    "hidden Settings development-audio and save-reset controls are not counted as human-visible operations without a visible Settings route",
+    "gameplay, rules, save, economy, and network semantics remain unchanged"
+  ],
+  "acceptance": [
+    "Browser Full Interaction expectations match the formally retired Home auxiliary-entry contract",
+    "GAMEROAD Required Gate passes PRE_ACTION authorization",
+    "Browser Full Interaction Evidence no longer fails because retired Home auxiliary routes are required",
+    "after PRE_ACTION cleanup the PR diff contains only tests/browser-full-interaction.spec.mjs"
+  ]
+}

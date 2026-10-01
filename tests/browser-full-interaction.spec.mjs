@@ -906,13 +906,30 @@ function visibleOperationGo(page, target) {
     .first();
 }
 
+const RETIRED_HOME_AUX_TARGETS = Object.freeze(['missions', 'gacha', 'records', 'profile', 'settings']);
+
+async function assertRetiredHomeAuxiliaryEntries(page, testInfo) {
+  const home = page.locator('section[data-screen="home"]');
+  await expect(home).toBeVisible();
+  for (const target of RETIRED_HOME_AUX_TARGETS) {
+    await expect(
+      home.locator(`button.homeUtilityBtn[data-go="${target}"]`),
+      `Home does not restore retired always-visible ${target} utility entry`,
+    ).toHaveCount(0);
+  }
+  testInfo.annotations.push({
+    type: 'retired-current-contract',
+    description: 'The five always-visible Home auxiliary entries were formally retired; current interaction evidence must not invent or force those hidden routes.',
+  });
+}
+
 async function backOperationVisible(page) {
   const back = page.locator('section.screen.active [data-back]:visible').first();
   await expect(back).toBeVisible();
   await back.click();
 }
 
-test('covers current Home center input semantics plus auxiliary Settings navigation without claiming hidden controls', async ({ page }, testInfo) => {
+test('covers current Home center input semantics and retired Home auxiliary boundary', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
 
@@ -922,7 +939,11 @@ test('covers current Home center input semantics plus auxiliary Settings navigat
     await center.click();
     const expandedAfterPointer = await center.getAttribute('aria-expanded');
     expect(['true', 'false'], 'Home center exposes a current expanded/collapsed state after pointer input').toContain(expandedAfterPointer);
-    await expect(home).toHaveAttribute('data-home-state', expandedAfterPointer === 'false' ? 'HOME_COLLAPSED' : 'HOME_EXPANDED');
+    if (expandedAfterPointer === 'false') {
+      await expect(home).toHaveAttribute('data-home-state', 'HOME_COLLAPSED');
+    } else {
+      await expect(home).toHaveAttribute('data-home-state', /^(HOME_EXPANDED|HOME_PRESSED)$/);
+    }
     if (expandedAfterPointer === 'true') {
       testInfo.annotations.push({
         type: 'current-input-semantics',
@@ -944,11 +965,8 @@ test('covers current Home center input semantics plus auxiliary Settings navigat
     testInfo.annotations.push({ type: 'not-visible-in-viewport', description: 'Home center collapse/expand control is not exposed in this viewport.' });
   }
 
-  const settings = visibleOperationGo(page, 'settings');
-  await expect(settings, 'Settings must be reachable by a visible current Home control').toBeVisible();
-  await settings.click();
-  await expect(page.locator('section[data-screen="settings"]')).toBeVisible();
-  await attachStateScreenshot(page, testInfo, 'settings-entry-visible');
+  await assertRetiredHomeAuxiliaryEntries(page, testInfo);
+  await expect(page.locator('section[data-screen="settings"]')).toBeHidden();
   runtime.assertClean(testInfo);
 });
 
@@ -1185,47 +1203,19 @@ test('covers Setup Honey/4P/2v2 plus Friend Room create, ready, waiting, and lea
   runtime.assertClean(testInfo);
 });
 
-test('covers Settings reduced-motion/low-performance, volume and mute controls, then Gacha open/detail/back/cards', async ({ page }, testInfo) => {
+test('classifies retired Home Settings entry, then covers current Shop-to-Gacha open/detail/back/cards', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
 
-  const settingsGo = visibleOperationGo(page, 'settings');
-  await expect(settingsGo).toBeVisible();
-  await settingsGo.click();
-  const settings = page.locator('section[data-screen="settings"]');
-  await expect(settings).toBeVisible();
+  await assertRetiredHomeAuxiliaryEntries(page, testInfo);
+  await expect(page.locator('section[data-screen="settings"]')).toBeHidden();
 
-  await settings.locator('#reduceMotion').click();
-  await settings.locator('#lowPerf').click();
-  await expect(settings.locator('#reduceMotion')).toHaveText('ON');
-  await expect(settings.locator('#lowPerf')).toHaveText('ON');
-
-  await settings.locator('#musicVolume').fill('35');
-  await settings.locator('#sfxVolume').fill('45');
-  await settings.locator('#partnerVoiceVolume').fill('55');
-  await expect(settings.locator('#musicVolumeLabel')).toHaveText('35');
-  await expect(settings.locator('#sfxVolumeLabel')).toHaveText('45');
-  await expect(settings.locator('#partnerVoiceVolumeLabel')).toHaveText('55');
-
-  await settings.locator('#musicMute').click();
-  await settings.locator('#sfxMute').click();
-  await settings.locator('#partnerVoiceMute').click();
-  await expect(settings.locator('#musicMute')).toContainText('ON');
-  await expect(settings.locator('#sfxMute')).toContainText('ON');
-  await expect(settings.locator('#partnerVoiceMute')).toContainText('ON');
-  await attachStateScreenshot(page, testInfo, 'settings-reduced-lowperf-audio-visible');
-
-  await backOperationVisible(page);
-  await expect(page.locator('section[data-screen="home"]')).toBeVisible();
-
-  let gachaGo = visibleOperationGo(page, 'gacha');
-  if ((await gachaGo.count()) === 0) {
-    const shopGo = visibleOperationGo(page, 'shop');
-    await expect(shopGo).toBeVisible();
-    await shopGo.click();
-    await expect(page.locator('section[data-screen="shop"]')).toBeVisible();
-    gachaGo = visibleOperationGo(page, 'gacha');
-  }
+  const shopGo = visibleOperationGo(page, 'shop');
+  await expect(shopGo).toBeVisible();
+  await shopGo.click();
+  const shop = page.locator('section[data-screen="shop"]');
+  await expect(shop).toBeVisible();
+  const gachaGo = shop.locator('[data-go="gacha"]:visible').first();
   await expect(gachaGo).toBeVisible();
   await gachaGo.click();
 
@@ -1395,39 +1385,15 @@ test('records explicit boundaries instead of falsely claiming unconnected or ext
 
 
 // FULLREG R13 reachable-operation residual
-test('R13 covers all currently actionable auxiliary screen navigation surfaces', async ({ page }, testInfo) => {
+test('R13 covers current auxiliary navigation without restoring retired Home utility entries', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
   const home = page.locator('section[data-screen="home"]');
 
-  for (const target of ['missions', 'records']) {
-    const go = visibleOperationGo(page, target);
-    await expect(go, `${target} must be reachable from Home`).toBeVisible();
-    await go.click();
-    const screen = page.locator(`section[data-screen="${target}"]`);
-    await expect(screen).toBeVisible();
-    await attachStateScreenshot(page, testInfo, `r13-${target}-visible`);
-    await backOperationVisible(page);
-    await expect(home).toBeVisible();
+  await assertRetiredHomeAuxiliaryEntries(page, testInfo);
+  for (const target of ['missions', 'records', 'profile', 'settings']) {
+    await expect(page.locator(`section[data-screen="${target}"]`), `${target} remains non-active without an invented Home route`).toBeHidden();
   }
-
-  const profileGo = visibleOperationGo(page, 'profile');
-  await expect(profileGo).toBeVisible();
-  await profileGo.click();
-  const profile = page.locator('section[data-screen="profile"]');
-  await expect(profile).toBeVisible();
-  await attachStateScreenshot(page, testInfo, 'r13-profile-visible');
-  for (const target of ['characters', 'records', 'settings']) {
-    const nested = profile.locator(`[data-go="${target}"]:visible`).first();
-    await expect(nested).toBeVisible();
-    await nested.click();
-    await expect(page.locator(`section[data-screen="${target}"]`)).toBeVisible();
-    await attachStateScreenshot(page, testInfo, `r13-profile-to-${target}-visible`);
-    await backOperationVisible(page);
-    await expect(profile).toBeVisible();
-  }
-  await backOperationVisible(page);
-  await expect(home).toBeVisible();
 
   const shopGo = visibleOperationGo(page, 'shop');
   await expect(shopGo).toBeVisible();
@@ -1546,32 +1512,20 @@ test('R13 covers four-player Friend Room ready toggle and visible Honey Hunt fou
   runtime.assertClean(testInfo);
 });
 
-test('R13 covers visible save reset confirmation and records hidden development-audio boundary', async ({ page }, testInfo) => {
+test('R13 classifies retired Home Settings entry and hidden development-audio/save-reset boundary', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
-  const settingsGo = visibleOperationGo(page, 'settings');
-  await expect(settingsGo).toBeVisible();
-  await settingsGo.click();
+  await assertRetiredHomeAuxiliaryEntries(page, testInfo);
+
   const settings = page.locator('section[data-screen="settings"]');
-  await expect(settings).toBeVisible();
-
-  for (const id of ['audioPreviewPack', 'battleMusicKey', 'previewBgm', 'previewMatchFound', 'previewBattleStart', 'previewComplete']) {
-    await expect(settings.locator(`#${id}`), `${id} is development-only and must not be counted as a human-visible operation`).toBeHidden();
+  await expect(settings).toBeHidden();
+  for (const id of ['audioPreviewPack', 'battleMusicKey', 'previewBgm', 'previewMatchFound', 'previewBattleStart', 'previewComplete', 'resetSave']) {
+    await expect(settings.locator(`#${id}`), `${id} is not a current human-visible operation without a visible Settings route`).toBeHidden();
   }
-  testInfo.annotations.push({ type: 'not-human-visible', description: 'Development audio preview/select controls exist in DOM but their parent surface is hidden in the current product. They are excluded from the human-visible operation inventory rather than force-clicked.' });
-  await attachStateScreenshot(page, testInfo, 'r13-settings-hidden-development-audio-boundary');
-
-  page.once('dialog', async (dialog) => {
-    expect(dialog.type()).toBe('confirm');
-    await dialog.accept();
+  testInfo.annotations.push({
+    type: 'not-human-visible',
+    description: 'The Settings screen and its development-audio/save-reset controls remain in DOM but are not promoted to human-visible coverage after the always-visible Home Settings entry was retired.',
   });
-  await settings.locator('#resetSave').click();
-  await expect(settings.locator('#reduceMotion')).toHaveText('オフ');
-  await expect(settings.locator('#lowPerf')).toHaveText('オフ');
-  await expect(settings.locator('#audioPreviewPack')).toHaveValue('none');
-  await expect(settings.locator('#battleMusicKey')).toHaveValue('battle_music_none');
-  await expect(settings.locator('#storageStatus')).toHaveText('一時保存');
-  await attachStateScreenshot(page, testInfo, 'r13-settings-save-reset-visible');
   runtime.assertClean(testInfo);
 });
 

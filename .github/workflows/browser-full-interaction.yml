@@ -72,6 +72,7 @@ jobs:
 
       - name: Restore matching full-interaction evidence
         id: interaction_evidence_cache
+        if: ${{ github.event_name != 'repository_dispatch' }}
         uses: actions/cache@v4
         with:
           path: |
@@ -150,7 +151,7 @@ jobs:
             const observedHead = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim().toLowerCase();
             const cacheHit = process.env.CACHE_HIT === 'true';
             const interactionOutcome = String(process.env.INTERACTION_OUTCOME || '');
-            const passed = observedHead === expectedHead && (cacheHit || interactionOutcome === 'success');
+            const passed = observedHead === expectedHead && !cacheHit && interactionOutcome === 'success';
             const receipt = {
               schemaVersion: 'gameroad-runtime-evidence-v1',
               kind: 'runtime_evidence',

@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GACHA-ARCADE-RITUAL-R2-20261002T1320-SOL",
+  "taskId": "BROWSER-GACHA-ARCADE-RITUAL-PLAYTEST-001",
+  "workUnitKey": "BROWSER_GACHA_ARCADE_RITUAL_PLAYTEST_R2_RECOVERY",
+  "acquireKey": "GACHA-ARCADE-RITUAL-R2-20261002T1320-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_4616E557_CURRENT_LEASE_NONOVERLAP_AND_EXPIRED_R1_RECOVERY",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "TDD_RED_CONFIRMED_BEFORE_IMPLEMENTATION_PLUS_HISTORICAL_PRESENTATION_DONOR_REVIEW",
+  "proceedToken": "PROCEED|GACHA-ARCADE-RITUAL-R2-20261002T1320-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|gacha-arcade-ritual-r2|current-lease",
+  "authorizationBaseSha": "4616e55799e3d884cfbeb4eb64254d2af8e11cbe",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-GACHA-ARCADE-RITUAL-PLAYTEST-001",
+  "leaseWorkUnitKey": "BROWSER_GACHA_ARCADE_RITUAL_PLAYTEST_R2_RECOVERY",
+  "leaseAcquireKey": "GACHA-ARCADE-RITUAL-R2-20261002T1320-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-02 13:36 JST",
+  "leaseUntilJst": "2026-10-02 14:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "browser/gacha-opening-ritual.mjs; tests/gacha-opening-ritual.test.mjs; browser/screen-navigation-core.mjs; tests/screen-navigation-core.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; data/preaction-authorizations/GACHA-ARCADE-RITUAL-R2-20261002T1320-SOL.json; branch chatgpt/gacha-arcade-ritual-r2-20261002; own PR/check/readback. browser/GAMEROAD.html and Browser Full Interaction tests are read-only.",
+  "scope": [
+    "browser/gacha-opening-ritual.mjs",
+    "tests/gacha-opening-ritual.test.mjs",
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/gacha-opening-ritual.mjs",
+    "tests/gacha-opening-ritual.test.mjs",
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "GACHA_ARCADE_RITUAL_PRESENTATION_R2",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "HISTORICAL_GACHA_OPENING_RITUAL_DONOR_PRESENTATION_ONLY_AND_98_COMMITS_STALE",
+  "solutionSearchEvidence": [
+    "Historical sol/gacha-astral-ritual-r1-20260923 provides a presentation-only ritual planner and DOM treatment without RNG, economy, ownership, or save authority.",
+    "The donor teal/violet/gold ladder does not match current blue/gold/rainbow acceptance and therefore requires adaptation rather than direct reuse.",
+    "The donor branch is 98 commits behind current main and its GAMEROAD.html patch is not reused.",
+    "Current active BFI and Battle World3D owners retain their files; this WorkUnit keeps those paths read-only and implements only a non-conflicting presentation slice."
+  ],
+  "formalInvariants": [
+    "caller-supplied ordered result bundle remains the sole result input",
+    "no RNG, probability, price, ownership, save, collection, deck, or server authority is created or changed",
+    "cabinet color may reflect only rarity already present in the confirmed result bundle",
+    "reducedMotion and lowPerf must settle without staged concealment",
+    "Skip may remove presentation concealment only and may not mutate result identity or order"
+  ],
+  "acceptance": [
+    "focused gacha ritual tests pass on current Node",
+    "new cabinet presentation shell is idempotent and idle before confirmed results",
+    "confirmed seven-result order is preserved while blue/gold/rainbow state is derived from confirmed rarity only",
+    "public package includes any imported presentation module before live consumer wiring",
+    "ordinary review and Devil's Advocate review find no RNG/economy/save authority leakage"
+  ]
+}

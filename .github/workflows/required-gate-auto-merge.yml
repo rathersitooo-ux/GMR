@@ -84,8 +84,7 @@ jobs:
               browser/screen-navigation-core.mjs|\
               tests/browser-full-interaction.spec.mjs|\
               tests/browser-full-interaction-state-sequence.spec.mjs|\
-              playwright.full-interaction.config.mjs|\
-              .github/workflows/browser-full-interaction.yml)
+              playwright.full-interaction.config.mjs)
                 bfi_required=true
                 ;;
               *) ;;

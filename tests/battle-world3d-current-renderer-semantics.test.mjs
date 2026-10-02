@@ -25,6 +25,8 @@ test('legacy person-node square shadow is suppressed only under the live central
 });
 
 test('presentation repair preserves current fieldProjection world-field path', () => {
-  assert.match(html, /worldFieldRenderModel=\{fieldProjection,worldField\}/);
-  assert.match(html, /fieldProjection=projected/);
+  assert.match(html, /fieldProjection=new Map\(\)/);
+  assert.match(html, /fieldProjection\.set\(id,p\)/);
+  assert.match(html, /for\(const \[id,p\] of fieldProjection\)/);
+  assert.match(html, /battleCentralWorldRuntimeR8\?\.worldFieldRenderModel\?\.\(\{/);
 });

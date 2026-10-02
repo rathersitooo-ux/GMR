@@ -747,19 +747,37 @@ test('moves resolve off the board into the dedicated Battle Phase with Naki cut-
     await expect(postNakiJankenPad, 'the real Janken SlidePad opens after Naki return').toHaveAttribute('data-expanded', 'true');
   }
 
-  const postNakiJanken = postNakiJankenPad.locator('[data-janken-slot]:visible:not(:disabled)').first();
-  await expect(postNakiJanken, 'a real Janken card is visible immediately after Naki return').toBeVisible();
-  await expect(postNakiJanken, 'a real Janken card is enabled immediately after Naki return').toBeEnabled();
-  const postNakiCardId = await postNakiJanken.getAttribute('data-card-id');
-  expect(postNakiCardId, 'the visible post-Naki Janken card exposes its real card id').toBeTruthy();
+  const postNakiJankenCards = postNakiJankenPad.locator('[data-janken-slot]:visible:not(:disabled)');
+  expect(await postNakiJankenCards.count(), 'real Janken cards are visible immediately after Naki return').toBeGreaterThan(0);
+  const postNakiCardIds = (await postNakiJankenCards.evaluateAll((nodes) => nodes
+    .map((node) => node.getAttribute('data-card-id'))
+    .filter(Boolean)));
+  expect(postNakiCardIds.length, 'visible post-Naki Janken cards expose real card ids').toBeGreaterThan(0);
 
-  await postNakiJanken.click();
-  await expect.poll(async () => battle.evaluate((clickedCardId) => {
+  const postNakiPlanBefore = await battle.evaluate(() => {
     const match = window.__GAMEROAD_TEST__?.state?.match ?? null;
     const player = match?.players?.find((candidate) => candidate?.human) ?? match?.players?.[0] ?? null;
-    return player?.plan?.roadId === clickedCardId || player?.plan?.battleId === clickedCardId;
-  }, postNakiCardId), {
-    message: 'the first real Janken click after Naki return is accepted into the authoritative human plan',
+    return { roadId: player?.plan?.roadId ?? null, battleId: player?.plan?.battleId ?? null };
+  });
+  expect(postNakiPlanBefore, 'next Plan starts without a pre-existing reservation').toEqual({ roadId: null, battleId: null });
+
+  const postNakiJankenHandle = postNakiJankenPad.locator('.grJankenSlidePadHandle:visible');
+  const postNakiTarget = postNakiJankenCards.first();
+  const handleBox = await postNakiJankenHandle.boundingBox();
+  const targetBox = await postNakiTarget.boundingBox();
+  expect(handleBox, 'post-Naki launcher handle has a real pointer box').not.toBeNull();
+  expect(targetBox, 'post-Naki Janken target has a real pointer box').not.toBeNull();
+  await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2);
+  await page.mouse.up();
+
+  await expect.poll(async () => battle.evaluate((candidateIds) => {
+    const match = window.__GAMEROAD_TEST__?.state?.match ?? null;
+    const player = match?.players?.find((candidate) => candidate?.human) ?? match?.players?.[0] ?? null;
+    return candidateIds.includes(player?.plan?.roadId) || candidateIds.includes(player?.plan?.battleId);
+  }, postNakiCardIds), {
+    message: 'the first real launcher gesture after Naki return is accepted into the authoritative human plan',
     timeout: 5_000,
   }).toBe(true);
   await attachStateScreenshot(page, testInfo, 'battle-phase-naki-return-janken-accepted');

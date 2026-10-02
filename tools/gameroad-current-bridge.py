@@ -132,7 +132,10 @@ def validate_packet(packet: dict[str, Any]) -> dict[str, Any]:
             raise BridgeError(f"unsafe_mutable_path:{path}")
         if path in CONTROL_PLANE_EXACT or any(path.startswith(prefix) for prefix in CONTROL_PLANE_PREFIXES):
             raise BridgeError(f"control_plane_mutation_rejected:{path}")
-    _string_list(packet.get("doNotChange"), "doNotChange")
+    do_not_change = _string_list(packet.get("doNotChange"), "doNotChange")
+    overlap = sorted(set(resources) & set(do_not_change))
+    if overlap:
+        raise BridgeError(f"mutable_do_not_change_overlap:{','.join(overlap)}")
     acceptance = _string_list(packet.get("acceptance"), "acceptance")
     if not acceptance:
         raise BridgeError("acceptance_required")
@@ -183,8 +186,9 @@ def active_lease_rows(
             continue
         try:
             until = parse_jst(lease.get("LeaseUntilJST", ""))
-        except BridgeError:
-            continue
+        except BridgeError as exc:
+            acquire_key = lease.get("AcquireKey", "")
+            raise BridgeError(f"active_lease_invalid_until:{acquire_key}") from exc
         if until > now_jst:
             out.append((row_number, lease))
     return out
@@ -247,8 +251,9 @@ def verify_packet_against_lease(packet: dict[str, Any], lease: dict[str, str]) -
     scope_text = lease.get("ExactMutableResources", "")
     if not scope_text:
         raise BridgeError("lease_scope_missing")
+    scope_segments = {segment.strip() for segment in scope_text.split(";") if segment.strip()}
     for path in packet["exactMutableResources"]:
-        if path not in scope_text:
+        if path not in scope_segments:
             raise BridgeError(f"lease_scope_mismatch:{path}")
 
 
@@ -269,7 +274,11 @@ def resource_conflicts(
     for _, lease in active_lease_rows(leases, now):
         if lease.get("AcquireKey") == packet["acquireKey"]:
             continue
-        scope = lease.get("ExactMutableResources", "")
+        scope = {
+            segment.strip()
+            for segment in lease.get("ExactMutableResources", "").split(";")
+            if segment.strip()
+        }
         for path in packet["exactMutableResources"]:
             if path in scope:
                 conflicts.append(f"{lease.get('AcquireKey')}:{path}")
@@ -806,6 +815,42 @@ def verify_candidate_pr(
     return pr, files
 
 
+def build_candidate_tree_entries(
+    packet: dict[str, Any],
+    files: list[dict[str, Any]],
+    entries_by_path: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    allowed = set(packet["exactMutableResources"])
+    tree_entries: list[dict[str, Any]] = []
+    for item in files:
+        path = str(item.get("filename", ""))
+        status = str(item.get("status", ""))
+        if path not in allowed:
+            raise BridgeError(f"candidate_path_out_of_scope:{path}")
+        if status == "renamed":
+            previous = str(item.get("previous_filename", ""))
+            if not previous or previous not in allowed:
+                raise BridgeError(f"candidate_path_out_of_scope:{previous}")
+            tree_entries.append(
+                {"path": previous, "mode": "100644", "type": "blob", "sha": None}
+            )
+        if status == "removed":
+            tree_entries.append({"path": path, "mode": "100644", "type": "blob", "sha": None})
+            continue
+        tree_item = entries_by_path.get(path)
+        if not tree_item or tree_item.get("type") != "blob":
+            raise BridgeError(f"candidate_blob_missing:{path}")
+        tree_entries.append(
+            {
+                "path": path,
+                "mode": str(tree_item.get("mode", "100644")),
+                "type": "blob",
+                "sha": str(tree_item.get("sha", "")),
+            }
+        )
+    return tree_entries
+
+
 def _sanitize_branch(acquire_key: str) -> str:
     slug = re.sub(r"[^A-Za-z0-9._-]+", "-", acquire_key).strip("-").lower()
     return f"work/pc-current-adopt-{slug[-48:]}"
@@ -936,26 +981,7 @@ def _copy_candidate_tree_commit(
         for item in candidate_tree.get("tree", [])
         if isinstance(item, dict) and item.get("path")
     }
-    tree_entries: list[dict[str, Any]] = []
-    for item in files:
-        path = str(item.get("filename", ""))
-        status = str(item.get("status", ""))
-        if path not in packet["exactMutableResources"]:
-            raise BridgeError(f"candidate_path_out_of_scope:{path}")
-        if status == "removed":
-            tree_entries.append({"path": path, "mode": "100644", "type": "blob", "sha": None})
-            continue
-        tree_item = entries_by_path.get(path)
-        if not tree_item or tree_item.get("type") != "blob":
-            raise BridgeError(f"candidate_blob_missing:{path}")
-        tree_entries.append(
-            {
-                "path": path,
-                "mode": str(tree_item.get("mode", "100644")),
-                "type": "blob",
-                "sha": str(tree_item.get("sha", "")),
-            }
-        )
+    tree_entries = build_candidate_tree_entries(packet, files, entries_by_path)
     new_tree = _github_json(
         "POST",
         f"https://api.github.com/repos/{repository}/git/trees",

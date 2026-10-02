@@ -97,6 +97,18 @@ class CurrentBridgeTests(unittest.TestCase):
         with self.assertRaisesRegex(bridge.BridgeError, "lease_scope_mismatch"):
             bridge.prepare_dispatch(bad, lease_values(), NOW, MAIN, [])
 
+    def test_lease_scope_requires_exact_path_segment_not_substring(self):
+        values = lease_values(
+            scope="browser/example.mjs.backup; tests/example.test.mjs; own branch/readback"
+        )
+        with self.assertRaisesRegex(bridge.BridgeError, "lease_scope_mismatch:browser/example.mjs"):
+            bridge.prepare_dispatch(packet(), values, NOW, MAIN, [])
+
+    def test_active_lease_with_malformed_expiry_fails_closed(self):
+        values = lease_values(until="not-a-jst-time")
+        with self.assertRaisesRegex(bridge.BridgeError, "active_lease_invalid_until"):
+            bridge.prepare_dispatch(packet(), values, NOW, MAIN, [])
+
     def test_duplicate_acquire_key_is_detected_from_persistent_issue_marker(self):
         title, body = bridge.build_executor_issue(packet())
         existing = [{"number": 77, "title": title, "body": body}]
@@ -127,6 +139,10 @@ class CurrentBridgeTests(unittest.TestCase):
                     )
         with self.assertRaisesRegex(bridge.BridgeError, "free_local_coder_opt_in_required"):
             bridge.validate_packet(packet(executorCapabilityHint=""))
+        with self.assertRaisesRegex(bridge.BridgeError, "mutable_do_not_change_overlap"):
+            bridge.validate_packet(
+                packet(doNotChange=["browser/example.mjs", "browser/other.mjs"])
+            )
 
     def test_issue_contains_bounded_packet_not_secret_or_current_mirror(self):
         title, body = bridge.build_executor_issue(packet())
@@ -156,6 +172,15 @@ class CurrentBridgeTests(unittest.TestCase):
         values = lease_values(acquire="OTHER", scope="browser/example.mjs; tests/other.test.mjs")
         with self.assertRaisesRegex(bridge.BridgeError, "active_scope_conflict"):
             bridge.prepare_acquire(packet(), values, "no prior key", NOW, MAIN)
+
+    def test_acquire_does_not_treat_path_substring_as_scope_conflict(self):
+        values = lease_values(
+            acquire="OTHER",
+            scope="browser/example.mjs.backup; tests/other.test.mjs",
+        )
+        p, row, _ = bridge.prepare_acquire(packet(), values, "no prior key", NOW, MAIN)
+        self.assertEqual(p["acquireKey"], ACQUIRE)
+        self.assertEqual(row, 6)
 
     def test_lease_row_and_events_are_bounded_and_do_not_mirror_current(self):
         until = NOW + dt.timedelta(minutes=60)
@@ -233,6 +258,50 @@ class CurrentBridgeTests(unittest.TestCase):
             manifest["proceedToken"].startswith(
                 f"PROCEED|{manifest['recordId']}|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|"
             )
+        )
+
+    def test_candidate_rename_deletes_previous_path_and_adds_new_blob(self):
+        rename_packet = packet(
+            exactMutableResources=[
+                "browser/old-name.mjs",
+                "browser/new-name.mjs",
+                "tests/example.test.mjs",
+            ]
+        )
+        entries = bridge.build_candidate_tree_entries(
+            rename_packet,
+            [
+                {
+                    "filename": "browser/new-name.mjs",
+                    "previous_filename": "browser/old-name.mjs",
+                    "status": "renamed",
+                }
+            ],
+            {
+                "browser/new-name.mjs": {
+                    "path": "browser/new-name.mjs",
+                    "type": "blob",
+                    "mode": "100644",
+                    "sha": "b" * 40,
+                }
+            },
+        )
+        self.assertEqual(
+            entries,
+            [
+                {
+                    "path": "browser/old-name.mjs",
+                    "mode": "100644",
+                    "type": "blob",
+                    "sha": None,
+                },
+                {
+                    "path": "browser/new-name.mjs",
+                    "mode": "100644",
+                    "type": "blob",
+                    "sha": "b" * 40,
+                },
+            ],
         )
 
     def test_adoption_branch_is_work_namespace_for_existing_auto_merge(self):

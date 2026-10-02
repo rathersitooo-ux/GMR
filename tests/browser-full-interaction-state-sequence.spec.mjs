@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 const CORE_SCREENS = ['home', 'cards', 'characters', 'setup', 'missions', 'profile', 'shop', 'records', 'settings', 'gacha'];
-const ROOT_TARGETS = ['cards', 'characters', 'setup', 'missions', 'profile', 'shop', 'records', 'settings'];
+const ROOT_TARGETS = ['cards', 'characters', 'setup', 'shop'];
 const CHILD_TARGETS = {
   profile: ['characters', 'records', 'settings'],
   shop: ['gacha', 'characters', 'cards'],
@@ -92,6 +92,21 @@ function rootGo(page, target) {
   return page
     .locator(`[data-go="${target}"]:visible, [data-home-target="${target}"]:visible, [data-root-go="${target}"]:visible`)
     .first();
+}
+
+async function selectVisibleSaasunaPartner(page) {
+  const characters = page.locator('section[data-screen="characters"]');
+  await expect(characters).toBeVisible();
+  const partnerRole = characters.locator('.charRoleTab[data-role="partner"]');
+  await expect(partnerRole, 'current Characters exposes the Partner role selector').toBeVisible();
+  await partnerRole.click();
+  const saasuna = characters.locator('.charCard').filter({ hasText: 'サースナー' }).first();
+  await expect(saasuna, 'Saasuna is reachable through the visible Partner roster').toBeVisible();
+  await saasuna.click();
+  await expect(characters.locator('#charName')).toHaveText('サースナー');
+  await expect(partnerRole).toHaveClass(/on/);
+  expect(await page.evaluate(() => window.GAMEROAD_PARTNER_STATE?.partner?.()?.id ?? null)).toBe('partner.saasuna');
+  return characters;
 }
 
 function nestedGo(page, current, target) {
@@ -293,8 +308,9 @@ test('Partner Shell is reachable through the live Saasuna conversation and stays
 
   const characters = page.locator('section[data-screen="characters"]');
   await expect(characters, 'Characters target reached through visible player control').toBeVisible();
+  await selectVisibleSaasunaPartner(page);
   const conversation = characters.locator('[data-gr-partner-conversation="1"]');
-  await expect(conversation, 'current Saasuna conversation is projected on the live Characters screen').toBeVisible({ timeout: 7_000 });
+  await expect(conversation, 'current Saasuna conversation is projected after visible Partner selection').toBeVisible({ timeout: 7_000 });
   await expect(conversation).toHaveAttribute('aria-label', 'サースナーとの会話');
 
   const input = conversation.locator('.grPartnerConversationInput');
@@ -321,13 +337,28 @@ test('Partner Shell is reachable through the live Saasuna conversation and stays
   const visibleActions = await overlay.locator('[data-partner-shell-action]:visible').evaluateAll((nodes) =>
     nodes.map((node) => node.dataset.partnerShellAction),
   );
-  expect(visibleActions, 'only current live actions are exposed').toEqual(['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION']);
+  expect(visibleActions, 'only current live actions are exposed').toEqual(['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'OPEN_TEA']);
   await expect(overlay.locator('[data-partner-shell-action="OPEN_COSTUME"]'), 'costume stays hidden without authoritative ownership/catalog/load/save provider').toHaveCount(0);
   await expect(overlay.locator('[data-partner-shell-action="OPEN_LIST"]'), 'unconnected roster action stays hidden').toHaveCount(0);
   await expect(input, 'direct conversation DOM is preserved behind the secondary overlay').toHaveValue('導線QAの下書き');
 
   const hubPng = await page.screenshot({ fullPage: true, animations: 'disabled' });
   await testInfo.attach(`${testInfo.project.name}-partner-shell-hub.png`, { body: hubPng, contentType: 'image/png' });
+
+  const teaBar = conversation.locator('[data-gr-partner-tea-quick-choice="1"]');
+  await expect(teaBar, 'current inline Tea quick choices are available beside the conversation').toBeVisible();
+  const teaAction = overlay.locator('[data-partner-shell-action="OPEN_TEA"]');
+  await expect(teaAction, 'Partner Shell exposes the current Tea shortcut').toBeVisible();
+  await teaAction.click();
+  await expect(overlay, 'Tea shortcut returns to the direct conversation instead of inventing a standalone Tea view').toBeHidden();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  const firstTeaChoice = teaBar.locator('.grPartnerTeaQuickChoiceButton').first();
+  await expect(firstTeaChoice, 'Tea shortcut focuses the existing inline quick-choice surface').toBeFocused();
+  await expect(input, 'Tea shortcut preserves the conversation draft').toHaveValue('導線QAの下書き');
+
+  await trigger.click();
+  await expect(overlay, 'Partner Shell can reopen after visiting the inline Tea shortcut').toBeVisible();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true');
 
   const detailAction = overlay.locator('[data-partner-shell-action="OPEN_ACTIVE_DETAIL"]');
   await expect(detailAction).toBeVisible();
@@ -352,54 +383,41 @@ test('Partner Shell is reachable through the live Saasuna conversation and stays
   runtime.assertClean(testInfo);
   testInfo.annotations.push({
     type: 'partner-shell-live-reachability',
-    description: `visible Home→Characters→Saasuna conversation→Partner Shell→detail→hub→conversation passed on ${testInfo.project.name}; approved idle content visible; unsupported costume/list actions absent; product/runtime/save/economy unchanged`,
+    description: `visible Home→Characters→Partner roster→Saasuna→conversation→Partner Shell→inline Tea shortcut→Partner Shell→detail→hub→conversation passed on ${testInfo.project.name}; approved idle content visible; unsupported costume/list actions absent; Tea reuses the current inline quick-choice surface; product/runtime/save/economy unchanged`,
   });
 });
 
-test('Profile identity-first surface and Records bridge are visible through real controls', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name === 'phone-touch-390x844', 'bounded Profile evidence runs in the three standard viewport projects');
+test('Retired Home Profile entry stays absent while current Shop child navigation remains reachable', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'phone-touch-390x844', 'bounded current-navigation evidence runs in the three standard viewport projects');
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
 
   const home = page.locator('section[data-screen="home"]');
-  const profileControl = rootGo(page, 'profile');
   await expect(home).toBeVisible();
-  await expect(profileControl, 'visible Home-to-Profile control').toBeVisible();
-  await profileControl.click();
+  await expect(rootGo(page, 'profile'), 'retired Home-to-Profile control stays absent').toHaveCount(0);
+  await expect(page.locator('section[data-screen="profile"]'), 'retired direct Profile route is not force-opened').toBeHidden();
 
-  const profile = page.locator('section[data-screen="profile"]');
-  await expect(profile, 'Profile target reached through visible pointer navigation').toBeVisible();
-  await expect(profile).toHaveAttribute('data-profile-presentation', 'PROFILE_IDENTITY_PRESENTATION_R1B');
-  await expect(profile.locator('.profileIdentityCard[data-role="player"]'), 'current player identity card').toBeVisible();
-  await expect(profile.locator('.profileIdentityCard[data-role="partner"]'), 'current Partner identity card').toBeVisible();
-  const legacyMetrics = profile.locator('.metricGrid');
-  if (await legacyMetrics.count()) await expect(legacyMetrics, 'legacy local-history metrics stay hidden on Profile').toBeHidden();
+  const shopControl = rootGo(page, 'shop');
+  await expect(shopControl, 'current Home-to-Shop control remains player-visible').toBeVisible();
+  await shopControl.click();
 
-  const profilePng = await page.screenshot({ fullPage: true, animations: 'disabled' });
-  await testInfo.attach(`${testInfo.project.name}-profile-identity-visible.png`, { body: profilePng, contentType: 'image/png' });
+  const shop = page.locator('section[data-screen="shop"]');
+  await expect(shop, 'Shop target reached through visible player control').toBeVisible();
+  const charactersControl = nestedGo(page, 'shop', 'characters');
+  await expect(charactersControl, 'current Shop-to-Characters bridge remains visible').toBeVisible();
+  await charactersControl.click();
 
-  const recordsControl = nestedGo(page, 'profile', 'records');
-  await expect(recordsControl, 'visible Profile-to-Records control').toBeVisible();
-  await expect(recordsControl).toHaveText('対戦記録を見る');
-  await recordsControl.click();
-
-  const records = page.locator('section[data-screen="records"]');
-  await expect(records, 'Records reached from Profile through the visible action').toBeVisible();
-  const recordsPng = await page.screenshot({ fullPage: true, animations: 'disabled' });
-  await testInfo.attach(`${testInfo.project.name}-profile-records-visible.png`, { body: recordsPng, contentType: 'image/png' });
-
-  const back = records.locator('[data-back]:visible').first();
-  await expect(back, 'visible Records Back control').toBeVisible();
+  const characters = page.locator('section[data-screen="characters"]');
+  await expect(characters, 'Characters is reachable through the current Shop child route').toBeVisible();
+  const back = characters.locator('[data-back]:visible').first();
+  await expect(back, 'Characters exposes a current Back control').toBeVisible();
   await back.click();
-  const active = page.locator('section.screen.active:visible');
-  await expect(active, 'one active screen after Records Back').toHaveCount(1);
-  const returnedScreen = await active.getAttribute('data-screen');
-  expect(['profile', 'home'], 'Records Back returns to a safe existing parent route').toContain(returnedScreen);
+  await expect(shop, 'Back returns to the current Shop parent').toBeVisible();
 
   runtime.assertClean(testInfo);
   testInfo.annotations.push({
-    type: 'profile-blackbox-evidence',
-    description: `visible Home→Profile→Records→Back path passed on ${testInfo.project.name}; Player+Partner identity presentation visible; legacy metrics hidden; no Profile product authority or save mutation introduced`,
+    type: 'retired-current-contract',
+    description: `Home→Profile remains retired while Home→Shop→Characters stays reachable on ${testInfo.project.name}; hidden Profile DOM is not force-operated.`,
   });
 });
 

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-MOVEMENT-EFFECT-DICE-R2-20261003T0316-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_EFFECT_MOVEMENT_BUDGET_DICE_R2",
+  "acquireKey": "BATTLE-MOVEMENT-EFFECT-DICE-R2-20261003T0316-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_4616E557_ROAD_COMPAT_PRINTED_RANK_HIDDEN_MOVEMENT_AUTHORITY_20261003_R2",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "FAILED_R1_REVIEWED_SAME_TWO_FILE_DIFF_PLUS_LOCAL_FOCUSED_TESTS_20261003_R2",
+  "proceedToken": "PROCEED|BATTLE-MOVEMENT-EFFECT-DICE-R2-20261003T0316-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|road-movement-authority-repair|explicit-effect-plus-optional-dice|active-one-hour-lease",
+  "authorizationBaseSha": "4616e55799e3d884cfbeb4eb64254d2af8e11cbe",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_EFFECT_MOVEMENT_BUDGET_DICE_R2",
+  "leaseAcquireKey": "BATTLE-MOVEMENT-EFFECT-DICE-R2-20261003T0316-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-03 03:16 JST",
+  "leaseUntilJst": "2026-10-03 04:16 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/road-move-compatibility-core.mjs; tests/road-move-compatibility-core.test.mjs; own PRE_ACTION witness data/preaction-authorizations/BATTLE-MOVEMENT-EFFECT-DICE-R2-20261003T0316-SOL.json; own branch/PR/check/merge/readback; own CURRENT event/lease records.",
+  "scope": [
+    "browser/road-move-compatibility-core.mjs",
+    "tests/road-move-compatibility-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/road-move-compatibility-core.mjs",
+    "tests/road-move-compatibility-core.test.mjs"
+  ]
+}

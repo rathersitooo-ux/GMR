@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   MENU_TRANSITION_MOTION_PROFILE,
+  GACHA_NATIVE_REVEAL_CSS,
+  GACHA_NATIVE_REVEAL_DURATION_MS,
+  GACHA_NATIVE_REVEAL_SKIP_TEXT,
   SCREEN_NAVIGATION_COMMON_BUTTON_SFX,
   SCREEN_NAVIGATION_FALLBACK_PARENT,
   SCREEN_NAVIGATION_REASON,
@@ -10,10 +13,12 @@ import {
   SCREEN_TRANSITION_EDGE_SHIMMER_CSS,
   SCREEN_TRANSITION_EDGE_SHIMMER_FRAMES,
   ensureScreenTransitionEdgeShimmer,
+  ensureGachaNativeRevealRuntime,
   createScreenNavigationRuntimeBridge,
   createScreenMotionPresentationDriver,
   createScreenTransitionRuntimeAdapter,
   resolveScreenBackTarget,
+  resolveGachaNativeRevealProfile,
   resolveScreenNavigation
 } from '../browser/screen-navigation-core.mjs';
 
@@ -903,4 +908,203 @@ test('P5X cross-screen source uses existing Profile and Partner piece motion wit
     '.partner-shell-runtime > .partner-shell-navigation'
   ]);
   assert.equal(SCREEN_MOTION_PIECE_SELECTORS.battle, undefined);
+});
+
+function fakeGachaNativeClassList(initial = []) {
+  const values = new Set(initial);
+  return {
+    add(...items) { for (const item of items) values.add(item); },
+    remove(...items) { for (const item of items) values.delete(item); },
+    contains(item) { return values.has(item); },
+    snapshot() { return [...values].sort(); },
+  };
+}
+
+function fakeGachaNativeFixture() {
+  const byId = new Map();
+  const styles = [];
+  const clickListeners = new Map();
+  const node = (id, classes = []) => {
+    const value = {
+      id,
+      dataset: {},
+      classList: fakeGachaNativeClassList(classes),
+      textContent: '',
+      onclick: null,
+      addEventListener(type, handler) {
+        if (!clickListeners.has(value)) clickListeners.set(value, {});
+        const bucket = clickListeners.get(value);
+        if (!bucket[type]) bucket[type] = [];
+        bucket[type].push(handler);
+      },
+      click() {
+        for (const handler of clickListeners.get(value)?.click || []) handler({type: 'click', currentTarget: value});
+        return value.onclick?.({type: 'click', currentTarget: value});
+      },
+    };
+    byId.set(id, value);
+    return value;
+  };
+
+  const stage = node('gachaStage');
+  const results = node('gachaResultsView', ['hidden']);
+  const open = node('openPack');
+  const skip = node('skipPack', ['hidden']);
+  const gachaScreen = node('gachaScreen');
+  let moviePlayCalls = 0;
+  let pauseCalls = 0;
+  let loadCalls = 0;
+  let revealCalls = 0;
+  const video = {
+    id: 'gachaVideo',
+    src: '',
+    onended: null,
+    onerror: null,
+    play() { moviePlayCalls += 1; return Promise.resolve(); },
+    pause() { pauseCalls += 1; },
+    removeAttribute(name) { if (name === 'src') this.src = ''; },
+    load() { loadCalls += 1; },
+  };
+  byId.set('gachaVideo', video);
+
+  const legacyOpen = function legacyOpen() {
+    stage.classList.add('playing');
+    skip.classList.remove('hidden');
+    results.classList.add('hidden');
+    video.src = 'data:video/mp4;base64,legacy-movie';
+    video.onended = () => {};
+    video.onerror = () => {};
+    video.play();
+    return 'legacy-result';
+  };
+  open.onclick = legacyOpen;
+  skip.onclick = () => {
+    revealCalls += 1;
+    video.pause();
+    stage.classList.remove('playing');
+    skip.classList.add('hidden');
+    results.classList.remove('hidden');
+  };
+
+  const documentSource = {
+    head: {
+      append(style) {
+        styles.push(style);
+        if (style?.id) byId.set(style.id, style);
+      },
+    },
+    getElementById(id) { return byId.get(id) || null; },
+    createElement(tagName) {
+      return {
+        tagName: String(tagName).toUpperCase(),
+        id: '',
+        textContent: '',
+        style: {},
+        attributes: {},
+        setAttribute(name, value) { this.attributes[name] = value; },
+      };
+    },
+  };
+
+  return {
+    documentSource, stage, results, open, skip, video, gachaScreen, legacyOpen, styles,
+    stats: () => ({moviePlayCalls, pauseCalls, loadCalls, revealCalls}),
+  };
+}
+
+test('Gacha native reveal profile is bounded and never declares movie playback', () => {
+  assert.deepEqual(GACHA_NATIVE_REVEAL_DURATION_MS, {normal: 520, low: 160, reduced: 0});
+  assert.deepEqual(resolveGachaNativeRevealProfile({}), {name: 'normal', durationMs: 520});
+  assert.deepEqual(resolveGachaNativeRevealProfile({lowPerf: true}), {name: 'low', durationMs: 160});
+  assert.deepEqual(resolveGachaNativeRevealProfile({reducedMotion: true, lowPerf: true}), {name: 'reduced', durationMs: 0});
+  assert.equal(GACHA_NATIVE_REVEAL_SKIP_TEXT, 'すぐ結果を見る');
+  assert.match(GACHA_NATIVE_REVEAL_CSS, /#gachaVideo\{display:none!important\}/);
+  assert.doesNotMatch(GACHA_NATIVE_REVEAL_CSS, /ultimate|ticket|jackpot|確変|当たり/);
+});
+
+test('Gacha native reveal suppresses legacy movie playback and settles through the existing result path', () => {
+  const fixture = fakeGachaNativeFixture();
+  let scheduled = null;
+  let cleared = 0;
+  const binding = ensureGachaNativeRevealRuntime(fixture.documentSource, {
+    readUiMode: () => ({reducedMotion: false, lowPerf: false}),
+    setTimer(callback, delay) {
+      scheduled = {callback, delay};
+      return 41;
+    },
+    clearTimer() { cleared += 1; },
+  });
+  assert.ok(binding);
+  assert.equal(fixture.skip.textContent, 'すぐ結果を見る');
+  assert.equal(fixture.styles.length, 1);
+
+  const wrappedOpen = fixture.open.onclick;
+  assert.notEqual(wrappedOpen, fixture.legacyOpen);
+  assert.equal(fixture.open.click(), 'legacy-result');
+  assert.equal(fixture.stats().moviePlayCalls, 0);
+  assert.equal(fixture.video.src, '');
+  assert.equal(fixture.video.onended, null);
+  assert.equal(fixture.video.onerror, null);
+  assert.equal(fixture.stage.classList.contains('playing'), false);
+  assert.equal(fixture.stage.classList.contains('gachaNativeOpening'), true);
+  assert.equal(fixture.stage.dataset.gachaNativeProfile, 'normal');
+  assert.equal(fixture.results.classList.contains('hidden'), true);
+  assert.equal(scheduled.delay, 520);
+  assert.equal(fixture.stats().revealCalls, 0);
+
+  binding.settle();
+  assert.equal(cleared, 1);
+  assert.equal(fixture.stage.classList.contains('gachaNativeOpening'), false);
+  assert.equal(fixture.stage.dataset.gachaNativeProfile, undefined);
+  assert.equal(fixture.results.classList.contains('hidden'), true);
+
+  fixture.open.click();
+  assert.equal(scheduled.delay, 520);
+  scheduled.callback();
+  assert.equal(fixture.stats().revealCalls, 1);
+  assert.equal(fixture.results.classList.contains('hidden'), false);
+  assert.equal(fixture.stage.classList.contains('gachaNativeOpening'), false);
+  assert.equal(fixture.stage.dataset.gachaNativeProfile, undefined);
+  assert.ok(fixture.stats().pauseCalls >= 2);
+  assert.ok(fixture.stats().loadCalls >= 1);
+
+  const rebound = ensureGachaNativeRevealRuntime(fixture.documentSource, {
+    readUiMode: () => ({reducedMotion: false, lowPerf: false}),
+  });
+  assert.equal(rebound, binding);
+  assert.equal(fixture.open.onclick, wrappedOpen);
+  assert.ok(cleared >= 1);
+});
+
+test('Gacha native reveal is immediate for reduced motion and uses the short 160ms low-performance window', () => {
+  const reduced = fakeGachaNativeFixture();
+  let reducedTimers = 0;
+  ensureGachaNativeRevealRuntime(reduced.documentSource, {
+    readUiMode: () => ({reducedMotion: true, lowPerf: true}),
+    setTimer() { reducedTimers += 1; return 1; },
+  });
+  reduced.open.click();
+  assert.equal(reducedTimers, 0);
+  assert.equal(reduced.stats().moviePlayCalls, 0);
+  assert.equal(reduced.stats().revealCalls, 1);
+  assert.equal(reduced.results.classList.contains('hidden'), false);
+
+  const low = fakeGachaNativeFixture();
+  let lowScheduled = null;
+  ensureGachaNativeRevealRuntime(low.documentSource, {
+    readUiMode: () => ({reducedMotion: false, lowPerf: true}),
+    setTimer(callback, delay) { lowScheduled = {callback, delay}; return 2; },
+  });
+  low.open.click();
+  assert.equal(low.stats().moviePlayCalls, 0);
+  assert.equal(lowScheduled.delay, 160);
+  low.skip.click();
+  assert.equal(low.stats().revealCalls, 1);
+  assert.equal(low.results.classList.contains('hidden'), false);
+});
+
+test('Gacha native reveal installer fails soft when the legacy surface is unavailable', () => {
+  assert.equal(ensureGachaNativeRevealRuntime(undefined), null);
+  assert.equal(ensureGachaNativeRevealRuntime({}), null);
+  assert.equal(ensureGachaNativeRevealRuntime({getElementById: () => null}), null);
 });

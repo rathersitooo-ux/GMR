@@ -754,12 +754,12 @@ test('moves resolve off the board into the dedicated Battle Phase with Naki cut-
   expect(postNakiCardId, 'the visible post-Naki Janken card exposes its real card id').toBeTruthy();
 
   await postNakiJanken.click();
-  await expect.poll(async () => {
-    const roadId = await battle.locator('#roadSelect').inputValue();
-    const battleId = await battle.locator('#battleSelect').inputValue();
-    return roadId === postNakiCardId || battleId === postNakiCardId;
-  }, {
-    message: 'the first real Janken click after Naki return is accepted into the visible plan',
+  await expect.poll(async () => battle.evaluate((clickedCardId) => {
+    const match = window.__GAMEROAD_TEST__?.state?.match ?? null;
+    const player = match?.players?.find((candidate) => candidate?.human) ?? match?.players?.[0] ?? null;
+    return player?.plan?.roadId === clickedCardId || player?.plan?.battleId === clickedCardId;
+  }, postNakiCardId), {
+    message: 'the first real Janken click after Naki return is accepted into the authoritative human plan',
     timeout: 5_000,
   }).toBe(true);
   await attachStateScreenshot(page, testInfo, 'battle-phase-naki-return-janken-accepted');

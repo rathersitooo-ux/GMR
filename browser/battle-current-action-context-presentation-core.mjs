@@ -106,13 +106,13 @@ export function projectBattleCurrentActionContext({
 
   const lines = [];
   if (normalizedCurrentAction) {
-    lines.push(displayLine('current_action', '今', normalizedCurrentAction));
+    lines.push(displayLine('current_action', '現在', normalizedCurrentAction));
   }
   if (waitingFor) {
-    lines.push(displayLine('waiting_for', '待ち', waitingFor.label));
+    lines.push(displayLine('waiting_for', '入力待ち', waitingFor.label));
   }
   if (normalizedWaitReason) {
-    lines.push(displayLine('reason', '理由', normalizedWaitReason));
+    lines.push(displayLine('reason', '状態', normalizedWaitReason));
   }
 
   const output = {
@@ -181,8 +181,8 @@ export const BATTLE_CURRENT_ACTION_CONTEXT_PRESENTATION = deepFreeze({
   expandsSecrets: false,
   writesGameState: false,
   displayLabels: Object.freeze({
-    currentAction: '今',
-    waitingFor: '待ち',
-    reason: '理由'
+    currentAction: '現在',
+    waitingFor: '入力待ち',
+    reason: '状態'
   })
 });

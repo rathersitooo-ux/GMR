@@ -1021,6 +1021,8 @@ def _preaction_record_id(acquire_key: str) -> str:
 def build_acceptance_evidence_receipt(
     packet: dict[str, Any], candidate_workflow_run: int | None
 ) -> dict[str, Any]:
+    if not isinstance(candidate_workflow_run, int) or candidate_workflow_run <= 0:
+        raise BridgeError("acceptance_evidence_workflow_run_required")
     typed_checks = list(packet.get("acceptanceChecks") or [])
     mode = "TYPED" if typed_checks else "LEGACY_COMPAT"
     if typed_checks:

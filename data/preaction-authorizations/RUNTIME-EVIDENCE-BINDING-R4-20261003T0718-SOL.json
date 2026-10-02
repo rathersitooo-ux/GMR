@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RUNTIME-EVIDENCE-BINDING-R4-20261003T0718-SOL",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "RUNTIME_EVIDENCE_BINDING_R4",
+  "acquireKey": "RUNTIME-EVIDENCE-BINDING-R4-20261003T0718-SOL",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "fresh-current-main-existing-bfi-repository-dispatch-and-provider-receipt-review",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "focused-node-python-tests-actionlint-and-required-gate",
+  "proceedToken": "PROCEED|RUNTIME-EVIDENCE-BINDING-R4-20261003T0718-SOL|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|fresh-current|runtime-evidence-binding",
+  "authorizationBaseSha": "2a5096ff336e8ad19e3b08054c54689a38a4846a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "RUNTIME_EVIDENCE_BINDING_R4",
+  "leaseAcquireKey": "RUNTIME-EVIDENCE-BINDING-R4-20261003T0718-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-03 07:18 JST",
+  "leaseUntilJst": "2026-10-03 08:18 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "tools/executor-bus-packet.mjs; tests/executor-bus-packet.test.mjs; .github/workflows/gameroad-executor-bus.yml; .github/workflows/browser-full-interaction.yml; tools/gameroad-current-bridge.py; tests/test_gameroad_current_bridge.py; own PRE_ACTION witness; own branch/PR/check/readback; own CURRENT event/lease records",
+  "scope": [
+    "tools/executor-bus-packet.mjs",
+    "tests/executor-bus-packet.test.mjs",
+    ".github/workflows/gameroad-executor-bus.yml",
+    ".github/workflows/browser-full-interaction.yml",
+    "tools/gameroad-current-bridge.py",
+    "tests/test_gameroad_current_bridge.py"
+  ],
+  "leaseScope": [
+    "tools/executor-bus-packet.mjs",
+    "tests/executor-bus-packet.test.mjs",
+    ".github/workflows/gameroad-executor-bus.yml",
+    ".github/workflows/browser-full-interaction.yml",
+    "tools/gameroad-current-bridge.py",
+    "tests/test_gameroad_current_bridge.py"
+  ],
+  "solutionSignature": "Reuse the existing candidate-only Browser Full Interaction repository_dispatch lane. Emit a bot-authored exact-head runtime receipt from that workflow and verify its workflow run plus artifact in CURRENT Bridge before marking the matching typed runtime_evidence condition PASS.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "existing-bfi-candidate-dispatch-plus-current-bridge-provider-verification",
+  "solutionSearchEvidence": [
+    "Executor Bus already dispatches gameroad-candidate-evidence with exact candidate head and PR number",
+    "Browser Full Interaction already checks out and verifies the dispatched exact head",
+    "Browser Full Interaction already uploads a run-bound artifact",
+    "CURRENT Bridge already verifies trusted bot comments, Actions runs, and artifacts for focused-test evidence"
+  ]
+}

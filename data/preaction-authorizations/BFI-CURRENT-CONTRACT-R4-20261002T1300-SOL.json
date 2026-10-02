@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BFI-CURRENT-CONTRACT-R4-20261002T1300-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BROWSER_FULL_INTERACTION_CURRENT_CONTRACT_R4",
+  "acquireKey": "BFI-CURRENT-CONTRACT-R4-20261002T1300-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_A6667A_BFI_35FAIL_STALE_PROFILE_SAASUNA_CONTRACT_CLUSTER_20261002T1300JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR2182_EXACT_TWO_TEST_BLOBS_REVIEWED_DONOR_ONLY_AFTER_RECORD_PATH_FAILURE",
+  "proceedToken": "PROCEED|BFI-CURRENT-CONTRACT-R4-20261002T1300-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|test-only-current-contract-repair|retired-profile-and-partner-selection|active-lease",
+  "authorizationBaseSha": "a6667acf72f0015f75c8d8e4052ce57b2ebd8169",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BROWSER_FULL_INTERACTION_CURRENT_CONTRACT_R4",
+  "leaseAcquireKey": "BFI-CURRENT-CONTRACT-R4-20261002T1300-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-02 13:00 JST",
+  "leaseUntilJst": "2026-10-02 14:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "tests/browser-full-interaction.spec.mjs; tests/browser-full-interaction-state-sequence.spec.mjs; own PRE_ACTION witness data/preaction-authorizations/BFI-CURRENT-CONTRACT-R4-20261002T1300-SOL.json; own branch/PR/check/merge/readback; own CURRENT event/lease records. Product runtime read-only.",
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
+  ]
+}

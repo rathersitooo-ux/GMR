@@ -164,7 +164,7 @@ class CurrentBridgeTests(unittest.TestCase):
                         "kind": "runtime_evidence",
                         "description": "Player route is visibly correct.",
                         "required": True,
-                        "target": "/play",
+                        "target": bridge.BROWSER_FULL_INTERACTION_TARGET,
                     },
                 ]
             )
@@ -183,6 +183,24 @@ class CurrentBridgeTests(unittest.TestCase):
                             "target": "tests/not-owned.test.mjs",
                         }
                     ]
+                )
+            )
+
+    def test_runtime_acceptance_rejects_unsupported_provider_target(self):
+        with self.assertRaisesRegex(
+            bridge.BridgeError, "acceptanceCheck_runtime_target_unsupported"
+        ):
+            bridge.validate_packet(
+                packet(
+                    acceptance=["Runtime evidence exists."],
+                    acceptanceChecks=[
+                        {
+                            "id": "runtime",
+                            "kind": "runtime_evidence",
+                            "description": "Runtime evidence exists.",
+                            "target": "/arbitrary-route",
+                        }
+                    ],
                 )
             )
 
@@ -322,6 +340,85 @@ class CurrentBridgeTests(unittest.TestCase):
         )
         self.assertFalse(bridge.trusted_executor_comment({}))
 
+    def test_runtime_evidence_comment_requires_exact_candidate_identity(self):
+        candidate = {"pr": 123, "commit": "b" * 40}
+        receipt = {
+            "schemaVersion": bridge.RUNTIME_EVIDENCE_SCHEMA,
+            "kind": "runtime_evidence",
+            "target": bridge.BROWSER_FULL_INTERACTION_TARGET,
+            "taskId": TASK,
+            "workUnitKey": WU,
+            "acquireKey": ACQUIRE,
+            "candidatePr": 123,
+            "headSha": "b" * 40,
+            "observedHeadSha": "b" * 40,
+            "workflowRun": 88,
+            "artifact": "browser-full-interaction-88",
+            "inputHash": "hash",
+            "cacheHit": False,
+            "freshCapture": True,
+            "status": "PASS",
+        }
+        body = "```runtime-evidence\n" + json.dumps(receipt) + "\n```"
+        parsed = bridge.parse_runtime_evidence_comment(body, packet(), candidate)
+        self.assertEqual(parsed["workflowRun"], 88)
+        self.assertEqual(parsed["status"], "PASS")
+        bad = dict(receipt)
+        bad["headSha"] = "c" * 40
+        bad_body = "```runtime-evidence\n" + json.dumps(bad) + "\n```"
+        self.assertIsNone(
+            bridge.parse_runtime_evidence_comment(bad_body, packet(), candidate)
+        )
+
+    def test_runtime_evidence_provider_receipt_requires_success_and_artifact(self):
+        candidate = {"pr": 123, "commit": "b" * 40}
+        receipt = {
+            "target": bridge.BROWSER_FULL_INTERACTION_TARGET,
+            "status": "PASS",
+            "workflowRun": 88,
+            "artifact": "browser-full-interaction-88",
+            "headSha": "b" * 40,
+            "observedHeadSha": "b" * 40,
+        }
+        run = {
+            "id": 88,
+            "name": bridge.BROWSER_FULL_INTERACTION_WORKFLOW_NAME,
+            "path": bridge.BROWSER_FULL_INTERACTION_WORKFLOW_PATH,
+            "event": "repository_dispatch",
+            "status": "completed",
+            "conclusion": "success",
+        }
+        artifacts = [
+            {
+                "name": "browser-full-interaction-88",
+                "expired": False,
+                "workflow_run": {"id": 88},
+            }
+        ]
+        self.assertTrue(
+            bridge.verify_runtime_evidence_receipt(candidate, receipt, run, artifacts)
+        )
+        pending = dict(run)
+        pending["status"] = "in_progress"
+        pending["conclusion"] = None
+        self.assertFalse(
+            bridge.verify_runtime_evidence_receipt(candidate, receipt, pending, artifacts)
+        )
+        failed = dict(receipt)
+        failed["status"] = "FAIL"
+        with self.assertRaisesRegex(bridge.BridgeError, "runtime_evidence_failed"):
+            bridge.verify_runtime_evidence_receipt(candidate, failed, run, artifacts)
+        bad_head = dict(receipt)
+        bad_head["observedHeadSha"] = "c" * 40
+        with self.assertRaisesRegex(
+            bridge.BridgeError, "runtime_evidence_exact_head_mismatch"
+        ):
+            bridge.verify_runtime_evidence_receipt(candidate, bad_head, run, artifacts)
+        with self.assertRaisesRegex(
+            bridge.BridgeError, "runtime_evidence_artifact_missing"
+        ):
+            bridge.verify_runtime_evidence_receipt(candidate, receipt, run, [])
+
     def test_executor_result_receipt_requires_exact_successful_issue_run_and_queue_artifact(self):
         candidate = {"workflowRun": 9}
         run = {
@@ -429,7 +526,7 @@ class CurrentBridgeTests(unittest.TestCase):
                         "kind": "runtime_evidence",
                         "description": "Player route is visibly correct.",
                         "required": True,
-                        "target": "/play",
+                        "target": bridge.BROWSER_FULL_INTERACTION_TARGET,
                     },
                     {
                         "id": "human",
@@ -455,6 +552,63 @@ class CurrentBridgeTests(unittest.TestCase):
         self.assertEqual(states["external"], "UNRUN")
         self.assertEqual(receipt["requiredSummary"], {"pass": 1, "unrun": 2})
         self.assertFalse(receipt["allRequiredPass"])
+        self.assertFalse(receipt["productCompletionClaimAllowed"])
+
+    def test_typed_runtime_receipt_promotes_only_matching_verified_runtime_condition(self):
+        p = bridge.validate_packet(
+            packet(
+                acceptance=[
+                    "Focused test passes.",
+                    "Player route is visibly correct.",
+                    "External deployment probe succeeds.",
+                ],
+                acceptanceChecks=[
+                    {
+                        "id": "unit",
+                        "kind": "focused_test",
+                        "description": "Focused test passes.",
+                        "required": True,
+                        "target": "tests/example.test.mjs",
+                    },
+                    {
+                        "id": "runtime",
+                        "kind": "runtime_evidence",
+                        "description": "Player route is visibly correct.",
+                        "required": True,
+                        "target": bridge.BROWSER_FULL_INTERACTION_TARGET,
+                    },
+                    {
+                        "id": "external",
+                        "kind": "external_evidence",
+                        "description": "External deployment probe succeeds.",
+                        "required": True,
+                        "target": "public-deploy",
+                    },
+                ]
+            )
+        )
+        runtime_receipt = {
+            bridge.BROWSER_FULL_INTERACTION_TARGET: {
+                "workflowRun": 88,
+                "artifact": "browser-full-interaction-88",
+                "headSha": "b" * 40,
+                "status": "PASS",
+            }
+        }
+        receipt = bridge.build_acceptance_evidence_receipt(p, 9, runtime_receipt)
+        states = {check["id"]: check["state"] for check in receipt["checks"]}
+        self.assertEqual(states["unit"], "PASS")
+        self.assertEqual(states["runtime"], "PASS")
+        self.assertEqual(states["external"], "UNRUN")
+        self.assertEqual(receipt["requiredSummary"], {"pass": 2, "unrun": 1})
+        runtime_check = next(
+            check for check in receipt["checks"] if check["id"] == "runtime"
+        )
+        self.assertEqual(
+            runtime_check["verification"],
+            "PROVIDER_BACKED_BROWSER_FULL_INTERACTION",
+        )
+        self.assertIn("workflow-run:88", runtime_check["evidenceRefs"])
         self.assertFalse(receipt["productCompletionClaimAllowed"])
 
     def test_typed_acceptance_receipt_allows_completion_only_when_all_required_checks_pass(self):
@@ -541,6 +695,27 @@ class CurrentBridgeTests(unittest.TestCase):
             {"number": 7, "pull_request": {"url": "x"}, "body": bridge.adoption_marker(ACQUIRE)}
         ]
         self.assertEqual(bridge.find_adoption_pr(items, ACQUIRE), 7)
+
+    def test_runtime_evidence_workflows_bind_exact_candidate_identity(self):
+        root = pathlib.Path(__file__).resolve().parents[1]
+        executor = (
+            root / ".github" / "workflows" / "gameroad-executor-bus.yml"
+        ).read_text(encoding="utf-8")
+        browser = (
+            root / ".github" / "workflows" / "browser-full-interaction.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("check.kind === 'runtime_evidence'", executor)
+        self.assertIn("check.target === 'browser-full-interaction'", executor)
+        self.assertIn("task_id: packet.taskId", executor)
+        self.assertIn("work_unit_key: packet.workUnitKey", executor)
+        self.assertIn("acquire_key: packet.acquireKey", executor)
+        self.assertIn("issues: write", browser)
+        self.assertIn("id: interaction_run", browser)
+        self.assertIn('SOURCE_SHA="$(git rev-parse HEAD)"', browser)
+        self.assertIn("gameroad-runtime-evidence-v1", browser)
+        self.assertIn("```runtime-evidence", browser)
+        self.assertIn("browser-full-interaction-${context.runId}", browser)
+        self.assertIn("observedHeadSha", browser)
 
     def test_windows_gui_issue_lane_is_owner_only_pinned_and_bounded(self):
         workflow = (

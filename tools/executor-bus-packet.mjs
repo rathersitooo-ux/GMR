@@ -124,6 +124,13 @@ export function normalizeQueuePacket(input) {
       executorCapabilityHint: cleanString(input.executorCapabilityHint ?? '', 'executorCapabilityHint', { max: 500, optional: true }),
     };
     packet.acceptanceChecks = cleanAcceptanceChecks(input.acceptanceChecks, packet.exactMutableResources);
+    if (packet.acceptanceChecks.length) {
+      const descriptions = packet.acceptanceChecks.map((item) => item.description);
+      if (descriptions.length !== packet.acceptance.length
+          || descriptions.some((description, index) => description !== packet.acceptance[index])) {
+        throw new Error('acceptanceChecks_must_classify_every_acceptance_item');
+      }
+    }
     const overlap = packet.exactMutableResources.filter((item) => packet.doNotChange.includes(item));
     if (overlap.length) throw new Error(`mutable_do_not_change_overlap:${overlap.join(',')}`);
     return { ok: true, packet };

@@ -1052,6 +1052,14 @@ test('Gacha native reveal suppresses legacy movie playback and settles through t
   assert.equal(scheduled.delay, 520);
   assert.equal(fixture.stats().revealCalls, 0);
 
+  binding.settle();
+  assert.equal(cleared, 1);
+  assert.equal(fixture.stage.classList.contains('gachaNativeOpening'), false);
+  assert.equal(fixture.stage.dataset.gachaNativeProfile, undefined);
+  assert.equal(fixture.results.classList.contains('hidden'), true);
+
+  fixture.open.click();
+  assert.equal(scheduled.delay, 520);
   scheduled.callback();
   assert.equal(fixture.stats().revealCalls, 1);
   assert.equal(fixture.results.classList.contains('hidden'), false);

@@ -1108,3 +1108,140 @@ test('Gacha native reveal installer fails soft when the legacy surface is unavai
   assert.equal(ensureGachaNativeRevealRuntime({}), null);
   assert.equal(ensureGachaNativeRevealRuntime({getElementById: () => null}), null);
 });
+
+
+class ShopNavNode {
+  constructor(tagName, ownerDocument) {
+    this.tagName = String(tagName).toUpperCase();
+    this.ownerDocument = ownerDocument;
+    this.children = [];
+    this.dataset = {};
+    this.className = '';
+    this.id = '';
+    this.textContent = '';
+    this.attributes = {};
+    this.parentNode = null;
+    this.listeners = new Map();
+  }
+  appendChild(node) { node.parentNode = this; this.children.push(node); return node; }
+  append(node) { return this.appendChild(node); }
+  replaceChildren(...nodes) { this.children = []; for (const node of nodes) this.appendChild(node); }
+  insertBefore(node, reference) {
+    node.parentNode = this;
+    const index = this.children.indexOf(reference);
+    if (index < 0) this.children.push(node); else this.children.splice(index, 0, node);
+    return node;
+  }
+  setAttribute(name, value) { this.attributes[name] = value; }
+  addEventListener(type, listener) { this.listeners.set(type, listener); }
+  querySelector(selector) {
+    const match = (node) => {
+      if (selector.startsWith('#')) return node.id === selector.slice(1);
+      if (selector.startsWith('.')) return String(node.className).split(/\s+/).includes(selector.slice(1));
+      return false;
+    };
+    const visit = (node) => {
+      for (const child of node.children || []) {
+        if (match(child)) return child;
+        const nested = visit(child);
+        if (nested) return nested;
+      }
+      return null;
+    };
+    return visit(this);
+  }
+}
+function shopNavigationFixture() {
+  const byId = new Map();
+  const documentSource = {
+    head: null,
+    createElement(tagName) {
+      const node = new ShopNavNode(tagName, documentSource);
+      Object.defineProperty(node, 'id', {
+        get() { return this._id || ''; },
+        set(value) { this._id = value; if (value) byId.set(value, this); },
+        configurable: true,
+      });
+      return node;
+    },
+    createDocumentFragment() { return new ShopNavNode('#fragment', documentSource); },
+    getElementById(id) { return byId.get(id) || null; },
+    querySelectorAll(selector) {
+      assert.equal(selector, '.screen[data-screen]');
+      return [shopScreen];
+    },
+  };
+  documentSource.head = documentSource.createElement('head');
+  const shopScreen = documentSource.createElement('section');
+  shopScreen.dataset.screen = 'shop';
+  const panel = documentSource.createElement('div');
+  panel.className = 'simplePanel shopPanel';
+  const availability = documentSource.createElement('div');
+  availability.className = 'safeNote shopAvailability';
+  availability.textContent = '購入機能は現在利用できません。';
+  shopScreen.appendChild(panel);
+  panel.appendChild(availability);
+  return {documentSource, shopScreen, panel, availability};
+}
+function flattenShopNav(node) {
+  return [node, ...(node.children || []).flatMap(flattenShopNav)];
+}
+
+test('Shop navigation mounts the approved Saasuna sleeve without acquiring purchase, ownership, or save authority', async () => {
+  const {ensureShopLiveCatalogRuntime, SHOP_LIVE_CATALOG_HOST_ID} = await import('../browser/screen-navigation-core.mjs');
+  const fixture = shopNavigationFixture();
+  const mounted = ensureShopLiveCatalogRuntime(fixture.documentSource);
+  assert.ok(mounted);
+  assert.equal(mounted.purchaseAuthority, false);
+  assert.equal(mounted.ownershipMutationAllowed, false);
+  assert.equal(mounted.saveMutationAllowed, false);
+  const host = fixture.shopScreen.querySelector('#' + SHOP_LIVE_CATALOG_HOST_ID);
+  assert.ok(host);
+  assert.equal(fixture.panel.children.indexOf(host), 0);
+  assert.equal(fixture.panel.children.indexOf(fixture.availability), 1);
+  const nodes = flattenShopNav(host);
+  assert.ok(nodes.some((node) => node.className === 'shopLiveCatalogTitle' && node.textContent === 'サースナー用ファンアートスリーブ'));
+  assert.ok(nodes.some((node) => node.className === 'shopLiveCatalogPrice' && node.textContent === '50 マニィ'));
+  const image = nodes.find((node) => node.className === 'shopLiveCatalogImage');
+  assert.ok(image);
+  assert.equal(image.src, '../assets/shop/fanart/saasuna-sleeve-snow-blue-v1.jpg');
+  const button = nodes.find((node) => node.className === 'shopLiveCatalogAcquire');
+  assert.ok(button);
+  assert.equal(button.disabled, true);
+  assert.equal(button.dataset.shopAcquireState, 'unavailable');
+  assert.equal(button.textContent, '取得不可');
+  assert.ok(fixture.documentSource.getElementById('gameroad-shop-live-catalog-r1'));
+  ensureShopLiveCatalogRuntime(fixture.documentSource);
+  assert.equal(fixture.panel.children.filter((node) => node.id === SHOP_LIVE_CATALOG_HOST_ID).length, 1);
+});
+
+test('screen transition Shop hook mounts the same fail-closed catalog while preserving synchronous screen swap', async () => {
+  const fixture = shopNavigationFixture();
+  const originalDocument = globalThis.document;
+  globalThis.document = fixture.documentSource;
+  let screen = 'home';
+  const presentationDriver = {
+    async runPhase() {},
+    finishRevision() {},
+    getState() { return Object.freeze({activeRevisions:Object.freeze([]), events:Object.freeze([])}); },
+  };
+  try {
+    const runtime = createScreenTransitionRuntimeAdapter({
+      getCurrentScreen: () => screen,
+      applyScreen: (next) => { screen = next; },
+      runVisualPhase: async () => {},
+      presentationDriver,
+    });
+    const result = await runtime.navigate('shop');
+    assert.equal(result.status, 'completed');
+    assert.equal(screen, 'shop');
+    const host = fixture.shopScreen.querySelector('#shopFormalCatalog');
+    assert.ok(host);
+    const button = flattenShopNav(host).find((node) => node.className === 'shopLiveCatalogAcquire');
+    assert.equal(button.disabled, true);
+    assert.equal(button.dataset.shopAcquireState, 'unavailable');
+  } finally {
+    if (originalDocument === undefined) delete globalThis.document;
+    else globalThis.document = originalDocument;
+  }
+});

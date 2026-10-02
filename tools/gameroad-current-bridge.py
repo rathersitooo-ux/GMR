@@ -1029,6 +1029,10 @@ def verify_runtime_evidence_receipt(
         return False
     if receipt.get("status") != "PASS":
         raise BridgeError(f"runtime_evidence_failed:{BROWSER_FULL_INTERACTION_TARGET}")
+    if receipt.get("cacheHit") is True or receipt.get("freshCapture") is not True:
+        raise BridgeError("runtime_evidence_fresh_capture_required")
+    if not str(receipt.get("inputHash", "")).strip():
+        raise BridgeError("runtime_evidence_input_hash_missing")
     candidate_head = str(candidate.get("commit", "")).lower()
     if receipt.get("observedHeadSha") != candidate_head:
         raise BridgeError("runtime_evidence_exact_head_mismatch")

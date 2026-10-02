@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-NAKI-BATTLE-RETURN-JANKEN-R11-20261003T0453",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "NAKI_BATTLE_RETURN_JANKEN_ACCEPTANCE_R11",
+  "acquireKey": "NAKI-BATTLE-RETURN-JANKEN-R11-20261003T0453-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R10_THREE_VIEWPORT_NAKI_RETURN_TO_PLAN_PLUS_RETURN_SCENE_POINTER_TRANSPARENCY",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R10_DEDICATED_NAKI_BFI_REACHES_RETURN_AND_FOCUSED_ADAPTER_TESTS_RELEASE_STALE_SCENE",
+  "proceedToken": "PROCEED|VWORK-NAKI-BATTLE-RETURN-JANKEN-R11-20261003T0453|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|naki-return-janken-visible-acceptance|r10-head|active-lease",
+  "authorizationBaseSha": "0206fa7b0984e346616655f64d7237c4b592f9d2",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "NAKI_BATTLE_RETURN_JANKEN_ACCEPTANCE_R11",
+  "leaseAcquireKey": "NAKI-BATTLE-RETURN-JANKEN-R11-20261003T0453-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-03 04:53 JST",
+  "leaseUntilJst": "2026-10-03 05:53 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "tests/browser-full-interaction.spec.mjs; data/preaction-authorizations/VWORK-NAKI-BATTLE-RETURN-JANKEN-R11-20261003T0453.json; own branch/PR/check/readback; own CURRENT event/lease records. Battle gameplay/rules/target/winner/order/board/save/economy/network and browser/GAMEROAD.html remain read-only.",
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs",
+    "data/preaction-authorizations/VWORK-NAKI-BATTLE-RETURN-JANKEN-R11-20261003T0453.json"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs",
+    "data/preaction-authorizations/VWORK-NAKI-BATTLE-RETURN-JANKEN-R11-20261003T0453.json"
+  ],
+  "formalInvariants": [
+    "R10 implementation and browser/GAMEROAD.html remain byte-identical",
+    "Battle gameplay/rules/target/winner/order/board/save/economy/network remain read-only",
+    "The acceptance change exercises only the existing visible Janken controls after Naki return",
+    "Success requires a real Playwright click and visible plan input reflection"
+  ],
+  "acceptance": [
+    "PRE_ACTION exact-scope validator passes",
+    "Dedicated Naki Battle Phase reaches the next visible Plan phase",
+    "The real Janken SlidePad opens through its visible handle when collapsed",
+    "One visible enabled Janken slot receives a real click after Naki return",
+    "The clicked card id appears in the visible Road or Battle plan input",
+    "A screenshot is captured after the accepted click in every configured BFI viewport"
+  ]
+}

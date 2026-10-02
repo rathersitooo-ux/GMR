@@ -17,6 +17,7 @@ import {
   installCardsSelectionPressReleaseFeedback,
   isNeutralizedDeckEditorSwipe,
   presentDeckAddSwipe,
+  readCardsInspectorDeckContext,
   installCardsInspectorDismissInteractions,
   countCardsLocalVoteHistory,
   installCardsVoteUiRepair,
@@ -917,6 +918,61 @@ test('public Battle local-art projection wraps only the existing public renderer
   assert.equal(slice.includes('opponentEquippedSkin'), false);
   for (const forbidden of ['fetch(', 'XMLHttpRequest', 'WebSocket', 'localStorage', 'sessionStorage']) {
     assert.equal(slice.includes(forbidden), false, `forbidden transport/storage path: ${forbidden}`);
+  }
+});
+
+test('Cards inspector Deck context reads only the already-rendered Deck identity, count and save state', () => {
+  const nodes = new Map([
+    ['#deckBoardTitle', { textContent: '  デッキ 3  ' }],
+    ['#r4TrayCount', { textContent: '40 / 40' }],
+    ['#deckSaveState', { textContent: '保存済み' }],
+  ]);
+  const doc = { querySelector: (selector) => nodes.get(selector) ?? null };
+  assert.deepEqual(readCardsInspectorDeckContext(doc), {
+    title: 'デッキ 3',
+    count: '40 / 40',
+    saveState: '保存済み',
+  });
+
+  nodes.get('#deckSaveState').textContent = '未保存';
+  assert.deepEqual(readCardsInspectorDeckContext(doc), {
+    title: 'デッキ 3',
+    count: '40 / 40',
+    saveState: '未保存',
+  });
+});
+
+test('Cards inspector Deck context fails soft instead of inventing missing Deck state', () => {
+  const doc = {
+    querySelector(selector) {
+      if (selector === '#deckBoardTitle') return { textContent: 'デッキ 2' };
+      if (selector === '#r4TrayCount') return { textContent: '39 / 40' };
+      return null;
+    },
+  };
+  assert.equal(readCardsInspectorDeckContext(doc), null);
+  assert.equal(readCardsInspectorDeckContext(null), null);
+});
+
+test('Cards inspector context mount is presentation-only and keeps mobile Deck identity visible beside card detail', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('export function installCardsInspectorDeckContext');
+  const end = source.indexOf('function resolveOpenCardsInspector', start);
+  const slice = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.ok(slice.includes("host.dataset.role = 'cards-inspector-deck-context'"));
+  assert.ok(slice.includes("host.setAttribute?.('aria-label', '編集中の札組')"));
+  assert.ok(slice.includes("doc.querySelector('#deckBoardTitle')"));
+  assert.ok(slice.includes("doc.querySelector('#r4TrayCount')"));
+  assert.ok(slice.includes("doc.querySelector('#deckSaveState')"));
+  assert.ok(slice.includes("addState.before?.(host)"));
+  assert.ok(slice.includes("new MutationObserverCtor(render)"));
+  assert.ok(slice.includes('@media(max-width:720px)'));
+  assert.ok(slice.includes('position:sticky;bottom:0'));
+  assert.ok(slice.includes('@media(prefers-reduced-motion:reduce)'));
+  for (const forbidden of ['localStorage', 'sessionStorage', 'writeDeckLibrary', 'selectDeckIndex(', 'addDeckCard(', 'removeDeckCard(']) {
+    assert.equal(slice.includes(forbidden), false, `Deck context must stay read-only: ${forbidden}`);
   }
 });
 

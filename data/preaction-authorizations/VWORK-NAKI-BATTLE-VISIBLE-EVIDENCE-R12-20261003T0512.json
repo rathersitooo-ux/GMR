@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-NAKI-BATTLE-VISIBLE-EVIDENCE-R12-20261003T0512",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "NAKI_BATTLE_VISIBLE_EVIDENCE_R12",
+  "acquireKey": "NAKI-BATTLE-VISIBLE-EVIDENCE-R12-20261003T0512-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R11_REAL_LAUNCHER_GESTURE_WITH_CORRECT_LOCATOR_EVALUATE_ARGUMENT",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PREVIOUS_RUN_REACHED_ALL_THREE_POST_NAKI_LAUNCHER_GESTURES_AND_FAILED_ONLY_IN_ASSERTION_ARGUMENT_SHAPE",
+  "proceedToken": "PROCEED|VWORK-NAKI-BATTLE-VISIBLE-EVIDENCE-R12-20261003T0512|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|naki-real-launcher-final-evidence|r11-correct-evaluate-head|active-lease",
+  "authorizationBaseSha": "e695cf3a59c5d8eca828eb02966cc8e9229be7e3",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "NAKI_BATTLE_VISIBLE_EVIDENCE_R12",
+  "leaseAcquireKey": "NAKI-BATTLE-VISIBLE-EVIDENCE-R12-20261003T0512-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-03 05:12 JST",
+  "leaseUntilJst": "2026-10-03 06:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": ".github/workflows/naki-return-janken-acceptance.yml; data/preaction-authorizations/VWORK-NAKI-BATTLE-VISIBLE-EVIDENCE-R12-20261003T0512.json; own branch/check/readback; own CURRENT event/lease records. R10 implementation, browser/GAMEROAD.html, tests/browser-full-interaction.spec.mjs, Battle gameplay/rules/state/network remain read-only.",
+  "scope": [
+    ".github/workflows/naki-return-janken-acceptance.yml",
+    "data/preaction-authorizations/VWORK-NAKI-BATTLE-VISIBLE-EVIDENCE-R12-20261003T0512.json"
+  ],
+  "leaseScope": [
+    ".github/workflows/naki-return-janken-acceptance.yml",
+    "data/preaction-authorizations/VWORK-NAKI-BATTLE-VISIBLE-EVIDENCE-R12-20261003T0512.json"
+  ],
+  "solutionSignature": "NAKI_REAL_LAUNCHER_BFI_EVIDENCE_LANE_V4",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R11_REAL_LAUNCHER_POINTER_GESTURE_PLUS_EXISTING_BFI_INFRA",
+  "solutionSearchEvidence": [
+    "Reused the existing browser-full-interaction Playwright config, static-server contract, Chromium setup, and three standard viewport projects.",
+    "Reused the launcher pointer semantics already implemented by battle-janken-slidepad-runtime-mount.mjs.",
+    "Reused the dedicated Naki test and corrected only the Locator.evaluate argument shape in its acceptance observer."
+  ],
+  "formalInvariants": [
+    "R10 implementation bytes remain unchanged",
+    "tests/browser-full-interaction.spec.mjs remains unchanged from corrected R11 head",
+    "browser/GAMEROAD.html and Battle gameplay/rules/state/network remain read-only",
+    "only the dedicated Naki acceptance case runs across the three standard viewports"
+  ],
+  "acceptance": [
+    "PRE_ACTION exact-scope validator passes",
+    "real launcher pointer gesture after Naki return updates authoritative human plan in all three viewports",
+    "three battle-phase-naki-return-janken-accepted screenshots are published"
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-CARDS-LOCAL-SKIN-ASSET-GC-R2-20261002T1153",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "CARDS_LOCAL_SKIN_ASSET_GC_R2",
+  "acquireKey": "CARDS-LOCAL-SKIN-ASSET-GC-R2-20261002T1153-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_9702A17_LOCAL_SKIN_ASSET_REFERENCE_LIFECYCLE_GAP_DIRECT_READ",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_CARDS_FOCUSED_TEST_PAIR_AND_ATOMIC_INDEXEDDB_REFERENCE_GC_PLAN",
+  "proceedToken": "PROCEED|VWORK-CARDS-LOCAL-SKIN-ASSET-GC-R2-20261002T1153|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|cards-local-skin-asset-gc|cards-runtime|active-lease",
+  "authorizationBaseSha": "9702a17af119f77383b4a8242492baac109c514f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "CARDS_LOCAL_SKIN_ASSET_GC_R2",
+  "leaseAcquireKey": "CARDS-LOCAL-SKIN-ASSET-GC-R2-20261002T1153-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-02 11:53 JST",
+  "leaseUntilJst": "2026-10-02 12:53 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; own data/preaction-authorizations/VWORK-CARDS-LOCAL-SKIN-ASSET-GC-R2-20261002T1153.json; own branch sol/cards-local-skin-asset-gc-r2-20261002; own PR/check/merge/readback; CURRENT_ACTIVE_LEASES!A5:L5 only.",
+  "solutionSignature": "CARDS_LOCAL_SKIN_REFERENCE_AWARE_ASSET_GC_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_FANART_INDEXEDDB_STORES_AND_CURRENT_WRITE_DELETE_FUNCTIONS",
+  "solutionSearchEvidence": [
+    "Current main already owns local skin assets in FANART_ASSET_STORE and card bindings in FANART_SKIN_STORE.",
+    "Current fanartDeleteSkin deletes the bound asset hash unconditionally, so a shared hash can be removed while another card still references it.",
+    "Current fanartWriteSkin overwrites the card binding without reclaiming an unreferenced prior hash.",
+    "The repair reuses the same stores and transaction helpers; no second storage system or card identity authority is introduced."
+  ],
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ]
+}

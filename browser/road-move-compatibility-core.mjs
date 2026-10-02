@@ -1,6 +1,3 @@
-const MIN_ROAD_VALUE = 1;
-const MAX_ROAD_VALUE = 6;
-
 function safeCall(fn, args, receiver) {
   if (typeof fn !== 'function') return { ok: false, value: undefined };
   try {
@@ -10,11 +7,11 @@ function safeCall(fn, args, receiver) {
   }
 }
 
-function readRoadValue(card, boardState) {
-  const result = safeCall(boardState?.roadValueOf, [card], boardState);
+function readMovementBudget(card, boardState) {
+  const result = safeCall(boardState?.movementBudgetOf, [card], boardState);
   if (!result.ok) return null;
   const value = result.value;
-  if (!Number.isSafeInteger(value) || value < MIN_ROAD_VALUE || value > MAX_ROAD_VALUE) return null;
+  if (!Number.isSafeInteger(value) || value < 0) return null;
   return value;
 }
 
@@ -35,23 +32,26 @@ function pathPasses(predicate, path, boardState) {
  * Pure Road-card/path compatibility predicate.
  *
  * This module intentionally does not own the 109-position graph, adjacency,
- * path representation, stoppability, or card schema. The current runtime
- * supplies those existing decisions through boardState adapters:
- *   - roadValueOf(card) -> integer 1..6 for a Road card, otherwise null/invalid
+ * path representation, stoppability, card schema, dice rule, or card effects.
+ * The current runtime supplies those existing decisions through boardState:
+ *   - movementBudgetOf(card) -> authoritative total movement budget for using
+ *     that card as Road now, or null/invalid when it is not a Road candidate
  *   - pathStepCountOf(path) -> positive integer movement step count
  *   - isPathLegal(path) -> true only for the current legal path
  *   - isPathStoppable(path) -> true only when the current endpoint may stop
  *
- * Road value is an upper bound, never an exact-distance requirement.
+ * A printed card number/rank is never movement authority here. A valid Road
+ * card may have movement budget 0. Optional dice and explicit card/rule effects
+ * belong upstream and may be composed into movementBudgetOf(card).
  */
 export function compatible(card, path, boardState) {
   if (!boardState || typeof boardState !== 'object') return false;
 
-  const roadValue = readRoadValue(card, boardState);
-  if (roadValue === null) return false;
+  const movementBudget = readMovementBudget(card, boardState);
+  if (movementBudget === null) return false;
 
   const steps = readStepCount(path, boardState);
-  if (steps === null || steps > roadValue) return false;
+  if (steps === null || steps > movementBudget) return false;
 
   if (!pathPasses(boardState.isPathLegal, path, boardState)) return false;
   if (!pathPasses(boardState.isPathStoppable, path, boardState)) return false;
@@ -61,7 +61,8 @@ export function compatible(card, path, boardState) {
 
 /**
  * Derived candidate set for the current draft path.
- * No focus, selection, submission, or card mutation occurs here.
+ * No focus, selection, submission, card mutation, dice roll, or movement write
+ * occurs here.
  */
 export function compatibleRoadCards(handRoadCards, path, boardState) {
   if (!Array.isArray(handRoadCards)) return [];

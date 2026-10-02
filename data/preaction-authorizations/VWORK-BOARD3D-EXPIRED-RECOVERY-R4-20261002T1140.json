@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-BOARD3D-EXPIRED-RECOVERY-R4-20261002T1140",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "BATTLE_3D_WORLD_VISUAL_COMPLETION_R4_RECOVERY",
+  "acquireKey": "BOARD3D-EXPIRED-RECOVERY-R4-20261002T1140-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_9702A17_VS_PR2173_08CE7BD_ADD_ONLY_6_PATHS",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "GITHUB_REQUIRED_GATE_RUN_36881165400_SUCCESS_HEAD_08CE7BD",
+  "proceedToken": "PROCEED|VWORK-BOARD3D-EXPIRED-RECOVERY-R4-20261002T1140|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|RECOVER_EXISTING_PR2173_ON_CURRENT_MAIN",
+  "authorizationBaseSha": "9702a17af119f77383b4a8242492baac109c514f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "BATTLE_3D_WORLD_VISUAL_COMPLETION_R4_RECOVERY",
+  "leaseAcquireKey": "BOARD3D-EXPIRED-RECOVERY-R4-20261002T1140-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-02 11:43 JST",
+  "leaseUntilJst": "2026-10-02 12:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@9702a17af119f77383b4a8242492baac109c514f; branch chatgpt/battle-3d-world-visual-completion-r4-20261001; PR#2173; browser/battle-board-webgl-world-renderer.mjs; browser/battle-board-world-live-mount.mjs; browser/battle-screen-runtime-mount.mjs; deploy/cloudflare/scripts/build.mjs; tests/battle-board-webgl-world-renderer.test.mjs; tests/battle-board-world-live-mount.test.mjs; own data/preaction-authorizations/VWORK-BOARD3D-EXPIRED-RECOVERY-R4-20261002T1140.json; own branch/PR/check/merge/readback",
+  "scope": [
+    "browser/battle-board-webgl-world-renderer.mjs",
+    "browser/battle-board-world-live-mount.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/battle-board-webgl-world-renderer.test.mjs",
+    "tests/battle-board-world-live-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-board-webgl-world-renderer.mjs",
+    "browser/battle-board-world-live-mount.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/battle-board-webgl-world-renderer.test.mjs",
+    "tests/battle-board-world-live-mount.test.mjs"
+  ],
+  "solutionSignature": "CURRENT_BOARD_WORLD_FIELD_MODEL+CURRENT_WORLD_INTERACTION_OVERLAY+EXISTING_PR2173_WEBGL_RENDERER_AND_LAZY_MOUNT",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR2173_CURRENT_MAIN_COMPOSITION_REVALIDATION_20261002",
+  "solutionSearchEvidence": [
+    "PR#2173 existing WebGL renderer/lazy mount retained instead of creating a second implementation",
+    "current main already owns battle-board-world-field-renderer.mjs, battle-board-world-interaction-overlay-core.mjs, and battle-board-legacy-world-interaction-adapter.mjs",
+    "current main vs PR#2173 diff is bounded to six leased paths; active CARDS lease is disjoint",
+    "old PR head Required Gate run 36881165400 succeeded; BFI failure was Home->profile navigation outside this scope"
+  ],
+  "intendedOutcome": "Rebase the existing PR #2173 work onto current main without duplicating the task, rerun focused/required checks, and either merge the bounded presentation slice or close with an exact blocker.",
+  "rollback": "Do not merge if current-main revalidation or checks fail; keep main unchanged and release the lease with the exact blocker.",
+  "acceptance": [
+    "current main is the authorization base",
+    "new WebGL/lazy-mount files reuse current field/interaction authorities and remain presentation-only",
+    "battle-screen/runtime and Cloudflare package changes remain additive",
+    "focused tests and Required Gate pass on the rewritten PR head",
+    "manifest is removed before merge"
+  ]
+}

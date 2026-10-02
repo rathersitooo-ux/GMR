@@ -378,6 +378,13 @@ class CurrentBridgeTests(unittest.TestCase):
             )
         )
 
+    def test_acceptance_receipt_requires_concrete_executor_workflow_run(self):
+        p = bridge.validate_packet(packet())
+        with self.assertRaisesRegex(
+            bridge.BridgeError, "acceptance_evidence_workflow_run_required"
+        ):
+            bridge.build_acceptance_evidence_receipt(p, None)
+
     def test_typed_acceptance_receipt_passes_only_executed_focused_test(self):
         p = bridge.validate_packet(
             packet(

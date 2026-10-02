@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CROSSSCREEN-VISIBLE-POLISH-R1-20261003T0342-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "CROSSSCREEN_VISIBLE_POLISH_R1",
+  "acquireKey": "CROSSSCREEN-VISIBLE-POLISH-R1-20261003T0342-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_PUBLIC_DOM_AUDIT_667x375_20261003_R1",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "LIVE_DOM_GEOMETRY_PLUS_SOURCE_RULE_AUDIT_20261003_R1",
+  "proceedToken": "PROCEED|CROSSSCREEN-VISIBLE-POLISH-R1-20261003T0342-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|USER_MAKASE",
+  "authorizationBaseSha": "8c1b203e07431932c8ffe76af5fbc8605bc8d0d0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "CROSSSCREEN_VISIBLE_POLISH_R1",
+  "leaseAcquireKey": "CROSSSCREEN-VISIBLE-POLISH-R1-20261003T0342-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-03 03:42 JST",
+  "leaseUntilJst": "2026-10-03 04:42 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "browser/home-cards-2p5d-presentation.mjs; browser/crossscreen-visible-polish-runtime.mjs; tests/crossscreen-visible-polish-runtime.test.mjs; data/preaction-authorizations/CROSSSCREEN-VISIBLE-POLISH-R1-20261003T0342-SOL.json; own branch/PR/check/readback; own CURRENT event/lease records",
+  "scope": [
+    "browser/home-cards-2p5d-presentation.mjs",
+    "browser/crossscreen-visible-polish-runtime.mjs",
+    "tests/crossscreen-visible-polish-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-cards-2p5d-presentation.mjs",
+    "browser/crossscreen-visible-polish-runtime.mjs",
+    "tests/crossscreen-visible-polish-runtime.test.mjs"
+  ],
+  "solutionSignature": "CROSSSCREEN_VISIBLE_POLISH_RUNTIME_STYLE_INJECTION_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "GLOBAL_PRESENTATION_MOUNT_REUSE_20261003_R1",
+  "solutionSearchEvidence": [
+    "Current public HTML already loads browser/home-cards-2p5d-presentation.mjs globally",
+    "browser/GAMEROAD.html is ~12MB and current connector transport is explicitly unsafe for direct replacement",
+    "Existing Home/Cards presentation module is presentation-only and free of active lease overlap"
+  ]
+}

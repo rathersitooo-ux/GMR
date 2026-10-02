@@ -1,9 +1,9 @@
 import { projectApprovedFanArtShopCatalog } from './shop-transaction-presentation-adapter.mjs';
 
 export const SHOP_LIVE_CATALOG_SCHEMA = 'gameroad.shop-live-catalog-runtime.v1';
-const VALID_STANDARD_KINDS = new Set(['STANDARD', 'COSMETIC']);
+const VALID_STANDARD_KINDS = new Set(['STANDARD', 'COSMETIC', 'SUPPLY']);
 const NON_MERCHANDISE_KINDS = new Set(['NAVIGATION']);
-const CURRENCY_DISPLAY = Object.freeze({ COIN: 'コイン', MANII: 'マニィ' });
+const CURRENCY_DISPLAY = Object.freeze({ COIN:'コイン', MANII:'マニィ' });
 
 function token(value, max = 160) {
   if (typeof value !== 'string') return null;
@@ -14,7 +14,7 @@ function token(value, max = 160) {
 function projectStandardItem(raw) {
   const reasons = [];
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    return { ok:false, reasons:['invalid-item'], item:null };
+    return {ok:false, reasons:['invalid-item'], item:null};
   }
   const productId = token(raw.productId, 128);
   const title = token(raw.title, 160);
@@ -22,6 +22,9 @@ function projectStandardItem(raw) {
   const currency = token(raw.currency, 32);
   const price = Number.isSafeInteger(raw.price) && raw.price > 0 ? raw.price : null;
   const imageAssetId = token(raw.imageAssetId, 256);
+  const imageUrl = token(raw.imageUrl, 1024);
+  const targetUseSite = token(raw.targetUseSite, 64);
+  const targetPartnerId = token(raw.targetPartnerId, 128);
 
   if (!productId) reasons.push('productId-invalid');
   if (!title) reasons.push('title-invalid');
@@ -31,18 +34,22 @@ function projectStandardItem(raw) {
   if (raw.acquisitionState !== 'READY') reasons.push('acquisition-not-ready');
   if (kind === 'STANDARD' && currency !== 'COIN') reasons.push('standard-currency-must-be-coin');
   if (kind === 'COSMETIC' && currency !== 'MANII') reasons.push('cosmetic-currency-must-be-manii');
+  if (kind === 'SUPPLY' && currency !== 'MANII') reasons.push('supply-currency-must-be-manii');
 
   if (reasons.length) return {ok:false, reasons:[...new Set(reasons)].sort(), item:null};
   return {
     ok:true,
     reasons:[],
     item:Object.freeze({
-      identity:`product:${productId}`,
+      identity:'product:' + productId,
       productId,
       source:'FORMAL_CATALOG',
       kind,
       title,
       imageAssetId,
+      imageUrl,
+      targetUseSite,
+      targetPartnerId,
       currency,
       currencyDisplayName:CURRENCY_DISPLAY[currency],
       price,
@@ -61,14 +68,13 @@ function projectFormalCatalog(items) {
   for (const raw of items) {
     const rawKind = token(raw?.kind, 32);
     if (rawKind && NON_MERCHANDISE_KINDS.has(rawKind)) continue;
-
     const result = projectStandardItem(raw);
     if (!result.ok) {
-      const key = token(raw?.productId, 128) ?? 'unknown';
-      reasons.push(...result.reasons.map((reason)=>`${key}:${reason}`));
+      const key = token(raw?.productId, 128) || 'unknown';
+      reasons.push(...result.reasons.map((reason)=>key + ':' + reason));
       continue;
     }
-    if (identities.has(result.item.identity)) reasons.push(`duplicate:${result.item.identity}`);
+    if (identities.has(result.item.identity)) reasons.push('duplicate:' + result.item.identity);
     identities.add(result.item.identity);
     projected.push(result.item);
   }
@@ -84,14 +90,17 @@ function projectFanArtItems(works) {
   if (!catalog.visible) return Object.freeze({visible:false, items:Object.freeze([]), reasons:catalog.reasons});
 
   const items = catalog.items.map((item)=>Object.freeze({
-    identity:`fanart:${item.workId}@${item.workVersion}`,
+    identity:'fanart:' + item.workId + '@' + item.workVersion,
     productId:item.acquisition.productId,
     source:'FANART',
     kind:'FANART',
     title:item.title,
     creatorDisplayName:item.creatorDisplayName,
-    targetCardId:item.targetCardId,
+    targetCardId:item.targetCardId || null,
+    targetUseSite:item.targetUseSite || null,
+    targetPartnerId:item.targetPartnerId || null,
     imageAssetId:item.imageAssetId,
+    imageUrl:item.imageUrl || null,
     currency:item.acquisition.currency,
     currencyDisplayName:item.acquisition.currencyDisplayName,
     price:item.acquisition.price,
@@ -105,13 +114,15 @@ export function projectShopLiveCatalog({formalCatalogItems = [], approvedFanArtW
   const fanart = projectFanArtItems(approvedFanArtWorks);
   const standard = formal.items.filter((item)=>item.kind === 'STANDARD');
   const cosmetics = formal.items.filter((item)=>item.kind === 'COSMETIC');
-  const visibleItems = [...standard, ...cosmetics, ...fanart.items];
+  const supplies = formal.items.filter((item)=>item.kind === 'SUPPLY');
+  const visibleItems = [...standard, ...cosmetics, ...supplies, ...fanart.items];
 
   return Object.freeze({
     schema:SHOP_LIVE_CATALOG_SCHEMA,
     sections:Object.freeze([
       Object.freeze({id:'standard', title:'商品', visible:standard.length > 0, items:Object.freeze(standard)}),
       Object.freeze({id:'cosmetics', title:'外観', visible:cosmetics.length > 0, items:Object.freeze(cosmetics)}),
+      Object.freeze({id:'supplies', title:'サプライ', visible:supplies.length > 0, items:Object.freeze(supplies)}),
       Object.freeze({id:'fanart', title:'ファンアート', visible:fanart.visible, items:fanart.items}),
     ]),
     visible:visibleItems.length > 0,
@@ -132,22 +143,48 @@ function appendText(documentSource, parent, tagName, className, text) {
   return node;
 }
 
-function renderItem(documentSource, grid, item, onAcquireRequest) {
+function renderItem(documentSource, grid, item, onAcquireRequest, getAcquireState) {
   const card = documentSource.createElement('article');
   card.className = 'shopCard shopLiveCatalogCard';
   card.dataset.shopItemIdentity = item.identity;
   card.dataset.shopItemKind = item.kind;
   appendText(documentSource, card, 'div', 'k', item.kind === 'FANART' ? 'FAN ART' : item.kind);
+  if (item.imageUrl) {
+    const image = documentSource.createElement('img');
+    image.className = 'shopLiveCatalogImage';
+    image.src = item.imageUrl;
+    image.alt = item.title;
+    image.loading = 'lazy';
+    card.appendChild(image);
+  }
   appendText(documentSource, card, 'h3', 'shopLiveCatalogTitle', item.title);
-  if (item.creatorDisplayName) appendText(documentSource, card, 'p', 'shopLiveCatalogCreator', `作者 ${item.creatorDisplayName}`);
-  appendText(documentSource, card, 'div', 'shopLiveCatalogPrice', `${item.price} ${item.currencyDisplayName}`);
-  const button = appendText(documentSource, card, 'button', 'shopLiveCatalogAcquire', '取得する');
+  if (item.creatorDisplayName) appendText(documentSource, card, 'p', 'shopLiveCatalogCreator', '作者 ' + item.creatorDisplayName);
+  if (item.targetUseSite === 'CARD_SLEEVE') {
+    appendText(documentSource, card, 'p', 'shopLiveCatalogUseSite', '使用先：サースナーのカードスリーブ');
+  }
+  appendText(documentSource, card, 'div', 'shopLiveCatalogPrice', item.price + ' ' + item.currencyDisplayName);
+  let acquireState = typeof onAcquireRequest === 'function' ? 'ready' : 'unavailable';
+  if (typeof getAcquireState === 'function') {
+    try {
+      const state = getAcquireState(item.productId, item);
+      if (state && typeof state.state === 'string') acquireState = state.state;
+    } catch {
+      acquireState = 'unavailable';
+    }
+  }
+  const buttonLabel = acquireState === 'owned'
+    ? '所有済み'
+    : acquireState === 'insufficient'
+      ? 'マニィ不足'
+      : acquireState === 'ready'
+        ? '取得する'
+        : '取得不可';
+  const button = appendText(documentSource, card, 'button', 'shopLiveCatalogAcquire', buttonLabel);
   button.type = 'button';
   button.dataset.shopProductId = item.productId;
-  const acquireReady = typeof onAcquireRequest === 'function';
-  button.disabled = !acquireReady;
-  button.dataset.shopAcquireState = acquireReady ? 'ready' : 'unavailable';
-  if (acquireReady) {
+  button.dataset.shopAcquireState = acquireState;
+  button.disabled = acquireState !== 'ready' || typeof onAcquireRequest !== 'function';
+  if (!button.disabled) {
     button.addEventListener('click', ()=>{
       onAcquireRequest(Object.freeze({
         productId:item.productId,
@@ -164,11 +201,13 @@ export function mountShopLiveCatalogRuntime({
   formalCatalogItems = [],
   approvedFanArtWorks = [],
   onAcquireRequest = null,
+  getAcquireState = null,
 } = {}) {
   if (!host || typeof host.replaceChildren !== 'function') throw new Error('host must support replaceChildren');
   const documentSource = host.ownerDocument ?? globalThis.document;
   if (!documentSource || typeof documentSource.createElement !== 'function') throw new Error('document source unavailable');
   if (onAcquireRequest != null && typeof onAcquireRequest !== 'function') throw new Error('onAcquireRequest must be a function or null');
+  if (getAcquireState != null && typeof getAcquireState !== 'function') throw new Error('getAcquireState must be a function or null');
 
   const projection = projectShopLiveCatalog({formalCatalogItems, approvedFanArtWorks});
   const fragment = documentSource.createDocumentFragment?.() ?? documentSource.createElement('div');
@@ -182,11 +221,11 @@ export function mountShopLiveCatalogRuntime({
     for (const section of projection.sections) {
       if (!section.visible) continue;
       const sectionNode = documentSource.createElement('section');
-      sectionNode.className = `shopLiveCatalogSection shopLiveCatalogSection-${section.id}`;
+      sectionNode.className = 'shopLiveCatalogSection shopLiveCatalogSection-' + section.id;
       appendText(documentSource, sectionNode, 'h2', 'shopLiveCatalogSectionTitle', section.title);
       const grid = documentSource.createElement('div');
       grid.className = 'shopGrid shopLiveCatalogGrid';
-      for (const item of section.items) renderItem(documentSource, grid, item, onAcquireRequest);
+      for (const item of section.items) renderItem(documentSource, grid, item, onAcquireRequest, getAcquireState);
       sectionNode.appendChild(grid);
       shell.appendChild(sectionNode);
     }

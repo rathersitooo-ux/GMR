@@ -411,21 +411,37 @@ test('Boot normal/reduced/lowPerf variants keep the same semantic state and acti
 
 const liveSlidepadRoutes = ['setup', 'shop', 'partner', 'characters', 'cards'];
 
-test('Home runtime removes the retired visual layer together with duplicate legacy controls', () => {
+test('Home runtime removes retired legacy controls and residual empty chrome containers', () => {
   const removed = [];
   const legacyLayer = { remove: () => removed.push('visual') };
   const battleCta = { remove: () => removed.push('battle') };
   const partnerChip = { remove: () => removed.push('partner') };
+  const leftRail = { remove: () => removed.push('left-rail') };
+  const rightRail = { remove: () => removed.push('right-rail') };
+  const centerStage = { remove: () => removed.push('center-stage') };
+  const utilities = { remove: () => removed.push('utilities') };
   const home = {
     querySelectorAll(selector) {
       if (selector === '#codexHomeVisualLayer' || selector === '.codexHomeVisualLayer') return [legacyLayer];
       if (selector === '#codexHomeBattleCta' || selector === '.codexBattleCta') return [battleCta];
       if (selector === '#codexHomePartnerChip' || selector === '.codexPartnerChip') return [partnerChip];
+      if (selector === '.codexHomeLeftRail') return [leftRail];
+      if (selector === '.codexHomeRightRail') return [rightRail];
+      if (selector === '.codexHomeCenterStage') return [centerStage];
+      if (selector === '.codexHomeUtilities') return [utilities];
       return [];
     },
   };
-  assert.equal(removeLegacyHomeNodes(home), 3);
-  assert.deepEqual(removed.sort(), ['battle', 'partner', 'visual']);
+  assert.equal(removeLegacyHomeNodes(home), 7);
+  assert.deepEqual(removed.sort(), [
+    'battle',
+    'center-stage',
+    'left-rail',
+    'partner',
+    'right-rail',
+    'utilities',
+    'visual',
+  ]);
 });
 
 test('Home compatibility direction map keeps the four fixed responsibilities for non-pointer input', () => {

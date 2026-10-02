@@ -562,6 +562,21 @@ test('Cards local skin object URLs are owned per rendered surface instead of per
   assert.ok(slice.includes('for (const node of [...urls.keys()]) if (!liveNodes.has(node)) revoke(node)'));
 });
 
+test('Cards local skin database connection is reused and closes on schema version change', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('const fanartDbPromises = new WeakMap()');
+  const end = source.indexOf('function fanartRequest', start);
+  const slice = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.ok(slice.includes('const cached = fanartDbPromises.get(idb)'));
+  assert.ok(slice.includes('if (cached) return cached'));
+  assert.ok(slice.includes('fanartDbPromises.set(idb, pending)'));
+  assert.ok(slice.includes('db.onversionchange = () =>'));
+  assert.ok(slice.includes('db.close?.()'));
+  assert.ok(slice.includes("request.onblocked = () =>"));
+});
+
 test('Cards local skin consumer fails closed without a Cards document and has no transport fallback', async () => {
   const { readFile } = await import('node:fs/promises');
   const mod = await import('../browser/cards-deck-presentation.mjs');

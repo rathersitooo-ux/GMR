@@ -11,6 +11,7 @@ import {
 const deckStorageLiveInstallations = new WeakMap();
 const cardsDeckFindabilityInstallations = new WeakMap();
 const cardsInspectorDismissInstallations = new WeakMap();
+const cardsInspectorDeckContextInstallations = new WeakMap();
 const cardsVoteUiRepairInstallations = new WeakMap();
 const cardsSelectionFeedbackInstallations = new WeakMap();
 const CARDS_FAVORITE_STORAGE_KEY = 'gameroad.cards.favorite.v1';
@@ -1104,6 +1105,107 @@ export function installDeckStorageLiveMount({
   return installation;
 }
 
+function compactCardsInspectorContextText(value, maxLength = 80) {
+  const text = String(value ?? '').replace(/\s+/g, ' ').trim();
+  return text && text.length <= maxLength ? text : null;
+}
+
+export function readCardsInspectorDeckContext(documentSource = globalThis.document) {
+  if (!documentSource?.querySelector) return null;
+  const title = compactCardsInspectorContextText(
+    documentSource.querySelector('#deckBoardTitle')?.textContent,
+    48,
+  );
+  const count = compactCardsInspectorContextText(
+    documentSource.querySelector('#r4TrayCount')?.textContent
+      ?? documentSource.querySelector('#r4DeckTotal')?.textContent,
+    32,
+  );
+  const saveState = compactCardsInspectorContextText(
+    documentSource.querySelector('#deckSaveState')?.textContent
+      ?? documentSource.querySelector('#r4TrayState')?.textContent,
+    32,
+  );
+  if (!title || !count || !saveState) return null;
+  return Object.freeze({ title, count, saveState });
+}
+
+export function installCardsInspectorDeckContext({
+  document: doc = globalThis.document,
+  window: win = globalThis.window,
+} = {}) {
+  if (!doc?.querySelector || !doc?.createElement) return Object.freeze({ render() { return null; }, destroy() {} });
+  const existing = cardsInspectorDeckContextInstallations.get(doc);
+  if (existing) return existing;
+
+  const preview = doc.querySelector('section[data-screen="cards"] .cardPreview')
+    ?? doc.querySelector('.screen.cards .cardPreview');
+  const copy = preview?.querySelector?.('.r4PreviewCopy');
+  const addState = copy?.querySelector?.('.deckAddState');
+  if (!preview || !copy || !addState) return Object.freeze({ render() { return null; }, destroy() {} });
+
+  let host = copy.querySelector?.('[data-role="cards-inspector-deck-context"]') ?? null;
+  const ownsHost = !host;
+  if (!host) {
+    host = doc.createElement('div');
+    host.dataset.role = 'cards-inspector-deck-context';
+    host.setAttribute?.('aria-label', '編集中の札組');
+    host.innerHTML = '<span class="cardsInspectorDeckContextLabel">編集中の札組</span><b data-role="cards-inspector-deck-title"></b><span data-role="cards-inspector-deck-count"></span><span data-role="cards-inspector-deck-save"></span>';
+    addState.before?.(host);
+    if (!host.parentNode && typeof copy.insertBefore === 'function') copy.insertBefore(host, addState);
+  }
+
+  if (!doc.getElementById?.('gameroad-cards-inspector-deck-context-style')) {
+    const style = doc.createElement('style');
+    style.id = 'gameroad-cards-inspector-deck-context-style';
+    style.textContent = '[data-role="cards-inspector-deck-context"]{display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:5px 8px;margin:7px 0 1px;padding:7px 8px;border:1px solid rgba(19,27,24,.14);border-radius:8px;background:rgba(19,27,24,.055);color:#27302d;font:700 10px/1.2 system-ui}[data-role="cards-inspector-deck-context"][hidden]{display:none}.cardsInspectorDeckContextLabel{font-size:8px;letter-spacing:.08em;color:#746b57}[data-role="cards-inspector-deck-title"]{font-size:11px;color:#151a18}[data-role="cards-inspector-deck-count"]{color:#4f5b56}[data-role="cards-inspector-deck-save"]{justify-self:end;padding:3px 6px;border-radius:999px;background:rgba(19,27,24,.08);color:#55605b}@media(max-width:720px){[data-role="cards-inspector-deck-context"]{position:sticky;bottom:0;z-index:2;grid-template-columns:auto 1fr auto;margin:6px 0 0;padding:8px;background:rgba(240,238,229,.96);backdrop-filter:blur(6px)}.cardsInspectorDeckContextLabel{grid-column:1/-1}[data-role="cards-inspector-deck-save"]{justify-self:end}}@media(prefers-reduced-motion:reduce){[data-role="cards-inspector-deck-context"]{backdrop-filter:none}}';
+    (doc.head ?? doc.documentElement)?.appendChild?.(style);
+  }
+
+  const titleNode = host.querySelector?.('[data-role="cards-inspector-deck-title"]');
+  const countNode = host.querySelector?.('[data-role="cards-inspector-deck-count"]');
+  const saveNode = host.querySelector?.('[data-role="cards-inspector-deck-save"]');
+  const render = () => {
+    const context = readCardsInspectorDeckContext(doc);
+    host.hidden = !context;
+    if (!context) return null;
+    if (titleNode) titleNode.textContent = context.title;
+    if (countNode) countNode.textContent = context.count;
+    if (saveNode) saveNode.textContent = context.saveState;
+    return context;
+  };
+
+  const MutationObserverCtor = win?.MutationObserver ?? globalThis.MutationObserver;
+  const observer = typeof MutationObserverCtor === 'function'
+    ? new MutationObserverCtor(render)
+    : null;
+  for (const source of [
+    doc.querySelector('#deckBoardTitle'),
+    doc.querySelector('#r4TrayCount'),
+    doc.querySelector('#r4DeckTotal'),
+    doc.querySelector('#deckSaveState'),
+    doc.querySelector('#r4TrayState'),
+  ]) {
+    if (source) observer?.observe?.(source, { childList: true, characterData: true, subtree: true });
+  }
+  render();
+
+  let destroyed = false;
+  const installation = Object.freeze({
+    render,
+    state: () => readCardsInspectorDeckContext(doc),
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      observer?.disconnect?.();
+      if (ownsHost) host.remove?.();
+      cardsInspectorDeckContextInstallations.delete(doc);
+    },
+  });
+  cardsInspectorDeckContextInstallations.set(doc, installation);
+  return installation;
+}
+
 function resolveOpenCardsInspector(doc) {
   const screen = cardsScreen(doc);
   if (!screen || !screen.classList?.contains?.('active') || screen.dataset?.inspector !== 'open') return null;
@@ -1301,6 +1403,7 @@ if (typeof document !== 'undefined') {
   autoInstallCardsDeckFindability(document, globalThis.window);
   installCardsSelectionPressReleaseFeedback({ document, window: globalThis.window });
   installCardsVoteUiRepair({ document, window: globalThis.window });
+  installCardsInspectorDeckContext({ document, window: globalThis.window });
   installCardsInspectorDismissInteractions({ document });
 }
 

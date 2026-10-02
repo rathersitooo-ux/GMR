@@ -144,6 +144,44 @@ class CurrentBridgeTests(unittest.TestCase):
                 packet(doNotChange=["browser/example.mjs", "browser/other.mjs"])
             )
 
+    def test_typed_acceptance_checks_validate_exact_focused_test_target(self):
+        checked = bridge.validate_packet(
+            packet(
+                acceptanceChecks=[
+                    {
+                        "id": "unit",
+                        "kind": "focused_test",
+                        "description": "Focused test passes.",
+                        "required": True,
+                        "target": "tests/example.test.mjs",
+                    },
+                    {
+                        "id": "runtime",
+                        "kind": "runtime_evidence",
+                        "description": "Player route is visibly correct.",
+                        "required": True,
+                        "target": "/play",
+                    },
+                ]
+            )
+        )
+        self.assertEqual(checked["acceptanceChecks"][0]["kind"], "focused_test")
+        with self.assertRaisesRegex(
+            bridge.BridgeError, "acceptanceCheck_focused_test_not_mutable"
+        ):
+            bridge.validate_packet(
+                packet(
+                    acceptanceChecks=[
+                        {
+                            "id": "bad",
+                            "kind": "focused_test",
+                            "description": "Wrong test.",
+                            "target": "tests/not-owned.test.mjs",
+                        }
+                    ]
+                )
+            )
+
     def test_issue_contains_bounded_packet_not_secret_or_current_mirror(self):
         title, body = bridge.build_executor_issue(packet())
         self.assertTrue(title.startswith("[EXECUTOR]"))
@@ -322,16 +360,99 @@ class CurrentBridgeTests(unittest.TestCase):
         self.assertEqual(manifest["leaseScope"], MUTABLE)
         self.assertIn("browser/example.mjs", manifest["leaseExactMutableResources"])
         receipt = manifest["acceptanceEvidenceReceipt"]
-        self.assertEqual(receipt["criteria"], packet()["acceptance"])
-        self.assertEqual(receipt["focusedTests"], ["tests/example.test.mjs"])
+        self.assertEqual(receipt["schemaVersion"], "gameroad-acceptance-evidence-v1")
+        self.assertEqual(receipt["mode"], "LEGACY_COMPAT")
         self.assertEqual(receipt["executorWorkflowRun"], 9)
-        self.assertEqual(receipt["evidenceClaim"], "focused-tests:PASS")
-        self.assertEqual(receipt["semanticCoverage"], "NOT_INFERRED_FROM_TEST_PASS")
+        self.assertEqual(receipt["checks"][0]["kind"], "focused_test")
+        self.assertEqual(receipt["checks"][0]["state"], "PASS")
+        legacy_checks = [
+            check for check in receipt["checks"] if check["kind"] == "legacy_untyped"
+        ]
+        self.assertEqual(len(legacy_checks), 2)
+        self.assertTrue(all(check["state"] == "UNRUN" for check in legacy_checks))
+        self.assertFalse(receipt["allRequiredPass"])
+        self.assertFalse(receipt["productCompletionClaimAllowed"])
         self.assertTrue(
             manifest["proceedToken"].startswith(
                 f"PROCEED|{manifest['recordId']}|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|"
             )
         )
+
+    def test_acceptance_receipt_requires_concrete_executor_workflow_run(self):
+        p = bridge.validate_packet(packet())
+        with self.assertRaisesRegex(
+            bridge.BridgeError, "acceptance_evidence_workflow_run_required"
+        ):
+            bridge.build_acceptance_evidence_receipt(p, None)
+
+    def test_typed_acceptance_receipt_passes_only_executed_focused_test(self):
+        p = bridge.validate_packet(
+            packet(
+                acceptanceChecks=[
+                    {
+                        "id": "unit",
+                        "kind": "focused_test",
+                        "description": "Focused test passes.",
+                        "required": True,
+                        "target": "tests/example.test.mjs",
+                    },
+                    {
+                        "id": "runtime",
+                        "kind": "runtime_evidence",
+                        "description": "Player route is visibly correct.",
+                        "required": True,
+                        "target": "/play",
+                    },
+                    {
+                        "id": "human",
+                        "kind": "human_review",
+                        "description": "Human reviewer accepts presentation.",
+                        "required": False,
+                    },
+                    {
+                        "id": "external",
+                        "kind": "external_evidence",
+                        "description": "External deployment probe succeeds.",
+                        "required": True,
+                        "target": "public-deploy",
+                    },
+                ]
+            )
+        )
+        receipt = bridge.build_acceptance_evidence_receipt(p, 9)
+        states = {check["id"]: check["state"] for check in receipt["checks"]}
+        self.assertEqual(states["unit"], "PASS")
+        self.assertEqual(states["runtime"], "UNRUN")
+        self.assertEqual(states["human"], "UNRUN")
+        self.assertEqual(states["external"], "UNRUN")
+        self.assertEqual(receipt["requiredSummary"], {"pass": 1, "unrun": 2})
+        self.assertFalse(receipt["allRequiredPass"])
+        self.assertFalse(receipt["productCompletionClaimAllowed"])
+
+    def test_typed_acceptance_receipt_allows_completion_only_when_all_required_checks_pass(self):
+        p = bridge.validate_packet(
+            packet(
+                acceptanceChecks=[
+                    {
+                        "id": "unit",
+                        "kind": "focused_test",
+                        "description": "Focused test passes.",
+                        "required": True,
+                        "target": "tests/example.test.mjs",
+                    },
+                    {
+                        "id": "human-optional",
+                        "kind": "human_review",
+                        "description": "Optional human review.",
+                        "required": False,
+                    },
+                ]
+            )
+        )
+        receipt = bridge.build_acceptance_evidence_receipt(p, 9)
+        self.assertEqual(receipt["requiredSummary"], {"pass": 1, "unrun": 0})
+        self.assertTrue(receipt["allRequiredPass"])
+        self.assertTrue(receipt["productCompletionClaimAllowed"])
 
     def test_candidate_rename_deletes_previous_path_and_adds_new_blob(self):
         rename_packet = packet(

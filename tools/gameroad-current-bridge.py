@@ -51,6 +51,13 @@ CONTROL_PLANE_EXACT = {
     ".github/workflows/gameroad-required-gate.yml",
     "tools/preaction-authorization-validator.mjs",
 }
+ACCEPTANCE_KINDS = {
+    "focused_test",
+    "runtime_evidence",
+    "human_review",
+    "external_evidence",
+}
+ACCEPTANCE_CHECK_KEYS = {"id", "kind", "description", "required", "target"}
 REQUIRED_PACKET_KEYS = {
     "schemaVersion",
     "kind",
@@ -108,6 +115,56 @@ def _string_list(value: Any, key: str) -> list[str]:
     return [item.strip() for item in value]
 
 
+def _acceptance_checks(value: Any, resources: list[str]) -> list[dict[str, Any]]:
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise BridgeError("invalid_acceptanceChecks")
+    if len(value) > 64:
+        raise BridgeError("acceptanceChecks_too_many")
+    seen: set[str] = set()
+    cleaned: list[dict[str, Any]] = []
+    for index, item in enumerate(value):
+        if not isinstance(item, dict):
+            raise BridgeError(f"acceptanceCheck_not_object:{index}")
+        unknown = sorted(set(item) - ACCEPTANCE_CHECK_KEYS)
+        if unknown:
+            raise BridgeError(f"acceptanceCheck_unknown_key:{index}:{','.join(unknown)}")
+        check_id = str(item.get("id", "")).strip()
+        kind = str(item.get("kind", "")).strip()
+        description = str(item.get("description", "")).strip()
+        target = str(item.get("target", "") or "").strip()
+        required = item.get("required", True)
+        if not check_id or len(check_id) > 160:
+            raise BridgeError(f"acceptanceCheck_invalid_id:{index}")
+        if check_id in seen:
+            raise BridgeError(f"acceptanceCheck_duplicate_id:{check_id}")
+        seen.add(check_id)
+        if kind not in ACCEPTANCE_KINDS:
+            raise BridgeError(f"acceptanceCheck_invalid_kind:{index}")
+        if not description or len(description) > 1200:
+            raise BridgeError(f"acceptanceCheck_invalid_description:{index}")
+        if not isinstance(required, bool):
+            raise BridgeError(f"acceptanceCheck_invalid_required:{index}")
+        if len(target) > 1200:
+            raise BridgeError(f"acceptanceCheck_invalid_target:{index}")
+        if kind == "focused_test":
+            if not (target.startswith("tests/") and target.endswith(".test.mjs")):
+                raise BridgeError(f"acceptanceCheck_invalid_focused_test_target:{index}")
+            if target not in resources:
+                raise BridgeError(f"acceptanceCheck_focused_test_not_mutable:{target}")
+        cleaned.append(
+            {
+                "id": check_id,
+                "kind": kind,
+                "description": description,
+                "required": required,
+                "target": target,
+            }
+        )
+    return cleaned
+
+
 def validate_packet(packet: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(packet, dict):
         raise BridgeError("packet_not_object")
@@ -142,6 +199,7 @@ def validate_packet(packet: dict[str, Any]) -> dict[str, Any]:
     acceptance = _string_list(packet.get("acceptance"), "acceptance")
     if not acceptance:
         raise BridgeError("acceptance_required")
+    packet["acceptanceChecks"] = _acceptance_checks(packet.get("acceptanceChecks"), resources)
     if "FREE_LOCAL_CODER" not in str(packet.get("executorCapabilityHint", "")):
         raise BridgeError("free_local_coder_opt_in_required")
     return packet
@@ -960,6 +1018,84 @@ def _preaction_record_id(acquire_key: str) -> str:
     return f"PCADOPT-{acquire_key}"
 
 
+def build_acceptance_evidence_receipt(
+    packet: dict[str, Any], candidate_workflow_run: int | None
+) -> dict[str, Any]:
+    if not isinstance(candidate_workflow_run, int) or candidate_workflow_run <= 0:
+        raise BridgeError("acceptance_evidence_workflow_run_required")
+    typed_checks = list(packet.get("acceptanceChecks") or [])
+    mode = "TYPED" if typed_checks else "LEGACY_COMPAT"
+    if typed_checks:
+        source_checks = typed_checks
+    else:
+        source_checks = [
+            {
+                "id": f"legacy-focused-test:{path}",
+                "kind": "focused_test",
+                "description": f"Focused test passes: {path}",
+                "required": True,
+                "target": path,
+            }
+            for path in packet["exactMutableResources"]
+            if path.startswith("tests/") and path.endswith(".test.mjs")
+        ]
+        source_checks.extend(
+            {
+                "id": f"legacy-untyped:{index + 1}",
+                "kind": "legacy_untyped",
+                "description": criterion,
+                "required": True,
+                "target": "",
+            }
+            for index, criterion in enumerate(packet["acceptance"])
+        )
+
+    checks: list[dict[str, Any]] = []
+    required_pass = 0
+    required_unrun = 0
+    for check in source_checks:
+        kind = check["kind"]
+        if kind == "focused_test":
+            state = "PASS"
+            evidence_refs = [
+                "focused-tests:PASS",
+                f"workflow-run:{candidate_workflow_run}",
+                f"test:{check['target']}",
+            ]
+            verification = "PROVIDER_BACKED_EXECUTOR_FOCUSED_TEST_RUN"
+        else:
+            state = "UNRUN"
+            evidence_refs = []
+            verification = "SEPARATE_EVIDENCE_REQUIRED"
+        if check["required"]:
+            if state == "PASS":
+                required_pass += 1
+            else:
+                required_unrun += 1
+        checks.append(
+            {
+                **check,
+                "state": state,
+                "evidenceRefs": evidence_refs,
+                "verification": verification,
+            }
+        )
+
+    return {
+        "schemaVersion": "gameroad-acceptance-evidence-v1",
+        "mode": mode,
+        "executorWorkflowRun": candidate_workflow_run,
+        "checks": checks,
+        "requiredSummary": {
+            "pass": required_pass,
+            "unrun": required_unrun,
+        },
+        "allRequiredPass": required_unrun == 0,
+        "productCompletionClaimAllowed": required_unrun == 0,
+        "rule": "UNRUN/PENDING/FAIL are never promoted to PASS by focused-test success.",
+    }
+
+
 def build_adoption_manifest(
     packet: dict[str, Any],
     lease: dict[str, str],
@@ -1010,17 +1146,9 @@ def build_adoption_manifest(
             "fresh CURRENT_ACTIVE_LEASES readback immediately before adoption",
             "existing GAMEROAD Required Gate and auto-merge remain authoritative",
         ],
-        "acceptanceEvidenceReceipt": {
-            "criteria": list(packet["acceptance"]),
-            "focusedTests": [
-                path
-                for path in packet["exactMutableResources"]
-                if path.startswith("tests/") and path.endswith(".test.mjs")
-            ],
-            "executorWorkflowRun": candidate_workflow_run,
-            "evidenceClaim": "focused-tests:PASS",
-            "semanticCoverage": "NOT_INFERRED_FROM_TEST_PASS",
-        },
+        "acceptanceEvidenceReceipt": build_acceptance_evidence_receipt(
+            packet, candidate_workflow_run
+        ),
     }
     return path, manifest
 

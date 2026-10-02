@@ -62,6 +62,82 @@ test('preserves an optional ordered procedure', () => {
   assert.deepEqual(checked.packet.procedure, ['Read input.', 'Apply patch.', 'Run check.']);
 });
 
+test('keeps legacy acceptance compatible with no typed checks', () => {
+  const checked = normalizeQueuePacket(queue());
+  assert.equal(checked.ok, true);
+  assert.deepEqual(checked.packet.acceptanceChecks, []);
+});
+
+test('normalizes typed acceptance checks without inferring evidence state', () => {
+  const checked = normalizeQueuePacket(queue({
+    exactMutableResources: ['path/a', 'tests/example.test.mjs'],
+    acceptanceChecks: [
+      {
+        id: 'unit',
+        kind: 'focused_test',
+        description: 'Focused unit test passes.',
+        target: 'tests/example.test.mjs',
+      },
+      {
+        id: 'player-route',
+        kind: 'runtime_evidence',
+        description: 'Player route is visibly correct.',
+        required: true,
+        target: '/play',
+      },
+      {
+        id: 'review',
+        kind: 'human_review',
+        description: 'Human review accepts the change.',
+        required: false,
+      },
+    ],
+  }));
+  assert.equal(checked.ok, true);
+  assert.deepEqual(checked.packet.acceptanceChecks, [
+    {
+      id: 'unit',
+      kind: 'focused_test',
+      description: 'Focused unit test passes.',
+      required: true,
+      target: 'tests/example.test.mjs',
+    },
+    {
+      id: 'player-route',
+      kind: 'runtime_evidence',
+      description: 'Player route is visibly correct.',
+      required: true,
+      target: '/play',
+    },
+    {
+      id: 'review',
+      kind: 'human_review',
+      description: 'Human review accepts the change.',
+      required: false,
+      target: '',
+    },
+  ]);
+});
+
+test('rejects malformed typed acceptance checks', () => {
+  const base = {
+    exactMutableResources: ['path/a', 'tests/example.test.mjs'],
+  };
+  for (const acceptanceChecks of [
+    [{ id: 'x', kind: 'focused_test', description: 'x', target: 'tests/missing.test.mjs' }],
+    [{ id: 'x', kind: 'unknown', description: 'x' }],
+    [{ id: 'x', kind: 'human_review', description: 'x', required: 'yes' }],
+    [
+      { id: 'dup', kind: 'human_review', description: 'x' },
+      { id: 'dup', kind: 'external_evidence', description: 'y' },
+    ],
+    [{ id: 'x', kind: 'human_review', description: 'x', command: 'echo nope' }],
+  ]) {
+    const checked = normalizeQueuePacket(queue({ ...base, acceptanceChecks }));
+    assert.equal(checked.ok, false, JSON.stringify(acceptanceChecks));
+  }
+});
+
 test('rejects queue packet without mutable resources', () => {
   const checked = normalizeQueuePacket(queue({ exactMutableResources: [] }));
   assert.equal(checked.ok, false);

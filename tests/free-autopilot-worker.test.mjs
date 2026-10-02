@@ -69,6 +69,36 @@ test('parses normal executor bus issue body', () => {
   assert.equal(result.packet.acquireKey, 'ACQ-1');
 });
 
+test('buildPrompt includes typed acceptance without claiming evidence state', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'free-autopilot-typed-'));
+  fs.mkdirSync(path.join(root, 'browser'));
+  fs.mkdirSync(path.join(root, 'tests'));
+  fs.writeFileSync(path.join(root, 'browser/example.mjs'), 'export const value = 1;\n');
+  fs.writeFileSync(path.join(root, 'tests/example.test.mjs'), 'test placeholder\n');
+  const prompt = buildPrompt(packet({
+    acceptanceChecks: [
+      {
+        id: 'unit',
+        kind: 'focused_test',
+        description: 'Focused test passes.',
+        target: 'tests/example.test.mjs',
+        required: true,
+      },
+      {
+        id: 'runtime',
+        kind: 'runtime_evidence',
+        description: 'Player route is visually correct.',
+        target: '/play',
+        required: true,
+      },
+    ],
+  }), root);
+  assert.match(prompt, /TYPED_ACCEPTANCE_CHECKS:/);
+  assert.match(prompt, /\[focused_test\] id=unit required=true target=tests\/example\.test\.mjs/);
+  assert.match(prompt, /\[runtime_evidence\] id=runtime required=true target=\/play/);
+  assert.doesNotMatch(prompt, /runtime.*PASS/i);
+});
+
 test('buildPrompt includes ordered procedure and bounded context', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'free-autopilot-'));
   fs.mkdirSync(path.join(root, 'browser'));

@@ -7,6 +7,13 @@ const MAX_TEXT = 8000;
 const MAX_ITEM = 1200;
 const MAX_LIST = 64;
 const RESULT_STATUSES = new Set(['RETURNED', 'BLOCKED', 'NO_CHANGE', 'FAILED']);
+export const ACCEPTANCE_KINDS = new Set([
+  'focused_test',
+  'runtime_evidence',
+  'human_review',
+  'external_evidence',
+]);
+const ACCEPTANCE_CHECK_KEYS = new Set(['id', 'kind', 'description', 'required', 'target']);
 const FORBIDDEN_KEYS = new Set([
   'command', 'commands', 'shell', 'script', 'run', 'exec', 'password', 'secret', 'secrets',
   'token', 'apiKey', 'api_key', 'credential', 'credentials', 'privateKey', 'private_key',
@@ -40,6 +47,42 @@ function rejectForbiddenKeys(object) {
   for (const key of Object.keys(object)) {
     if (FORBIDDEN_KEYS.has(key)) throw new Error(`forbidden_key:${key}`);
   }
+}
+
+function cleanAcceptanceChecks(value, exactMutableResources) {
+  if (value == null) return [];
+  if (!Array.isArray(value)) throw new Error('acceptanceChecks_must_be_array');
+  if (value.length > MAX_LIST) throw new Error('acceptanceChecks_too_many');
+  const seen = new Set();
+  return value.map((item, index) => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      throw new Error(`acceptanceChecks_${index}_must_be_object`);
+    }
+    rejectForbiddenKeys(item);
+    for (const key of Object.keys(item)) {
+      if (!ACCEPTANCE_CHECK_KEYS.has(key)) {
+        throw new Error(`acceptanceChecks_${index}_unknown_key:${key}`);
+      }
+    }
+    const id = cleanString(item.id, `acceptanceChecks_${index}_id`, { max: 160 });
+    if (seen.has(id)) throw new Error(`acceptanceChecks_duplicate_id:${id}`);
+    seen.add(id);
+    const kind = cleanString(item.kind, `acceptanceChecks_${index}_kind`, { max: 40 });
+    if (!ACCEPTANCE_KINDS.has(kind)) throw new Error(`acceptanceChecks_${index}_kind_invalid`);
+    const description = cleanString(item.description, `acceptanceChecks_${index}_description`, { max: MAX_ITEM });
+    const required = item.required == null ? true : item.required;
+    if (typeof required !== 'boolean') throw new Error(`acceptanceChecks_${index}_required_must_be_boolean`);
+    const target = cleanString(item.target ?? '', `acceptanceChecks_${index}_target`, { max: MAX_ITEM, optional: true });
+    if (kind === 'focused_test') {
+      if (!target.startsWith('tests/') || !target.endsWith('.test.mjs')) {
+        throw new Error(`acceptanceChecks_${index}_focused_test_target_invalid`);
+      }
+      if (!exactMutableResources.includes(target)) {
+        throw new Error(`acceptanceChecks_${index}_focused_test_target_not_mutable`);
+      }
+    }
+    return { id, kind, description, required, target };
+  });
 }
 
 export function parseFencedJson(text, fenceName) {
@@ -76,9 +119,11 @@ export function normalizeQueuePacket(input) {
       userEndState: cleanString(input.userEndState, 'userEndState'),
       realOutputTarget: cleanString(input.realOutputTarget, 'realOutputTarget'),
       acceptance: cleanList(input.acceptance, 'acceptance', { required: true }),
+      acceptanceChecks: [],
       resumeCondition: cleanString(input.resumeCondition, 'resumeCondition'),
       executorCapabilityHint: cleanString(input.executorCapabilityHint ?? '', 'executorCapabilityHint', { max: 500, optional: true }),
     };
+    packet.acceptanceChecks = cleanAcceptanceChecks(input.acceptanceChecks, packet.exactMutableResources);
     const overlap = packet.exactMutableResources.filter((item) => packet.doNotChange.includes(item));
     if (overlap.length) throw new Error(`mutable_do_not_change_overlap:${overlap.join(',')}`);
     return { ok: true, packet };

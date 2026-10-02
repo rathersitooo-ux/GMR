@@ -46,11 +46,12 @@ on:
 
 permissions:
   contents: read
-  issues: write
-  pull-requests: read
 
 jobs:
   chromium-interaction-evidence:
+    permissions:
+      contents: read
+      issues: write
     if: ${{ github.event_name != 'workflow_run' && (github.event_name != 'repository_dispatch' || github.event.client_payload.bfi_required == true) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30

@@ -49,12 +49,12 @@ function normalizeBundle(resultBundle) {
   return cloneJson(resultBundle, 'resultBundle');
 }
 
-function presentationEffects({ reducedMotion = false, lowPerf = false, videoAsset = 'fallback' } = {}) {
+function presentationEffects({ reducedMotion = false, lowPerf = false } = {}) {
   const reduced = Boolean(reducedMotion);
   const low = Boolean(lowPerf);
-  if (reduced) return Object.freeze({ motion: 'still', video: 'disabled' });
-  if (low) return Object.freeze({ motion: 'short_fade', video: 'disabled' });
-  return Object.freeze({ motion: 'full', video: videoAsset === 'formal' ? 'enabled' : 'fallback' });
+  if (reduced) return Object.freeze({ motion: 'still', video: 'disabled', revealMs: 0 });
+  if (low) return Object.freeze({ motion: 'short_fade', video: 'disabled', revealMs: 160 });
+  return Object.freeze({ motion: 'native_reveal', video: 'disabled', revealMs: 520 });
 }
 
 function normalizeAssets(assets = {}) {
@@ -155,7 +155,6 @@ export function createGachaPresentation({
     effects: presentationEffects({
       reducedMotion,
       lowPerf,
-      videoAsset: normalizedAssets.video,
     }),
   };
   return deepFreeze(assertState(state));

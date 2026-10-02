@@ -906,6 +906,21 @@ function visibleOperationGo(page, target) {
     .first();
 }
 
+async function selectVisibleSaasunaPartner(page) {
+  const characters = page.locator('section[data-screen="characters"]');
+  await expect(characters).toBeVisible();
+  const partnerRole = characters.locator('.charRoleTab[data-role="partner"]');
+  await expect(partnerRole, 'current Characters exposes the Partner role selector').toBeVisible();
+  await partnerRole.click();
+  const saasuna = characters.locator('.charCard').filter({ hasText: 'サースナー' }).first();
+  await expect(saasuna, 'Saasuna is reachable through the visible Partner roster').toBeVisible();
+  await saasuna.click();
+  await expect(characters.locator('#charName')).toHaveText('サースナー');
+  await expect(partnerRole).toHaveClass(/on/);
+  expect(await page.evaluate(() => window.GAMEROAD_PARTNER_STATE?.partner?.()?.id ?? null)).toBe('partner.saasuna');
+  return characters;
+}
+
 const RETIRED_HOME_AUX_TARGETS = Object.freeze(['missions', 'gacha', 'records', 'profile', 'settings']);
 
 async function assertRetiredHomeAuxiliaryEntries(page, testInfo) {
@@ -1133,25 +1148,24 @@ test('covers Cards search, suit filtering, detail open/close, mobile tray, and r
   runtime.assertClean(testInfo);
 });
 
-test('covers the current visible Saasuna partner conversation product surface', async ({ page }, testInfo) => {
+test('covers the current visible Saasuna partner conversation through the live Partner selector', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
 
   const charactersGo = visibleOperationGo(page, 'characters');
   await expect(charactersGo).toBeVisible();
   await charactersGo.click();
-  const characters = page.locator('section[data-screen="characters"]');
-  await expect(characters).toBeVisible();
+  const characters = await selectVisibleSaasunaPartner(page);
   const conversation = characters.locator('.grPartnerConversation[data-gr-partner-conversation="1"]');
   await expect(conversation).toBeVisible();
-  await expect(characters.locator('#charName')).toHaveText('サースナー');
   await expect(conversation).toHaveAttribute('data-static-visual', '1');
   await expect(conversation).toHaveAttribute('data-animatable', '0');
   await expect(conversation).toHaveAttribute('data-character-production-owned-here', '0');
   await expect(conversation.locator('.grPartnerStaticVisual')).toHaveAttribute('src', '/ws?partnerOp=visual');
   await expect(conversation.locator('.grPartnerConversationInput')).toBeVisible();
   await expect(conversation.locator('.grPartnerConversationSend')).toBeEnabled();
-  await expect(characters.locator('.charRoleTab')).toHaveCount(0);
+  await expect(characters.locator('.charRoleTab')).toHaveCount(2);
+  expect(await characters.locator('.charCard').count(), 'current Partner roster remains available').toBeGreaterThan(0);
   const product = await page.evaluate(() => {
     const mounted = window.GAMEROAD_PARTNER_CONVERSATION_PRODUCT_MOUNT;
     return mounted ? {
@@ -1164,7 +1178,7 @@ test('covers the current visible Saasuna partner conversation product surface', 
   });
   expect(product).toEqual({
     partnerId: 'partner.saasuna',
-    pickerRequired: false,
+    pickerRequired: true,
     staticVisual: true,
     animatable: false,
     characterProductionOwnedHere: false,
@@ -1634,14 +1648,13 @@ test('R13 covers visible deck-slot removal followed by meaningful restore', asyn
   runtime.assertClean(testInfo);
 });
 
-test('R13 covers the current visible advice-partner conversation composer without inventing a picker', async ({ page }, testInfo) => {
+test('R13 covers the current visible advice-partner conversation composer through the live Partner selector', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
   const charactersGo = visibleOperationGo(page, 'characters');
   await expect(charactersGo).toBeVisible();
   await charactersGo.click();
-  const characters = page.locator('section[data-screen="characters"]');
-  await expect(characters).toBeVisible();
+  const characters = await selectVisibleSaasunaPartner(page);
   const conversation = characters.locator('.grPartnerConversation[data-gr-partner-conversation="1"]');
   const input = conversation.locator('.grPartnerConversationInput');
   const send = conversation.locator('.grPartnerConversationSend');
@@ -1651,7 +1664,8 @@ test('R13 covers the current visible advice-partner conversation composer withou
   await input.fill('表示中の会話入力を確認');
   await expect(input).toHaveValue('表示中の会話入力を確認');
   await expect(send).toBeEnabled();
-  expect(await characters.locator('.charCard, .charRoleTab').count(), 'current product does not expose the retired partner picker').toBe(0);
+  await expect(characters.locator('.charRoleTab')).toHaveCount(2);
+  expect(await characters.locator('.charCard').count(), 'current Partner roster remains player-reachable').toBeGreaterThan(0);
   await attachStateScreenshot(page, testInfo, 'r13-partner-conversation-composer-visible');
   runtime.assertClean(testInfo);
 });

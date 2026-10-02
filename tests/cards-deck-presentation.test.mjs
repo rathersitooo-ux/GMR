@@ -577,6 +577,18 @@ test('Cards local skin database connection is reused and closes on schema versio
   assert.ok(slice.includes("request.onblocked = () =>"));
 });
 
+test('Cards local skin selection follows click so keyboard activation enables image actions', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('export function installFanartLocalSkinCards');
+  const end = source.indexOf('const fanartPublicBattleProjectionInstallations', start);
+  const slice = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.ok(slice.includes("screen.addEventListener('click', select, true)"));
+  assert.ok(slice.includes("screen.removeEventListener('click', select, true)"));
+  assert.equal(slice.includes("screen.addEventListener('pointerdown', select, true)"), false);
+});
+
 test('Cards local skin consumer fails closed without a Cards document and has no transport fallback', async () => {
   const { readFile } = await import('node:fs/promises');
   const mod = await import('../browser/cards-deck-presentation.mjs');

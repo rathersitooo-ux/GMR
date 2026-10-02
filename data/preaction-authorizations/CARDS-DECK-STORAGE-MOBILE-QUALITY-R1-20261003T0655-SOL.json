@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-DECK-STORAGE-MOBILE-QUALITY-R1-20261003T0655-SOL",
+  "taskId": "COLLECTION-CROSSDOMAIN-EXPERIENCE-001",
+  "workUnitKey": "CARDS_DECK_STORAGE_MOBILE_QUALITY_R1",
+  "acquireKey": "CARDS-DECK-STORAGE-MOBILE-QUALITY-R1-20261003T0655-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_ZERO_TARGET_OVERLAP_PLUS_CURRENT_MOBILE_STORAGE_CSS_DIRECT_READ",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CSS_ONLY_STORAGE_PRESENTATION_DELTA_WITH_EXISTING_RUNTIME_TEST_SEAM",
+  "proceedToken": "PROCEED|CARDS-DECK-STORAGE-MOBILE-QUALITY-R1-20261003T0655-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|deck-storage-mobile-quality|active-lease",
+  "authorizationBaseSha": "6dece61da03e857ef81c4cdef8083e4a20999d30",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTION-CROSSDOMAIN-EXPERIENCE-001",
+  "leaseWorkUnitKey": "CARDS_DECK_STORAGE_MOBILE_QUALITY_R1",
+  "leaseAcquireKey": "CARDS-DECK-STORAGE-MOBILE-QUALITY-R1-20261003T0655-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-03 06:56 JST",
+  "leaseUntilJst": "2026-10-03 07:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:L9",
+  "leaseExactMutableResources": "browser/deck-storage-corner-runtime.mjs; tests/deck-storage-corner-runtime.test.mjs; data/preaction-authorizations/CARDS-DECK-STORAGE-MOBILE-QUALITY-R1-20261003T0655-SOL.json; own branch/PR/check/merge/readback; own CURRENT event/lease records.",
+  "solutionSignature": "DECK_STORAGE_MOBILE_SINGLE_COLUMN_TOUCH_QUALITY_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "Current <=560px Deck Storage shrinks to min(310px,58vw) while retaining two columns, compressing card image, label, and actions.",
+    "Apple game-control guidance recommends frequent touch controls at least 44x44pt and using vertical scrolling rather than shrinking controls to fit small screens.",
+    "MTG Arena mobile deck-builder community reports repeatedly identify cramped card viewing and editing friction as a practical failure mode.",
+    "No gameplay/deck/save semantics need to change; existing Storage state/controller and visual clones are reusable."
+  ],
+  "externalReferences": [
+    "https://developer.apple.com/jp/design/human-interface-guidelines/game-controls",
+    "https://developer.apple.com/jp/videos/play/meet-with-apple/243/",
+    "https://magic.wizards.com/en/news/mtg-arena/mtg-arena-state-game-adventures-forgotten-realms-2021-07-02"
+  ],
+  "scope": [
+    "browser/deck-storage-corner-runtime.mjs",
+    "tests/deck-storage-corner-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/deck-storage-corner-runtime.mjs",
+    "tests/deck-storage-corner-runtime.test.mjs"
+  ],
+  "formalInvariants": [
+    "Deck max size, overflow behavior, Storage membership and Deck mutation authority remain unchanged.",
+    "Card identity, ownership, save, rules, gameplay and network semantics remain unchanged.",
+    "Phone repair is presentation-only: use available width, stack groups vertically, preserve card aspect ratio and >=44px frequent touch targets.",
+    "Desktop layout remains two-column."
+  ],
+  "acceptance": [
+    "Focused runtime tests lock phone single-column/full-width behavior and 44px action/close/storage targets.",
+    "Existing Deck Storage controller/gesture tests remain green.",
+    "Required Gate passes on exact head.",
+    "Final main readback preserves only the two-file presentation/test delta."
+  ]
+}

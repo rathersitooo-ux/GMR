@@ -1,4 +1,6 @@
 import {createTransitionDirector} from './ui-state-feedback-core.mjs';
+import {SHOP_FORMAL_CATALOG} from './shop-formal-catalog.mjs';
+import {mountShopLiveCatalogRuntime} from './shop-live-catalog-runtime.mjs';
 
 export const SCREEN_NAVIGATION_REASON = Object.freeze({
   EMPTY_TARGET: 'EMPTY_TARGET',
@@ -105,6 +107,38 @@ const HOME_ROUTE_SELECTOR = '.homePadChoice[data-home-target]';
 const HOME_SLIDEPAD_CENTER_SELECTOR = '#homePadCenter';
 const HOME_VISUAL_LAYER_SELECTOR = '.codexHomeVisualLayer';
 
+
+export const SHOP_LIVE_CATALOG_HOST_ID = 'shopFormalCatalog';
+
+export function ensureShopLiveCatalogRuntime(documentSource = globalThis.document) {
+  if (!documentSource || typeof documentSource.querySelectorAll !== 'function' || typeof documentSource.createElement !== 'function') return null;
+  const shopScreen = [...documentSource.querySelectorAll('.screen[data-screen]')]
+    .find((candidate) => candidate?.dataset?.screen === 'shop');
+  if (!shopScreen || typeof shopScreen.querySelector !== 'function') return null;
+  const panel = shopScreen.querySelector('.shopPanel') || shopScreen;
+  let host = shopScreen.querySelector('#' + SHOP_LIVE_CATALOG_HOST_ID);
+  if (!host) {
+    host = documentSource.createElement('div');
+    host.id = SHOP_LIVE_CATALOG_HOST_ID;
+    host.className = 'shopFormalCatalogHost';
+    host.setAttribute?.('aria-label', '正式ショップ商品');
+    const availability = shopScreen.querySelector('.shopAvailability');
+    if (availability?.parentNode === panel && typeof panel.insertBefore === 'function') panel.insertBefore(host, availability);
+    else if (typeof panel.appendChild === 'function') panel.appendChild(host);
+    else if (typeof panel.append === 'function') panel.append(host);
+    else return null;
+  }
+  try {
+    return mountShopLiveCatalogRuntime({
+      host,
+      formalCatalogItems: SHOP_FORMAL_CATALOG.items,
+      approvedFanArtWorks: SHOP_FORMAL_CATALOG.approvedFanArtWorks,
+    });
+  } catch {
+    host.replaceChildren?.();
+    return null;
+  }
+}
 
 export const GACHA_PREVIEW_NOTICE_ID = 'gachaPreviewAuthorityNotice';
 export const GACHA_PREVIEW_NOTICE_TEXT = '※ 現在は演出プレビューです。表示されたカードは所持・保存には反映されません。';
@@ -711,6 +745,7 @@ export function createScreenTransitionRuntimeAdapter({
           ensureGachaPreviewDisclosure(globalThis.document);
           ensureGachaNativeRevealRuntime(globalThis.document);
         }
+        if (decision.to === 'shop') ensureShopLiveCatalogRuntime(globalThis.document);
       }
     });
     presentationDriver.finishRevision?.(result.revision, result.status);

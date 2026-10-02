@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GACHA-NATIVE-REVEAL-R4-20261003T0327-SOL",
+  "taskId": "BROWSER-GACHA-ARCADE-RITUAL-PLAYTEST-001",
+  "workUnitKey": "GACHA-NATIVE-REVEAL-R4",
+  "acquireKey": "GACHA-NATIVE-REVEAL-R4-20261003T0327-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_PLAYER_GACHA_MOVIE_WAIT_PATH_PLUS_SCREEN_NAVIGATION_LIVE_SEAM_20261003T0327JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "SCREEN_NAVIGATION_GACHA_POST_SWAP_HOOK_AND_EXISTING_GACHA_SKIP_RESULT_PATH",
+  "proceedToken": "PROCEED|GACHA-NATIVE-REVEAL-R4-20261003T0327-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|screen-navigation|movie-runtime-bypass|active-lease",
+  "authorizationBaseSha": "8c1b203e07431932c8ffe76af5fbc8605bc8d0d0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-GACHA-ARCADE-RITUAL-PLAYTEST-001",
+  "leaseWorkUnitKey": "GACHA-NATIVE-REVEAL-R4",
+  "leaseAcquireKey": "GACHA-NATIVE-REVEAL-R4-20261003T0327-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-03 03:27 JST",
+  "leaseUntilJst": "2026-10-03 04:17 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "browser/screen-navigation-core.mjs; tests/screen-navigation-core.test.mjs; data/preaction-authorizations/GACHA-NATIVE-REVEAL-R4-20261003T0327-SOL.json; task row 1384 non-owner fields only; own branch/PR/check/readback; own CURRENT event/lease records. browser/GAMEROAD.html remains read-only in R4 because connected GitHub transport cannot safely rewrite its ~12MB blob.",
+  "scope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs"
+  ]
+}

@@ -732,8 +732,37 @@ test('moves resolve off the board into the dedicated Battle Phase with Naki cut-
   expect(after.shell.surfaceHidden).toBe(true);
   expect(after.shell.resolutionParent).toBe('battleMap');
   expect(after.conservation, 'card conservation after dedicated Battle Phase').toBe(true);
-  expect(['plan', null]).toContain(after.phase);
-  expect(['battle', 'result']).toContain(after.screen);
+  expect(after.phase, 'Naki return hands control back to the next visible Plan phase').toBe('plan');
+  expect(after.screen, 'Naki return stays on the live Battle screen for the next input').toBe('battle');
+
+  await expect(battle, 'Naki return restores the visible Battle screen').toBeVisible();
+  await expect(battle.locator('#phaseTitle'), 'Naki return restores the visible planning prompt').toContainText('行動を計画');
+
+  const postNakiJankenPad = battle.locator('[data-battle-janken-slidepad="1"]').first();
+  await expect(postNakiJankenPad, 'the real Janken SlidePad is available immediately after Naki return').toBeVisible();
+  if ((await postNakiJankenPad.getAttribute('data-expanded')) !== 'true') {
+    const postNakiJankenHandle = postNakiJankenPad.locator('.grJankenSlidePadHandle:visible');
+    await expect(postNakiJankenHandle, 'the real Janken handle remains clickable after Naki return').toBeVisible();
+    await postNakiJankenHandle.click();
+    await expect(postNakiJankenPad, 'the real Janken SlidePad opens after Naki return').toHaveAttribute('data-expanded', 'true');
+  }
+
+  const postNakiJanken = postNakiJankenPad.locator('[data-janken-slot]:visible:not(:disabled)').first();
+  await expect(postNakiJanken, 'a real Janken card is visible immediately after Naki return').toBeVisible();
+  await expect(postNakiJanken, 'a real Janken card is enabled immediately after Naki return').toBeEnabled();
+  const postNakiCardId = await postNakiJanken.getAttribute('data-card-id');
+  expect(postNakiCardId, 'the visible post-Naki Janken card exposes its real card id').toBeTruthy();
+
+  await postNakiJanken.click();
+  await expect.poll(async () => {
+    const roadId = await battle.locator('#roadSelect').inputValue();
+    const battleId = await battle.locator('#battleSelect').inputValue();
+    return roadId === postNakiCardId || battleId === postNakiCardId;
+  }, {
+    message: 'the first real Janken click after Naki return is accepted into the visible plan',
+    timeout: 5_000,
+  }).toBe(true);
+  await attachStateScreenshot(page, testInfo, 'battle-phase-naki-return-janken-accepted');
 
   runtime.assertClean(testInfo);
 });

@@ -772,7 +772,7 @@ test('moves resolve off the board into the dedicated Battle Phase with Naki cut-
   await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2);
   await page.mouse.up();
 
-  await expect.poll(async () => battle.evaluate((candidateIds) => {
+  await expect.poll(async () => battle.evaluate((_, candidateIds) => {
     const match = window.__GAMEROAD_TEST__?.state?.match ?? null;
     const player = match?.players?.find((candidate) => candidate?.human) ?? match?.players?.[0] ?? null;
     return candidateIds.includes(player?.plan?.roadId) || candidateIds.includes(player?.plan?.battleId);

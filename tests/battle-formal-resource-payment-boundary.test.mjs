@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+const LIVE_HTML = readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
 
 import {
   FORMAL_MANA_MAX,
@@ -133,4 +136,23 @@ test('invalid resource or card inputs fail closed', () => {
     () => getFormalGenericManaCost({ kind: 'UNKNOWN', cardNumber: 1 }),
     TypeError,
   );
+});
+
+
+test('live active Battle submission projects formal Mana payment before removing the card', () => {
+  const helperStart = LIVE_HTML.indexOf('async function projectLiveBattleCardPayment');
+  const resolveStart = LIVE_HTML.indexOf('async function resolveBattle()');
+  const payment = LIVE_HTML.indexOf('const payment=await projectLiveBattleCardPayment(p,battle);', resolveStart);
+  const remove = LIVE_HTML.indexOf("removeHand(p,battle);", payment);
+  const commit = LIVE_HTML.indexOf('commitLiveBattleCardPayment(p,payment);', remove);
+  const reveal = LIVE_HTML.indexOf("makeParticipant(p,battle,'active_submission')", commit);
+
+  assert.ok(helperStart > 0, 'live payment helper must exist');
+  assert.match(LIVE_HTML, /import\('\.\/battle-formal-resource-payment-boundary\.mjs'\)/);
+  assert.ok(resolveStart > 0 && payment > resolveStart, 'resolveBattle must invoke formal payment');
+  assert.ok(remove > payment, 'insufficient Mana must be decided before hand removal');
+  assert.ok(commit > remove, 'Mana must be deducted only after hand removal succeeds');
+  assert.ok(reveal > commit, 'participant registration must happen after payment commit');
+  assert.match(LIVE_HTML.slice(payment, remove), /if\(!payment\?\.resolved\).*continue/s);
+  assert.doesNotMatch(LIVE_HTML.slice(payment, reveal), /honey\s*[-+]=|honey\s*=/);
 });

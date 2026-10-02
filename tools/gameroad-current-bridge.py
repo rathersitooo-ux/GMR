@@ -36,6 +36,9 @@ LEASE_AUTHORITY = "CURRENT_ACTIVE_LEASES"
 LEASE_MINUTES = 60
 RENEW_BELOW_MINUTES = 50
 PREACTION_PREFIX = "data/preaction-authorizations/"
+EXECUTOR_WORKFLOW_NAME = "GAMEROAD Executor Bus"
+EXECUTOR_WORKFLOW_PATH = ".github/workflows/gameroad-executor-bus.yml"
+TRUSTED_EXECUTOR_COMMENT_AUTHOR = "github-actions[bot]"
 CONTROL_PLANE_PREFIXES = (
     ".github/workflows/",
     "data/preaction-authorizations/",
@@ -485,7 +488,10 @@ def parse_executor_result_comment(body: str, packet: dict[str, Any]) -> dict[str
     for key in ("taskId", "workUnitKey", "acquireKey"):
         if result.get(key) != packet.get(key):
             return None
+    evidence = result.get("evidence")
     refs = result.get("producedRefs")
+    if not isinstance(evidence, list) or "focused-tests:PASS" not in evidence:
+        return None
     if not isinstance(refs, list):
         return None
     pr_numbers = [
@@ -498,9 +504,26 @@ def parse_executor_result_comment(body: str, packet: dict[str, Any]) -> dict[str
         for ref in refs
         if isinstance(ref, str) and (match := re.fullmatch(r"commit:([0-9a-fA-F]{40})", ref))
     ]
-    if len(pr_numbers) != 1 or len(commits) != 1:
+    workflow_runs = [
+        int(match.group(1))
+        for ref in refs
+        if isinstance(ref, str) and (match := re.fullmatch(r"workflow-run:([1-9]\d*)", ref))
+    ]
+    if len(pr_numbers) != 1 or len(commits) != 1 or len(workflow_runs) != 1:
         return None
-    return {"pr": pr_numbers[0], "commit": commits[0], "raw": result}
+    if f"workflow-run:{workflow_runs[0]}" not in evidence:
+        return None
+    return {
+        "pr": pr_numbers[0],
+        "commit": commits[0],
+        "workflowRun": workflow_runs[0],
+        "raw": result,
+    }
+
+
+def trusted_executor_comment(comment: dict[str, Any]) -> bool:
+    user = comment.get("user")
+    return isinstance(user, dict) and user.get("login") == TRUSTED_EXECUTOR_COMMENT_AUTHOR
 
 
 def _github_json(
@@ -778,10 +801,87 @@ def _candidate_result(
     repository: str, issue_number: int, packet: dict[str, Any], token: str
 ) -> dict[str, Any] | None:
     for comment in reversed(_github_issue_comments(repository, issue_number, token)):
+        if not trusted_executor_comment(comment):
+            continue
         result = parse_executor_result_comment(str(comment.get("body", "")), packet)
         if result:
+            result["commentId"] = int(comment.get("id", 0) or 0)
             return result
     return None
+
+
+def verify_executor_result_receipt(
+    packet: dict[str, Any],
+    issue_number: int,
+    repository_owner: str,
+    candidate: dict[str, Any],
+    run: dict[str, Any],
+    artifacts: list[dict[str, Any]],
+) -> bool:
+    workflow_run = candidate.get("workflowRun")
+    if not isinstance(workflow_run, int) or workflow_run <= 0:
+        raise BridgeError("executor_workflow_run_missing")
+    try:
+        actual_run = int(run.get("id", 0))
+    except (TypeError, ValueError) as exc:
+        raise BridgeError("executor_workflow_run_identity_invalid") from exc
+    if actual_run != workflow_run:
+        raise BridgeError("executor_workflow_run_identity_mismatch")
+    if run.get("name") != EXECUTOR_WORKFLOW_NAME or run.get("path") != EXECUTOR_WORKFLOW_PATH:
+        raise BridgeError("executor_workflow_identity_mismatch")
+    if run.get("event") != "issues":
+        raise BridgeError("executor_workflow_event_mismatch")
+    if str(run.get("head_sha", "")).lower() != packet["baseRef"]:
+        raise BridgeError("executor_workflow_base_mismatch")
+    actor = run.get("actor")
+    if not isinstance(actor, dict) or actor.get("login") != repository_owner:
+        raise BridgeError("executor_workflow_actor_mismatch")
+    if run.get("status") != "completed":
+        return False
+    if run.get("conclusion") != "success":
+        raise BridgeError("executor_workflow_not_success")
+
+    expected_artifact = f"executor-bus-queue-{issue_number}-{workflow_run}"
+    matches = [
+        artifact
+        for artifact in artifacts
+        if artifact.get("name") == expected_artifact and not artifact.get("expired", False)
+    ]
+    if len(matches) != 1:
+        raise BridgeError("executor_queue_artifact_receipt_missing")
+    artifact_run = matches[0].get("workflow_run")
+    if not isinstance(artifact_run, dict) or int(artifact_run.get("id", 0) or 0) != workflow_run:
+        raise BridgeError("executor_queue_artifact_run_mismatch")
+    if str(artifact_run.get("head_sha", "")).lower() != packet["baseRef"]:
+        raise BridgeError("executor_queue_artifact_base_mismatch")
+    return True
+
+
+def verify_executor_result_provenance(
+    packet: dict[str, Any],
+    repository: str,
+    issue_number: int,
+    token: str,
+    candidate: dict[str, Any],
+) -> bool:
+    workflow_run = candidate.get("workflowRun")
+    run = _github_json(
+        "GET",
+        f"https://api.github.com/repos/{repository}/actions/runs/{workflow_run}",
+        token,
+    )
+    artifact_data = _github_json(
+        "GET",
+        f"https://api.github.com/repos/{repository}/actions/runs/{workflow_run}/artifacts?per_page=100",
+        token,
+    )
+    artifacts = artifact_data.get("artifacts", []) if isinstance(artifact_data, dict) else []
+    if not isinstance(artifacts, list):
+        raise BridgeError("executor_workflow_artifacts_invalid")
+    owner, _, _ = repository.partition("/")
+    return verify_executor_result_receipt(
+        packet, issue_number, owner, candidate, run, artifacts
+    )
 
 
 def _pr_files(repository: str, pr_number: int, token: str) -> list[dict[str, Any]]:
@@ -866,6 +966,7 @@ def build_adoption_manifest(
     lease_row: int,
     now: dt.datetime,
     candidate_pr: int,
+    candidate_workflow_run: int | None = None,
 ) -> tuple[str, dict[str, Any]]:
     record_id = _preaction_record_id(packet["acquireKey"])
     path = f"{PREACTION_PREFIX}{record_id}.json"
@@ -909,6 +1010,17 @@ def build_adoption_manifest(
             "fresh CURRENT_ACTIVE_LEASES readback immediately before adoption",
             "existing GAMEROAD Required Gate and auto-merge remain authoritative",
         ],
+        "acceptanceEvidenceReceipt": {
+            "criteria": list(packet["acceptance"]),
+            "focusedTests": [
+                path
+                for path in packet["exactMutableResources"]
+                if path.startswith("tests/") and path.endswith(".test.mjs")
+            ],
+            "executorWorkflowRun": candidate_workflow_run,
+            "evidenceClaim": "focused-tests:PASS",
+            "semanticCoverage": "NOT_INFERRED_FROM_TEST_PASS",
+        },
     }
     return path, manifest
 
@@ -1049,7 +1161,9 @@ def create_adoption_pr(
     candidate_pr, files = verify_candidate_pr(packet, repository, token, candidate)
     branch = _sanitize_branch(packet["acquireKey"])
     _create_ref(repository, branch, packet["baseRef"], token)
-    manifest_path, manifest = build_adoption_manifest(packet, lease, lease_row, now, candidate["pr"])
+    manifest_path, manifest = build_adoption_manifest(
+        packet, lease, lease_row, now, candidate["pr"], candidate["workflowRun"]
+    )
     manifest_commit = _put_contents(
         repository,
         branch,
@@ -1209,6 +1323,16 @@ def supervise(packet_path: pathlib.Path, repository: str, token: str) -> dict[st
             "issueNumber": issue_number,
             "leaseUntilJst": lease["LeaseUntilJST"],
             "mainSha": main_sha,
+        }
+    if not verify_executor_result_provenance(
+        packet, repository, issue_number, token, candidate
+    ):
+        return {
+            "status": "WAIT_CANDIDATE_EVIDENCE",
+            "issueNumber": issue_number,
+            "candidatePr": candidate["pr"],
+            "workflowRun": candidate["workflowRun"],
+            "leaseUntilJst": lease["LeaseUntilJST"],
         }
 
     # Fresh authority read immediately before candidate adoption.

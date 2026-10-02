@@ -1526,20 +1526,22 @@ export function installFanartLocalSkinCards({ document: doc = globalThis.documen
     style.textContent = '[data-fanart-local-skin-host="1"]{position:relative!important;isolation:isolate;overflow:hidden}[data-role="fanart-local-skin-overlay"]{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;pointer-events:none;z-index:0!important}[data-fanart-local-skin-host="1"]>.cardCostBadge,[data-fanart-local-skin-host="1"]>.cardRank,[data-fanart-local-skin-host="1"]>.cardAbilityTag,[data-fanart-local-skin-host="1"]>.cardFaceName,[data-fanart-local-skin-host="1"]>.inDeckTag{z-index:2!important;text-shadow:0 1px 2px rgba(0,0,0,.95)}[data-fanart-local-skin-host="1"]>.cardCostBadge{background:rgba(255,255,245,.96)!important;border-radius:6px}[data-fanart-local-skin-host="1"]>.cardRank,[data-fanart-local-skin-host="1"]>.cardFaceName{box-sizing:border-box;border-radius:4px!important;padding:0 3px!important;background:rgba(255,255,245,.92)!important;box-shadow:0 1px 3px rgba(0,0,0,.24)}.screen.cards #collectionGrid .cardAbilityTag{box-sizing:border-box;max-width:calc(100% - 14px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:2px 4px;border-radius:999px;background:rgba(10,16,25,.84);color:#fff;font-size:8px!important;line-height:1.15!important;text-shadow:0 1px 2px rgba(0,0,0,.95)}[data-role="fanart-local-skin-button"],[data-role="fanart-local-skin-remove-button"]{min-height:44px}[data-role="fanart-local-skin-button"][disabled],[data-role="fanart-local-skin-remove-button"][disabled]{opacity:.56;cursor:not-allowed}';
     (doc.head || doc.documentElement)?.appendChild(style);
   }
-  const revoke = (id) => { const url = urls.get(id); if (url) { win.URL.revokeObjectURL(url); urls.delete(id); } };
+  const revoke = (node) => { const url = urls.get(node); if (url) { win.URL.revokeObjectURL(url); urls.delete(node); } };
   const renderNode = async (node, currentTicket) => {
     const id = normalizeLocalSkinCardId(String(node?.dataset?.id ?? '')); if (!id) return;
     let record = null; try { record = await fanartReadSkin(idb, id); } catch {}
     if (destroyed || currentTicket !== ticket || !node.isConnected) return;
     const old = node.querySelector?.('[data-role="fanart-local-skin-overlay"]');
-    if (!record) { old?.remove?.(); node.removeAttribute?.('data-fanart-local-skin-host'); revoke(id); return; }
-    revoke(id); const url = win.URL.createObjectURL(record.asset.blob); urls.set(id, url);
+    if (!record) { old?.remove?.(); node.removeAttribute?.('data-fanart-local-skin-host'); revoke(node); return; }
+    revoke(node); const url = win.URL.createObjectURL(record.asset.blob); urls.set(node, url);
     const overlay = old || doc.createElement('img'); overlay.dataset.role = 'fanart-local-skin-overlay'; overlay.alt = ''; overlay.src = url; overlay.setAttribute('aria-hidden', 'true');
     node.dataset.fanartLocalSkinHost = '1'; if (!old) node.appendChild(overlay);
   };
   const refresh = async () => {
     const currentTicket = ++ticket;
     const nodes = [...screen.querySelectorAll('#collectionGrid [data-id], #deckSlots [data-id], #exDeckSlots [data-id]')];
+    const liveNodes = new Set(nodes);
+    for (const node of [...urls.keys()]) if (!liveNodes.has(node)) revoke(node);
     await Promise.all(nodes.map((node) => renderNode(node, currentTicket)));
     let selectedRecord = null;
     if (selected) { try { selectedRecord = await fanartReadSkin(idb, selected); } catch {} }
@@ -1579,7 +1581,7 @@ export function installFanartLocalSkinCards({ document: doc = globalThis.documen
   const observer = typeof win.MutationObserver === 'function' ? new win.MutationObserver(() => refresh().catch(() => {})) : null;
   observer?.observe(screen, { childList: true, subtree: true }); refresh().catch(() => {});
   const installation = Object.freeze({ contract: FANART_LOCAL_SKIN_CONTRACT, refresh, selectedCardId: () => selected, destroy() {
-    if (destroyed) return; destroyed = true; observer?.disconnect?.(); screen.removeEventListener('pointerdown', select, true); for (const id of [...urls.keys()]) revoke(id); button.remove?.(); removeButton.remove?.(); input.remove?.(); fanartInstallations.delete(doc);
+    if (destroyed) return; destroyed = true; observer?.disconnect?.(); screen.removeEventListener('pointerdown', select, true); for (const node of [...urls.keys()]) revoke(node); button.remove?.(); removeButton.remove?.(); input.remove?.(); fanartInstallations.delete(doc);
   } });
   fanartInstallations.set(doc, installation); return installation;
 }

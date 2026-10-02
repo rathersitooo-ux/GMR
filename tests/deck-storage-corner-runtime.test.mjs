@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   createDeckStorageCornerController,
   installDeckStorageCardsDiscovery,
+  installDeckStorageCornerStyles,
   installDeckSwipeFirstSuccessHints,
   mountDeckStorageCorner,
   shouldRevealDeckStorageFromCardsSwipe,
@@ -102,6 +103,23 @@ function fakeDocument() {
     getElementById: () => null,
   };
 }
+
+test('phone Deck Storage uses one readable column and touch-sized controls', () => {
+  const document = fakeDocument();
+  installDeckStorageCornerStyles(document);
+  const css = document.head.children[0]?.textContent ?? '';
+  assert.match(css, /\.gr-storage-button\{[^}]*min-height:44px[^}]*touch-action:manipulation/);
+  assert.match(css, /\.gr-storage-close\{[^}]*min-width:44px;min-height:44px[^}]*touch-action:manipulation/);
+  assert.match(css, /\.gr-storage-card-actions button\{[^}]*min-width:44px;min-height:44px[^}]*touch-action:manipulation/);
+  assert.match(css, /\.gr-storage-window\{[^}]*overscroll-behavior:contain[^}]*-webkit-overflow-scrolling:touch/);
+  assert.match(css, /\.gr-storage-button:active,[^}]*transform:translateY\(1px\) scale\(\.985\)/);
+  assert.match(css, /\.gr-storage-button:focus-visible,[^}]*outline:2px solid #ffd84a/);
+  assert.match(css, /@media\(prefers-reduced-motion:reduce\)[\s\S]*?\.gr-storage-button:active,[^}]*transform:none/);
+  assert.match(css, /@media\(max-width:560px\)\{[^}]*\.gr-storage-backdrop\{left:max\(8px,env\(safe-area-inset-left\)\);right:max\(8px,env\(safe-area-inset-right\)\);top:max\(8px,env\(safe-area-inset-top\)\);width:auto;max-width:none\}/s);
+  assert.match(css, /@media\(max-width:560px\)[\s\S]*?\.gr-storage-columns\{grid-template-columns:1fr;gap:10px\}/);
+  assert.match(css, /@media\(max-width:560px\)[\s\S]*?\.gr-storage-card-visual\{width:56px\}/);
+  assert.match(css, /@media\(max-width:560px\)[\s\S]*?\.gr-storage-card-actions\{grid-column:1\/-1;margin-top:4px;gap:8px\}/);
+});
 
 function timerWindow() {
   let next = 1;

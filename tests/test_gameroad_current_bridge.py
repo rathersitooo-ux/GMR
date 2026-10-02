@@ -147,6 +147,10 @@ class CurrentBridgeTests(unittest.TestCase):
     def test_typed_acceptance_checks_validate_exact_focused_test_target(self):
         checked = bridge.validate_packet(
             packet(
+                acceptance=[
+                    "Focused test passes.",
+                    "Player route is visibly correct.",
+                ],
                 acceptanceChecks=[
                     {
                         "id": "unit",
@@ -179,6 +183,24 @@ class CurrentBridgeTests(unittest.TestCase):
                             "target": "tests/not-owned.test.mjs",
                         }
                     ]
+                )
+            )
+
+    def test_typed_acceptance_must_classify_every_legacy_acceptance_item(self):
+        with self.assertRaisesRegex(
+            bridge.BridgeError, "acceptanceChecks_must_classify_every_acceptance_item"
+        ):
+            bridge.validate_packet(
+                packet(
+                    acceptance=["Focused test passes.", "Runtime evidence exists."],
+                    acceptanceChecks=[
+                        {
+                            "id": "unit",
+                            "kind": "focused_test",
+                            "description": "Focused test passes.",
+                            "target": "tests/example.test.mjs",
+                        }
+                    ],
                 )
             )
 
@@ -388,6 +410,12 @@ class CurrentBridgeTests(unittest.TestCase):
     def test_typed_acceptance_receipt_passes_only_executed_focused_test(self):
         p = bridge.validate_packet(
             packet(
+                acceptance=[
+                    "Focused test passes.",
+                    "Player route is visibly correct.",
+                    "Human reviewer accepts presentation.",
+                    "External deployment probe succeeds.",
+                ],
                 acceptanceChecks=[
                     {
                         "id": "unit",
@@ -432,6 +460,10 @@ class CurrentBridgeTests(unittest.TestCase):
     def test_typed_acceptance_receipt_allows_completion_only_when_all_required_checks_pass(self):
         p = bridge.validate_packet(
             packet(
+                acceptance=[
+                    "Focused test passes.",
+                    "Optional human review.",
+                ],
                 acceptanceChecks=[
                     {
                         "id": "unit",

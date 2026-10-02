@@ -71,6 +71,11 @@ test('keeps legacy acceptance compatible with no typed checks', () => {
 test('normalizes typed acceptance checks without inferring evidence state', () => {
   const checked = normalizeQueuePacket(queue({
     exactMutableResources: ['path/a', 'tests/example.test.mjs'],
+    acceptance: [
+      'Focused unit test passes.',
+      'Player route is visibly correct.',
+      'Human review accepts the change.',
+    ],
     acceptanceChecks: [
       {
         id: 'unit',
@@ -117,6 +122,23 @@ test('normalizes typed acceptance checks without inferring evidence state', () =
       target: '',
     },
   ]);
+});
+
+test('rejects typed acceptance that leaves legacy criteria unclassified', () => {
+  const checked = normalizeQueuePacket(queue({
+    exactMutableResources: ['path/a', 'tests/example.test.mjs'],
+    acceptance: ['Focused test passes.', 'Runtime evidence exists.'],
+    acceptanceChecks: [
+      {
+        id: 'unit',
+        kind: 'focused_test',
+        description: 'Focused test passes.',
+        target: 'tests/example.test.mjs',
+      },
+    ],
+  }));
+  assert.equal(checked.ok, false);
+  assert.equal(checked.reason, 'acceptanceChecks_must_classify_every_acceptance_item');
 });
 
 test('rejects malformed typed acceptance checks', () => {

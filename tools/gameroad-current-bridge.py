@@ -200,6 +200,10 @@ def validate_packet(packet: dict[str, Any]) -> dict[str, Any]:
     if not acceptance:
         raise BridgeError("acceptance_required")
     packet["acceptanceChecks"] = _acceptance_checks(packet.get("acceptanceChecks"), resources)
+    if packet["acceptanceChecks"]:
+        descriptions = [item["description"] for item in packet["acceptanceChecks"]]
+        if descriptions != acceptance:
+            raise BridgeError("acceptanceChecks_must_classify_every_acceptance_item")
     if "FREE_LOCAL_CODER" not in str(packet.get("executorCapabilityHint", "")):
         raise BridgeError("free_local_coder_opt_in_required")
     return packet

@@ -1313,6 +1313,7 @@ const FANART_MAX_SIDE = 5000;
 const FANART_STORED_MAX_SIDE = 1600;
 const FANART_MAX_STORED_BYTES = 3 * 1024 * 1024;
 const fanartInstallations = new WeakMap();
+const fanartDbPromises = new WeakMap();
 
 export const FANART_LOCAL_SKIN_CONTRACT = Object.freeze({
   schema: 'gameroad.fanart-local-skin-cards.v1',
@@ -1367,17 +1368,37 @@ export function validateLocalSkinSource({ bytes, size } = {}) {
 }
 
 function fanartOpenDb(idb) {
-  return new Promise((resolve, reject) => {
-    if (!idb?.open) return reject(new Error('INDEXEDDB_UNAVAILABLE'));
+  if (!idb?.open) return Promise.reject(new Error('INDEXEDDB_UNAVAILABLE'));
+  const cached = fanartDbPromises.get(idb);
+  if (cached) return cached;
+  const pending = new Promise((resolve, reject) => {
     const request = idb.open(FANART_DB_NAME, FANART_DB_VERSION);
+    const clear = () => {
+      if (fanartDbPromises.get(idb) === pending) fanartDbPromises.delete(idb);
+    };
     request.onupgradeneeded = () => {
       const db = request.result;
       if (!db.objectStoreNames.contains(FANART_ASSET_STORE)) db.createObjectStore(FANART_ASSET_STORE, { keyPath: 'hash' });
       if (!db.objectStoreNames.contains(FANART_SKIN_STORE)) db.createObjectStore(FANART_SKIN_STORE, { keyPath: 'baseCardId' });
     };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error || new Error('INDEXEDDB_OPEN_FAILED'));
+    request.onsuccess = () => {
+      const db = request.result;
+      db.onversionchange = () => {
+        try { db.close?.(); } finally { clear(); }
+      };
+      resolve(db);
+    };
+    request.onerror = () => {
+      clear();
+      reject(request.error || new Error('INDEXEDDB_OPEN_FAILED'));
+    };
+    request.onblocked = () => {
+      clear();
+      reject(new Error('INDEXEDDB_OPEN_BLOCKED'));
+    };
   });
+  fanartDbPromises.set(idb, pending);
+  return pending;
 }
 
 function fanartRequest(request) {

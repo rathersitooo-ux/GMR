@@ -904,3 +904,83 @@ test('P5X cross-screen source uses existing Profile and Partner piece motion wit
   ]);
   assert.equal(SCREEN_MOTION_PIECE_SELECTORS.battle, undefined);
 });
+
+
+test('successful Gacha navigation mounts one idle arcade cabinet presentation shell', async () => {
+  const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+  const byId = new Map();
+  const register = (node) => { if (node?.id) byId.set(node.id, node); return node; };
+  const makeNode = (tagName = 'div') => ({
+    tagName: String(tagName).toUpperCase(),
+    id: '',
+    className: '',
+    children: [],
+    attributes: {},
+    style: {},
+    classList: {
+      values: new Set(),
+      add(...names) { for (const name of names) this.values.add(name); },
+      contains(name) { return this.values.has(name); }
+    },
+    setAttribute(key, value) { this.attributes[key] = String(value); },
+    appendChild(node) { this.children.push(node); register(node); return node; },
+    append(...nodes) { this.children.push(...nodes); for (const node of nodes) register(node); },
+    prepend(node) { this.children.unshift(node); register(node); return node; }
+  });
+  const controls = makeNode('div');
+  controls.insertBefore = function insertBefore(node, before) {
+    const index = this.children.indexOf(before);
+    this.children.splice(index < 0 ? this.children.length : index, 0, node);
+    node.parentNode = this;
+    register(node);
+  };
+  const openButton = makeNode('button');
+  openButton.id = 'openPack';
+  openButton.parentNode = controls;
+  controls.children.push(openButton);
+  register(openButton);
+
+  const stage = makeNode('div');
+  stage.className = 'gachaStage';
+  const gachaScreen = makeNode('section');
+  gachaScreen.id = 'gachaScreen';
+  gachaScreen.querySelector = (selector) => selector === '.gachaStage' ? stage : null;
+  register(gachaScreen);
+  const head = makeNode('head');
+
+  const fakeDocument = {
+    head,
+    getElementById(id) { return byId.get(id) || null; },
+    createElement(tagName) { return makeNode(tagName); },
+    querySelector(selector) { return selector === '.gachaStage' ? stage : null; }
+  };
+  Object.defineProperty(globalThis, 'document', {value: fakeDocument, configurable: true});
+
+  let currentScreen = 'shop';
+  const presentationDriver = {
+    async runPhase() {},
+    finishRevision() {},
+    getState() { return Object.freeze({activeRevisions: Object.freeze([]), events: Object.freeze([])}); }
+  };
+  const runtime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => currentScreen,
+    applyScreen: (next) => { currentScreen = next; },
+    presentationDriver
+  });
+
+  try {
+    assert.equal((await runtime.navigate('gacha')).status, 'completed');
+    const cabinet = byId.get('gachaArcadeCabinetR2');
+    assert.ok(cabinet);
+    assert.equal(cabinet.attributes['data-presentation-only'], 'true');
+    assert.equal(stage.attributes['data-gacha-cabinet-state'], 'idle');
+    assert.equal(stage.children.filter((node) => node.id === 'gachaArcadeCabinetR2').length, 1);
+
+    currentScreen = 'shop';
+    assert.equal((await runtime.navigate('gacha')).status, 'completed');
+    assert.equal(stage.children.filter((node) => node.id === 'gachaArcadeCabinetR2').length, 1);
+  } finally {
+    if (originalDocument) Object.defineProperty(globalThis, 'document', originalDocument);
+    else delete globalThis.document;
+  }
+});

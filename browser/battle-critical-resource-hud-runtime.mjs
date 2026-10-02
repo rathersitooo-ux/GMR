@@ -130,11 +130,11 @@ function addStyle(document) {
   style.textContent = `
 [${RESOURCE_HUD_ATTR}="1"]{display:flex;align-items:stretch;gap:4px;min-width:0;pointer-events:none}
 [${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell{display:grid;grid-template-columns:auto;align-content:center;gap:1px;min-width:42px;padding:3px 6px;border:1px solid rgba(225,244,215,.12);border-radius:8px;background:rgba(3,20,17,.48);color:inherit;text-shadow:inherit;box-shadow:none}
-[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell small{font-size:9px;font-weight:900;line-height:1;letter-spacing:.06em;opacity:.68;white-space:nowrap}
-[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceValue{font-size:15px;font-weight:1000;line-height:1.05}
-[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceDelta{font-size:8px;font-weight:800;line-height:1.05;opacity:.66;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:82px}
+[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell small{font-size:10px;font-weight:900;line-height:1;letter-spacing:.06em;opacity:.68;white-space:nowrap}
+[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceValue{font-size:16px;font-weight:1000;line-height:1.05}
+[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceDelta{font-size:9px;font-weight:800;line-height:1.05;opacity:.66;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:82px}
 [${RESOURCE_HUD_ATTR}="1"] [data-resolved="false"] .grBattleResourceValue{opacity:.54}
-@media(max-height:420px),(max-width:720px){[${RESOURCE_HUD_ATTR}="1"]{gap:2px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell{min-width:36px;padding:2px 4px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell small{font-size:8px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceValue{font-size:13px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceDelta{font-size:7px;max-width:58px}}
+@media(max-height:420px),(max-width:720px){[${RESOURCE_HUD_ATTR}="1"]{gap:2px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell{min-width:36px;padding:2px 4px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell small{font-size:9px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceValue{font-size:14px}[${RESOURCE_HUD_ATTR}="1"] .grBattleResourceDelta{font-size:8px;max-width:64px}}
 /* WU07: late, Battle-shell-scoped presentation contract. No gameplay/state authority. */
 @media(max-height:420px) and (orientation:landscape){
 [data-gr-battle-screen="1"] [data-battle-screen-causal-grid]{top:46px!important;bottom:auto!important;left:42%!important;right:4px!important;height:48px!important;gap:3px!important;opacity:.78}
@@ -145,11 +145,11 @@ function addStyle(document) {
 [data-gr-battle-screen="1"] [data-battle-shield-slot]{padding:1px 2px!important;gap:1px!important}
 [data-gr-battle-screen="1"] .grBattleLaneRole,[data-gr-battle-screen="1"] .grBattleLaneAfterstate{display:none!important}
 [data-gr-battle-screen="1"] [data-battle-current-action]{top:103px!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;z-index:10!important;max-width:min(58vw,390px)!important;min-height:24px!important;padding:5px 11px!important;border-color:rgba(255,239,170,.66)!important;background:rgba(4,28,24,.90)!important;box-shadow:0 6px 18px rgba(0,0,0,.26),0 0 0 1px rgba(255,239,170,.08)!important;font-size:11px!important;letter-spacing:.04em!important}
-[data-gr-battle-screen="1"] [${RESOURCE_HUD_ATTR}="1"]{max-width:176px;gap:1px;opacity:.66;transform:scale(.86);transform-origin:left top;flex-wrap:nowrap}
-[data-gr-battle-screen="1"] [${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell{min-width:31px;padding:1px 3px;border-color:rgba(225,244,215,.08);background:rgba(3,20,17,.36)}
-[data-gr-battle-screen="1"] [${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell small{font-size:7px;opacity:.60}
-[data-gr-battle-screen="1"] [${RESOURCE_HUD_ATTR}="1"] .grBattleResourceValue{font-size:11px}
-[data-gr-battle-screen="1"] [${RESOURCE_HUD_ATTR}="1"] .grBattleResourceDelta{font-size:6px;max-width:46px}
+[data-gr-battle-screen="1"] [${RESOURCE_HUD_ATTR}="1"]{max-width:188px;gap:2px;opacity:.84;transform:none;transform-origin:left top;flex-wrap:nowrap}
+[data-gr-battle-screen="1"] [${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell{min-width:34px;padding:2px 4px;border-color:rgba(225,244,215,.08);background:rgba(3,20,17,.36)}
+[data-gr-battle-screen="1"] [${RESOURCE_HUD_ATTR}="1"] .grBattleResourceCell small{font-size:9px;opacity:.76}
+[data-gr-battle-screen="1"] [${RESOURCE_HUD_ATTR}="1"] .grBattleResourceValue{font-size:13px}
+[data-gr-battle-screen="1"] [${RESOURCE_HUD_ATTR}="1"] .grBattleResourceDelta{font-size:8px;max-width:58px}
 }
 @media(prefers-reduced-motion:reduce){[${RESOURCE_HUD_ATTR}="1"] *{transition:none!important;animation:none!important}}
 `;

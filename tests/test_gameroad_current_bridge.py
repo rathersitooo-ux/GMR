@@ -379,6 +379,9 @@ class CurrentBridgeTests(unittest.TestCase):
             "artifact": "browser-full-interaction-88",
             "headSha": "b" * 40,
             "observedHeadSha": "b" * 40,
+            "cacheHit": False,
+            "freshCapture": True,
+            "inputHash": "input-hash",
         }
         run = {
             "id": 88,
@@ -418,6 +421,14 @@ class CurrentBridgeTests(unittest.TestCase):
             bridge.BridgeError, "runtime_evidence_artifact_missing"
         ):
             bridge.verify_runtime_evidence_receipt(candidate, receipt, run, [])
+
+        cached = dict(receipt)
+        cached["cacheHit"] = True
+        cached["freshCapture"] = False
+        with self.assertRaisesRegex(
+            bridge.BridgeError, "runtime_evidence_fresh_capture_required"
+        ):
+            bridge.verify_runtime_evidence_receipt(candidate, cached, run, artifacts)
 
     def test_executor_result_receipt_requires_exact_successful_issue_run_and_queue_artifact(self):
         candidate = {"workflowRun": 9}
@@ -711,6 +722,7 @@ class CurrentBridgeTests(unittest.TestCase):
         self.assertIn("acquire_key: packet.acquireKey", executor)
         self.assertIn("issues: write", browser)
         self.assertIn("id: interaction_run", browser)
+        self.assertIn("github.event_name != \'repository_dispatch\'", browser)
         self.assertIn('SOURCE_SHA="$(git rev-parse HEAD)"', browser)
         self.assertIn("gameroad-runtime-evidence-v1", browser)
         self.assertIn("BROWSER_FULL_INTERACTION_RUNTIME_EVIDENCE", browser)

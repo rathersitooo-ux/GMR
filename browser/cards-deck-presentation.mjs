@@ -1404,22 +1404,58 @@ async function fanartReadSkin(idb, cardId) {
   return skin && asset?.blob ? { skin, asset } : null;
 }
 
+export function isLocalSkinAssetReferencedByOtherCard(skins = [], assetHash, cardId) {
+  const hash = String(assetHash ?? '');
+  const id = String(cardId ?? '');
+  if (!hash) return false;
+  return (Array.isArray(skins) ? skins : []).some((skin) =>
+    String(skin?.assetHash ?? '') === hash && String(skin?.baseCardId ?? '') !== id
+  );
+}
+
+async function fanartReadSkinReferenceState(db, cardId) {
+  const tx = db.transaction(FANART_SKIN_STORE, 'readonly');
+  const store = tx.objectStore(FANART_SKIN_STORE);
+  const currentRequest = store.get(cardId);
+  const allRequest = store.getAll();
+  const [skin, skins] = await Promise.all([
+    fanartRequest(currentRequest),
+    fanartRequest(allRequest),
+  ]);
+  await fanartTx(tx);
+  return Object.freeze({ skin, skins: Array.isArray(skins) ? skins : [] });
+}
+
 async function fanartWriteSkin(idb, skin, asset) {
   const db = await fanartOpenDb(idb);
+  const references = await fanartReadSkinReferenceState(db, skin.baseCardId);
+  const previousHash = String(references.skin?.assetHash ?? '');
+  const nextHash = String(skin?.assetHash ?? '');
+  const deletePreviousAsset = Boolean(
+    previousHash
+      && previousHash !== nextHash
+      && !isLocalSkinAssetReferencedByOtherCard(references.skins, previousHash, skin.baseCardId)
+  );
+
   const tx = db.transaction([FANART_SKIN_STORE, FANART_ASSET_STORE], 'readwrite');
   tx.objectStore(FANART_ASSET_STORE).put(asset);
   tx.objectStore(FANART_SKIN_STORE).put(skin);
+  if (deletePreviousAsset) tx.objectStore(FANART_ASSET_STORE).delete(previousHash);
   await fanartTx(tx);
 }
 
 async function fanartDeleteSkin(idb, cardId) {
   const db = await fanartOpenDb(idb);
-  const readTx = db.transaction(FANART_SKIN_STORE, 'readonly');
-  const skin = await fanartRequest(readTx.objectStore(FANART_SKIN_STORE).get(cardId));
-  await fanartTx(readTx);
+  const references = await fanartReadSkinReferenceState(db, cardId);
+  const assetHash = String(references.skin?.assetHash ?? '');
+  const deleteAsset = Boolean(
+    assetHash
+      && !isLocalSkinAssetReferencedByOtherCard(references.skins, assetHash, cardId)
+  );
+
   const tx = db.transaction([FANART_SKIN_STORE, FANART_ASSET_STORE], 'readwrite');
   tx.objectStore(FANART_SKIN_STORE).delete(cardId);
-  if (skin?.assetHash) tx.objectStore(FANART_ASSET_STORE).delete(skin.assetHash);
+  if (deleteAsset) tx.objectStore(FANART_ASSET_STORE).delete(assetHash);
   await fanartTx(tx);
 }
 

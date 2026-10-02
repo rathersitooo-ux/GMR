@@ -58,7 +58,8 @@ export function validateFreePacket(packet) {
     if (!Array.isArray(packet.procedure) || packet.procedure.length === 0) {
       throw new Error('procedure_required');
     }
-    return { ok: true, packet: { ...packet, exactMutableResources: mutablePaths } };
+    const acceptanceChecks = Array.isArray(packet.acceptanceChecks) ? packet.acceptanceChecks : [];
+    return { ok: true, packet: { ...packet, exactMutableResources: mutablePaths, acceptanceChecks } };
   } catch (error) {
     return fail(error.message);
   }

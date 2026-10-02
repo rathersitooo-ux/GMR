@@ -1598,14 +1598,14 @@ export function installFanartLocalSkinCards({ document: doc = globalThis.documen
     await fanartWriteSkin(idb, { baseCardId: selected, assetHash: asset.hash, label: '自分用skin', localOnly: true, updatedAt: Date.now() }, asset);
     await refresh();
   };
-  screen.addEventListener('pointerdown', select, true);
+  screen.addEventListener('click', select, true);
   button.addEventListener('click', () => choose().catch(() => { button.textContent = '画像を選択できません'; }));
   removeButton.addEventListener('click', () => remove().catch(() => { button.textContent = '端末保存を確認できません'; }));
   input.addEventListener('change', () => save().catch(() => { button.textContent = '画像を確認できません'; }));
   const observer = typeof win.MutationObserver === 'function' ? new win.MutationObserver(() => refresh().catch(() => {})) : null;
   observer?.observe(screen, { childList: true, subtree: true }); refresh().catch(() => {});
   const installation = Object.freeze({ contract: FANART_LOCAL_SKIN_CONTRACT, refresh, selectedCardId: () => selected, destroy() {
-    if (destroyed) return; destroyed = true; observer?.disconnect?.(); screen.removeEventListener('pointerdown', select, true); for (const node of [...urls.keys()]) revoke(node); button.remove?.(); removeButton.remove?.(); input.remove?.(); fanartInstallations.delete(doc);
+    if (destroyed) return; destroyed = true; observer?.disconnect?.(); screen.removeEventListener('click', select, true); for (const node of [...urls.keys()]) revoke(node); button.remove?.(); removeButton.remove?.(); input.remove?.(); fanartInstallations.delete(doc);
   } });
   fanartInstallations.set(doc, installation); return installation;
 }

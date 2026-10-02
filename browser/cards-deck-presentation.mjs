@@ -1398,6 +1398,9 @@ function fanartOpenDb(idb) {
     };
   });
   fanartDbPromises.set(idb, pending);
+  void pending.catch(() => {
+    if (fanartDbPromises.get(idb) === pending) fanartDbPromises.delete(idb);
+  });
   return pending;
 }
 

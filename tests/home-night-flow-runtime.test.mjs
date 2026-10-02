@@ -74,3 +74,8 @@ test('runtime stays presentation-only and night audio is user-gesture-gated', ()
     assert.equal(source.includes(forbidden), false, forbidden);
   }
 });
+
+test('Home runtime suppresses the retired diagonal Home pseudo-element', () => {
+  const source = fs.readFileSync(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.ok(source.includes("HOME_SELECTOR + '.codexHome::after{content:none!important;display:none!important}'"));
+});

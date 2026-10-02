@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ACCEPTANCE-TYPED-CONTRACT-R3-20261003T0645-SOL",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "ACCEPTANCE_TYPED_CONTRACT_R3",
+  "acquireKey": "ACCEPTANCE-TYPED-CONTRACT-R3-20261003T0645-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "fresh-current-main-and-existing-acceptance-evidence-path-review",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "node-and-python-focused-tests-plus-required-gate",
+  "proceedToken": "PROCEED|ACCEPTANCE-TYPED-CONTRACT-R3-20261003T0645-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|fresh-current|typed-acceptance-contract",
+  "authorizationBaseSha": "ddea197b6afb7de7cdb58799f27fc35b76dc2c0b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "ACCEPTANCE_TYPED_CONTRACT_R3",
+  "leaseAcquireKey": "ACCEPTANCE-TYPED-CONTRACT-R3-20261003T0645-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-03 06:45 JST",
+  "leaseUntilJst": "2026-10-03 07:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "tools/executor-bus-packet.mjs; tests/executor-bus-packet.test.mjs; tools/free-autopilot-worker.mjs; tests/free-autopilot-worker.test.mjs; tools/gameroad-current-bridge.py; tests/test_gameroad_current_bridge.py; own PRE_ACTION witness; own branch/PR/check/readback; own CURRENT event/lease records",
+  "scope": [
+    "tools/executor-bus-packet.mjs",
+    "tests/executor-bus-packet.test.mjs",
+    "tools/free-autopilot-worker.mjs",
+    "tests/free-autopilot-worker.test.mjs",
+    "tools/gameroad-current-bridge.py",
+    "tests/test_gameroad_current_bridge.py"
+  ],
+  "leaseScope": [
+    "tools/executor-bus-packet.mjs",
+    "tests/executor-bus-packet.test.mjs",
+    "tools/free-autopilot-worker.mjs",
+    "tests/free-autopilot-worker.test.mjs",
+    "tools/gameroad-current-bridge.py",
+    "tests/test_gameroad_current_bridge.py"
+  ],
+  "solutionSignature": "Extend the existing Executor Bus packet and CURRENT Bridge receipt with optional typed acceptance checks. Reuse existing focused-test evidence; keep legacy natural-language acceptance as pending semantic criteria rather than creating a second acceptance authority.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "existing-executor-bus-acceptance-and-current-bridge-evidence-reuse",
+  "solutionSearchEvidence": [
+    "Executor Bus already transports natural-language acceptance and runs exact mutable focused tests",
+    "CURRENT Bridge already verifies provider-backed focused-test evidence before adoption",
+    "Free Local Coder already receives acceptance text in its prompt",
+    "Required Gate remains unchanged and authoritative"
+  ]
+}

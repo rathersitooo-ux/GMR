@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ROAD-EXPLICIT-MOVEMENT-LIVE-R2-20261003T0453-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_EXPLICIT_MOVEMENT_LIVE_R2",
+  "acquireKey": "BATTLE-ROAD-EXPLICIT-MOVEMENT-LIVE-R2-20261003T0453-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_HTML_EXACT_ANCHORS_AND_R24_LEASE_20261003T0453JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "MERGED_EXPLICIT_MOVEMENT_CORE_2191_PLUS_CURRENT_HTML_READONLY_SURGERY",
+  "proceedToken": "PROCEED|BATTLE-ROAD-EXPLICIT-MOVEMENT-LIVE-R2-20261003T0453-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|explicit-road-movement-live|html-test|active-lease",
+  "authorizationBaseSha": "2727ac6455a67b09a5101a8b02a5d289b79a23df",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_EXPLICIT_MOVEMENT_LIVE_R2",
+  "leaseAcquireKey": "BATTLE-ROAD-EXPLICIT-MOVEMENT-LIVE-R2-20261003T0453-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-03 04:53 JST",
+  "leaseUntilJst": "2026-10-03 05:53 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; tests/road-move-compatibility-core.test.mjs; data/preaction-authorizations/BATTLE-ROAD-EXPLICIT-MOVEMENT-LIVE-R2-20261003T0453-SOL.json; own branch/PR/check/readback; own CURRENT event/lease records. browser/new-base-movement-budget-core.mjs and browser/road-move-compatibility-core.mjs remain read-only/reused.",
+  "solutionSignature": "ROAD_EXPLICIT_MOVEMENT_LIVE_CONSUMER_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR2191_EXPLICIT_MOVEMENT_COMPOSER_PLUS_CURRENT_LIVE_CONSUMER_AUDIT",
+  "solutionSearchEvidence": [
+    "PR #2191 already established that printed Road number is not movement authority and introduced an explicit movement-budget composer.",
+    "Current GAMEROAD.html still derives normal movement from CARDS[id].power, so the residual is the live consumer and embedded default-card metadata.",
+    "Existing road-move-compatibility-core tests already encode no-movement Road and explicit movement semantics, so this slice extends that existing test lane instead of creating a second movement engine."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-compatibility-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-compatibility-core.test.mjs"
+  ]
+}

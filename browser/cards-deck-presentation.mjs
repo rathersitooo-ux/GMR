@@ -1313,6 +1313,7 @@ const FANART_MAX_SIDE = 5000;
 const FANART_STORED_MAX_SIDE = 1600;
 const FANART_MAX_STORED_BYTES = 3 * 1024 * 1024;
 const fanartInstallations = new WeakMap();
+const fanartDbPromises = new WeakMap();
 
 export const FANART_LOCAL_SKIN_CONTRACT = Object.freeze({
   schema: 'gameroad.fanart-local-skin-cards.v1',
@@ -1367,17 +1368,40 @@ export function validateLocalSkinSource({ bytes, size } = {}) {
 }
 
 function fanartOpenDb(idb) {
-  return new Promise((resolve, reject) => {
-    if (!idb?.open) return reject(new Error('INDEXEDDB_UNAVAILABLE'));
+  if (!idb?.open) return Promise.reject(new Error('INDEXEDDB_UNAVAILABLE'));
+  const cached = fanartDbPromises.get(idb);
+  if (cached) return cached;
+  const pending = new Promise((resolve, reject) => {
     const request = idb.open(FANART_DB_NAME, FANART_DB_VERSION);
+    const clear = () => {
+      if (fanartDbPromises.get(idb) === pending) fanartDbPromises.delete(idb);
+    };
     request.onupgradeneeded = () => {
       const db = request.result;
       if (!db.objectStoreNames.contains(FANART_ASSET_STORE)) db.createObjectStore(FANART_ASSET_STORE, { keyPath: 'hash' });
       if (!db.objectStoreNames.contains(FANART_SKIN_STORE)) db.createObjectStore(FANART_SKIN_STORE, { keyPath: 'baseCardId' });
     };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error || new Error('INDEXEDDB_OPEN_FAILED'));
+    request.onsuccess = () => {
+      const db = request.result;
+      db.onversionchange = () => {
+        try { db.close?.(); } finally { clear(); }
+      };
+      resolve(db);
+    };
+    request.onerror = () => {
+      clear();
+      reject(request.error || new Error('INDEXEDDB_OPEN_FAILED'));
+    };
+    request.onblocked = () => {
+      clear();
+      reject(new Error('INDEXEDDB_OPEN_BLOCKED'));
+    };
   });
+  fanartDbPromises.set(idb, pending);
+  void pending.catch(() => {
+    if (fanartDbPromises.get(idb) === pending) fanartDbPromises.delete(idb);
+  });
+  return pending;
 }
 
 function fanartRequest(request) {
@@ -1404,22 +1428,58 @@ async function fanartReadSkin(idb, cardId) {
   return skin && asset?.blob ? { skin, asset } : null;
 }
 
+export function isLocalSkinAssetReferencedByOtherCard(skins = [], assetHash, cardId) {
+  const hash = String(assetHash ?? '');
+  const id = String(cardId ?? '');
+  if (!hash) return false;
+  return (Array.isArray(skins) ? skins : []).some((skin) =>
+    String(skin?.assetHash ?? '') === hash && String(skin?.baseCardId ?? '') !== id
+  );
+}
+
+async function fanartReadSkinReferenceState(db, cardId) {
+  const tx = db.transaction(FANART_SKIN_STORE, 'readonly');
+  const store = tx.objectStore(FANART_SKIN_STORE);
+  const currentRequest = store.get(cardId);
+  const allRequest = store.getAll();
+  const [skin, skins] = await Promise.all([
+    fanartRequest(currentRequest),
+    fanartRequest(allRequest),
+  ]);
+  await fanartTx(tx);
+  return Object.freeze({ skin, skins: Array.isArray(skins) ? skins : [] });
+}
+
 async function fanartWriteSkin(idb, skin, asset) {
   const db = await fanartOpenDb(idb);
+  const references = await fanartReadSkinReferenceState(db, skin.baseCardId);
+  const previousHash = String(references.skin?.assetHash ?? '');
+  const nextHash = String(skin?.assetHash ?? '');
+  const deletePreviousAsset = Boolean(
+    previousHash
+      && previousHash !== nextHash
+      && !isLocalSkinAssetReferencedByOtherCard(references.skins, previousHash, skin.baseCardId)
+  );
+
   const tx = db.transaction([FANART_SKIN_STORE, FANART_ASSET_STORE], 'readwrite');
   tx.objectStore(FANART_ASSET_STORE).put(asset);
   tx.objectStore(FANART_SKIN_STORE).put(skin);
+  if (deletePreviousAsset) tx.objectStore(FANART_ASSET_STORE).delete(previousHash);
   await fanartTx(tx);
 }
 
 async function fanartDeleteSkin(idb, cardId) {
   const db = await fanartOpenDb(idb);
-  const readTx = db.transaction(FANART_SKIN_STORE, 'readonly');
-  const skin = await fanartRequest(readTx.objectStore(FANART_SKIN_STORE).get(cardId));
-  await fanartTx(readTx);
+  const references = await fanartReadSkinReferenceState(db, cardId);
+  const assetHash = String(references.skin?.assetHash ?? '');
+  const deleteAsset = Boolean(
+    assetHash
+      && !isLocalSkinAssetReferencedByOtherCard(references.skins, assetHash, cardId)
+  );
+
   const tx = db.transaction([FANART_SKIN_STORE, FANART_ASSET_STORE], 'readwrite');
   tx.objectStore(FANART_SKIN_STORE).delete(cardId);
-  if (skin?.assetHash) tx.objectStore(FANART_ASSET_STORE).delete(skin.assetHash);
+  if (deleteAsset) tx.objectStore(FANART_ASSET_STORE).delete(assetHash);
   await fanartTx(tx);
 }
 
@@ -1490,20 +1550,22 @@ export function installFanartLocalSkinCards({ document: doc = globalThis.documen
     style.textContent = '[data-fanart-local-skin-host="1"]{position:relative!important;isolation:isolate;overflow:hidden}[data-role="fanart-local-skin-overlay"]{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;pointer-events:none;z-index:0!important}[data-fanart-local-skin-host="1"]>.cardCostBadge,[data-fanart-local-skin-host="1"]>.cardRank,[data-fanart-local-skin-host="1"]>.cardAbilityTag,[data-fanart-local-skin-host="1"]>.cardFaceName,[data-fanart-local-skin-host="1"]>.inDeckTag{z-index:2!important;text-shadow:0 1px 2px rgba(0,0,0,.95)}[data-fanart-local-skin-host="1"]>.cardCostBadge{background:rgba(255,255,245,.96)!important;border-radius:6px}[data-fanart-local-skin-host="1"]>.cardRank,[data-fanart-local-skin-host="1"]>.cardFaceName{box-sizing:border-box;border-radius:4px!important;padding:0 3px!important;background:rgba(255,255,245,.92)!important;box-shadow:0 1px 3px rgba(0,0,0,.24)}.screen.cards #collectionGrid .cardAbilityTag{box-sizing:border-box;max-width:calc(100% - 14px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:2px 4px;border-radius:999px;background:rgba(10,16,25,.84);color:#fff;font-size:8px!important;line-height:1.15!important;text-shadow:0 1px 2px rgba(0,0,0,.95)}[data-role="fanart-local-skin-button"],[data-role="fanart-local-skin-remove-button"]{min-height:44px}[data-role="fanart-local-skin-button"][disabled],[data-role="fanart-local-skin-remove-button"][disabled]{opacity:.56;cursor:not-allowed}';
     (doc.head || doc.documentElement)?.appendChild(style);
   }
-  const revoke = (id) => { const url = urls.get(id); if (url) { win.URL.revokeObjectURL(url); urls.delete(id); } };
+  const revoke = (node) => { const url = urls.get(node); if (url) { win.URL.revokeObjectURL(url); urls.delete(node); } };
   const renderNode = async (node, currentTicket) => {
     const id = normalizeLocalSkinCardId(String(node?.dataset?.id ?? '')); if (!id) return;
     let record = null; try { record = await fanartReadSkin(idb, id); } catch {}
     if (destroyed || currentTicket !== ticket || !node.isConnected) return;
     const old = node.querySelector?.('[data-role="fanart-local-skin-overlay"]');
-    if (!record) { old?.remove?.(); node.removeAttribute?.('data-fanart-local-skin-host'); revoke(id); return; }
-    revoke(id); const url = win.URL.createObjectURL(record.asset.blob); urls.set(id, url);
+    if (!record) { old?.remove?.(); node.removeAttribute?.('data-fanart-local-skin-host'); revoke(node); return; }
+    revoke(node); const url = win.URL.createObjectURL(record.asset.blob); urls.set(node, url);
     const overlay = old || doc.createElement('img'); overlay.dataset.role = 'fanart-local-skin-overlay'; overlay.alt = ''; overlay.src = url; overlay.setAttribute('aria-hidden', 'true');
     node.dataset.fanartLocalSkinHost = '1'; if (!old) node.appendChild(overlay);
   };
   const refresh = async () => {
     const currentTicket = ++ticket;
     const nodes = [...screen.querySelectorAll('#collectionGrid [data-id], #deckSlots [data-id], #exDeckSlots [data-id]')];
+    const liveNodes = new Set(nodes);
+    for (const node of [...urls.keys()]) if (!liveNodes.has(node)) revoke(node);
     await Promise.all(nodes.map((node) => renderNode(node, currentTicket)));
     let selectedRecord = null;
     if (selected) { try { selectedRecord = await fanartReadSkin(idb, selected); } catch {} }
@@ -1536,14 +1598,14 @@ export function installFanartLocalSkinCards({ document: doc = globalThis.documen
     await fanartWriteSkin(idb, { baseCardId: selected, assetHash: asset.hash, label: '自分用skin', localOnly: true, updatedAt: Date.now() }, asset);
     await refresh();
   };
-  screen.addEventListener('pointerdown', select, true);
+  screen.addEventListener('click', select, true);
   button.addEventListener('click', () => choose().catch(() => { button.textContent = '画像を選択できません'; }));
   removeButton.addEventListener('click', () => remove().catch(() => { button.textContent = '端末保存を確認できません'; }));
   input.addEventListener('change', () => save().catch(() => { button.textContent = '画像を確認できません'; }));
   const observer = typeof win.MutationObserver === 'function' ? new win.MutationObserver(() => refresh().catch(() => {})) : null;
   observer?.observe(screen, { childList: true, subtree: true }); refresh().catch(() => {});
   const installation = Object.freeze({ contract: FANART_LOCAL_SKIN_CONTRACT, refresh, selectedCardId: () => selected, destroy() {
-    if (destroyed) return; destroyed = true; observer?.disconnect?.(); screen.removeEventListener('pointerdown', select, true); for (const id of [...urls.keys()]) revoke(id); button.remove?.(); removeButton.remove?.(); input.remove?.(); fanartInstallations.delete(doc);
+    if (destroyed) return; destroyed = true; observer?.disconnect?.(); screen.removeEventListener('click', select, true); for (const node of [...urls.keys()]) revoke(node); button.remove?.(); removeButton.remove?.(); input.remove?.(); fanartInstallations.delete(doc);
   } });
   fanartInstallations.set(doc, installation); return installation;
 }

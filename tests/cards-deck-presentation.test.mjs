@@ -521,6 +521,33 @@ test('Cards local skin source validation retains bounded PNG safety envelope', a
   assert.equal(mod.validateLocalSkinSource({ bytes, size: mod.FANART_LOCAL_SKIN_CONTRACT.maxSourceBytes + 1 }).reason, 'SOURCE_SIZE');
 });
 
+test('Cards local skin asset cleanup preserves shared hashes and releases orphaned replacements', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const mod = await import('../browser/cards-deck-presentation.mjs');
+  const skins = [
+    { baseCardId: 'CARD_A', assetHash: 'HASH_SHARED' },
+    { baseCardId: 'CARD_B', assetHash: 'HASH_SHARED' },
+    { baseCardId: 'CARD_C', assetHash: 'HASH_SOLO' },
+  ];
+
+  assert.equal(mod.isLocalSkinAssetReferencedByOtherCard(skins, 'HASH_SHARED', 'CARD_A'), true);
+  assert.equal(mod.isLocalSkinAssetReferencedByOtherCard(skins, 'HASH_SHARED', 'CARD_B'), true);
+  assert.equal(mod.isLocalSkinAssetReferencedByOtherCard(skins, 'HASH_SOLO', 'CARD_C'), false);
+  assert.equal(mod.isLocalSkinAssetReferencedByOtherCard(skins, 'HASH_MISSING', 'CARD_A'), false);
+  assert.equal(mod.isLocalSkinAssetReferencedByOtherCard(skins, '', 'CARD_A'), false);
+
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('async function fanartWriteSkin');
+  const end = source.indexOf('function fanartCanvasBlob', start);
+  const slice = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.ok(slice.includes('previousHash !== nextHash'));
+  assert.ok(slice.includes('isLocalSkinAssetReferencedByOtherCard(references.skins, previousHash, skin.baseCardId)'));
+  assert.ok(slice.includes('isLocalSkinAssetReferencedByOtherCard(references.skins, assetHash, cardId)'));
+  assert.ok(slice.includes('if (deletePreviousAsset) tx.objectStore(FANART_ASSET_STORE).delete(previousHash)'));
+  assert.ok(slice.includes('if (deleteAsset) tx.objectStore(FANART_ASSET_STORE).delete(assetHash)'));
+});
+
 test('Cards local skin consumer fails closed without a Cards document and has no transport fallback', async () => {
   const { readFile } = await import('node:fs/promises');
   const mod = await import('../browser/cards-deck-presentation.mjs');

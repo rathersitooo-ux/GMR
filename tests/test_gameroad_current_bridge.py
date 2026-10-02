@@ -713,7 +713,8 @@ class CurrentBridgeTests(unittest.TestCase):
         self.assertIn("id: interaction_run", browser)
         self.assertIn('SOURCE_SHA="$(git rev-parse HEAD)"', browser)
         self.assertIn("gameroad-runtime-evidence-v1", browser)
-        self.assertIn("```runtime-evidence", browser)
+        self.assertIn("BROWSER_FULL_INTERACTION_RUNTIME_EVIDENCE", browser)
+        self.assertIn("runtime-evidence", browser)
         self.assertIn("browser-full-interaction-${context.runId}", browser)
         self.assertIn("observedHeadSha", browser)
 

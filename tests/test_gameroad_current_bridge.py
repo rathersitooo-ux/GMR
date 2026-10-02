@@ -222,7 +222,7 @@ class CurrentBridgeTests(unittest.TestCase):
     def test_current_event_ledger_pointer_is_resolved_from_current_sheet(self):
         self.assertEqual(bridge.current_event_ledger_id(lease_values()), "ledger-id")
 
-    def test_executor_result_requires_matching_identity_and_one_pr_and_commit(self):
+    def test_executor_result_requires_matching_identity_and_test_workflow_evidence(self):
         result = {
             "schemaVersion": "gameroad-executor-bus-v1",
             "kind": "result",
@@ -230,7 +230,7 @@ class CurrentBridgeTests(unittest.TestCase):
             "workUnitKey": WU,
             "acquireKey": ACQUIRE,
             "status": "RETURNED",
-            "evidence": ["focused tests passed"],
+            "evidence": ["focused-tests:PASS", "workflow-run:9"],
             "unresolved": [],
             "producedRefs": ["pr:123", f"commit:{'b' * 40}", "workflow-run:9"],
             "nextAction": "fresh CURRENT adoption",
@@ -239,21 +239,94 @@ class CurrentBridgeTests(unittest.TestCase):
         parsed = bridge.parse_executor_result_comment(body, packet())
         self.assertEqual(parsed["pr"], 123)
         self.assertEqual(parsed["commit"], "b" * 40)
-        result["acquireKey"] = "OTHER"
-        bad = "```executor-result\n" + json.dumps(result) + "\n```"
-        self.assertIsNone(bridge.parse_executor_result_comment(bad, packet()))
+        self.assertEqual(parsed["workflowRun"], 9)
+
+        for mutation in (
+            {"acquireKey": "OTHER"},
+            {"evidence": ["workflow-run:9"]},
+            {"evidence": ["focused-tests:PASS"]},
+            {"producedRefs": ["pr:123", f"commit:{'b' * 40}"]},
+        ):
+            with self.subTest(mutation=mutation):
+                bad_result = dict(result)
+                bad_result.update(mutation)
+                bad = "```executor-result\n" + json.dumps(bad_result) + "\n```"
+                self.assertIsNone(bridge.parse_executor_result_comment(bad, packet()))
+
+    def test_only_github_actions_bot_comment_is_trusted_for_candidate_result(self):
+        self.assertTrue(
+            bridge.trusted_executor_comment({"user": {"login": "github-actions[bot]"}})
+        )
+        self.assertFalse(
+            bridge.trusted_executor_comment({"user": {"login": "rathersitooo-ux"}})
+        )
+        self.assertFalse(bridge.trusted_executor_comment({}))
+
+    def test_executor_result_receipt_requires_exact_successful_issue_run_and_queue_artifact(self):
+        candidate = {"workflowRun": 9}
+        run = {
+            "id": 9,
+            "name": bridge.EXECUTOR_WORKFLOW_NAME,
+            "path": bridge.EXECUTOR_WORKFLOW_PATH,
+            "event": "issues",
+            "status": "completed",
+            "conclusion": "success",
+            "head_sha": MAIN,
+            "actor": {"login": "owner"},
+        }
+        artifacts = [
+            {
+                "name": "executor-bus-queue-77-9",
+                "expired": False,
+                "workflow_run": {"id": 9, "head_sha": MAIN},
+            }
+        ]
+        self.assertTrue(
+            bridge.verify_executor_result_receipt(
+                packet(), 77, "owner", candidate, run, artifacts
+            )
+        )
+
+        pending = dict(run)
+        pending["status"] = "in_progress"
+        pending["conclusion"] = None
+        self.assertFalse(
+            bridge.verify_executor_result_receipt(
+                packet(), 77, "owner", candidate, pending, artifacts
+            )
+        )
+
+        bad_run = dict(run)
+        bad_run["head_sha"] = "b" * 40
+        with self.assertRaisesRegex(bridge.BridgeError, "executor_workflow_base_mismatch"):
+            bridge.verify_executor_result_receipt(
+                packet(), 77, "owner", candidate, bad_run, artifacts
+            )
+
+        with self.assertRaisesRegex(
+            bridge.BridgeError, "executor_queue_artifact_receipt_missing"
+        ):
+            bridge.verify_executor_result_receipt(
+                packet(), 77, "owner", candidate, run, []
+            )
 
     def test_adoption_manifest_is_valid_shape_for_current_preaction_contract(self):
         _, lease = bridge.resolve_live_lease_row(
             bridge.parse_lease_table_rows(lease_values()), ACQUIRE, NOW
         )
-        path, manifest = bridge.build_adoption_manifest(packet(), lease, 5, NOW, 123)
+        path, manifest = bridge.build_adoption_manifest(packet(), lease, 5, NOW, 123, 9)
         self.assertEqual(path, f"data/preaction-authorizations/{manifest['recordId']}.json")
         self.assertEqual(manifest["authorizationBaseSha"], MAIN)
         self.assertEqual(manifest["leaseSnapshotReadbackRef"], "CURRENT_ACTIVE_LEASES!A5:L5")
         self.assertEqual(manifest["scope"], MUTABLE)
         self.assertEqual(manifest["leaseScope"], MUTABLE)
         self.assertIn("browser/example.mjs", manifest["leaseExactMutableResources"])
+        receipt = manifest["acceptanceEvidenceReceipt"]
+        self.assertEqual(receipt["criteria"], packet()["acceptance"])
+        self.assertEqual(receipt["focusedTests"], ["tests/example.test.mjs"])
+        self.assertEqual(receipt["executorWorkflowRun"], 9)
+        self.assertEqual(receipt["evidenceClaim"], "focused-tests:PASS")
+        self.assertEqual(receipt["semanticCoverage"], "NOT_INFERRED_FROM_TEST_PASS")
         self.assertTrue(
             manifest["proceedToken"].startswith(
                 f"PROCEED|{manifest['recordId']}|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|"

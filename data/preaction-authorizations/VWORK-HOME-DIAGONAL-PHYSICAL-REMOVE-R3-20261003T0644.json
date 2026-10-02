@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-HOME-DIAGONAL-PHYSICAL-REMOVE-R3-20261003T0644",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_DIAGONAL_PHYSICAL_REMOVE_R3",
+  "acquireKey": "HOME-DIAGONAL-PHYSICAL-REMOVE-R3-20261003T0640-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "HOME-DIAGONAL-CURRENT-SOURCE-025666-AND-RUNTIME-E608",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FOCUSED-SOURCE-REMOVAL-REGRESSION-PLANNED",
+  "proceedToken": "PROCEED|VWORK-HOME-DIAGONAL-PHYSICAL-REMOVE-R3-20261003T0644|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|remove-retired-home-diagonal|lease-A7",
+  "authorizationBaseSha": "ddea197b6afb7de7cdb58799f27fc35b76dc2c0b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_DIAGONAL_PHYSICAL_REMOVE_R3",
+  "leaseAcquireKey": "HOME-DIAGONAL-PHYSICAL-REMOVE-R3-20261003T0640-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-03 06:44 JST",
+  "leaseUntilJst": "2026-10-03 07:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; browser/home-boot-runtime-mount.mjs; tests/home-night-flow-runtime.test.mjs; own PRE_ACTION witness; own branch/PR/check/merge/readback; own CURRENT lease/event records.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-night-flow-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-night-flow-runtime.test.mjs"
+  ]
+}

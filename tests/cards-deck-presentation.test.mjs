@@ -521,6 +521,36 @@ test('Cards local skin source validation retains bounded PNG safety envelope', a
   assert.equal(mod.validateLocalSkinSource({ bytes, size: mod.FANART_LOCAL_SKIN_CONTRACT.maxSourceBytes + 1 }).reason, 'SOURCE_SIZE');
 });
 
+test('Cards local skin asset GC preserves a hash while another card still references it', async () => {
+  const mod = await import('../browser/cards-deck-presentation.mjs');
+  const skins = [
+    { baseCardId: 'CARD_A', assetHash: 'HASH_SHARED' },
+    { baseCardId: 'CARD_B', assetHash: 'HASH_SHARED' },
+    { baseCardId: 'CARD_C', assetHash: 'HASH_ORPHAN' },
+  ];
+
+  assert.equal(mod.isLocalSkinAssetHashReferencedByOtherCard(skins, 'HASH_SHARED', 'CARD_A'), true);
+  assert.equal(mod.isLocalSkinAssetHashReferencedByOtherCard(skins, 'HASH_SHARED', 'CARD_B'), true);
+  assert.equal(mod.isLocalSkinAssetHashReferencedByOtherCard(skins, 'HASH_ORPHAN', 'CARD_C'), false);
+  assert.equal(mod.isLocalSkinAssetHashReferencedByOtherCard(skins, '', 'CARD_C'), false);
+});
+
+test('Cards local skin replacement and removal reclaim only unreferenced asset hashes', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('async function fanartWriteSkin');
+  const end = source.indexOf('function fanartCanvasBlob', start);
+  const lifecycle = source.slice(start, end);
+
+  assert.ok(start >= 0 && end > start);
+  assert.match(lifecycle, /skinStore\.get\(skin\.baseCardId\)/);
+  assert.match(lifecycle, /skinStore\.getAll\(\)/);
+  assert.match(lifecycle, /previous\.assetHash !== skin\.assetHash/);
+  assert.match(lifecycle, /isLocalSkinAssetHashReferencedByOtherCard\(skins, previous\.assetHash, skin\.baseCardId\)/);
+  assert.match(lifecycle, /isLocalSkinAssetHashReferencedByOtherCard\(skins, skin\.assetHash, cardId\)/);
+  assert.equal(lifecycle.includes("db.transaction(FANART_SKIN_STORE, 'readonly')"), false);
+});
+
 test('Cards local skin consumer fails closed without a Cards document and has no transport fallback', async () => {
   const { readFile } = await import('node:fs/promises');
   const mod = await import('../browser/cards-deck-presentation.mjs');

@@ -399,7 +399,12 @@ jobs:
               p === 'tests/browser-full-interaction-state-sequence.spec.mjs' ||
               p === 'playwright.full-interaction.config.mjs' ||
               p === '.github/workflows/browser-full-interaction.yml';
-            const bfiRequired = packet.exactMutableResources.some(browserEvidencePath);
+            const bfiAcceptanceRequired = (packet.acceptanceChecks || []).some((check) =>
+              check.kind === 'runtime_evidence' &&
+              check.required === true &&
+              check.target === 'browser-full-interaction',
+            );
+            const bfiRequired = bfiAcceptanceRequired || packet.exactMutableResources.some(browserEvidencePath);
             await github.rest.repos.createDispatchEvent({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -411,6 +416,9 @@ jobs:
                 pr_number: Number(process.env.PR_NUMBER),
                 candidate_branch: process.env.CANDIDATE_BRANCH,
                 bfi_required: bfiRequired,
+                task_id: packet.taskId,
+                work_unit_key: packet.workUnitKey,
+                acquire_key: packet.acquireKey,
               },
             });
             core.setOutput('bfi_required', String(bfiRequired));

@@ -109,6 +109,154 @@ const HOME_VISUAL_LAYER_SELECTOR = '.codexHomeVisualLayer';
 export const GACHA_PREVIEW_NOTICE_ID = 'gachaPreviewAuthorityNotice';
 export const GACHA_PREVIEW_NOTICE_TEXT = '※ 現在は演出プレビューです。表示されたカードは所持・保存には反映されません。';
 
+export const GACHA_NATIVE_REVEAL_STYLE_ID = 'gameroad-gacha-native-reveal-r4';
+export const GACHA_NATIVE_REVEAL_SKIP_TEXT = 'すぐ結果を見る';
+export const GACHA_NATIVE_REVEAL_DURATION_MS = Object.freeze({normal: 520, low: 160, reduced: 0});
+export const GACHA_NATIVE_REVEAL_CSS = `
+#gachaStage.gachaNativeOpening #gachaVideo{display:none!important}
+#gachaStage.gachaNativeOpening .gachaIdle{opacity:1!important;pointer-events:none!important}
+#gachaStage.gachaNativeOpening .gachaResults,#gachaStage.gachaNativeOpening .gachaFocus{opacity:0!important;pointer-events:none!important}
+#gachaStage.gachaNativeOpening .gachaCardFan{animation:gachaNativeFanRevealR4 .52s cubic-bezier(.22,.72,.2,1)}
+#gachaStage.gachaNativeOpening .gachaCompanion{animation:gachaNativeCompanionRevealR4 .52s ease-out}
+#gachaStage.gachaNativeOpening .gachaStageBand{animation:gachaNativeBandRevealR4 .52s ease-out}
+#gachaStage.gachaNativeOpening[data-gacha-native-profile="low"] .gachaCardFan,#gachaStage.gachaNativeOpening[data-gacha-native-profile="low"] .gachaCompanion,#gachaStage.gachaNativeOpening[data-gacha-native-profile="low"] .gachaStageBand{animation:gachaNativeFadeRevealR4 .16s linear}
+@keyframes gachaNativeFanRevealR4{0%{opacity:.72;transform:scale(.985)}58%{opacity:1;transform:scale(1.018)}100%{opacity:1;transform:scale(1)}}
+@keyframes gachaNativeCompanionRevealR4{0%{opacity:.82;transform:translateY(4px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes gachaNativeBandRevealR4{0%{opacity:.35;transform:scaleX(.18);transform-origin:left}100%{opacity:1;transform:scaleX(1);transform-origin:left}}
+@keyframes gachaNativeFadeRevealR4{0%{opacity:.72}100%{opacity:1}}
+@media(prefers-reduced-motion:reduce){#gachaStage.gachaNativeOpening .gachaCardFan,#gachaStage.gachaNativeOpening .gachaCompanion,#gachaStage.gachaNativeOpening .gachaStageBand{animation:none!important}}
+`;
+
+const gachaNativeRevealBindings = new WeakMap();
+
+export function resolveGachaNativeRevealProfile({reducedMotion = false, lowPerf = false} = {}) {
+  if (reducedMotion) return Object.freeze({name: 'reduced', durationMs: GACHA_NATIVE_REVEAL_DURATION_MS.reduced});
+  if (lowPerf) return Object.freeze({name: 'low', durationMs: GACHA_NATIVE_REVEAL_DURATION_MS.low});
+  return Object.freeze({name: 'normal', durationMs: GACHA_NATIVE_REVEAL_DURATION_MS.normal});
+}
+
+export function ensureGachaNativeRevealStyle(documentSource = globalThis.document) {
+  if (!documentSource?.head || typeof documentSource.createElement !== 'function') return false;
+  if (documentSource.getElementById?.(GACHA_NATIVE_REVEAL_STYLE_ID)) return false;
+  const style = documentSource.createElement('style');
+  style.id = GACHA_NATIVE_REVEAL_STYLE_ID;
+  style.textContent = GACHA_NATIVE_REVEAL_CSS;
+  documentSource.head.append?.(style);
+  return true;
+}
+
+function invokeGachaLegacyWithoutMovie(video, legacyOpen, thisArg, event) {
+  if (typeof legacyOpen !== 'function') return Object.freeze({ok: false, reason: 'LEGACY_OPEN_MISSING'});
+  if (!video || typeof video !== 'object') return Object.freeze({ok: false, reason: 'VIDEO_NODE_MISSING'});
+  const hadOwnPlay = Object.prototype.hasOwnProperty.call(video, 'play');
+  const ownPlayDescriptor = hadOwnPlay ? Object.getOwnPropertyDescriptor(video, 'play') : null;
+  try {
+    Object.defineProperty(video, 'play', {configurable: true, writable: true, value: () => Promise.resolve()});
+  } catch {
+    return Object.freeze({ok: false, reason: 'MOVIE_SUPPRESSION_UNAVAILABLE'});
+  }
+  try {
+    return Object.freeze({ok: true, value: legacyOpen.call(thisArg, event)});
+  } finally {
+    try { video.pause?.(); } catch {}
+    try {
+      video.onended = null;
+      video.onerror = null;
+      video.removeAttribute?.('src');
+      video.load?.();
+    } catch {}
+    try {
+      if (hadOwnPlay && ownPlayDescriptor) Object.defineProperty(video, 'play', ownPlayDescriptor);
+      else delete video.play;
+    } catch {}
+  }
+}
+
+export function ensureGachaNativeRevealRuntime(documentSource = globalThis.document, {
+  readUiMode = () => globalThis.GAMEROAD_READ_UI_MODE?.() || {},
+  setTimer = (callback, delay) => globalThis.setTimeout(callback, delay),
+  clearTimer = (timer) => globalThis.clearTimeout(timer),
+} = {}) {
+  if (!documentSource || typeof documentSource.getElementById !== 'function') return null;
+  const openButton = documentSource.getElementById('openPack');
+  const skipButton = documentSource.getElementById('skipPack');
+  const stage = documentSource.getElementById('gachaStage');
+  const video = documentSource.getElementById('gachaVideo');
+  const results = documentSource.getElementById('gachaResultsView');
+  if (!openButton || !skipButton || !stage || !video || !results || typeof openButton.onclick !== 'function') return null;
+
+  const existing = gachaNativeRevealBindings.get(openButton);
+  if (existing) {
+    skipButton.textContent = GACHA_NATIVE_REVEAL_SKIP_TEXT;
+    return existing;
+  }
+
+  ensureGachaNativeRevealStyle(documentSource);
+  const legacyOpen = openButton.onclick;
+  let timer = null;
+
+  const settle = () => {
+    if (timer !== null) {
+      try { clearTimer(timer); } catch {}
+      timer = null;
+    }
+    stage.classList?.remove?.('gachaNativeOpening');
+    if (stage.dataset) delete stage.dataset.gachaNativeProfile;
+  };
+
+  const finishThroughExistingSkip = () => {
+    settle();
+    if (!results.classList?.contains?.('hidden')) return false;
+    if (typeof skipButton.click === 'function') {
+      skipButton.click();
+      return true;
+    }
+    if (typeof skipButton.onclick === 'function') {
+      skipButton.onclick();
+      return true;
+    }
+    return false;
+  };
+
+  const onSkip = () => settle();
+  skipButton.addEventListener?.('click', onSkip, {capture: true});
+
+  openButton.onclick = function gachaNativeRevealOpen(event) {
+    settle();
+    const suppressed = invokeGachaLegacyWithoutMovie(video, legacyOpen, this, event);
+    if (!suppressed.ok) return suppressed;
+
+    skipButton.textContent = GACHA_NATIVE_REVEAL_SKIP_TEXT;
+    try { video.pause?.(); } catch {}
+    stage.classList?.remove?.('playing');
+
+    if (!results.classList?.contains?.('hidden')) {
+      settle();
+      return suppressed.value;
+    }
+
+    const profile = resolveGachaNativeRevealProfile(readUiMode?.() || {});
+    stage.classList?.add?.('gachaNativeOpening');
+    if (stage.dataset) stage.dataset.gachaNativeProfile = profile.name;
+
+    if (profile.durationMs <= 0 || typeof setTimer !== 'function') {
+      finishThroughExistingSkip();
+      return suppressed.value;
+    }
+
+    timer = setTimer(() => {
+      timer = null;
+      finishThroughExistingSkip();
+    }, profile.durationMs);
+    return suppressed.value;
+  };
+
+  skipButton.textContent = GACHA_NATIVE_REVEAL_SKIP_TEXT;
+  const binding = Object.freeze({openButton, skipButton, stage, video, results, settle, finishThroughExistingSkip});
+  gachaNativeRevealBindings.set(openButton, binding);
+  return binding;
+}
+
 export function ensureGachaPreviewDisclosure(documentSource = globalThis.document) {
   if (!documentSource || typeof documentSource.getElementById !== 'function' || typeof documentSource.createElement !== 'function') return null;
   try {
@@ -559,7 +707,10 @@ export function createScreenTransitionRuntimeAdapter({
       applySwap: (context) => {
         const applied = applyScreen(decision.to, Object.freeze({from: decision.from, to: decision.to, reason, revision: context.revision}));
         if (applied && typeof applied.then === 'function') throw new Error('applyScreen must be synchronous');
-        if (decision.to === 'gacha') ensureGachaPreviewDisclosure(globalThis.document);
+        if (decision.to === 'gacha') {
+          ensureGachaPreviewDisclosure(globalThis.document);
+          ensureGachaNativeRevealRuntime(globalThis.document);
+        }
       }
     });
     presentationDriver.finishRevision?.(result.revision, result.status);

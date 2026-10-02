@@ -40,6 +40,9 @@ const STYLE_TEXT = `
 .screen.battle[${ROOT_ATTR}="1"] [data-battle-r75-hud="1"]{z-index:33!important}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="current-action"]{position:absolute!important;z-index:32!important;top:calc(var(--gr-ui-edge) + clamp(42px,9vh,72px))!important;left:50%!important;right:auto!important;bottom:auto!important;width:max-content!important;min-width:min(32vw,280px)!important;max-width:var(--gr-action-max)!important;transform:translateX(-50%)!important;margin:0!important;text-align:center!important;pointer-events:none!important;transition:opacity 120ms ease,filter 120ms ease,box-shadow 120ms ease!important}
 .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud{position:absolute!important;z-index:31!important;top:var(--gr-ui-edge)!important;left:50%!important;right:auto!important;bottom:auto!important;transform:translateX(-50%)!important;width:min(48vw,500px)!important;max-height:54px!important;overflow:hidden!important;padding:3px 6px!important;pointer-events:none!important;opacity:.82;transition:opacity 120ms ease,filter 120ms ease}
+.screen.battle[${ROOT_ATTR}="1"] #publicTurnHud .publicPlayerCopy b{font-size:10px!important}
+.screen.battle[${ROOT_ATTR}="1"] #publicTurnHud .publicPlayerState{font-size:9px!important}
+.screen.battle[${ROOT_ATTR}="1"] #publicTurnHud .publicPlayerMeta,.screen.battle[${ROOT_ATTR}="1"] #publicTurnHud .publicPlayerRoyal{font-size:8px!important}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{position:absolute!important;z-index:32!important;left:var(--gr-ui-edge)!important;right:auto!important;top:auto!important;bottom:var(--gr-ui-edge)!important;width:auto!important;max-width:min(22vw,170px)!important;pointer-events:none!important}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="support-entry"]{position:absolute!important;z-index:33!important;left:var(--gr-ui-edge)!important;right:auto!important;top:auto!important;bottom:calc(var(--gr-ui-edge) + 46px)!important;min-width:44px!important;min-height:36px!important;width:auto!important;height:36px!important;max-height:36px!important;padding:5px 8px!important;margin:0!important;transform:none!important;box-sizing:border-box!important;font-size:11px!important;pointer-events:auto!important;transition:opacity 120ms ease,filter 120ms ease!important}
 .screen.battle[${ROOT_ATTR}="1"] .battleInfo{position:absolute!important;z-index:25!important;left:clamp(104px,16vw,190px)!important;right:calc(var(--gr-thumb-w) + var(--gr-ui-edge) + var(--gr-ui-gap))!important;top:auto!important;bottom:var(--gr-ui-edge)!important;height:var(--gr-bottom-h)!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(138px,28%)!important;align-items:end!important;gap:var(--gr-ui-gap)!important;padding:0!important;background:none!important;border:0!important;border-radius:16px!important;box-shadow:none!important;pointer-events:none!important;transition:opacity 120ms ease,filter 120ms ease,background 120ms ease,box-shadow 120ms ease!important}
@@ -107,7 +110,11 @@ const STYLE_TEXT = `
 @media(max-height:430px) and (orientation:landscape){
   .screen.battle[${ROOT_ATTR}="1"]{--gr-thumb-w:208px;--gr-thumb-h:160px;--gr-bottom-h:clamp(82px,26vh,106px)}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="current-action"]{top:46px!important;min-width:0!important;max-width:46vw!important}
-  .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud{width:min(44vw,400px)!important;max-height:44px!important;padding:2px 4px!important}
+  .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud{width:min(46vw,420px)!important;max-height:50px!important;padding:3px 4px!important}
+  .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud .publicPlayerStrip{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:3px!important}
+  .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud .publicPlayerChip{grid-template-columns:20px minmax(0,1fr)!important;min-height:38px!important;padding:3px!important}
+  .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud .publicPlayerAvatar{width:20px!important;height:20px!important;font-size:9px!important}
+  .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud .publicPlayerMeta{display:none!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{max-width:112px!important;font-size:10px!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="support-entry"]{min-height:32px!important;height:32px!important;max-height:32px!important;padding:3px 6px!important;font-size:10px!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner-visual"]{width:112px!important;height:160px!important}
@@ -122,7 +129,11 @@ const STYLE_TEXT = `
 @media(max-width:520px) and (orientation:portrait){
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="current-action"]{top:108px!important;left:8px!important;right:8px!important;width:auto!important;min-width:0!important;max-width:none!important;transform:translateY(6px)!important}
   .screen.battle[${ROOT_ATTR}="1"]{--gr-thumb-w:176px;--gr-thumb-h:172px;--gr-bottom-h:28vh}
-  .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud{top:48px!important;width:76vw!important}
+  .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud{top:48px!important;left:8px!important;right:8px!important;width:auto!important;max-height:56px!important;transform:none!important}
+  .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud .publicPlayerStrip{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:3px!important}
+  .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud .publicPlayerChip{grid-template-columns:20px minmax(0,1fr)!important;padding:3px!important}
+  .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud .publicPlayerAvatar{width:20px!important;height:20px!important;font-size:9px!important}
+  .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud .publicPlayerMeta{display:none!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{max-width:30vw!important;bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap))!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="support-entry"]{bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap) + 46px)!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner"]{bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap) + 92px)!important}

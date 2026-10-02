@@ -1,0 +1,121 @@
+name: NAKI Return Janken Acceptance
+
+on:
+  push:
+    branches:
+      - chatgpt/naki-battle-visible-evidence-r12-20261003
+
+permissions:
+  contents: read
+
+jobs:
+  naki-visible-acceptance:
+    name: Naki visible acceptance (3 viewports)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact R12 head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate R12 PRE_ACTION scope
+        shell: bash
+        env:
+          BASE_SHA: e695cf3a59c5d8eca828eb02966cc8e9229be7e3
+        run: |
+          set -euo pipefail
+          git diff --name-only "${BASE_SHA}" "${GITHUB_SHA}" > /tmp/naki-r12-changed.txt
+          node tools/preaction-authorization-validator.mjs             --base "${BASE_SHA}"             --head "${GITHUB_SHA}"             --changed /tmp/naki-r12-changed.txt
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run only the dedicated Naki return acceptance
+        id: naki_test
+        continue-on-error: true
+        run: >-
+          npx playwright test
+          --config=playwright.full-interaction.config.mjs
+          --workers=1
+          --grep "moves resolve off the board into the dedicated Battle Phase with Naki cut-in and four-player compare"
+
+      - name: Collect Naki acceptance evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf naki-visible-evidence
+          mkdir -p naki-visible-evidence
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const reportPath = 'test-results/full-interaction/unattended-playtest-report.json';
+          if (!fs.existsSync(reportPath)) {
+            fs.writeFileSync('naki-visible-evidence/result.json', JSON.stringify({
+              source_sha: process.env.GITHUB_SHA,
+              assertion: 'first real launcher gesture after Naki return is accepted into the authoritative human plan',
+              report_missing: true,
+            }, null, 2) + '\n');
+            process.exit(0);
+          }
+          const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+          const wanted = 'battle-phase-naki-return-janken-accepted';
+          const attachments = [];
+          function walk(value) {
+            if (Array.isArray(value)) {
+              for (const item of value) walk(item);
+              return;
+            }
+            if (!value || typeof value !== 'object') return;
+            if (
+              typeof value.name === 'string' &&
+              value.name.includes(wanted) &&
+              typeof value.path === 'string'
+            ) {
+              attachments.push(value);
+            }
+            for (const child of Object.values(value)) walk(child);
+          }
+          walk(report);
+          const unique = new Map();
+          for (const item of attachments) unique.set(item.name, item);
+          const rows = [...unique.values()].sort((a, b) => a.name.localeCompare(b.name));
+          const expected = ['desktop-1280x720', 'phone-390x844', 'short-landscape-667x375'];
+          for (const row of rows) {
+            fs.copyFileSync(row.path, path.join('naki-visible-evidence', path.basename(row.name)));
+          }
+          fs.writeFileSync(
+            'naki-visible-evidence/result.json',
+            JSON.stringify({
+              source_sha: process.env.GITHUB_SHA,
+              assertion: 'first real launcher gesture after Naki return is accepted into the authoritative human plan',
+              accepted_click_screenshots: rows.map(row => path.basename(row.name)),
+              expected_projects: expected,
+            }, null, 2) + '\n',
+          );
+          NODE
+          find naki-visible-evidence -maxdepth 1 -type f -print -exec ls -lh {} \;
+
+      - name: Upload compact Naki visible evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: naki-return-janken-visible-${{ github.run_id }}
+          path: |
+            naki-visible-evidence/
+            test-results/full-interaction/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Enforce Naki acceptance result
+        if: steps.naki_test.outcome != 'success'
+        run: exit 1

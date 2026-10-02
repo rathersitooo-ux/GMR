@@ -590,6 +590,25 @@ test('Cards local skin image controls stay discoverable and separate replace fro
   assert.ok(removeSlice.includes('fanartDeleteSkin'));
 });
 
+test('Cards Deck quick filters stay grouped, touch-sized and horizontally readable', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('export function installCardsDeckFindability');
+  const end = source.indexOf('function createExistingDeckAuthorityBridge');
+  const slice = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.ok(slice.includes("host.setAttribute?.('aria-label', 'カードとデッキを絞り込む')"));
+  assert.ok(slice.includes('[data-role="cards-deck-findability"][data-integrated="true"]{display:flex;flex:1 1 100%'));
+  assert.ok(slice.includes('flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain'));
+  assert.ok(slice.includes('scrollbar-width:none'));
+  assert.ok(slice.includes('button{min-height:44px'));
+  assert.ok(slice.includes('touch-action:manipulation'));
+  assert.ok(slice.includes('button:active{transform:translateY(1px) scale(.985)}'));
+  assert.ok(slice.includes('button:focus-visible{outline:2px solid #ffd84a'));
+  assert.ok(slice.includes('@media(prefers-reduced-motion:reduce)'));
+  assert.equal(slice.includes('[data-integrated="true"]{display:contents'), false);
+});
+
 test('Cards findability contract adds favorite without taking Deck or ownership authority', async () => {
   const mod = await import('../browser/cards-deck-presentation.mjs');
   assert.equal(mod.CARDS_DECK_FINDABILITY_CONTRACT.schema, 'gameroad.cards-deck-findability.v2');

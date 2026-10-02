@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   GACHA_PRESENTATION_SCHEMA,
@@ -49,8 +50,9 @@ test('requires a server-confirmed opaque ordered result bundle and freezes an in
   assert.equal(state.stage, 'idle');
   assert.equal(state.revealIndex, -1);
   assert.equal(state.viewIndex, -1);
-  assert.equal(state.effects.motion, 'full');
-  assert.equal(state.effects.video, 'enabled');
+  assert.equal(state.effects.motion, 'native_reveal');
+  assert.equal(state.effects.video, 'disabled');
+  assert.equal(state.effects.revealMs, 520);
   assert.equal(state.assets.character, 'formal');
   assert.equal(state.assets.video, 'formal');
   assert.ok(Object.isFrozen(state));
@@ -164,17 +166,30 @@ test('skip exposes the same immutable confirmed bundle in the same order', () =>
 
 test('reduced-motion and low-performance fallbacks remove long motion without losing result information', () => {
   const reduced = create({ reducedMotion: true, assets: { character: 'formal', video: 'formal' } });
-  assert.deepEqual(reduced.effects, { motion: 'still', video: 'disabled' });
+  assert.deepEqual(reduced.effects, { motion: 'still', video: 'disabled', revealMs: 0 });
   assert.equal(projectGachaPresentation(reduced).resultCount, 3);
 
   const low = create({ lowPerf: true, assets: { character: 'formal', video: 'formal' } });
-  assert.deepEqual(low.effects, { motion: 'short_fade', video: 'disabled' });
+  assert.deepEqual(low.effects, { motion: 'short_fade', video: 'disabled', revealMs: 160 });
   assert.equal(projectGachaPresentation(low).resultCount, 3);
 
   const missing = create({ assets: {} });
   assert.deepEqual(missing.assets, { character: 'fallback', video: 'fallback' });
-  assert.deepEqual(missing.effects, { motion: 'full', video: 'fallback' });
+  assert.deepEqual(missing.effects, { motion: 'native_reveal', video: 'disabled', revealMs: 520 });
   assert.deepEqual(missing.resultBundle, makeBundle());
+});
+
+test('live Browser Gacha open path contains no movie dependency and keeps the existing seven-result producer', () => {
+  const source = readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
+
+  assert.doesNotMatch(source, /id="gachaVideo"/);
+  assert.doesNotMatch(source, /GACHA_VIDEO_[AB]01/);
+  assert.doesNotMatch(source, /function playStage\(/);
+  assert.match(source, /function startGachaNativeReveal\(\)/);
+  assert.match(source, /const waitMs=profile==='low'\?160:520/);
+  assert.match(source, /state\.lastPackPreview=buildPackPreview\(\)/);
+  assert.match(source, /state\.lastPackPreview\.forEach\(\(c,i\)=>/);
+  assert.match(source, /id="skipPack">すぐ結果を見る<\/button>/);
 });
 
 test('duplicate events are idempotent while stale, gap, presentation, and result identity mismatches fail closed', () => {

@@ -548,6 +548,20 @@ test('Cards local skin asset cleanup preserves shared hashes and releases orphan
   assert.ok(slice.includes('if (deleteAsset) tx.objectStore(FANART_ASSET_STORE).delete(assetHash)'));
 });
 
+test('Cards local skin object URLs are owned per rendered surface instead of per card id', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('export function installFanartLocalSkinCards');
+  const end = source.indexOf('const fanartPublicBattleProjectionInstallations', start);
+  const slice = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.ok(slice.includes('const revoke = (node) => { const url = urls.get(node)'));
+  assert.ok(slice.includes('urls.set(node, url)'));
+  assert.equal(slice.includes('urls.set(id, url)'), false);
+  assert.ok(slice.includes('const liveNodes = new Set(nodes)'));
+  assert.ok(slice.includes('for (const node of [...urls.keys()]) if (!liveNodes.has(node)) revoke(node)'));
+});
+
 test('Cards local skin consumer fails closed without a Cards document and has no transport fallback', async () => {
   const { readFile } = await import('node:fs/promises');
   const mod = await import('../browser/cards-deck-presentation.mjs');

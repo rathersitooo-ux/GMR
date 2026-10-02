@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BFI-AUTO-MERGE-DEADLOCK-R5-20261003T0735-SOL",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "BFI_AUTO_MERGE_BASELINE_DEADLOCK_R5",
+  "acquireKey": "BFI-AUTO-MERGE-DEADLOCK-R5-20261003T0735-SOL",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "main-bfi-run-37071060291-baseline-failure-plus-auto-merge-cycle-review",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "dedicated-auto-merge-contract-test-plus-actionlint-required-gate",
+  "proceedToken": "PROCEED|BFI-AUTO-MERGE-DEADLOCK-R5-20261003T0735-SOL|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|fresh-current|break-bfi-self-gate-cycle",
+  "authorizationBaseSha": "e3cdc7e37c21b5b707b43fb1f6ddd6c643799111",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "BFI_AUTO_MERGE_BASELINE_DEADLOCK_R5",
+  "leaseAcquireKey": "BFI-AUTO-MERGE-DEADLOCK-R5-20261003T0735-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-03 07:35 JST",
+  "leaseUntilJst": "2026-10-03 08:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": ".github/workflows/required-gate-auto-merge.yml; .github/workflows/gameroad-required-gate.yml; tests/required-gate-auto-merge.test.mjs; own PRE_ACTION witness; own branch/PR/check/readback; own CURRENT event/lease records",
+  "scope": [
+    ".github/workflows/required-gate-auto-merge.yml",
+    ".github/workflows/gameroad-required-gate.yml",
+    "tests/required-gate-auto-merge.test.mjs"
+  ],
+  "leaseScope": [
+    ".github/workflows/required-gate-auto-merge.yml",
+    ".github/workflows/gameroad-required-gate.yml",
+    "tests/required-gate-auto-merge.test.mjs"
+  ],
+  "solutionSignature": "Remove browser-full-interaction.yml itself from the broad BFI product evidence path set. Add a dedicated static contract test to Required Gate so self-changes are actionlint + contract verified, while browser product/E2E spec/config changes remain broad-BFI gated.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "existing-required-gate-actionlint-and-auto-merge-path-classifier",
+  "solutionSearchEvidence": [
+    "Main BFI run 37071060291 fails independently with 27 existing product/spec mismatches and 20m timeout",
+    "required-gate-auto-merge already listens to Browser Full Interaction completion",
+    "Required Gate already actionlints browser-full-interaction.yml and auto-merge workflow",
+    "Circularity comes from treating browser-full-interaction.yml itself as product-runtime evidence scope"
+  ]
+}

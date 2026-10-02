@@ -1,0 +1,60 @@
+<section class="screen home codexHome active" data-screen="home" data-home-state="HOME_EXPANDED" data-home-preview="" data-codex-home-source="HomeMainMenuSlidePad-R2-shell+formal-clean-crops">
+  <div class="codexHomeFog codexHomeFogA" aria-hidden="true"></div>
+  <div class="codexHomeFog codexHomeFogB" aria-hidden="true"></div>
+  <div class="codexHomeFog codexHomeFogC" aria-hidden="true"></div>
+
+  <aside class="codexHomeLeftRail" aria-label="進行中">
+    <div class="codexRailTitle">進行中</div>
+    <button type="button" class="codexWireCard codexSeasonCard" data-go="missions">
+      <span class="codexWireBadge">PASS</span>
+      <strong>シーズンミッション</strong>
+      <small>シーズンの進行と受取状況を確認します</small>
+      <em>シーズンミッションへ →</em>
+    </button>
+  </aside>
+
+  <main class="codexHomeCenterStage">
+    <div class="codexCenterEyebrow">HOME VISUAL</div>
+    <div class="codexCenterTitle">GAMEROAD のホーム</div>
+    <div class="codexCenterSub">ホームから各機能へ移動できます</div>
+    <div class="codexHomeVisualLayer" data-formal-background="missing">
+      <div class="codexHalo codexHaloOuter" aria-hidden="true"></div>
+      <div class="codexHalo codexHaloInner" aria-hidden="true"></div>
+    </div>
+    <div class="codexBattleCrest"><span>バトル</span><strong>RANK<br>MATCH</strong></div>
+    <div class="codexRankLabel">ランクマッチ</div>
+    <button type="button" class="codexPartnerChip" data-go="characters"><span>パートナー</span></button>
+    <button type="button" class="codexBattleCta" data-go="setup">バトルへ →</button>
+  </main>
+
+  <aside class="codexHomeRightRail" aria-label="案内">
+    <div class="codexRailTitle">案内</div>
+    <button type="button" class="codexWireCard codexMissionCard" data-go="missions">
+      <strong>ミッション</strong>
+      <small>日次・週間・シーズンミッションの進行と受取状況を確認します</small>
+      <em>日次ミッションへ →</em>
+    </button>
+    <button type="button" class="codexHomeSettings" data-go="settings">ホーム表示設定</button>
+    <button type="button" class="codexHomeSettings codexHomeAuxDesktop" data-go="gacha">パック</button>
+    <button type="button" class="codexHomeSettings codexHomeAuxDesktop" data-go="records">対戦記録</button>
+    <button type="button" class="codexHomeSettings codexHomeAuxDesktop" data-go="profile">プロフィール</button>
+  </aside>
+
+  <nav class="homeUtilities codexHomeUtilities" aria-label="ホーム補助メニュー">
+    <button class="homeUtilityBtn" type="button" data-go="missions">任務</button>
+    <button class="homeUtilityBtn" type="button" data-go="gacha">パック</button>
+    <button class="homeUtilityBtn" type="button" data-go="records">記録</button>
+    <button class="homeUtilityBtn" type="button" data-go="profile">プロフィール</button>
+    <button class="homeUtilityBtn" type="button" data-go="settings">設定</button>
+  </nav>
+
+  <nav class="homeSlidePad codexHomeSlidePad" id="homeSlidePad" aria-label="ホーム主要メニュー">
+    <button type="button" class="homePadChoice codexPadBattle" data-home-target="setup" data-home-direction="up" data-dir-label="↑" aria-label="バトルへ"><img class="codexPadArt" data-pad-art="battle" alt="" aria-hidden="true" src="./pad-battle.png"><span class="codexPadFallback">バトル</span><strong>バトル</strong></button>
+    <button type="button" class="homePadChoice codexPadShop" data-home-target="shop" data-home-direction="right" data-dir-label="→" aria-label="ショップへ"><img class="codexPadArt" data-pad-art="shop" alt="" aria-hidden="true" src="./pad-shop.png"><span class="codexPadFallback">ショップ</span><strong>ショップ</strong></button>
+    <button type="button" class="homePadChoice codexPadPartner" data-home-target="characters" data-home-direction="up-left" data-dir-label="↖" aria-label="パートナーへ"><img class="codexPadArt" data-pad-art="partner" alt="" aria-hidden="true" src="./pad-partner.png"><span class="codexPadFallback">パートナー</span><strong>パートナー</strong></button>
+    <button type="button" class="homePadChoice codexPadDeck" data-home-target="cards" data-home-direction="down-left" data-dir-label="↙" aria-label="デッキへ"><img class="codexPadArt" data-pad-art="deck" alt="" aria-hidden="true" src="./pad-deck.png"><span class="codexPadFallback">デッキ</span><strong>デッキ</strong></button>
+    <button type="button" class="homePadCenter codexPadCenter" id="homePadCenter" aria-expanded="true" aria-controls="homeSlidePad" aria-label="ホームメニューを収納"><img class="codexPadArt" data-pad-art="center" alt="" aria-hidden="true" src="./pad-center.png"><span class="codexPadFallback">ホーム</span><b>HOME</b></button>
+  </nav>
+
+</section>
+<script id="codex-home-pad-failsafe-r4">(()=>{const p=document.getElementById('homeSlidePad');if(!p)return;p.querySelectorAll('.codexPadArt').forEach(i=>i.addEventListener('error',()=>p.classList.add('codexAtlasFailed'),{once:true}));})();</script>

@@ -1,0 +1,20 @@
+{
+  "name": "gameroad-local-tools",
+  "interface": {
+    "displayName": "GAMEROAD Local Tools"
+  },
+  "plugins": [
+    {
+      "name": "gameroad-operator",
+      "source": {
+        "source": "local",
+        "path": "./plugins/gameroad-operator"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

@@ -25,7 +25,7 @@ function exactToken(value, maxLength) {
 
 function validAccountId(value) {
   const text = exactToken(value, MAX_ACCOUNT_ID_LENGTH);
-  return text && /^acc_[0-9a-f-]{36}$/i.test(text) ? text : null;
+  return text && /^acc_[0-9a-f]{32}$/i.test(text) ? text : null;
 }
 
 function validSecret(value) {
@@ -39,6 +39,13 @@ function safeNowMs(value) {
 
 function bytesToHex(bytes) {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+export async function derivePlayerAccountId(accountKey, cryptoImpl = globalThis.crypto) {
+  const key = validSecret(accountKey);
+  if (!key || !key.startsWith('grk_')) throw new TypeError('account_key_invalid');
+  const digest = await secretDigest(key, cryptoImpl);
+  return `acc_${digest.slice(0, 32)}`;
 }
 
 async function secretDigest(secret, cryptoImpl = globalThis.crypto) {
@@ -127,8 +134,13 @@ export async function createPlayerAccount(storage, input = {}, runtime = {}) {
   const digest = await secretDigest(accountKey, runtime.crypto);
 
   return store.transaction(async (txn) => {
-    const existing = await txn.get(ACCOUNT_STATE_KEY);
-    if (existing !== undefined) return reject('account_already_exists');
+    const existingRaw = await txn.get(ACCOUNT_STATE_KEY);
+    if (existingRaw !== undefined) {
+      const existing = normalizeAccount(existingRaw, accountId);
+      if (!existing) return reject('account_not_found_or_corrupt');
+      if (!constantTimeEqual(existing.credential.digest, digest)) return reject('account_identity_conflict');
+      return Object.freeze({ ok: true, created: false, idempotent: true, account: publicAccount(existing) });
+    }
     const account = {
       schema: ACCOUNT_SCHEMA,
       accountId,
@@ -139,7 +151,7 @@ export async function createPlayerAccount(storage, input = {}, runtime = {}) {
       revision: 0,
     };
     txn.put(ACCOUNT_STATE_KEY, account);
-    return Object.freeze({ ok: true, created: true, account: publicAccount(account) });
+    return Object.freeze({ ok: true, created: true, idempotent: false, account: publicAccount(account) });
   });
 }
 

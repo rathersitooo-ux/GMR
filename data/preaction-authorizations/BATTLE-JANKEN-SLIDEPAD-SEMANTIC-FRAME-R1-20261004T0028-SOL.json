@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-BATTLE-JANKEN-SLIDEPAD-SEMANTIC-FRAME-R1-20261004T0028",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_JANKEN_SLIDEPAD_SEMANTIC_FRAME_REPAIR_R1",
+  "acquireKey": "BATTLE-JANKEN-SLIDEPAD-SEMANTIC-FRAME-R1-20261004T0028-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR966_FUNCTIONAL_RATIONALE+CURRENT_SOURCE_A6071C20+UIVIS_R001+APPLE_HIG_MOTION_FEEDBACK_20261004",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "DETERMINISTIC_EXISTING_CSS_SOURCE_AND_FOCUSED_TEST_REPAIR",
+  "proceedToken": "PROCEED|VWORK-BATTLE-JANKEN-SLIDEPAD-SEMANTIC-FRAME-R1-20261004T0028|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|remove-nonsemantic-slidepad-frame|lease-A8",
+  "authorizationBaseSha": "8ecbd46116f305446a640e32f3f05f9eed416814",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_SLIDEPAD_SEMANTIC_FRAME_REPAIR_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-SLIDEPAD-SEMANTIC-FRAME-R1-20261004T0028-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-04 00:28 JST",
+  "leaseUntilJst": "2026-10-04 01:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; data/preaction-authorizations/BATTLE-JANKEN-SLIDEPAD-SEMANTIC-FRAME-R1-20261004T0028-SOL.json; own fresh branch/PR/check/readback; own CURRENT event/lease records",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

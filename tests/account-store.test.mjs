@@ -6,6 +6,7 @@ import {
   INITIAL_MANII_GRANT_AMOUNT,
   claimInitialManiiGrant,
   createPlayerAccount,
+  derivePlayerAccountId,
   issuePlayerSession,
   readPlayerAccount,
   revokePlayerSession,
@@ -35,9 +36,9 @@ function memoryStorage() {
   };
 }
 
-const accountId = 'acc_00000000-0000-4000-8000-000000000001';
 const accountKey = 'grk_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef1234567890_-';
 const sessionToken = 'grs_abcdefghijklmnopqrstuvwxyzABCDEF1234567890_-';
+const accountId = await derivePlayerAccountId(accountKey, webcrypto);
 const runtime = (nowMs) => ({ nowMs, crypto: webcrypto });
 
 async function readyAccount() {
@@ -63,10 +64,10 @@ test('creates a stable account without exposing credential material in public st
 test('account creation is single-owner and cannot silently reset an existing account', async () => {
   const storage = memoryStorage();
   assert.equal((await createPlayerAccount(storage, { accountId, accountKey }, runtime(1000))).ok, true);
-  assert.deepEqual(
-    await createPlayerAccount(storage, { accountId, accountKey }, runtime(2000)),
-    { ok: false, reason: 'account_already_exists' },
-  );
+  const second = await createPlayerAccount(storage, { accountId, accountKey }, runtime(2000));
+  assert.equal(second.ok, true);
+  assert.equal(second.created, false);
+  assert.equal(second.idempotent, true);
 });
 
 test('wrong account key cannot issue a session', async () => {
@@ -106,9 +107,9 @@ test('first onboarding grant adds 100 MANII exactly once per account', async () 
 
 test('different accounts are isolated even when they use the same logical flow', async () => {
   const storageA = await readyAccount();
-  const accountIdB = 'acc_00000000-0000-4000-8000-000000000002';
   const keyB = 'grk_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB';
   const tokenB = 'grs_CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC';
+  const accountIdB = await derivePlayerAccountId(keyB, webcrypto);
   const storageB = memoryStorage();
   await createPlayerAccount(storageB, { accountId: accountIdB, accountKey: keyB }, runtime(1000));
   await issuePlayerSession(storageB, { accountId: accountIdB, accountKey: keyB, sessionToken: tokenB }, runtime(2000));

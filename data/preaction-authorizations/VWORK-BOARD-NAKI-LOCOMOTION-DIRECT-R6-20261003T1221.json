@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-BOARD-NAKI-LOCOMOTION-DIRECT-R6-20261003T1221",
+  "taskId": "CHARACTER-BOARD-RUNTIME-SELECT-CUTIN-001",
+  "workUnitKey": "BOARD_NAKI_LOCOMOTION_DIRECT_R6",
+  "acquireKey": "BOARD-NAKI-LOCOMOTION-DIRECT-R6-20261003T1221-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-BOARD-OLD-VISUAL-PLUS-NAKI_BOARD_LOCOMOTION_R2-CONTACT-SHEET",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R5-PREACTION-PASS-FOCUSED-8-OF-8-PLUS-BUILD-PROVENANCE-SINGLE-PIN-FAIL",
+  "proceedToken": "PROCEED|VWORK-BOARD-NAKI-LOCOMOTION-DIRECT-R6-20261003T1221|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|board-naki-locomotion-direct-r6|current-lease",
+  "authorizationBaseSha": "fea5cff3a237ad5d41ae3148dfb76e08916ed54c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "CHARACTER-BOARD-RUNTIME-SELECT-CUTIN-001",
+  "leaseWorkUnitKey": "BOARD_NAKI_LOCOMOTION_DIRECT_R6",
+  "leaseAcquireKey": "BOARD-NAKI-LOCOMOTION-DIRECT-R6-20261003T1221-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-03 12:21 JST",
+  "leaseUntilJst": "2026-10-03 13:21 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/assets/partners/naki-idol/board/locomotion-r2/naki-board-locomotion-r2-atlas.png; browser/battle-board-naki-4p-visual-binding.mjs; tests/battle-board-naki-4p-visual-binding.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; own transient PRE_ACTION witness create/delete only; own fresh branch/PR/check/merge/readback",
+  "scope": [
+    "browser/assets/partners/naki-idol/board/locomotion-r2/naki-board-locomotion-r2-atlas.png",
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/assets/partners/naki-idol/board/locomotion-r2/naki-board-locomotion-r2-atlas.png",
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "NAKI_BOARD_LOCOMOTION_R2_EXISTING_FOUR_STATE_TRANSPARENT_SPRITES_TO_CURRENT_BOARD_SURFACE",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R5-DIRECT-ATLAS-IMPLEMENTATION-PLUS-EXACT-BUILD-PIN-REPAIR",
+  "solutionSearchEvidence": [
+    "Library package NAKI_BOARD_LOCOMOTION_R2 already supplies BOARD_IDLE WALK_LEFT WALK_RIGHT ARRIVE",
+    "R5 focused board binding test passed 8/8 including exact partner.naki runtime bypass",
+    "R5 build failure isolated to the expected currentBlob pin for battle-board-naki-4p-visual-binding.mjs"
+  ],
+  "formalInvariants": [
+    "authoritative board marker remains position authority",
+    "only exact partner.naki bypasses generic character runtime",
+    "WALK_LEFT and WALK_RIGHT remain separately drawn and are never mirrored",
+    "build.test change is provenance-only and pins the exact changed source blob",
+    "no gameplay rules save economy network or winner authority changes"
+  ],
+  "acceptance": [
+    "PRE_ACTION manifest-first history validates",
+    "focused Naki board binding regression passes",
+    "public package contains the exact Naki locomotion atlas",
+    "exact public-package dependency blob provenance passes",
+    "Required Gate passes",
+    "real Battle evidence visibly shows the black-purple Naki board sprite"
+  ]
+}

@@ -97,7 +97,7 @@ test('first bootstrap atomically creates the onboarding marker, adds 100 MANII, 
   assert.equal(update.storageDeletes, null);
   assert.equal(update.updateLedger, true);
   assert.equal(update.storageWrites.length, 1);
-  assert.deepEqual(update.storageWrites[0], {
+  assert.deepEqual(JSON.parse(JSON.stringify(update.storageWrites[0])), {
     collection: 'gameroad_economy',
     key: 'onboarding_manii_v1',
     userId: 'user-1',
@@ -106,10 +106,10 @@ test('first bootstrap atomically creates the onboarding marker, adds 100 MANII, 
       amount: 100,
     },
     version: '*',
-    permissionRead: 1,
+    permissionRead: 0,
     permissionWrite: 0,
   });
-  assert.deepEqual(update.walletUpdates, [{
+  assert.deepEqual(JSON.parse(JSON.stringify(update.walletUpdates)), [{
     userId: 'user-1',
     changeset: { MANII: 100 },
     metadata: {

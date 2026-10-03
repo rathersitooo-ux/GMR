@@ -6,7 +6,7 @@ import {
   createSetupQuickDeckLiveModel,
   installSetupQuickDeckFromCurrentRuntime,
   installSetupQuickDeckRuntime,
-} from '../browser/setup-quick-deck-runtime-mount.mjs';
+} from '../browser/cards-deck-presentation-core.mjs';
 
 class FakeClassList {
   constructor(node) { this.node = node; }
@@ -225,17 +225,16 @@ test('invalid caller state fails closed instead of inventing deck data', () => {
 
 test('production integration reads current selected saved deck and existing editor route only', () => {
   const coreSource = fs.readFileSync(new URL('../browser/cards-deck-presentation-core.mjs', import.meta.url), 'utf8');
-  const runtimeSource = fs.readFileSync(new URL('../browser/setup-quick-deck-runtime-mount.mjs', import.meta.url), 'utf8');
-  assert.ok(coreSource.includes("import('./setup-quick-deck-runtime-mount.mjs')"));
+  assert.equal(coreSource.includes("import('./setup-quick-deck-runtime-mount.mjs')"), false);
   assert.ok(coreSource.includes('installSetupQuickDeckFromCurrentRuntime'));
-  assert.ok(runtimeSource.includes('selectedDeckNumber: Number(state?.selectedDeckIndex) + 1'));
-  assert.ok(runtimeSource.includes('savedDeck: state?.savedDeck'));
-  assert.ok(runtimeSource.includes('savedDeckRule: state?.savedDeckRule'));
-  assert.ok(runtimeSource.includes("navigate?.('cards', { reason: 'detail' })"));
-  assert.equal(runtimeSource.includes('localStorage'), false);
-  assert.equal(runtimeSource.includes('sessionStorage'), false);
-  assert.equal(runtimeSource.includes('writeDeck'), false);
-  assert.equal(runtimeSource.includes('commitDeck'), false);
+  assert.ok(coreSource.includes('selectedDeckNumber: Number(state?.selectedDeckIndex) + 1'));
+  assert.ok(coreSource.includes('savedDeck: state?.savedDeck'));
+  assert.ok(coreSource.includes('savedDeckRule: state?.savedDeckRule'));
+  assert.ok(coreSource.includes("navigate?.('cards', { reason: 'detail' })"));
+  assert.equal(coreSource.includes('localStorage'), false);
+  assert.equal(coreSource.includes('sessionStorage'), false);
+  assert.equal(coreSource.includes('writeDeck'), false);
+  assert.equal(coreSource.includes('commitDeck'), false);
 });
 
 test('current-runtime adapter opens slot 12 from live state and sends edit through existing navigation', () => {
@@ -270,10 +269,10 @@ test('current-runtime adapter opens slot 12 from live state and sends edit throu
 });
 
 test('live mount keeps compact portrait and landscape geometry plus 44px controls', () => {
-  const runtimeSource = fs.readFileSync(new URL('../browser/setup-quick-deck-runtime-mount.mjs', import.meta.url), 'utf8');
-  assert.ok(runtimeSource.includes('@media(max-width:480px)'));
-  assert.ok(runtimeSource.includes('@media(max-height:470px) and (orientation:landscape)'));
-  assert.ok(runtimeSource.includes('min-height:44px'));
-  assert.ok(runtimeSource.includes('max-height:calc(100dvh - 12px)'));
-  assert.ok(runtimeSource.includes('max-height:calc(100dvh - 10px)'));
+  const coreSource = fs.readFileSync(new URL('../browser/cards-deck-presentation-core.mjs', import.meta.url), 'utf8');
+  assert.ok(coreSource.includes('@media(max-width:480px)'));
+  assert.ok(coreSource.includes('@media(max-height:470px) and (orientation:landscape)'));
+  assert.ok(coreSource.includes('min-height:44px'));
+  assert.ok(coreSource.includes('max-height:calc(100dvh - 12px)'));
+  assert.ok(coreSource.includes('max-height:calc(100dvh - 10px)'));
 });

@@ -18,7 +18,7 @@ export const SETUP_QUICK_DECK_PREVIEW_CONTRACT = Object.freeze({
 });
 
 function requireSelectedDeckNumber(value) {
-  if (!Number.isInteger(value) || value < 1 || value > 3) {
+  if (!Number.isInteger(value) || value < 1 || value > 12) {
     throw new RangeError('SELECTED_DECK_NUMBER_INVALID');
   }
   return value;
@@ -837,3 +837,16 @@ export function installCardsInspectorDismissInteractions({ document: doc = globa
 }
 
 if (typeof document !== 'undefined') installCardsInspectorDismissInteractions({ document });
+
+
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  queueMicrotask(() => {
+    void import('./setup-quick-deck-runtime-mount.mjs')
+      .then(({ installSetupQuickDeckFromCurrentRuntime }) => installSetupQuickDeckFromCurrentRuntime({
+        global: globalThis,
+        document: globalThis.document,
+        window: globalThis.window,
+      }))
+      .catch((error) => console.warn('Setup Quick Deck unavailable', error?.message || error));
+  });
+}

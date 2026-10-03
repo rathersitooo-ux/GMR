@@ -12,6 +12,9 @@ const VISUAL_FOOTPRINT = Object.freeze({
   shortLandscape: Object.freeze({ surfaceWidth: 32, surfaceHeight: 40, fallbackWidth: 26, fallbackHeight: 32 }),
   portrait: Object.freeze({ surfaceWidth: 34, surfaceHeight: 44, fallbackWidth: 28, fallbackHeight: 36 }),
 });
+const RUNTIME_HANDLES = new WeakMap();
+const RUNTIME_MOTIONS = new WeakMap();
+
 const CONTACT_SHADOW = Object.freeze({
   anchor: 'AUTHORITATIVE_BOARD_MARKER_FOOT',
   widthPercent: 74,
@@ -152,6 +155,37 @@ function facingScale(facing) {
   return ['left', 'up-left', 'down-left'].includes(facing) ? -1 : 1;
 }
 
+export function projectControlledCharacterRuntimeState(motion) {
+  const normalized = normalizeMotion(motion);
+  if (!normalized) return null;
+  return Object.freeze({
+    state: normalized.phase === 'moving' && !normalized.reducedMotion ? 'move' : 'idle',
+    facing: facingScale(normalized.facing) < 0 ? 'left' : 'right',
+    performance: normalized.lowPerformance ? 'low' : 'normal',
+  });
+}
+
+async function syncRuntimeMotionState(globalRef, surface, motion) {
+  const runtime = globalRef?.GameRoadThreeCharRuntime;
+  const handle = RUNTIME_HANDLES.get(surface);
+  const projected = projectControlledCharacterRuntimeState(motion);
+  if (!handle || !projected || typeof runtime?.setState !== 'function') return false;
+  const key = [projected.state, projected.facing, projected.performance, motion.motionSerial].join('|');
+  if (surface.dataset.runtimeMotionKey === key) return true;
+  try {
+    await runtime.setState(handle, projected.state, {
+      facing: projected.facing,
+      performance: projected.performance,
+      allowNetwork: false,
+    });
+    surface.dataset.runtimeMotionKey = key;
+    surface.dataset.runtimeState = handle.root?.dataset?.state || projected.state;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function applyMotionProjection(surface, motion) {
   if (!surface?.dataset || !motion) return;
   const previousSerial = surface.dataset.motionSerial;
@@ -194,13 +228,14 @@ async function mountControlledCharacter(globalRef, documentRef, surface, row) {
     return;
   }
   try {
-    await runtime.mount(surface, {
+    const handle = await runtime.mount(surface, {
       characterId: row.characterId,
       state: 'idle',
       assetMode: 'embedded',
       performance: row.motion.lowPerformance ? 'low' : 'normal',
       allowNetwork: false,
     });
+    RUNTIME_HANDLES.set(surface, handle);
     const fallback = surface.querySelector?.('.grControlledCharacterFallback');
     if (surface.querySelector?.('.grtc-image')) fallback?.remove?.();
     else failVisible(documentRef, surface, row.participantId);
@@ -209,6 +244,7 @@ async function mountControlledCharacter(globalRef, documentRef, surface, row) {
       : 'participant-generic';
     surface.dataset.mountState = 'mounted';
     applyMotionProjection(surface, row.motion);
+    await syncRuntimeMotionState(globalRef, surface, RUNTIME_MOTIONS.get(surface) || row.motion);
   } catch {
     surface.replaceChildren?.();
     failVisible(documentRef, surface, row.participantId);
@@ -234,8 +270,10 @@ function ensureSurface(globalRef, documentRef, marker, row) {
     marker.appendChild(surface);
   }
   surface.hidden = false;
+  RUNTIME_MOTIONS.set(surface, row.motion);
   applyMotionProjection(surface, row.motion);
-  void mountControlledCharacter(globalRef, documentRef, surface, row);
+  if (surface.dataset.mountState === 'mounted') void syncRuntimeMotionState(globalRef, surface, row.motion);
+  else void mountControlledCharacter(globalRef, documentRef, surface, row);
   return surface;
 }
 

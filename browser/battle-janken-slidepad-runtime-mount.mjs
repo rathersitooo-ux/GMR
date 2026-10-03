@@ -456,9 +456,11 @@ function addStyle(documentRef) {
   if (documentRef.getElementById?.(STYLE_ID)) return;
   const style = documentRef.createElement('style');
   style.id = STYLE_ID;
+  // SlidePad の外枠自体には、じゃんけんの選択・確定・使用済みを表す意味を持たせない。
+  // 状態は実際に操作する入力方式、つまみ、3つの選択肢、Power Energy だけで示す。
+  // 恒常的な背景図形を足すと、ゲーム内に存在しない別の物体を作ってしまうため描画しない。
   style.textContent = `
 [${HOST_ATTR}="1"]{position:absolute;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:42;width:248px;height:196px;pointer-events:none;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;isolation:isolate}
-[${HOST_ATTR}="1"]::before{content:"";position:absolute;right:13px;bottom:10px;width:198px;height:160px;border:9px solid rgba(218,218,218,.20);border-left-color:rgba(218,218,218,.05);border-bottom-color:rgba(218,218,218,.08);border-radius:58% 52% 54% 50%;transform:rotate(-8deg);box-shadow:0 0 22px rgba(208,208,208,.12),inset 0 0 18px rgba(238,238,238,.06);pointer-events:none;z-index:0}
 [${HOST_ATTR}="1"] .grJankenInputModePicker{position:absolute;right:0;top:-35px;display:flex;align-items:center;gap:3px;padding:3px;border:1px solid rgba(228,228,228,.42);border-radius:10px;background:rgba(11,11,11,.82);box-shadow:0 6px 16px rgba(6,6,6,.34);backdrop-filter:blur(3px);pointer-events:auto;z-index:6}
 [${HOST_ATTR}="1"] .grJankenInputModeButton{min-height:24px;padding:3px 7px;border:1px solid rgba(230,230,230,.3);border-radius:7px;background:rgba(56,56,56,.82);color:#f8f8f8;font:800 9px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;white-space:nowrap;cursor:pointer;touch-action:manipulation}
 [${HOST_ATTR}="1"] .grJankenInputModeButton[aria-pressed="true"]{border-color:rgba(255,255,255,.92);background:linear-gradient(145deg,rgba(218,218,218,.94),rgba(94,94,94,.94));color:#111;box-shadow:0 0 0 2px rgba(255,255,255,.14),0 0 14px rgba(220,220,220,.18)}
@@ -493,7 +495,6 @@ function addStyle(documentRef) {
 [${HOST_ATTR}="1"] .grJankenLoadPreviewCard{font-size:12px;line-height:1.12;font-weight:900;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical}
 [${HOST_ATTR}="1"] .grJankenLoadPreviewHand{font-size:12px;font-weight:950;letter-spacing:.08em}
 section[data-screen="battle"] #hand .handCard[data-janken-reserved="true"]{display:none!important}
-[${HOST_ATTR}="1"][data-janken-turn-used="true"]::before{content:none;display:none}
 [${HOST_ATTR}="1"][data-janken-turn-used="true"] .grJankenInputModePicker,[${HOST_ATTR}="1"][data-janken-turn-used="true"] .grJankenSlidePadHandle,[${HOST_ATTR}="1"][data-janken-turn-used="true"] .grJankenSlidePadSlot,[${HOST_ATTR}="1"][data-janken-turn-used="true"] .grJankenLoadPreview{display:none!important}
 section[data-screen="battle"] #hand .handCard[data-hand-aura-draggable="true"]{touch-action:none}
 section[data-screen="battle"] #hand .handCard[data-hand-aura-dragging="true"]{opacity:.22!important}
@@ -526,7 +527,6 @@ ${BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS}
 @media(max-width:540px) and (orientation:portrait){[${HOST_ATTR}="1"]{bottom:185px}[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:76px;height:76px;padding:5px;border-radius:42% 58% 56% 44%/48% 42% 58% 52%}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-118px,2px) rotate(-13deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-70px,-60px) rotate(-3deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-4px,-92px) rotate(8deg)}[${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:26px}[${HOST_ATTR}="1"] .grJankenSlidePadCard{font-size:9px;line-height:1.1}[${HOST_ATTR}="1"] .grJankenSlidePadHand{font-size:8px}[${HOST_ATTR}="1"] .grJankenLoadPreview{width:98px;height:132px}}
 @media(orientation:landscape){section[data-screen="battle"] #hand.grPlayableHandActionBase::before{bottom:0}section[data-screen="battle"] #hand .grPlayableHandTriangle{top:-14px;bottom:auto}}
 @media(max-height:430px) and (orientation:landscape){section[data-screen="battle"] #hand.grPlayableHandActionBase{overflow:visible!important}[${HOST_ATTR}="1"]{width:208px;height:160px;right:7px;bottom:7px}[${HOST_ATTR}="1"] .grJankenSlidePadHandle{width:58px;height:58px}[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:74px;height:74px;padding:4px}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-132px,2px) rotate(-13deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-78px,-62px) rotate(-3deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-2px,-78px) rotate(8deg)}[${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:26px}[${HOST_ATTR}="1"] .grJankenSlidePadCard{font-size:8px;line-height:1.05}[${HOST_ATTR}="1"] .grJankenSlidePadHand{font-size:8px}[${HOST_ATTR}="1"] .grJankenLoadPreview{width:82px;height:108px;left:2px;top:2px}}
-@media(max-height:430px) and (orientation:landscape){[${HOST_ATTR}="1"]::before{right:12px;bottom:8px;width:176px;height:138px;border-width:7px}}
 @media(max-height:430px) and (orientation:landscape){[${HOST_ATTR}="1"] .grPowerEnergy{width:92px;height:92px;right:-56px;bottom:-50px}}
 @media(max-width:430px) and (orientation:portrait){[${HOST_ATTR}="1"] .grPowerEnergy{width:96px;height:96px;right:-60px;bottom:-54px}}
 @media(prefers-reduced-motion:reduce){[${HOST_ATTR}="1"] .grJankenSlidePadSlot,[${HOST_ATTR}="1"] .grJankenSlidePadHandle,[${HOST_ATTR}="1"] .grJankenLoadPreview,[${HOST_ATTR}="1"] .grPowerEnergy{transition:none!important}}

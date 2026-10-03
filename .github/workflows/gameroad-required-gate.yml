@@ -342,6 +342,7 @@ jobs:
               deploy/cloudflare/relay/src/relay-core.mjs|\
               deploy/cloudflare/relay/src/match-store.mjs|\
               deploy/cloudflare/relay/src/partner-report-store.mjs|\
+              deploy/cloudflare/relay/src/account-store.mjs|\
               deploy/cloudflare/relay/src/relay-worker.mjs|\
               deploy/cloudflare/relay/wrangler.toml|\
               deploy/cloudflare/scripts/build.mjs|\
@@ -349,6 +350,7 @@ jobs:
               deploy/cloudflare/tests/relay-core.test.mjs|\
               deploy/cloudflare/tests/normal-match-r3.test.mjs|\
               deploy/cloudflare/tests/partner-report-provider.test.mjs|\
+              deploy/cloudflare/tests/account-store.test.mjs|\
               deploy/cloudflare/wrangler.pages.toml|\
               .github/workflows/cloudflare-public-deploy.yml|\
               .github/workflows/required-gate-auto-merge.yml)
@@ -773,12 +775,180 @@ jobs:
         run: |
           set -euo pipefail
           node --test tests/field-music-policy-core.test.mjs deploy/cloudflare/tests/relay-core.test.mjs
-          if grep -Eq '^(deploy/cloudflare/functions/report\.js|deploy/cloudflare/relay/src/partner-report-store\.mjs|deploy/cloudflare/tests/partner-report-provider\.test\.mjs)$' /tmp/gameroad-changed.txt; then
+          if grep -Eq '^(deploy/cloudflare/functions/report\.js|deploy/cloudflare/relay/src/partner-report-store\.mjs|deploy/cloudflare/tests/partner-report-provider\.test\.mjs)
+
+      - name: Run PublicHost Cloudflare syntax checks
+        if: steps.classify.outputs.publichost == 'true'
+        run: |
+          node --check deploy/cloudflare/functions/ws.js
+          node --check deploy/cloudflare/relay/src/relay-core.mjs
+          node --check deploy/cloudflare/relay/src/account-store.mjs
+          node --check deploy/cloudflare/relay/src/relay-worker.mjs
+          node --check deploy/cloudflare/scripts/build.mjs
+
+      - name: Verify formal Roblox placement
+        if: steps.classify.outputs.roblox == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="roblox/GAMEROAD.rbxlx"
+          expected_sha256="b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51"
+
+          if [[ ! -f "${target}" ]]; then
+            echo "Required formal Roblox placement is missing: ${target}"
+            exit 1
+          fi
+
+          actual_sha256="$(sha256sum "${target}" | awk '{print $1}')"
+          if [[ "${actual_sha256}" != "${expected_sha256}" ]]; then
+            echo "Roblox placement SHA-256 mismatch."
+            echo "expected=${expected_sha256}"
+            echo "actual=${actual_sha256}"
+            exit 1
+          fi
+
+          python3 - "${target}" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+
+          path = sys.argv[1]
+          try:
+              root = ET.parse(path).getroot()
+          except ET.ParseError as exc:
+              raise SystemExit(f"Roblox placement XML parse failed: {exc}")
+
+          tag = root.tag.rsplit('}', 1)[-1]
+          if tag != "roblox":
+              raise SystemExit(f"Roblox placement root must be <roblox>, got <{tag}>")
+          if not root.attrib.get("version"):
+              raise SystemExit("Roblox placement root is missing the version attribute")
+
+          print(f"Roblox placement verified: root={tag} version={root.attrib['version']}")
+          PY
+
+      - name: Install Playwright test runner
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true'
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium browser for Browser lane
+        if: steps.classify.outputs.browser == 'true'
+        run: npx playwright install chromium
+
+      - name: Install Chromium and OS dependencies for DINO/Learning lanes
+        if: steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Browser runtime smoke
+        if: steps.classify.outputs.browser == 'true'
+        run: npx playwright test --config=playwright.config.mjs --workers=1
+
+      - name: Run DINO DIG mobile whitebox smoke
+        if: steps.classify.outputs.dino == 'true'
+        run: npx playwright test --config=playwright.dino-dig.config.mjs --workers=1
+
+      - name: Run Learning Crossmedia whitebox smoke
+        if: steps.classify.outputs.learning == 'true'
+        run: npx playwright test --config=playwright.learning-crossmedia.config.mjs --workers=1
+
+      - name: Fail closed on unclassified executable or CI paths
+        if: always() && steps.classify.outputs.unclassified == 'true'
+        run: |
+          echo "Required gate has no approved test mapping for these executable/CI paths:"
+          cat /tmp/gameroad-unclassified.txt
+          exit 1
+ /tmp/gameroad-changed.txt; then
             if [[ ! -f deploy/cloudflare/tests/partner-report-provider.test.mjs ]]; then
               echo "Required Partner report provider test is missing: deploy/cloudflare/tests/partner-report-provider.test.mjs"
               exit 1
             fi
             node --test deploy/cloudflare/tests/partner-report-provider.test.mjs
+          fi
+          if grep -Eq '^(deploy/cloudflare/relay/src/account-store\.mjs|deploy/cloudflare/relay/src/relay-worker\.mjs|deploy/cloudflare/relay/wrangler\.toml|deploy/cloudflare/tests/account-store\.test\.mjs)
+
+      - name: Run PublicHost Cloudflare syntax checks
+        if: steps.classify.outputs.publichost == 'true'
+        run: |
+          node --check deploy/cloudflare/functions/ws.js
+          node --check deploy/cloudflare/relay/src/relay-core.mjs
+          node --check deploy/cloudflare/relay/src/relay-worker.mjs
+          node --check deploy/cloudflare/scripts/build.mjs
+
+      - name: Verify formal Roblox placement
+        if: steps.classify.outputs.roblox == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="roblox/GAMEROAD.rbxlx"
+          expected_sha256="b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51"
+
+          if [[ ! -f "${target}" ]]; then
+            echo "Required formal Roblox placement is missing: ${target}"
+            exit 1
+          fi
+
+          actual_sha256="$(sha256sum "${target}" | awk '{print $1}')"
+          if [[ "${actual_sha256}" != "${expected_sha256}" ]]; then
+            echo "Roblox placement SHA-256 mismatch."
+            echo "expected=${expected_sha256}"
+            echo "actual=${actual_sha256}"
+            exit 1
+          fi
+
+          python3 - "${target}" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+
+          path = sys.argv[1]
+          try:
+              root = ET.parse(path).getroot()
+          except ET.ParseError as exc:
+              raise SystemExit(f"Roblox placement XML parse failed: {exc}")
+
+          tag = root.tag.rsplit('}', 1)[-1]
+          if tag != "roblox":
+              raise SystemExit(f"Roblox placement root must be <roblox>, got <{tag}>")
+          if not root.attrib.get("version"):
+              raise SystemExit("Roblox placement root is missing the version attribute")
+
+          print(f"Roblox placement verified: root={tag} version={root.attrib['version']}")
+          PY
+
+      - name: Install Playwright test runner
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true'
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium browser for Browser lane
+        if: steps.classify.outputs.browser == 'true'
+        run: npx playwright install chromium
+
+      - name: Install Chromium and OS dependencies for DINO/Learning lanes
+        if: steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Browser runtime smoke
+        if: steps.classify.outputs.browser == 'true'
+        run: npx playwright test --config=playwright.config.mjs --workers=1
+
+      - name: Run DINO DIG mobile whitebox smoke
+        if: steps.classify.outputs.dino == 'true'
+        run: npx playwright test --config=playwright.dino-dig.config.mjs --workers=1
+
+      - name: Run Learning Crossmedia whitebox smoke
+        if: steps.classify.outputs.learning == 'true'
+        run: npx playwright test --config=playwright.learning-crossmedia.config.mjs --workers=1
+
+      - name: Fail closed on unclassified executable or CI paths
+        if: always() && steps.classify.outputs.unclassified == 'true'
+        run: |
+          echo "Required gate has no approved test mapping for these executable/CI paths:"
+          cat /tmp/gameroad-unclassified.txt
+          exit 1
+ /tmp/gameroad-changed.txt; then
+            if [[ ! -f deploy/cloudflare/tests/account-store.test.mjs ]]; then
+              echo "Required account store test is missing: deploy/cloudflare/tests/account-store.test.mjs"
+              exit 1
+            fi
+            node --test deploy/cloudflare/tests/account-store.test.mjs
           fi
 
       - name: Run PublicHost Cloudflare syntax checks

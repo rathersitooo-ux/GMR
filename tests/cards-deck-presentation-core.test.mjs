@@ -243,6 +243,10 @@ test('Setup Quick Deck projection fails closed on malformed deck shape or opaque
     /SELECTED_DECK_NUMBER_INVALID/,
   );
   assert.throws(
+    () => createSetupQuickDeckPreview({ selectedDeckNumber: 13, savedDeck: { main: [], ex: [] } }),
+    /SELECTED_DECK_NUMBER_INVALID/,
+  );
+  assert.throws(
     () => createSetupQuickDeckPreview({ selectedDeckNumber: 1, savedDeck: { main: 'SP_A', ex: [] } }),
     /SAVED_DECK_MAIN_REQUIRED/,
   );

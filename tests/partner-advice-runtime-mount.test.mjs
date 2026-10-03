@@ -580,6 +580,8 @@ test('Battle Advice chat reuses the existing root as a compact peripheral overla
   assert.match(source, /data-battle-advice-overlay/);
   assert.match(source, /max-height:126px/);
   assert.match(source, /orientation:portrait/);
+  assert.match(source, /max-height:min\(24vh,176px\)!important/);
+  assert.match(source, /bottom:auto!important/);
   assert.doesNotMatch(source, /createPartnerAdviceStore|new PartnerAdviceStore/);
 });
 
@@ -595,6 +597,7 @@ test('Battle Partner controls converge into one visible surface without replacin
   assert.doesNotMatch(source, /delgateButton/);
   assert.match(source, /legacyHost\.hidden = true/);
   assert.match(source, /legacyHost\.dataset\.partnerAdviceSourceOnly = 'true'/);
+  assert.match(source, /partnerDecisionBox\[data-partner-advice-source-only="true"\]\{display:none!important/);
   assert.match(source, /root\.dataset\.partnerAdviceUnifiedSurface = 'true'/);
   assert.doesNotMatch(source, /class="partnerAdviceQuickReply">まかせた！<\/button>/);
   assert.doesNotMatch(source, /state\.selectedPartnerId\s*=|state\.settings\.advicePartnerId\s*=/);

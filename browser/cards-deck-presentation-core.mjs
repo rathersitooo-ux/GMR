@@ -626,6 +626,31 @@ export function createDeckSwipePresentationController({
     fire('land', { cardId, reducedMotion: reduced }, onLandSfx);
   };
 
+  function playLocalSuccess({ sourceElement, countElement = null, cardId = null } = {}) {
+    if (!sourceElement) throw new TypeError('SOURCE_ELEMENT_REQUIRED');
+    const reduced = resolveReducedMotion(win, reducedMotion);
+    const confirmMs = reduced ? 1 : 90;
+    clearPresentationClass(sourceElement, 'gr-deck-swipe-source-armed', confirmMs);
+    clearPresentationClass(countElement, 'gr-deck-swipe-count-hit', cfg.countPulseMs);
+    fire('commit', { cardId, reducedMotion: reduced }, onCommitSfx);
+
+    let landed = false;
+    const finish = () => {
+      if (landed) return;
+      landed = true;
+      fire('land', { cardId, reducedMotion: reduced }, onLandSfx);
+    };
+    setTimer(finish, confirmMs);
+
+    return Object.freeze({
+      kind: 'local-confirmation',
+      cardId,
+      reducedMotion: reduced,
+      spatialTransfer: false,
+      cancel: () => { landed = true; },
+    });
+  }
+
   function playSuccess({ sourceElement, targetElement, countElement = null, insertedElement = null, cardId = null } = {}) {
     if (!sourceElement?.getBoundingClientRect || !targetElement?.getBoundingClientRect) {
       throw new TypeError('SOURCE_AND_TARGET_ELEMENTS_REQUIRED');
@@ -740,7 +765,7 @@ export function createDeckSwipePresentationController({
 
   const dispose = () => { deckMutationObserver?.disconnect?.(); cancelAll(); try { localSfx?.dispose?.(); } catch {} };
 
-  return Object.freeze({ playSuccess, playReject, cancelAll, dispose, config: cfg, sfxPlayer: localSfx });
+  return Object.freeze({ playLocalSuccess, playSuccess, playReject, cancelAll, dispose, config: cfg, sfxPlayer: localSfx });
 }
 
 const cardsInspectorDismissInstallations = new WeakMap();

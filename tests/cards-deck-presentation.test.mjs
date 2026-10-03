@@ -94,21 +94,21 @@ test('default visual contract is stable and frozen', () => {
   });
 });
 
-test('live Deck add binding reuses inserted slot as the existing presentation landing', () => {
+test('live Deck add binding confirms the acted card and visible count without a hidden Deck destination', () => {
   const source = fakeElement();
-  const target = fakeElement();
-  target.dataset = { id: 'c7' };
-  const deck = fakeElement();
-  target.closest = () => deck;
+  const count = fakeElement();
+  const selectors = [];
   const calls = [];
   const doc = {
-    querySelectorAll(selector) {
-      return selector === '#deckSlots [data-id], #exDeckSlots [data-id]' ? [target] : [];
+    querySelector(selector) {
+      selectors.push(selector);
+      if (selector === '#r4TrayCount') return count;
+      if (selector === '#r4DeckTotal') return null;
+      throw new Error(`unexpected selector: ${selector}`);
     },
-    querySelector() { return deck; },
   };
   const presentation = {
-    playSuccess(payload) { calls.push(['success', payload]); },
+    playLocalSuccess(payload) { calls.push(['success', payload]); },
     playReject(payload) { calls.push(['reject', payload]); },
   };
 
@@ -119,18 +119,22 @@ test('live Deck add binding reuses inserted slot as the existing presentation la
     sourceElement: source,
     cardId: 'c7',
   }), true);
+
+  assert.deepEqual(selectors, ['#r4TrayCount']);
   assert.equal(calls.length, 1);
   assert.equal(calls[0][0], 'success');
   assert.equal(calls[0][1].sourceElement, source);
-  assert.equal(calls[0][1].targetElement, deck);
-  assert.equal(calls[0][1].insertedElement, target);
+  assert.equal(calls[0][1].countElement, count);
+  assert.equal(calls[0][1].cardId, 'c7');
+  assert.equal('targetElement' in calls[0][1], false);
+  assert.equal('insertedElement' in calls[0][1], false);
 });
 
-test('live Deck add binding rejects without fake landing and presentation failures stay non-fatal', () => {
+test('live Deck add rejection stays on the acted card and presentation failures stay non-fatal', () => {
   const source = fakeElement();
-  const deck = fakeElement();
   const calls = [];
-  const doc = { querySelectorAll: () => [], querySelector: () => deck };
+  const doc = { querySelector: () => null };
+
   assert.equal(presentDeckAddSwipe({
     doc,
     presentation: { playReject(payload) { calls.push(payload); } },
@@ -138,10 +142,13 @@ test('live Deck add binding rejects without fake landing and presentation failur
     sourceElement: source,
     cardId: 'c9',
   }), true);
+  assert.equal(calls[0].sourceElement, source);
   assert.equal(calls[0].reason, 'deck-rule-rejected');
+  assert.equal('targetElement' in calls[0], false);
+
   assert.equal(presentDeckAddSwipe({
     doc,
-    presentation: { playSuccess() { throw new Error('visual-only failure'); } },
+    presentation: { playLocalSuccess() { throw new Error('visual-only failure'); } },
     result: { ok: true, action: 'deck-add' },
     sourceElement: source,
     cardId: 'c9',

@@ -798,27 +798,21 @@ export function isNeutralizedDeckEditorSwipe(intent) {
 export function presentDeckAddSwipe({ doc, presentation, result, sourceElement, cardId }) {
   if (result?.action !== 'deck-add' || !sourceElement) return false;
   try {
+    // GAMEROAD の Deck は画面上の物体ではない。追加結果を hidden Deck DOM の位置へ飛ばさず、
+    // 操作したカード自身と既存の枚数表示へ返す。ゲーム状態の権威は既存 add path のまま。
+    const countElement = doc?.querySelector?.('#r4TrayCount') ?? doc?.querySelector?.('#r4DeckTotal') ?? null;
     if (!result.ok) {
-      presentation?.playReject?.({
+      if (typeof presentation?.playReject !== 'function') return false;
+      presentation.playReject({
         sourceElement,
-        targetElement: doc?.querySelector?.('#deckSlots, #exDeckSlots') ?? sourceElement,
         cardId,
         reason: result.reason ?? 'deck-rule-rejected',
       });
-      return typeof presentation?.playReject === 'function';
+      return true;
     }
-    const insertedElement = byCardId(doc, '#deckSlots [data-id], #exDeckSlots [data-id]', cardId);
-    const targetElement = insertedElement?.closest?.('#deckSlots, #exDeckSlots')
-      ?? insertedElement?.parentElement
-      ?? doc?.querySelector?.('#deckSlots, #exDeckSlots');
-    if (!targetElement) return false;
-    presentation?.playSuccess?.({
-      sourceElement,
-      targetElement,
-      insertedElement,
-      cardId,
-    });
-    return typeof presentation?.playSuccess === 'function';
+    if (typeof presentation?.playLocalSuccess !== 'function') return false;
+    presentation.playLocalSuccess({ sourceElement, countElement, cardId });
+    return true;
   } catch {
     return false;
   }

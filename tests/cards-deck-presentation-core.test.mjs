@@ -136,6 +136,30 @@ test('success presentation uses the formal aura and light trail without cloning 
   controller.cancelAll();
 });
 
+test('local Deck success confirms the acted card and visible count without a spatial destination', () => {
+  const doc = fakeDocument();
+  const win = deferredWindow();
+  const source = fakeElement(rect(40, 400, 120, 168));
+  const count = fakeElement();
+  const controller = createDeckSwipePresentationController({ document: doc, window: win, sfx: false });
+
+  const result = controller.playLocalSuccess({ sourceElement: source, countElement: count, cardId: 'HT_8' });
+
+  assert.equal(result.kind, 'local-confirmation');
+  assert.equal(result.spatialTransfer, false);
+  assert.equal(result.cardId, 'HT_8');
+  assert.equal(doc.body.children.some((child) => String(child.className || '').includes('gr-deck-swipe-layer')), false);
+  assert.equal(source.classList.contains('gr-deck-swipe-source-armed'), true);
+  assert.equal(count.classList.contains('gr-deck-swipe-count-hit'), true);
+  assert.deepEqual(doc.events.map((event) => event.type), ['gameroad:deck-swipe-commit']);
+
+  for (const timer of [...win.pending.values()]) timer.fn();
+  assert.deepEqual(doc.events.map((event) => event.type), [
+    'gameroad:deck-swipe-commit',
+    'gameroad:deck-swipe-land',
+  ]);
+});
+
 test('low-performance card transfer keeps the light path but caps particles', () => {
   const doc = fakeDocument();
   doc.body.classList.add('low-perf');

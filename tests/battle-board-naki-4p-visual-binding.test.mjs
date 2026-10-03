@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import {
   CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING,
   NAKI_4P_BOARD_VISUAL_BINDING,
+  NAKI_BOARD_LOCOMOTION_R2_ASSET,
   projectFourParticipantControlledCharacters,
   projectFourParticipantNakiBoardMarkers,
 } from '../browser/battle-board-naki-4p-visual-binding.mjs';
@@ -149,6 +150,9 @@ test('contract separates controlled-character identity from Advice Partner and n
   assert.equal(contract.projectionInput, 'CALLER_FOUR_PARTICIPANT_MOTION_DIRECTOR_ROWS');
   assert.equal(contract.identityAuthority, 'CALLER_SUPPLIED_OPAQUE_CHARACTER_ID');
   assert.equal(contract.motionAuthority, 'CALLER_PROJECTED_CONTROLLED_CHARACTER_MOTION');
+  assert.equal(contract.nakiVisualSource, 'NAKI_BOARD_LOCOMOTION_R2_DIRECT_ATLAS');
+  assert.equal(contract.nakiRuntimePolicy, 'BYPASS_GAMEROAD_THREE_CHAR_RUNTIME_FOR_EXACT_PARTNER_NAKI_ONLY');
+  assert.equal(contract.nakiWalkMirrorPolicy, 'SEPARATE_LEFT_RIGHT_FRAMES__NO_MIRROR');
   assert.equal(contract.positionAuthority, 'PARENT_BOARD_PLAYER_MARKER');
   assert.equal(contract.coordinateProjection, 'NONE__VISUAL_IS_CHILD_OF_AUTHORITATIVE_MARKER');
   assert.equal(contract.unknownIdentityPolicy, 'MARKER_ONLY_NO_FAKE_CHARACTER');
@@ -169,6 +173,22 @@ test('contract separates controlled-character identity from Advice Partner and n
     opacity: 0.92,
     followsSpriteMotion: false,
   });
+});
+
+test('exact partner.naki uses the produced locomotion R2 atlas directly instead of the legacy character runtime', () => {
+  const source = readFileSync(new URL('../browser/battle-board-naki-4p-visual-binding.mjs', import.meta.url), 'utf8');
+  assert.equal(NAKI_BOARD_LOCOMOTION_R2_ASSET.sourcePackage, 'NAKI_BOARD_LOCOMOTION_R2');
+  assert.equal(NAKI_BOARD_LOCOMOTION_R2_ASSET.atlasColumns, 4);
+  assert.equal(NAKI_BOARD_LOCOMOTION_R2_ASSET.atlasRows, 8);
+  assert.equal(NAKI_BOARD_LOCOMOTION_R2_ASSET.separatelyDrawnWalkDirections, true);
+  assert.equal(NAKI_BOARD_LOCOMOTION_R2_ASSET.mirrorWalkFrames, false);
+  assert.match(source, /row\.characterId === NAKI_CHARACTER_ID/);
+  assert.match(source, /mountNakiBoardLocomotion\(documentRef, surface, row\)/);
+  assert.match(source, /grNakiBoardSprite/);
+  assert.match(source, /data-naki-board-state="walk-left"/);
+  assert.match(source, /data-naki-board-state="walk-right"/);
+  assert.match(source, /NAKI_BOARD_LOCOMOTION_R2_DIRECT_ATLAS/);
+  assert.match(source, /BYPASS_GAMEROAD_THREE_CHAR_RUNTIME_FOR_EXACT_PARTNER_NAKI_ONLY/);
 });
 
 test('renders an explicit contact shadow at the authoritative marker foot instead of relying on a full-sprite halo', () => {

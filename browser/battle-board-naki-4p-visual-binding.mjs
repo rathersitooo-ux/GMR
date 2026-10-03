@@ -21,6 +21,21 @@ const CONTACT_SHADOW = Object.freeze({
   followsSpriteMotion: false,
 });
 
+const NAKI_CHARACTER_ID = 'partner.naki';
+export const NAKI_BOARD_LOCOMOTION_R2_ASSET = Object.freeze({
+  sourcePackage: 'NAKI_BOARD_LOCOMOTION_R2',
+  sourceSheets: Object.freeze(['BOARD_IDLE', 'WALK_LEFT', 'WALK_RIGHT', 'ARRIVE']),
+  sourceFrameSize: 128,
+  atlasColumns: 4,
+  atlasRows: 8,
+  runtimePath: './assets/partners/naki-idol/board/locomotion-r2/naki-board-locomotion-r2-atlas.png',
+  separatelyDrawnWalkDirections: true,
+  mirrorWalkFrames: false,
+  formalArt: false,
+  humanAccepted: false,
+});
+const NAKI_BOARD_LOCOMOTION_R2_URL = new URL(NAKI_BOARD_LOCOMOTION_R2_ASSET.runtimePath, import.meta.url).href;
+
 function canonicalString(value, maximum = 160) {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -130,6 +145,13 @@ ${BATTLE_FOCUS_CHROME_SELECTOR}{display:none!important}
 #boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{position:absolute;left:50%;top:50%;width:${VISUAL_FOOTPRINT.desktop.surfaceWidth}px;height:${VISUAL_FOOTPRINT.desktop.surfaceHeight}px;transform:translate(-50%,-82%);display:flex;align-items:flex-end;justify-content:center;pointer-events:none;overflow:visible;filter:drop-shadow(0 2px 2px rgba(0,0,0,.18));--grcc-facing-scale:1;--grcc-motion-duration:0ms}
 #boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]::before{content:"";position:absolute;left:50%;bottom:0;width:${CONTACT_SHADOW.widthPercent}%;height:${CONTACT_SHADOW.heightPercent}%;transform:translateX(-50%) scaleY(${CONTACT_SHADOW.planeScaleY});transform-origin:50% 50%;border-radius:50%;background:radial-gradient(ellipse at center,rgba(4,8,10,.46) 0%,rgba(4,8,10,.30) 48%,rgba(4,8,10,0) 78%);opacity:${CONTACT_SHADOW.opacity};pointer-events:none;z-index:0}
 #boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}] .grtc-image{position:relative;z-index:1;display:block;width:auto;height:100%;max-width:100%;object-fit:contain;opacity:1;visibility:visible;transform:scaleX(var(--grcc-facing-scale));transform-origin:50% 85%}
+#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}][data-character-id="partner.naki"]{aspect-ratio:1/1;width:auto;min-width:var(--gr-naki-board-size,56px)}
+#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}] .grNakiBoardSprite{position:relative;z-index:1;display:block;height:100%;aspect-ratio:1/1;flex:0 0 auto;background-repeat:no-repeat;background-size:400% 800%;background-position:0 0;image-rendering:pixelated;transform-origin:50% 85%}
+#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}][data-naki-board-state="idle"] .grNakiBoardSprite{animation:grNakiBoardIdle 1000ms steps(1,end) infinite}
+#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}][data-naki-board-state="walk-left"] .grNakiBoardSprite{animation:grNakiBoardWalkLeft 800ms steps(1,end) infinite}
+#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}][data-naki-board-state="walk-right"] .grNakiBoardSprite{animation:grNakiBoardWalkRight 800ms steps(1,end) infinite}
+#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}][data-naki-board-state="arrive"] .grNakiBoardSprite{animation:grNakiBoardArrive 920ms steps(1,end) 1 both}
+#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}][data-motion-reduced="1"] .grNakiBoardSprite,#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}][data-motion-lowperf="1"] .grNakiBoardSprite{animation:none!important;background-position:0 0!important}
 #battleRuntime::before{content:"";position:absolute;left:50%;bottom:0;width:${CONTACT_SHADOW.widthPercent}%;height:${CONTACT_SHADOW.heightPercent}%;transform:translateX(-50%) scaleY(${CONTACT_SHADOW.planeScaleY});transform-origin:50% 50%;border-radius:50%;background:radial-gradient(ellipse at center,rgba(4,8,10,.46) 0%,rgba(4,8,10,.30) 48%,rgba(4,8,10,0) 78%);opacity:${CONTACT_SHADOW.opacity};pointer-events:none;z-index:0}
 #battleRuntime .grtc-root,#battleRuntime .grtc-facing,#battleRuntime .grtc-primary-motion,#battleRuntime .grtc-secondary-motion,#battleRuntime .grtc-image{position:relative;z-index:1}
 #boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}][data-motion-phase="moving"][data-motion-reduced="0"][data-motion-lowperf="0"] .grtc-image{animation:grccAcceptedMove var(--grcc-motion-duration) ease-out 1}
@@ -140,6 +162,10 @@ ${BATTLE_FOCUS_CHROME_SELECTOR}{display:none!important}
 @keyframes grccAcceptedMove{0%,100%{transform:scaleX(var(--grcc-facing-scale)) translateY(0)}45%{transform:scaleX(var(--grcc-facing-scale)) translateY(-3px)}}
 @keyframes grccSelected{0%,100%{transform:scaleX(var(--grcc-facing-scale)) scale(1)}55%{transform:scaleX(var(--grcc-facing-scale)) scale(1.06)}}
 @keyframes grccReact{0%,100%{transform:scaleX(var(--grcc-facing-scale)) translateX(0)}35%{transform:scaleX(var(--grcc-facing-scale)) translateX(-2px)}70%{transform:scaleX(var(--grcc-facing-scale)) translateX(2px)}}
+@keyframes grNakiBoardIdle{0%{background-position:0 0}12.5%{background-position:33.333333% 0}25%{background-position:66.666667% 0}37.5%{background-position:100% 0}50%{background-position:0 14.285714%}62.5%{background-position:33.333333% 14.285714%}75%{background-position:66.666667% 14.285714%}87.5%,100%{background-position:100% 14.285714%}}
+@keyframes grNakiBoardWalkLeft{0%{background-position:0 28.571429%}12.5%{background-position:33.333333% 28.571429%}25%{background-position:66.666667% 28.571429%}37.5%{background-position:100% 28.571429%}50%{background-position:0 42.857143%}62.5%{background-position:33.333333% 42.857143%}75%{background-position:66.666667% 42.857143%}87.5%,100%{background-position:100% 42.857143%}}
+@keyframes grNakiBoardWalkRight{0%{background-position:0 57.142857%}12.5%{background-position:33.333333% 57.142857%}25%{background-position:66.666667% 57.142857%}37.5%{background-position:100% 57.142857%}50%{background-position:0 71.428571%}62.5%{background-position:33.333333% 71.428571%}75%{background-position:66.666667% 71.428571%}87.5%,100%{background-position:100% 71.428571%}}
+@keyframes grNakiBoardArrive{0%{background-position:0 85.714286%}12.5%{background-position:33.333333% 85.714286%}25%{background-position:66.666667% 85.714286%}37.5%{background-position:100% 85.714286%}50%{background-position:0 100%}62.5%{background-position:33.333333% 100%}75%{background-position:66.666667% 100%}87.5%,100%{background-position:100% 100%}}
 @media(max-width:900px){#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{width:${VISUAL_FOOTPRINT.compact.surfaceWidth}px;height:${VISUAL_FOOTPRINT.compact.surfaceHeight}px}#boardPlayers ${MARKER_SELECTOR} .grControlledCharacterFallback{width:${VISUAL_FOOTPRINT.compact.fallbackWidth}px;height:${VISUAL_FOOTPRINT.compact.fallbackHeight}px}}
 @media(max-height:420px){#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{width:${VISUAL_FOOTPRINT.shortLandscape.surfaceWidth}px;height:${VISUAL_FOOTPRINT.shortLandscape.surfaceHeight}px}#boardPlayers ${MARKER_SELECTOR} .grControlledCharacterFallback{width:${VISUAL_FOOTPRINT.shortLandscape.fallbackWidth}px;height:${VISUAL_FOOTPRINT.shortLandscape.fallbackHeight}px}}
 @media(max-width:540px) and (orientation:portrait){#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{width:${VISUAL_FOOTPRINT.portrait.surfaceWidth}px;height:${VISUAL_FOOTPRINT.portrait.surfaceHeight}px}#boardPlayers ${MARKER_SELECTOR} .grControlledCharacterFallback{width:${VISUAL_FOOTPRINT.portrait.fallbackWidth}px;height:${VISUAL_FOOTPRINT.portrait.fallbackHeight}px}}
@@ -150,6 +176,22 @@ ${BATTLE_FOCUS_CHROME_SELECTOR}{display:none!important}
 
 function facingScale(facing) {
   return ['left', 'up-left', 'down-left'].includes(facing) ? -1 : 1;
+}
+
+function nakiBoardStateForMotion(motion) {
+  if (!motion || motion.reducedMotion || motion.lowPerformance) return 'idle';
+  if (motion.phase === 'moving') {
+    return ['left', 'up-left', 'down-left'].includes(motion.facing) ? 'walk-left' : 'walk-right';
+  }
+  if (motion.phase === 'selected' || motion.phase === 'reacting') return 'arrive';
+  return 'idle';
+}
+
+function applyNakiBoardMotion(surface, motion) {
+  if (surface?.dataset?.characterId !== NAKI_CHARACTER_ID) return false;
+  surface.dataset.nakiBoardState = nakiBoardStateForMotion(motion);
+  surface.dataset.nakiBoardSource = NAKI_BOARD_LOCOMOTION_R2_ASSET.sourcePackage;
+  return true;
 }
 
 function applyMotionProjection(surface, motion) {
@@ -164,6 +206,7 @@ function applyMotionProjection(surface, motion) {
   surface.dataset.positionKey = motion.positionKey == null ? '' : String(motion.positionKey);
   surface.style?.setProperty?.('--grcc-facing-scale', String(facingScale(motion.facing)));
   surface.style?.setProperty?.('--grcc-motion-duration', `${motion.durationMs}ms`);
+  applyNakiBoardMotion(surface, motion);
   if (previousSerial !== undefined && previousSerial !== surface.dataset.motionSerial) {
     const image = surface.querySelector?.('.grtc-image');
     if (image?.style) {
@@ -175,7 +218,7 @@ function applyMotionProjection(surface, motion) {
 }
 
 function failVisible(documentRef, surface, participantId) {
-  if (surface.querySelector?.('.grtc-image,.grControlledCharacterFallback')) return;
+  if (surface.querySelector?.('.grtc-image,.grNakiBoardSprite,.grControlledCharacterFallback')) return;
   const fallback = documentRef.createElement('div');
   fallback.className = 'grControlledCharacterFallback';
   fallback.textContent = participantId;
@@ -184,9 +227,27 @@ function failVisible(documentRef, surface, participantId) {
   surface.dataset.visualState = 'participant-generic';
 }
 
+function mountNakiBoardLocomotion(documentRef, surface, row) {
+  surface.replaceChildren?.();
+  const sprite = documentRef.createElement('span');
+  sprite.className = 'grNakiBoardSprite';
+  sprite.dataset.asset = NAKI_BOARD_LOCOMOTION_R2_ASSET.sourcePackage;
+  sprite.dataset.atlas = 'naki-board-locomotion-r2-atlas.png';
+  sprite.style.backgroundImage = `url("${NAKI_BOARD_LOCOMOTION_R2_URL}")`;
+  surface.appendChild(sprite);
+  surface.dataset.visualState = 'naki-board-locomotion-r2-direct';
+  surface.dataset.mountState = 'mounted';
+  applyMotionProjection(surface, row.motion);
+  return true;
+}
+
 async function mountControlledCharacter(globalRef, documentRef, surface, row) {
   if (surface.dataset.mountState === 'mounted' || surface.dataset.mountState === 'mounting') return;
   surface.dataset.mountState = 'mounting';
+  if (row.characterId === NAKI_CHARACTER_ID) {
+    mountNakiBoardLocomotion(documentRef, surface, row);
+    return;
+  }
   const runtime = globalRef?.GameRoadThreeCharRuntime;
   if (!runtime || typeof runtime.mount !== 'function') {
     failVisible(documentRef, surface, row.participantId);
@@ -390,6 +451,10 @@ export const CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING = Object.freeze({
   projectionInput: 'CALLER_FOUR_PARTICIPANT_MOTION_DIRECTOR_ROWS',
   identityAuthority: 'CALLER_SUPPLIED_OPAQUE_CHARACTER_ID',
   motionAuthority: 'CALLER_PROJECTED_CONTROLLED_CHARACTER_MOTION',
+  nakiVisualSource: 'NAKI_BOARD_LOCOMOTION_R2_DIRECT_ATLAS',
+  nakiVisualAsset: NAKI_BOARD_LOCOMOTION_R2_ASSET,
+  nakiRuntimePolicy: 'BYPASS_GAMEROAD_THREE_CHAR_RUNTIME_FOR_EXACT_PARTNER_NAKI_ONLY',
+  nakiWalkMirrorPolicy: 'SEPARATE_LEFT_RIGHT_FRAMES__NO_MIRROR',
   positionAuthority: 'PARENT_BOARD_PLAYER_MARKER',
   coordinateProjection: 'NONE__VISUAL_IS_CHILD_OF_AUTHORITATIVE_MARKER',
   unknownIdentityPolicy: 'MARKER_ONLY_NO_FAKE_CHARACTER',

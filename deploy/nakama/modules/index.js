@@ -40,7 +40,7 @@ function gameroadEnsureInitialManiiGrant(ctx, logger, nk) {
       amount: GAMEROAD_ONBOARDING_GRANT_AMOUNT
     },
     version: "*",
-    permissionRead: 1,
+    permissionRead: 0,
     permissionWrite: 0
   };
 

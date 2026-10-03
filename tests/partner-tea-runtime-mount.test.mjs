@@ -2,9 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  NAKI_PARTNER_VISUAL_CONTRACT,
   PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS,
   createPartnerConversationHubInput,
   mountPartnerTeaQuickChoiceRuntime,
+  projectNakiPartnerIdentityVisual,
+  resolveCurrentPartnerIdentity,
   partnerConversationHubCanDispatch,
   partnerConversationHubProjectionPlan,
   partnerTeaQuickChoiceProjectionPlan,
@@ -174,6 +177,46 @@ function teaFixture({ draft = '下書き' } = {}) {
   return { document, surface, head, form, input, send };
 }
 
+
+function characterFixture() {
+  const document = {
+    head: null,
+    body: null,
+    documentElement: null,
+    readyState: 'complete',
+    getElementById(id) {
+      return [this.head, ...descendants(this.head), this.body, ...descendants(this.body)]
+        .find((node) => node?.id === id) || null;
+    },
+    createElement(tag) { return element(tag, this); },
+    querySelectorAll(selector) {
+      const roots = [this.body, this.head].filter(Boolean);
+      const nodes = roots.flatMap((root) => [root, ...descendants(root)]);
+      return nodes.filter((node) => matches(node, selector));
+    },
+  };
+  document.head = element('head', document);
+  document.body = element('body', document);
+  document.documentElement = element('html', document);
+  const screen = document.createElement('section');
+  screen.className = 'screen characters active';
+  screen.dataset.screen = 'characters';
+  const stage = document.createElement('div');
+  stage.className = 'charStage';
+  const roster = document.createElement('div');
+  roster.className = 'charRoster';
+  const partnerTab = document.createElement('button');
+  partnerTab.className = 'charRoleTab on';
+  partnerTab.dataset.role = 'partner';
+  const playerTab = document.createElement('button');
+  playerTab.className = 'charRoleTab';
+  playerTab.dataset.role = 'player';
+  roster.append(partnerTab, playerTab);
+  screen.append(stage, roster);
+  document.body.appendChild(screen);
+  return { document, screen, stage, roster, partnerTab, playerTab };
+}
+
 function allNodes(root) {
   return [root, ...descendants(root)];
 }
@@ -197,7 +240,8 @@ test('Partner Hub plan composes the current Shell without inventing conversation
   const plan = partnerConversationHubProjectionPlan();
   assert.equal(plan.presentation, 'secondary_nonblocking_overlay');
   assert.equal(plan.useSite, 'partner-conversation');
-  assert.equal(plan.activePartnerId, 'partner.saasuna');
+  assert.equal(plan.activePartnerSource, 'GAMEROAD_PARTNER_STATE');
+  assert.equal(plan.fallbackActivePartnerId, 'partner.saasuna');
   assert.equal(plan.directConversationDefault, true);
   assert.equal(plan.conversationDomPreserved, true);
   assert.equal(plan.createsConversationSession, false);
@@ -220,6 +264,88 @@ test('Partner Hub dispatcher exposes detail, conversation, contextual Tea and re
   }
   assert.equal(createPartnerConversationHubInput().activePartnerId, 'partner.saasuna');
   assert.equal(createPartnerConversationHubInput().roster.length, 1);
+});
+
+
+test('Naki Partner identity resolves from current authority without Saasuna leakage or fake dialogue capability', () => {
+  const global = {
+    GAMEROAD_PARTNER_STATE: {
+      partner: () => ({ id: 'partner.naki', name: NAKI_PARTNER_VISUAL_CONTRACT.displayName }),
+    },
+  };
+  const identity = resolveCurrentPartnerIdentity(global);
+  assert.equal(identity.partnerId, 'partner.naki');
+  assert.equal(identity.displayName, NAKI_PARTNER_VISUAL_CONTRACT.displayName);
+  assert.equal(identity.portraitRef, NAKI_PARTNER_VISUAL_CONTRACT.portraitRef);
+  assert.equal(NAKI_PARTNER_VISUAL_CONTRACT.formalArt, false);
+  assert.equal(NAKI_PARTNER_VISUAL_CONTRACT.humanAccepted, false);
+  assert.equal(NAKI_PARTNER_VISUAL_CONTRACT.candidateOnly, true);
+
+  const input = createPartnerConversationHubInput('hub', identity);
+  assert.equal(input.activePartnerId, 'partner.naki');
+  assert.equal(input.detailPartnerId, 'partner.naki');
+  assert.equal(input.roster.length, 1);
+  assert.equal(input.roster[0].displayName, NAKI_PARTNER_VISUAL_CONTRACT.displayName);
+  assert.equal(input.roster[0].portraitRef.startsWith('data:image/webp;base64,'), true);
+  assert.equal(JSON.stringify(input).includes('サースナー'), false);
+});
+
+test('Naki Partner projects the corrected black-purple chibi candidate on Characters and clears it outside Partner role', () => {
+  const fixture = characterFixture();
+  let partner = { id: 'partner.naki', name: NAKI_PARTNER_VISUAL_CONTRACT.displayName };
+  const global = {
+    document: fixture.document,
+    GAMEROAD_PARTNER_STATE: { partner: () => partner },
+  };
+  assert.equal(projectNakiPartnerIdentityVisual(global), 1);
+  assert.equal(fixture.screen.dataset.grNakiPartnerVisual, '1');
+  const card = fixture.screen.querySelector('[data-gr-naki-partner-identity="1"]');
+  assert.ok(card);
+  assert.equal(card.dataset.partnerId, 'partner.naki');
+  assert.equal(card.dataset.formalArt, 'false');
+  assert.equal(card.dataset.humanAccepted, 'false');
+  assert.equal(card.dataset.sourceBlob, NAKI_PARTNER_VISUAL_CONTRACT.sourceBlob);
+  const image = card.children[0];
+  assert.equal(image.tag, 'img');
+  assert.equal(image.src, NAKI_PARTNER_VISUAL_CONTRACT.portraitRef);
+  assert.equal(image.alt, NAKI_PARTNER_VISUAL_CONTRACT.displayName);
+  assert.equal(projectNakiPartnerIdentityVisual(global), 0);
+
+  fixture.partnerTab.className = 'charRoleTab';
+  fixture.playerTab.className = 'charRoleTab on';
+  assert.equal(projectNakiPartnerIdentityVisual(global), 0);
+  assert.equal(fixture.screen.querySelector('[data-gr-naki-partner-identity="1"]'), null);
+  assert.equal(fixture.screen.dataset.grNakiPartnerVisual, undefined);
+
+  fixture.partnerTab.className = 'charRoleTab on';
+  fixture.playerTab.className = 'charRoleTab';
+  partner = { id: 'partner.saasuna', name: 'サースナー' };
+  assert.equal(projectNakiPartnerIdentityVisual(global), 0);
+  assert.equal(fixture.screen.querySelector('[data-gr-naki-partner-identity="1"]'), null);
+});
+
+test('Naki Partner fail-closes Saasuna conversation and Tea actions on a stale conversation surface', () => {
+  const fixture = teaFixture();
+  const global = {
+    document: fixture.document,
+    GAMEROAD_PARTNER_STATE: {
+      partner: () => ({ id: 'partner.naki', name: NAKI_PARTNER_VISUAL_CONTRACT.displayName }),
+    },
+  };
+  assert.equal(projectPartnerTeaQuickChoices(global), 0);
+  assert.equal(fixture.form.insertedBefore, undefined);
+  assert.equal(projectPartnerConversationHubOverlay(global), 1);
+  const trigger = fixture.surface.querySelector('[data-partner-hub-trigger="1"]');
+  const overlay = fixture.surface.querySelector('[data-partner-hub-overlay="1"]');
+  trigger.click();
+  const nodes = allNodes(overlay);
+  const actions = nodes.filter((node) => node.dataset?.partnerShellAction).map((node) => node.dataset.partnerShellAction);
+  assert.deepEqual(actions, ['OPEN_ACTIVE_DETAIL']);
+  assert.equal(nodes.some((node) => node.className === 'partner-shell-idle-readable'), false);
+  const portrait = nodes.find((node) => node.className === 'partner-shell-portrait');
+  assert.ok(portrait);
+  assert.equal(portrait.dataset.partnerId, 'partner.naki');
+  assert.equal(portrait.src, NAKI_PARTNER_VISUAL_CONTRACT.portraitRef);
 });
 
 test('mount is a no-op when browser DOM lifecycle is unavailable', () => {
@@ -450,7 +576,7 @@ test('runtime observes future surfaces and disabled-state changes and fails clos
   }
   const global = { document: fixture.document, MutationObserver: FakeObserver };
   const runtime = mountPartnerTeaQuickChoiceRuntime(global);
-  assert.equal(runtime.version, 'gameroad.partner-tea-quick-choice-runtime.v2');
+  assert.equal(runtime.version, 'gameroad.partner-tea-quick-choice-runtime.v3');
   assert.equal(runtime.partnerHubPlan.directConversationDefault, true);
   assert.equal(runtime.partnerHubPlan.teaCreatesStandaloneView, false);
   assert.equal(typeof observerCallback, 'function');

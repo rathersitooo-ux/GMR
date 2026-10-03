@@ -1,0 +1,103 @@
+name: Home diagonal physical removal R5 stager
+
+on:
+  push:
+    branches:
+      - sol/home-diagonal-physical-remove-r5-20261003
+    paths:
+      - .github/workflows/home-diagonal-physical-remove-r5.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Physically remove retired Home diagonal and obsolete suppression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          html_path = Path("browser/GAMEROAD.html")
+          runtime_path = Path("browser/home-boot-runtime-mount.mjs")
+          test_path = Path("tests/home-night-flow-runtime.test.mjs")
+
+          diagonal = b'.home.codexHome::after{content:"";position:absolute;left:16%;top:66%;width:72%;height:8%;border-radius:999px;background:rgb(124,88,216);opacity:.07;transform:rotate(-8deg);pointer-events:none}'
+          html = html_path.read_bytes()
+          if html.count(diagonal) != 1:
+              raise SystemExit(f"expected exactly one diagonal rule, found {html.count(diagonal)}")
+          if diagonal + b"\r\n" in html:
+              html = html.replace(diagonal + b"\r\n", b"", 1)
+          elif diagonal + b"\n" in html:
+              html = html.replace(diagonal + b"\n", b"", 1)
+          else:
+              html = html.replace(diagonal, b"", 1)
+          if diagonal in html or b'.home.codexHome::after{' in html:
+              raise SystemExit("diagonal selector remains after source deletion")
+          html_path.write_bytes(html)
+
+          suppression = b"    HOME_SELECTOR + '.codexHome::after{content:none!important;display:none!important}',"
+          runtime = runtime_path.read_bytes()
+          if runtime.count(suppression) != 1:
+              raise SystemExit(f"expected exactly one suppression line, found {runtime.count(suppression)}")
+          if suppression + b"\r\n" in runtime:
+              runtime = runtime.replace(suppression + b"\r\n", b"", 1)
+          elif suppression + b"\n" in runtime:
+              runtime = runtime.replace(suppression + b"\n", b"", 1)
+          else:
+              runtime = runtime.replace(suppression, b"", 1)
+          runtime_path.write_bytes(runtime)
+
+          old = b"""test('Home runtime suppresses the retired diagonal Home pseudo-element', () => {
+            const source = fs.readFileSync(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
+            assert.ok(source.includes("HOME_SELECTOR + '.codexHome::after{content:none!important;display:none!important}'"));
+          });
+          """
+          new = b"""test('retired Home diagonal pseudo-element is physically removed from source', () => {
+            const html = fs.readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
+            const runtime = fs.readFileSync(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
+            assert.equal(html.includes('.home.codexHome::after{'), false);
+            assert.equal(runtime.includes("HOME_SELECTOR + '.codexHome::after{content:none!important;display:none!important}'"), false);
+          });
+          """
+          tests = test_path.read_bytes()
+          if tests.count(old) != 1:
+              raise SystemExit(f"expected exactly one old regression block, found {tests.count(old)}")
+          tests = tests.replace(old, new, 1)
+          test_path.write_bytes(tests)
+          PY
+
+      - name: Verify focused regression
+        run: |
+          set -euo pipefail
+          node --test tests/home-night-flow-runtime.test.mjs
+          git diff --check
+          python - <<'PY'
+          from pathlib import Path
+          html = Path("browser/GAMEROAD.html").read_text(encoding="utf-8")
+          runtime = Path("browser/home-boot-runtime-mount.mjs").read_text(encoding="utf-8")
+          assert ".home.codexHome::after{" not in html
+          assert "HOME_SELECTOR + '.codexHome::after{content:none!important;display:none!important}'" not in runtime
+          PY
+
+      - name: Commit exact bounded product patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add browser/GAMEROAD.html browser/home-boot-runtime-mount.mjs tests/home-night-flow-runtime.test.mjs
+          changed="$(git diff --cached --name-only)"
+          expected="$(printf '%s\n' browser/GAMEROAD.html browser/home-boot-runtime-mount.mjs tests/home-night-flow-runtime.test.mjs | sort)"
+          actual="$(printf '%s\n' "$changed" | sort)"
+          test "$actual" = "$expected"
+          git commit -m "Home: physically remove retired diagonal source"
+          git push origin "HEAD:$GITHUB_REF_NAME"

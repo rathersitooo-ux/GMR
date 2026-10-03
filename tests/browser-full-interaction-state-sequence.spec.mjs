@@ -14,6 +14,7 @@ function observeRuntimeErrors(page) {
   const consoleErrors = [];
   const unexpectedHttpErrors = [];
   let versionManifest404Count = 0;
+  let partnerVisual404Count = 0;
 
   page.on('pageerror', (error) => pageErrors.push(error.message));
   page.on('console', (message) => {
@@ -26,13 +27,17 @@ function observeRuntimeErrors(page) {
       versionManifest404Count += 1;
       return;
     }
+    if (response.status() === 404 && url.pathname === '/ws' && url.searchParams.get('partnerOp') === 'visual') {
+      partnerVisual404Count += 1;
+      return;
+    }
     unexpectedHttpErrors.push(`${response.status()} ${url.pathname}`);
   });
 
   return {
     assertClean(testInfo) {
       const remainingConsoleErrors = [...consoleErrors];
-      for (let i = 0; i < versionManifest404Count; i += 1) {
+      for (let i = 0; i < versionManifest404Count + partnerVisual404Count; i += 1) {
         const index = remainingConsoleErrors.findIndex((message) =>
           message.includes('Failed to load resource') && message.includes('404'),
         );
@@ -42,6 +47,12 @@ function observeRuntimeErrors(page) {
         testInfo.annotations.push({
           type: 'known-deployment-gap',
           description: `gameroad-version.json returned 404 ${versionManifest404Count} time(s); tracked separately from state-sequence evidence`,
+        });
+      }
+      if (partnerVisual404Count > 0) {
+        testInfo.annotations.push({
+          type: 'known-local-static-server-gap',
+          description: `/ws?partnerOp=visual returned 404 ${partnerVisual404Count} time(s) on the local static BFI server; public edge behavior remains outside this local serving boundary`,
         });
       }
       expect(unexpectedHttpErrors, `unexpected HTTP errors:\n${unexpectedHttpErrors.join('\n')}`).toEqual([]);
@@ -90,7 +101,7 @@ async function assertModelScreen(page, model) {
 
 function rootGo(page, target) {
   return page
-    .locator(`[data-go="${target}"]:visible, [data-home-target="${target}"]:visible, [data-root-go="${target}"]:visible`)
+    .locator(`section[data-screen="home"].active:visible [data-go="${target}"]:visible, section[data-screen="home"].active:visible [data-home-target="${target}"]:visible, section[data-screen="home"].active:visible [data-root-go="${target}"]:visible`)
     .first();
 }
 

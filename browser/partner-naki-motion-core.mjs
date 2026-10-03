@@ -44,10 +44,12 @@ export function createNakiAdviceMotionController({
     frameIndex: frame,
   });
 
-  const setState = (nextState = 'IDLE') => {
+  const setState = (nextState = 'IDLE', { restart = false } = {}) => {
     if (!active) return null;
+    const resolvedState = Object.hasOwn(PROFILES, nextState) ? nextState : 'IDLE';
+    if (!restart && state === resolvedState) return profileFor(resolvedState);
     clearTimer();
-    state = Object.hasOwn(PROFILES, nextState) ? nextState : 'IDLE';
+    state = resolvedState;
     serial += 1;
     const token = serial;
     const profile = profileFor(state);

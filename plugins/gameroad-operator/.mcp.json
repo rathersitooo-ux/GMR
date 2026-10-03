@@ -1,0 +1,19 @@
+{
+  "mcp_servers": {
+    "gameroad-desktop": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@wonderwhy-er/desktop-commander@latest"
+      ]
+    },
+    "gameroad-browser": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest",
+        "--caps=network,storage,testing,vision,pdf,devtools"
+      ]
+    }
+  }
+}

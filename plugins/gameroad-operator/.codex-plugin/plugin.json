@@ -1,0 +1,33 @@
+{
+  "name": "gameroad-operator",
+  "version": "0.1.0",
+  "description": "Local GAMEROAD PC and browser execution stack using maintained MCP servers.",
+  "repository": "https://github.com/rathersitooo-ux/GMR",
+  "license": "MIT",
+  "keywords": [
+    "gameroad",
+    "desktop",
+    "browser",
+    "playwright",
+    "mcp"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "GAMEROAD Operator",
+    "shortDescription": "Local PC, files, terminal, processes, and browser automation for GAMEROAD",
+    "longDescription": "Runs maintained local MCP servers for PC filesystem/terminal/process work and full headed browser automation, plus a GAMEROAD workflow skill bound to fresh CURRENT, owner/lease, actual evidence, and readback.",
+    "developerName": "GAMEROAD",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/rathersitooo-ux/GMR",
+    "defaultPrompt": [
+      "Run the GAMEROAD CURRENT work loop on my PC.",
+      "Diagnose the local GAMEROAD environment and browser.",
+      "Use the browser to verify the current playable consumer and read back evidence."
+    ]
+  }
+}

@@ -5,6 +5,7 @@ import {
   parseFencedJson,
   normalizeQueuePacket,
   normalizeResultPacket,
+  BROWSER_FULL_INTERACTION_TARGET,
 } from '../tools/executor-bus-packet.mjs';
 
 function queue(overrides = {}) {
@@ -88,7 +89,7 @@ test('normalizes typed acceptance checks without inferring evidence state', () =
         kind: 'runtime_evidence',
         description: 'Player route is visibly correct.',
         required: true,
-        target: '/play',
+        target: BROWSER_FULL_INTERACTION_TARGET,
       },
       {
         id: 'review',
@@ -112,7 +113,7 @@ test('normalizes typed acceptance checks without inferring evidence state', () =
       kind: 'runtime_evidence',
       description: 'Player route is visibly correct.',
       required: true,
-      target: '/play',
+      target: BROWSER_FULL_INTERACTION_TARGET,
     },
     {
       id: 'review',
@@ -139,6 +140,22 @@ test('rejects typed acceptance that leaves legacy criteria unclassified', () => 
   }));
   assert.equal(checked.ok, false);
   assert.equal(checked.reason, 'acceptanceChecks_must_classify_every_acceptance_item');
+});
+
+test('rejects unsupported runtime evidence target', () => {
+  const checked = normalizeQueuePacket(queue({
+    acceptance: ['Runtime evidence exists.'],
+    acceptanceChecks: [
+      {
+        id: 'runtime',
+        kind: 'runtime_evidence',
+        description: 'Runtime evidence exists.',
+        target: '/arbitrary-route',
+      },
+    ],
+  }));
+  assert.equal(checked.ok, false);
+  assert.match(checked.reason, /runtime_target_unsupported/);
 });
 
 test('rejects malformed typed acceptance checks', () => {

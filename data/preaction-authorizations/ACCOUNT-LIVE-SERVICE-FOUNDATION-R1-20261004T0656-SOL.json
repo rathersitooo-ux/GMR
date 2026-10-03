@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ACCOUNT-LIVE-SERVICE-FOUNDATION-R1-20261004T0656-SOL",
+  "taskId": "SHOP-SAFE-ECONOMY-INTEGRATION-001",
+  "workUnitKey": "ACCOUNT_LIVE_SERVICE_FOUNDATION_R1",
+  "acquireKey": "ACCOUNT-LIVE-SERVICE-FOUNDATION-R1-20261004T0656-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_ACCOUNT_AUTHORITY_ABSENT_USER_EXPLICIT_20261004",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_DURABLE_OBJECT_STORAGE_PATTERNS_AND_CLOSED_PR2235_DONOR",
+  "proceedToken": "PROCEED|ACCOUNT-LIVE-SERVICE-FOUNDATION-R1-20261004T0656-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|account-live-service-foundation|server-account-core|active-lease",
+  "authorizationBaseSha": "89d002d421e5d4a22537ef8e365976acd82ab468",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHOP-SAFE-ECONOMY-INTEGRATION-001",
+  "leaseWorkUnitKey": "ACCOUNT_LIVE_SERVICE_FOUNDATION_R1",
+  "leaseAcquireKey": "ACCOUNT-LIVE-SERVICE-FOUNDATION-R1-20261004T0656-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-04 06:56 JST",
+  "leaseUntilJst": "2026-10-04 07:56 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "deploy/cloudflare/relay/src/account-store.mjs; deploy/cloudflare/relay/src/relay-worker.mjs; deploy/cloudflare/relay/wrangler.toml; tests/account-store.test.mjs; data/preaction-authorizations/ACCOUNT-LIVE-SERVICE-FOUNDATION-R1-20261004T0656-SOL.json; own fresh branch/PR/check/readback; own CURRENT R25 event/lease records",
+  "solutionSignature": "PLAYER_ACCOUNT_DURABLE_OBJECT_FOUNDATION_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_RELAY_DURABLE_OBJECT_PATTERNS_PLUS_PR2235_DONOR",
+  "solutionSearchEvidence": [
+    "Current relay storage uses SQLite-backed Durable Objects with transaction-safe state updates.",
+    "Current match-store demonstrates idempotent server-owned storage mutations and fail-closed validation.",
+    "Closed PR2235 is donor-only for one-time MANII wallet behavior because its control-plane commit order was invalid.",
+    "Cloudflare current documentation confirms new SQLite Durable Object classes can be declared with exports and bound through durable_objects.bindings."
+  ],
+  "scope": [
+    "deploy/cloudflare/relay/src/account-store.mjs",
+    "deploy/cloudflare/relay/src/relay-worker.mjs",
+    "deploy/cloudflare/relay/wrangler.toml",
+    "tests/account-store.test.mjs"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/relay/src/account-store.mjs",
+    "deploy/cloudflare/relay/src/relay-worker.mjs",
+    "deploy/cloudflare/relay/wrangler.toml",
+    "tests/account-store.test.mjs"
+  ]
+}

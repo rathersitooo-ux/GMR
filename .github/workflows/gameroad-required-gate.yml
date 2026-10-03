@@ -339,6 +339,12 @@ jobs:
               deploy/cloudflare/README.md|\
               deploy/cloudflare/functions/ws.js|\
               deploy/cloudflare/functions/report.js|\
+              deploy/cloudflare/functions/account.js|\
+              deploy/nakama/docker-compose.yml|\
+              deploy/nakama/local.yml|\
+              deploy/nakama/modules/index.js|\
+              deploy/nakama/README.md|\
+              tests/nakama-live-service-foundation.test.mjs|\
               deploy/cloudflare/relay/src/relay-core.mjs|\
               deploy/cloudflare/relay/src/match-store.mjs|\
               deploy/cloudflare/relay/src/partner-report-store.mjs|\
@@ -780,6 +786,13 @@ jobs:
             fi
             node --test deploy/cloudflare/tests/partner-report-provider.test.mjs
           fi
+          if grep -Eq '^(deploy/cloudflare/functions/account\.js|deploy/nakama/|tests/nakama-live-service-foundation\.test\.mjs)' /tmp/gameroad-changed.txt; then
+            if [[ ! -f tests/nakama-live-service-foundation.test.mjs ]]; then
+              echo "Required Nakama live-service foundation test is missing: tests/nakama-live-service-foundation.test.mjs"
+              exit 1
+            fi
+            node --test tests/nakama-live-service-foundation.test.mjs
+          fi
 
       - name: Run PublicHost Cloudflare syntax checks
         if: steps.classify.outputs.publichost == 'true'
@@ -788,6 +801,12 @@ jobs:
           node --check deploy/cloudflare/relay/src/relay-core.mjs
           node --check deploy/cloudflare/relay/src/relay-worker.mjs
           node --check deploy/cloudflare/scripts/build.mjs
+          if [[ -f deploy/cloudflare/functions/account.js ]]; then
+            node --check deploy/cloudflare/functions/account.js
+          fi
+          if [[ -f deploy/nakama/modules/index.js ]]; then
+            node --check deploy/nakama/modules/index.js
+          fi
 
       - name: Verify formal Roblox placement
         if: steps.classify.outputs.roblox == 'true'

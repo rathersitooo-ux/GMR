@@ -51,6 +51,8 @@ test('Battle bust-up owns a dedicated framed Advice Partner slot instead of a ba
   assert.match(source, /battleSurface\.append\(figure\)/);
   assert.match(source, /overflow:hidden/);
   assert.match(source, /border:1px solid/);
+  assert.match(source, /partnerAdviceBustup\{display:none!important\}/);
+  assert.match(source, /data-saasuna-bustup="true"\]\{left:max\(8px,env\(safe-area-inset-left\)\)!important/);
 });
 
 test('accepted TOUCH_CRY asset is bound from the canonical registry to a visible Battle touch overlay', () => {

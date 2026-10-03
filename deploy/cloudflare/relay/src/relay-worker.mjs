@@ -18,6 +18,14 @@ import {
   storedMatchTicketStatus,
 } from './match-store.mjs';
 import { handleBattleReceiptRequest, handlePartnerReportRequest } from './partner-report-store.mjs';
+import {
+  claimInitialManiiGrant,
+  createPlayerAccount,
+  derivePlayerAccountId,
+  issuePlayerSession,
+  readPlayerAccount,
+  revokePlayerSession,
+} from './account-store.mjs';
 
 const ROOM_KEY = 'room.v1';
 
@@ -197,6 +205,184 @@ async function handleMatchRequest(ctx, request, url) {
   });
 }
 
+
+function accountJson(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    },
+  });
+}
+
+function accountErrorStatus(reason) {
+  if (reason === 'account_auth_invalid' || reason === 'account_session_unauthorized') return 403;
+  if (reason === 'account_not_found_or_corrupt') return 404;
+  if (reason === 'account_identity_conflict') return 409;
+  if (reason === 'account_wallet_overflow') return 500;
+  return 400;
+}
+
+async function readAccountJson(request) {
+  const contentLength = Number(request.headers.get('content-length') || 0);
+  if (Number.isFinite(contentLength) && contentLength > 8192) throw new Error('account_request_too_large');
+  const text = await request.text();
+  if (text.length > 8192) throw new Error('account_request_too_large');
+  return JSON.parse(text || '{}');
+}
+
+function randomOpaqueSecret(prefix) {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  const encoded = btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/g, '');
+  return `${prefix}_${encoded}`;
+}
+
+function exactPublicAccountId(value) {
+  return typeof value === 'string' && /^acc_[0-9a-f]{32}$/i.test(value) ? value : null;
+}
+
+export class GAMEROADAccount extends DurableObject {
+  constructor(ctx, env) {
+    super(ctx, env);
+    this.ctx = ctx;
+  }
+
+  accountId() {
+    return String(this.ctx.id.name || '');
+  }
+
+  async createAccount(input = {}) {
+    return createPlayerAccount(this.ctx.storage, {
+      accountId: this.accountId(),
+      accountKey: input.accountKey,
+    }, { nowMs: input.nowMs });
+  }
+
+  async issueSession(input = {}) {
+    return issuePlayerSession(this.ctx.storage, {
+      accountId: this.accountId(),
+      accountKey: input.accountKey,
+      sessionToken: input.sessionToken,
+    }, { nowMs: input.nowMs });
+  }
+
+  async readAccount(input = {}) {
+    return readPlayerAccount(this.ctx.storage, {
+      accountId: this.accountId(),
+      sessionToken: input.sessionToken,
+    }, { nowMs: input.nowMs });
+  }
+
+  async claimInitialManii(input = {}) {
+    return claimInitialManiiGrant(this.ctx.storage, {
+      accountId: this.accountId(),
+      sessionToken: input.sessionToken,
+    }, { nowMs: input.nowMs });
+  }
+
+  async revokeSession(input = {}) {
+    return revokePlayerSession(this.ctx.storage, {
+      accountId: this.accountId(),
+      sessionToken: input.sessionToken,
+    }, { nowMs: input.nowMs });
+  }
+}
+
+async function handleAccountRequest(env, request, url) {
+  if (request.method === 'OPTIONS') return accountJson({ ok: true }, 204);
+  if (request.method !== 'POST') return accountJson({ ok: false, reason: 'account_method_invalid' }, 405);
+  if (!env?.GAMEROAD_ACCOUNT?.getByName) return accountJson({ ok: false, reason: 'account_service_unavailable' }, 503);
+
+  const op = url.searchParams.get('accountOp') || '';
+  if (!['create', 'session', 'state', 'claimInitialManii', 'revoke'].includes(op)) {
+    return accountJson({ ok: false, reason: 'account_op_invalid' }, 404);
+  }
+
+  let body;
+  try {
+    body = await readAccountJson(request);
+  } catch (error) {
+    return accountJson({
+      ok: false,
+      reason: error?.message === 'account_request_too_large' ? 'account_request_too_large' : 'account_request_invalid',
+    }, error?.message === 'account_request_too_large' ? 413 : 400);
+  }
+
+  const nowMs = Date.now();
+
+  if (op === 'create') {
+    let accountId;
+    try {
+      accountId = await derivePlayerAccountId(body.accountKey, crypto);
+    } catch {
+      return accountJson({ ok: false, reason: 'account_create_invalid' }, 400);
+    }
+    const stub = env.GAMEROAD_ACCOUNT.getByName(accountId);
+    const created = await stub.createAccount({ accountKey: body.accountKey, nowMs });
+    if (!created.ok) return accountJson(created, accountErrorStatus(created.reason));
+
+    const sessionToken = randomOpaqueSecret('grs');
+    const session = await stub.issueSession({ accountKey: body.accountKey, sessionToken, nowMs });
+    if (!session.ok) return accountJson(session, accountErrorStatus(session.reason));
+
+    const grant = await stub.claimInitialManii({ sessionToken, nowMs });
+    if (!grant.ok) return accountJson(grant, accountErrorStatus(grant.reason));
+
+    return accountJson({
+      ok: true,
+      accountId,
+      created: created.created,
+      idempotent: created.idempotent,
+      sessionToken,
+      sessionExpiresAtMs: session.expiresAtMs,
+      initialGrant: {
+        granted: grant.granted,
+        idempotent: grant.idempotent,
+        amount: grant.amount,
+      },
+      account: grant.account,
+    });
+  }
+
+  const accountId = exactPublicAccountId(body.accountId);
+  if (!accountId) return accountJson({ ok: false, reason: 'account_identity_invalid' }, 400);
+  const stub = env.GAMEROAD_ACCOUNT.getByName(accountId);
+
+  if (op === 'session') {
+    let derived;
+    try {
+      derived = await derivePlayerAccountId(body.accountKey, crypto);
+    } catch {
+      return accountJson({ ok: false, reason: 'account_session_invalid' }, 400);
+    }
+    if (derived !== accountId) return accountJson({ ok: false, reason: 'account_auth_invalid' }, 403);
+    const sessionToken = randomOpaqueSecret('grs');
+    const result = await stub.issueSession({ accountKey: body.accountKey, sessionToken, nowMs });
+    if (!result.ok) return accountJson(result, accountErrorStatus(result.reason));
+    return accountJson({ ok: true, accountId, sessionToken, sessionExpiresAtMs: result.expiresAtMs });
+  }
+
+  if (op === 'state') {
+    const result = await stub.readAccount({ sessionToken: body.sessionToken, nowMs });
+    return accountJson(result, result.ok ? 200 : accountErrorStatus(result.reason));
+  }
+
+  if (op === 'claimInitialManii') {
+    const result = await stub.claimInitialManii({ sessionToken: body.sessionToken, nowMs });
+    return accountJson(result, result.ok ? 200 : accountErrorStatus(result.reason));
+  }
+
+  const result = await stub.revokeSession({ sessionToken: body.sessionToken, nowMs });
+  return accountJson(result, result.ok ? 200 : accountErrorStatus(result.reason));
+}
+
 export class GAMEROADFriendRoomRelay extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
@@ -356,7 +542,9 @@ export class GAMEROADFriendRoomRelay extends DurableObject {
 }
 
 export default {
-  fetch() {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    if (url.searchParams.has('accountOp')) return handleAccountRequest(env, request, url);
     return new Response(`GAMEROAD ${WS_WIRE} Durable Object worker`, { status: 404 });
   },
 };

@@ -7,6 +7,7 @@ import {
   claimInitialManiiGrant,
   createPlayerAccount,
   derivePlayerAccountId,
+  derivePlayerAccountId,
   issuePlayerSession,
   readPlayerAccount,
   revokePlayerSession,
@@ -38,6 +39,7 @@ function memoryStorage() {
 
 const accountKey = 'grk_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef1234567890_-';
 const sessionToken = 'grs_abcdefghijklmnopqrstuvwxyzABCDEF1234567890_-';
+const accountId = await derivePlayerAccountId(accountKey, webcrypto);
 const accountId = await derivePlayerAccountId(accountKey, webcrypto);
 const runtime = (nowMs) => ({ nowMs, crypto: webcrypto });
 
@@ -109,6 +111,7 @@ test('different accounts are isolated even when they use the same logical flow',
   const storageA = await readyAccount();
   const keyB = 'grk_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB';
   const tokenB = 'grs_CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC';
+  const accountIdB = await derivePlayerAccountId(keyB, webcrypto);
   const accountIdB = await derivePlayerAccountId(keyB, webcrypto);
   const storageB = memoryStorage();
   await createPlayerAccount(storageB, { accountId: accountIdB, accountKey: keyB }, runtime(1000));

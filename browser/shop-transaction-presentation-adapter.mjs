@@ -94,7 +94,10 @@ function validateApprovedFanArtShopItem(raw) {
   const submissionRecordId = token(raw.submissionRecordId, 128);
   const approvalRecordId = token(raw.approvalRecordId, 128);
   const targetCardId = token(raw.targetCardId, 128);
+  const targetUseSite = token(raw.targetUseSite, 64);
+  const targetPartnerId = token(raw.targetPartnerId, 128);
   const imageAssetId = token(raw.imageAssetId, 256);
+  const imageUrl = token(raw.imageUrl, 1024);
 
   if (!workId) reasons.push('workId-invalid');
   if (!workVersion) reasons.push('workVersion-invalid');
@@ -103,7 +106,9 @@ function validateApprovedFanArtShopItem(raw) {
   if (!creatorUserId) reasons.push('creatorUserId-invalid');
   if (!submissionRecordId) reasons.push('submissionRecordId-invalid');
   if (!approvalRecordId) reasons.push('approvalRecordId-invalid');
-  if (!targetCardId) reasons.push('targetCardId-invalid');
+  if (!targetCardId && !(targetUseSite === 'CARD_SLEEVE' && targetPartnerId && imageUrl)) reasons.push('use-target-invalid');
+  if (targetUseSite === 'CARD_SLEEVE' && !targetPartnerId) reasons.push('targetPartnerId-invalid');
+  if (targetUseSite === 'CARD_SLEEVE' && !imageUrl) reasons.push('imageUrl-invalid');
   if (!imageAssetId) reasons.push('imageAssetId-invalid');
   if (raw.formalApprovalState !== 'APPROVED') reasons.push('formal-approval-not-approved');
   if (raw.approvedBy !== 'HUMAN') reasons.push('formal-approval-not-human');
@@ -137,7 +142,10 @@ function validateApprovedFanArtShopItem(raw) {
       title,
       creatorDisplayName,
       targetCardId,
+      targetUseSite,
+      targetPartnerId,
       imageAssetId,
+      imageUrl,
       acquisition:Object.freeze({
         productId: acquisition.productId.trim(),
         currency: 'MANII',

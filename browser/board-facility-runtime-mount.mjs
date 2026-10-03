@@ -266,11 +266,9 @@ export async function resolveSaasunaCollectiveContext(global = globalThis) {
 export function partnerConversationProjectionDecision({
   screenActive = false,
   activeRole = null,
-  roleTabsPresent = activeRole !== null,
   selectedPartnerId = null,
 } = {}) {
-  const roleAllowsConversation = activeRole === 'partner' || (activeRole === null && roleTabsPresent === false);
-  return screenActive && roleAllowsConversation && selectedPartnerId === 'partner.saasuna'
+  return screenActive && activeRole === 'partner' && selectedPartnerId === 'partner.saasuna'
     ? 'conversation'
     : 'idle';
 }
@@ -417,13 +415,11 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
     const screen = document.querySelector('[data-screen="characters"]');
     const roster = document.querySelector('#charRoster');
     const existing = roster?.querySelector?.('[data-gr-partner-conversation="1"]') ?? null;
-    const roleTabsPresent = Boolean(screen?.querySelector?.('.charRoleTab[data-role]'));
     const activeRole = screen?.querySelector?.('.charRoleTab.on[data-role]')?.dataset?.role ?? null;
     const selectedPartnerId = global?.GAMEROAD_PARTNER_STATE?.partner?.()?.id ?? null;
     const projection = partnerConversationProjectionDecision({
       screenActive: Boolean(screen?.classList?.contains?.('active')),
       activeRole,
-      roleTabsPresent,
       selectedPartnerId,
     });
     if (!screen || !roster || projection !== 'conversation') {
@@ -593,7 +589,7 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
   const runtime = Object.freeze({
     version: 'gameroad.partner-conversation-product-mount.v3',
     partnerId: 'partner.saasuna',
-    pickerRequired: false,
+    pickerRequired: true,
     providerReady: provider !== null,
     persistentTranscript: false,
     staticVisual: true,

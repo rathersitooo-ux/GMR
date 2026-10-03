@@ -180,3 +180,90 @@ test('runtime emits identity-only acquire intent and never claims purchase autho
   assert.equal(runtime.ownershipMutationAllowed, false);
   assert.equal(runtime.saveMutationAllowed, false);
 });
+
+
+test('Saasuna CARD_SLEEVE keeps exact use-site, image, and 50 MANII presentation', () => {
+  const sleeve = approvedFanArt({
+    targetCardId:null,
+    targetUseSite:'CARD_SLEEVE',
+    targetPartnerId:'partner.saasuna',
+    imageUrl:'../assets/shop/fanart/saasuna-sleeve-snow-blue-v1.jpg',
+    acquisition:{state:'READY', productId:'fanart:saasuna-sleeve-snow-blue:v1', currency:'MANII', price:50},
+  });
+  const out = projectShopLiveCatalog({approvedFanArtWorks:[sleeve]});
+  const section = out.sections.find((entry)=>entry.id === 'fanart');
+  assert.equal(section.visible, true);
+  assert.equal(section.items.length, 1);
+  const item = section.items[0];
+  assert.equal(item.targetCardId, null);
+  assert.equal(item.targetUseSite, 'CARD_SLEEVE');
+  assert.equal(item.targetPartnerId, 'partner.saasuna');
+  assert.equal(item.imageUrl, '../assets/shop/fanart/saasuna-sleeve-snow-blue-v1.jpg');
+  assert.equal(item.currency, 'MANII');
+  assert.equal(item.currencyDisplayName, 'マニィ');
+  assert.equal(item.price, 50);
+  assert.equal(out.purchaseAuthority, false);
+  assert.equal(out.ownershipMutationAllowed, false);
+  assert.equal(out.saveMutationAllowed, false);
+});
+
+test('SUPPLY is a supported formal section but is not invented without authoritative input', () => {
+  const empty = projectShopLiveCatalog();
+  const emptySupply = empty.sections.find((entry)=>entry.id === 'supplies');
+  assert.ok(emptySupply);
+  assert.equal(emptySupply.visible, false);
+  assert.deepEqual(emptySupply.items, []);
+
+  const valid = projectShopLiveCatalog({formalCatalogItems:[
+    formalItem({productId:'supply:approved:001', title:'承認サプライ', kind:'SUPPLY', currency:'MANII', price:80}),
+  ]});
+  const supply = valid.sections.find((entry)=>entry.id === 'supplies');
+  assert.equal(supply.visible, true);
+  assert.equal(supply.items[0].currency, 'MANII');
+
+  const invalid = projectShopLiveCatalog({formalCatalogItems:[
+    formalItem({productId:'supply:bad:001', title:'不正サプライ', kind:'SUPPLY', currency:'COIN', price:80}),
+  ]});
+  assert.equal(invalid.visible, false);
+  assert.ok(invalid.reasons.some((reason)=>reason.includes('supply-currency-must-be-manii')));
+});
+
+test('runtime renders sleeve art and use-site while emitting identity-only acquire intent', () => {
+  const documentSource = new FakeDocument();
+  const host = new FakeNode('div', documentSource);
+  const requests = [];
+  const sleeve = approvedFanArt({
+    targetCardId:null,
+    targetUseSite:'CARD_SLEEVE',
+    targetPartnerId:'partner.saasuna',
+    imageUrl:'../assets/shop/fanart/saasuna-sleeve-snow-blue-v1.jpg',
+    acquisition:{state:'READY', productId:'fanart:saasuna-sleeve-snow-blue:v1', currency:'MANII', price:50},
+  });
+  const runtime = mountShopLiveCatalogRuntime({
+    host,
+    approvedFanArtWorks:[sleeve],
+    onAcquireRequest:(request)=>requests.push(request),
+    getAcquireState:()=>({state:'ready'}),
+  });
+  const nodes = flatten(host);
+  const image = nodes.find((node)=>node.tagName === 'img');
+  const useSite = nodes.find((node)=>node.className === 'shopLiveCatalogUseSite');
+  const button = nodes.find((node)=>node.className === 'shopLiveCatalogAcquire');
+  assert.ok(image);
+  assert.equal(image.src, '../assets/shop/fanart/saasuna-sleeve-snow-blue-v1.jpg');
+  assert.equal(image.alt, '承認作品');
+  assert.equal(useSite.textContent, '使用先：サースナーのカードスリーブ');
+  assert.equal(button.dataset.shopAcquireState, 'ready');
+  assert.equal(button.disabled, false);
+  button.click();
+  assert.deepEqual(requests, [{
+    productId:'fanart:saasuna-sleeve-snow-blue:v1',
+    source:'FANART',
+    itemIdentity:'fanart:FANART-WORK-0001@v1',
+  }]);
+  assert.equal(Object.hasOwn(requests[0], 'price'), false);
+  assert.equal(Object.hasOwn(requests[0], 'currency'), false);
+  assert.equal(runtime.purchaseAuthority, false);
+  assert.equal(runtime.ownershipMutationAllowed, false);
+  assert.equal(runtime.saveMutationAllowed, false);
+});

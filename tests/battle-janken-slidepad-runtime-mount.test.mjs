@@ -392,11 +392,32 @@ test('live SlidePad blocks every janken input after one commit and reprojects on
   assert.match(source, /function latchJankenTurnCommit\(roundId, cardId\)[\s\S]*turnLifecycle = projectBattleJankenTurnLifecycle\([\s\S]*syncHandZoneProjection\(root, model, turnLifecycle\.reservedCardIds\);[\s\S]*for \(const node of slotNodes\.values\(\)\) node\.disabled = true;/);
   assert.match(source, /if \(clicked\) \{\s*latchJankenTurnCommit\(model\.roundId, cardId\);[\s\S]*schedule\(\);/);
   assert.match(source, /onAccepted:[\s\S]*latchJankenTurnCommit\(model\.roundId, acceptedSlot\.cardId\);/);
-  assert.match(source, /\[data-janken-turn-used="true"\]::before\{content:none;display:none\}/);
+  assert.equal(source.includes('[${HOST_ATTR}="1"][data-janken-turn-used="true"]::before'), false);
   assert.match(source, /committedCardId = id;/);
   assert.match(source, /syncHandZoneProjection\(root, model, turnLifecycle\.reservedCardIds\)/);
   assert.match(source, /function isReservedCardId\(cardId\) \{[\s\S]*turnLifecycle\?\.reservedCardIds/);
   assert.match(source, /if \(committedRoundId && committedRoundId !== roundId\) \{[\s\S]*committedCardId = null;/);
+});
+
+test('live SlidePad has no permanent decorative host object outside its functional controls', () => {
+  const source = readFileSync(
+    new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
+    'utf8',
+  ).replace(/\r\n/g, '\n');
+  assert.equal(
+    source.includes('[${HOST_ATTR}="1"]::before{'),
+    false,
+    'the SlidePad host must not synthesize a permanent decorative background object',
+  );
+  assert.equal(
+    source.includes('width:198px;height:160px;border:9px solid rgba(218,218,218,.20)'),
+    false,
+    'the retired tilted host frame geometry must stay physically absent',
+  );
+  assert.equal(source.includes('transform:rotate(-8deg);box-shadow:0 0 22px rgba(208,208,208,.12)'), false);
+  for (const selector of ['.grJankenInputModePicker', '.grJankenSlidePadHandle', '.grJankenSlidePadSlot', '.grPowerEnergy']) {
+    assert.equal(source.includes(selector), true, `functional SlidePad surface remains: ${selector}`);
+  }
 });
 
 test('target-confirm proxy is layered above the expanded SlidePad only during target mode', () => {

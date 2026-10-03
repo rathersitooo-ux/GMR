@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NAKAMA-LIVE-SERVICE-FOUNDATION-R2-20261004T0730-SOL",
+  "taskId": "SHOP-SAFE-ECONOMY-INTEGRATION-001",
+  "workUnitKey": "NAKAMA_LIVE_SERVICE_ACCOUNT_WALLET_FOUNDATION_R2",
+  "acquireKey": "NAKAMA-LIVE-SERVICE-FOUNDATION-R2-20261004T0730-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R1_REQUIRED_GATE_UNCLASSIFIED_EXECUTABLE_PATHS_CAUSAL_20261004",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR2239_DONOR_PLUS_REQUIRED_GATE_CLASSIFIER_READBACK",
+  "proceedToken": "PROCEED|NAKAMA-LIVE-SERVICE-FOUNDATION-R2-20261004T0730-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|nakama-live-service-r2|required-gate-mapping|active-lease",
+  "authorizationBaseSha": "89d002d421e5d4a22537ef8e365976acd82ab468",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHOP-SAFE-ECONOMY-INTEGRATION-001",
+  "leaseWorkUnitKey": "NAKAMA_LIVE_SERVICE_ACCOUNT_WALLET_FOUNDATION_R2",
+  "leaseAcquireKey": "NAKAMA-LIVE-SERVICE-FOUNDATION-R2-20261004T0730-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-04 07:30 JST",
+  "leaseUntilJst": "2026-10-04 08:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": ".github/workflows/gameroad-required-gate.yml; deploy/nakama/docker-compose.yml; deploy/nakama/local.yml; deploy/nakama/modules/index.js; deploy/nakama/README.md; deploy/cloudflare/functions/account.js; tests/nakama-live-service-foundation.test.mjs; data/preaction-authorizations/NAKAMA-LIVE-SERVICE-FOUNDATION-R2-20261004T0730-SOL.json; own fresh branch/PR/check/readback; own CURRENT R25 event/lease records",
+  "solutionSignature": "NAKAMA_ACCOUNT_WALLET_FOUNDATION_WITH_REQUIRED_GATE_MAPPING_V2",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR2239_DONOR_AND_REQUIRED_GATE_FAIL_CLOSED_MAPPING",
+  "solutionSearchEvidence": [
+    "PR#2239 PRE_ACTION passed and its only Required Gate blocker was the fail-closed unclassified executable path set.",
+    "R1 product files are reused as donor content; the successor is rebuilt from fresh main rather than merging the invalid candidate.",
+    "Required Gate already maps existing Cloudflare executable paths to the PublicHost lane; this successor extends that explicit mapping and adds the focused Nakama test without weakening unclassified-path failure.",
+    "Nakama 3.41.0 raw source and official docs were reviewed for authentication, sessions, wallet ledger, storage permissions, OCC, and atomic multiUpdate."
+  ],
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml",
+    "deploy/nakama/docker-compose.yml",
+    "deploy/nakama/local.yml",
+    "deploy/nakama/modules/index.js",
+    "deploy/nakama/README.md",
+    "deploy/cloudflare/functions/account.js",
+    "tests/nakama-live-service-foundation.test.mjs"
+  ],
+  "leaseScope": [
+    ".github/workflows/gameroad-required-gate.yml",
+    "deploy/nakama/docker-compose.yml",
+    "deploy/nakama/local.yml",
+    "deploy/nakama/modules/index.js",
+    "deploy/nakama/README.md",
+    "deploy/cloudflare/functions/account.js",
+    "tests/nakama-live-service-foundation.test.mjs"
+  ]
+}

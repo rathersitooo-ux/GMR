@@ -75,7 +75,9 @@ test('runtime stays presentation-only and night audio is user-gesture-gated', ()
   }
 });
 
-test('Home runtime suppresses the retired diagonal Home pseudo-element', () => {
-  const source = fs.readFileSync(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
-  assert.ok(source.includes("HOME_SELECTOR + '.codexHome::after{content:none!important;display:none!important}'"));
+test('retired Home diagonal pseudo-element is physically removed from source', () => {
+  const html = fs.readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
+  const runtime = fs.readFileSync(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.equal(html.includes('.home.codexHome::after{'), false);
+  assert.equal(runtime.includes("HOME_SELECTOR + '.codexHome::after{content:none!important;display:none!important}'"), false);
 });

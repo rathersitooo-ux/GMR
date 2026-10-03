@@ -139,7 +139,6 @@ function ensureStyle(doc) {
   style.id = STYLE_ID;
   style.textContent = [
     HOME_SELECTOR + ' ' + STAGE_SELECTOR + '{isolation:isolate}',
-    HOME_SELECTOR + '.codexHome::after{content:none!important;display:none!important}',
     HOME_SELECTOR + ' .' + CANVAS_CLASS + '{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none;mix-blend-mode:screen;opacity:.72;transition:opacity 420ms ease;contain:strict}',
     HOME_SELECTOR + ':not(.active) .' + CANVAS_CLASS + '{opacity:0}',
     '@media(prefers-reduced-motion:reduce){' + HOME_SELECTOR + ' .' + CANVAS_CLASS + '{opacity:.34;transition:none}}',

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-CURRENT-SELECTION-CONVERSATION-R4-20261003T1323-SOL",
+  "taskId": "PARTNER-FIRST-RELEASE-FORMAL-ASSET-RUNTIME-ACCEPT-001",
+  "workUnitKey": "PARTNER_CURRENT_SELECTION_CONVERSATION_ACCEPTANCE_R4",
+  "acquireKey": "PARTNER-CURRENT-SELECTION-CONVERSATION-R4-20261003T1323-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_SAASUNA_SELECTION_CONTRACT_MISMATCH_20261003",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR2159_REQUIRED_GATE_GREEN_PLUS_CURRENT_MAIN_DIRECT_READBACK",
+  "proceedToken": "PROCEED|PARTNER-CURRENT-SELECTION-CONVERSATION-R4-20261003T1323-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-selection|visible-roster|active-lease",
+  "authorizationBaseSha": "fea5cff3a237ad5d41ae3148dfb76e08916ed54c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-FIRST-RELEASE-FORMAL-ASSET-RUNTIME-ACCEPT-001",
+  "leaseWorkUnitKey": "PARTNER_CURRENT_SELECTION_CONVERSATION_ACCEPTANCE_R4",
+  "leaseAcquireKey": "PARTNER-CURRENT-SELECTION-CONVERSATION-R4-20261003T1323-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-03 13:23 JST",
+  "leaseUntilJst": "2026-10-03 14:23 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/board-facility-runtime-mount.mjs; tests/board-facility-runtime-mount.test.mjs; deploy/cloudflare/tests/build.test.mjs; tests/browser-full-interaction.spec.mjs; tests/browser-full-interaction-state-sequence.spec.mjs; own data/preaction-authorizations/PARTNER-CURRENT-SELECTION-CONVERSATION-R4-20261003T1323-SOL.json; own branch/PR/check/merge/readback; own CURRENT R25 event/lease records",
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GAMEROAD-OPERATOR-SELFHOST-R1-20261004T0828-SOL",
+  "taskId": "OPS-CAPABILITY-SELFHOST-001",
+  "workUnitKey": "SELFHOST_PC_BROWSER_MCP_R1",
+  "acquireKey": "GAMEROAD-OPERATOR-SELFHOST-R1-20261004T0828-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_CURRENT_NO_RESOURCE_COLLISION_20261004T0828JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "MAINTAINED_OSS_COMPOSITION_DESKTOP_COMMANDER_PLAYWRIGHT_OPENAI_LOCAL_PLUGIN",
+  "proceedToken": "PROCEED|GAMEROAD-OPERATOR-SELFHOST-R1-20261004T0828-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|selfhost-pc-browser-mcp|reuse-first|active-lease",
+  "authorizationBaseSha": "f000c7c1a05705dec0caa6dc548af88e5871adf5",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-CAPABILITY-SELFHOST-001",
+  "leaseWorkUnitKey": "SELFHOST_PC_BROWSER_MCP_R1",
+  "leaseAcquireKey": "GAMEROAD-OPERATOR-SELFHOST-R1-20261004T0828-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-04 08:28 JST",
+  "leaseUntilJst": "2026-10-04 09:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:O9",
+  "leaseExactMutableResources": "tools/gameroad-operator/**; data/preaction-authorizations/GAMEROAD-OPERATOR-SELFHOST-R1-20261004T0828-SOL.json; own fresh branch/PR/check/readback; own CURRENT R25 event/lease records",
+  "solutionSignature": "LOCAL_CHATGPT_PLUGIN_DESKTOP_COMMANDER_PLUS_PLAYWRIGHT_MCP_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "OPENAI_PLUGIN_PACKAGING_PLUS_MAINTAINED_DESKTOP_COMMANDER_AND_PLAYWRIGHT_MCP",
+  "solutionSearchEvidence": [
+    "OpenAI plugin packaging supports bundled local MCP servers through .mcp.json and local marketplaces in ChatGPT Desktop.",
+    "wonderwhy-er/DesktopCommanderMCP is maintained MIT-licensed OSS providing local filesystem, terminal, process, search, edit, document and audit capabilities.",
+    "Microsoft Playwright MCP is maintained and provides headed browser navigation, snapshots, clicks, typing, screenshots and persistent browser state; browser downloads automatically on first use.",
+    "Native ChatGPT Google Drive, web search and scheduled-task capabilities remain reusable, so this WorkUnit does not rebuild those services.",
+    "Hosted Desktop Commander relay and TinyFish metered browser are not required for the local plugin route."
+  ],
+  "scope": [
+    "tools/gameroad-operator/**"
+  ],
+  "leaseScope": [
+    "tools/gameroad-operator/**"
+  ]
+}

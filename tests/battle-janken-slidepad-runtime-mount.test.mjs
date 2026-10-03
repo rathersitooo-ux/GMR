@@ -889,8 +889,8 @@ test('non-suit janken interaction chrome keeps hard-coded state color achromatic
     'hard-coded six-digit colors in the non-suit runtime stay achromatic',
   );
   assert.doesNotMatch(runtimeSource, /filter:\s*saturate\(|\s+saturate\(/);
-  assert.equal(runtimeSource.includes('border:9px solid rgba(218,218,218,.20)'), true,
-    'the thumb family keeps a thick achromatic ring without borrowing suit hue');
+  assert.equal(runtimeSource.includes('border:9px solid rgba(218,218,218,.20)'), false,
+    'achromatic state semantics belong to the functional controls, not a permanent host ring');
   assert.match(runtimeSource, /\.grJankenSlidePadSlot\.rock\{transform:translate\(-150px,-2px\) rotate\(-15deg\)\}/);
   assert.match(runtimeSource, /\.grJankenSlidePadSlot\.scissors\{transform:translate\(-96px,-66px\) rotate\(-4deg\)/);
   assert.match(runtimeSource, /\.grJankenSlidePadSlot\.paper\{transform:translate\(-14px,-96px\) rotate\(9deg\)/);

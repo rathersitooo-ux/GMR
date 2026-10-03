@@ -611,6 +611,10 @@ test('Cards Deck quick filters keep separate physical hit rows while preserving 
   assert.ok(slice.includes('[data-role="cards-deck-findability"][data-integrated="true"]{position:static;z-index:auto;display:flex;flex:0 0 100%;width:100%;max-width:100%;box-sizing:border-box'));
   assert.ok(slice.includes('flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain'));
   assert.ok(slice.includes('scrollbar-width:none'));
+  assert.ok(slice.includes('@media(max-height:470px) and (orientation:landscape)'));
+  assert.ok(slice.includes('.r4CollectionTools:has(#r4SuitFilters[data-cards-findability-integrated="true"]){grid-template-columns:minmax(120px,1fr) minmax(0,1fr)}'));
+  assert.ok(slice.includes('#r4SuitFilters[data-cards-findability-integrated="true"]{min-width:0;max-width:100%;width:100%;flex-wrap:nowrap;overflow-x:auto'));
+  assert.ok(slice.includes('>[data-role="cards-deck-findability"][data-integrated="true"]{flex:0 0 auto;width:auto;max-width:none;overflow:visible'));
   assert.ok(slice.includes('button{min-height:44px'));
   assert.ok(slice.includes('touch-action:manipulation'));
   assert.ok(slice.includes('button:active{transform:translateY(1px) scale(.985)}'));

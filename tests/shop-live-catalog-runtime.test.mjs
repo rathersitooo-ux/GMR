@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   SHOP_LIVE_CATALOG_SCHEMA,
+  SHOP_LIVE_CATALOG_CSS,
   projectShopLiveCatalog,
   mountShopLiveCatalogRuntime,
 } from '../browser/shop-live-catalog-runtime.mjs';
@@ -266,4 +267,26 @@ test('runtime renders sleeve art and use-site while emitting identity-only acqui
   assert.equal(runtime.purchaseAuthority, false);
   assert.equal(runtime.ownershipMutationAllowed, false);
   assert.equal(runtime.saveMutationAllowed, false);
+});
+
+test('CARD_SLEEVE presentation preserves full artwork and does not label an unknown partner as Saasuna', () => {
+  assert.match(SHOP_LIVE_CATALOG_CSS, /object-fit:contain/);
+  assert.doesNotMatch(SHOP_LIVE_CATALOG_CSS, /object-fit:cover/);
+
+  const documentSource = new FakeDocument();
+  const host = new FakeNode('div', documentSource);
+  const sleeve = approvedFanArt({
+    targetCardId:null,
+    targetUseSite:'CARD_SLEEVE',
+    targetPartnerId:'partner.other',
+    imageUrl:'../assets/shop/fanart/other-sleeve.jpg',
+    acquisition:{state:'READY', productId:'fanart:other-sleeve:v1', currency:'MANII', price:50},
+  });
+
+  mountShopLiveCatalogRuntime({host, approvedFanArtWorks:[sleeve]});
+
+  const useSite = flatten(host).find((node)=>node.className === 'shopLiveCatalogUseSite');
+  assert.ok(useSite);
+  assert.equal(useSite.textContent, '使用先：カードスリーブ');
+  assert.doesNotMatch(useSite.textContent, /サースナー/);
 });

@@ -11,7 +11,7 @@ export const SHOP_LIVE_CATALOG_CSS = `
 .shopFormalCatalogHost .shopLiveCatalogGrid{height:auto;min-height:0;grid-template-columns:1fr;grid-template-rows:auto}
 .shopFormalCatalogHost .shopLiveCatalogCard{display:grid;grid-template-columns:minmax(120px,200px) minmax(0,1fr);gap:7px 14px;align-items:start;min-height:0;padding:14px;clip-path:none}
 .shopFormalCatalogHost .shopLiveCatalogCard>:not(.shopLiveCatalogImage){grid-column:2}
-.shopFormalCatalogHost .shopLiveCatalogImage{grid-column:1;grid-row:1/8;width:100%;height:190px;object-fit:cover;border-radius:10px;border:1px solid rgba(198,239,228,.24)}
+.shopFormalCatalogHost .shopLiveCatalogImage{grid-column:1;grid-row:1/8;width:100%;height:190px;object-fit:contain;border-radius:10px;border:1px solid rgba(198,239,228,.24)}
 .shopFormalCatalogHost .shopLiveCatalogTitle{margin:0;font-size:clamp(18px,2.2vw,28px)}
 .shopFormalCatalogHost .shopLiveCatalogCreator,.shopFormalCatalogHost .shopLiveCatalogUseSite{margin:0;color:#bfd4cd;font-size:10px;line-height:1.45}
 .shopFormalCatalogHost .shopLiveCatalogPrice{font-size:16px;font-weight:1000}
@@ -190,7 +190,10 @@ function renderItem(documentSource, grid, item, onAcquireRequest, getAcquireStat
   appendText(documentSource, card, 'h3', 'shopLiveCatalogTitle', item.title);
   if (item.creatorDisplayName) appendText(documentSource, card, 'p', 'shopLiveCatalogCreator', '作者 ' + item.creatorDisplayName);
   if (item.targetUseSite === 'CARD_SLEEVE') {
-    appendText(documentSource, card, 'p', 'shopLiveCatalogUseSite', '使用先：サースナーのカードスリーブ');
+    const useSiteText = item.targetPartnerId === 'partner.saasuna'
+      ? '使用先：サースナーのカードスリーブ'
+      : '使用先：カードスリーブ';
+    appendText(documentSource, card, 'p', 'shopLiveCatalogUseSite', useSiteText);
   }
   appendText(documentSource, card, 'div', 'shopLiveCatalogPrice', item.price + ' ' + item.currencyDisplayName);
   let acquireState = typeof onAcquireRequest === 'function' ? 'ready' : 'unavailable';

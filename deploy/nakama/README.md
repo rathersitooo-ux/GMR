@@ -37,7 +37,21 @@ docker compose up
 
 Nakama HTTP is available on `http://127.0.0.1:7350` and the local console on `http://127.0.0.1:7351`.
 
-The compose file is a development stack, not the production topology. Production should use TLS, managed/backed-up PostgreSQL, secret management, metrics/alerts, load balancing, and multiple Nakama nodes as traffic requires.
+The compose file is a development stack, not the production topology.
+
+## Production scale boundary
+
+GAMEROAD targets a live-service population in the thousands to tens of thousands and must not treat one local/open-source Nakama node as production-complete.
+
+For production:
+
+- use TLS and unique non-default Nakama server/session/runtime keys;
+- use managed or otherwise highly available PostgreSQL with backups and restore drills;
+- use metrics, alerts, rate limits, abuse controls, and secret management;
+- use Nakama Enterprise or Heroic Cloud when high-availability multi-node clustering/failover is required;
+- load-test the exact GAMEROAD account, wallet, storage, and concurrent-login workload before launch.
+
+Nakama's cluster configuration and automatic inter-node state synchronization are Enterprise/managed-cloud capabilities. The game-facing account contract in this package intentionally uses standard Nakama APIs/runtime primitives so moving from the local open-source development stack to that production topology does not require inventing a second account model.
 
 ## GAMEROAD onboarding MANII
 
@@ -45,7 +59,7 @@ The compose file is a development stack, not the production topology. Production
 
 The first authenticated bootstrap performs one Nakama `multiUpdate` transaction containing both:
 
-1. a server-only storage marker `gameroad_economy/onboarding_manii_v1` written with `version: "*"` (create-only);
+1. a server-only (`permissionRead: 0`, `permissionWrite: 0`) storage marker `gameroad_economy/onboarding_manii_v1` written with `version: "*"` (create-only);
 2. a +100 `MANII` wallet update with wallet-ledger recording enabled.
 
 The marker and wallet change therefore succeed or roll back together. Concurrent logins cannot double-grant because only one create-only marker can win. A losing concurrent attempt re-reads the marker and converges to the already-granted state.

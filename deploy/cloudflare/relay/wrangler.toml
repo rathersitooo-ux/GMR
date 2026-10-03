@@ -4,6 +4,14 @@ main = "src/relay-worker.mjs"
 compatibility_date = "2026-08-16"
 workers_dev = false
 
+[[durable_objects.bindings]]
+name = "GAMEROAD_ACCOUNT"
+class_name = "GAMEROADAccount"
+
 [exports.GAMEROADFriendRoomRelay]
+type = "durable-object"
+storage = "sqlite"
+
+[exports.GAMEROADAccount]
 type = "durable-object"
 storage = "sqlite"

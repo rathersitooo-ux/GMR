@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "SHOP-SAASUNA-SLEEVE-PRESENTATION-POLISH-R1B-20261004T0203-SOL",
+  "taskId": "SHOP-SAFE-ECONOMY-INTEGRATION-001",
+  "workUnitKey": "SHOP_SAASUNA_SLEEVE_PRESENTATION_POLISH_R1B",
+  "acquireKey": "SHOP-SAASUNA-SLEEVE-PRESENTATION-POLISH-R1B-20261004T0203-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_2233_MERGED_PLUS_DIRECT_RUNTIME_REVIEW_20261004",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_RUNTIME_TESTS_PLUS_NEGATIVE_UNKNOWN_PARTNER_ORACLE",
+  "proceedToken": "PROCEED|SHOP-SAASUNA-SLEEVE-PRESENTATION-POLISH-R1B-20261004T0203-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|shop-sleeve-presentation-polish|runtime-only|active-lease",
+  "authorizationBaseSha": "d067eec88ce77da70ba2e9089243fe7713befbd8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHOP-SAFE-ECONOMY-INTEGRATION-001",
+  "leaseWorkUnitKey": "SHOP_SAASUNA_SLEEVE_PRESENTATION_POLISH_R1B",
+  "leaseAcquireKey": "SHOP-SAASUNA-SLEEVE-PRESENTATION-POLISH-R1B-20261004T0203-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-04 02:03 JST",
+  "leaseUntilJst": "2026-10-04 03:03 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:L9",
+  "leaseExactMutableResources": "browser/shop-live-catalog-runtime.mjs; tests/shop-live-catalog-runtime.test.mjs; data/preaction-authorizations/SHOP-SAASUNA-SLEEVE-PRESENTATION-POLISH-R1B-20261004T0203-SOL.json; own fresh branch/PR/check/readback; own CURRENT event/lease records",
+  "publicControlMetadataAuthorization": "USER_EXPLICIT_2026-10-04",
+  "solutionSignature": "ADAPT_EXISTING_SHOP_CARD_SLEEVE_PRESENTATION_WITHOUT_AUTHORITY_CHANGE",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR2233_CURRENT_MAIN_PRESENTATION_GAP_REVIEW",
+  "solutionSearchEvidence": [
+    "PR #2233 is merged and current main retains the approved Saasuna sleeve live Shop and public package path.",
+    "Current runtime hardcodes Saasuna for every CARD_SLEEVE item, which would mislabel any future partner sleeve.",
+    "Current sleeve image styling uses object-fit:cover, which can crop approved artwork; contain preserves the full cosmetic image.",
+    "The repair is limited to presentation and focused regression coverage; purchase, ownership, entitlement, save, economy, and gameplay authority remain unchanged."
+  ],
+  "scope": [
+    "browser/shop-live-catalog-runtime.mjs",
+    "tests/shop-live-catalog-runtime.test.mjs",
+    "data/preaction-authorizations/SHOP-SAASUNA-SLEEVE-PRESENTATION-POLISH-R1B-20261004T0203-SOL.json"
+  ],
+  "leaseScope": [
+    "browser/shop-live-catalog-runtime.mjs",
+    "tests/shop-live-catalog-runtime.test.mjs",
+    "data/preaction-authorizations/SHOP-SAASUNA-SLEEVE-PRESENTATION-POLISH-R1B-20261004T0203-SOL.json"
+  ]
+}

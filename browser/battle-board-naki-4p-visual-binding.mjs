@@ -1,4 +1,10 @@
 import './battle-board-visual-explanation-runtime-mount.mjs';
+import {
+  NAKI_CURRENT_PARTNER_ID,
+  NAKI_CURRENT_VISUAL_ASSETS,
+  applySpriteFrame,
+  isCurrentNakiCharacterId,
+} from './naki-current-visual-assets.mjs';
 
 const STYLE_ID = 'gameroad-controlled-character-4p-board-visuals-style';
 const SURFACE_ATTR = 'data-board-controlled-character';
@@ -12,6 +18,8 @@ const VISUAL_FOOTPRINT = Object.freeze({
   shortLandscape: Object.freeze({ surfaceWidth: 32, surfaceHeight: 40, fallbackWidth: 26, fallbackHeight: 32 }),
   portrait: Object.freeze({ surfaceWidth: 34, surfaceHeight: 44, fallbackWidth: 28, fallbackHeight: 36 }),
 });
+const nakiBoardControllers = new WeakMap();
+
 const CONTACT_SHADOW = Object.freeze({
   anchor: 'AUTHORITATIVE_BOARD_MARKER_FOOT',
   widthPercent: 74,
@@ -130,11 +138,12 @@ ${BATTLE_FOCUS_CHROME_SELECTOR}{display:none!important}
 #boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{position:absolute;left:50%;top:50%;width:${VISUAL_FOOTPRINT.desktop.surfaceWidth}px;height:${VISUAL_FOOTPRINT.desktop.surfaceHeight}px;transform:translate(-50%,-82%);display:flex;align-items:flex-end;justify-content:center;pointer-events:none;overflow:visible;filter:drop-shadow(0 2px 2px rgba(0,0,0,.18));--grcc-facing-scale:1;--grcc-motion-duration:0ms}
 #boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]::before{content:"";position:absolute;left:50%;bottom:0;width:${CONTACT_SHADOW.widthPercent}%;height:${CONTACT_SHADOW.heightPercent}%;transform:translateX(-50%) scaleY(${CONTACT_SHADOW.planeScaleY});transform-origin:50% 50%;border-radius:50%;background:radial-gradient(ellipse at center,rgba(4,8,10,.46) 0%,rgba(4,8,10,.30) 48%,rgba(4,8,10,0) 78%);opacity:${CONTACT_SHADOW.opacity};pointer-events:none;z-index:0}
 #boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}] .grtc-image{position:relative;z-index:1;display:block;width:auto;height:100%;max-width:100%;object-fit:contain;opacity:1;visibility:visible;transform:scaleX(var(--grcc-facing-scale));transform-origin:50% 85%}
+#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}][data-current-naki-visual="1"] .grNakiCurrentBoardSprite{width:100%;height:100%;max-width:none;object-fit:initial;background-repeat:no-repeat;image-rendering:pixelated;transform:none!important;transform-origin:50% 100%;animation:none!important}
 #battleRuntime::before{content:"";position:absolute;left:50%;bottom:0;width:${CONTACT_SHADOW.widthPercent}%;height:${CONTACT_SHADOW.heightPercent}%;transform:translateX(-50%) scaleY(${CONTACT_SHADOW.planeScaleY});transform-origin:50% 50%;border-radius:50%;background:radial-gradient(ellipse at center,rgba(4,8,10,.46) 0%,rgba(4,8,10,.30) 48%,rgba(4,8,10,0) 78%);opacity:${CONTACT_SHADOW.opacity};pointer-events:none;z-index:0}
 #battleRuntime .grtc-root,#battleRuntime .grtc-facing,#battleRuntime .grtc-primary-motion,#battleRuntime .grtc-secondary-motion,#battleRuntime .grtc-image{position:relative;z-index:1}
-#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}][data-motion-phase="moving"][data-motion-reduced="0"][data-motion-lowperf="0"] .grtc-image{animation:grccAcceptedMove var(--grcc-motion-duration) ease-out 1}
-#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}][data-motion-phase="selected"][data-motion-reduced="0"][data-motion-lowperf="0"] .grtc-image{animation:grccSelected var(--grcc-motion-duration) ease-out 1}
-#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}][data-motion-phase="reacting"][data-motion-reduced="0"][data-motion-lowperf="0"] .grtc-image{animation:grccReact var(--grcc-motion-duration) ease-out 1}
+#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]:not([data-current-naki-visual="1"])[data-motion-phase="moving"][data-motion-reduced="0"][data-motion-lowperf="0"] .grtc-image{animation:grccAcceptedMove var(--grcc-motion-duration) ease-out 1}
+#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]:not([data-current-naki-visual="1"])[data-motion-phase="selected"][data-motion-reduced="0"][data-motion-lowperf="0"] .grtc-image{animation:grccSelected var(--grcc-motion-duration) ease-out 1}
+#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]:not([data-current-naki-visual="1"])[data-motion-phase="reacting"][data-motion-reduced="0"][data-motion-lowperf="0"] .grtc-image{animation:grccReact var(--grcc-motion-duration) ease-out 1}
 #boardPlayers ${MARKER_SELECTOR} .grControlledCharacterFallback{position:relative;z-index:1;width:${VISUAL_FOOTPRINT.desktop.fallbackWidth}px;height:${VISUAL_FOOTPRINT.desktop.fallbackHeight}px;display:grid;place-items:end center;padding:0 4px 6px;border:1px solid rgba(255,255,255,.5);border-radius:48% 48% 22% 22%;background:linear-gradient(180deg,rgba(136,187,199,.92),rgba(43,67,70,.95));box-shadow:0 3px 8px rgba(0,0,0,.24);color:#fff;font-size:8px;font-weight:900;letter-spacing:.08em;text-shadow:0 1px 3px #000}
 [${ACTIVE_ATTR}="1"] #boardPlayers{z-index:12}
 @keyframes grccAcceptedMove{0%,100%{transform:scaleX(var(--grcc-facing-scale)) translateY(0)}45%{transform:scaleX(var(--grcc-facing-scale)) translateY(-3px)}}
@@ -152,6 +161,116 @@ function facingScale(facing) {
   return ['left', 'up-left', 'down-left'].includes(facing) ? -1 : 1;
 }
 
+function currentNakiBoardStateForMotion(motion) {
+  if (!motion || motion.reducedMotion) return 'BOARD_IDLE';
+  if (motion.phase === 'moving') {
+    return ['left', 'up-left', 'down-left'].includes(motion.facing) ? 'WALK_LEFT' : 'WALK_RIGHT';
+  }
+  if (motion.phase === 'reacting') return 'ARRIVE';
+  return 'BOARD_IDLE';
+}
+
+function createCurrentNakiBoardController(globalRef, documentRef, surface) {
+  const sprite = documentRef.createElement('span');
+  sprite.className = 'grtc-image grNakiCurrentBoardSprite';
+  sprite.dataset.role = 'naki-current-board-sprite';
+  sprite.dataset.visualSource = 'NAKI_BOARD_LOCOMOTION_R2';
+  sprite.setAttribute?.('aria-hidden', 'true');
+  surface.replaceChildren?.(sprite);
+  surface.dataset.currentNakiVisual = '1';
+  surface.dataset.visualState = 'naki-current-board-locomotion-r2';
+  surface.dataset.mountState = 'mounted';
+
+  const schedule = globalRef?.setTimeout?.bind(globalRef) ?? globalThis.setTimeout?.bind(globalThis) ?? null;
+  const cancel = globalRef?.clearTimeout?.bind(globalRef) ?? globalThis.clearTimeout?.bind(globalThis) ?? null;
+  let timer = null;
+  let token = 0;
+  let state = null;
+  let lastMotionSerial = null;
+  let destroyed = false;
+
+  const clearTimer = () => {
+    if (timer != null && cancel) {
+      try { cancel(timer); } catch {}
+    }
+    timer = null;
+  };
+
+  const frame = (frameIndex) => applySpriteFrame(sprite, {
+    src: NAKI_CURRENT_VISUAL_ASSETS.board.atlas,
+    columns: NAKI_CURRENT_VISUAL_ASSETS.board.columns,
+    rows: NAKI_CURRENT_VISUAL_ASSETS.board.rows,
+    frameIndex,
+  });
+
+  const play = (nextState, { afterState = null } = {}) => {
+    clearTimer();
+    token += 1;
+    const activeToken = token;
+    state = Object.hasOwn(NAKI_CURRENT_VISUAL_ASSETS.board.states, nextState) ? nextState : 'BOARD_IDLE';
+    const profile = NAKI_CURRENT_VISUAL_ASSETS.board.states[state];
+    surface.dataset.nakiBoardMotionState = state;
+    let index = 0;
+    const tick = () => {
+      if (destroyed || activeToken !== token || !surface.isConnected) return;
+      frame(profile.start + index);
+      index += 1;
+      if (index >= profile.frames) {
+        if (profile.loop) index = 0;
+        else if (afterState) {
+          play(afterState);
+          return;
+        } else {
+          index = profile.frames - 1;
+          return;
+        }
+      }
+      if (schedule) timer = schedule(tick, profile.frameDurationMs);
+    };
+    tick();
+    return profile;
+  };
+
+  const applyMotion = (motion) => {
+    if (destroyed || !motion) return null;
+    const serialChanged = lastMotionSerial !== motion.motionSerial;
+    const desired = currentNakiBoardStateForMotion(motion);
+    const wasWalking = state === 'WALK_LEFT' || state === 'WALK_RIGHT';
+    lastMotionSerial = motion.motionSerial;
+
+    if (motion.reducedMotion) {
+      clearTimer();
+      token += 1;
+      state = 'BOARD_IDLE';
+      surface.dataset.nakiBoardMotionState = 'BOARD_IDLE';
+      return frame(NAKI_CURRENT_VISUAL_ASSETS.board.reducedMotionFrame);
+    }
+
+    if (wasWalking && motion.phase !== 'moving' && serialChanged) {
+      return play('ARRIVE', { afterState: 'BOARD_IDLE' });
+    }
+    if (state !== desired || serialChanged) return play(desired);
+    return NAKI_CURRENT_VISUAL_ASSETS.board.states[desired];
+  };
+
+  const destroy = () => {
+    if (destroyed) return false;
+    destroyed = true;
+    clearTimer();
+    token += 1;
+    nakiBoardControllers.delete(surface);
+    return true;
+  };
+
+  const controller = Object.freeze({
+    applyMotion,
+    destroy,
+    snapshot: () => Object.freeze({ state, lastMotionSerial, source: 'NAKI_BOARD_LOCOMOTION_R2' }),
+  });
+  nakiBoardControllers.set(surface, controller);
+  return controller;
+}
+
 function applyMotionProjection(surface, motion) {
   if (!surface?.dataset || !motion) return;
   const previousSerial = surface.dataset.motionSerial;
@@ -162,7 +281,10 @@ function applyMotionProjection(surface, motion) {
   surface.dataset.motionReduced = motion.reducedMotion ? '1' : '0';
   surface.dataset.motionLowperf = motion.lowPerformance ? '1' : '0';
   surface.dataset.positionKey = motion.positionKey == null ? '' : String(motion.positionKey);
-  surface.style?.setProperty?.('--grcc-facing-scale', String(facingScale(motion.facing)));
+  surface.style?.setProperty?.(
+    '--grcc-facing-scale',
+    surface.dataset.currentNakiVisual === '1' ? '1' : String(facingScale(motion.facing)),
+  );
   surface.style?.setProperty?.('--grcc-motion-duration', `${motion.durationMs}ms`);
   if (previousSerial !== undefined && previousSerial !== surface.dataset.motionSerial) {
     const image = surface.querySelector?.('.grtc-image');
@@ -185,6 +307,13 @@ function failVisible(documentRef, surface, participantId) {
 }
 
 async function mountControlledCharacter(globalRef, documentRef, surface, row) {
+  if (isCurrentNakiCharacterId(row.characterId)) {
+    let controller = nakiBoardControllers.get(surface);
+    if (!controller) controller = createCurrentNakiBoardController(globalRef, documentRef, surface);
+    controller.applyMotion(row.motion);
+    applyMotionProjection(surface, row.motion);
+    return;
+  }
   if (surface.dataset.mountState === 'mounted' || surface.dataset.mountState === 'mounting') return;
   surface.dataset.mountState = 'mounting';
   const runtime = globalRef?.GameRoadThreeCharRuntime;
@@ -216,9 +345,14 @@ async function mountControlledCharacter(globalRef, documentRef, surface, row) {
   }
 }
 
+function destroySurfaceVisual(surface) {
+  nakiBoardControllers.get(surface)?.destroy?.();
+}
+
 function ensureSurface(globalRef, documentRef, marker, row) {
   let surface = marker.querySelector?.(`[${SURFACE_ATTR}="${row.participantId}"]`);
   if (surface && surface.dataset.characterId !== row.characterId) {
+    destroySurfaceVisual(surface);
     surface.remove?.();
     surface = null;
   }
@@ -283,7 +417,10 @@ export function installControlledCharacter4pBoardVisualBinding(globalRef = globa
   }
 
   function clearSurfaces() {
-    for (const surface of surfaces()) surface.remove?.();
+    for (const surface of surfaces()) {
+      destroySurfaceVisual(surface);
+      surface.remove?.();
+    }
   }
 
   function sync() {
@@ -307,7 +444,10 @@ export function installControlledCharacter4pBoardVisualBinding(globalRef = globa
     }
     for (const surface of surfaces()) {
       const ownerId = asParticipantId(surface.parentNode?.dataset?.player);
-      if (!live.has(surface.dataset.participantId) || ownerId !== surface.dataset.participantId) surface.remove?.();
+      if (!live.has(surface.dataset.participantId) || ownerId !== surface.dataset.participantId) {
+        destroySurfaceVisual(surface);
+        surface.remove?.();
+      }
     }
     return Object.freeze({
       active: true,
@@ -379,6 +519,16 @@ function autoInstall(globalRef = globalThis) {
 }
 
 autoInstall();
+
+export const NAKI_CURRENT_BOARD_VISUAL = Object.freeze({
+  partnerId: NAKI_CURRENT_PARTNER_ID,
+  source: 'NAKI_BOARD_LOCOMOTION_R2',
+  atlas: NAKI_CURRENT_VISUAL_ASSETS.board.atlas,
+  authoredFacing: NAKI_CURRENT_VISUAL_ASSETS.board.authoredFacing,
+  mirrorPolicy: NAKI_CURRENT_VISUAL_ASSETS.board.mirrorPolicy,
+  legacyRuntimeFallback: false,
+  presentationOnly: true,
+});
 
 export const CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING = Object.freeze({
   role: 'CONTROLLED_CHARACTER',

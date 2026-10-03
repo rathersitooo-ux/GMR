@@ -10,6 +10,13 @@ import {
   SAASUNA_BATTLE_MOTION_RUNTIME
 } from './saasuna-battle-motion-core.mjs';
 import {
+  NAKI_CURRENT_PARTNER_ID,
+  NAKI_CURRENT_VISUAL_ASSETS,
+  applySpriteFrame,
+  isCurrentNakiCharacterId,
+} from './naki-current-visual-assets.mjs';
+import { createNakiBattleMagicLiveAdapter } from './naki-battle-magic-live-adapter.mjs';
+import {
   BATTLE_CINEMATIC_CAUSAL_TIMELINE,
   clearBattleCinematicCausalTimeline,
   createBattleCinematicCausalTimeline,
@@ -204,11 +211,14 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFigure::after{content:"";position:absolute;left:50%;bottom:0;width:78%;height:72%;transform:translateX(-50%);border-radius:44% 44% 20% 20% / 28% 28% 12% 12%;background:linear-gradient(145deg,rgba(104,179,196,.96),rgba(31,72,87,.98) 46%,rgba(7,17,26,.99));clip-path:polygon(25% 0,75% 0,100% 36%,82% 48%,76% 100%,24% 100%,18% 48%,0 36%);box-shadow:inset 0 0 0 2px rgba(229,249,255,.12)}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelSide[data-role="target"] .grBattleCinematicDuelFigure[data-visual-kind="css-proxy"]{filter:hue-rotate(154deg) saturate(.76) brightness(.93)}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFigure[data-visual-kind="character-runtime"]::before,
-[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFigure[data-visual-kind="character-runtime"]::after{display:none!important}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFigure[data-visual-kind="character-runtime"]::after,
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFigure[data-visual-kind="naki-current"]::before,
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFigure[data-visual-kind="naki-current"]::after{display:none!important}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelCharacterHost{position:absolute;inset:0;display:grid;place-items:end center;overflow:visible}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelCharacterHost[hidden]{display:none!important}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelCharacterHost>*{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelCharacterHost .grtc-image{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;object-position:50% 100%!important}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grNakiCurrentBattleSprite{display:block;width:100%;height:100%;background-repeat:no-repeat;image-rendering:pixelated;filter:drop-shadow(0 14px 18px rgba(0,0,0,.38));transform-origin:50% 100%}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFx{position:relative;grid-column:2;align-self:center;justify-self:stretch;height:clamp(72px,18vh,150px);pointer-events:none;overflow:visible}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFx::before{content:"";position:absolute;left:-18%;top:50%;width:clamp(24px,4.8vw,66px);aspect-ratio:1.7;border:2px solid rgba(226,248,255,.72);border-radius:50%;background:radial-gradient(ellipse at 35% 48%,rgba(255,255,255,.82),rgba(173,226,239,.28) 42%,transparent 70%);box-shadow:0 0 18px rgba(185,236,249,.52),inset -8px 0 14px rgba(45,129,158,.32);transform:translateY(-50%) scaleX(.72);opacity:0}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFx::after{content:"";position:absolute;right:-9%;top:50%;width:clamp(22px,4vw,54px);height:2px;background:linear-gradient(90deg,transparent,rgba(239,252,255,.96),transparent);box-shadow:0 -10px 0 -1px rgba(217,246,255,.56),0 10px 0 -1px rgba(217,246,255,.48);opacity:0;transform:translateY(-50%) rotate(-8deg)}
@@ -798,8 +808,20 @@ function applyCinematicTimelinePhaseToCharacters(global, active, entry) {
   if (!active || !entry) return;
   active.timelinePhase = entry.phase;
   const runtime = global?.GameRoadThreeCharRuntime;
-  if (typeof runtime?.setState !== 'function') return;
   for (const binding of active.characterBindings ?? []) {
+    if (binding.kind === 'naki-current') {
+      try {
+        binding.controller?.applyCausalPhase?.({
+          causalPhase: entry.phase,
+          role: binding.role,
+          actionPhase: binding.actionPhase,
+          transition: binding.transition,
+        });
+        binding.state = entry.phase;
+      } catch {}
+      continue;
+    }
+    if (typeof runtime?.setState !== 'function') continue;
     const desired = binding.role === 'source' && (entry.phase === 'release' || entry.phase === 'impact')
       ? 'attack'
       : 'idle';
@@ -814,11 +836,155 @@ function applyCinematicTimelinePhaseToCharacters(global, active, entry) {
   }
 }
 
-function mountCinematicDuelCharacter(global, scene, view, characterId, role, motion, motionContext = {}) {
-  const runtime = global?.GameRoadThreeCharRuntime;
-  if (!characterId || typeof runtime?.mount !== 'function') return false;
+function createCurrentNakiCinematicController(global, scene, view, role, motion, motionContext = {}) {
   const active = cinematicDuelRuntimeState.get(scene);
-  if (!active) return false;
+  if (!active) return null;
+  const doc = global?.document;
+  if (!doc?.createElement) return null;
+
+  const sprite = doc.createElement('span');
+  sprite.className = 'grNakiCurrentBattleSprite';
+  sprite.dataset.role = 'naki-current-battle-sprite';
+  sprite.dataset.visualSource = 'NAKI_IDOL_BATTLE_PRIMARY_R1';
+  sprite.setAttribute?.('aria-hidden', 'true');
+  view.characterHost.replaceChildren?.(sprite);
+  view.characterHost.hidden = false;
+  view.figure.dataset.visualKind = 'naki-current';
+  view.figure.dataset.characterId = NAKI_CURRENT_PARTNER_ID;
+  view.figure.dataset.nakiVisualSource = 'NAKI_IDOL_BATTLE_PRIMARY_R1';
+
+  const schedule = global?.setTimeout?.bind(global) ?? globalThis.setTimeout?.bind(globalThis) ?? null;
+  const cancel = global?.clearTimeout?.bind(global) ?? globalThis.clearTimeout?.bind(globalThis) ?? null;
+  let timer = null;
+  let token = 0;
+  let currentPhase = 'stance';
+  let destroyed = false;
+
+  const stop = () => {
+    token += 1;
+    if (timer != null && cancel) {
+      try { cancel(timer); } catch {}
+    }
+    timer = null;
+  };
+
+  const show = (kind, frame) => {
+    const src = kind === 'attack' ? NAKI_CURRENT_VISUAL_ASSETS.battle.attack : NAKI_CURRENT_VISUAL_ASSETS.battle.idle;
+    return applySpriteFrame(sprite, {
+      src,
+      columns: NAKI_CURRENT_VISUAL_ASSETS.battle.columns,
+      rows: NAKI_CURRENT_VISUAL_ASSETS.battle.rows,
+      frameIndex: frame,
+    });
+  };
+
+  const play = (kind, frames, intervalMs, loop = true) => {
+    stop();
+    const activeToken = token;
+    let index = 0;
+    const tick = () => {
+      if (destroyed || activeToken !== token || !sprite.isConnected) return;
+      show(kind, frames[index]);
+      index += 1;
+      if (index >= frames.length) {
+        if (loop) index = 0;
+        else {
+          index = frames.length - 1;
+          return;
+        }
+      }
+      if (schedule && frames.length > 1) timer = schedule(tick, intervalMs);
+    };
+    tick();
+  };
+
+  const vfx = createNakiBattleMagicLiveAdapter({
+    doc,
+    host: view.figure,
+    characterHost: view.characterHost,
+    characterId: NAKI_CURRENT_PARTNER_ID,
+    nakiCharacterId: NAKI_CURRENT_PARTNER_ID,
+    role,
+    motion,
+    phase: motionContext?.phase,
+    transition: motionContext?.transition,
+    motionState: motionContext?.motionState,
+    setTimeoutFn: schedule,
+    clearTimeoutFn: cancel,
+  });
+
+  const applyCausalPhase = (input = {}) => {
+    if (destroyed) return null;
+    currentPhase = input.causalPhase ?? 'stance';
+    if (currentPhase === 'stance' || currentPhase === 'static' || currentPhase === 'return') {
+      play('idle', [0, 1, 2, 1], 360, true);
+    } else if (currentPhase === 'anticipation') {
+      play('attack', [0, 1, 2, 3, 4], 88, true);
+    } else if (currentPhase === 'release') {
+      play('attack', [5, 6], 72, true);
+    } else if (currentPhase === 'impact') {
+      play('attack', [7, 8], 80, true);
+    } else if (currentPhase === 'reaction') {
+      if (role === 'target') play('attack', [8, 7, 8], 110, false);
+      else play('attack', [6, 7], 110, true);
+    } else {
+      play('idle', [0, 1, 2, 1], 360, true);
+    }
+    vfx?.applyCausalPhase?.(input);
+    return currentPhase;
+  };
+
+  const destroy = () => {
+    if (destroyed) return false;
+    destroyed = true;
+    stop();
+    try { vfx?.destroy?.(); } catch {}
+    return true;
+  };
+
+  const controller = Object.freeze({
+    applyCausalPhase,
+    destroy,
+    clear: destroy,
+    snapshot: () => Object.freeze({
+      phase: currentPhase,
+      source: 'NAKI_IDOL_BATTLE_PRIMARY_R1',
+      legacyRuntimeFallback: false,
+    }),
+  });
+  applyCausalPhase({
+    causalPhase: 'stance',
+    role,
+    actionPhase: motionContext?.phase ?? 'attack',
+    transition: motionContext?.transition,
+  });
+  return controller;
+}
+
+function mountCinematicDuelCharacter(global, scene, view, characterId, role, motion, motionContext = {}) {
+  const active = cinematicDuelRuntimeState.get(scene);
+  if (!active || !characterId) return false;
+
+  if (isCurrentNakiCharacterId(characterId)) {
+    const controller = createCurrentNakiCinematicController(global, scene, view, role, motion, motionContext);
+    if (!controller) return false;
+    active.motionControllers.push(controller);
+    active.characterBindings.push({
+      kind: 'naki-current',
+      controller,
+      role,
+      actionPhase: motionContext?.phase ?? 'attack',
+      transition: motionContext?.transition ?? 'CONTINUE',
+      state: 'stance',
+    });
+    if (active.timelinePhase) {
+      applyCinematicTimelinePhaseToCharacters(global, active, { phase: active.timelinePhase });
+    }
+    return true;
+  }
+
+  const runtime = global?.GameRoadThreeCharRuntime;
+  if (typeof runtime?.mount !== 'function') return false;
 
   let pending;
   try {
@@ -1003,6 +1169,7 @@ function writeCinematicDuel(global, document, scene, model, context = {}) {
   setData(scene, 'transition', model.transition ?? null);
   setData(scene, 'motion', model.motion ?? null);
   setData(scene, 'saasunaMotionRuntime', SAASUNA_BATTLE_MOTION_RUNTIME.schema);
+  setData(scene, 'nakiCurrentVisual', 'NAKI_IDOL_BATTLE_PRIMARY_R1');
   setData(scene, 'sourceId', source.id);
   setData(scene, 'targetId', target.id);
   setData(scene, 'sourceCharacterId', sourceCharacterId);

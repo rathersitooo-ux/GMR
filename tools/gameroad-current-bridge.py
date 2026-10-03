@@ -38,6 +38,10 @@ RENEW_BELOW_MINUTES = 50
 PREACTION_PREFIX = "data/preaction-authorizations/"
 EXECUTOR_WORKFLOW_NAME = "GAMEROAD Executor Bus"
 EXECUTOR_WORKFLOW_PATH = ".github/workflows/gameroad-executor-bus.yml"
+RUNTIME_EVIDENCE_SCHEMA = "gameroad-runtime-evidence-v1"
+BROWSER_FULL_INTERACTION_TARGET = "browser-full-interaction"
+BROWSER_FULL_INTERACTION_WORKFLOW_NAME = "Browser Full Interaction Evidence"
+BROWSER_FULL_INTERACTION_WORKFLOW_PATH = ".github/workflows/browser-full-interaction.yml"
 TRUSTED_EXECUTOR_COMMENT_AUTHOR = "github-actions[bot]"
 CONTROL_PLANE_PREFIXES = (
     ".github/workflows/",
@@ -153,6 +157,8 @@ def _acceptance_checks(value: Any, resources: list[str]) -> list[dict[str, Any]]
                 raise BridgeError(f"acceptanceCheck_invalid_focused_test_target:{index}")
             if target not in resources:
                 raise BridgeError(f"acceptanceCheck_focused_test_not_mutable:{target}")
+        if kind == "runtime_evidence" and target != BROWSER_FULL_INTERACTION_TARGET:
+            raise BridgeError(f"acceptanceCheck_runtime_target_unsupported:{index}")
         cleaned.append(
             {
                 "id": check_id,
@@ -946,6 +952,152 @@ def verify_executor_result_provenance(
     )
 
 
+def parse_runtime_evidence_comment(
+    body: str, packet: dict[str, Any], candidate: dict[str, Any]
+) -> dict[str, Any] | None:
+    match = re.search(r"```runtime-evidence\s*\n([\s\S]*?)\n```", body or "")
+    if not match:
+        return None
+    try:
+        receipt = json.loads(match.group(1))
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(receipt, dict):
+        return None
+    if receipt.get("schemaVersion") != RUNTIME_EVIDENCE_SCHEMA:
+        return None
+    if receipt.get("kind") != "runtime_evidence":
+        return None
+    if receipt.get("target") != BROWSER_FULL_INTERACTION_TARGET:
+        return None
+    for key in ("taskId", "workUnitKey", "acquireKey"):
+        if receipt.get(key) != packet.get(key):
+            return None
+    try:
+        candidate_pr = int(receipt.get("candidatePr", 0))
+        workflow_run = int(receipt.get("workflowRun", 0))
+    except (TypeError, ValueError):
+        return None
+    if candidate_pr != candidate.get("pr") or workflow_run <= 0:
+        return None
+    expected_head = str(candidate.get("commit", "")).lower()
+    if str(receipt.get("headSha", "")).lower() != expected_head:
+        return None
+    status = str(receipt.get("status", ""))
+    if status not in ("PASS", "FAIL"):
+        return None
+    artifact = str(receipt.get("artifact", ""))
+    if artifact != f"browser-full-interaction-{workflow_run}":
+        return None
+    return {
+        "target": BROWSER_FULL_INTERACTION_TARGET,
+        "status": status,
+        "workflowRun": workflow_run,
+        "artifact": artifact,
+        "headSha": expected_head,
+        "observedHeadSha": str(receipt.get("observedHeadSha", "")).lower(),
+        "cacheHit": bool(receipt.get("cacheHit", False)),
+        "freshCapture": bool(receipt.get("freshCapture", False)),
+        "inputHash": str(receipt.get("inputHash", "")),
+        "raw": receipt,
+    }
+
+
+def verify_runtime_evidence_receipt(
+    candidate: dict[str, Any],
+    receipt: dict[str, Any],
+    run: dict[str, Any],
+    artifacts: list[dict[str, Any]],
+) -> bool:
+    workflow_run = receipt.get("workflowRun")
+    if not isinstance(workflow_run, int) or workflow_run <= 0:
+        raise BridgeError("runtime_evidence_workflow_run_missing")
+    try:
+        actual_run = int(run.get("id", 0))
+    except (TypeError, ValueError) as exc:
+        raise BridgeError("runtime_evidence_workflow_run_identity_invalid") from exc
+    if actual_run != workflow_run:
+        raise BridgeError("runtime_evidence_workflow_run_identity_mismatch")
+    if (
+        run.get("name") != BROWSER_FULL_INTERACTION_WORKFLOW_NAME
+        or run.get("path") != BROWSER_FULL_INTERACTION_WORKFLOW_PATH
+    ):
+        raise BridgeError("runtime_evidence_workflow_identity_mismatch")
+    if run.get("event") != "repository_dispatch":
+        raise BridgeError("runtime_evidence_workflow_event_mismatch")
+    if run.get("status") != "completed":
+        return False
+    if receipt.get("status") != "PASS":
+        raise BridgeError(f"runtime_evidence_failed:{BROWSER_FULL_INTERACTION_TARGET}")
+    if receipt.get("cacheHit") is True or receipt.get("freshCapture") is not True:
+        raise BridgeError("runtime_evidence_fresh_capture_required")
+    if not str(receipt.get("inputHash", "")).strip():
+        raise BridgeError("runtime_evidence_input_hash_missing")
+    candidate_head = str(candidate.get("commit", "")).lower()
+    if receipt.get("observedHeadSha") != candidate_head:
+        raise BridgeError("runtime_evidence_exact_head_mismatch")
+    if run.get("conclusion") != "success":
+        raise BridgeError("runtime_evidence_workflow_not_success")
+    expected_artifact = f"browser-full-interaction-{workflow_run}"
+    matches = [
+        artifact
+        for artifact in artifacts
+        if artifact.get("name") == expected_artifact and not artifact.get("expired", False)
+    ]
+    if len(matches) != 1:
+        raise BridgeError("runtime_evidence_artifact_missing")
+    artifact_run = matches[0].get("workflow_run")
+    if not isinstance(artifact_run, dict) or int(artifact_run.get("id", 0) or 0) != workflow_run:
+        raise BridgeError("runtime_evidence_artifact_run_mismatch")
+    return True
+
+
+def verify_required_runtime_evidence(
+    packet: dict[str, Any],
+    repository: str,
+    token: str,
+    candidate: dict[str, Any],
+) -> dict[str, dict[str, Any]] | None:
+    required_checks = [
+        check
+        for check in packet.get("acceptanceChecks", [])
+        if check.get("kind") == "runtime_evidence" and check.get("required") is True
+    ]
+    if not required_checks:
+        return {}
+    comments = _github_issue_comments(repository, int(candidate["pr"]), token)
+    verified: dict[str, dict[str, Any]] = {}
+    for target in sorted({str(check["target"]) for check in required_checks}):
+        receipt = None
+        for comment in reversed(comments):
+            if not trusted_executor_comment(comment):
+                continue
+            parsed = parse_runtime_evidence_comment(str(comment.get("body", "")), packet, candidate)
+            if parsed and parsed["target"] == target:
+                receipt = parsed
+                break
+        if receipt is None:
+            return None
+        workflow_run = receipt["workflowRun"]
+        run = _github_json(
+            "GET",
+            f"https://api.github.com/repos/{repository}/actions/runs/{workflow_run}",
+            token,
+        )
+        artifact_data = _github_json(
+            "GET",
+            f"https://api.github.com/repos/{repository}/actions/runs/{workflow_run}/artifacts?per_page=100",
+            token,
+        )
+        artifacts = artifact_data.get("artifacts", []) if isinstance(artifact_data, dict) else []
+        if not isinstance(artifacts, list):
+            raise BridgeError("runtime_evidence_artifacts_invalid")
+        if not verify_runtime_evidence_receipt(candidate, receipt, run, artifacts):
+            return None
+        verified[target] = receipt
+    return verified
+
+
 def _pr_files(repository: str, pr_number: int, token: str) -> list[dict[str, Any]]:
     data = _github_json(
         "GET", f"https://api.github.com/repos/{repository}/pulls/{pr_number}/files?per_page=100", token
@@ -1023,11 +1175,14 @@ def _preaction_record_id(acquire_key: str) -> str:
 
 
 def build_acceptance_evidence_receipt(
-    packet: dict[str, Any], candidate_workflow_run: int | None
+    packet: dict[str, Any],
+    candidate_workflow_run: int | None,
+    runtime_evidence: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     if not isinstance(candidate_workflow_run, int) or candidate_workflow_run <= 0:
         raise BridgeError("acceptance_evidence_workflow_run_required")
     typed_checks = list(packet.get("acceptanceChecks") or [])
+    runtime_evidence = runtime_evidence or {}
     mode = "TYPED" if typed_checks else "LEGACY_COMPAT"
     if typed_checks:
         source_checks = typed_checks
@@ -1067,6 +1222,15 @@ def build_acceptance_evidence_receipt(
                 f"test:{check['target']}",
             ]
             verification = "PROVIDER_BACKED_EXECUTOR_FOCUSED_TEST_RUN"
+        elif kind == "runtime_evidence" and check["target"] in runtime_evidence:
+            runtime_receipt = runtime_evidence[check["target"]]
+            state = "PASS"
+            evidence_refs = [
+                f"workflow-run:{runtime_receipt['workflowRun']}",
+                f"artifact:{runtime_receipt['artifact']}",
+                f"candidate-head:{runtime_receipt['headSha']}",
+            ]
+            verification = "PROVIDER_BACKED_BROWSER_FULL_INTERACTION"
         else:
             state = "UNRUN"
             evidence_refs = []
@@ -1107,6 +1271,7 @@ def build_adoption_manifest(
     now: dt.datetime,
     candidate_pr: int,
     candidate_workflow_run: int | None = None,
+    runtime_evidence: dict[str, dict[str, Any]] | None = None,
 ) -> tuple[str, dict[str, Any]]:
     record_id = _preaction_record_id(packet["acquireKey"])
     path = f"{PREACTION_PREFIX}{record_id}.json"
@@ -1151,7 +1316,7 @@ def build_adoption_manifest(
             "existing GAMEROAD Required Gate and auto-merge remain authoritative",
         ],
         "acceptanceEvidenceReceipt": build_acceptance_evidence_receipt(
-            packet, candidate_workflow_run
+            packet, candidate_workflow_run, runtime_evidence
         ),
     }
     return path, manifest
@@ -1289,12 +1454,19 @@ def create_adoption_pr(
     lease_row: int,
     lease: dict[str, str],
     now: dt.datetime,
+    runtime_evidence: dict[str, dict[str, Any]] | None = None,
 ) -> int:
     candidate_pr, files = verify_candidate_pr(packet, repository, token, candidate)
     branch = _sanitize_branch(packet["acquireKey"])
     _create_ref(repository, branch, packet["baseRef"], token)
     manifest_path, manifest = build_adoption_manifest(
-        packet, lease, lease_row, now, candidate["pr"], candidate["workflowRun"]
+        packet,
+        lease,
+        lease_row,
+        now,
+        candidate["pr"],
+        candidate["workflowRun"],
+        runtime_evidence,
     )
     manifest_commit = _put_contents(
         repository,
@@ -1466,6 +1638,24 @@ def supervise(packet_path: pathlib.Path, repository: str, token: str) -> dict[st
             "workflowRun": candidate["workflowRun"],
             "leaseUntilJst": lease["LeaseUntilJST"],
         }
+    runtime_evidence = verify_required_runtime_evidence(
+        packet, repository, token, candidate
+    )
+    if runtime_evidence is None:
+        return {
+            "status": "WAIT_RUNTIME_EVIDENCE",
+            "issueNumber": issue_number,
+            "candidatePr": candidate["pr"],
+            "requiredTargets": sorted(
+                {
+                    str(check["target"])
+                    for check in packet.get("acceptanceChecks", [])
+                    if check.get("kind") == "runtime_evidence"
+                    and check.get("required") is True
+                }
+            ),
+            "leaseUntilJst": lease["LeaseUntilJST"],
+        }
 
     # Fresh authority read immediately before candidate adoption.
     now = dt.datetime.now(tz=JST)
@@ -1492,7 +1682,14 @@ def supervise(packet_path: pathlib.Path, repository: str, token: str) -> dict[st
     if existing_adoption is not None:
         return {"status": "WAIT_REQUIRED_GATE_AUTO_MERGE", "adoptionPr": existing_adoption}
     pr_number = create_adoption_pr(
-        packet, repository, token, candidate, row_number, lease, fresh_now
+        packet,
+        repository,
+        token,
+        candidate,
+        row_number,
+        lease,
+        fresh_now,
+        runtime_evidence,
     )
     return {
         "status": "ADOPTION_PR_OPENED",

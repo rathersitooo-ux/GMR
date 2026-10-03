@@ -14,6 +14,7 @@ export const ACCEPTANCE_KINDS = new Set([
   'external_evidence',
 ]);
 const ACCEPTANCE_CHECK_KEYS = new Set(['id', 'kind', 'description', 'required', 'target']);
+export const BROWSER_FULL_INTERACTION_TARGET = 'browser-full-interaction';
 const FORBIDDEN_KEYS = new Set([
   'command', 'commands', 'shell', 'script', 'run', 'exec', 'password', 'secret', 'secrets',
   'token', 'apiKey', 'api_key', 'credential', 'credentials', 'privateKey', 'private_key',
@@ -80,6 +81,9 @@ function cleanAcceptanceChecks(value, exactMutableResources) {
       if (!exactMutableResources.includes(target)) {
         throw new Error(`acceptanceChecks_${index}_focused_test_target_not_mutable`);
       }
+    }
+    if (kind === 'runtime_evidence' && target !== BROWSER_FULL_INTERACTION_TARGET) {
+      throw new Error(`acceptanceChecks_${index}_runtime_target_unsupported`);
     }
     return { id, kind, description, required, target };
   });

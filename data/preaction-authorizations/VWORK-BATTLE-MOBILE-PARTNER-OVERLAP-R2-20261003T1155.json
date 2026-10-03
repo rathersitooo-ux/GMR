@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-BATTLE-MOBILE-PARTNER-OVERLAP-R2-20261003T1155",
+  "taskId": "BROWSER-BATTLE-MOBILE-UI-REPAIR-001",
+  "workUnitKey": "BATTLE_MOBILE_PARTNER_OVERLAP_R2",
+  "acquireKey": "BATTLE-MOBILE-PARTNER-OVERLAP-R2-20261003T1155-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER-SCREENSHOT-390X1536-BATTLE-PARTNER-OVERLAP-20261003",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR2224-SOURCE-BOUNDED-PORTRAIT-DECONFLICTION-PLUS-FOCUSED-REGRESSIONS",
+  "proceedToken": "PROCEED|VWORK-BATTLE-MOBILE-PARTNER-OVERLAP-R2-20261003T1155|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-mobile-partner-overlap-r2|current-lease",
+  "authorizationBaseSha": "7b67df91546bc736caae11496802a37a97b2f89c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-MOBILE-UI-REPAIR-001",
+  "leaseWorkUnitKey": "BATTLE_MOBILE_PARTNER_OVERLAP_R2",
+  "leaseAcquireKey": "BATTLE-MOBILE-PARTNER-OVERLAP-R2-20261003T1155-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-03 11:55 JST",
+  "leaseUntilJst": "2026-10-03 12:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/partner-advice-runtime-mount.mjs; browser/partner-saasuna-bustup-visuals.mjs; tests/partner-advice-runtime-mount.test.mjs; tests/partner-saasuna-bustup-visuals.test.mjs; deploy/cloudflare/tests/build.test.mjs provenance-only; own transient data/preaction-authorizations/VWORK-BATTLE-MOBILE-PARTNER-OVERLAP-R2-20261003T1155.json create/delete only; own fresh branch/PR/check/merge/readback; gameplay/rules/save/economy/network READ_ONLY; browser/GAMEROAD.html READ_ONLY",
+  "scope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "browser/partner-saasuna-bustup-visuals.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "tests/partner-saasuna-bustup-visuals.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "browser/partner-saasuna-bustup-visuals.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "tests/partner-saasuna-bustup-visuals.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "formalInvariants": [
+    "no gameplay/rules/save/economy/network/delegation authority changes",
+    "existing Partner authority nodes are reused rather than duplicated",
+    "portrait phone layout keeps lower hand/janken/thumb action region visually clear",
+    "Saasuna accepted asset registry and non-portrait presentation remain unchanged",
+    "public package provenance continues to pin exact source blobs"
+  ],
+  "acceptance": [
+    "PRE_ACTION manifest-first history validates",
+    "partner advice focused Node test passes",
+    "Saasuna bust-up focused Node test passes",
+    "public package provenance invariant passes",
+    "Required Gate passes",
+    "merged-main readback contains portrait deconfliction rules"
+  ]
+}

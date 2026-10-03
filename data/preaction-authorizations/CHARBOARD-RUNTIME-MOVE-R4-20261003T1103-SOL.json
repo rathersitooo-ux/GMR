@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CHARBOARD-RUNTIME-MOVE-R4-20261003T1103-SOL",
+  "taskId": "CHARACTER-BOARD-RUNTIME-SELECT-CUTIN-001",
+  "workUnitKey": "BOARD_CONTROLLED_CHARACTER_RUNTIME_STATE_BRIDGE_R4",
+  "acquireKey": "CHARBOARD-RUNTIME-MOVE-R4-20261003T1103-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR2217:first_commit_not_manifest_only + PR2066:bounded_three_file_green_donor",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR2066:existing_required_gate_green_movement_runtime_bridge",
+  "proceedToken": "PROCEED|CHARBOARD-RUNTIME-MOVE-R4-20261003T1103-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|R24-readback|PR2066-donor",
+  "authorizationBaseSha": "7b67df91546bc736caae11496802a37a97b2f89c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "CHARACTER-BOARD-RUNTIME-SELECT-CUTIN-001",
+  "leaseWorkUnitKey": "BOARD_CONTROLLED_CHARACTER_RUNTIME_STATE_BRIDGE_R4",
+  "leaseAcquireKey": "CHARBOARD-RUNTIME-MOVE-R4-20261003T1103-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-03 11:06 JST",
+  "leaseUntilJst": "2026-10-03 12:03 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/battle-board-naki-4p-visual-binding.mjs; tests/battle-board-naki-4p-visual-binding.test.mjs; deploy/cloudflare/tests/build.test.mjs; data/preaction-authorizations/CHARBOARD-RUNTIME-MOVE-R4-20261003T1103-SOL.json; own branch/PR/check/merge/readback; own CURRENT task/event/lease records",
+  "scope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

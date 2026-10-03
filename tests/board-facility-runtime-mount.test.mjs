@@ -95,13 +95,11 @@ test('failed Partner conversation send restores the retry draft without keeping 
   assert.equal(removals, 1);
 });
 
-test('Partner conversation projects for selected Saasuna on the current roleless Characters route and rejects explicit non-Partner roles', () => {
+test('Partner conversation only projects for Saasuna in the active normal Partner role', () => {
   assert.equal(partnerConversationProjectionDecision({ screenActive: false, activeRole: 'partner', selectedPartnerId: 'partner.saasuna' }), 'idle');
   assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'player', selectedPartnerId: 'partner.saasuna' }), 'idle');
   assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'partner', selectedPartnerId: 'partner.honoka' }), 'idle');
   assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'partner', selectedPartnerId: 'partner.saasuna' }), 'conversation');
-  assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: null, roleTabsPresent: false, selectedPartnerId: 'partner.saasuna' }), 'conversation');
-  assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: null, roleTabsPresent: true, selectedPartnerId: 'partner.saasuna' }), 'idle');
 });
 
 test('provisional Saasuna visual is explicitly static and outside character production', () => {

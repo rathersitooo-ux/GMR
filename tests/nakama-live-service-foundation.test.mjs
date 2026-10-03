@@ -319,3 +319,16 @@ test('account facade fails closed before upstream calls when service configurati
   assert.equal(invalid.status, 400);
   assert.equal(calls, 0);
 });
+
+
+test('deployment package pins the reviewed Nakama and PostgreSQL versions and loads the GAMEROAD runtime', async () => {
+  const compose = await readFile(new URL('../deploy/nakama/docker-compose.yml', import.meta.url), 'utf8');
+  const config = await readFile(new URL('../deploy/nakama/local.yml', import.meta.url), 'utf8');
+
+  assert.match(compose, /nakama:3\.41\.0/);
+  assert.match(compose, /postgres:16\.8-alpine/);
+  assert.match(compose, /nakama migrate up/);
+  assert.match(config, /js_entrypoint:\s*"index\.js"/);
+  assert.match(config, /token_expiry_sec:\s*7200/);
+  assert.match(config, /refresh_token_expiry_sec:\s*2592000/);
+});

@@ -16,7 +16,7 @@ assert.equal(manifest.skills, "./skills/");
 assert.equal(mcp.mcp_servers["gameroad-desktop"].command, "npx");
 assert.ok(mcp.mcp_servers["gameroad-desktop"].args.includes("@wonderwhy-er/desktop-commander@latest"));
 assert.equal(mcp.mcp_servers["gameroad-browser"].command, "npx");
-assert.ok(mcp.mcp_servers["gameroad-browser"].args.includes("@playwright/mcp@latest"));
+assert.ok(mcp.mcp_servers["gameroad-browser"].args.includes("@playwright/mcp@latest"));\nassert.ok(mcp.mcp_servers["gameroad-browser"].args.includes("--caps=network,storage,testing,vision,pdf,devtools"));
 assert.equal(market.plugins[0].source.path, "./plugins/gameroad-operator");
 assert.match(skill, /GAMEROAD_Drive総合目次・記録ルーティング_CURRENT/);
 assert.match(skill, /owner\/lease/i);

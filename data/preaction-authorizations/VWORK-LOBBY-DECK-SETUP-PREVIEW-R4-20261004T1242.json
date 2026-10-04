@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-LOBBY-DECK-SETUP-PREVIEW-R4-20261004T1242",
+  "taskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "workUnitKey": "SETUP_QUICK_DECK_PREVIEW_LIVE_ACCEPTANCE_R4",
+  "acquireKey": "LOBBY-DECK-SETUP-PREVIEW-R4-20261004T1242-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ROW1331_SETUP_MOUNT_OPEN+PR1913_IMMUTABLE_PREVIEW_CORE+MAIN_SETUP_STATUS_AND_EDIT_ROUTE+BFI_THREE_VIEWPORT_RUNNER_20261004",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1913_CORE_TESTS+CURRENT_CARDS_PRESENTATION_TEST_SUITE+CURRENT_BFI_SETUP_NAVIGATION_BASELINE",
+  "proceedToken": "PROCEED|VWORK-LOBBY-DECK-SETUP-PREVIEW-R4-20261004T1242|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|setup-quick-deck-live|lease-A8",
+  "authorizationBaseSha": "737151157b095004e9d9821a4dba33661df58d9c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "leaseWorkUnitKey": "SETUP_QUICK_DECK_PREVIEW_LIVE_ACCEPTANCE_R4",
+  "leaseAcquireKey": "LOBBY-DECK-SETUP-PREVIEW-R4-20261004T1242-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-04 12:43 JST",
+  "leaseUntilJst": "2026-10-04 13:42 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; tests/browser-full-interaction.spec.mjs; data/preaction-authorizations/VWORK-LOBBY-DECK-SETUP-PREVIEW-R4-20261004T1242.json; own fresh branch/PR/check/readback; own CURRENT lease/event records",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

@@ -100,6 +100,11 @@ $pb64=[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($payload))
 $bad=Wait-Result $badId
 if($bad.result.status -ne "error" -or $bad.result.error -notmatch "invalid signature"){ throw "bad signature did not fail closed" }
 
+# Direct powershell op is intentionally not exposed; staged write_file + start_process is the accepted route.
+Sign-Command "ci-direct-powershell-disabled-001" "powershell" @{script="Write-Output should-not-run";timeout_sec=5}
+$disabled=Wait-Result "ci-direct-powershell-disabled-001"
+if($disabled.result.status -ne "error" -or $disabled.result.error -notmatch "Unsupported op"){ throw "direct powershell op was unexpectedly available" }
+
 # Duplicate command id must not re-execute after a result already exists.
 $resultPath=Join-Path (Join-Path $relayRoot "outbox") "ci-write-001.result.json"
 $before=(Get-Item $resultPath).LastWriteTimeUtc
@@ -132,6 +137,7 @@ $evidence=[ordered]@{
   write_side_effect=(Get-Content $sentinel -Raw).Trim()
   process_side_effect=(Get-Content $procSentinel -Raw).Trim()
   invalid_signature_fail_closed=$true
+  direct_powershell_op_disabled=$true
   duplicate_id_no_reexecution=$true
   clean_stop=$true
 }

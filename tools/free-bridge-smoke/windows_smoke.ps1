@@ -53,7 +53,11 @@ $env:GAMEROAD_FREE_RELAY_ROOT=$relayRoot
 
 Push-Location $otherCwd
 try{
-  $proc=Start-Process cmd.exe -ArgumentList @("/d","/c","call `"$installer`"") -Wait -PassThru -WindowStyle Hidden
+  $proc=Start-Process cmd.exe -ArgumentList @("/d","/c","call `"$installer`"") -PassThru -WindowStyle Hidden
+  if(-not $proc.WaitForExit(20000)){
+    try{$proc.Kill()}catch{}
+    throw "single-file installer command hung for more than 20 seconds"
+  }
   if($proc.ExitCode -ne 0){ throw "single-file installer exited $($proc.ExitCode)" }
 } finally { Pop-Location }
 

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "LOBBY-DECK-RESIDUAL-R13-20261005T0444-SOL",
+  "taskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "workUnitKey": "DECK_REJOIN_INVALID_RAPID_CROSSMATCH_PROOF_R13",
+  "acquireKey": "LOBBY-DECK-RESIDUAL-R13-20261005T0444-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRIEND_ROOM_GUEST_DECK_HOST_COPY_DEFECT_DIRECT_CURRENT_MAIN_20261005T0531JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_MATCH_START_SNAPSHOT_VALIDATE_DECK_PLUS_FRIEND_RECONNECT_SNAPSHOT_PATH",
+  "proceedToken": "PROCEED|LOBBY-DECK-RESIDUAL-R13-20261005T0444-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|friend-room-guest-deck-binding|html-bfi|active-lease",
+  "authorizationBaseSha": "ff9fc3ebe5cc16076006cdc816cef3eb57f25a09",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "leaseWorkUnitKey": "DECK_REJOIN_INVALID_RAPID_CROSSMATCH_PROOF_R13",
+  "leaseAcquireKey": "LOBBY-DECK-RESIDUAL-R13-20261005T0444-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-05 05:31 JST",
+  "leaseUntilJst": "2026-10-05 05:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; tests/browser-full-interaction.spec.mjs; data/preaction-authorizations/LOBBY-DECK-RESIDUAL-R13-20261005T0444-SOL.json transient PRE_ACTION; branch chatgpt/lobby-deck-residual-r13-20261005; own PR/check/readback; own CURRENT R25 event/lease records; central task row1331 bounded sync only",
+  "solutionSignature": "FRIEND_ROOM_VALIDATED_GUEST_MATCH_START_DECK_BINDING_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_MATCH_START_SNAPSHOT_VALIDATE_DECK_AND_FRIEND_ROOM_EXISTING_RECONNECT_PIPELINE",
+  "solutionSearchEvidence": [
+    "Current local match start already uses createDeckMatchStartSnapshot and validateDeck as the authoritative deck legality path.",
+    "Current Friend Room already owns seat identity, reconnect, current hand/deck projection, and host-authoritative match state.",
+    "The defect is that guest ready/join never supplies a validated guest deck, so hostStart initializes guest seats from the host deck.",
+    "The repair will reuse the existing snapshot validator on both guest submission and host acceptance; no second save or deck-rule authority is introduced."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

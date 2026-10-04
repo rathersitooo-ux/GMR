@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-BASE52-COMMON-FACE-R8B-20261004T1036",
+  "taskId": "CARD-BASE52-FORMAL-FACE-ASSET-CONNECTION-001",
+  "workUnitKey": "BASE52_COMMON_FACE_ACTUAL_R8",
+  "acquireKey": "BASE52-COMMON-FACE-R8-20261004T1018-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R7_BASE52_GATE+CURRENT_CARDS_GREEN+TARGET_BLOBS_REVALIDATED",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R7_52_FAILCLOSED_CORE+PR2250_SCHEMA_ONLY_REJECTION",
+  "proceedToken": "PROCEED|VWORK-BASE52-COMMON-FACE-R8B-20261004T1036|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|compose-base52-reuse|lease-A6",
+  "authorizationBaseSha": "737151157b095004e9d9821a4dba33661df58d9c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "CARD-BASE52-FORMAL-FACE-ASSET-CONNECTION-001",
+  "leaseWorkUnitKey": "BASE52_COMMON_FACE_ACTUAL_R8",
+  "leaseAcquireKey": "BASE52-COMMON-FACE-R8-20261004T1018-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-04 10:36 JST",
+  "leaseUntilJst": "2026-10-04 11:18 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "browser/base52-face-layout-candidate.mjs; tests/base52-face-layout-candidate.test.mjs; browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; browser/base52-common-face-assets.mjs; tests/base52-common-face-assets.test.mjs; browser/GAMEROAD.html only if fresh actual proves product mount requires it; own branch/PR/check/readback; row60 bounded evidence sync",
+  "solutionSignature": "BASE52_COMMON_FACE|CARDS|R7_IDENTITY+PINNED_REUSED_SVG+FAILSOFT_INDEX|R8",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R8_REUSE_SEARCH_WEBISSO_PLUS_ACCESSIBLE_REFERENCE",
+  "solutionSearchEvidence": [
+    "R7 Base52 candidate core and 52 rank-suit coverage",
+    "Current Cards Collection/Deck consumer on main",
+    "Webisso playing-cards pinned lightweight SVG deck",
+    "SVGCards Accessible Horizontal jumbo-index reference",
+    "Microsoft XAG contrast and non-color-only identity",
+    "Apple Games HIG legibility"
+  ],
+  "scope": [
+    "browser/base52-common-face-assets.mjs",
+    "tests/base52-common-face-assets.test.mjs",
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/base52-common-face-assets.mjs",
+    "tests/base52-common-face-assets.test.mjs",
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ]
+}

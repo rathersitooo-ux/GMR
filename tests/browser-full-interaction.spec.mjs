@@ -582,6 +582,108 @@ test('persists a legal 40-card deck across save and page reload through visible 
   runtime.assertClean(testInfo);
 });
 
+test('Setup Quick Deck previews selected decks 1-3 read-only and keeps the existing edit/start paths', async ({ page }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+
+  const deckSetup = await installLegalBattleDeck(page);
+  expect(deckSetup.main).toHaveLength(40);
+  expect(deckSetup.committed, 'deck 1 legal precondition committed').toBeTruthy();
+
+  const openSetup = async () => {
+    const home = page.locator('section[data-screen="home"]');
+    await expect(home).toBeVisible();
+    const setupControl = visibleHomeControl(page, 'setup');
+    await expect(setupControl).toBeVisible();
+    await setupControl.click();
+    const setup = page.locator('section[data-screen="setup"]');
+    await expect(setup).toBeVisible();
+    return setup;
+  };
+
+  let setup = await openSetup();
+  let trigger = setup.locator('[data-role="setup-quick-deck-trigger"]');
+  let panel = setup.locator('[data-role="setup-quick-deck-preview"]');
+  await expect(trigger, 'current selected deck has a player-visible read-only preview entry').toBeVisible();
+  await expect(trigger).toContainText('デッキ1');
+
+  const beforeDeck1 = await page.evaluate(() => ({
+    selectedDeckIndex: window.__GAMEROAD_TEST__.state.selectedDeckIndex,
+    savedDeck: JSON.stringify(window.__GAMEROAD_TEST__.state.savedDeck),
+  }));
+  await trigger.click();
+  await expect(panel).toBeVisible();
+  await expect(panel.locator('[data-role="setup-quick-deck-title"]')).toHaveText('デッキ1');
+  await expect(panel.locator('[data-role="setup-quick-deck-summary"]')).toHaveText('メイン40・EX0');
+  expect(await panel.locator('[data-role="setup-quick-deck-main"] [data-card-id]').count()).toBe(40);
+  expect(await panel.locator('[data-role="setup-quick-deck-ex"] [data-card-id]').count()).toBe(0);
+  const afterDeck1 = await page.evaluate(() => ({
+    selectedDeckIndex: window.__GAMEROAD_TEST__.state.selectedDeckIndex,
+    savedDeck: JSON.stringify(window.__GAMEROAD_TEST__.state.savedDeck),
+  }));
+  expect(afterDeck1).toEqual(beforeDeck1);
+  await attachStateScreenshot(page, testInfo, 'setup-quick-deck-1-open');
+
+  await page.keyboard.press('Escape');
+  await expect(panel).toBeHidden();
+  await expect(trigger).toBeFocused();
+  await expect(setup.locator('#startMatch')).toBeVisible();
+  await expect(setup.locator('#startMatch')).toBeEnabled();
+
+  await trigger.click();
+  await panel.locator('[data-role="setup-quick-deck-edit"]').click();
+  let cards = page.locator('section[data-screen="cards"]');
+  await expect(cards, 'Quick Deck edit action reuses the existing Cards/Deck route').toBeVisible();
+
+  for (const deckNumber of [2, 3]) {
+    const picker = cards.locator('#deckSlotPicker .modeBtn');
+    expect(await picker.count(), 'existing deck slot picker exposes saved deck slots').toBeGreaterThanOrEqual(deckNumber);
+    await picker.nth(deckNumber - 1).click();
+
+    const selected = await page.evaluate(() => ({
+      selectedDeckIndex: window.__GAMEROAD_TEST__.state.selectedDeckIndex,
+      savedDeck: JSON.stringify(window.__GAMEROAD_TEST__.state.savedDeck),
+    }));
+    expect(selected.selectedDeckIndex).toBe(deckNumber - 1);
+
+    const back = cards.locator('[data-back]').first();
+    await expect(back).toBeVisible();
+    await back.click();
+    await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+
+    setup = await openSetup();
+    trigger = setup.locator('[data-role="setup-quick-deck-trigger"]');
+    panel = setup.locator('[data-role="setup-quick-deck-preview"]');
+    await expect(trigger).toBeVisible();
+    await expect(trigger).toContainText(`デッキ${deckNumber}`);
+    await trigger.click();
+    await expect(panel).toBeVisible();
+    await expect(panel.locator('[data-role="setup-quick-deck-title"]')).toHaveText(`デッキ${deckNumber}`);
+    await expect(panel.locator('[data-role="setup-quick-deck-summary"]')).toHaveText('メイン0・EX0');
+    expect(await panel.locator('[data-card-id]').count()).toBe(0);
+
+    const afterPreview = await page.evaluate(() => ({
+      selectedDeckIndex: window.__GAMEROAD_TEST__.state.selectedDeckIndex,
+      savedDeck: JSON.stringify(window.__GAMEROAD_TEST__.state.savedDeck),
+    }));
+    expect(afterPreview).toEqual(selected);
+    await expect(setup.locator('#startMatch'), 'empty saved deck remains truthfully ineligible').toBeDisabled();
+    await attachStateScreenshot(page, testInfo, `setup-quick-deck-${deckNumber}-open`);
+
+    if (deckNumber === 2) {
+      await panel.locator('[data-role="setup-quick-deck-edit"]').click();
+      cards = page.locator('section[data-screen="cards"]');
+      await expect(cards).toBeVisible();
+    } else {
+      await panel.locator('[data-role="setup-quick-deck-close"]').click();
+      await expect(panel).toBeHidden();
+      await expect(trigger).toBeFocused();
+    }
+  }
+
+  runtime.assertClean(testInfo);
+});
+
 test('starts through visible Setup and advances the first Battle decision through visible controls', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);

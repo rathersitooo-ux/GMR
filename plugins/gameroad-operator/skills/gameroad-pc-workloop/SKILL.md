@@ -45,9 +45,9 @@ After execution:
 
 ## Mandatory local quality decision gate
 
-Before any material PC/browser/code/asset mutation, create one temporary JSON decision packet and run the bundled deterministic gate:
+Before any material PC/browser/code/asset mutation, create one temporary JSON decision packet and run the repository's already-classified deterministic operator gate:
 
-\`node <plugin-root>/tools/quality-decision-gate.mjs --input <decision-packet.json>\`
+\`node tools/gameroad-operator-package.mjs --quality-input <decision-packet.json>\`
 
 The packet is ephemeral evidence for this mutation. Do not create a second project tracker or authority from it. CURRENT and the active lease remain authoritative.
 

@@ -1442,7 +1442,7 @@ test('Cards Base52 common face consumer mounts reused art plus color-independent
 test('Cards Base52 common face mount ignores non-Base52 cards instead of inventing a mapping', async () => {
   const { readFile } = await import('node:fs/promises');
   const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
-  const start = source.indexOf('export function installBase52CommonFaceCards');
+  const start = source.indexOf('function mountBase52CommonFaceOnNode');
   const end = source.indexOf('function byCardId', start);
   const slice = source.slice(start, end);
   assert.ok(start >= 0 && end > start);

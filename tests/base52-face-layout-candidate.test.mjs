@@ -2,9 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  BASE52_EXTERNAL_FACE_SOURCE,
   BASE52_FACE_LAYOUT_CANDIDATE,
   buildBase52FaceLayoutCandidateManifest,
   createBase52FaceLayoutCandidate,
+  resolveBase52ExternalFaceAsset,
 } from '../browser/base52-face-layout-candidate.mjs';
 
 function fixtureDeck() {
@@ -66,6 +68,7 @@ test('face-down plans leak no canonical id, rank, or suit from the caller card',
   assert.equal(plan.face, 'back');
   assert.equal(plan.publicIdentity, null);
   assert.equal(plan.cornerIndex, null);
+  assert.equal(plan.externalFaceAsset, null);
   assert.equal(plan.secretFaceLeakage, false);
   assert.equal(encoded.includes(card.canonicalCardId), false);
   assert.equal(encoded.includes(card.suit), false);
@@ -133,4 +136,55 @@ test('does not mutate caller-supplied card registry or preferences', () => {
 
   assert.deepEqual(cards, beforeCards);
   assert.deepEqual(prefs, beforePrefs);
+});
+
+
+test('maps all 52 canonical rank-suit pairs to one pinned external SVG donor without generated placeholders', () => {
+  const manifest = buildBase52FaceLayoutCandidateManifest(fixtureDeck());
+
+  assert.equal(manifest.externalFaceCoverage, 52);
+  assert.equal(new Set(manifest.entries.map(entry => entry.externalFaceAsset.sourceUrl)).size, 52);
+  assert.equal(BASE52_EXTERNAL_FACE_SOURCE.disposition, 'REUSE_COMPOSE');
+  assert.equal(BASE52_EXTERNAL_FACE_SOURCE.directUseCandidate.repository, 'Webisso/playing-cards');
+  assert.equal(BASE52_EXTERNAL_FACE_SOURCE.directUseCandidate.commit, '50a3f7be7d6b7248da5f5c56533e1c5414aefb40');
+  assert.equal(BASE52_EXTERNAL_FACE_SOURCE.directUseCandidate.license, 'MIT');
+  assert.equal(BASE52_EXTERNAL_FACE_SOURCE.generatedFromModelDefaults, false);
+  assert.equal(BASE52_FACE_LAYOUT_CANDIDATE.generatedPlaceholderAllowed, false);
+  assert.equal(BASE52_FACE_LAYOUT_CANDIDATE.codeDrawnFormalFaceAllowed, false);
+  for (const entry of manifest.entries) {
+    assert.equal(entry.externalFaceAsset.generatedFromModelDefaults, false);
+    assert.equal(entry.externalFaceAsset.formalAssetAccepted, false);
+    assert.match(entry.externalFaceAsset.sourceUrl, /^https:\/\/raw\.githubusercontent\.com\/Webisso\/playing-cards\/50a3f7be7d6b7248da5f5c56533e1c5414aefb40\/svg\/.+\.svg$/);
+  }
+});
+
+test('uses predictable donor filenames for number and court cards while keeping caller canonical ids authoritative', () => {
+  const cases = [
+    [{ canonicalCardId: 'fixture:spades:A', suit: 'spades', rank: 'A' }, 'ace_of_spades.svg'],
+    [{ canonicalCardId: 'fixture:hearts:10', suit: 'hearts', rank: '10' }, '10_of_hearts.svg'],
+    [{ canonicalCardId: 'fixture:diamonds:Q', suit: 'diamonds', rank: 'Q' }, 'queen_of_diamonds.svg'],
+    [{ canonicalCardId: 'fixture:clubs:K', suit: 'clubs', rank: 'K' }, 'king_of_clubs.svg'],
+  ];
+
+  for (const [card, filename] of cases) {
+    const asset = resolveBase52ExternalFaceAsset(card);
+    assert.equal(asset.canonicalCardId, card.canonicalCardId);
+    assert.equal(asset.sourceFilename, filename);
+    assert.ok(asset.sourceUrl.endsWith('/svg/' + filename));
+  }
+});
+
+test('records external accessibility and rights references without promoting them to formal GAMEROAD art', () => {
+  const refs = BASE52_EXTERNAL_FACE_SOURCE.readabilityReferences;
+
+  assert.ok(refs.some(ref => ref.repository === 'saulspatz/SVGCards' && ref.license === 'public-domain'));
+  assert.ok(refs.some(ref => ref.repository === 'AustinGabriel/Public-Domain-and-CC0-Playing-Cards' && ref.license === 'CC0/public-domain'));
+  assert.ok(refs.some(ref => ref.product === 'Balatro'));
+  assert.equal(BASE52_EXTERNAL_FACE_SOURCE.formalAssetAccepted, false);
+
+  const plan = createBase52FaceLayoutCandidate({ canonicalCardId: 'fixture:clubs:2', suit: 'clubs', rank: '2' }, { lowPerf: true });
+  assert.equal(plan.externalFacePolicy.generatedPlaceholderAllowed, false);
+  assert.equal(plan.externalFacePolicy.codeDrawnFormalFaceAllowed, false);
+  assert.equal(plan.externalFacePolicy.identityFallback, 'corner-index');
+  assert.equal(plan.externalFacePolicy.lowPerfCenterArtOptional, true);
 });

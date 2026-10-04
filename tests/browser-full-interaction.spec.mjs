@@ -652,6 +652,12 @@ test('Setup Quick Deck previews selected decks 1-3 read-only and keeps the exist
     }));
     expect(selected.selectedDeckIndex).toBe(deckNumber - 1);
 
+    const mobileDeckBackdrop = cards.locator('#r4DeckBackdrop:visible');
+    if ((await mobileDeckBackdrop.count()) > 0) {
+      await mobileDeckBackdrop.click();
+      await page.waitForTimeout(120);
+    }
+
     const back = cards.locator('[data-back]').first();
     await expect(back).toBeVisible();
     await back.click();

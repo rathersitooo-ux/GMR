@@ -1450,7 +1450,7 @@ test('Cards Base52 common face mount ignores non-Base52 cards instead of inventi
   assert.match(slice, /if \(!asset\)/);
   assert.match(slice, /removeBase52CommonFaceFromNode\(node\)/);
   assert.match(slice, /base52-common-face-index/);
-  assert.match(slice, /fail-soft-identity-remains/);
+  assert.match(source, /networkFailure: 'fail-soft-identity-remains'/);
   assert.equal(slice.includes('card.power ='), false);
   assert.equal(slice.includes('card.value ='), false);
   assert.equal(slice.includes('fetch('), false);

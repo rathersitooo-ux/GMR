@@ -1214,6 +1214,126 @@ test('covers Setup Honey/4P/2v2 plus Friend Room create, ready, waiting, and lea
   runtime.assertClean(testInfo);
 });
 
+
+test('Setup Quick Deck keeps selected Deck 1 to 3 read-only and matches the next Battle snapshot', async ({ page }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+  const installed = await installLegalBattleDeck(page);
+  expect(installed.main).toHaveLength(40);
+  expect(installed.committed).toBeTruthy();
+
+  const setupGo = visibleOperationGo(page, 'setup');
+  await expect(setupGo).toBeVisible();
+  await setupGo.click();
+  const setup = page.locator('section[data-screen="setup"]');
+  const trigger = setup.locator('[data-role="setup-quick-deck-open"]');
+  const preview = setup.locator('[data-role="setup-quick-deck-preview"]');
+  const start = setup.locator('#startMatch');
+  await expect(setup).toBeVisible();
+  await expect(trigger).toBeVisible();
+
+  const openAndRead = async (deckNumber) => {
+    await expect(trigger).toContainText('デッキ' + deckNumber);
+    await trigger.click();
+    await expect(preview).toBeVisible();
+    await expect(preview).toHaveAttribute('data-selected-deck-number', String(deckNumber));
+    const counts = {
+      main: Number(await preview.getAttribute('data-main-count')),
+      ex: Number(await preview.getAttribute('data-ex-count')),
+    };
+    await expect(start, 'Quick Deck must not hide the existing Battle start CTA').toBeVisible();
+    const [previewBox, startBox] = await Promise.all([preview.boundingBox(), start.boundingBox()]);
+    expect(previewBox).not.toBeNull();
+    expect(startBox).not.toBeNull();
+    const overlaps = previewBox.x < startBox.x + startBox.width
+      && previewBox.x + previewBox.width > startBox.x
+      && previewBox.y < startBox.y + startBox.height
+      && previewBox.y + previewBox.height > startBox.y;
+    expect(overlaps, 'Quick Deck must stay out of the Battle start CTA hit area').toBe(false);
+    return counts;
+  };
+
+  const beforeOpen = await page.evaluate(() => ({
+    selectedDeckIndex: window.__GAMEROAD_TEST__.state.selectedDeckIndex,
+    savedDeck: structuredClone(window.__GAMEROAD_TEST__.state.savedDeck),
+  }));
+  expect(await openAndRead(1)).toEqual({ main: 40, ex: 0 });
+  await page.keyboard.press('Escape');
+  await expect(preview).toBeHidden();
+  await expect(trigger).toBeFocused();
+  expect(await page.evaluate(() => ({
+    selectedDeckIndex: window.__GAMEROAD_TEST__.state.selectedDeckIndex,
+    savedDeck: structuredClone(window.__GAMEROAD_TEST__.state.savedDeck),
+  }))).toEqual(beforeOpen);
+
+  const switchThroughExistingEditor = async (deckNumber) => {
+    await trigger.click();
+    await expect(preview).toBeVisible();
+    await preview.locator('[data-role="setup-quick-deck-edit"]').click();
+    const cards = page.locator('section[data-screen="cards"]');
+    await expect(cards).toBeVisible();
+    const picker = cards.locator('#deckSlotPicker button').nth(deckNumber - 1);
+    if (!(await picker.isVisible().catch(() => false))) {
+      const tray = cards.locator('#r4DeckTrayToggle:visible');
+      if ((await tray.count()) > 0) await tray.click();
+    }
+    await expect(picker).toBeVisible();
+    await picker.click();
+    await backOperationVisible(page);
+    await expect(setup).toBeVisible();
+    await expect(setup.locator('#setupDeckIdentity')).toContainText('デッキ' + deckNumber);
+    await expect(trigger).toContainText('デッキ' + deckNumber);
+  };
+
+  await switchThroughExistingEditor(2);
+  expect(await openAndRead(2)).toEqual({ main: 0, ex: 0 });
+  await expect(start).toBeDisabled();
+  await preview.locator('[data-role="setup-quick-deck-close"]').click();
+  await switchThroughExistingEditor(3);
+  expect(await openAndRead(3)).toEqual({ main: 0, ex: 0 });
+  await expect(start).toBeDisabled();
+  await preview.locator('[data-role="setup-quick-deck-close"]').click();
+  await switchThroughExistingEditor(1);
+  expect(await openAndRead(1)).toEqual({ main: 40, ex: 0 });
+  await expect(start).toBeEnabled();
+
+  const back = setup.locator('[data-back]');
+  await back.click();
+  await expect(setup, 'first Back while Quick Deck is open closes only the preview').toBeVisible();
+  await expect(preview).toBeHidden();
+  await back.click();
+  await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+
+  const setupAgain = visibleOperationGo(page, 'setup');
+  await setupAgain.click();
+  await expect(setup).toBeVisible();
+  await trigger.click();
+  await expect(preview).toBeVisible();
+  const previewMainIds = await preview.locator('[data-role="setup-quick-deck-main"] [data-card-id]').evaluateAll(
+    (nodes) => nodes.map((node) => node.dataset.cardId),
+  );
+  expect(previewMainIds).toHaveLength(40);
+  await attachStateScreenshot(page, testInfo, 'setup-quick-deck-selected-visible');
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(preview).toBeVisible();
+  await start.click();
+  const battle = page.locator('section[data-screen="battle"]');
+  await expect(battle).toBeVisible();
+  const matchStart = await page.evaluate(() => ({
+    selectedDeckIndex: window.__GAMEROAD_TEST__.state.selectedDeckIndex,
+    main: [...(window.__GAMEROAD_TEST__.state.match?.deckStartSnapshot?.deck?.main ?? [])],
+    ex: [...(window.__GAMEROAD_TEST__.state.match?.deckStartSnapshot?.deck?.ex ?? [])],
+  }));
+  expect(matchStart.selectedDeckIndex).toBe(0);
+  expect(matchStart.main).toEqual(previewMainIds);
+  expect(matchStart.ex).toEqual([]);
+  await attachStateScreenshot(page, testInfo, 'setup-quick-deck-match-snapshot-visible');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+
+  runtime.assertClean(testInfo);
+});
+
 test('covers Settings reduced-motion/low-performance, volume and mute controls, then Gacha open/detail/back/cards', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);

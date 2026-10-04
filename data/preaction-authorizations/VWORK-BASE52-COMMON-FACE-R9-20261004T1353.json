@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-BASE52-COMMON-FACE-R9-20261004T1353",
+  "taskId": "CARD-BASE52-FORMAL-FACE-ASSET-CONNECTION-001",
+  "workUnitKey": "BASE52_COMMON_FACE_ASSET_LAYER_R9",
+  "acquireKey": "BASE52-COMMON-FACE-R9-20261004T1353-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "ROW60_R7_BASE52_CORE+R8_PR2251_DONOR+FRESH_WEBISSO_SVGCARDS_CC0_RESEARCH_20261004",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R7_BASE52_7OF7+R8_DONOR_DIFF+CURRENT_MAIN_BASE52_CORE",
+  "proceedToken": "PROCEED|VWORK-BASE52-COMMON-FACE-R9-20261004T1353|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|base52-external-face-mapping|lease-A6",
+  "authorizationBaseSha": "737151157b095004e9d9821a4dba33661df58d9c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "CARD-BASE52-FORMAL-FACE-ASSET-CONNECTION-001",
+  "leaseWorkUnitKey": "BASE52_COMMON_FACE_ASSET_LAYER_R9",
+  "leaseAcquireKey": "BASE52-COMMON-FACE-R9-20261004T1353-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-04 13:56 JST",
+  "leaseUntilJst": "2026-10-04 14:53 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "browser/base52-face-layout-candidate.mjs; tests/base52-face-layout-candidate.test.mjs; browser/base52-common-face-assets.mjs; tests/base52-common-face-assets.test.mjs; data/preaction-authorizations/VWORK-BASE52-COMMON-FACE-R9-20261004T1353.json temporary branch-history witness only; new bounded BASE52 common-face asset/manifest files if required; own fresh branch/PR/check/readback; own CURRENT R25 event/lease records; GAMEROAD 全作業一覧 row60 bounded evidence/resume sync",
+  "scope": [
+    "browser/base52-face-layout-candidate.mjs",
+    "tests/base52-face-layout-candidate.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/base52-face-layout-candidate.mjs",
+    "tests/base52-face-layout-candidate.test.mjs"
+  ]
+}

@@ -191,7 +191,7 @@ set "RC=%ERRORLEVEL%"
 if not "%RC%"=="0" (
   echo.
   echo GAMEROAD Free Bridge installation failed with exit code %RC%.
-  pause
+  if /I not "%GITHUB_ACTIONS%"=="true" pause
 )
 exit /b %RC%
 ###GRFB_POWERSHELL###

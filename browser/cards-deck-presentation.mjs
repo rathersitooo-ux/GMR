@@ -1,7 +1,7 @@
 export * from './cards-deck-presentation-core.mjs';
 
 import './deck-save-recovery-core.mjs';
-import { createDeckSwipePresentationController } from './cards-deck-presentation-core.mjs';
+import { createDeckSwipePresentationController, createSetupQuickDeckPreview } from './cards-deck-presentation-core.mjs';
 import { resolveDeckEditorSwipe } from './deck-storage-corner-core.mjs';
 import {
   createDeckStorageCornerController,
@@ -9,6 +9,7 @@ import {
 } from './deck-storage-corner-runtime.mjs';
 
 const deckStorageLiveInstallations = new WeakMap();
+const setupQuickDeckPreviewInstallations = new WeakMap();
 const cardsDeckFindabilityInstallations = new WeakMap();
 const cardsInspectorDismissInstallations = new WeakMap();
 const cardsInspectorDeckContextInstallations = new WeakMap();
@@ -1384,6 +1385,226 @@ export function installCardsVoteUiRepair({
   return controller;
 }
 
+
+export function readSetupQuickDeckPreviewSource(runtimeGlobal = globalThis) {
+  const state = runtimeGlobal?.__GAMEROAD_TEST__?.state;
+  if (!state || typeof state !== 'object') return null;
+  const selectedDeckNumber = Number(state.selectedDeckIndex) + 1;
+  if (!Number.isInteger(selectedDeckNumber) || selectedDeckNumber < 1 || selectedDeckNumber > 3) return null;
+  try {
+    return createSetupQuickDeckPreview({
+      selectedDeckNumber,
+      savedDeck: state.savedDeck,
+      savedDeckRule: state.savedDeckRule,
+    });
+  } catch {
+    return null;
+  }
+}
+
+function setupQuickDeckCardLabel(runtimeGlobal, cardId) {
+  const id = String(cardId ?? '');
+  const cards = Array.isArray(runtimeGlobal?.__CARD_DATA__) ? runtimeGlobal.__CARD_DATA__ : [];
+  const card = cards.find((candidate) => String(candidate?.id ?? '') === id);
+  return String(card?.display_name ?? id);
+}
+
+export function installSetupQuickDeckPreview({
+  document: doc = globalThis.document,
+  window: win = globalThis.window,
+  global: runtimeGlobal = globalThis,
+  readSource = null,
+} = {}) {
+  const empty = () => Object.freeze({ render() { return null; }, open() { return false; }, close() { return false; }, destroy() {} });
+  if (!doc?.querySelector || !doc?.createElement) return empty();
+  const prior = setupQuickDeckPreviewInstallations.get(doc);
+  if (prior) return prior;
+
+  const setup = doc.querySelector('section[data-screen="setup"]');
+  const setupBox = setup?.querySelector?.('.setupBox');
+  const recovery = setup?.querySelector?.('.setupDeckRecovery');
+  const existingEdit = setup?.querySelector?.('#fixDeckFromSetup');
+  if (!setup || !setupBox || !recovery || !existingEdit) return empty();
+
+  const sourceReader = typeof readSource === 'function'
+    ? readSource
+    : () => readSetupQuickDeckPreviewSource(runtimeGlobal);
+
+  const trigger = doc.createElement('button');
+  trigger.type = 'button';
+  trigger.className = 'btn setupQuickDeckOpen';
+  trigger.dataset.role = 'setup-quick-deck-open';
+  trigger.setAttribute?.('aria-expanded', 'false');
+  trigger.setAttribute?.('aria-controls', 'setupQuickDeckPreview');
+  trigger.textContent = 'デッキを確認';
+
+  const host = doc.createElement('aside');
+  host.id = 'setupQuickDeckPreview';
+  host.dataset.role = 'setup-quick-deck-preview';
+  host.hidden = true;
+  host.setAttribute?.('role', 'dialog');
+  host.setAttribute?.('aria-modal', 'false');
+  host.setAttribute?.('aria-label', '選択中デッキの確認');
+  host.innerHTML = '<header><div><span>QUICK DECK</span><strong data-role="setup-quick-deck-title"></strong><small data-role="setup-quick-deck-counts"></small></div><button type="button" data-role="setup-quick-deck-close" aria-label="デッキ確認を閉じる">×</button></header><div class="setupQuickDeckBody"><section><b>MAIN</b><div data-role="setup-quick-deck-main"></div></section><section data-role="setup-quick-deck-ex-section"><b>EX</b><div data-role="setup-quick-deck-ex"></div></section></div><footer><span>確認専用・内容は変更しません</span><button type="button" class="btn" data-role="setup-quick-deck-edit">編集へ</button></footer>';
+
+  recovery.after?.(trigger);
+  if (!trigger.parentNode) setupBox.insertBefore?.(trigger, setup.querySelector?.('#friendRoomEntry') ?? null);
+  setup.appendChild?.(host);
+
+  if (!doc.getElementById?.('gameroad-setup-quick-deck-preview-style')) {
+    const style = doc.createElement('style');
+    style.id = 'gameroad-setup-quick-deck-preview-style';
+    style.textContent = '.screen.setup [data-role="setup-quick-deck-open"]{grid-column:1/-1;min-height:44px}.screen.setup [data-role="setup-quick-deck-preview"]{position:absolute;left:2.5%;top:70px;bottom:5%;width:50%;z-index:58;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:8px;padding:12px;border:1px solid rgba(197,246,228,.34);border-radius:14px;background:rgba(3,18,15,.97);box-shadow:0 22px 54px rgba(0,0,0,.42);color:#f5fff9}.screen.setup [data-role="setup-quick-deck-preview"][hidden]{display:none}.screen.setup [data-role="setup-quick-deck-preview"]>header{display:flex;align-items:start;justify-content:space-between;gap:10px}.screen.setup [data-role="setup-quick-deck-preview"]>header>div{display:grid;gap:2px}.screen.setup [data-role="setup-quick-deck-preview"]>header span{font-size:8px;letter-spacing:.14em;color:#a6c6bc}.screen.setup [data-role="setup-quick-deck-preview"]>header strong{font-size:18px}.screen.setup [data-role="setup-quick-deck-preview"]>header small{font-size:9px;color:#c0d7cf}.screen.setup [data-role="setup-quick-deck-close"]{min-width:44px;min-height:44px;border:1px solid rgba(197,246,228,.24);border-radius:999px;background:#09251e;color:inherit;font-size:20px}.setupQuickDeckBody{min-height:0;overflow:auto;display:grid;align-content:start;gap:8px}.setupQuickDeckBody section{display:grid;gap:5px}.setupQuickDeckBody section>b{font-size:8px;letter-spacing:.12em;color:#ffd27e}.setupQuickDeckBody [data-role="setup-quick-deck-main"],.setupQuickDeckBody [data-role="setup-quick-deck-ex"]{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.setupQuickDeckCard{min-width:0;padding:5px 4px;border:1px solid rgba(197,246,228,.16);border-radius:6px;background:rgba(12,44,36,.78);font-size:7px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.screen.setup [data-role="setup-quick-deck-preview"]>footer{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid rgba(197,246,228,.14);padding-top:8px}.screen.setup [data-role="setup-quick-deck-preview"]>footer span{font-size:8px;color:#a6c6bc}.screen.setup [data-role="setup-quick-deck-edit"]{min-height:44px;min-width:88px}@media(max-height:500px) and (orientation:landscape){.screen.setup [data-role="setup-quick-deck-preview"]{left:1.5%;top:50px;bottom:4px;width:44%;padding:7px;gap:4px}.screen.setup [data-role="setup-quick-deck-preview"]>header strong{font-size:13px}.setupQuickDeckBody [data-role="setup-quick-deck-main"],.setupQuickDeckBody [data-role="setup-quick-deck-ex"]{grid-template-columns:repeat(5,minmax(0,1fr));gap:2px}.setupQuickDeckCard{padding:2px 3px;font-size:6px}.screen.setup [data-role="setup-quick-deck-preview"]>footer{padding-top:4px}}@media(max-width:540px) and (orientation:portrait){.screen.setup [data-role="setup-quick-deck-preview"]{left:3%;right:3%;top:54px;bottom:auto;width:auto;height:235px;padding:8px;gap:5px}.screen.setup [data-role="setup-quick-deck-preview"]>header strong{font-size:14px}.setupQuickDeckBody [data-role="setup-quick-deck-main"],.setupQuickDeckBody [data-role="setup-quick-deck-ex"]{grid-template-columns:repeat(8,minmax(0,1fr));gap:2px}.setupQuickDeckCard{padding:2px;font-size:5.8px}.screen.setup [data-role="setup-quick-deck-preview"]>footer{padding-top:4px}}@media(prefers-reduced-motion:reduce){.screen.setup [data-role="setup-quick-deck-preview"]{scroll-behavior:auto}}';
+    (doc.head ?? doc.documentElement)?.appendChild?.(style);
+  }
+
+  const title = host.querySelector?.('[data-role="setup-quick-deck-title"]');
+  const counts = host.querySelector?.('[data-role="setup-quick-deck-counts"]');
+  const mainRoot = host.querySelector?.('[data-role="setup-quick-deck-main"]');
+  const exRoot = host.querySelector?.('[data-role="setup-quick-deck-ex"]');
+  const exSection = host.querySelector?.('[data-role="setup-quick-deck-ex-section"]');
+  const closeButton = host.querySelector?.('[data-role="setup-quick-deck-close"]');
+  const editButton = host.querySelector?.('[data-role="setup-quick-deck-edit"]');
+  let destroyed = false;
+  let opened = false;
+  let lastFocus = null;
+
+  const renderCards = (root, ids) => {
+    if (!root?.replaceChildren) return;
+    const nodes = ids.map((cardId) => {
+      const node = doc.createElement('span');
+      node.className = 'setupQuickDeckCard';
+      node.dataset.cardId = String(cardId);
+      node.textContent = setupQuickDeckCardLabel(runtimeGlobal, cardId);
+      node.title = node.textContent;
+      return node;
+    });
+    root.replaceChildren(...nodes);
+  };
+
+  const render = () => {
+    if (destroyed) return null;
+    const preview = sourceReader();
+    if (!preview) {
+      trigger.hidden = true;
+      if (opened) {
+        opened = false;
+        host.hidden = true;
+        trigger.setAttribute?.('aria-expanded', 'false');
+        delete setup.dataset.quickDeckPreview;
+      }
+      return null;
+    }
+    trigger.hidden = false;
+    trigger.textContent = 'デッキ' + preview.selectedDeckNumber + 'を確認';
+    host.dataset.selectedDeckNumber = String(preview.selectedDeckNumber);
+    host.dataset.mainCount = String(preview.deck.mainCount);
+    host.dataset.exCount = String(preview.deck.exCount);
+    if (title) title.textContent = 'デッキ' + preview.selectedDeckNumber;
+    if (counts) counts.textContent = 'メイン ' + preview.deck.mainCount + ' / EX ' + preview.deck.exCount;
+    renderCards(mainRoot, preview.deck.main);
+    renderCards(exRoot, preview.deck.ex);
+    if (exSection) exSection.hidden = preview.deck.exCount === 0;
+    return preview;
+  };
+
+  const close = ({ restoreFocus = true } = {}) => {
+    if (!opened) return false;
+    opened = false;
+    host.hidden = true;
+    trigger.setAttribute?.('aria-expanded', 'false');
+    delete setup.dataset.quickDeckPreview;
+    if (restoreFocus) {
+      const target = lastFocus?.isConnected ? lastFocus : trigger;
+      try { target?.focus?.({ preventScroll: true }); } catch { try { target?.focus?.(); } catch {} }
+    }
+    lastFocus = null;
+    return true;
+  };
+
+  const open = () => {
+    const preview = render();
+    if (!preview) return false;
+    if (opened) return true;
+    opened = true;
+    lastFocus = doc.activeElement ?? trigger;
+    host.hidden = false;
+    setup.dataset.quickDeckPreview = 'open';
+    trigger.setAttribute?.('aria-expanded', 'true');
+    try { closeButton?.focus?.({ preventScroll: true }); } catch { try { closeButton?.focus?.(); } catch {} }
+    return true;
+  };
+
+  const onTrigger = () => { if (opened) close(); else open(); };
+  const onClose = () => close();
+  const onEdit = () => {
+    if (!opened) return;
+    close({ restoreFocus: false });
+    existingEdit.click?.();
+  };
+  const onKeyDown = (event) => {
+    if (!opened || event?.key !== 'Escape') return;
+    event.preventDefault?.();
+    event.stopPropagation?.();
+    event.stopImmediatePropagation?.();
+    close();
+  };
+  const onClickCapture = (event) => {
+    if (!opened) return;
+    const target = event?.target;
+    if (target?.closest?.('section[data-screen="setup"] [data-back]')) {
+      event.preventDefault?.();
+      event.stopPropagation?.();
+      event.stopImmediatePropagation?.();
+      close();
+      return;
+    }
+    if (target && (host.contains?.(target) || trigger.contains?.(target))) return;
+    close({ restoreFocus: false });
+  };
+
+  trigger.addEventListener?.('click', onTrigger);
+  closeButton?.addEventListener?.('click', onClose);
+  editButton?.addEventListener?.('click', onEdit);
+  doc.addEventListener?.('keydown', onKeyDown, true);
+  doc.addEventListener?.('click', onClickCapture, true);
+
+  const MutationObserverCtor = win?.MutationObserver ?? globalThis.MutationObserver;
+  const observer = typeof MutationObserverCtor === 'function' ? new MutationObserverCtor(() => render()) : null;
+  for (const source of [setup.querySelector?.('#setupDeckIdentity'), setup.querySelector?.('#setupDeckNote')]) {
+    if (source) observer?.observe?.(source, { childList: true, characterData: true, subtree: true });
+  }
+  render();
+
+  const installation = Object.freeze({
+    render,
+    open,
+    close,
+    state: () => Object.freeze({ open: opened, preview: render() }),
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      observer?.disconnect?.();
+      trigger.removeEventListener?.('click', onTrigger);
+      closeButton?.removeEventListener?.('click', onClose);
+      editButton?.removeEventListener?.('click', onEdit);
+      doc.removeEventListener?.('keydown', onKeyDown, true);
+      doc.removeEventListener?.('click', onClickCapture, true);
+      trigger.remove?.();
+      host.remove?.();
+      setupQuickDeckPreviewInstallations.delete(doc);
+    },
+  });
+  setupQuickDeckPreviewInstallations.set(doc, installation);
+  return installation;
+}
+
+function autoInstallSetupQuickDeckPreview(doc, win, runtimeGlobal) {
+  const install = () => installSetupQuickDeckPreview({ document: doc, window: win, global: runtimeGlobal });
+  if (doc?.readyState === 'loading') doc.addEventListener?.('DOMContentLoaded', install, { once: true });
+  else install();
+}
+
 function autoInstallDeckStorageLiveMount(doc, win) {
   const install = () => installDeckStorageLiveMount({ document: doc, window: win });
   if (doc?.readyState === 'loading') doc.addEventListener?.('DOMContentLoaded', install, { once: true });
@@ -1398,6 +1619,7 @@ function autoInstallCardsDeckFindability(doc, win) {
 
 if (typeof document !== 'undefined') {
   autoInstallDeckStorageLiveMount(document, globalThis.window);
+  autoInstallSetupQuickDeckPreview(document, globalThis.window, globalThis);
   autoInstallCardsDeckFindability(document, globalThis.window);
   installCardsSelectionPressReleaseFeedback({ document, window: globalThis.window });
   installCardsVoteUiRepair({ document, window: globalThis.window });

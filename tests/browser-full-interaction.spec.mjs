@@ -614,7 +614,7 @@ test('Setup Quick Deck previews selected decks 1-3 read-only and keeps the exist
   await trigger.click();
   await expect(panel).toBeVisible();
   await expect(panel.locator('[data-role="setup-quick-deck-title"]')).toHaveText('デッキ1');
-  await expect(panel.locator('[data-role="setup-quick-deck-summary"]')).toHaveText('メイン40・EX0');
+  await expect(panel.locator('[data-role="setup-quick-deck-summary"]')).toHaveText('メイン40・EX 0');
   expect(await panel.locator('[data-role="setup-quick-deck-main"] [data-card-id]').count()).toBe(40);
   expect(await panel.locator('[data-role="setup-quick-deck-ex"] [data-card-id]').count()).toBe(0);
   const afterDeck1 = await page.evaluate(() => ({
@@ -659,7 +659,7 @@ test('Setup Quick Deck previews selected decks 1-3 read-only and keeps the exist
     await trigger.click();
     await expect(panel).toBeVisible();
     await expect(panel.locator('[data-role="setup-quick-deck-title"]')).toHaveText(`デッキ${deckNumber}`);
-    await expect(panel.locator('[data-role="setup-quick-deck-summary"]')).toHaveText('メイン0・EX0');
+    await expect(panel.locator('[data-role="setup-quick-deck-summary"]')).toHaveText('メイン0・EX 0');
     expect(await panel.locator('[data-card-id]').count()).toBe(0);
 
     const afterPreview = await page.evaluate(() => ({

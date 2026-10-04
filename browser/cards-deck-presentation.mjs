@@ -1,7 +1,10 @@
 export * from './cards-deck-presentation-core.mjs';
 
 import './deck-save-recovery-core.mjs';
-import { createDeckSwipePresentationController } from './cards-deck-presentation-core.mjs';
+import {
+  createDeckSwipePresentationController,
+  createSetupQuickDeckPreview,
+} from './cards-deck-presentation-core.mjs';
 import { resolveDeckEditorSwipe } from './deck-storage-corner-core.mjs';
 import {
   createDeckStorageCornerController,
@@ -14,6 +17,7 @@ const cardsInspectorDismissInstallations = new WeakMap();
 const cardsInspectorDeckContextInstallations = new WeakMap();
 const cardsVoteUiRepairInstallations = new WeakMap();
 const cardsSelectionFeedbackInstallations = new WeakMap();
+const setupQuickDeckPreviewInstallations = new WeakMap();
 const CARDS_FAVORITE_STORAGE_KEY = 'gameroad.cards.favorite.v1';
 const DECK_SWIPE_DISCOVERY_STORAGE_KEY = 'gameroad.cards.deckSwipeDiscovery.v1';
 
@@ -1384,6 +1388,258 @@ export function installCardsVoteUiRepair({
   return controller;
 }
 
+
+export function readSetupQuickDeckPreviewSnapshot({ window: win = globalThis.window } = {}) {
+  const state = win?.__GAMEROAD_TEST__?.state;
+  const selectedDeckIndex = Number(state?.selectedDeckIndex);
+  if (!Number.isInteger(selectedDeckIndex) || selectedDeckIndex < 0 || selectedDeckIndex > 2) return null;
+  try {
+    return createSetupQuickDeckPreview({
+      selectedDeckNumber: selectedDeckIndex + 1,
+      savedDeck: state?.savedDeck,
+      savedDeckRule: state?.savedDeckRule,
+    });
+  } catch {
+    return null;
+  }
+}
+
+function compactQuickDeckCardLabel(win, id) {
+  const key = String(id ?? '');
+  const source = Array.isArray(win?.__CARD_DATA__) ? win.__CARD_DATA__ : [];
+  const card = source.find((candidate) => String(candidate?.id ?? '') === key);
+  return String(card?.display_name ?? card?.canonical_name ?? key);
+}
+
+export function installSetupQuickDeckPreview({
+  document: doc = globalThis.document,
+  window: win = globalThis.window,
+} = {}) {
+  if (!doc?.querySelector || !doc?.createElement) {
+    return Object.freeze({ render() { return null; }, open() { return false; }, close() {}, destroy() {} });
+  }
+  const existing = setupQuickDeckPreviewInstallations.get(doc);
+  if (existing) return existing;
+
+  const setup = doc.querySelector('section[data-screen="setup"]');
+  const box = setup?.querySelector?.('.setupBox');
+  const deckIdentity = setup?.querySelector?.('#setupDeckIdentity');
+  const editRoute = setup?.querySelector?.('#fixDeckFromSetup');
+  const startMatch = setup?.querySelector?.('#startMatch');
+  if (!setup || !box || !deckIdentity || !startMatch) {
+    return Object.freeze({ render() { return null; }, open() { return false; }, close() {}, destroy() {} });
+  }
+
+  const trigger = doc.createElement('button');
+  trigger.type = 'button';
+  trigger.className = 'btn setupQuickDeckTrigger';
+  trigger.dataset.role = 'setup-quick-deck-trigger';
+  trigger.setAttribute('aria-haspopup', 'dialog');
+  trigger.setAttribute('aria-expanded', 'false');
+
+  const panel = doc.createElement('section');
+  panel.dataset.role = 'setup-quick-deck-preview';
+  panel.className = 'setupQuickDeckPreview';
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-modal', 'false');
+  panel.setAttribute('aria-label', '選択中デッキの確認');
+  panel.hidden = true;
+
+  const head = doc.createElement('div');
+  head.className = 'setupQuickDeckHead';
+  const title = doc.createElement('b');
+  title.dataset.role = 'setup-quick-deck-title';
+  const summary = doc.createElement('span');
+  summary.dataset.role = 'setup-quick-deck-summary';
+  head.append(title, summary);
+
+  const mainList = doc.createElement('div');
+  mainList.className = 'setupQuickDeckCards';
+  mainList.dataset.role = 'setup-quick-deck-main';
+  mainList.setAttribute('aria-label', 'メインデッキ');
+  const exList = doc.createElement('div');
+  exList.className = 'setupQuickDeckCards setupQuickDeckEx';
+  exList.dataset.role = 'setup-quick-deck-ex';
+  exList.setAttribute('aria-label', 'EXデッキ');
+
+  const actions = doc.createElement('div');
+  actions.className = 'setupQuickDeckActions';
+  const edit = doc.createElement('button');
+  edit.type = 'button';
+  edit.className = 'btn';
+  edit.dataset.role = 'setup-quick-deck-edit';
+  edit.textContent = '編集へ';
+  const closeButton = doc.createElement('button');
+  closeButton.type = 'button';
+  closeButton.className = 'btn primary';
+  closeButton.dataset.role = 'setup-quick-deck-close';
+  closeButton.textContent = '閉じる';
+  actions.append(edit, closeButton);
+  panel.append(head, mainList, exList, actions);
+
+  startMatch.before?.(trigger);
+  trigger.after?.(panel);
+  if (!trigger.parentNode) box.insertBefore?.(trigger, startMatch);
+  if (!panel.parentNode) box.insertBefore?.(panel, startMatch);
+
+  if (!doc.getElementById?.('gameroad-setup-quick-deck-preview-style')) {
+    const style = doc.createElement('style');
+    style.id = 'gameroad-setup-quick-deck-preview-style';
+    style.textContent = `
+[data-role="setup-quick-deck-trigger"],[data-role="setup-quick-deck-preview"]{grid-column:1/-1}
+[data-role="setup-quick-deck-trigger"]{min-height:44px;text-align:left;justify-content:flex-start}
+[data-role="setup-quick-deck-preview"]{display:grid;gap:7px;padding:8px;border:1px solid rgba(160,239,213,.32);border-radius:9px;background:rgba(3,18,16,.94);box-shadow:0 12px 28px rgba(0,0,0,.24)}
+[data-role="setup-quick-deck-preview"][hidden]{display:none!important}
+.setupQuickDeckHead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;min-width:0}
+.setupQuickDeckHead b{font-size:11px}.setupQuickDeckHead span{font-size:8px;color:#a6c6bc;white-space:nowrap}
+.setupQuickDeckCards{display:flex;gap:4px;max-height:64px;overflow:auto;padding:2px;overscroll-behavior:contain}
+.setupQuickDeckCards:empty{display:none}
+.setupQuickDeckCard{flex:0 0 auto;max-width:116px;padding:5px 7px;border:1px solid rgba(197,246,228,.18);border-radius:6px;background:rgba(10,32,27,.9);font:800 8px/1.2 system-ui;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.setupQuickDeckEx .setupQuickDeckCard{border-color:rgba(255,208,123,.3)}
+.setupQuickDeckActions{display:flex;justify-content:flex-end;gap:6px}
+.setupQuickDeckActions .btn{min-height:36px}
+@media(max-height:500px) and (orientation:landscape){[data-role="setup-quick-deck-trigger"]{min-height:32px;font-size:8px}.setupQuickDeckCards{max-height:46px}.setupQuickDeckCard{max-width:92px;padding:3px 5px;font-size:7px}.setupQuickDeckActions .btn{min-height:30px;padding:3px 8px;font-size:8px}}
+@media(max-width:540px) and (orientation:portrait){[data-role="setup-quick-deck-trigger"]{min-height:40px;font-size:9px}.setupQuickDeckCards{max-height:54px}.setupQuickDeckCard{max-width:104px}.setupQuickDeckActions .btn{min-height:38px}}
+`;
+    (doc.head ?? doc.documentElement)?.appendChild?.(style);
+  }
+
+  let destroyed = false;
+  let open = false;
+  let lastSnapshot = null;
+  let opener = trigger;
+
+  const replaceCards = (root, ids) => {
+    root.replaceChildren?.();
+    for (const id of ids) {
+      const item = doc.createElement('span');
+      item.className = 'setupQuickDeckCard';
+      item.dataset.cardId = String(id);
+      item.textContent = compactQuickDeckCardLabel(win, id);
+      item.title = item.textContent;
+      root.appendChild?.(item);
+    }
+  };
+
+  const render = () => {
+    if (destroyed) return null;
+    const snapshot = readSetupQuickDeckPreviewSnapshot({ window: win });
+    lastSnapshot = snapshot;
+    if (!snapshot) {
+      trigger.hidden = true;
+      panel.hidden = true;
+      open = false;
+      trigger.setAttribute('aria-expanded', 'false');
+      return null;
+    }
+    trigger.hidden = false;
+    trigger.textContent = `デッキ${snapshot.selectedDeckNumber}の中身を見る`;
+    trigger.setAttribute('aria-label', `デッキ${snapshot.selectedDeckNumber}の中身を確認`);
+    title.textContent = `デッキ${snapshot.selectedDeckNumber}`;
+    summary.textContent = `メイン${snapshot.deck.mainCount}・EX${snapshot.deck.exCount}`;
+    replaceCards(mainList, snapshot.deck.main);
+    replaceCards(exList, snapshot.deck.ex);
+    if (open) panel.hidden = false;
+    return snapshot;
+  };
+
+  const close = ({ restoreFocus = true } = {}) => {
+    if (!open) return;
+    open = false;
+    panel.hidden = true;
+    trigger.setAttribute('aria-expanded', 'false');
+    if (restoreFocus) {
+      try { opener?.focus?.({ preventScroll: true }); }
+      catch { try { opener?.focus?.(); } catch {} }
+    }
+  };
+
+  const show = () => {
+    const snapshot = render();
+    if (!snapshot) return false;
+    opener = doc.activeElement ?? trigger;
+    open = true;
+    panel.hidden = false;
+    trigger.setAttribute('aria-expanded', 'true');
+    try { closeButton.focus?.({ preventScroll: true }); }
+    catch { try { closeButton.focus?.(); } catch {} }
+    return true;
+  };
+
+  const onTrigger = () => { if (open) close(); else show(); };
+  const onClose = () => close();
+  const onEdit = () => {
+    if (typeof editRoute?.click !== 'function') return;
+    close({ restoreFocus: false });
+    editRoute.click();
+  };
+  const onKeyDown = (event) => {
+    if (!open || event?.key !== 'Escape') return;
+    event.preventDefault?.();
+    event.stopPropagation?.();
+    close();
+  };
+  const onClickCapture = (event) => {
+    if (!open) return;
+    const target = event?.target;
+    if (target && (panel.contains?.(target) || trigger.contains?.(target))) return;
+    close();
+  };
+
+  trigger.addEventListener?.('click', onTrigger);
+  closeButton.addEventListener?.('click', onClose);
+  edit.addEventListener?.('click', onEdit);
+  doc.addEventListener?.('keydown', onKeyDown, true);
+  doc.addEventListener?.('click', onClickCapture, true);
+
+  const observer = typeof win?.MutationObserver === 'function'
+    ? new win.MutationObserver(() => render())
+    : null;
+  observer?.observe?.(setup, { attributes: true, attributeFilter: ['class'] });
+  observer?.observe?.(deckIdentity, { childList: true, subtree: true, characterData: true });
+  render();
+
+  const installation = Object.freeze({
+    contract: Object.freeze({
+      schema: 'gameroad.setup-quick-deck-live-preview.v1',
+      readOnly: true,
+      ownsDeck: false,
+      mutatesSelection: false,
+      editRoute: 'existing-fixDeckFromSetup-click',
+    }),
+    render,
+    open: show,
+    close,
+    state: () => Object.freeze({
+      open,
+      selectedDeckNumber: lastSnapshot?.selectedDeckNumber ?? null,
+      mainCount: lastSnapshot?.deck?.mainCount ?? null,
+      exCount: lastSnapshot?.deck?.exCount ?? null,
+    }),
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      observer?.disconnect?.();
+      trigger.removeEventListener?.('click', onTrigger);
+      closeButton.removeEventListener?.('click', onClose);
+      edit.removeEventListener?.('click', onEdit);
+      doc.removeEventListener?.('keydown', onKeyDown, true);
+      doc.removeEventListener?.('click', onClickCapture, true);
+      panel.remove?.();
+      trigger.remove?.();
+      setupQuickDeckPreviewInstallations.delete(doc);
+    },
+  });
+  setupQuickDeckPreviewInstallations.set(doc, installation);
+  return installation;
+}
+
+function autoInstallSetupQuickDeckPreview(doc, win) {
+  const install = () => installSetupQuickDeckPreview({ document: doc, window: win });
+  if (doc?.readyState === 'loading') doc.addEventListener?.('DOMContentLoaded', install, { once: true });
+  else install();
+}
+
 function autoInstallDeckStorageLiveMount(doc, win) {
   const install = () => installDeckStorageLiveMount({ document: doc, window: win });
   if (doc?.readyState === 'loading') doc.addEventListener?.('DOMContentLoaded', install, { once: true });
@@ -1399,6 +1655,7 @@ function autoInstallCardsDeckFindability(doc, win) {
 if (typeof document !== 'undefined') {
   autoInstallDeckStorageLiveMount(document, globalThis.window);
   autoInstallCardsDeckFindability(document, globalThis.window);
+  autoInstallSetupQuickDeckPreview(document, globalThis.window);
   installCardsSelectionPressReleaseFeedback({ document, window: globalThis.window });
   installCardsVoteUiRepair({ document, window: globalThis.window });
   installCardsInspectorDeckContext({ document, window: globalThis.window });

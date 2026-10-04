@@ -654,8 +654,11 @@ test('Setup Quick Deck previews selected decks 1-3 read-only and keeps the exist
 
     const mobileDeckBackdrop = cards.locator('#r4DeckBackdrop:visible');
     if ((await mobileDeckBackdrop.count()) > 0) {
-      await mobileDeckBackdrop.click();
+      const closeTrayToggle = cards.locator('#r4DeckTrayToggle:visible');
+      expect(await closeTrayToggle.count(), 'mobile Deck tray keeps its explicit close toggle while open').toBeGreaterThan(0);
+      await closeTrayToggle.click();
       await page.waitForTimeout(120);
+      await expect(cards.locator('#r4DeckBackdrop:visible'), 'mobile Deck tray closes before using the existing screen Back action').toHaveCount(0);
     }
 
     const back = cards.locator('[data-back]').first();

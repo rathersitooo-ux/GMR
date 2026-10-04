@@ -1455,3 +1455,28 @@ test('Cards Base52 common face mount ignores non-Base52 cards instead of inventi
   assert.equal(slice.includes('card.value ='), false);
   assert.equal(slice.includes('fetch('), false);
 });
+
+
+test('Cards Base52 mapping uses one pinned reuse source and fails closed on incomplete 52 coverage', async () => {
+  const mod = await import('../browser/cards-deck-presentation.mjs');
+  const ranks=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+  const ids=['SP','HT','DI','CL'].flatMap((prefix)=>ranks.map((rank)=>`${prefix}_${rank}`));
+
+  assert.equal(mod.BASE52_COMMON_FACE_SOURCE.repository,'Webisso/playing-cards');
+  assert.equal(mod.BASE52_COMMON_FACE_SOURCE.commit,'50a3f7be7d6b7248da5f5c56533e1c5414aefb40');
+  assert.equal(mod.BASE52_COMMON_FACE_SOURCE.runtimeFetch,true);
+  assert.equal(mod.BASE52_COMMON_FACE_SOURCE.formalAssetAccepted,false);
+
+  const ace=mod.resolveBase52CommonFaceAsset('SP_A');
+  assert.equal(ace.rank,'A');
+  assert.equal(ace.suitSymbol,'♠');
+  assert.match(ace.assetUrl,/50a3f7be7d6b7248da5f5c56533e1c5414aefb40\/svg\/ace_of_spades\.svg$/);
+  assert.equal(mod.resolveBase52CommonFaceAsset('GED'),null);
+
+  const manifest=mod.buildBase52CommonFaceManifest(ids);
+  assert.equal(manifest.count,52);
+  assert.equal(new Set(manifest.entries.map((x)=>x.canonicalCardId)).size,52);
+  assert.equal(new Set(manifest.entries.map((x)=>`${x.suit}:${x.rank}`)).size,52);
+  assert.throws(()=>mod.buildBase52CommonFaceManifest(ids.slice(1)),/BASE52_EXACTLY_52_REQUIRED/);
+  assert.throws(()=>mod.buildBase52CommonFaceManifest([...ids.slice(0,51),ids[0]]),/BASE52_CANONICAL_ID_DUPLICATE|BASE52_RANK_SUIT_DUPLICATE/);
+});

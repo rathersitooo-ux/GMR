@@ -70,16 +70,26 @@ if(-not (Test-Path $startupLauncher)){ throw "startup launcher was not installed
 if(Test-Path (Join-Path (Join-Path $relayRoot "inbox") "ci-ping-001.command.json")){ throw "processed ping stayed in inbox" }
 if(-not (Test-Path (Join-Path (Join-Path $relayRoot "archive") "ci-ping-001.command.json"))){ throw "processed ping not archived" }
 
-# Held-out executable side effect through the installed bridge.
-$sentinel=Join-Path $env:RUNNER_TEMP "grfb-command-executed.txt"
-$script = "'bridge-executed' | Set-Content -Encoding UTF8 '" + $sentinel.Replace("'","''") + "'"
-Sign-Command "ci-exec-001" "powershell" @{script=$script;timeout_sec=30}
-$exec=Wait-Result "ci-exec-001"
-$exec | ConvertTo-Json -Depth 20 | Set-Content -Encoding UTF8 (Join-Path $evidenceDir "ci-exec-result.json")
-Write-Host "EXEC_RESULT=$($exec | ConvertTo-Json -Depth 20 -Compress)"
-if($exec.result.status -ne "completed" -or $exec.result.exit_code -ne 0){ throw "powershell command failed" }
-if(-not (Test-Path $sentinel)){ throw "powershell side effect missing" }
-if((Get-Content $sentinel -Raw).Trim() -ne "bridge-executed"){ throw "powershell side effect content mismatch" }
+# Held-out write side effect through the installed bridge.
+$sentinel=Join-Path $env:RUNNER_TEMP "grfb-write-executed.txt"
+Sign-Command "ci-write-001" "write_file" @{path=$sentinel;content="bridge-write-executed"}
+$write=Wait-Result "ci-write-001"
+$write | ConvertTo-Json -Depth 20 | Set-Content -Encoding UTF8 (Join-Path $evidenceDir "ci-write-result.json")
+if($write.result.status -ne "ok"){ throw "write_file command failed" }
+if(-not (Test-Path $sentinel)){ throw "write_file side effect missing" }
+if((Get-Content $sentinel -Raw).Trim() -ne "bridge-write-executed"){ throw "write_file side effect content mismatch" }
+
+# Held-out process launch through the installed bridge.
+$procSentinel=Join-Path $env:RUNNER_TEMP "grfb-process-executed.txt"
+$procArgs="-NoProfile -Command `"Set-Content -LiteralPath '$($procSentinel.Replace("'","''"))' -Value 'bridge-process-executed'`""
+Sign-Command "ci-process-001" "start_process" @{file="powershell.exe";arguments=$procArgs}
+$procResult=Wait-Result "ci-process-001"
+$procResult | ConvertTo-Json -Depth 20 | Set-Content -Encoding UTF8 (Join-Path $evidenceDir "ci-process-result.json")
+if($procResult.result.status -ne "ok"){ throw "start_process command failed" }
+$deadline=(Get-Date).AddSeconds(10)
+while((Get-Date) -lt $deadline -and -not (Test-Path $procSentinel)){ Start-Sleep -Milliseconds 250 }
+if(-not (Test-Path $procSentinel)){ throw "start_process side effect missing" }
+if((Get-Content $procSentinel -Raw).Trim() -ne "bridge-process-executed"){ throw "start_process side effect content mismatch" }
 
 # Bad signature must fail closed.
 $badId="ci-bad-signature-001"
@@ -91,13 +101,13 @@ $bad=Wait-Result $badId
 if($bad.result.status -ne "error" -or $bad.result.error -notmatch "invalid signature"){ throw "bad signature did not fail closed" }
 
 # Duplicate command id must not re-execute after a result already exists.
-$resultPath=Join-Path (Join-Path $relayRoot "outbox") "ci-exec-001.result.json"
+$resultPath=Join-Path (Join-Path $relayRoot "outbox") "ci-write-001.result.json"
 $before=(Get-Item $resultPath).LastWriteTimeUtc
-Copy-Item (Join-Path (Join-Path $relayRoot "archive") "ci-exec-001.command.json") (Join-Path (Join-Path $relayRoot "inbox") "ci-exec-001.command.json") -Force
+Copy-Item (Join-Path (Join-Path $relayRoot "archive") "ci-write-001.command.json") (Join-Path (Join-Path $relayRoot "inbox") "ci-write-001.command.json") -Force
 Start-Sleep -Seconds 2
 $after=(Get-Item $resultPath).LastWriteTimeUtc
 if($after -ne $before){ throw "duplicate command rewrote result / may have re-executed" }
-if(Test-Path (Join-Path (Join-Path $relayRoot "inbox") "ci-exec-001.command.json")){ throw "duplicate command was not drained" }
+if(Test-Path (Join-Path (Join-Path $relayRoot "inbox") "ci-write-001.command.json")){ throw "duplicate command was not drained" }
 
 $config=Get-Content (Join-Path $installRoot "config.json") -Raw | ConvertFrom-Json
 if([string]$config.relay_root -ne $relayRoot){ throw "relay root was not persisted exactly" }
@@ -119,7 +129,7 @@ $evidence=[ordered]@{
   installed_bridge=$true
   startup_launcher=$true
   signed_ping=$ping.result.status
-  executable_command_side_effect=(Get-Content $sentinel -Raw).Trim()
+  write_side_effect=(Get-Content $sentinel -Raw).Trim()\n  process_side_effect=(Get-Content $procSentinel -Raw).Trim()
   invalid_signature_fail_closed=$true
   duplicate_id_no_reexecution=$true
   clean_stop=$true

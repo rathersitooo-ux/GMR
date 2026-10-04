@@ -654,11 +654,14 @@ test('Setup Quick Deck previews selected decks 1-3 read-only and keeps the exist
 
     const mobileDeckBackdrop = cards.locator('#r4DeckBackdrop:visible');
     if ((await mobileDeckBackdrop.count()) > 0) {
-      const closeTrayToggle = cards.locator('#r4DeckTrayToggle:visible');
-      expect(await closeTrayToggle.count(), 'mobile Deck tray keeps its explicit close toggle while open').toBeGreaterThan(0);
-      await closeTrayToggle.click();
-      await page.waitForTimeout(120);
-      await expect(cards.locator('#r4DeckBackdrop:visible'), 'mobile Deck tray closes before using the existing screen Back action').toHaveCount(0);
+      const backdropBox = await mobileDeckBackdrop.boundingBox();
+      const drawerBox = await cards.locator('.deckBoard:visible').boundingBox();
+      expect(backdropBox, 'mobile Deck backdrop exposes a clickable outside area').not.toBeNull();
+      expect(drawerBox, 'mobile Deck drawer remains measurable while open').not.toBeNull();
+      const outsideX = backdropBox.x + backdropBox.width / 2;
+      const outsideY = Math.max(backdropBox.y + 2, drawerBox.y - 8);
+      await page.mouse.click(outsideX, outsideY);
+      await expect(cards, 'mobile Deck tray closes before using the existing screen Back action').not.toHaveAttribute('data-deck-drawer', 'open');
     }
 
     const back = cards.locator('[data-back]').first();

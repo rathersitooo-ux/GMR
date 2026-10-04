@@ -21,6 +21,7 @@ import {
   installCardsInspectorDismissInteractions,
   countCardsLocalVoteHistory,
   installCardsVoteUiRepair,
+  readSetupQuickDeckPreviewSnapshot,
 } from '../browser/cards-deck-presentation.mjs';
 
 const rect = (left, top, width, height) => ({ left, top, width, height });
@@ -82,6 +83,40 @@ function immediateWindow({ reduced = false } = {}) {
     clearTimeout() {},
   };
 }
+
+test('Setup Quick Deck reads selected saved deck 1-3 without taking deck authority', () => {
+  for (const selectedDeckIndex of [0, 1, 2]) {
+    const savedDeck = { main: ['SP_A', 'HT_2'], ex: ['EX_X'] };
+    const win = {
+      __GAMEROAD_TEST__: {
+        state: {
+          selectedDeckIndex,
+          savedDeck,
+          savedDeckRule: { id: 'FIRST_REGULATION', revision: 3 },
+        },
+      },
+    };
+    const snapshot = readSetupQuickDeckPreviewSnapshot({ window: win });
+    assert.equal(snapshot.selectedDeckNumber, selectedDeckIndex + 1);
+    assert.deepEqual(snapshot.deck.main, ['SP_A', 'HT_2']);
+    assert.deepEqual(snapshot.deck.ex, ['EX_X']);
+    assert.equal(snapshot.deck.rule.id, 'FIRST_REGULATION');
+    assert.equal(snapshot.deck.rule.revision, 3);
+    assert.equal(snapshot.readOnly, true);
+    savedDeck.main.push('DI_3');
+    assert.deepEqual(snapshot.deck.main, ['SP_A', 'HT_2']);
+  }
+});
+
+test('Setup Quick Deck fails closed outside the user-authorized 1-3 range or malformed state', () => {
+  assert.equal(readSetupQuickDeckPreviewSnapshot({ window: {} }), null);
+  assert.equal(readSetupQuickDeckPreviewSnapshot({
+    window: { __GAMEROAD_TEST__: { state: { selectedDeckIndex: 3, savedDeck: { main: [], ex: [] }, savedDeckRule: null } } },
+  }), null);
+  assert.equal(readSetupQuickDeckPreviewSnapshot({
+    window: { __GAMEROAD_TEST__: { state: { selectedDeckIndex: 0, savedDeck: null, savedDeckRule: null } } },
+  }), null);
+});
 
 test('default visual contract is stable and frozen', () => {
   assert.equal(Object.isFrozen(DEFAULT_DECK_SWIPE_PRESENTATION), true);

@@ -129,7 +129,8 @@ $evidence=[ordered]@{
   installed_bridge=$true
   startup_launcher=$true
   signed_ping=$ping.result.status
-  write_side_effect=(Get-Content $sentinel -Raw).Trim()\n  process_side_effect=(Get-Content $procSentinel -Raw).Trim()
+  write_side_effect=(Get-Content $sentinel -Raw).Trim()
+  process_side_effect=(Get-Content $procSentinel -Raw).Trim()
   invalid_signature_fail_closed=$true
   duplicate_id_no_reexecution=$true
   clean_stop=$true

@@ -75,6 +75,8 @@ $sentinel=Join-Path $env:RUNNER_TEMP "grfb-command-executed.txt"
 $script = "'bridge-executed' | Set-Content -Encoding UTF8 '" + $sentinel.Replace("'","''") + "'"
 Sign-Command "ci-exec-001" "powershell" @{script=$script;timeout_sec=30}
 $exec=Wait-Result "ci-exec-001"
+$exec | ConvertTo-Json -Depth 20 | Set-Content -Encoding UTF8 (Join-Path $evidenceDir "ci-exec-result.json")
+Write-Host "EXEC_RESULT=$($exec | ConvertTo-Json -Depth 20 -Compress)"
 if($exec.result.status -ne "completed" -or $exec.result.exit_code -ne 0){ throw "powershell command failed" }
 if(-not (Test-Path $sentinel)){ throw "powershell side effect missing" }
 if((Get-Content $sentinel -Raw).Trim() -ne "bridge-executed"){ throw "powershell side effect content mismatch" }

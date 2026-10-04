@@ -73,26 +73,11 @@ function Inventory {
     bridge_version="0.6.0"
   }
 }
-function Run-PowerShell([string]$script,[int]$timeoutSec) {
-  if($timeoutSec -lt 1){$timeoutSec=60}
-  if($timeoutSec -gt 1800){$timeoutSec=1800}
-  $outFile=Join-Path $env:TEMP "grfb-$PID-stdout.txt"
-  $errFile=Join-Path $env:TEMP "grfb-$PID-stderr.txt"
-  Remove-Item $outFile,$errFile -Force -ErrorAction SilentlyContinue
-  $enc=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($script))
-  $p=Start-Process powershell.exe -ArgumentList @("-NoProfile","-NonInteractive","-ExecutionPolicy","Bypass","-EncodedCommand",$enc) -RedirectStandardOutput $outFile -RedirectStandardError $errFile -WindowStyle Hidden -PassThru
-  if(-not $p.WaitForExit($timeoutSec*1000)){
-    try{$p.Kill()}catch{}
-    return @{status="timeout";stdout=(Get-Content $outFile -Raw -ErrorAction SilentlyContinue);stderr=(Get-Content $errFile -Raw -ErrorAction SilentlyContinue)}
-  }
-  return @{status="completed";exit_code=$p.ExitCode;stdout=(Get-Content $outFile -Raw -ErrorAction SilentlyContinue);stderr=(Get-Content $errFile -Raw -ErrorAction SilentlyContinue)}
-}
 function Execute-Command($payload,[string]$relayRoot) {
   $a=$payload.args
   switch([string]$payload.op){
     "ping" { return @{status="ok";inventory=(Inventory)} }
     "inventory" { return @{status="ok";inventory=(Inventory)} }
-    "powershell" { return Run-PowerShell ([string]$a.script) ([int]$a.timeout_sec) }
     "list_dir" { return @{status="ok";items=@(Get-ChildItem -Force ([string]$a.path) -ErrorAction Stop | Select-Object Name,FullName,Length,Mode,LastWriteTime)} }
     "read_file" {
       $p=[string]$a.path; $max=[int]$a.max_chars; if($max -le 0){$max=200000}

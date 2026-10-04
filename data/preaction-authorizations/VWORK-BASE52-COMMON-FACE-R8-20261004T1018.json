@@ -20,14 +20,18 @@
   "leaseSnapshotReadbackAtJst": "2026-10-04 10:26 JST",
   "leaseUntilJst": "2026-10-04 11:18 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
-  "leaseExactMutableResources": "browser/base52-face-layout-candidate.mjs; tests/base52-face-layout-candidate.test.mjs; browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; browser/base52-common-face-assets.mjs; tests/base52-common-face-assets.test.mjs; own fresh branch/PR/check/merge/readback; own CURRENT R25 event/lease records; GAMEROAD 全作業一覧 row60 bounded evidence/resume sync",
+  "leaseExactMutableResources": "browser/assets/base52/svg-cards.svg; browser/assets/base52/LICENSE.svg-cards.txt; browser/base52-common-face-assets.mjs; tests/base52-common-face-assets.test.mjs; browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; own fresh branch/PR/check/merge/readback; own CURRENT R25 event/lease records; GAMEROAD 全作業一覧 row60 bounded evidence/resume sync",
   "scope": [
+    "browser/assets/base52/svg-cards.svg",
+    "browser/assets/base52/LICENSE.svg-cards.txt",
     "browser/base52-common-face-assets.mjs",
     "tests/base52-common-face-assets.test.mjs",
     "browser/cards-deck-presentation.mjs",
     "tests/cards-deck-presentation.test.mjs"
   ],
   "leaseScope": [
+    "browser/assets/base52/svg-cards.svg",
+    "browser/assets/base52/LICENSE.svg-cards.txt",
     "browser/base52-common-face-assets.mjs",
     "tests/base52-common-face-assets.test.mjs",
     "browser/cards-deck-presentation.mjs",

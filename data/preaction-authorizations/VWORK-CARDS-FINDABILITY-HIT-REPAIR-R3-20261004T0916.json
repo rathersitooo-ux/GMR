@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-CARDS-FINDABILITY-HIT-REPAIR-R3-20261004T0916",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "CARDS_FINDABILITY_PHYSICAL_HIT_REPAIR_R3",
+  "acquireKey": "CARDS-FINDABILITY-HIT-REPAIR-R3-20261004T0916-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R2_REQUIRED_GATE_37161009772_SUCCESS+R2_BFI_37161009773_CARDS_ALL_3_VIEWPORTS_PASS+W3C_WCAG22_TARGET_SIZE+MDN_POINTER_HIT_TEST+APPLE_HIG_44PT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR2242_EXACT_HEAD_CA495541_R2_PRODUCT_TEST_DONOR+UNCHANGED_CURRENT_MAIN_TARGET_BLOBS",
+  "proceedToken": "PROCEED|VWORK-CARDS-FINDABILITY-HIT-REPAIR-R3-20261004T0916|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|repair-cards-hit-overlap-r3|lease-A5",
+  "authorizationBaseSha": "c16b1a7e78d1df306077ffbcde026d5e70c4c762",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "CARDS_FINDABILITY_PHYSICAL_HIT_REPAIR_R3",
+  "leaseAcquireKey": "CARDS-FINDABILITY-HIT-REPAIR-R3-20261004T0916-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-04 09:16 JST",
+  "leaseUntilJst": "2026-10-04 10:16 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; data/preaction-authorizations/VWORK-CARDS-FINDABILITY-HIT-REPAIR-R3-20261004T0916.json; own fresh branch/PR/check/merge/readback; own CURRENT R25 event/lease records",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ]
+}

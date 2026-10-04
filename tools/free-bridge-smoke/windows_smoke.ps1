@@ -25,9 +25,9 @@ if($files.Count -ne 1 -or $files[0].Name -ne "START_GAMEROAD_FREE_BRIDGE_v0.6.cm
   throw "installer is not a true single-file payload"
 }
 
-function Sign-Command([string]$id,[string]$op,$args,[int]$ttl=600,[string]$secret=$testSecret){
+function Sign-Command([string]$id,[string]$op,$commandArgs,[int]$ttl=600,[string]$secret=$testSecret){
   $now=[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
-  $payload=[ordered]@{id=$id;op=$op;args=$args;created_at_epoch=$now;expires_at_epoch=($now+$ttl)}
+  $payload=[ordered]@{id=$id;op=$op;args=$commandArgs;created_at_epoch=$now;expires_at_epoch=($now+$ttl)}
   $payloadJson=$payload | ConvertTo-Json -Depth 20 -Compress
   $pb64=[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($payloadJson))
   $key=New-Object byte[] ($secret.Length/2)

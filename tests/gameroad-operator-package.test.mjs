@@ -4,7 +4,7 @@ import { validateGameroadOperatorPackage } from '../tools/gameroad-operator-pack
 import {
   QUALITY_GATE_SCHEMA_VERSION,
   validateQualityDecision,
-} from '../plugins/gameroad-operator/tools/quality-decision-gate.mjs';
+} from '../tools/gameroad-operator-package.mjs';
 
 test('GAMEROAD Operator package is internally consistent', () => {
   const result = validateGameroadOperatorPackage();

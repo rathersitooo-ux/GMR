@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "AICAP-OPERATOR-QUALITY-R1-20261004T1006-SOL",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "GAMEROAD_OPERATOR_QUALITY_GATE_R1",
+  "acquireKey": "AICAP-OPERATOR-QUALITY-R1-20261004T1006-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R47_OFFLINE_V04_28_OF_28_AND_CURRENT_OPERATOR_GAP_20261004",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "V04_OFFLINE_KERNEL_SHA_0ACA21E0_AND_OPERATOR_MAIN_READBACK",
+  "proceedToken": "PROCEED|AICAP-OPERATOR-QUALITY-R1-20261004T1006-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-operator|v04-adapt|active-lease",
+  "authorizationBaseSha": "83fb04d3aa73bde6f0278d7a7b08692082ee584c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "GAMEROAD_OPERATOR_QUALITY_GATE_R1",
+  "leaseAcquireKey": "AICAP-OPERATOR-QUALITY-R1-20261004T1006-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-04 10:06 JST",
+  "leaseUntilJst": "2026-10-04 11:06 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "plugins/gameroad-operator/skills/gameroad-pc-workloop/SKILL.md; plugins/gameroad-operator/tools/quality-decision-gate.mjs; plugins/gameroad-operator/README.md; tools/gameroad-operator-package.mjs; tests/gameroad-operator-package.test.mjs; tests/gameroad-operator-quality-gate.test.mjs; data/preaction-authorizations/AICAP-OPERATOR-QUALITY-R1-20261004T1006-SOL.json temporary branch history only; own fresh branch/PR/check/merge/readback; GAMEROAD 全作業一覧 row1364 bounded R48 evidence/resume sync; own CURRENT R25 event/lease records",
+  "solutionSignature": "EXISTING_GAMEROAD_OPERATOR_PLUS_DETERMINISTIC_QUALITY_DECISION_GATE_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R47_REUSE_EXISTING_OPERATOR_AND_V04_KERNEL_20261004",
+  "solutionSearchEvidence": [
+    "Current main already contains merged PR#2245 GAMEROAD Operator using maintained Desktop Commander MCP and Playwright MCP; no second PC/browser stack is created.",
+    "Drive/current v0.4 offline quality kernel is the donor contract and passed 28/28 negative/positive tests with exact readback SHA256 0aca21e0aad30f73ed9d96a87c96885a99255636ac6eb4e9a1d7af493486ee64.",
+    "Current global PRE_ACTION already owns repo-wide reuse discovery and remains unchanged; this slice adds only operator-local deterministic preflight for quality evidence.",
+    "Existing operator skill already owns CURRENT/lease/current-actual/browser-evidence routing, so the residual is quality-decision validation plus tests and documentation."
+  ],
+  "solutionSignatureDetails": {
+    "userEndState": "Local GAMEROAD operator must fail closed before material PC/browser mutation when research/reuse/asset/visual evidence is materially incomplete.",
+    "requiredBehaviorOrIO": "Validate one JSON decision packet and return deterministic PASS/FAIL reasons before material mutation.",
+    "consumerOrUseSite": "plugins/gameroad-operator local PC work loop",
+    "environmentOrPlatform": "Windows/local ChatGPT-Codex plugin with Node.js 20+",
+    "acceptanceEvidence": "negative and positive Node tests plus Required Gate and merged-main readback"
+  },
+  "scope": [
+    "plugins/gameroad-operator/skills/gameroad-pc-workloop/SKILL.md",
+    "plugins/gameroad-operator/tools/quality-decision-gate.mjs",
+    "plugins/gameroad-operator/README.md",
+    "tools/gameroad-operator-package.mjs",
+    "tests/gameroad-operator-package.test.mjs",
+    "tests/gameroad-operator-quality-gate.test.mjs"
+  ],
+  "leaseScope": [
+    "plugins/gameroad-operator/skills/gameroad-pc-workloop/SKILL.md",
+    "plugins/gameroad-operator/tools/quality-decision-gate.mjs",
+    "plugins/gameroad-operator/README.md",
+    "tools/gameroad-operator-package.mjs",
+    "tests/gameroad-operator-package.test.mjs",
+    "tests/gameroad-operator-quality-gate.test.mjs"
+  ]
+}

@@ -21,6 +21,7 @@ import {
   installCardsInspectorDismissInteractions,
   countCardsLocalVoteHistory,
   installCardsVoteUiRepair,
+  readSetupQuickDeckPreviewSource,
 } from '../browser/cards-deck-presentation.mjs';
 
 const rect = (left, top, width, height) => ({ left, top, width, height });
@@ -82,6 +83,56 @@ function immediateWindow({ reduced = false } = {}) {
     clearTimeout() {},
   };
 }
+
+
+test('Setup Quick Deck source reads the existing selected saved deck 1 to 3 without mutating it', () => {
+  for (let selectedDeckIndex = 0; selectedDeckIndex < 3; selectedDeckIndex += 1) {
+    const state = {
+      selectedDeckIndex,
+      savedDeck: { main: ['SP_A', 'HT_2'], ex: ['EX_1'] },
+      savedDeckRule: { id: 'FIRST_REGULATION', revision: 3 },
+    };
+    const runtimeGlobal = { __GAMEROAD_TEST__: { state } };
+    const preview = readSetupQuickDeckPreviewSource(runtimeGlobal);
+    assert.equal(preview.selectedDeckNumber, selectedDeckIndex + 1);
+    assert.deepEqual(preview.deck.main, ['SP_A', 'HT_2']);
+    assert.deepEqual(preview.deck.ex, ['EX_1']);
+    assert.deepEqual(preview.deck.rule, { id: 'FIRST_REGULATION', revision: 3 });
+    state.savedDeck.main[0] = 'MUTATED_AFTER_READ';
+    assert.deepEqual(preview.deck.main, ['SP_A', 'HT_2']);
+  }
+  assert.equal(readSetupQuickDeckPreviewSource({ __GAMEROAD_TEST__: { state: {
+    selectedDeckIndex: 3,
+    savedDeck: { main: ['SP_A'], ex: [] },
+    savedDeckRule: { id: 'FIRST_REGULATION', revision: 3 },
+  } } }), null);
+});
+
+test('Setup Quick Deck live mount stays presentation-only and reuses the existing Setup edit route', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('export function installSetupQuickDeckPreview');
+  const end = source.indexOf('function autoInstallDeckStorageLiveMount', start);
+  const slice = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.ok(slice.includes("setup.querySelector?.('#fixDeckFromSetup')"));
+  assert.ok(slice.includes('existingEdit.click?.()'));
+  assert.ok(slice.includes("target?.closest?.('section[data-screen=\"setup\"] [data-back]')"));
+  assert.ok(slice.includes("event?.key !== 'Escape'"));
+  assert.ok(slice.includes('@media(max-height:500px) and (orientation:landscape)'));
+  assert.ok(slice.includes('@media(max-width:540px) and (orientation:portrait)'));
+  assert.ok(slice.includes('left:2.5%;top:70px;bottom:5%;width:50%'));
+  for (const forbidden of [
+    'localStorage',
+    'sessionStorage',
+    'writeDeckLibrary',
+    'selectDeckIndex(',
+    'deckEligibility(',
+    'GAMEROAD_CREATE_DECK_MATCH_START_SNAPSHOT',
+  ]) {
+    assert.equal(slice.includes(forbidden), false, 'Quick Deck mount must not own deck state: ' + forbidden);
+  }
+});
 
 test('default visual contract is stable and frozen', () => {
   assert.equal(Object.isFrozen(DEFAULT_DECK_SWIPE_PRESENTATION), true);

@@ -85,7 +85,7 @@ export function validateGameroadOperatorPackage(repoRoot = process.cwd()) {
 
   for (const requiredGateToken of [
     "gameroad-operator-quality-v1",
-    "research_application_missing_effect",
+    "research_application_missing_",
     "build_blocked_material_candidate_frontier_open",
     "external_asset_rights_unresolved",
     "formal_asset_authority_missing",

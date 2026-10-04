@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
 import {
   composeSaasunaProviderUserMessage,
@@ -12,6 +13,7 @@ import {
   restoreSaasunaConversationRetryDraft,
   SAASUNA_PROVISIONAL_VISUAL_CONTRACT,
 } from '../browser/board-facility-runtime-mount.mjs';
+import { createSaasunaConversationEntry } from '../browser/partner-conversation-core.mjs';
 import { buildPartnerConversationCollectiveContext } from '../browser/partner-conversation-collective-context.mjs';
 import { onRequest as cloudflareEntry } from '../deploy/cloudflare/functions/ws.js';
 
@@ -84,6 +86,14 @@ test('rejects an incompatible occupied runtime global', async () => {
 test('conversation product mount is a no-op outside a browser DOM', () => {
   assert.equal(mountSaasunaConversationProductSurface({}), null);
   assert.equal(mountSaasunaConversationProductSurface({ document: {} }), null);
+});
+
+test('public Saasuna mount derives picker requirement from the fixed conversation entry', async () => {
+  const entry = createSaasunaConversationEntry({ createSessionId: () => 'picker-metadata-test' });
+  assert.equal(entry.status().pickerRequired, false);
+  const runtimeSource = await readFile(new URL('../browser/board-facility-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(runtimeSource, /pickerRequired:\s*entry\.status\(\)\.pickerRequired/);
+  assert.doesNotMatch(runtimeSource, /pickerRequired:\s*true/);
 });
 
 test('failed Partner conversation send restores the retry draft without keeping a duplicate user bubble', () => {

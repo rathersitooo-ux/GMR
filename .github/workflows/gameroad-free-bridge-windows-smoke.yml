@@ -1,0 +1,42 @@
+name: Free Bridge Windows Smoke
+
+on:
+  push:
+    branches:
+      - ops/free-bridge-windows-smoke-20261004
+    paths:
+      - tools/free-bridge-smoke/**
+      - .github/workflows/gameroad-free-bridge-windows-smoke.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: windows-2025
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v7.0.1
+
+      - name: Show Windows and Python versions
+        shell: pwsh
+        run: |
+          Write-Host "OS=$([Environment]::OSVersion.VersionString)"
+          Write-Host "PS=$($PSVersionTable.PSVersion)"
+          python --version
+
+      - name: Run single-file bootstrap smoke
+        shell: pwsh
+        run: |
+          ./tools/free-bridge-smoke/windows_smoke.ps1
+
+      - name: Upload independent smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: free-bridge-windows-smoke
+          path: artifacts/free-bridge-smoke/
+          if-no-files-found: error
+          retention-days: 7

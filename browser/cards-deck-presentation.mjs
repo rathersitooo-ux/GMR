@@ -7,8 +7,10 @@ import {
   createDeckStorageCornerController,
   mountDeckStorageCorner,
 } from './deck-storage-corner-runtime.mjs';
+import { resolveBase52CommonFaceAsset } from './base52-common-face-assets.mjs';
 
 const deckStorageLiveInstallations = new WeakMap();
+const base52CommonFaceInstallations = new WeakMap();
 const cardsDeckFindabilityInstallations = new WeakMap();
 const cardsInspectorDismissInstallations = new WeakMap();
 const cardsInspectorDeckContextInstallations = new WeakMap();
@@ -172,6 +174,138 @@ export function matchCardsDeckFindabilityCard(
 
 function cardsScreen(doc) {
   return doc?.querySelector?.('section[data-screen="cards"]') ?? null;
+}
+
+export const BASE52_COMMON_FACE_RUNTIME_CONTRACT = Object.freeze({
+  schema: 'gameroad.base52-common-face-runtime.v1',
+  surface: 'cards',
+  selectors: Object.freeze(['#collectionGrid [data-id]', '#deckSlots [data-id]', '#exDeckSlots [data-id]']),
+  assetRole: 'base52-common-face-art',
+  identityRole: 'base52-common-face-index',
+  networkFailure: 'fail-soft-identity-remains',
+  localSkinPrecedence: 'local-skin-over-common-face',
+  ownsCardRules: false,
+  ownsCardValues: false,
+  ownsDeck: false,
+  formalAssetAcceptance: false,
+});
+
+function ensureBase52CommonFaceStyle(doc) {
+  if (!doc?.createElement || doc.getElementById?.('gameroad-base52-common-face-style')) return;
+  const style = doc.createElement('style');
+  style.id = 'gameroad-base52-common-face-style';
+  style.textContent = `
+[data-base52-common-face-host="1"]{position:relative!important;isolation:isolate;overflow:hidden}
+[data-base52-common-face-host="1"]>[data-role="base52-common-face-art"]{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:0;background:#fff}
+[data-base52-common-face-host="1"][data-base52-asset-load="failed"]>[data-role="base52-common-face-art"]{display:none}
+[data-base52-common-face-host="1"]>[data-role="base52-common-face-index"]{position:absolute;top:3px;left:3px;z-index:3;display:inline-flex;align-items:center;justify-content:center;min-width:24px;min-height:22px;box-sizing:border-box;padding:2px 4px;border:1px solid rgba(17,20,26,.72);border-radius:5px;background:rgba(255,255,255,.95);color:#101216;font:800 clamp(12px,1.08em,18px)/1 system-ui,sans-serif;letter-spacing:-.02em;box-shadow:0 1px 3px rgba(0,0,0,.26);pointer-events:none}
+[data-base52-common-face-host="1"]>[data-role="base52-common-face-index"][data-color-family="red"]{color:#a30f20}
+[data-base52-common-face-host="1"]>.cardCostBadge,[data-base52-common-face-host="1"]>.cardRank,[data-base52-common-face-host="1"]>.cardAbilityTag,[data-base52-common-face-host="1"]>.cardFaceName,[data-base52-common-face-host="1"]>.inDeckTag{position:relative;z-index:4}
+[data-base52-common-face-host="1"]>[data-role="fanart-local-skin-overlay"]{z-index:5!important}
+@media(prefers-reduced-motion:reduce){[data-base52-common-face-host="1"]>[data-role="base52-common-face-art"],[data-base52-common-face-host="1"]>[data-role="base52-common-face-index"]{transition:none!important;animation:none!important}}
+`;
+  (doc.head || doc.documentElement)?.appendChild(style);
+}
+
+function removeBase52CommonFaceFromNode(node) {
+  node?.querySelector?.('[data-role="base52-common-face-art"]')?.remove?.();
+  node?.querySelector?.('[data-role="base52-common-face-index"]')?.remove?.();
+  node?.removeAttribute?.('data-base52-common-face-host');
+  node?.removeAttribute?.('data-base52-asset-load');
+  node?.removeAttribute?.('data-base52-canonical-id');
+}
+
+function mountBase52CommonFaceOnNode(node, doc) {
+  const cardId = String(node?.dataset?.id ?? '');
+  const asset = resolveBase52CommonFaceAsset(cardId);
+  if (!asset) {
+    removeBase52CommonFaceFromNode(node);
+    return false;
+  }
+
+  node.dataset.base52CommonFaceHost = '1';
+  node.dataset.base52CanonicalId = asset.canonicalCardId;
+
+  let art = node.querySelector?.('[data-role="base52-common-face-art"]');
+  if (!art) {
+    art = doc.createElement('img');
+    art.dataset.role = 'base52-common-face-art';
+    art.alt = '';
+    art.setAttribute?.('aria-hidden', 'true');
+    art.setAttribute?.('decoding', 'async');
+    art.setAttribute?.('loading', 'lazy');
+    art.addEventListener?.('load', () => {
+      node.dataset.base52AssetLoad = 'loaded';
+    });
+    art.addEventListener?.('error', () => {
+      node.dataset.base52AssetLoad = 'failed';
+    });
+    node.appendChild?.(art);
+  }
+  if (art.src !== asset.assetUrl) {
+    node.dataset.base52AssetLoad = 'pending';
+    art.src = asset.assetUrl;
+  }
+
+  let index = node.querySelector?.('[data-role="base52-common-face-index"]');
+  if (!index) {
+    index = doc.createElement('span');
+    index.dataset.role = 'base52-common-face-index';
+    index.setAttribute?.('aria-hidden', 'true');
+    node.appendChild?.(index);
+  }
+  index.dataset.colorFamily = asset.colorFamily;
+  index.textContent = `${asset.rank}${asset.suitSymbol}`;
+  return true;
+}
+
+export function installBase52CommonFaceCards({
+  document: doc = globalThis.document,
+  window: win = globalThis.window,
+} = {}) {
+  if (!doc?.querySelector || !doc?.querySelectorAll || !doc?.createElement) {
+    return Object.freeze({ refresh: () => 0, destroy() {} });
+  }
+  const prior = base52CommonFaceInstallations.get(doc);
+  if (prior) return prior;
+  const screen = cardsScreen(doc);
+  if (!screen) return Object.freeze({ refresh: () => 0, destroy() {} });
+
+  ensureBase52CommonFaceStyle(doc);
+  let destroyed = false;
+  const refresh = () => {
+    if (destroyed) return 0;
+    const nodes = [...(screen.querySelectorAll?.(
+      '#collectionGrid [data-id], #deckSlots [data-id], #exDeckSlots [data-id]'
+    ) ?? [])];
+    let mounted = 0;
+    for (const node of nodes) if (mountBase52CommonFaceOnNode(node, doc)) mounted += 1;
+    return mounted;
+  };
+
+  refresh();
+
+  const Observer = win?.MutationObserver ?? globalThis.MutationObserver;
+  const observer = typeof Observer === 'function'
+    ? new Observer(() => { refresh(); })
+    : null;
+  observer?.observe?.(screen, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-id'] });
+
+  const installation = Object.freeze({
+    contract: BASE52_COMMON_FACE_RUNTIME_CONTRACT,
+    refresh,
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      observer?.disconnect?.();
+      for (const node of screen.querySelectorAll?.('[data-base52-common-face-host="1"]') ?? []) {
+        removeBase52CommonFaceFromNode(node);
+      }
+      base52CommonFaceInstallations.delete(doc);
+    },
+  });
+  base52CommonFaceInstallations.set(doc, installation);
+  return installation;
 }
 
 function byCardId(doc, selector, cardId) {
@@ -1792,6 +1926,7 @@ export function installFanartPublicBattleCardProjection({
 
 function autoInstallFanart(doc, win) {
   const install = () => {
+    installBase52CommonFaceCards({ document: doc, window: win });
     installFanartLocalSkinCards({ document: doc, window: win, indexedDB: win?.indexedDB });
     installFanartPublicBattleCardProjection({ document: doc, window: win, global: globalThis, indexedDB: win?.indexedDB });
   };

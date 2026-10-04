@@ -200,7 +200,7 @@ function ensureBase52CommonFaceStyle(doc) {
 [data-base52-common-face-host="1"][data-base52-asset-load="failed"]>[data-role="base52-common-face-art"]{display:none}
 [data-base52-common-face-host="1"]>[data-role="base52-common-face-index"]{position:absolute;top:3px;left:3px;z-index:3;display:inline-flex;align-items:center;justify-content:center;min-width:24px;min-height:22px;box-sizing:border-box;padding:2px 4px;border:1px solid rgba(17,20,26,.72);border-radius:5px;background:rgba(255,255,255,.95);color:#101216;font:800 clamp(12px,1.08em,18px)/1 system-ui,sans-serif;letter-spacing:-.02em;box-shadow:0 1px 3px rgba(0,0,0,.26);pointer-events:none}
 [data-base52-common-face-host="1"]>[data-role="base52-common-face-index"][data-color-family="red"]{color:#a30f20}
-[data-base52-common-face-host="1"]>.cardCostBadge,[data-base52-common-face-host="1"]>.cardRank,[data-base52-common-face-host="1"]>.cardAbilityTag,[data-base52-common-face-host="1"]>.cardFaceName,[data-base52-common-face-host="1"]>.inDeckTag{position:relative;z-index:4}
+[data-base52-common-face-host="1"]>.cardCostBadge,[data-base52-common-face-host="1"]>.cardRank,[data-base52-common-face-host="1"]>.cardAbilityTag,[data-base52-common-face-host="1"]>.cardFaceName,[data-base52-common-face-host="1"]>.inDeckTag{z-index:4!important}
 [data-base52-common-face-host="1"]>[data-role="fanart-local-skin-overlay"]{z-index:5!important}
 @media(prefers-reduced-motion:reduce){[data-base52-common-face-host="1"]>[data-role="base52-common-face-art"],[data-base52-common-face-host="1"]>[data-role="base52-common-face-index"]{transition:none!important;animation:none!important}}
 `;

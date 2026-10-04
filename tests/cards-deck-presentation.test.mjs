@@ -115,7 +115,7 @@ test('Setup Quick Deck live mount stays presentation-only and reuses the existin
   const end = source.indexOf('function autoInstallDeckStorageLiveMount', start);
   const slice = source.slice(start, end);
   assert.ok(start >= 0 && end > start);
-  assert.ok(slice.includes("setup.querySelector?.('#fixDeckFromSetup')"));
+  assert.ok(slice.includes("setup?.querySelector?.('#fixDeckFromSetup')"));
   assert.ok(slice.includes('existingEdit.click?.()'));
   assert.ok(slice.includes("target?.closest?.('section[data-screen=\"setup\"] [data-back]')"));
   assert.ok(slice.includes("event?.key !== 'Escape'"));

@@ -67,7 +67,7 @@ For deterministic same-semantics work where a gate is not material, the packet m
 Run:
 
 \`\`\`powershell
-node "$HOME\.codex\plugins\gameroad-operator\tools\quality-decision-gate.mjs" --input <decision-packet.json>
+node .\tools\gameroad-operator-package.mjs --quality-input <decision-packet.json>
 \`\`\`
 
 A FAIL result means WRITE0 for the proposed material mutation until the missing evidence or packet is repaired.

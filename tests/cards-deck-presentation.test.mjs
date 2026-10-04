@@ -1362,3 +1362,96 @@ test('Cards local skins stay below identity labels and collection ability tags r
 
   installation.destroy();
 });
+
+
+test('Cards Base52 common face consumer mounts reused art plus color-independent rank-suit identity', async () => {
+  const mod = await import('../browser/cards-deck-presentation.mjs');
+
+  const makeNode = (dataset = {}) => {
+    const children = [];
+    const attrs = new Map();
+    const listeners = new Map();
+    const node = {
+      dataset: { ...dataset },
+      children,
+      attrs,
+      listeners,
+      textContent: '',
+      src: '',
+      alt: '',
+      appendChild(child) { child.parentNode = this; children.push(child); return child; },
+      setAttribute(name, value) { attrs.set(name, String(value)); },
+      removeAttribute(name) {
+        attrs.delete(name);
+        if (name === 'data-base52-common-face-host') delete this.dataset.base52CommonFaceHost;
+        if (name === 'data-base52-asset-load') delete this.dataset.base52AssetLoad;
+        if (name === 'data-base52-canonical-id') delete this.dataset.base52CanonicalId;
+      },
+      addEventListener(type, fn) { listeners.set(type, fn); },
+      querySelector(selector) {
+        const match = /\[data-role="([^"]+)"\]/.exec(selector);
+        return match ? children.find((child) => child.dataset?.role === match[1] && !child.removed) ?? null : null;
+      },
+      remove() { this.removed = true; },
+    };
+    return node;
+  };
+
+  const card = makeNode({ id: 'SP_A' });
+  const screen = makeNode();
+  screen.querySelectorAll = (selector) => selector.includes('[data-id]') ? [card] : [card];
+  const head = makeNode();
+  const document = {
+    head,
+    documentElement: head,
+    querySelector: (selector) => selector === 'section[data-screen="cards"]' ? screen : null,
+    querySelectorAll: () => [],
+    getElementById: () => null,
+    createElement: () => makeNode(),
+  };
+  class Observer {
+    observe() {}
+    disconnect() {}
+  }
+
+  const installation = mod.installBase52CommonFaceCards({ document, window: { MutationObserver: Observer } });
+  assert.equal(installation.contract.schema, 'gameroad.base52-common-face-runtime.v1');
+  assert.equal(installation.contract.ownsCardRules, false);
+  assert.equal(installation.contract.ownsCardValues, false);
+  assert.equal(installation.contract.formalAssetAcceptance, false);
+  assert.equal(card.dataset.base52CommonFaceHost, '1');
+  assert.equal(card.dataset.base52CanonicalId, 'SP_A');
+
+  const art = card.querySelector('[data-role="base52-common-face-art"]');
+  const index = card.querySelector('[data-role="base52-common-face-index"]');
+  assert.ok(art);
+  assert.ok(index);
+  assert.match(art.src, /Webisso\/playing-cards\/50a3f7be7d6b7248da5f5c56533e1c5414aefb40\/svg\/ace_of_spades\.svg$/);
+  assert.equal(index.textContent, 'A♠');
+  assert.equal(index.dataset.colorFamily, 'black');
+  assert.equal(index.attrs.get('aria-hidden'), 'true');
+
+  art.listeners.get('error')?.();
+  assert.equal(card.dataset.base52AssetLoad, 'failed');
+  assert.equal(index.textContent, 'A♠');
+
+  installation.destroy();
+  assert.equal(card.dataset.base52CommonFaceHost, undefined);
+});
+
+test('Cards Base52 common face mount ignores non-Base52 cards instead of inventing a mapping', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('export function installBase52CommonFaceCards');
+  const end = source.indexOf('function byCardId', start);
+  const slice = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.match(slice, /resolveBase52CommonFaceAsset\(cardId\)/);
+  assert.match(slice, /if \(!asset\)/);
+  assert.match(slice, /removeBase52CommonFaceFromNode\(node\)/);
+  assert.match(slice, /base52-common-face-index/);
+  assert.match(slice, /fail-soft-identity-remains/);
+  assert.equal(slice.includes('card.power ='), false);
+  assert.equal(slice.includes('card.value ='), false);
+  assert.equal(slice.includes('fetch('), false);
+});

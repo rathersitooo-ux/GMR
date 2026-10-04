@@ -598,7 +598,7 @@ test('Cards local skin image controls stay discoverable and separate replace fro
   assert.ok(removeSlice.includes('fanartDeleteSkin'));
 });
 
-test('Cards Deck quick filters stay grouped, touch-sized and horizontally readable', async () => {
+test('Cards Deck quick filters keep separate physical hit rows while preserving touch-sized controls', async () => {
   const { readFile } = await import('node:fs/promises');
   const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
   const start = source.indexOf('export function installCardsDeckFindability');
@@ -606,15 +606,23 @@ test('Cards Deck quick filters stay grouped, touch-sized and horizontally readab
   const slice = source.slice(start, end);
   assert.ok(start >= 0 && end > start);
   assert.ok(slice.includes("host.setAttribute?.('aria-label', 'カードとデッキを絞り込む')"));
-  assert.ok(slice.includes('[data-role="cards-deck-findability"][data-integrated="true"]{display:flex;flex:1 1 100%'));
+  assert.ok(slice.includes("existingFilterRow.dataset.cardsFindabilityIntegrated = 'true'"));
+  assert.ok(slice.includes('#r4SuitFilters[data-cards-findability-integrated="true"]{flex-wrap:wrap;overflow:visible;align-items:center}'));
+  assert.ok(slice.includes('[data-role="cards-deck-findability"][data-integrated="true"]{position:static;z-index:auto;display:flex;flex:0 0 100%;width:100%;max-width:100%;box-sizing:border-box'));
   assert.ok(slice.includes('flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain'));
   assert.ok(slice.includes('scrollbar-width:none'));
+  assert.ok(slice.includes('@media(max-height:470px) and (orientation:landscape)'));
+  assert.ok(slice.includes('.r4CollectionTools:has(#r4SuitFilters[data-cards-findability-integrated="true"]){grid-template-columns:minmax(120px,1fr) minmax(0,1fr)}'));
+  assert.ok(slice.includes('#r4SuitFilters[data-cards-findability-integrated="true"]{min-width:0;max-width:100%;width:100%;flex-wrap:nowrap;overflow-x:auto'));
+  assert.ok(slice.includes('>[data-role="cards-deck-findability"][data-integrated="true"]{flex:0 0 auto;width:auto;max-width:none;overflow:visible'));
   assert.ok(slice.includes('button{min-height:44px'));
   assert.ok(slice.includes('touch-action:manipulation'));
   assert.ok(slice.includes('button:active{transform:translateY(1px) scale(.985)}'));
   assert.ok(slice.includes('button:focus-visible{outline:2px solid #ffd84a'));
+  assert.ok(slice.includes("delete existingFilterRow.dataset.cardsFindabilityIntegrated"));
   assert.ok(slice.includes('@media(prefers-reduced-motion:reduce)'));
   assert.equal(slice.includes('[data-integrated="true"]{display:contents'), false);
+  assert.equal(slice.includes('[data-integrated="true"]{display:flex;flex:1 1 100%'), false);
 });
 
 test('Cards findability contract adds favorite without taking Deck or ownership authority', async () => {

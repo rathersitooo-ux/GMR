@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-LOBBY-DECK-SETUP-PREVIEW-R5-20261004T1350",
+  "taskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "workUnitKey": "SETUP_QUICK_DECK_PREVIEW_LIVE_ACCEPTANCE_R5",
+  "acquireKey": "LOBBY-DECK-SETUP-PREVIEW-R5-20261004T1350-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_7371511_PLUS_EXPIRED_R4_RECOVERY_20261004T1350JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_PR1913_QUICK_DECK_CORE_PLUS_CURRENT_SETUP_DOM_DIRECT_READBACK",
+  "proceedToken": "PROCEED|LOBBY-DECK-SETUP-PREVIEW-R5-20261004T1350-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|setup-quick-deck-live-mount|cards-presentation|direct-browser-acceptance",
+  "authorizationBaseSha": "737151157b095004e9d9821a4dba33661df58d9c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "leaseWorkUnitKey": "SETUP_QUICK_DECK_PREVIEW_LIVE_ACCEPTANCE_R5",
+  "leaseAcquireKey": "LOBBY-DECK-SETUP-PREVIEW-R5-20261004T1350-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-04 13:50 JST",
+  "leaseUntilJst": "2026-10-04 14:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:O8",
+  "leaseExactMutableResources": "browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; tests/browser-full-interaction.spec.mjs; data/preaction-authorizations/VWORK-LOBBY-DECK-SETUP-PREVIEW-R5-20261004T1350.json; own fresh branch/PR/check/readback; own CURRENT R25 event/lease records",
+  "solutionSignature": "SETUP_SELECTED_DECK_READ_ONLY_PREVIEW_CURRENT_CONSUMER_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_TASK_R1_PR1913_CORE_PLUS_MAIN_SETUP_SELECTED_DECK_STATE",
+  "solutionSearchEvidence": [
+    "Current task authority already records the user-directed Quick Deck behavior and external comparison evidence; do not create a second Deck state or a second preview core.",
+    "Current main directly contains createSetupQuickDeckPreview in browser/cards-deck-presentation-core.mjs from merged PR#1913.",
+    "Current main directly contains the live Setup DOM with setupDeckIdentity, setupDeckNote, fixDeckFromSetup and startMatch.",
+    "Current main directly contains selectedDeckIndex, savedDeck, savedDeckRule and renderSetupIdentity; the selected working copy is switched by existing selectDeckIndex and remains the authority.",
+    "Current cards-deck-presentation.mjs is already dynamically imported by GAMEROAD.html and auto-installs presentation-only consumers, so the remaining path is an adapter/mount rather than a new subsystem.",
+    "Existing fixDeckFromSetup already routes to the current Deck editor and can be reused for the explicit edit action."
+  ],
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "data/preaction-authorizations/VWORK-LOBBY-DECK-SETUP-PREVIEW-R5-20261004T1350.json"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "data/preaction-authorizations/VWORK-LOBBY-DECK-SETUP-PREVIEW-R5-20261004T1350.json"
+  ]
+}

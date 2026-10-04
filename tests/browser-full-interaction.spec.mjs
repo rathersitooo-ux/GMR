@@ -636,6 +636,12 @@ test('Setup Quick Deck previews selected decks 1-3 read-only and keeps the exist
   await expect(cards, 'Quick Deck edit action reuses the existing Cards/Deck route').toBeVisible();
 
   for (const deckNumber of [2, 3]) {
+    const mobileTrayToggle = cards.locator('#r4DeckTrayToggle:visible');
+    if ((await mobileTrayToggle.count()) > 0) {
+      await mobileTrayToggle.click();
+      await page.waitForTimeout(120);
+    }
+
     const picker = cards.locator('#deckSlotPicker .modeBtn');
     expect(await picker.count(), 'existing deck slot picker exposes saved deck slots').toBeGreaterThanOrEqual(deckNumber);
     await picker.nth(deckNumber - 1).click();
@@ -649,9 +655,8 @@ test('Setup Quick Deck previews selected decks 1-3 read-only and keeps the exist
     const back = cards.locator('[data-back]').first();
     await expect(back).toBeVisible();
     await back.click();
-    await expect(page.locator('section[data-screen="home"]')).toBeVisible();
-
-    setup = await openSetup();
+    setup = page.locator('section[data-screen="setup"]');
+    await expect(setup, 'Deck editor back returns to the invoking Setup screen').toBeVisible();
     trigger = setup.locator('[data-role="setup-quick-deck-trigger"]');
     panel = setup.locator('[data-role="setup-quick-deck-preview"]');
     await expect(trigger).toBeVisible();

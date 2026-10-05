@@ -1,4 +1,8 @@
 import { SAASUNA_PARTNER_ID } from './partner-saasuna-conversation-source.mjs';
+import {
+  createAdviceBustupFrameMap,
+  renderAdviceBustupSprite,
+} from './partner-advice-bustup-sprite-core.mjs';
 
 const STYLE_ID = 'gameroad-partner-advice-saasuna-bustup-r1';
 const CHAT_ROOT_ID = 'partnerAdviceChatPresentation';
@@ -20,6 +24,24 @@ export const SAASUNA_BUSTUP_ASSETS = Object.freeze({
   SAD_DOWNCAST: asset('GAMEROAD_SAASUNA_NAV_09_SAD_DOWNCAST_TRANSPARENT_20260915.png'),
 });
 
+export const SAASUNA_ADVICE_SPRITE = asset('saasuna-advice-bustup-candidate-r1.png');
+export const SAASUNA_ADVICE_SPRITE_FRAMES = createAdviceBustupFrameMap([
+  'GENTLE', 'IDOL_APPEAL', 'CURIOUS', 'WINK_PEACE', 'CHUUNIBYOU',
+  'SURPRISED', 'TEARY', 'LAUGH', 'DOWNCAST',
+]);
+
+const SAASUNA_EXPRESSION_LABELS = Object.freeze({
+  GENTLE: '穏やかな表情',
+  IDOL_APPEAL: 'アイドルアピール',
+  CURIOUS: '興味津々',
+  WINK_PEACE: 'ウィンク・ピース',
+  CHUUNIBYOU: '決め顔',
+  SURPRISED: '驚き',
+  TEARY: '感動の涙',
+  LAUGH: '満面の笑顔',
+  DOWNCAST: 'しょんぼり',
+});
+
 export function resolveSaasunaAdviceBustupState(input = {}) {
   if (input.partnerId !== SAASUNA_PARTNER_ID) return null;
   if (input.reactionActive) return 'SURPRISED';
@@ -28,6 +50,17 @@ export function resolveSaasunaAdviceBustupState(input = {}) {
   if (input.quickRouteId === 'idea') return 'GUIDE_PRESENT';
   if (input.adviceActive) return 'HAPPY_SMILE';
   return 'IDLE_GENTLE';
+}
+
+export function resolveSaasunaAdviceBustupFrame(input = {}) {
+  if (input.partnerId !== SAASUNA_PARTNER_ID) return null;
+  if (input.reactionActive) return 'SURPRISED';
+  if (input.tutorialActive) return 'WINK_PEACE';
+  if (input.quickRouteId === 'casual') return 'IDOL_APPEAL';
+  if (input.quickRouteId === 'situation') return 'CURIOUS';
+  if (input.quickRouteId === 'idea') return 'CHUUNIBYOU';
+  if (input.adviceActive) return 'LAUGH';
+  return 'GENTLE';
 }
 
 export function ensureSaasunaBattleBustupStyle(doc) {
@@ -65,21 +98,22 @@ export function ensureSaasunaBattleBustup(doc, battleSurface) {
 
 export function renderSaasunaBattleBustup({ root, bustup, partnerId, battleActive = false, reactionActive = false, tutorialActive = false, quickRouteId = null, adviceActive = false } = {}) {
   const state = resolveSaasunaAdviceBustupState({ partnerId, reactionActive, tutorialActive, quickRouteId, adviceActive });
-  const entry = state ? SAASUNA_BUSTUP_ASSETS[state] : null;
-  const visible = Boolean(root && bustup?.figure && bustup?.image && battleActive && entry);
-  if (root) root.dataset.saasunaBustup = visible ? 'true' : 'false';
-  if (!bustup?.figure || !bustup?.image) return Object.freeze({ visible: false, state: null, asset: null });
-  bustup.figure.hidden = !visible;
-  if (!visible) {
-    delete bustup.figure.dataset.state;
-    return Object.freeze({ visible: false, state: null, asset: null });
-  }
+  const input = { partnerId, reactionActive, tutorialActive, quickRouteId, adviceActive };
+  const frameKey = resolveSaasunaAdviceBustupFrame(input);
+  const frame = frameKey ? SAASUNA_ADVICE_SPRITE_FRAMES[frameKey] : null;
+  const presentation = renderAdviceBustupSprite({
+    root,
+    bustup,
+    partnerId,
+    partnerName: 'サースナー',
+    entry: frame ? SAASUNA_ADVICE_SPRITE : null,
+    frame,
+    battleActive,
+    alt: frame ? `サースナー（${SAASUNA_EXPRESSION_LABELS[frameKey]}）` : '',
+    legacyRootFlag: 'saasunaBustup',
+  });
+  if (!presentation.visible) return Object.freeze({ visible: false, state: null, frame: null, asset: null });
   bustup.figure.dataset.state = state;
-  bustup.figure.setAttribute('aria-label', 'アドバイスパートナー サースナー');
-  if (bustup.image.dataset.assetFile !== entry.fileName) {
-    bustup.image.src = entry.src;
-    bustup.image.dataset.assetFile = entry.fileName;
-  }
-  bustup.image.alt = 'サースナー';
-  return Object.freeze({ visible: true, state, asset: entry.fileName });
+  bustup.figure.dataset.expressionState = frameKey;
+  return Object.freeze({ ...presentation, state, frame: frameKey });
 }

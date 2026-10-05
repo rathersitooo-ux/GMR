@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "LOBBY-DECK-RESIDUAL-R16-20261005T1023-SOL",
+  "taskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "workUnitKey": "DECK_FRIENDROOM_GUEST_SNAPSHOT_REPAIR_R16",
+  "acquireKey": "LOBBY-DECK-RESIDUAL-R16-20261005T1023-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRIEND_ROOM_GUEST_DECK_HOST_COPY_DEFECT_DIRECT_CURRENT_MAIN_20261005T1023JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REUSE_EXISTING_MATCH_START_SNAPSHOT_VALIDATEDECK_AND_HOST_AUTHORITY",
+  "proceedToken": "PROCEED|LOBBY-DECK-RESIDUAL-R16-20261005T1023-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|friend-room-guest-deck-binding|transient-ci-route|active-lease",
+  "authorizationBaseSha": "9e99f6c7004cd1ff95cab5a7c7447e3e81ca0b38",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "leaseWorkUnitKey": "DECK_FRIENDROOM_GUEST_SNAPSHOT_REPAIR_R16",
+  "leaseAcquireKey": "LOBBY-DECK-RESIDUAL-R16-20261005T1023-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-05 10:23 JST",
+  "leaseUntilJst": "2026-10-05 11:23 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; tests/browser-full-interaction.spec.mjs; data/preaction-authorizations/LOBBY-DECK-RESIDUAL-R16-20261005T1023-SOL.json; tools/temp-lobby-deck-residual-r16.mjs; .github/workflows/temp-lobby-deck-residual-r16.yml; branch chatgpt/lobby-deck-residual-r16-20261005",
+  "solutionSignature": "FRIEND_ROOM_VALIDATED_GUEST_MATCH_START_DECK_BINDING_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_MATCH_START_SNAPSHOT_VALIDATE_DECK_AND_FRIEND_ROOM_EXISTING_RECONNECT_PIPELINE",
+  "solutionSearchEvidence": [
+    "Current match start already uses createDeckMatchStartSnapshot and validateDeck for battle legality.",
+    "Current Friend Room already owns seat identity, reconnect projection, and host-authoritative match state.",
+    "The proven defect is that guest ready carries no validated guest deck, so hostStart initializes guest seats from the host deck.",
+    "A transient CI patch route is included only because the monolithic HTML body cannot be committed reliably through the direct contents transport."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    "tools/temp-lobby-deck-residual-r16.mjs",
+    ".github/workflows/temp-lobby-deck-residual-r16.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    "tools/temp-lobby-deck-residual-r16.mjs",
+    ".github/workflows/temp-lobby-deck-residual-r16.yml"
+  ]
+}

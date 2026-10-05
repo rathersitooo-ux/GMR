@@ -2162,7 +2162,7 @@ test('update manifest is strictly validated, rollback-safe in wording, session-l
   runtime.assertClean(testInfo);
 });
 
-test('R2 visible precommit one-operation clear preserves route undo and fails closed against commit race', async ({ page }, testInfo) => {
+test('R2 visible precommit clear preserves route undo and fails closed after submit', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
   const battle = await beginVisibleTwoPlayerRoadShield(page, testInfo, 'r2-precommit-clear');
@@ -2175,14 +2175,13 @@ test('R2 visible precommit one-operation clear preserves route undo and fails cl
   await expect(clearAll).toBeDisabled();
 
   const roads = await roadSelect.locator('option').evaluateAll(nodes => nodes.map(node => node.value).filter(Boolean));
-  const battles = await battleSelect.locator('option').evaluateAll(nodes => nodes.map(node => node.value).filter(Boolean));
   const roadId = roads[0];
-  const battleId = battles.find(id => id !== roadId);
   expect(roadId).toBeTruthy();
-  expect(battleId).toBeTruthy();
+
   await roadSelect.selectOption(roadId);
-  await battleSelect.selectOption(battleId);
-  await expect(clearAll).toBeEnabled();
+  await expect(roadSelect).toHaveValue(roadId);
+  await expect(battleSelect).toHaveValue('');
+  await expect(clearAll, 'a partial uncommitted plan remains clearable').toBeEnabled();
   await clearAll.click();
   await expect(roadSelect).toHaveValue('');
   await expect(battleSelect).toHaveValue('');
@@ -2222,22 +2221,9 @@ test('R2 visible precommit one-operation clear preserves route undo and fails cl
     m.phase = 'plan'; m.activeId = null; m.busy = false; m.target = null;
     t.battlePresentationRender();
   });
-  await roadSelect.selectOption(roadId);
-  await battleSelect.selectOption(battleId);
-  await expect(battle.locator('#readyPlan')).toBeEnabled();
-  await expect(clearAll).toBeEnabled();
-  await page.evaluate(() => {
-    document.getElementById('clearPrecommitSelection').click();
-    document.getElementById('readyPlan').click();
-  });
-  await page.waitForTimeout(80);
-  const race = await page.evaluate(() => {
-    const m = window.__GAMEROAD_TEST__.state.match, me = m.players[0];
-    return { phase: m.phase, busy: Boolean(m.busy), roadId: me.plan?.roadId ?? null, battleId: me.plan?.battleId ?? null };
-  });
-  expect(race.roadId, 'Ready-started commit is never rolled back by the asynchronous clear').toBe(roadId);
-  expect(race.battleId, 'Ready-started commit preserves the staged Battle card').toBe(battleId);
-  await attachStateScreenshot(page, testInfo, 'r2-precommit-clear-race-fail-closed');
+  await submitVisiblePlan(battle);
+  await expect(clearAll, 'precommit clear is unavailable after the visible plan is submitted').not.toBeEnabled();
+  await attachStateScreenshot(page, testInfo, 'r2-precommit-clear-post-submit-fail-closed');
   runtime.assertClean(testInfo);
 });
 

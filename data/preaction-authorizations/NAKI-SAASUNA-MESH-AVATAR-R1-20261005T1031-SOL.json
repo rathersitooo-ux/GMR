@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NAKI-SAASUNA-MESH-AVATAR-R1-20261005T1031-SOL",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "NAKI_SAASUNA_MESH_AVATAR_RUNTIME_ADAPTER_R1",
+  "acquireKey": "NAKI-SAASUNA-MESH-AVATAR-R1-20261005T1031-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_CURRENT_LEASE_PLUS_MAIN_20261005T1034JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "READ_ONLY_EXISTING_NAKI_SAASUNA_CINEMATIC_AND_PARTNER_CONSUMERS",
+  "proceedToken": "PROCEED|NAKI-SAASUNA-MESH-AVATAR-R1-20261005T1031-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|mesh-avatar-runtime-adapter|new-files-only|active-lease",
+  "authorizationBaseSha": "9e99f6c7004cd1ff95cab5a7c7447e3e81ca0b38",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "NAKI_SAASUNA_MESH_AVATAR_RUNTIME_ADAPTER_R1",
+  "leaseAcquireKey": "NAKI-SAASUNA-MESH-AVATAR-R1-20261005T1031-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-10-05 10:34 JST",
+  "leaseUntilJst": "2026-10-05 11:31 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:O7",
+  "leaseExactMutableResources": "browser/mesh-avatar-studio-runtime.mjs; browser/battle-cinematic-mesh-avatar-adapter.mjs; tests/mesh-avatar-studio-runtime.test.mjs; tests/battle-cinematic-mesh-avatar-adapter.test.mjs; data/preaction-authorizations/NAKI-SAASUNA-MESH-AVATAR-R1-20261005T1031-SOL.json; branch chatgpt/naki-saasuna-mesh-avatar-r1-20261005; central task row1379 bounded sync",
+  "solutionSignature": "NAKI_SAASUNA_MESH_AVATAR_STUDIO_PINNED_RUNTIME_ADAPTER_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MESH_AVATAR_STUDIO_98B14C2_PLUS_CURRENT_GMR_CHARACTER_CONSUMERS",
+  "solutionSearchEvidence": [
+    "Mesh Avatar Studio upstream main is pinned at 98b14c2e352c876508c0c4739f9c75e88ef67e5d and code is MIT licensed.",
+    "Upstream runtime exposes head/body motion, blink, gaze, lip sync, emotion, breath and hair sway through createMeshAvatar.",
+    "GMR current main already owns Naki and Saasuna cinematic routes; this slice adds only an optional presentation adapter and does not replace gameplay or existing motion authority.",
+    "CURRENT requires walking dot art and advice/normal-person presentation to remain separate; this adapter targets normal-person/cutin presentation only.",
+    "WORK-side character/rig production is not duplicated here. Runtime accepts later rig.json+built asset output and fails closed to the existing static presentation when those assets are unavailable.",
+    "Current active lobby-deck work owns browser/GAMEROAD.html, so this slice performs no GAMEROAD.html mutation."
+  ],
+  "upstream": {
+    "repository": "shinshin86/mesh-avatar-studio",
+    "commit": "98b14c2e352c876508c0c4739f9c75e88ef67e5d",
+    "license": "MIT",
+    "sampleAssetsCopied": false
+  },
+  "scope": [
+    "browser/mesh-avatar-studio-runtime.mjs",
+    "browser/battle-cinematic-mesh-avatar-adapter.mjs",
+    "tests/mesh-avatar-studio-runtime.test.mjs",
+    "tests/battle-cinematic-mesh-avatar-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/mesh-avatar-studio-runtime.mjs",
+    "browser/battle-cinematic-mesh-avatar-adapter.mjs",
+    "tests/mesh-avatar-studio-runtime.test.mjs",
+    "tests/battle-cinematic-mesh-avatar-adapter.test.mjs"
+  ],
+  "invariants": [
+    "browser/GAMEROAD.html READ_ONLY",
+    "gameplay/rules/target/winner/order/save/economy/network authority unchanged",
+    "existing Naki/Saasuna motion routes remain fallback authority",
+    "walking dot-art pipeline unchanged",
+    "no character art generation in this WorkUnit",
+    "no sample character assets from Mesh Avatar Studio copied"
+  ]
+}

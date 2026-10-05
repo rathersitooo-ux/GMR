@@ -1,0 +1,58 @@
+name: Temp Lobby Deck Residual R16
+
+on:
+  push:
+    branches:
+      - chatgpt/lobby-deck-residual-r16-20261005
+    paths:
+      - 'tools/temp-lobby-deck-residual-r16.mjs'
+      - '.github/workflows/temp-lobby-deck-residual-r16.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout owned branch
+        uses: actions/checkout@v4
+        with:
+          ref: chatgpt/lobby-deck-residual-r16-20261005
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Patch monolithic Friend Room runtime
+        run: |
+          set -euo pipefail
+          node --check tools/temp-lobby-deck-residual-r16.mjs
+          node tools/temp-lobby-deck-residual-r16.mjs
+          git diff --check
+          git diff -- browser/GAMEROAD.html
+
+      - name: Install focused Playwright runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Friend Room guest deck regression
+        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 --grep "Friend Room guest ready sends a validated guest deck snapshot"
+
+      - name: Commit verified product patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add browser/GAMEROAD.html
+          test -n "$(git diff --cached --name-only)"
+          test "$(git diff --cached --name-only)" = "browser/GAMEROAD.html"
+          git commit -m "Bind Friend Room guests to validated deck snapshots"
+          git push origin HEAD:chatgpt/lobby-deck-residual-r16-20261005

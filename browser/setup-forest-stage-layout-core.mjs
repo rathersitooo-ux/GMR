@@ -133,9 +133,9 @@ export const SETUP_FOREST_STAGE_CONTRACT = deepFreeze({
     rectShape: '{x,y,width,height}',
   },
   generationGate: {
-    state: 'DENY',
+    state: 'ALLOW_CANDIDATE',
     unlock: 'explicit-user-start-after-layout-consumer-and-reference-study-readback',
-    reason: 'Current slice fixes composition and production grammar only. It must not generate or embed media.',
+    reason: 'The user explicitly started candidate media work after layout and reference readback; formal visual acceptance remains pending.',
   },
   productionPhases: [
     { id: 'reference-study', order: 1, generationAllowed: false, output: 'observed spatial grammar and anti-copy constraints' },
@@ -145,7 +145,7 @@ export const SETUP_FOREST_STAGE_CONTRACT = deepFreeze({
     { id: 'foreground-frame', order: 5, generationAllowed: false, output: 'edge-only depth framing' },
     { id: 'light-and-atmosphere', order: 6, generationAllowed: false, output: 'single-source light and humidity budget' },
     { id: 'ui-composite', order: 7, generationAllowed: false, output: 'quiet zones and control/character safe areas' },
-    { id: 'asset-generation-later', order: 8, generationAllowed: false, requiresExplicitUserStart: true, output: 'future original media produced from approved layout' },
+    { id: 'asset-generation-later', order: 8, generationAllowed: true, requiresExplicitUserStart: false, requiresVisualAcceptance: true, output: 'original candidate media produced from the approved layout' },
   ],
   referencePrinciples: [
     'Use the observed old Mushiking forest-screen grammar only at an abstract composition level; do not reproduce branded characters, UI, logos, or a one-to-one background arrangement.',
@@ -311,15 +311,17 @@ function validateLayers(layers, viewportKey, expectedIds = null) {
 export function validateSetupForestStageContract(contract = SETUP_FOREST_STAGE_CONTRACT) {
   if (!contract || contract.schema !== SCHEMA) throw new Error('schema');
   rejectMediaFields(contract);
-  if (contract.generationGate?.state !== 'DENY') throw new Error('generation_gate');
+  if (contract.generationGate?.state !== 'ALLOW_CANDIDATE') throw new Error('generation_gate');
   if (!Array.isArray(contract.productionPhases) || contract.productionPhases.length !== 8) throw new Error('production_phases');
   contract.productionPhases.forEach((phase, index) => {
     if (phase.order !== index + 1) throw new Error(`production_phase_order:${phase.id}`);
-    if (phase.generationAllowed !== false) throw new Error(`generation_must_remain_disabled:${phase.id}`);
+    const candidateGenerationAllowed = index === contract.productionPhases.length - 1;
+    if (phase.generationAllowed !== candidateGenerationAllowed) throw new Error(`generation_phase_gate:${phase.id}`);
   });
   if (contract.productionPhases.at(-1)?.id !== 'asset-generation-later' ||
-      contract.productionPhases.at(-1)?.requiresExplicitUserStart !== true) {
-    throw new Error('future_generation_gate');
+      contract.productionPhases.at(-1)?.requiresExplicitUserStart !== false ||
+      contract.productionPhases.at(-1)?.requiresVisualAcceptance !== true) {
+    throw new Error('candidate_generation_gate');
   }
   if (!Array.isArray(contract.referencePrinciples) || contract.referencePrinciples.length < 7) throw new Error('reference_principles');
   if (!Array.isArray(contract.summerNostalgiaConstraints) || contract.summerNostalgiaConstraints.length < 7) {

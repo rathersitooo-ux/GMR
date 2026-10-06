@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
   SAASUNA_BUSTUP_ASSETS,
+  renderSaasunaBattleBustup,
   resolveSaasunaAdviceBustupState,
 } from '../browser/partner-saasuna-bustup-visuals.mjs';
 
@@ -39,6 +40,117 @@ test('Battle presentation selects only context-appropriate Saasuna bust-ups auto
   assert.equal(resolveSaasunaAdviceBustupState({ ...base, reactionActive: true }), 'SURPRISED');
   assert.equal(resolveSaasunaAdviceBustupState({ partnerId: 'partner.other' }), null);
   assert.ok(SAASUNA_BUSTUP_ASSETS.SHH && SAASUNA_BUSTUP_ASSETS.TOUCH_CRY && SAASUNA_BUSTUP_ASSETS.SAD_DOWNCAST);
+});
+
+test('all nine existing bust-up states can be explicitly previewed without inventing a live dialogue trigger', () => {
+  for (const state of Object.keys(SAASUNA_BUSTUP_ASSETS)) {
+    assert.equal(resolveSaasunaAdviceBustupState({ partnerId: 'partner.saasuna', visualState: state }), state);
+  }
+  assert.equal(resolveSaasunaAdviceBustupState({ partnerId: 'partner.other', visualState: 'SHH' }), null);
+
+  const root = { dataset: {} };
+  const figure = { dataset: {}, hidden: true, setAttribute() {} };
+  const image = { dataset: {} };
+  const bustup = { figure, image };
+  for (const state of Object.keys(SAASUNA_BUSTUP_ASSETS)) {
+    const result = renderSaasunaBattleBustup({
+      root, bustup, partnerId: 'partner.saasuna', battleActive: true, visualState: state,
+    });
+    assert.equal(result.state, state);
+    assert.equal(result.asset, SAASUNA_BUSTUP_ASSETS[state].fileName);
+  }
+  figure.dataset.visualStateOverride = 'SHH';
+  assert.equal(renderSaasunaBattleBustup({ root, bustup, partnerId: 'partner.saasuna', battleActive: true }).state, 'SHH');
+});
+
+test('the existing touch-to-cry event holds TOUCH_CRY, then lets SAD_DOWNCAST settle before normal context resumes', () => {
+  const root = { dataset: {} };
+  const overlay = { style: { display: 'none' } };
+  const figure = { dataset: {}, hidden: true, setAttribute() {}, querySelector: () => overlay };
+  const image = { dataset: {} };
+  const bustup = { figure, image };
+  const render = (nowMs) => renderSaasunaBattleBustup({
+    root, bustup, partnerId: 'partner.saasuna', battleActive: true, nowMs,
+  });
+
+  assert.equal(render(100).state, 'IDLE_GENTLE');
+  figure.dataset.touchCryVisible = 'true';
+  overlay.style.display = 'block';
+  assert.equal(render(2000).state, 'TOUCH_CRY');
+  assert.equal(overlay.style.display, 'none');
+  delete figure.dataset.touchCryVisible;
+  assert.equal(render(3001).state, 'SAD_DOWNCAST');
+  assert.equal(render(4200).state, 'SAD_DOWNCAST');
+  assert.equal(render(4201).state, 'IDLE_GENTLE');
+});
+
+test('real touch-cry data-attribute changes rerender the bust-up and finish the SAD_DOWNCAST afterglow', () => {
+  const observers = [];
+  const timers = new Map();
+  let timerId = 0;
+  class FakeMutationObserver {
+    constructor(callback) {
+      this.callback = callback;
+      observers.push(this);
+    }
+
+    observe(target, options) {
+      this.target = target;
+      this.options = options;
+    }
+
+    disconnect() {}
+
+    fire() {
+      this.callback([{ type: 'attributes', target: this.target, attributeName: 'data-touch-cry-visible' }]);
+    }
+  }
+
+  const view = {
+    MutationObserver: FakeMutationObserver,
+    setTimeout(callback, delay) {
+      const id = ++timerId;
+      timers.set(id, { callback, delay });
+      return id;
+    },
+    clearTimeout(id) {
+      timers.delete(id);
+    },
+  };
+  const root = { dataset: {} };
+  const overlay = { style: { display: 'none' } };
+  const figure = {
+    ownerDocument: { defaultView: view },
+    dataset: {},
+    hidden: true,
+    setAttribute() {},
+    querySelector: (selector) => selector === '.partnerAdviceTouchCryOverlay' ? overlay : null,
+  };
+  const image = { dataset: {} };
+  const bustup = { figure, image };
+  const render = () => renderSaasunaBattleBustup({
+    root, bustup, partnerId: 'partner.saasuna', battleActive: true, nowMs: 100,
+  });
+
+  assert.equal(render().state, 'IDLE_GENTLE');
+  const observer = observers[0];
+  assert.equal(observer?.target, figure);
+  assert.deepEqual(observer?.options, { attributes: true, attributeFilter: ['data-touch-cry-visible'] });
+  overlay.style.display = 'block';
+  figure.dataset.touchCryVisible = 'true';
+  observer?.fire();
+  assert.equal(figure.dataset.state, 'TOUCH_CRY');
+  assert.equal(image.dataset.assetFile, SAASUNA_BUSTUP_ASSETS.TOUCH_CRY.fileName);
+  assert.equal(overlay.style.display, 'none');
+
+  delete figure.dataset.touchCryVisible;
+  observer?.fire();
+  assert.equal(figure.dataset.state, 'SAD_DOWNCAST');
+  const afterglow = [...timers.entries()].find(([, timer]) => timer.delay === 1200);
+  assert.ok(afterglow, 'SAD_DOWNCAST should have one bounded 1200ms afterglow');
+  timers.delete(afterglow[0]);
+  afterglow[1].callback();
+  assert.equal(figure.dataset.state, 'IDLE_GENTLE');
 });
 
 

@@ -115,6 +115,11 @@ test('mounts the existing Flanora surface and persistent Shield-entry gates with
   assert.equal(runtime.snapshot().gateCue.activeArrowCount, 0);
   assert.equal(runtime.snapshot().progressionBuiltStageCount, 0);
   assert.equal(runtime.snapshot().progressionLatentStageCount, 84);
+  assert.equal(runtime.flanoraLayout.legacyLowerTopologyStripped, true);
+  assert.equal(runtime.flanoraLayout.lowerFieldTopologyResolvedHere, false);
+  assert.equal('sharedFieldCells' in runtime.flanoraLayout, false);
+  assert.equal('geometryEdges' in runtime.flanoraLayout, false);
+  assert.equal(runtime.snapshot().boardSurface.sourceClearingBindingCount, 0);
   assert.equal(runtime.boardSurfaceRuntime.resolveRoadStep('P1', 0, 1), null);
   const p2CenterGate = runtime.resolveGateCueLane('P2', 1);
   assert.equal(p2CenterGate.anchor, runtime.boardSurfaceRuntime.resolveRouteGate('P2', 1));
@@ -153,6 +158,8 @@ test('hands the current NEW_BOARD_ONLY world-field model to the live renderer se
   assert.equal(model.gameplayAuthority, false);
   assert.equal(model.movementAuthority, false);
   assert.equal(BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT.worldFieldGeometryAuthority, 'EXISTING_BATTLE_BOARD_WORLD_FIELD_RENDERER');
+  assert.equal(BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT.lowerFieldTopologyHandoff, 'LEGACY_FLANORA_LOWER_TOPOLOGY_STRIPPED_AT_COMPOSER_BOUNDARY');
+  assert.equal(BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT.worldLowerFieldTopologyAuthority, 'BATTLE_BOARD_VISUAL_GRAPH_VIA_WORLD_FIELD_RENDERER');
 });
 
 test('1..6 established cards become BUILT while future stages stay logical-only and GOAL remains closed', () => {

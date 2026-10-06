@@ -10,8 +10,8 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-test('Setup forest contract keeps generation disabled until an explicit later user start', () => {
-  assert.equal(SETUP_FOREST_STAGE_CONTRACT.generationGate.state, 'DENY');
+test('Setup forest contract allows user-started candidate media while retaining visual acceptance', () => {
+  assert.equal(SETUP_FOREST_STAGE_CONTRACT.generationGate.state, 'ALLOW_CANDIDATE');
   assert.equal(SETUP_FOREST_STAGE_CONTRACT.productionPhases.length, 8);
   assert.deepEqual(
     SETUP_FOREST_STAGE_CONTRACT.productionPhases.map((phase) => phase.id),
@@ -26,8 +26,10 @@ test('Setup forest contract keeps generation disabled until an explicit later us
       'asset-generation-later',
     ],
   );
-  assert.ok(SETUP_FOREST_STAGE_CONTRACT.productionPhases.every((phase) => phase.generationAllowed === false));
-  assert.equal(SETUP_FOREST_STAGE_CONTRACT.productionPhases.at(-1).requiresExplicitUserStart, true);
+  assert.ok(SETUP_FOREST_STAGE_CONTRACT.productionPhases.slice(0, -1).every((phase) => phase.generationAllowed === false));
+  assert.equal(SETUP_FOREST_STAGE_CONTRACT.productionPhases.at(-1).generationAllowed, true);
+  assert.equal(SETUP_FOREST_STAGE_CONTRACT.productionPhases.at(-1).requiresExplicitUserStart, false);
+  assert.equal(SETUP_FOREST_STAGE_CONTRACT.productionPhases.at(-1).requiresVisualAcceptance, true);
   assert.equal(validateSetupForestStageContract(), true);
 });
 

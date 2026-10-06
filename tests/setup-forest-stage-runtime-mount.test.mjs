@@ -99,15 +99,15 @@ test('viewport classifier maps the three adopted Setup compositions deterministi
   assert.equal(classifySetupForestViewport({ width: 844, height: 390 }), 'shortLandscape');
 });
 
-test('runtime projection carries the ordered layout contract without binding media', () => {
+test('runtime projection marks generated media as a candidate and reports partial binding', () => {
   for (const input of [
     { width: 1280, height: 720 },
     { width: 667, height: 375 },
     { width: 390, height: 844 },
   ]) {
     const projection = projectSetupForestRuntime(input);
-    assert.equal(projection.generationState, 'DENY');
-    assert.equal(projection.mediaState, 'UNBOUND');
+    assert.equal(projection.generationState, 'CANDIDATE');
+    assert.equal(projection.mediaState, 'PARTIAL');
     assert.equal(projection.layers.length, 10);
     assert.ok(projection.layers.every((layer, index) => index === 0 || layer.zOrder > projection.layers[index - 1].zOrder));
     assert.ok(projection.safeZones.centralBreathing.maxDetailDensity <= 0.10);
@@ -132,30 +132,38 @@ test('layer and safe-zone geometry becomes explicit CSS custom-property coordina
   assert.equal(safe['--gr-setup-forest-central-breathing-width'], '24%');
 });
 
-test('live mount creates inert ordered slots, exposes axis metadata, and stays media-unbound', () => {
+test('live mount binds the animated sun patch while retaining ten ordered layer slots', () => {
   const fake = fakeRuntime(1280, 720);
   const mounted = mountSetupForestStageRuntime(fake);
   assert.equal(mounted.mounted, true);
   assert.equal(mounted.viewportKey, 'wide');
   assert.equal(mounted.layerCount, 10);
-  assert.equal(mounted.generationState, 'denied');
-  assert.equal(mounted.mediaState, 'unbound');
+  assert.equal(mounted.generationState, 'candidate');
+  assert.equal(mounted.mediaState, 'partial');
   assert.equal(fake.setup.dataset.setupForestMounted, 'true');
   assert.equal(fake.setup.dataset.setupForestViewport, 'wide');
-  assert.equal(fake.setup.dataset.setupForestGeneration, 'denied');
-  assert.equal(fake.setup.dataset.setupForestMedia, 'unbound');
+  assert.equal(fake.setup.dataset.setupForestGeneration, 'candidate');
+  assert.equal(fake.setup.dataset.setupForestMedia, 'partial');
   assert.equal(fake.setup.children.length, 1);
 
   const stage = fake.setup.children[0];
   assert.equal(stage.id, SETUP_FOREST_RUNTIME_STAGE_ID);
   assert.equal(stage.dataset.layerCount, '10');
-  assert.equal(stage.children.length, 10);
+  const layers = stage.children.filter((child) => child.className === 'gameroadSetupForestLayerSlot');
+  assert.equal(layers.length, 10);
+  assert.ok(stage.children.some((child) => child.tagName === 'STYLE' && child.textContent.includes('@keyframes gameroadSetupForestSunPatch')));
   assert.deepEqual(
-    stage.children.map((layer) => layer.dataset.layerId),
+    layers.map((layer) => layer.dataset.layerId),
     projectSetupForestRuntime({ width: 1280, height: 720 }).layers.map((layer) => layer.id),
   );
-  assert.ok(stage.children.every((layer) => layer.dataset.mediaState === 'unbound'));
-  assert.ok(stage.children.every((layer) => layer.style.background === 'none'));
+  const sunPatch = layers.find((layer) => layer.dataset.layerId === 'sun-patch');
+  assert.equal(sunPatch.dataset.mediaState, 'bound');
+  assert.equal(sunPatch.dataset.animationState, 'enabled');
+  assert.match(sunPatch.style.backgroundImage, /setup-forest-sun-patch-4x4-v1\.png/);
+  assert.equal(sunPatch.style.backgroundSize, '400% 400%');
+  assert.match(sunPatch.style.animation, /9s steps\(1, end\) infinite alternate/);
+  assert.ok(layers.filter((layer) => layer !== sunPatch).every((layer) => layer.dataset.mediaState === 'unbound'));
+  assert.ok(layers.every((layer) => layer.style.background === 'none'));
   assert.equal(fake.setup.style['--gr-setup-forest-ui-reading-x'], '56%');
   assert.equal(fake.setup.style['--gr-setup-forest-central-breathing-x'], '32%');
 
@@ -177,12 +185,20 @@ test('production bootstrap mounts the forest stage through the already-loaded Ho
   assert.match(source, /import '\.\/setup-forest-stage-runtime-mount\.mjs';/);
 });
 
-test('runtime mount contains no media producer or generated-art binding in this slice', () => {
+test('runtime binds only the approved generated ambient sprite and provides a reduced-motion fallback', () => {
   const source = fs.readFileSync(new URL('../browser/setup-forest-stage-runtime-mount.mjs', import.meta.url), 'utf8');
-  assert.doesNotMatch(source, /backgroundImage\s*=/);
-  assert.doesNotMatch(source, /createElement\(['"]img['"]\)/);
-  assert.doesNotMatch(source, /\.src\s*=/);
-  assert.doesNotMatch(source, /url\(/i);
-  assert.match(source, /dataset\.mediaState = 'unbound'/);
-  assert.match(source, /dataset\.generationState = 'denied'/);
+  assert.match(source, /FOREST_MEDIA_BINDINGS/);
+  assert.match(source, /backgroundImage\s*=/);
+  assert.match(source, /url\(/i);
+  assert.match(source, /prefers-reduced-motion: reduce/);
+  assert.match(source, /dataset\.mediaState = media \? 'bound' : 'unbound'/);
+  assert.match(source, /dataset\.generationState = 'candidate'/);
+});
+
+test('generated sprite exists as a portable transparent PNG', () => {
+  const sprite = fs.readFileSync(new URL('../assets/visual/effects/setup-forest-sun-patch-4x4-v1.png', import.meta.url));
+  assert.equal(sprite.toString('ascii', 1, 4), 'PNG');
+  assert.equal(sprite.readUInt32BE(16), 1448);
+  assert.equal(sprite.readUInt32BE(20), 1086);
+  assert.ok(sprite.length < 2_000_000);
 });

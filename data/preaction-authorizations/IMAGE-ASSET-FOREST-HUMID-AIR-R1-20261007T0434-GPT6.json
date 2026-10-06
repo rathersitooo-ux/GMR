@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "IMAGE-ASSET-FOREST-HUMID-AIR-R1-20261007T0434-GPT6",
+  "taskId": "IMAGE_ASSET_FULL-02",
+  "workUnitKey": "SETUP_FOREST_HUMID_AIR_VEIL_CANDIDATE_R1",
+  "acquireKey": "IMAGE-ASSET-FOREST-HUMID-AIR-R1-20261007T0434-GPT6",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "Existing Setup forest humid-air-veil layer already exists across all three viewport projections. This change adds only a low-opacity background sprite and CSS drift; layout, controls, gameplay, and formal asset authority do not change.",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "node --check passed for runtime and test modules; both focused Setup forest test files passed. Final texture inspected as RGBA PNG 1774x887, 1,231,861 bytes, 55.6% fully transparent, alpha max 133/255.",
+  "proceedToken": "PROCEED|IMAGE-ASSET-FOREST-HUMID-AIR-R1-20261007T0434-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|USER_EXPLICITLY_AUTHORIZED_ALL_APPROVALS",
+  "authorizationBaseSha": "f67a919f3a71a191ee9a84cdbe4d3fdcb61a5d7d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "IMAGE_ASSET_FULL-02",
+  "leaseWorkUnitKey": "SETUP_FOREST_HUMID_AIR_VEIL_CANDIDATE_R1",
+  "leaseAcquireKey": "IMAGE-ASSET-FOREST-HUMID-AIR-R1-20261007T0434-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-07 04:51 JST",
+  "leaseUntilJst": "2026-10-07 05:34 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR; exact base main f67a919f3a71a191ee9a84cdbe4d3fdcb61a5d7d; branch codex/setup-forest-humid-air-veil-r1-20261007; existing: browser/setup-forest-stage-runtime-mount.mjs, tests/setup-forest-stage-runtime-mount.test.mjs; new: assets/visual/effects/setup-forest-humid-air-veil-v1.png, assets/visual/effects/setup-forest-humid-air-veil-v1.SOURCES.md; transient PRE_ACTION only in manifest-first and cleanup commits: data/preaction-authorizations/IMAGE-ASSET-FOREST-HUMID-AIR-R1-20261007T0434-GPT6.json; own branch/PR/exact-head checks/merge/readback. Drive: own R25 events; CURRENT_ACTIVE_LEASES row5 A:J,L:M,O (N derived read-only); GAMEROAD 全作業一覧 row85 G,N only. Read-only: CURRENT_ACTIVE_LEASES N1:N3; other task and owner resources; forest layout/layer contract and formal source/Human acceptance fields; board terrain/coordinates/routes/rules; gameplay, save, network, and formal asset authority.",
+  "scope": [
+    "browser/setup-forest-stage-runtime-mount.mjs",
+    "tests/setup-forest-stage-runtime-mount.test.mjs",
+    "assets/visual/effects/setup-forest-humid-air-veil-v1.png",
+    "assets/visual/effects/setup-forest-humid-air-veil-v1.SOURCES.md"
+  ],
+  "leaseScope": [
+    "browser/setup-forest-stage-runtime-mount.mjs",
+    "tests/setup-forest-stage-runtime-mount.test.mjs",
+    "assets/visual/effects/setup-forest-humid-air-veil-v1.png",
+    "assets/visual/effects/setup-forest-humid-air-veil-v1.SOURCES.md"
+  ],
+  "solutionSignature": "SETUP_FOREST_HUMID_AIR_VEIL_ATMOSPHERE_TEXTURE_R2",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "IMAGE_ASSET_FULL-02 / ASSET_FIRST_RESEARCH_R1 / USER_LINKED_3D_SEARCH_AND_BLENDER_WORKFLOW",
+  "solutionSearchEvidence": [
+    "The existing Setup forest composition already defines a full-screen humid-air-veil layer, with central and UI safe zones; binding that slot reuses the current stage mount and avoids new layout.",
+    "The existing sun-patch sprite handles light animation; this separate candidate fills the existing atmosphere slot and remains broad, sparse, low contrast, and independent of gameplay.",
+    "The user-linked 3d-asset-server is useful for licensed-model discovery, but this 2D atmosphere texture has no 3D geometry consumer; no model or third-party asset was imported.",
+    "The source note records ImageGen origin, prompt, alpha, use-site, and non-CC0 status. Formal art/source acceptance remains separate."
+  ]
+}

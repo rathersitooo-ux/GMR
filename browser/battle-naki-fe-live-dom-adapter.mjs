@@ -228,6 +228,9 @@ function ensureSceneStyle(doc) {
 .gmrBattleLive__impact{position:absolute;z-index:5;left:50%;top:47%;width:20px;height:20px;opacity:0;transform:translate(-50%,-50%) scale(.2);pointer-events:none}
 .gmrBattleLive__impact:before{content:var(--impact-pattern,"♥  ✦  ♥");position:absolute;inset:0;color:#ff8ff0;text-shadow:0 0 14px #d947ff,0 0 4px white;font-size:clamp(18px,3.6vw,36px);white-space:nowrap;letter-spacing:.12em}
 .gmrBattleLive__crescent{position:absolute;left:50%;top:50%;opacity:0;color:#e6d8ff;font-size:clamp(28px,5vw,48px);text-shadow:0 0 12px #bca0ff;transform:translate(-50%,-50%) rotate(-25deg)}
+.gmrBattleLive__assetSlash{position:absolute;z-index:4;left:51%;top:49%;width:clamp(64px,12vw,136px);aspect-ratio:64/47;background-image:var(--asset-slash);background-repeat:no-repeat;background-size:900% 100%;background-position:0% 0%;image-rendering:pixelated;opacity:0;pointer-events:none;transform:translate(-50%,-50%);filter:drop-shadow(0 0 3px rgba(255,255,255,.42))}
+.gmrBattleLive[data-asset-slash="active"] .gmrBattleLive__assetSlash{opacity:1;animation:gmrBattleAssetSlash .36s steps(1,end) both}
+.gmrBattleLive[data-asset-slash="active"] .gmrBattleLive__impact,.gmrBattleLive[data-asset-slash="active"] .gmrBattleLive__crescent{display:none}
 .gmrBattleLive[data-vfx-variant="0"] .gmrBattleLive__impact{margin-left:-5px}.gmrBattleLive[data-vfx-variant="1"] .gmrBattleLive__impact{margin-left:5px}
 .gmrBattleLive[data-vfx-variant="0"] .gmrBattleLive__crescent,.gmrBattleLive[data-vfx-variant="1"] .gmrBattleLive__crescent{display:none}
 .gmrBattleLive[data-causal-phase="impact"] .gmrBattleLive__impact{opacity:1;animation:gmrBattleHeartImpact .34s steps(3,end) both}
@@ -243,14 +246,15 @@ function ensureSceneStyle(doc) {
 .gmrBattleLive[data-causal-phase="reaction"] .gmrBattleLive__fighter--target{animation:gmrBattleRecoil .17s steps(2,end) both}
 .gmrBattleLive[data-causal-phase="impact"] .gmrBattleLive__arena{animation:gmrBattleCameraHit .14s steps(2,end)}
 .gmrBattleLive[data-causal-phase="return"]{animation:gmrBattleReturn .24s steps(3,end) both;pointer-events:none}
-.gmrBattleLive[data-hitstop="true"] .gmrBattleLive__fighter,.gmrBattleLive[data-hitstop="true"] .gmrBattleLive__arena,.gmrBattleLive[data-hitstop="true"] .gmrBattleLive__ground-run,.gmrBattleLive[data-hitstop="true"] .gmrBattleLive__impact,.gmrBattleLive[data-hitstop="true"] .gmrBattleLive__crescent{animation-play-state:paused!important}
+.gmrBattleLive[data-hitstop="true"] .gmrBattleLive__fighter,.gmrBattleLive[data-hitstop="true"] .gmrBattleLive__arena,.gmrBattleLive[data-hitstop="true"] .gmrBattleLive__ground-run,.gmrBattleLive[data-hitstop="true"] .gmrBattleLive__impact,.gmrBattleLive[data-hitstop="true"] .gmrBattleLive__crescent,.gmrBattleLive[data-hitstop="true"] .gmrBattleLive__assetSlash{animation-play-state:paused!important}
 @keyframes gmrBattleEnter{0%{opacity:0;transform:scale(1.035);filter:brightness(1.8)}100%{opacity:1;transform:scale(1);filter:none}}
 @keyframes gmrBattleAnticipate{to{transform:translateY(5px) scaleX(.98)}}@keyframes gmrBattleRelease{to{transform:translate(20px,-6px) scale(1.04)}}@keyframes gmrBattleRecoil{25%{transform:translateX(7px) rotate(2deg)}60%{transform:translateX(-4px) rotate(-1deg)}}@keyframes gmrBattleCameraHit{25%{transform:translateX(4px)}60%{transform:translateX(-3px)}}
 @keyframes gmrBattleGroundRun{to{background-position:100% var(--ground-row-position,0%)}}
+@keyframes gmrBattleAssetSlash{0%{background-position:0% 0%}11.111%{background-position:12.5% 0%}22.222%{background-position:25% 0%}33.333%{background-position:37.5% 0%}44.444%{background-position:50% 0%}55.556%{background-position:62.5% 0%}66.667%{background-position:75% 0%}77.778%{background-position:87.5% 0%}88.889%,100%{background-position:100% 0%}}
 @keyframes gmrBattleHeartImpact{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.4)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.9)}}
 @keyframes gmrBattleCrescent{0%{opacity:0;transform:translate(-50%,-50%) rotate(-25deg) scale(.5)}35%{opacity:.24;transform:translate(-50%,-50%) rotate(12deg) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) rotate(34deg) scale(1.12)}}
 @keyframes gmrBattleReturn{to{opacity:0;transform:scale(.985)}}
-@media(prefers-reduced-motion:reduce){.gmrBattleLive *{animation:none!important;transition:none!important}}
+@media(prefers-reduced-motion:reduce){.gmrBattleLive *{animation:none!important;transition:none!important}.gmrBattleLive[data-asset-slash="active"] .gmrBattleLive__assetSlash{opacity:0!important}}
 @media(max-width:560px){.gmrBattleLive__arena{padding:0 2vw 7vh}.gmrBattleLive__fighter{width:40vw;height:min(48vh,340px)}.gmrBattleLive__top{padding:8px}.gmrBattleLive__name{min-width:42vw;padding:7px}.gmrBattleLive__panel{min-height:62px;padding:7px}.gmrBattleLive__floor{bottom:11%;height:16%}}
 `;
   (doc.head ?? doc.body)?.appendChild?.(style);
@@ -407,7 +411,7 @@ function createBattleScene(doc, win, projection, assets) {
 <main class="gmrBattleLive__arena"><div class="gmrBattleLive__horizon" aria-hidden="true"></div><div class="gmrBattleLive__floor" aria-hidden="true"></div><div class="gmrBattleLive__ground-run" aria-hidden="true"></div>
 <div class="gmrBattleLive__fighter gmrBattleLive__fighter--source" data-slot="source-figure"><div class="gmrBattleLive__sprite" data-slot="source-sprite"></div></div>
 <div class="gmrBattleLive__fighter gmrBattleLive__fighter--target" data-slot="target-figure"><div class="gmrBattleLive__sprite" data-slot="target-sprite"></div></div>
-<div class="gmrBattleLive__impact" aria-hidden="true"></div><span class="gmrBattleLive__crescent" aria-hidden="true">☾</span>
+<div class="gmrBattleLive__impact" aria-hidden="true"></div><span class="gmrBattleLive__crescent" aria-hidden="true">☾</span><div class="gmrBattleLive__assetSlash" aria-hidden="true"></div>
 <div class="gmrBattleLive__caption" data-slot="caption"></div></main>
 <footer class="gmrBattleLive__bottom"><section class="gmrBattleLive__panel"><div class="gmrBattleLive__action" data-slot="source-action"></div><small class="gmrBattleLive__element" data-slot="source-panel-element"></small><div class="gmrBattleLive__beat" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></section><section class="gmrBattleLive__panel gmrBattleLive__panel--target"><div class="gmrBattleLive__action" data-slot="target-action">TARGET</div><small class="gmrBattleLive__element" data-slot="target-panel-element"></small></section></footer>`;
 
@@ -416,6 +420,7 @@ function createBattleScene(doc, win, projection, assets) {
   const targetElement = projection.targetElement ?? 'arcane';
   root.style.setProperty('--element-color', ELEMENT_COLORS[sourceElement] ?? ELEMENT_COLORS.dark);
   root.style.setProperty('--ground-run', `url("${assets?.groundRun ?? ''}")`);
+  root.style.setProperty('--asset-slash', `url("${assets?.nakiSlash ?? ''}")`);
   root.style.setProperty('--ground-row-position', (ELEMENT_ROWS[sourceElement] ?? ELEMENT_ROWS.dark) * 100 / 6 + '%');
   slot('source-name').textContent = projection.sourceLabel;
   slot('target-name').textContent = projection.targetLabel;
@@ -441,6 +446,7 @@ function createBattleScene(doc, win, projection, assets) {
   (doc.body ?? doc.documentElement)?.appendChild?.(root);
 
   let hitstop = false;
+  root.dataset.assetSlash = 'inactive';
   let frameTimer = null;
   let frameToken = 0;
   let currentPhase = 'stance';
@@ -472,10 +478,11 @@ function createBattleScene(doc, win, projection, assets) {
     setNakiFrame(role, sequence[0]);
     if (timer && sequence.length > 1) frameTimer = timer(tick, interval);
   }
-  function setPhase(phase) {
+  function setPhase(phase, phaseProjection = projection) {
     currentPhase = phase;
     root.dataset.causalPhase = phase;
     if (phase === 'stance' || phase === 'static') {
+      root.dataset.assetSlash = 'inactive';
       root.dataset.stage = 'stance';
       loopFrames('source', phase === 'static' ? [0] : [0, 1, 2], 460);
       return true;
@@ -487,6 +494,8 @@ function createBattleScene(doc, win, projection, assets) {
       return true;
     }
     if (phase === 'release') {
+      const useAssetSlash = phaseProjection?.phase === 'attack' && phaseProjection.staticOnly !== true && Boolean(assets?.nakiSlash);
+      root.dataset.assetSlash = useAssetSlash ? 'active' : 'inactive';
       root.dataset.stage = 'release';
       slot('caption').textContent = sourceIsNaki ? 'HEART SONG · RELEASE' : 'STRIKE';
       loopFrames('source', [5, 6], 72);
@@ -508,6 +517,7 @@ function createBattleScene(doc, win, projection, assets) {
       return true;
     }
     if (phase === 'return') {
+      root.dataset.assetSlash = 'inactive';
       root.dataset.stage = 'return';
       slot('caption').textContent = 'RETURN';
       if (sourceIsNaki) setAtlasFrame(sourceSprite, assets?.nakiIdle, 0);
@@ -705,7 +715,7 @@ export function installBattleNakiFeLiveDomAdapter(globalRef = globalThis, option
     }
     if (projection.stage === 'compare' || projection.stage === 'attack' || projection.stage === 'ability') {
       active.pendingReaction = false; active.pendingReturn = false;
-      scene.setPhase?.('release');
+      scene.setPhase?.('release', projection);
       playPhaseAudio('release');
       if (!active.impactPending && !active.impactComplete) startImpactSequence(currentGeneration, eventId);
       return true;
@@ -806,7 +816,7 @@ export const BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT = Object.freeze({
   timelineAuthority: 'LIVE_BATTLE_DOM_STAGE_WITH_148MS_RELEASE_TO_IMPACT_AND_62MS_HITSTOP',
   returnGraceMs: RETURN_GRACE_MS,
   actionFailsafeMs: ACTION_FAILSAFE_MS,
-  animationAssets: Object.freeze({ nakiIdleFrames: 9, nakiSongAttackFrames: 9, elementalGroundRun: '7-elements-x-3-frames' }),
+  animationAssets: Object.freeze({ nakiIdleFrames: 9, nakiSongAttackFrames: 9, elementalGroundRun: '7-elements-x-3-frames', externalCc0Slash: '9-frames-x-1-atlas-25fps-ordinary-attack-only' }),
   soundAssets: SOUND_ASSET_IDS,
   soundPhaseOrder: Object.freeze(['stance', 'anticipation', 'release', 'impact-at-148ms', 'reaction-after-62ms-hitstop', 'return']),
   soundVariation: 'STABLE_EVENT_HASH_SAMPLE_AND_MICRO_RATE_SELECTION',

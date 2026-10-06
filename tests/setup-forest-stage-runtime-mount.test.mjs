@@ -132,7 +132,7 @@ test('layer and safe-zone geometry becomes explicit CSS custom-property coordina
   assert.equal(safe['--gr-setup-forest-central-breathing-width'], '24%');
 });
 
-test('live mount binds the animated sun patch while retaining ten ordered layer slots', () => {
+test('live mount binds the animated sun patch and drifting humidity veil while retaining ten ordered layer slots', () => {
   const fake = fakeRuntime(1280, 720);
   const mounted = mountSetupForestStageRuntime(fake);
   assert.equal(mounted.mounted, true);
@@ -162,7 +162,17 @@ test('live mount binds the animated sun patch while retaining ten ordered layer 
   assert.match(sunPatch.style.backgroundImage, /setup-forest-sun-patch-4x4-v1\.png/);
   assert.equal(sunPatch.style.backgroundSize, '400% 400%');
   assert.match(sunPatch.style.animation, /9s steps\(1, end\) infinite alternate/);
-  assert.ok(layers.filter((layer) => layer !== sunPatch).every((layer) => layer.dataset.mediaState === 'unbound'));
+  const humidityVeil = layers.find((layer) => layer.dataset.layerId === 'humid-air-veil');
+  assert.equal(humidityVeil.dataset.mediaState, 'bound');
+  assert.equal(humidityVeil.dataset.animationState, 'enabled');
+  assert.match(humidityVeil.style.backgroundImage, /setup-forest-humid-air-veil-v1\.png/);
+  assert.equal(humidityVeil.style.backgroundSize, 'cover');
+  assert.match(humidityVeil.style.animation, /28s ease-in-out infinite alternate/);
+  assert.deepEqual(
+    layers.filter((layer) => layer.dataset.mediaState === 'bound').map((layer) => layer.dataset.layerId),
+    ['sun-patch', 'humid-air-veil'],
+  );
+  assert.ok(layers.filter((layer) => layer !== sunPatch && layer !== humidityVeil).every((layer) => layer.dataset.mediaState === 'unbound'));
   assert.ok(layers.every((layer) => layer.style.background === 'none'));
   assert.equal(fake.setup.style['--gr-setup-forest-ui-reading-x'], '56%');
   assert.equal(fake.setup.style['--gr-setup-forest-central-breathing-x'], '32%');
@@ -185,20 +195,30 @@ test('production bootstrap mounts the forest stage through the already-loaded Ho
   assert.match(source, /import '\.\/setup-forest-stage-runtime-mount\.mjs';/);
 });
 
-test('runtime binds only the approved generated ambient sprite and provides a reduced-motion fallback', () => {
+test('runtime binds approved ambient sprites and provides reduced-motion and low-performance fallbacks', () => {
   const source = fs.readFileSync(new URL('../browser/setup-forest-stage-runtime-mount.mjs', import.meta.url), 'utf8');
   assert.match(source, /FOREST_MEDIA_BINDINGS/);
   assert.match(source, /backgroundImage\s*=/);
   assert.match(source, /url\(/i);
+  assert.match(source, /gameroadSetupForestHumidAirVeilDrift/);
   assert.match(source, /prefers-reduced-motion: reduce/);
+  assert.match(source, /html\.r10LowPerf/);
+  assert.match(source, /html\.r10Reduced/);
   assert.match(source, /dataset\.mediaState = media \? 'bound' : 'unbound'/);
   assert.match(source, /dataset\.generationState = 'candidate'/);
 });
 
-test('generated sprite exists as a portable transparent PNG', () => {
+test('generated sun patch and humidity veil exist as portable transparent PNGs', () => {
   const sprite = fs.readFileSync(new URL('../assets/visual/effects/setup-forest-sun-patch-4x4-v1.png', import.meta.url));
   assert.equal(sprite.toString('ascii', 1, 4), 'PNG');
   assert.equal(sprite.readUInt32BE(16), 1448);
   assert.equal(sprite.readUInt32BE(20), 1086);
   assert.ok(sprite.length < 2_000_000);
+
+  const veil = fs.readFileSync(new URL('../assets/visual/effects/setup-forest-humid-air-veil-v1.png', import.meta.url));
+  assert.equal(veil.toString('ascii', 1, 4), 'PNG');
+  assert.equal(veil.readUInt32BE(16), 1774);
+  assert.equal(veil.readUInt32BE(20), 887);
+  assert.equal(veil[25], 6, 'humidity veil PNG keeps RGBA alpha');
+  assert.ok(veil.length < 1_500_000);
 });

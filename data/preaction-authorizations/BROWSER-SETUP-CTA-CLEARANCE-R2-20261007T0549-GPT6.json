@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BROWSER-SETUP-CTA-CLEARANCE-R2-20261007T0549-GPT6",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "SETUP_MATCHTYPE_CTA_OCCLUSION_R1",
+  "acquireKey": "BROWSER-SETUP-CTA-CLEARANCE-R2-20261007T0549-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R25_ACQUIRE:BROWSER-SETUP-CTA-CLEARANCE-R2-20261007T0549-GPT6; live actual 2026-10-07 05:58 JST at https://gameroad-browser-r5.pages.dev/ shows #startMatch overlaps MATCH TYPE rows.",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "Live public Setup DOM/screenshot is the alternate oracle; the change only returns the existing button to normal document flow and leaves selection/route behavior unchanged.",
+  "proceedToken": "PROCEED|BROWSER-SETUP-CTA-CLEARANCE-R2-20261007T0549-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-layout-css-fix",
+  "authorizationBaseSha": "8e27657f611c71dbee92ddad9907fe6efe3862d7",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "SETUP_MATCHTYPE_CTA_OCCLUSION_R1",
+  "leaseAcquireKey": "BROWSER-SETUP-CTA-CLEARANCE-R2-20261007T0549-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-07 05:58 JST",
+  "leaseUntilJst": "2026-10-07 06:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR; exact base main 8e27657f611c71dbee92ddad9907fe6efe3862d7; branch codex/browser-setup-matchtype-cta-clearance-r1-20261007; edit browser/home-shell-presentation-core.mjs and tests/home-boot-presentation.test.mjs only. Drive: own R25 events; CURRENT_ACTIVE_LEASES row8 A:J,L:M,O (N derived read-only).",
+  "scope": [
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "solutionSignature": "Keep all Setup match-type choices visible and operable before the existing Start CTA, on desktop/mobile/short landscape, without changing the DOM, match selection, or start behavior.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "Current CSS and live DOM review plus visual comparison with Marvel SNAP and Persona 3 Reload.",
+  "solutionSearchEvidence": [
+    "ADAPT the existing #startMatch control to normal document flow; reuse current Setup DOM and scroll containers.",
+    "Native CSS document flow avoids a new library, runtime hook, asset, route, or gameplay change.",
+    "Marvel SNAP and Persona 3 Reload were checked as comparative interaction references; only non-occlusion and clear selection/action separation inform the decision."
+  ]
+}

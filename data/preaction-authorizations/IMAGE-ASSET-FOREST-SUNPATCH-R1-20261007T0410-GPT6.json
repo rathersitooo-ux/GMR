@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "IMAGE-ASSET-FOREST-SUNPATCH-R1-20261007T0410-GPT6",
+  "taskId": "IMAGE_ASSET_FULL-02",
+  "workUnitKey": "SETUP_FOREST_SUNPATCH_CANDIDATE_R1",
+  "acquireKey": "IMAGE-ASSET-FOREST-SUNPATCH-R1-20261007T0410-GPT6",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "Existing Setup forest sun-patch layer; low-opacity screen blend; no layout, control, gameplay, or terrain authority change; formal visual acceptance remains separate.",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "Focused Node verification: both Setup forest contract/runtime test files pass; PNG is transparent RGBA 1448x1086; 4x4 frame mapping verified in runtime assertions.",
+  "proceedToken": "PROCEED|IMAGE-ASSET-FOREST-SUNPATCH-R1-20261007T0410-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|USER_EXPLICITLY_AUTHORIZED_ALL_APPROVALS",
+  "authorizationBaseSha": "3dc244f435fe013c5f9e41e58afc3f5275724eb6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "IMAGE_ASSET_FULL-02",
+  "leaseWorkUnitKey": "SETUP_FOREST_SUNPATCH_CANDIDATE_R1",
+  "leaseAcquireKey": "IMAGE-ASSET-FOREST-SUNPATCH-R1-20261007T0410-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-07 04:10 JST",
+  "leaseUntilJst": "2026-10-07 05:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR; exact base main 3dc244f435fe013c5f9e41e58afc3f5275724eb6; branch codex/setup-forest-sunpatch-sprite-r2-20261007; existing: browser/setup-forest-stage-layout-core.mjs, browser/setup-forest-stage-runtime-mount.mjs, tests/setup-forest-stage-layout-core.test.mjs, tests/setup-forest-stage-runtime-mount.test.mjs; new: assets/visual/effects/setup-forest-sun-patch-4x4-v1.png, assets/visual/effects/setup-forest-sun-patch-4x4-v1.SOURCES.md; transient PRE_ACTION only in manifest-first and cleanup commits: data/preaction-authorizations/IMAGE-ASSET-FOREST-SUNPATCH-R1-20261007T0410-GPT6.json; own branch/PR/exact-head checks/merge/readback. Drive: own R25 events; CURRENT_ACTIVE_LEASES row5 A:J,L:M,O (N derived read-only); GAMEROAD 全作業一覧 row85 G,N only. Read-only: CURRENT_ACTIVE_LEASES N1:N3; other tasks and owners; IMAGE_ASSET_FULL-02 formal source/Human acceptance fields; board terrain/coordinates/routes/rules; gameplay, save, network, and formal asset authority.",
+  "scope": [
+    "browser/setup-forest-stage-layout-core.mjs",
+    "browser/setup-forest-stage-runtime-mount.mjs",
+    "tests/setup-forest-stage-layout-core.test.mjs",
+    "tests/setup-forest-stage-runtime-mount.test.mjs",
+    "assets/visual/effects/setup-forest-sun-patch-4x4-v1.png",
+    "assets/visual/effects/setup-forest-sun-patch-4x4-v1.SOURCES.md"
+  ],
+  "leaseScope": [
+    "browser/setup-forest-stage-layout-core.mjs",
+    "browser/setup-forest-stage-runtime-mount.mjs",
+    "tests/setup-forest-stage-layout-core.test.mjs",
+    "tests/setup-forest-stage-runtime-mount.test.mjs",
+    "assets/visual/effects/setup-forest-sun-patch-4x4-v1.png",
+    "assets/visual/effects/setup-forest-sun-patch-4x4-v1.SOURCES.md"
+  ],
+  "solutionSignature": "SETUP_FOREST_SUN_PATCH_ATMOSPHERE_SPRITE_SHEET_R1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "IMAGE_ASSET_FULL-02 / ASSET_FIRST_RESEARCH_R1 / USER_LINKED_3D_SEARCH_AND_BLENDER_WORKFLOW",
+  "solutionSearchEvidence": [
+    "The existing forest contract already defines a sun-patch layer and visual safe zones; bind only that slot and reuse its existing mount.",
+    "The repository already contains reusable transfer, selection, transition, and setup-state VFX sprites; none is a diffuse canopy light patch, so this candidate fills a distinct existing use-site.",
+    "The 3d-asset-server is useful for licensed-model discovery, but the reviewed CC0 Root Cluster 01 is a high-poly 3D model and has no direct consumer in this 2D ambient layer.",
+    "The user-linked Blender article supports reference/spec first, modular authoring, and render-check iteration for future 3D work; no third-party model or game screenshot was used as generation input here.",
+    "The generated source note records the prompt and marks this original candidate as not CC0; the final acceptance gate remains pending."
+  ]
+}

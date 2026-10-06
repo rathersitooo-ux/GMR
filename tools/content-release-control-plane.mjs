@@ -1,4 +1,6 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { link, mkdir, open, readFile, rename, rm } from 'node:fs/promises';
+import path from 'node:path';
 
 export const RELEASE_SCHEMA = 'gameroad.content-release.v1';
 export const STAGING_SCHEMA = 'gameroad.content-release.staging-manifest.v1';
@@ -237,4 +239,246 @@ export function rollbackToPreviousGood(state) {
       }),
     ]),
   });
+}
+
+function assertStagingManifest(manifest) {
+  if (!isPlainObject(manifest) || manifest.schema !== STAGING_SCHEMA) {
+    throw new ReleaseControlError('STAGING_MANIFEST_REQUIRED');
+  }
+  const candidate = manifest.candidate;
+  const validation = validateReleasePackage(candidate);
+  if (!validation.ok) throw new ReleaseControlError('RELEASE_VALIDATION_FAILED', validation.errors.join(','));
+  if (candidate.environment !== 'staging') throw new ReleaseControlError('PRODUCTION_ACTIVATION_FORBIDDEN_V1');
+  if (
+    manifest.releaseId !== candidate.releaseId
+    || manifest.version !== candidate.version
+    || manifest.contentType !== candidate.contentType
+    || manifest.candidateDigest !== validation.stagedDigest
+    || manifest.approvalState !== candidate.approvalState
+    || manifest.previousGoodVersion !== candidate.previousGoodVersion
+    || manifest.rollbackTarget !== candidate.rollbackTarget
+    || manifest.lifecycleState !== 'STAGED'
+  ) {
+    throw new ReleaseControlError('STAGING_MANIFEST_INTEGRITY_MISMATCH');
+  }
+  return manifest;
+}
+
+function assertReleaseIdentity(releaseId, version) {
+  if (!/^[A-Z0-9][A-Z0-9._-]{2,79}$/.test(releaseId ?? '')) {
+    throw new ReleaseControlError('INVALID_RELEASE_ID');
+  }
+  if (!Number.isInteger(version) || version < 1) throw new ReleaseControlError('INVALID_VERSION');
+}
+
+function assertPersistedReleaseState(state) {
+  if (
+    !isPlainObject(state)
+    || !Object.hasOwn(state, 'active')
+    || !Object.hasOwn(state, 'previousGood')
+    || !isPlainObject(state.seenVersions)
+    || !Array.isArray(state.history)
+  ) {
+    throw new ReleaseControlError('PERSISTED_RELEASE_STATE_INVALID');
+  }
+
+  for (const pointer of [state.active, state.previousGood]) {
+    if (pointer === null) continue;
+    if (
+      !isPlainObject(pointer)
+      || typeof pointer.releaseId !== 'string'
+      || !Number.isInteger(pointer.version)
+      || typeof pointer.digest !== 'string'
+      || !/^[0-9a-f]{64}$/.test(pointer.digest)
+      || typeof pointer.contentType !== 'string'
+    ) {
+      throw new ReleaseControlError('PERSISTED_RELEASE_STATE_INVALID');
+    }
+  }
+
+  for (const digest of Object.values(state.seenVersions)) {
+    if (typeof digest !== 'string' || !/^[0-9a-f]{64}$/.test(digest)) {
+      throw new ReleaseControlError('PERSISTED_RELEASE_STATE_INVALID');
+    }
+  }
+  if (state.history.some((event) => !isPlainObject(event))) {
+    throw new ReleaseControlError('PERSISTED_RELEASE_STATE_INVALID');
+  }
+  return state;
+}
+
+async function syncDirectory(directoryPath) {
+  let directory;
+  try {
+    directory = await open(directoryPath, 'r');
+    await directory.sync();
+  } catch (error) {
+    if (['EBADF', 'EISDIR', 'EINVAL', 'ENOTSUP'].includes(error?.code)) return;
+    throw error;
+  } finally {
+    await directory?.close().catch(() => {});
+  }
+}
+
+async function writeJsonAtomically(filePath, value) {
+  const directoryPath = path.dirname(filePath);
+  await mkdir(directoryPath, { recursive: true, mode: 0o700 });
+  const temporaryPath = path.join(directoryPath, `.${path.basename(filePath)}.${randomUUID()}.tmp`);
+  let file;
+  try {
+    file = await open(temporaryPath, 'wx', 0o600);
+    await file.writeFile(`${JSON.stringify(value, null, 2)}\n`, 'utf8');
+    await file.sync();
+    await file.close();
+    file = null;
+    await rename(temporaryPath, filePath);
+    await syncDirectory(directoryPath);
+  } catch (error) {
+    await file?.close().catch(() => {});
+    await rm(temporaryPath, { force: true }).catch(() => {});
+    throw error;
+  }
+}
+
+async function withReleaseStoreLock(lockPath, operation) {
+  await mkdir(path.dirname(lockPath), { recursive: true, mode: 0o700 });
+  let lock;
+  try {
+    lock = await open(lockPath, 'wx', 0o600);
+  } catch (error) {
+    if (error?.code === 'EEXIST') throw new ReleaseControlError('RELEASE_STORE_BUSY');
+    throw error;
+  }
+
+  try {
+    await lock.writeFile(`${process.pid}\n`, 'utf8');
+    await lock.sync();
+    return await operation();
+  } finally {
+    await lock.close().catch(() => {});
+    await rm(lockPath, { force: true });
+    await syncDirectory(path.dirname(lockPath));
+  }
+}
+
+async function readPersistedReleaseState(statePath) {
+  let contents;
+  try {
+    contents = await readFile(statePath, 'utf8');
+  } catch (error) {
+    if (error?.code === 'ENOENT') return createEmptyReleaseState();
+    throw error;
+  }
+  let state;
+  try {
+    state = JSON.parse(contents);
+  } catch {
+    throw new ReleaseControlError('PERSISTED_RELEASE_STATE_INVALID');
+  }
+  return assertPersistedReleaseState(state);
+}
+
+async function readStagingManifestFile(stagingDirectory, releaseId, version) {
+  assertReleaseIdentity(releaseId, version);
+  const manifestPath = path.join(stagingDirectory, `${releaseId}-v${version}.json`);
+  let contents;
+  try {
+    contents = await readFile(manifestPath, 'utf8');
+  } catch (error) {
+    if (error?.code === 'ENOENT') throw new ReleaseControlError('STAGING_MANIFEST_NOT_FOUND');
+    throw error;
+  }
+
+  let manifest;
+  try {
+    manifest = JSON.parse(contents);
+  } catch {
+    throw new ReleaseControlError('STAGING_MANIFEST_CORRUPT');
+  }
+  try {
+    assertStagingManifest(manifest);
+  } catch (error) {
+    throw new ReleaseControlError('STAGING_MANIFEST_CORRUPT', error.code ?? 'STAGING_MANIFEST_CORRUPT');
+  }
+  if (manifest.releaseId !== releaseId || manifest.version !== version) {
+    throw new ReleaseControlError('STAGING_MANIFEST_CORRUPT');
+  }
+  return manifest;
+}
+
+export function createFileBackedStagingReleaseStore(rootDirectory) {
+  if (typeof rootDirectory !== 'string' || rootDirectory.trim().length === 0) {
+    throw new ReleaseControlError('RELEASE_STORE_ROOT_REQUIRED');
+  }
+  const root = path.resolve(rootDirectory);
+  const stagingDirectory = path.join(root, 'staging');
+  const statePath = path.join(root, 'release-state.json');
+  const lockPath = path.join(root, '.release-state.lock');
+
+  async function readState() {
+    return readPersistedReleaseState(statePath);
+  }
+
+  async function stage(manifest) {
+    assertStagingManifest(manifest);
+    await mkdir(stagingDirectory, { recursive: true, mode: 0o700 });
+    const destinationPath = path.join(stagingDirectory, `${manifest.releaseId}-v${manifest.version}.json`);
+    const temporaryPath = path.join(stagingDirectory, `.manifest-${randomUUID()}.tmp`);
+    let file;
+    try {
+      file = await open(temporaryPath, 'wx', 0o600);
+      await file.writeFile(`${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+      await file.sync();
+      await file.close();
+      file = null;
+      await link(temporaryPath, destinationPath);
+    } catch (error) {
+      await file?.close().catch(() => {});
+      await rm(temporaryPath, { force: true }).catch(() => {});
+      if (error?.code === 'EEXIST') {
+        throw new ReleaseControlError('STAGING_MANIFEST_ALREADY_EXISTS');
+      }
+      throw error;
+    }
+    await rm(temporaryPath, { force: true });
+    await syncDirectory(stagingDirectory);
+
+    const persisted = await readStagingManifestFile(stagingDirectory, manifest.releaseId, manifest.version);
+    if (canonicalJson(persisted) !== canonicalJson(manifest)) {
+      throw new ReleaseControlError('STAGING_MANIFEST_READBACK_MISMATCH');
+    }
+    return persisted;
+  }
+
+  async function readStaged(releaseId, version) {
+    return readStagingManifestFile(stagingDirectory, releaseId, version);
+  }
+
+  async function persistStateAndReadBack(nextState) {
+    await writeJsonAtomically(statePath, nextState);
+    const persisted = await readPersistedReleaseState(statePath);
+    if (canonicalJson(persisted) !== canonicalJson(nextState)) {
+      throw new ReleaseControlError('PERSISTED_RELEASE_STATE_READBACK_MISMATCH');
+    }
+    return persisted;
+  }
+
+  async function activate(releaseId, version) {
+    return withReleaseStoreLock(lockPath, async () => {
+      const manifest = await readStagingManifestFile(stagingDirectory, releaseId, version);
+      const currentState = await readPersistedReleaseState(statePath);
+      const nextState = activateStagingManifest(manifest, currentState);
+      return persistStateAndReadBack(nextState);
+    });
+  }
+
+  async function rollback() {
+    return withReleaseStoreLock(lockPath, async () => {
+      const currentState = await readPersistedReleaseState(statePath);
+      const nextState = rollbackToPreviousGood(currentState);
+      return persistStateAndReadBack(nextState);
+    });
+  }
+
+  return Object.freeze({ stage, readStaged, readState, activate, rollback });
 }

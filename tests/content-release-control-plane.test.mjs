@@ -1,13 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import os from 'node:os';
 import {
   ReleaseControlError,
   activateStagingManifest,
   assertCandidateCanActivate,
   createEmptyReleaseState,
+  createFileBackedStagingReleaseStore,
   createStagingManifest,
   normalizeAuthoringRow,
   rollbackToPreviousGood,
@@ -154,4 +156,97 @@ test('rollback restores previous-good after a newer non-production activation', 
   assert.equal(rolled.active.digest, version1.candidateDigest);
   assert.equal(rolled.previousGood, null);
   assert.equal(rolled.history.at(-1).event, 'ROLLBACK_NONPROD');
+});
+
+test('file-backed staging survives store restart and rollback persists the previous-good version', async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'gameroad-release-store-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+
+  const row = await fixtureRow();
+  const version1 = createStagingManifest(normalizeAuthoringRow(row));
+  const firstStore = createFileBackedStagingReleaseStore(root);
+  const staged1 = await firstStore.stage(version1);
+  const manifestPath = path.join(root, 'staging', 'OPS-SMOKE-20260929-001-v1.json');
+  const persistedManifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+  assert.deepEqual(persistedManifest, JSON.parse(JSON.stringify(version1)));
+  assert.equal(staged1.approvalState, 'PENDING');
+  assert.equal((await createFileBackedStagingReleaseStore(root).readStaged(version1.releaseId, 1)).candidateDigest, version1.candidateDigest);
+
+  await firstStore.activate(version1.releaseId, 1);
+  const afterRestart1 = await createFileBackedStagingReleaseStore(root).readState();
+  assert.deepEqual(afterRestart1.active, {
+    releaseId: 'OPS-SMOKE-20260929-001',
+    version: 1,
+    digest: version1.candidateDigest,
+    contentType: 'ops_smoke',
+  });
+
+  const version2 = createStagingManifest(normalizeAuthoringRow({
+    ...row,
+    version: '2',
+    previousGoodVersion: '1',
+    rollbackTarget: '1',
+    requiredDataJson: '{"message":"release-control-plane-smoke-v2"}',
+  }));
+  const restartedStore = createFileBackedStagingReleaseStore(root);
+  await restartedStore.stage(version2);
+  const activated2 = await restartedStore.activate(version2.releaseId, 2);
+  assert.equal(activated2.active.version, 2);
+  assert.equal(activated2.previousGood.version, 1);
+
+  const statePath = path.join(root, 'release-state.json');
+  const onDiskAfterActivation = JSON.parse(await readFile(statePath, 'utf8'));
+  assert.equal(onDiskAfterActivation.active.version, 2);
+  assert.equal(onDiskAfterActivation.previousGood.version, 1);
+
+  await createFileBackedStagingReleaseStore(root).rollback();
+  const afterRestartRollback = await createFileBackedStagingReleaseStore(root).readState();
+  assert.equal(afterRestartRollback.active.version, 1);
+  assert.equal(afterRestartRollback.active.digest, version1.candidateDigest);
+  assert.equal(afterRestartRollback.previousGood, null);
+  assert.deepEqual(afterRestartRollback.history.at(-1), {
+    event: 'ROLLBACK_NONPROD',
+    fromReleaseId: 'OPS-SMOKE-20260929-001',
+    fromVersion: 2,
+    toReleaseId: 'OPS-SMOKE-20260929-001',
+    toVersion: 1,
+  });
+});
+
+test('file-backed staging refuses a same-version manifest overwrite', async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'gameroad-release-store-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+
+  const row = await fixtureRow();
+  const first = createStagingManifest(normalizeAuthoringRow(row));
+  const changed = createStagingManifest(normalizeAuthoringRow({
+    ...row,
+    requiredDataJson: '{"message":"different-content"}',
+  }));
+  assert.notEqual(changed.candidateDigest, first.candidateDigest);
+
+  const store = createFileBackedStagingReleaseStore(root);
+  await store.stage(first);
+  await assert.rejects(store.stage(changed), expectCode('STAGING_MANIFEST_ALREADY_EXISTS'));
+  assert.equal((await store.readStaged(first.releaseId, first.version)).candidateDigest, first.candidateDigest);
+});
+
+test('file-backed staging rejects rollback metadata that differs from the hashed candidate', async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'gameroad-release-store-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+
+  const row = await fixtureRow();
+  const version2 = createStagingManifest(normalizeAuthoringRow({
+    ...row,
+    version: '2',
+    previousGoodVersion: '1',
+    rollbackTarget: '1',
+  }));
+  const inconsistentManifest = { ...version2, previousGoodVersion: null };
+  const store = createFileBackedStagingReleaseStore(root);
+
+  await assert.rejects(
+    store.stage(inconsistentManifest),
+    expectCode('STAGING_MANIFEST_INTEGRITY_MISMATCH'),
+  );
 });

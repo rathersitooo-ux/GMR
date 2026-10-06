@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NAKI-CC0-SLASH-RUNTIME-R1-20261006T1443-GPT6",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "NAKI_BATTLE_CC0_SLASH_RUNTIME_BINDING_R1",
+  "acquireKey": "NAKI-CC0-SLASH-RUNTIME-R1-20261006T1443-GPT6",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "NAKI-SLASH-VFX-DOM-OVERLAY-20261006; presentation-only on ordinary attack projection; no battle authority/state changes.",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "Focused Node tests 2/2; Cloudflare package test 8/8 in reconstructed package fixture; server Required Gate remains authoritative.",
+  "proceedToken": "PROCEED|NAKI-CC0-SLASH-RUNTIME-R1-20261006T1443-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|USER_EXPLICITLY_AUTHORIZED",
+  "authorizationBaseSha": "06e165c34d83cebdb055c46441bb68027a0d5fbf",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "NAKI_BATTLE_CC0_SLASH_RUNTIME_BINDING_R1",
+  "leaseAcquireKey": "NAKI-CC0-SLASH-RUNTIME-R1-20261006T1443-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-06 14:43 JST",
+  "leaseUntilJst": "2026-10-06 15:43 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR; main base 06e165c34d83cebdb055c46441bb68027a0d5fbf; branch codex/naki-cc0-slash-runtime-r1-20261006; existing: browser/battle-naki-fe-live-dom-adapter.mjs, browser/profile-presentation-runtime-mount.mjs, tests/battle-naki-fe-live-dom-adapter.test.mjs; new: browser/assets/partners/naki-idol/vfx/slash/pixel-art-sword-slash-cc0-9x1-576x47.png, browser/assets/partners/naki-idol/vfx/slash/README.md; transient PRE_ACTION only in manifest-first and cleanup commits: data/preaction-authorizations/NAKI-CC0-SLASH-RUNTIME-R1-20261006T1443-GPT6.json; own branch/PR/exact-head checks/merge/readback. Drive: own R25 events; CURRENT_ACTIVE_LEASES row5 A:J,L:M,O (N derived read-only); GAMEROAD 全作業一覧 row1379 N only; 知見許可・未知_CURRENT row148 A:Y. Read-only: CURRENT_ACTIVE_LEASES N1:N3; board terrain/coordinates/routes/rules; battle outcome/action-order authority; save/network; other tasks and owners.",
+  "scope": [
+    "browser/battle-naki-fe-live-dom-adapter.mjs",
+    "browser/profile-presentation-runtime-mount.mjs",
+    "tests/battle-naki-fe-live-dom-adapter.test.mjs",
+    "browser/assets/partners/naki-idol/vfx/slash/pixel-art-sword-slash-cc0-9x1-576x47.png",
+    "browser/assets/partners/naki-idol/vfx/slash/README.md"
+  ],
+  "leaseScope": [
+    "browser/battle-naki-fe-live-dom-adapter.mjs",
+    "browser/profile-presentation-runtime-mount.mjs",
+    "tests/battle-naki-fe-live-dom-adapter.test.mjs",
+    "browser/assets/partners/naki-idol/vfx/slash/pixel-art-sword-slash-cc0-9x1-576x47.png",
+    "browser/assets/partners/naki-idol/vfx/slash/README.md"
+  ],
+  "solutionSignature": "Bind a pixel-identical 9-frame CC0 sword-slash atlas as a temporary DOM/CSS sprite overlay in the existing battle adapter.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "Drive row1379 ASSET_FIRST_RESEARCH_R1 / LIVE_CHECK_R2 / FREE_PIXEL_PACK_R3 / CC0_PIXEL_SLASH_TRIAL_R4 + OpenGameArt CC0 source review",
+  "solutionSearchEvidence": [
+    "Existing browser battle adapter uses DOM/CSS and sprite-sheet positioning; no Three.js consumer is present in this battle route.",
+    "OpenGameArt tbbk Pixel art sword slash, CC0 1.0, 192x141 RGBA atlas, nine 64x47 frames; repacked row-major to 576x47 with pixels verified identical.",
+    "Hun0FX Stylized Combat VFX was considered but not used: current pixel style and DOM consumer do not call for the pack's Three.js/Godot integration; the full pack license text was not reviewed.",
+    "Ludo.ai and Spritesheet AI official VFX tools were reviewed; both advertise transparent game-effect sprite-sheet exports. This trial reuses the CC0 pack and does not depend on generated output.",
+    "World Labs Marble was reviewed for 3D environments; its scene/mesh workflow has no direct consumer in the current DOM battle route and remains a separate field task."
+  ]
+}

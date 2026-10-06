@@ -16,8 +16,33 @@ const FOREST_MEDIA_BINDINGS = Object.freeze({
     duration: '9s',
     animationName: 'gameroadSetupForestSunPatch',
   }),
+  'humid-air-veil': Object.freeze({
+    src: '/assets/visual/effects/setup-forest-humid-air-veil-v1.png',
+    duration: '28s',
+    animationName: 'gameroadSetupForestHumidAirVeilDrift',
+    motion: 'background-drift',
+  }),
 });
 const FOREST_ANIMATION_CSS = `@keyframes gameroadSetupForestSunPatch {\n  0% { background-position: 0% 0%; }\n  6.6667% { background-position: 33.3333% 0%; }\n  13.3333% { background-position: 66.6667% 0%; }\n  20% { background-position: 100% 0%; }\n  26.6667% { background-position: 0% 33.3333%; }\n  33.3333% { background-position: 33.3333% 33.3333%; }\n  40% { background-position: 66.6667% 33.3333%; }\n  46.6667% { background-position: 100% 33.3333%; }\n  53.3333% { background-position: 0% 66.6667%; }\n  60% { background-position: 33.3333% 66.6667%; }\n  66.6667% { background-position: 66.6667% 66.6667%; }\n  73.3333% { background-position: 100% 66.6667%; }\n  80% { background-position: 0% 100%; }\n  86.6667% { background-position: 33.3333% 100%; }\n  93.3333% { background-position: 66.6667% 100%; }\n  100% { background-position: 100% 100%; }\n}\n@media (prefers-reduced-motion: reduce) {\n  #gameroadSetupForestStage .gameroadSetupForestLayerSlot[data-layer-id=\"sun-patch\"] {\n    animation: none !important;\n    background-position: 0% 0% !important;\n  }\n}`;
+
+const HUMID_AIR_VEIL_ANIMATION_CSS = `
+@keyframes gameroadSetupForestHumidAirVeilDrift {
+  0% { background-position: 44% 46%; opacity: 0.045; }
+  100% { background-position: 56% 54%; opacity: 0.075; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #gameroadSetupForestStage .gameroadSetupForestLayerSlot[data-layer-id="humid-air-veil"] {
+    animation: none !important;
+    background-position: 50% 50% !important;
+    opacity: 0.05 !important;
+  }
+}
+html.r10LowPerf #gameroadSetupForestStage .gameroadSetupForestLayerSlot[data-layer-id="humid-air-veil"],
+html.r10Reduced #gameroadSetupForestStage .gameroadSetupForestLayerSlot[data-layer-id="humid-air-veil"] {
+  animation: none !important;
+  background-position: 50% 50% !important;
+  opacity: 0.05 !important;
+}`;
 
 const runtime = {
   mounted: false,
@@ -149,6 +174,17 @@ function createLayerSlot(documentSource, layer) {
   node.style.border = '0';
   node.style.boxShadow = 'none';
   applyStyleEntries(node.style, setupForestLayerStyleEntries(layer));
+  if (media?.motion === 'background-drift') {
+    node.dataset.animationState = 'enabled';
+    node.style.backgroundImage = 'url("' + media.src + '")';
+    node.style.backgroundSize = 'cover';
+    node.style.backgroundPosition = '50% 50%';
+    node.style.backgroundRepeat = 'no-repeat';
+    node.style.opacity = '0.07';
+    node.style.mixBlendMode = 'screen';
+    node.style.animation = media.animationName + ' ' + media.duration + ' ease-in-out infinite alternate';
+    return node;
+  }
   if (media) {
     node.dataset.animationState = 'enabled';
     node.style.backgroundImage = `url(\"${media.src}\")`;
@@ -184,7 +220,7 @@ function ensureStage(documentSource, setup) {
 function createAnimationStyle(documentSource) {
   const style = documentSource.createElement('style');
   style.dataset.runtimeAnimationStyles = 'setup-forest';
-  style.textContent = FOREST_ANIMATION_CSS;
+  style.textContent = [FOREST_ANIMATION_CSS, HUMID_AIR_VEIL_ANIMATION_CSS].join('\n');
   return style;
 }
 

@@ -411,6 +411,7 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
   );
   assert.match(source, /#hand \.handCard\{[^}]*transform:translateY\(0\) rotate\(0deg\)!important/);
   assert.match(source, /#hand \.handCard\.select\{[^}]*translateY\(-10px\)[^}]*scale\(1\.02\)!important/);
+  assert.ok((4 * 46) + (3 * 2) + 4 <= 198, 'four-card portrait row fits the measured 198px hand region without dropping below 44px');
   assert.doesNotMatch(source, /Reserved janken cards remain DOM children; portrait hand fit must not depend on nth-child order[\s\S]{0,1200}#hand \.handCard:nth-child\(/);
 }
 

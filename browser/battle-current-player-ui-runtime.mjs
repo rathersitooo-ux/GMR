@@ -127,9 +127,16 @@ const STYLE_TEXT = `
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="support-entry"]{bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap) + 46px)!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner"]{bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap) + 92px)!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner-visual"]{width:96px!important;height:154px!important}
-  .screen.battle[${ROOT_ATTR}="1"] .battleInfo{left:1.5%!important;right:calc(var(--gr-thumb-w) + var(--gr-ui-edge) + var(--gr-ui-gap))!important;height:28vh!important;grid-template-columns:1fr!important;grid-template-rows:minmax(0,1fr) auto!important}
+  .screen.battle[${ROOT_ATTR}="1"] .battleInfo{left:1.5%!important;right:1.5%!important;height:28vh!important;grid-template-columns:1fr!important;grid-template-rows:minmax(0,1fr) auto!important}
+  .screen.battle[${ROOT_ATTR}="1"] #hand{gap:2px!important;padding-left:3px!important;padding-right:3px!important;justify-content:center!important}
+  .screen.battle[${ROOT_ATTR}="1"] #hand .handCard{width:58px!important;min-width:44px!important;max-width:58px!important;flex:0 1 58px!important;box-sizing:border-box!important}
+  .screen.battle[${ROOT_ATTR}="1"] #hand .handCard:nth-child(1){transform:translateY(5px) rotate(-4deg)}
+  .screen.battle[${ROOT_ATTR}="1"] #hand .handCard:nth-child(2){transform:translateY(2px) rotate(-2deg)}
+  .screen.battle[${ROOT_ATTR}="1"] #hand .handCard:nth-child(3){transform:translateY(0) rotate(1deg)}
+  .screen.battle[${ROOT_ATTR}="1"] #hand .handCard:nth-child(n+4){transform:translateY(4px) rotate(3deg)}
+  .screen.battle[${ROOT_ATTR}="1"] #hand .handCard.select{transform:translateY(-10px) rotate(0deg) scale(1.02)!important}
   .screen.battle[${ROOT_ATTR}="1"] .planBox{max-width:none!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}
-  .screen.battle[${ROOT_ATTR}="1"] [data-battle-janken-slidepad="1"]{width:var(--gr-thumb-w)!important;height:var(--gr-thumb-h)!important;right:var(--gr-ui-edge)!important;bottom:var(--gr-ui-edge)!important}
+  .screen.battle[${ROOT_ATTR}="1"] [data-battle-janken-slidepad="1"]{width:var(--gr-thumb-w)!important;height:var(--gr-thumb-h)!important;right:var(--gr-ui-edge)!important;bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap))!important}
   .screen.battle[${ROOT_ATTR}="1"] [data-battle-playable-hand-row-roulette-live="1"]{max-width:min(164px,42vw)!important}
   .screen.battle[${ROOT_ATTR}="1"] .battleRail{left:var(--gr-ui-edge)!important;right:var(--gr-ui-edge)!important;top:158px!important;width:auto!important;max-width:none!important;justify-content:flex-start!important}
   .screen.battle[${ROOT_ATTR}="1"] #targetBox{width:96vw!important;right:2vw!important;bottom:30vh!important}

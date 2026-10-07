@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PRECOMMIT-CLEAR-R4-PREACTION-20261007T1813-SOL",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "BATTLE_PRECOMMIT_CLEAR_LIVE_R4_20261007",
+  "acquireKey": "SOL-BATTLE-PRECOMMIT-CLEAR-R4-20261007T175207JST",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "Fresh CURRENT_ACTIVE_LEASES read 2026-10-07 18:13 JST guard PASS/0; main exact 8e27657f611c71dbee92ddad9907fe6efe3862d7; prior current-head full interaction evidence reproduces clear disabled on phone-390x844 and residual Battle select after clear on desktop/short-landscape.",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "Existing browser-full-interaction R2 live test is the alternate oracle: full clear must empty Road/Battle, reset plan path, keep route undo, allow target reselection, and fail closed against commit race.",
+  "proceedToken": "PROCEED|BATTLE-PRECOMMIT-CLEAR-R4-PREACTION-20261007T1813-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|atomic-precommit-clear-ui-sync",
+  "authorizationBaseSha": "8e27657f611c71dbee92ddad9907fe6efe3862d7",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "BATTLE_PRECOMMIT_CLEAR_LIVE_R4_20261007",
+  "leaseAcquireKey": "SOL-BATTLE-PRECOMMIT-CLEAR-R4-20261007T175207JST",
+  "leaseSnapshotReadbackAtJst": "2026-10-07 18:13 JST",
+  "leaseUntilJst": "2026-10-07 18:22 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
+  "leaseExactMutableResources": "repo:GMR branch:sol/battle-precommit-clear-live-r4-20261007 ; browser/GAMEROAD.html ; tests/battle-precommit-clear-live-wiring.test.mjs(new) ; CURRENT_ACTIVE_LEASES row11 A:O",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-precommit-clear-live-wiring.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-precommit-clear-live-wiring.test.mjs"
+  ],
+  "solutionSignature": "Keep pre-commit cancel-all available after any staged Road/Battle/path choice, and restore both authoritative plan state and visible input controls to one baseline checkpoint without replaying synthetic selection changes across the commit boundary.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "SRC-UIVIS-284 plus current live CI evidence. Reuse the existing precommit-clear core/button and existing direct-plan/first-cycle/context renderers; do not add a second cancel authority or universal Confirm step.",
+  "solutionSearchEvidence": [
+    "Public ygopro-core player selection implementation separates cancelable, finishable, and select/unselect semantics instead of treating them as one generic back action.",
+    "Current GAMEROAD browser-full-interaction evidence reproduces a phone enablement gap and desktop/landscape residual Battle-select UI after clear.",
+    "Existing GAMEROAD grSyncBattlePrecommitClear, syncDirectPlanRoleUi, first10Render, and ctxClear can be composed for the reset; no new state authority is needed."
+  ]
+}

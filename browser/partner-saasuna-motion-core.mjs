@@ -370,10 +370,33 @@ export function createSaasunaMotionController({ doc, bustup, transitionMs = 180 
   let currentState = null;
   let currentAssetFile = surface.image.dataset.assetFile || null;
   let sequence = 0;
+  let figureStateObserver = null;
+
+  const observeFigureVisualState = () => {
+    if (figureStateObserver) return;
+    const Observer = doc.defaultView?.MutationObserver ?? globalThis.MutationObserver;
+    if (typeof Observer !== 'function') return;
+    const observer = new Observer((records) => {
+      if (!records.some((record) => record.attributeName === 'data-state')) return;
+      const visualState = surface.figure.dataset?.state;
+      if (typeof visualState !== 'string' || !Object.hasOwn(PROFILES, visualState)) {
+        clear();
+        return;
+      }
+      setState({ partnerId: SAASUNA_PARTNER_ID, visualState }, { restart: false });
+    });
+    try {
+      observer.observe(surface.figure, { attributes: true, attributeFilter: ['data-state'] });
+      figureStateObserver = observer;
+    } catch {
+      observer.disconnect?.();
+    }
+  };
 
   const setState = (input = {}, options = {}) => {
     const plan = resolveSaasunaMotionPlan(input);
     if (!plan) return null;
+    observeFigureVisualState();
     const restart = options.restart !== false;
     const stateChanged = currentState !== plan.state;
     const shouldRestart = restart || stateChanged;
@@ -396,6 +419,8 @@ export function createSaasunaMotionController({ doc, bustup, transitionMs = 180 
 
   const clear = () => {
     sequence += 1;
+    figureStateObserver?.disconnect?.();
+    figureStateObserver = null;
     animationState.motionAnimation?.cancel?.();
     animationState.effectAnimation?.cancel?.();
     currentState = null;

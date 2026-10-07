@@ -262,7 +262,8 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
   assert.match(styleText, /\.battleRail\{[^}]*max-width:min\(28vw,340px\)!important[^}]*transform:none!important/);
   assert.match(styleText, /data-battle-janken-slidepad=\"1\"\]\{[^}]*width:var\(--gr-thumb-w\)!important[^}]*height:var\(--gr-thumb-h\)!important/);
   assert.match(styleText, /@media\(max-height:430px\)[\s\S]*\[data-gr-current-ui-zone="partner-visual"\]\{width:112px!important;height:160px!important\}/);
-  assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\.battleInfo\{[^}]*right:calc\(var\(--gr-thumb-w\) \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\)\)!important/);
+  assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\.battleInfo\{[^}]*right:1\.5%!important/);
+  assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-battle-janken-slidepad=\"1\"\]\{[^}]*bottom:calc\(28vh \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\)\)!important/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="support-entry"\]\{[^}]*bottom:calc\(28vh \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\) \+ 46px\)!important/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="partner"\]\{[^}]*bottom:calc\(28vh \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\) \+ 92px\)!important/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="partner-visual"\]\{width:96px!important;height:154px!important\}/);
@@ -398,3 +399,12 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
 }
 
 console.log('battle-current-player-ui-runtime: live-consumer focused tests passed');
+
+{
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-current-player-ui-runtime.mjs', import.meta.url), 'utf8');
+  assert.match(source, /@media\(max-width:520px\) and \(orientation:portrait\)\{[\s\S]*?#hand\{[^}]*gap:2px!important[^}]*padding-left:3px!important[^}]*padding-right:3px!important/);
+  assert.match(source, /@media\(max-width:520px\) and \(orientation:portrait\)\{[\s\S]*?#hand \.handCard\{[^}]*width:58px!important[^}]*min-width:44px!important[^}]*max-width:58px!important[^}]*flex:0 1 58px!important/);
+  assert.match(source, /@media\(max-width:520px\) and \(orientation:portrait\)\{[\s\S]*?#hand \.handCard:nth-child\(1\)\{transform:translateY\(5px\) rotate\(-4deg\)\}/);
+  assert.match(source, /@media\(max-width:520px\) and \(orientation:portrait\)\{[\s\S]*?#hand \.handCard:nth-child\(n\+4\)\{transform:translateY\(4px\) rotate\(3deg\)\}/);
+}

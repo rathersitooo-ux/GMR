@@ -106,6 +106,7 @@ const ARTIFACT_SPECS = Object.freeze([
   { source: 'browser/ze-kuu-formal-card-art-runtime.mjs', output: 'ze-kuu-formal-card-art-runtime.mjs', artifact: 'ze_kuu_formal_card_art_runtime', label: 'Ze-Kuu formal card art runtime' },
   { source: 'assets/visual/cards/dcg-ze-kuu.jpg', output: 'assets/visual/cards/dcg-ze-kuu.jpg', artifact: 'ze_kuu_formal_card_art', label: 'Ze-Kuu formal card art' },
   { source: 'browser/battle-janken-slidepad-runtime-mount.mjs', output: 'battle-janken-slidepad-runtime-mount.mjs', artifact: 'battle_janken_slidepad_runtime_mount', label: 'Battle janken SlidePad runtime mount' },
+  { source: 'browser/battle-hand-input-arbiter.mjs', output: 'battle-hand-input-arbiter.mjs', artifact: 'battle_hand_input_arbiter', label: 'Battle hand input ownership arbiter' },
   { source: 'browser/battle-hidden-road-janken-slidepad-integration.mjs', output: 'battle-hidden-road-janken-slidepad-integration.mjs', artifact: 'battle_hidden_road_janken_slidepad_integration', label: 'Battle Hidden Road janken SlidePad integration' },
   { source: 'browser/battle-hidden-hand-add-button-runtime.mjs', output: 'battle-hidden-hand-add-button-runtime.mjs', artifact: 'battle_hidden_hand_add_button_runtime', label: 'Battle Hidden Hand add-button runtime' },
   { source: 'browser/new-base-hidden-hand-runtime-core.mjs', output: 'new-base-hidden-hand-runtime-core.mjs', artifact: 'new_base_hidden_hand_runtime_core', label: 'New Base Hidden Hand runtime core' },

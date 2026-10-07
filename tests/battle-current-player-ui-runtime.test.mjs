@@ -409,3 +409,19 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
 }
 
 console.log('battle-current-player-ui-runtime: live-consumer focused tests passed');
+
+{
+  // 390px portrait hand budget keeps five visible cards above the 44px touch floor.
+  const viewportWidth = 390;
+  const battleInfoLeft = viewportWidth * 0.015;
+  const thumbWidth = 176;
+  const edge = 6;
+  const gap = 4;
+  const battleInfoWidth = viewportWidth - battleInfoLeft - (thumbWidth + edge + gap);
+  const handInnerWidth = battleInfoWidth - 4; // 2px left + 2px right padding.
+  const rowGapWidth = 3 * 2; // four cards => three 2px column gaps.
+  const fourCardWidth = (handInnerWidth - rowGapWidth) / 4;
+  assert.ok(fourCardWidth >= 44, `portrait hand card width ${fourCardWidth}px must stay >=44px`);
+  assert.ok((4 * fourCardWidth) + rowGapWidth <= handInnerWidth + 0.001);
+  assert.ok(54 <= handInnerWidth, 'the wrapped fifth card must fit on the second row at its 54px basis');
+}

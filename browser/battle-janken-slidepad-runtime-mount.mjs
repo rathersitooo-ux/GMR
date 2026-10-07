@@ -16,6 +16,11 @@ import {
   captureBattleCardReleaseFlightEffect,
   playBattleCardReleaseFlightEffect,
 } from './battle-card-release-flight-runtime-effect.mjs';
+import {
+  BATTLE_HAND_INPUT_EFFECT,
+  createBattleHandInputState,
+  reduceBattleHandInput,
+} from './battle-hand-input-arbiter.mjs';
 
 export const BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA = 'gameroad.battle-janken-slidepad-runtime.v1';
 export const BATTLE_JANKEN_FOCUS_LIVE_MOUNT_SCHEMA = 'gameroad.battle-janken-focus-live-mount.v1';
@@ -79,6 +84,8 @@ const GESTURE_DEAD_ZONE_PX = 10;
 const GESTURE_MIN_DIRECTION_COSINE = 0.45;
 const GESTURE_STICK_TRAVEL_PX = 30;
 const HAND_DRAG_DEAD_ZONE_PX = 8;
+// Provisional runtime tuning only; physical-device/Human acceptance must tune this value.
+const HAND_DETAIL_HOLD_MS = 500;
 const HAND_AURA_ARM_PADDING_PX = 18;
 const HAND_AURA_RELEASE_DURATION_MS = 520;
 const SLOT_ROLL_DETENT_FEEDBACK_DURATION_MS = 110;
@@ -503,6 +510,19 @@ section[data-screen="battle"] #hand.grPlayableHandActionBase::before{content:"";
 section[data-screen="battle"] #hand .handCard.grPlayableHandCandidate{position:relative;overflow:visible!important;z-index:1}
 /* ADDRESS31 ordinary-hand local detail: enlarge the same physical card face in place; shared drawer/detail remains address37. */
 section[data-screen="battle"] #hand .handCard[data-card-focus="true"]{translate:0 -15px;scale:1.38;filter:brightness(1.08);z-index:5!important;box-shadow:0 0 0 2px rgba(241,241,241,.62),0 10px 24px rgba(9,9,9,.35)!important}
+section[data-screen="battle"] #hand .handCard[data-hand-detail-hold="true"]{translate:0 -20px;scale:1.5;filter:brightness(1.13);z-index:8!important;box-shadow:0 0 0 3px rgba(248,248,248,.8),0 0 22px rgba(220,220,220,.3),0 14px 30px rgba(9,9,9,.42)!important}
+section[data-screen="battle"] .grBattleHandDetailOverlay{position:absolute;inset:0;z-index:230;display:grid;place-items:center;padding:20px;background:rgba(6,6,6,.72);pointer-events:auto}
+section[data-screen="battle"] .grBattleHandDetailOverlay[hidden]{display:none!important}
+section[data-screen="battle"] .grBattleHandDetailPanel{width:min(430px,92vw);max-height:min(620px,84vh);overflow:auto;border:1px solid rgba(235,235,235,.78);border-radius:16px;background:linear-gradient(155deg,rgba(34,34,34,.98),rgba(14,14,14,.99));box-shadow:0 24px 60px rgba(0,0,0,.62);padding:16px;color:#f6f6f6}
+section[data-screen="battle"] .grBattleHandDetailHead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+section[data-screen="battle"] .grBattleHandDetailTitle{font-size:22px;font-weight:950;line-height:1.15}
+section[data-screen="battle"] .grBattleHandDetailClose{flex:0 0 44px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(238,238,238,.66);background:#202020;color:#fff;font-size:22px;font-weight:900}
+section[data-screen="battle"] .grBattleHandDetailMeta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:12px 0}
+section[data-screen="battle"] .grBattleHandDetailMeta span{min-width:0;padding:7px;border:1px solid rgba(228,228,228,.2);background:rgba(255,255,255,.055)}
+section[data-screen="battle"] .grBattleHandDetailMeta small{display:block;font-size:7px;opacity:.62}
+section[data-screen="battle"] .grBattleHandDetailMeta b{display:block;margin-top:2px;font-size:12px;overflow-wrap:anywhere}
+section[data-screen="battle"] .grBattleHandDetailRules{margin:0;padding:12px 0 0;border-top:1px solid rgba(228,228,228,.2);font-size:13px;line-height:1.55;white-space:pre-wrap}
+@media(max-height:430px) and (orientation:landscape){section[data-screen="battle"] .grBattleHandDetailOverlay{padding:8px}section[data-screen="battle"] .grBattleHandDetailPanel{width:min(520px,78vw);max-height:94vh;padding:10px 12px;border-radius:12px}section[data-screen="battle"] .grBattleHandDetailTitle{font-size:17px}section[data-screen="battle"] .grBattleHandDetailMeta{margin:7px 0;gap:4px}section[data-screen="battle"] .grBattleHandDetailRules{font-size:11px;padding-top:8px}}
 section[data-screen="battle"] #hand .handCard[data-card-focus="true"][data-card-focus-legal="true"]{translate:0 -18px;scale:1.44;filter:brightness(1.16);box-shadow:0 0 0 3px rgba(214,214,214,.78),0 0 18px rgba(214,214,214,.24),0 12px 26px rgba(9,9,9,.38)!important}
 section[data-screen="battle"] #hand .handCard[data-card-staged="true"]{translate:0 -14px;filter:brightness(1.14);z-index:6!important;box-shadow:0 0 0 3px rgba(236,236,236,.94),0 0 0 6px rgba(188,188,188,.18),0 0 26px rgba(190,190,190,.34)!important}
 section[data-screen="battle"] #hand .grPlayableHandTriangle{position:absolute;left:50%;bottom:-14px;transform:translateX(-50%);color:#d6d6d6;font:1000 13px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 7px rgba(214,214,214,.58);pointer-events:none;user-select:none;z-index:3}
@@ -1134,6 +1154,23 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   powerEnergyImage.setAttribute('aria-hidden', 'true');
   powerEnergy.appendChild(powerEnergyImage);
   host.appendChild(powerEnergy);
+
+  const handDetailOverlay = documentRef.createElement('section');
+  handDetailOverlay.className = 'grBattleHandDetailOverlay';
+  handDetailOverlay.hidden = true;
+  handDetailOverlay.setAttribute('role', 'dialog');
+  handDetailOverlay.setAttribute('aria-modal', 'true');
+  handDetailOverlay.setAttribute('aria-label', 'カード詳細');
+  handDetailOverlay.innerHTML = '<article class="grBattleHandDetailPanel"><header class="grBattleHandDetailHead"><div><div class="grBattleHandDetailTitle"></div></div><button type="button" class="grBattleHandDetailClose" aria-label="カード詳細を閉じる">×</button></header><div class="grBattleHandDetailMeta"><span><small>RANK</small><b data-detail-rank></b></span><span><small>POWER</small><b data-detail-power></b></span><span><small>COST</small><b data-detail-cost></b></span><span><small>TYPE</small><b data-detail-type></b></span></div><p class="grBattleHandDetailRules"></p></article>';
+  root.appendChild(handDetailOverlay);
+  const handDetailTitle = handDetailOverlay.querySelector('.grBattleHandDetailTitle');
+  const handDetailRank = handDetailOverlay.querySelector('[data-detail-rank]');
+  const handDetailPower = handDetailOverlay.querySelector('[data-detail-power]');
+  const handDetailCost = handDetailOverlay.querySelector('[data-detail-cost]');
+  const handDetailType = handDetailOverlay.querySelector('[data-detail-type]');
+  const handDetailRules = handDetailOverlay.querySelector('.grBattleHandDetailRules');
+  const handDetailClose = handDetailOverlay.querySelector('.grBattleHandDetailClose');
+
   const handle = documentRef.createElement('button');
   handle.type = 'button';
   handle.className = 'grJankenSlidePadHandle';
@@ -1186,9 +1223,13 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   let slotRollLastX = 0;
   let slotRollDetentPx = 0;
   let handDrag = null;
+  let handDetailHoldTimer = null;
+  let handDetailLatchedCardId = null;
+  let handDetailReturnFocus = null;
   let slotDrag = null;
   let boundHandRoot = null;
   let suppressNativeClickCardId = null;
+  let suppressNativeClickPointerId = null;
   let allowAuraProgrammaticClick = false;
   let suppressClickTimer = null;
   let suppressSlotClickHand = null;
@@ -1695,15 +1736,109 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       && turnLifecycle.reservedCardIds.includes(cardId);
   }
 
+  function clearHandDetailHoldTimer() {
+    if (handDetailHoldTimer === null) return;
+    globalRef.clearTimeout?.(handDetailHoldTimer);
+    handDetailHoldTimer = null;
+  }
+
+  function clearHandDetailVisual(state) {
+    if (state?.source?.dataset) delete state.source.dataset.handDetailHold;
+  }
+
+  function cardDetailMetadata(cardId) {
+    const card = cardCatalog(globalRef).find((entry) => entry?.id === cardId) ?? null;
+    return Object.freeze({
+      id: cardId,
+      title: card?.display_name ?? card?.name ?? card?.label ?? cardId,
+      rank: card?.rank ?? card?.power ?? '—',
+      power: card?.power ?? '—',
+      cost: card?.ability_cost ?? 0,
+      type: card?.ability_type ?? 'Vanilla',
+      rules: card?.rules_text ?? card?.ability ?? '能力なし',
+    });
+  }
+
+  function closeHandDetailPanel({ restoreFocus = true } = {}) {
+    if (handDetailOverlay.hidden) return false;
+    const returnFocus = handDetailReturnFocus;
+    handDetailOverlay.hidden = true;
+    handDetailOverlay.dataset.cardId = '';
+    handDetailReturnFocus = null;
+    if (handDetailLatchedCardId) {
+      const source = handCardNodes(root).find((node) => node.dataset?.cardId === handDetailLatchedCardId) ?? null;
+      clearHandDetailVisual({ source });
+      if (focusedCardId === handDetailLatchedCardId) setFocusedCardId(null);
+    }
+    handDetailLatchedCardId = null;
+    if (restoreFocus) returnFocus?.focus?.();
+    return true;
+  }
+
+  function openHandDetailPanel(cardId, source) {
+    const detail = cardDetailMetadata(cardId);
+    handDetailLatchedCardId = cardId;
+    handDetailReturnFocus = source ?? null;
+    handDetailOverlay.dataset.cardId = cardId;
+    handDetailTitle.textContent = detail.title;
+    handDetailRank.textContent = String(detail.rank);
+    handDetailPower.textContent = String(detail.power);
+    handDetailCost.textContent = String(detail.cost);
+    handDetailType.textContent = String(detail.type);
+    handDetailRules.textContent = String(detail.rules);
+    handDetailOverlay.hidden = false;
+    handDetailClose?.focus?.();
+    return detail;
+  }
+
+  function clearLatchedHandDetail() {
+    if (!handDetailLatchedCardId && handDetailOverlay.hidden) return;
+    closeHandDetailPanel({ restoreFocus: false });
+  }
+
+  function handleHandDetailOverlayPointerDown(event) {
+    if (handDetailOverlay.hidden || event?.target !== handDetailOverlay) return;
+    event.preventDefault?.();
+    event.stopPropagation?.();
+    closeHandDetailPanel({ restoreFocus: true });
+  }
+
+  function handleHandDetailEscape(event) {
+    if (handDetailOverlay.hidden || event?.key !== 'Escape') return;
+    event.preventDefault?.();
+    event.stopPropagation?.();
+    closeHandDetailPanel({ restoreFocus: true });
+  }
+
+  function openHandDetailHold(state) {
+    if (!state || handDrag !== state || state.moved) return;
+    const output = reduceBattleHandInput(state.inputState, { type: 'hold' });
+    state.inputState = output.state;
+    if (output.effects.some((effect) => effect.type === BATTLE_HAND_INPUT_EFFECT.OPEN_DETAIL_PREVIEW)) {
+      state.source.dataset.handDetailHold = 'true';
+      setFocusedCardId(state.cardId);
+    }
+  }
+
   function updateHandDrag(event) {
     const state = handDrag;
     if (!state || event?.pointerId !== state.pointerId) return false;
     const x = Number(event.clientX);
     const y = Number(event.clientY);
     if (![x, y].every(Number.isFinite)) return false;
+    const inputOutput = reduceBattleHandInput(
+      state.inputState,
+      { type: 'pointermove', pointerId: event.pointerId, x, y },
+      { moveSlopPx: HAND_DRAG_DEAD_ZONE_PX, dragType: 'hand_aura' },
+    );
+    state.inputState = inputOutput.state;
+    if (inputOutput.effects.some((effect) => effect.type === BATTLE_HAND_INPUT_EFFECT.CLOSE_DETAIL_PREVIEW)) {
+      clearHandDetailVisual(state);
+    }
     const distance = Math.hypot(x - state.originPointer.x, y - state.originPointer.y);
     if (!state.moved && distance >= HAND_DRAG_DEAD_ZONE_PX) {
       state.moved = true;
+      setFocusedCardId(state.cardId);
       state.ghost.style.visibility = 'visible';
       state.source.dataset.handAuraDragging = 'true';
       host.dataset.handAuraActive = 'true';
@@ -1751,26 +1886,48 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   function finishHandDrag(event, { cancelled = false } = {}) {
     const state = handDrag;
     if (!state || event?.pointerId !== state.pointerId) return;
+    clearHandDetailHoldTimer();
     if (!cancelled) updateHandDrag(event);
+    const inputOutput = reduceBattleHandInput(
+      state.inputState,
+      {
+        type: cancelled ? 'pointercancel' : 'pointerup',
+        pointerId: state.pointerId,
+        x: event?.clientX,
+        y: event?.clientY,
+      },
+      { moveSlopPx: HAND_DRAG_DEAD_ZONE_PX, dragType: 'hand_aura' },
+    );
+    state.inputState = inputOutput.state;
+    const detailLatch = inputOutput.effects.some((effect) => effect.type === BATTLE_HAND_INPUT_EFFECT.LATCH_DETAIL);
     const moved = state.moved;
     const cardId = state.cardId;
     const sourceStillOrdinary = !isReservedCardId(cardId)
       && state.source?.dataset?.jankenReserved !== 'true';
     const commit = !cancelled && moved && state.armed && state.legalCandidate === true && sourceStillOrdinary;
-    if (moved) {
+    const effectiveCommit = commit && !detailLatch;
+    if (moved || detailLatch) {
       event.preventDefault?.();
       event.stopPropagation?.();
       suppressNativeClickCardId = cardId;
       scheduleSuppressClear(cardId);
     }
 
+    if (detailLatch) {
+      clearHandDetailVisual(state);
+      cleanupHandDrag(state);
+      setFocusedCardId(cardId);
+      openHandDetailPanel(cardId, state.source);
+      return;
+    }
+    clearHandDetailVisual(state);
     let clicked = false;
-    if (commit) {
+    if (effectiveCommit) {
       allowAuraProgrammaticClick = true;
       try { clicked = clickExistingHandCard(root, cardId); }
       finally { allowAuraProgrammaticClick = false; }
     }
-    if (commit && clicked) {
+    if (effectiveCommit && clicked) {
       const ghost = state.ghost;
       cleanupHandDrag(state, { keepGhost: true });
       setFocusedCardId(null);
@@ -1781,15 +1938,60 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     setFocusedCardId(null);
   }
 
+  function handleGlobalHandSecondaryPointerDown(event) {
+    const state = handDrag;
+    const pointerId = Number(event?.pointerId);
+    if (!state || !Number.isFinite(pointerId) || pointerId === state.pointerId) return;
+    clearHandDetailHoldTimer();
+    clearHandDetailVisual(state);
+    suppressNativeClickCardId = state.cardId;
+    suppressNativeClickPointerId = state.pointerId;
+    cleanupHandDrag(state);
+    setFocusedCardId(null);
+    event.preventDefault?.();
+    event.stopPropagation?.();
+  }
+
+  function handleGlobalSuppressedPrimaryEnd(event) {
+    const pointerId = Number(event?.pointerId);
+    if (!Number.isFinite(pointerId) || pointerId !== suppressNativeClickPointerId) return;
+    suppressNativeClickPointerId = null;
+    if (suppressNativeClickCardId) scheduleSuppressClear(suppressNativeClickCardId);
+  }
+
+  function handleHandVisibilityChange() {
+    if (documentRef.hidden !== true) return;
+    closeHandDetailPanel({ restoreFocus: false });
+    const state = handDrag;
+    if (!state) return;
+    clearHandDetailHoldTimer();
+    const output = reduceBattleHandInput(
+      state.inputState,
+      { type: 'visibilitychange', pointerId: state.pointerId },
+      { moveSlopPx: HAND_DRAG_DEAD_ZONE_PX, dragType: 'hand_aura' },
+    );
+    state.inputState = output.state;
+    clearHandDetailVisual(state);
+    cleanupHandDrag(state);
+    setFocusedCardId(null);
+  }
+
   function beginHandDrag(event) {
+    const pointerId = Number(event?.pointerId);
+    if (handDrag && Number.isFinite(pointerId) && pointerId !== handDrag.pointerId) {
+      clearHandDetailHoldTimer();
+      clearHandDetailVisual(handDrag);
+      cleanupHandDrag(handDrag);
+      setFocusedCardId(null);
+      return;
+    }
     if (destroyed || handDrag || activePointerId !== null) return;
     const source = event?.target?.closest?.('#hand .handCard[data-card-id]');
     if (!source || source.dataset?.handAuraDraggable !== 'true' || source.dataset?.jankenReserved === 'true') return;
     const cardId = source.dataset?.cardId?.trim?.() ?? '';
-    const pointerId = event?.pointerId;
     if (!cardId || !Number.isFinite(pointerId) || isReservedCardId(cardId)) return;
+    clearLatchedHandDetail();
     const legalCandidate = currentPlayableHandAffordance(root)?.candidateCardIds?.includes?.(cardId) === true;
-    setFocusedCardId(cardId);
     const rect = source.getBoundingClientRect?.();
     const x = Number(event.clientX);
     const y = Number(event.clientY);
@@ -1817,6 +2019,12 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       moved: false,
       legalCandidate,
       armed: false,
+      inputState: createBattleHandInputState({
+        pointerId,
+        cardId,
+        origin: { x, y },
+        startedAt: Number(event.timeStamp) || 0,
+      }),
       handlers: null,
     };
     state.handlers = {
@@ -1826,6 +2034,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       lost: (nextEvent) => finishHandDrag(nextEvent, { cancelled: true }),
     };
     handDrag = state;
+    handDetailHoldTimer = globalRef.setTimeout?.(() => openHandDetailHold(state), HAND_DETAIL_HOLD_MS) ?? null;
     source.addEventListener?.('pointermove', state.handlers.move);
     source.addEventListener?.('pointerup', state.handlers.up);
     source.addEventListener?.('pointercancel', state.handlers.cancel);
@@ -2046,6 +2255,14 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     return true;
   }
 
+  documentRef.addEventListener?.('pointerdown', handleGlobalHandSecondaryPointerDown, true);
+  documentRef.addEventListener?.('pointerup', handleGlobalSuppressedPrimaryEnd, true);
+  documentRef.addEventListener?.('pointercancel', handleGlobalSuppressedPrimaryEnd, true);
+  documentRef.addEventListener?.('keydown', handleHandDetailEscape, true);
+  documentRef.addEventListener?.('visibilitychange', handleHandVisibilityChange, true);
+  handDetailOverlay.addEventListener?.('pointerdown', handleHandDetailOverlayPointerDown);
+  handDetailClose.addEventListener?.('click', () => closeHandDetailPanel({ restoreFocus: true }));
+
   const runtime = Object.freeze({
     render,
     snapshot: () => model,
@@ -2073,6 +2290,13 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       if (roundOpenTimer !== null) globalRef.clearTimeout?.(roundOpenTimer);
       if (suppressClickTimer !== null) globalRef.clearTimeout?.(suppressClickTimer);
       if (suppressSlotClickTimer !== null) globalRef.clearTimeout?.(suppressSlotClickTimer);
+      clearHandDetailHoldTimer();
+      documentRef.removeEventListener?.('pointerdown', handleGlobalHandSecondaryPointerDown, true);
+      documentRef.removeEventListener?.('pointerup', handleGlobalSuppressedPrimaryEnd, true);
+      documentRef.removeEventListener?.('pointercancel', handleGlobalSuppressedPrimaryEnd, true);
+      documentRef.removeEventListener?.('keydown', handleHandDetailEscape, true);
+      documentRef.removeEventListener?.('visibilitychange', handleHandVisibilityChange, true);
+      closeHandDetailPanel({ restoreFocus: false });
       closeDedicatedFocusSurface();
       if (handDrag) cleanupHandDrag(handDrag);
       if (slotDrag) {
@@ -2102,6 +2326,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       clearPlayableHandAffordance(root);
       for (const node of handCardNodes(root)) restoreHandNode(node);
       for (const observer of observers) observer.disconnect();
+      handDetailOverlay.remove?.();
       host.remove();
       return true;
     },

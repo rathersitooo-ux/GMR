@@ -707,3 +707,45 @@ test('the live consumer blocks new stage and direct clear while transport is in 
   const result = await pending;
   assert.equal(result.committed, true);
 });
+
+
+test('switching cards while a new legal candidate loads cannot commit the previous card', async () => {
+  let releasePaper;
+  let announcePaper;
+  const paperStarted = new Promise((resolve) => { announcePaper = resolve; });
+  const paperWait = new Promise((resolve) => { releasePaper = resolve; });
+  const sent = [];
+  let paperReads = 0;
+  const adapter = createBattleNewBaseLiveConsumerAdapter({
+    readRoundAuthority: async () => roundAuthority(),
+    readAuthoritativeHand3Uint32: () => 4,
+    readCompoundAttackCandidate: async ({ jankenHand }) => {
+      if (jankenHand === 'PAPER') {
+        paperReads += 1;
+        if (paperReads === 1) {
+          announcePaper();
+          return paperWait;
+        }
+        return compoundCandidate({ jankenHand: 'PAPER', cardId: 'card-b' });
+      }
+      return compoundCandidate();
+    },
+    sendExistingBattleAction: async (payload) => { sent.push(payload); return true; },
+  });
+  const first = await adapter.stageCompoundAttack('ROCK');
+  assert.equal(first.package.cardId, 'card-c');
+  const pending = adapter.stageCompoundAttack('PAPER');
+  await paperStarted;
+  assert.equal(adapter.status().stagedCompoundAttack, null);
+  const blocked = await adapter.commitCompoundAttack();
+  assert.equal(blocked.committed, false);
+  assert.equal(blocked.reason, 'STAGE_READ_IN_FLIGHT');
+  assert.equal(sent.length, 0);
+  releasePaper(compoundCandidate({ jankenHand: 'PAPER', cardId: 'card-b' }));
+  const second = await pending;
+  assert.equal(second.package.cardId, 'card-b');
+  const result = await adapter.commitCompoundAttack();
+  assert.equal(result.committed, true);
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].cardId, 'card-b');
+});

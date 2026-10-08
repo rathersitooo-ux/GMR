@@ -277,8 +277,11 @@ export function createSaasunaBattleMotionController({
   let frameTimer = null;
   let frameKind = null;
   let frameGeneration = 0;
+  let causalPhase = null;
+  let heldAdvance = null;
   function cancelFramePlayback() {
     frameGeneration += 1;
+    heldAdvance = null;
     if (frameTimer != null) {
       (timerHost.clearTimeout ?? globalThis.clearTimeout).call(timerHost, frameTimer);
       frameTimer = null;
@@ -309,6 +312,14 @@ export function createSaasunaBattleMotionController({
     const advance = () => {
       if (destroyed || frameGeneration !== generation) return;
       const next = index + 1;
+      // The authored emission frame must not precede the game-owned release cue.
+      // Hold frame four; an exact release cue resumes the existing playback once.
+      if (sprite.releaseFrame && next === sprite.releaseFrame - 1
+        && (causalPhase === 'stance' || causalPhase === 'anticipation')) {
+        frameTimer = null;
+        heldAdvance = advance;
+        return;
+      }
       if (next >= sprite.frameCount && !sprite.loop) { frameTimer = null; return; }
       index = next % sprite.frameCount;
       paintR2(sprite, index);
@@ -339,6 +350,7 @@ export function createSaasunaBattleMotionController({
       ...input,
     });
     if (!plan || destroyed) return null;
+    if (role === 'source' && typeof input.causalPhase === 'string') causalPhase = input.causalPhase;
     const restart = options.restart !== false;
     if (!restart && currentState === plan.state) return plan;
     currentState = plan.state;
@@ -357,6 +369,11 @@ export function createSaasunaBattleMotionController({
     surface.keyframe.hidden = false;
     if (strip) playR2(strip);
     else showLegacy(plan);
+    if (heldAdvance && causalPhase === 'release') {
+      const resume = heldAdvance;
+      heldAdvance = null;
+      resume();
+    }
     surface.keyframe.dataset.keyframeId = plan.keyframeId;
     surface.ice.hidden = !plan.effect.includes('ice') || reducedMotion;
     surface.wind.hidden = !plan.effect.includes('wind') || reducedMotion;

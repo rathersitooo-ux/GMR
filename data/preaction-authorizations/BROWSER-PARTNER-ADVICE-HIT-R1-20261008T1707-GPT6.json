@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BROWSER-PARTNER-ADVICE-HIT-R1-20261008T1707-GPT6",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BFI_PARTNER_ADVICE_INTERCEPT_REPAIR_R1",
+  "acquireKey": "BROWSER-PARTNER-ADVICE-HIT-R1-20261008T1707-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "GHA-37746001689-intercept-battleMap-2v2-all-three-viewports",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "GHA-37745255493-same-intercept-baseline;conventional-node-and-exact-head-playwright-required",
+  "proceedToken": "PROCEED|BROWSER-PARTNER-ADVICE-HIT-R1-20261008T1707-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|readback|repair",
+  "authorizationBaseSha": "4d53867d9b58a251fb19d274331a87d123d86cd4",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BFI_PARTNER_ADVICE_INTERCEPT_REPAIR_R1",
+  "leaseAcquireKey": "BROWSER-PARTNER-ADVICE-HIT-R1-20261008T1707-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-08 17:07 JST",
+  "leaseUntilJst": "2026-10-08 17:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A12:L12",
+  "leaseExactMutableResources": "browser/partner-advice-runtime-mount.mjs; tests/partner-advice-runtime-mount.test.mjs; data/preaction-authorizations/BROWSER-PARTNER-ADVICE-HIT-R1-20261008T1707-GPT6.json; work/bfi-partner-advice-hit-r1-20261008",
+  "scope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs"
+  ]
+}

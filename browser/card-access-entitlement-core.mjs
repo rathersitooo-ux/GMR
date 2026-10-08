@@ -29,7 +29,7 @@ function idSet(values, label) {
   return out;
 }
 
-function normalizeGrant(value, { label, allowAllCards }) {
+function normalizeGrant(value, label) {
   if (value === undefined) {
     return Object.freeze({ active: false, allCards: false, cardIds: new Set() });
   }
@@ -42,12 +42,9 @@ function normalizeGrant(value, { label, allowAllCards }) {
   if (value.allCards !== undefined && typeof value.allCards !== 'boolean') {
     throw new TypeError(`${label.toUpperCase()}_ALLCARDS_BOOLEAN_REQUIRED`);
   }
-  if (value.allCards === true && allowAllCards !== true) {
-    throw new TypeError(`${label.toUpperCase()}_ALLCARDS_FORBIDDEN`);
-  }
   return Object.freeze({
     active: value.active,
-    allCards: allowAllCards === true && value.allCards === true,
+    allCards: value.allCards === true,
     cardIds: idSet(value.cardIds, `${label}_cardId`),
   });
 }
@@ -58,14 +55,8 @@ function normalizePolicy(policy = {}) {
   }
   return Object.freeze({
     ownedCardIds: idSet(policy.ownedCardIds, 'ownedCardId'),
-    seasonPass: normalizeGrant(policy.seasonPass, {
-      label: 'season_pass',
-      allowAllCards: false,
-    }),
-    freeTrial: normalizeGrant(policy.freeTrial, {
-      label: 'free_trial',
-      allowAllCards: true,
-    }),
+    seasonPass: normalizeGrant(policy.seasonPass, 'season_pass'),
+    freeTrial: normalizeGrant(policy.freeTrial, 'free_trial'),
   });
 }
 
@@ -73,10 +64,7 @@ function granted(grant, cardId) {
   return grant.active === true && (grant.allCards === true || grant.cardIds.has(cardId));
 }
 
-export function resolveCardAccess(cardIdInput, policyInput = {}) {
-  const cardId = token(cardIdInput);
-  const policy = normalizePolicy(policyInput);
-
+function resolveNormalizedCardAccess(cardId, policy) {
   let status = CARD_ACCESS_STATUS.LOCKED;
   if (policy.ownedCardIds.has(cardId)) status = CARD_ACCESS_STATUS.OWNED;
   else if (granted(policy.seasonPass, cardId)) status = CARD_ACCESS_STATUS.SEASON_PASS;
@@ -92,6 +80,11 @@ export function resolveCardAccess(cardIdInput, policyInput = {}) {
       status === CARD_ACCESS_STATUS.SEASON_PASS ||
       status === CARD_ACCESS_STATUS.FREE_TRIAL,
   });
+}
+
+export function resolveCardAccess(cardIdInput, policyInput = {}) {
+  const cardId = token(cardIdInput);
+  return resolveNormalizedCardAccess(cardId, normalizePolicy(policyInput));
 }
 
 function deckCards(deck) {
@@ -110,8 +103,9 @@ function deckCards(deck) {
 }
 
 export function evaluateDeckCardAccess(deck, policyInput = {}) {
+  const policy = normalizePolicy(policyInput);
   const entries = deckCards(deck).map((entry) => {
-    const access = resolveCardAccess(entry.cardId, policyInput);
+    const access = resolveNormalizedCardAccess(entry.cardId, policy);
     return Object.freeze({
       ...entry,
       status: access.status,
@@ -145,7 +139,7 @@ export const CARD_ACCESS_ENTITLEMENT_CONTRACT = Object.freeze({
     CARD_ACCESS_STATUS.LOCKED,
   ]),
   activeWindowAuthority: 'CALLER',
-  seasonPassMembershipAuthority: 'CALLER',
+  seasonPassScopeAuthority: 'CALLER',
   freeTrialScopeAuthority: 'CALLER',
   ownershipMutationAllowed: false,
   purchaseAuthority: false,

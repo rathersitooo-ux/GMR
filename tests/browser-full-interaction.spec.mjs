@@ -1442,6 +1442,10 @@ await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount
   await expect(battle.locator('#battleMap')).toHaveClass(/showRange/);
   await attachStateScreenshot(page, testInfo, 'battle-range-visible');
 
+  const partnerDisclosure = battle.locator('#partnerAdviceChatPresentation [data-player-focus-disclosure="true"]');
+  await expect(partnerDisclosure, 'the collapsed Battle partner entry is a real visible control').toBeVisible();
+  if ((await partnerDisclosure.getAttribute('aria-expanded')) !== 'true') await partnerDisclosure.click();
+  await expect(partnerDisclosure).toHaveAttribute('aria-expanded', 'true');
   await battle.locator('#partnerAdviceBtn').click();
   const advice = await page.evaluate(() => window.__GAMEROAD_HATE_PARTNER_TEST__?.adviceEnvelope?.() ?? null);
   expect(advice).not.toBeNull();

@@ -565,3 +565,145 @@ test('contract records canonical hand3 and reused precommit-clear boundaries whi
     },
   );
 });
+
+
+test('delayed fresh legal read cannot send an identical package from a subsequent turn', async () => {
+  let authority = roundAuthority();
+  let releaseLegalRead;
+  let announceLegalRead;
+  const legalReadStarted = new Promise((resolve) => { announceLegalRead = resolve; });
+  const legalReadWait = new Promise((resolve) => { releaseLegalRead = resolve; });
+  const sent = [];
+  let reads = 0;
+  const adapter = createBattleNewBaseLiveConsumerAdapter({
+    readRoundAuthority: async () => authority,
+    readAuthoritativeHand3Uint32: () => 4,
+    readCompoundAttackCandidate: async () => {
+      reads += 1;
+      if (reads === 2) {
+        announceLegalRead();
+        return legalReadWait;
+      }
+      return compoundCandidate();
+    },
+    sendExistingBattleAction: async (payload) => { sent.push(payload); return true; },
+  });
+  await adapter.stageCompoundAttack('ROCK');
+  const pending = adapter.commitCompoundAttack();
+  await legalReadStarted;
+  authority = roundAuthority({ turnId: 'turn-7-b' });
+  // The opponent, path and Shield can match byte-for-byte in consecutive turns.
+  releaseLegalRead(compoundCandidate());
+  const result = await pending;
+  assert.equal(result.committed, false);
+  assert.equal(result.reason, 'TURN_CHANGED_RESTAGE_REQUIRED');
+  assert.equal(sent.length, 0);
+  assert.equal(adapter.status().stagedCompoundAttack, null);
+});
+
+test('a slow stage cannot insert an attack from a superseded turn', async () => {
+  let authority = roundAuthority();
+  let releaseLegalRead;
+  let announceLegalRead;
+  const started = new Promise((resolve) => { announceLegalRead = resolve; });
+  const gate = new Promise((resolve) => { releaseLegalRead = resolve; });
+  const adapter = createBattleNewBaseLiveConsumerAdapter({
+    readRoundAuthority: async () => authority,
+    readAuthoritativeHand3Uint32: () => 4,
+    readCompoundAttackCandidate: async () => {
+      announceLegalRead();
+      return gate;
+    },
+    sendExistingBattleAction: async () => { throw Error('unexpected transport'); },
+  });
+  const pending = adapter.stageCompoundAttack('ROCK');
+  await started;
+  authority = roundAuthority({ turnId: 'turn-7-b' });
+  releaseLegalRead(compoundCandidate());
+  await assert.rejects(pending, /TURN_CHANGED_RESTAGE_REQUIRED/);
+  assert.equal(adapter.status().stagedCompoundAttack, null);
+});
+
+test('clearing a still-pending stage invalidates its later legal response', async () => {
+  let releaseLegalRead;
+  let announceLegalRead;
+  const started = new Promise((resolve) => { announceLegalRead = resolve; });
+  const gate = new Promise((resolve) => { releaseLegalRead = resolve; });
+  const adapter = createBattleNewBaseLiveConsumerAdapter({
+    readRoundAuthority: async () => roundAuthority(),
+    readAuthoritativeHand3Uint32: () => 4,
+    readCompoundAttackCandidate: async () => {
+      announceLegalRead();
+      return gate;
+    },
+    sendExistingBattleAction: async () => { throw Error('unexpected transport'); },
+  });
+  const pending = adapter.stageCompoundAttack('ROCK');
+  await started;
+  assert.equal(adapter.clearCompoundAttack().cleared, false);
+  releaseLegalRead(compoundCandidate());
+  await assert.rejects(pending, /STAGE_CANCELLED_OR_SUPERSEDED/);
+  assert.equal(adapter.status().stagedCompoundAttack, null);
+});
+
+test('global precommit clear cancels a pending compound read without phantom restaging', async () => {
+  let releaseLegalRead;
+  let announceLegalRead;
+  const started = new Promise((resolve) => { announceLegalRead = resolve; });
+  const gate = new Promise((resolve) => { releaseLegalRead = resolve; });
+  const appliedDrafts = [];
+  const adapter = createBattleNewBaseLiveConsumerAdapter({
+    readRoundAuthority: async () => roundAuthority(),
+    readAuthoritativeHand3Uint32: () => 4,
+    readCompoundAttackCandidate: async () => {
+      announceLegalRead();
+      return gate;
+    },
+    sendExistingBattleAction: async () => { throw Error('unexpected transport'); },
+    readExistingPrecommitState: async () => ({
+      phase: 'target',
+      position: 'P1',
+      plan: { path: ['P1'] },
+      targetDraft: { defenderId: 'P3', lane: 'CENTER', shield: 'P3:CENTER' },
+      targetCommitted: false,
+      busy: false,
+    }),
+    applyExistingPrecommitDraft: async (next) => {
+      appliedDrafts.push(next);
+      return true;
+    },
+  });
+  const pending = adapter.stageCompoundAttack('ROCK');
+  await started;
+  const cleared = await adapter.clearPrecommitSelection();
+  assert.equal(cleared.ok, true);
+  assert.equal(cleared.compoundCleared, true);
+  assert.equal(appliedDrafts.length, 1);
+  releaseLegalRead(compoundCandidate());
+  await assert.rejects(pending, /STAGE_CANCELLED_OR_SUPERSEDED/);
+  assert.equal(adapter.status().stagedCompoundAttack, null);
+});
+
+test('the live consumer blocks new stage and direct clear while transport is in flight', async () => {
+  let allowTransport;
+  let announceTransport;
+  const started = new Promise((resolve) => { announceTransport = resolve; });
+  const gate = new Promise((resolve) => { allowTransport = resolve; });
+  const { adapter } = createHarness({
+    sendExistingBattleAction: async () => {
+      announceTransport();
+      await gate;
+      return true;
+    },
+  });
+  await adapter.stageCompoundAttack('ROCK');
+  const pending = adapter.commitCompoundAttack();
+  await started;
+  await assert.rejects(adapter.stageCompoundAttack('ROCK'), /COMMIT_IN_FLIGHT/);
+  const canceled = adapter.clearCompoundAttack();
+  assert.equal(canceled.cleared, false);
+  assert.equal(canceled.reason, 'COMMIT_IN_FLIGHT');
+  allowTransport();
+  const result = await pending;
+  assert.equal(result.committed, true);
+});

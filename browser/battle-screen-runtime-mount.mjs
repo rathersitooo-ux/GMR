@@ -9,6 +9,7 @@ import {
   createSaasunaBattleMotionController,
   SAASUNA_BATTLE_MOTION_RUNTIME
 } from './saasuna-battle-motion-core.mjs';
+import { resolveSaasunaBattleCausalMotionState } from './battle-cinematic-character-motion-router.mjs';
 import {
   BATTLE_CINEMATIC_CAUSAL_TIMELINE,
   clearBattleCinematicCausalTimeline,
@@ -797,6 +798,21 @@ function createCinematicDuelFx(document) {
 function applyCinematicTimelinePhaseToCharacters(global, active, entry) {
   if (!active || !entry) return;
   active.timelinePhase = entry.phase;
+  // Keep the provisional Saasuna pose synchronized to the accepted causal timeline.
+  // Explicit per-participant motion choices must not be overwritten here.
+  for (const binding of active.motionBindings ?? []) {
+    if (binding.explicitState) continue;
+    const state = resolveSaasunaBattleCausalMotionState({
+      causalPhase: entry.phase,
+      role: binding.role,
+      actionPhase: active.actionPhase
+    });
+    if (!state || binding.state === state) continue;
+    try {
+      binding.controller.setState({ role: binding.role, phase: active.actionPhase, motionState: state });
+      binding.state = state;
+    } catch {}
+  }
   const runtime = global?.GameRoadThreeCharRuntime;
   if (typeof runtime?.setState !== 'function') return;
   for (const binding of active.characterBindings ?? []) {
@@ -866,6 +882,12 @@ function mountCinematicDuelCharacter(global, scene, view, characterId, role, mot
     });
     if (motionController) {
       active.motionControllers.push(motionController);
+      active.motionBindings.push({
+        controller: motionController,
+        role,
+        explicitState: Boolean(motionContext?.motionState),
+        state: null
+      });
       view.figure.dataset.motionVisualKind = 'provisional-keyframe-sheet';
       view.figure.dataset.provisionalArt = 'true';
     }
@@ -943,9 +965,11 @@ function writeCinematicDuel(global, document, scene, model, context = {}) {
     mounts: [],
     timers: [],
     motionControllers: [],
+    motionBindings: [],
     characterBindings: [],
     timelineNodes: [],
-    timelinePhase: null
+    timelinePhase: null,
+    actionPhase: phase
   };
   cinematicDuelRuntimeState.set(scene, active);
   cinematicDuelPairState.set(scene, currentPair);

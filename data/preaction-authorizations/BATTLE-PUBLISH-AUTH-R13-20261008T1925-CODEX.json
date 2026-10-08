@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PUBLISH-AUTH-R13-20261008T1925-CODEX",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FRAME_FIX_PUBLIC_ADMISSION_AUTH_REPAIR_R13",
+  "acquireKey": "BATTLE-PUBLISH-AUTH-R13-20261008T1925-CODEX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "EXACT_DEPLOY_403_AND_ANONYMOUS_SOURCE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "AUTH_HEADER_REGRESSION_AND_EXISTING_ADMISSION_FIXTURES",
+  "proceedToken": "PROCEED|BATTLE-PUBLISH-AUTH-R13-20261008T1925-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|authenticated-admission|existing-API-contract|active-lease",
+  "authorizationBaseSha": "c8ae4e8b6af6d4ce1b812ec770ea77e1a50a13f0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_FRAME_FIX_PUBLIC_ADMISSION_AUTH_REPAIR_R13",
+  "leaseAcquireKey": "BATTLE-PUBLISH-AUTH-R13-20261008T1925-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-10-08 19:25 JST",
+  "leaseUntilJst": "2026-10-08 20:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": ".github/workflows/cloudflare-public-deploy.yml; deploy/cloudflare/tests/version-manifest.test.mjs; temporary data/preaction-authorizations/BATTLE-PUBLISH-AUTH-R13-20261008T1925-CODEX.json; new branch codex/public-admission-auth-r13-20261008; own PR/check/merge and normal publication; isolated /workspace/scratch/01f0e27d67ac/gmr-contact-r8; own R25 events/lease/N1379. Existing clock fix and all other owners/files READ_ONLY.",
+  "solutionSignature": "EXISTING_PUBLIC_DEPLOY_GITHUB_EVIDENCE_AUTH_REPAIR",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_R4_REUSE_FE8_SOURCE_AND_EXISTING_RENDERER",
+  "solutionSearchEvidence": [
+    "Current actual deploy failed github_api_403 before publishing.",
+    "Reuse existing checker and github.token; preserve exact PR and Required Gate identity.",
+    "GitHub official endpoint documentation requires pull-requests:read and checks:read."
+  ],
+  "scope": [
+    ".github/workflows/cloudflare-public-deploy.yml",
+    "deploy/cloudflare/tests/version-manifest.test.mjs"
+  ],
+  "leaseScope": [
+    ".github/workflows/cloudflare-public-deploy.yml",
+    "deploy/cloudflare/tests/version-manifest.test.mjs"
+  ]
+}

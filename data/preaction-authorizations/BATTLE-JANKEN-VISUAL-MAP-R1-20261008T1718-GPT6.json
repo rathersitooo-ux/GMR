@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-VISUAL-MAP-R1-20261008T1718-GPT6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "JANKEN_4P_VISUAL_OPPONENT_MAP_R1",
+  "acquireKey": "BATTLE-JANKEN-VISUAL-MAP-R1-20261008T1718-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "GAMEROAD_実装理由CURRENT §9.7 and RAW-BATTLE-SLOT-20261008-002",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "2026-10-08 Node22 local isolated test 10/10 /mnt/data/gameroad_fixed_slots/tests/battle-janken-visual-opponent-map-core.test.mjs",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-VISUAL-MAP-R1-20261008T1718-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|LOCAL_ISOLATED_10_PASS",
+  "authorizationBaseSha": "4d53867d9b58a251fb19d274331a87d123d86cd4",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "JANKEN_4P_VISUAL_OPPONENT_MAP_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-VISUAL-MAP-R1-20261008T1718-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-08 17:18 JST",
+  "leaseUntilJst": "2026-10-08 18:02 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A15:L15",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR branch chatgpt/janken-visual-opponent-map-r1-20261008; NEW browser/battle-janken-visual-opponent-map-core.mjs; NEW tests/battle-janken-visual-opponent-map-core.test.mjs; optional transient PRE_ACTION data/preaction-authorizations/BATTLE-JANKEN-VISUAL-MAP-R1-20261008T1718-GPT6.json; own draft PR; own R25 event and own lease row. No existing main/HTML/SlidePad write, merge or deployment.",
+  "scope": [
+    "browser/battle-janken-visual-opponent-map-core.mjs",
+    "tests/battle-janken-visual-opponent-map-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-visual-opponent-map-core.mjs",
+    "tests/battle-janken-visual-opponent-map-core.test.mjs"
+  ],
+  "solutionSignature": "four-player human janken left-center-right card-candidate slots map to ordered opponents excluding attacker",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "GAMEROAD_実装理由_CURRENT §9.6–9.7; current GitHub main blob 07e952f7bbc353d05b426d143dfcfb14063fe04e",
+  "solutionSearchEvidence": [
+    "Current HTML legalOpponents/autoTarget has no deterministic visual slot mapping",
+    "Existing browser/battle-janken-compound-attack-package-core.mjs reused for complete package validation; no visual seat map module in current browser inventory"
+  ],
+  "buildResidualReason": "The existing package core validates an already supplied opponentId; it does not derive or validate the user's new screen-position-to-opponent rule. A narrow pure function is needed."
+}

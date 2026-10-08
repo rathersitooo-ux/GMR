@@ -23,6 +23,7 @@ import {
   BATTLE_JANKEN_ORDER_SLIDEPAD_PRESENTER_SCHEMA,
   presentBattleJankenOrderMotionToSlidePad,
   projectBattleJankenOrderSlidePadPresentation,
+  projectBattlePowerOrbLaunchMotion,
 } from '../browser/battle-janken-slidepad-runtime-mount.mjs';
 import { projectBattleJankenOrderSnapshot } from '../browser/battle-janken-order-live-adapter.mjs';
 import {
@@ -1027,3 +1028,58 @@ test('Power Energy uses the exact recovered web derivative and does not add a se
   assert.doesNotMatch(source, /createPowerEnergy(?:Controller|Engine|Store)/);
 });
 // BATTLE_POWER_ENERGY_VISUAL_TARGET_R1_END
+
+
+function powerOrbFivePhaseInput(overrides = {}) {
+  return {
+    start: { x: 120, y: 500 },
+    aura: { x: 300, y: 440 },
+    target: { x: 700, y: 260 },
+    cardSize: { width: 80, height: 120 },
+    ...overrides,
+  };
+}
+
+test('Power Orb presentation passes through wrap, draw, fire, trail and impact without gameplay state writes', () => {
+  const motion = projectBattlePowerOrbLaunchMotion(powerOrbFivePhaseInput());
+  assert.equal(motion.schema, 'gameroad.battle-power-orb-motion.v1');
+  assert.equal(motion.presentationOnly, true);
+  assert.equal(motion.gameplayAuthority, false);
+  assert.equal(motion.gameStateWrite, false);
+  assert.deepEqual(motion.sequence, ['wrap', 'draw', 'fire', 'trail', 'impact']);
+  assert.ok(motion.cardKeyframes.some((frame) => frame.phase === 'wrap'));
+  assert.ok(motion.cardKeyframes.some((frame) => frame.phase === 'draw'));
+  assert.ok(motion.cardKeyframes.some((frame) => frame.phase === 'fire'));
+  assert.ok(motion.cardKeyframes.some((frame) => frame.phase === 'trail'));
+  assert.ok(motion.cardKeyframes.some((frame) => frame.phase === 'impact'));
+  assert.ok(motion.trailKeyframes.length >= 2);
+  assert.deepEqual(motion.impact, { x: 700, y: 260 });
+  assert.ok(motion.cardKeyframes.every((frame) => Number.isFinite(frame.offset)));
+  assert.equal(motion.cardKeyframes[0].offset, 0);
+  assert.equal(motion.cardKeyframes.at(-1).offset, 1);
+});
+
+test('Power Orb reduced motion disables moving frames while retaining semantic presentation phases', () => {
+  const motion = projectBattlePowerOrbLaunchMotion(powerOrbFivePhaseInput({ reducedMotion: true }));
+  assert.deepEqual(motion.sequence, ['wrap', 'draw', 'fire', 'trail', 'impact']);
+  assert.equal(motion.motionMode, 'semantic-only');
+  assert.deepEqual(motion.cardKeyframes, []);
+  assert.deepEqual(motion.trailKeyframes, []);
+  assert.equal(motion.gameStateWrite, false);
+});
+
+test('Power Orb refuses invalid geometry rather than manufacturing a launch route', () => {
+  assert.equal(projectBattlePowerOrbLaunchMotion(powerOrbFivePhaseInput({ aura: null })), null);
+  assert.equal(projectBattlePowerOrbLaunchMotion(powerOrbFivePhaseInput({ target: { x: Number.NaN, y: 2 } })), null);
+  assert.equal(projectBattlePowerOrbLaunchMotion(powerOrbFivePhaseInput({ cardSize: { width: 0, height: 0 } })), null);
+});
+
+test('Power Orb live release remains gated behind existing successfully committed physical card', () => {
+  const source = readFileSync(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+  const successfulRelease = source.match(/if \(effectiveCommit && clicked\) \{([\s\S]*?)\n    \}/);
+  assert.ok(successfulRelease, 'the existing success-only release gate remains');
+  assert.match(successfulRelease[1], /animateHandAuraLaunch\(globalRef, documentRef, root, powerEnergy, ghost\);/);
+  assert.match(source, /projectBattlePowerOrbLaunchMotion\(/);
+  assert.match(source, /@keyframes grPowerEnergyFlame/);
+  assert.match(source, /prefers-reduced-motion:\s*reduce/);
+});

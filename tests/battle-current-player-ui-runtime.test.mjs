@@ -241,7 +241,9 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
     assert.doesNotMatch(rule, /(?:^|;)(?:left|right|top|bottom):/);
   }
   assert.match(styleText, /\[data-gr-current-ui-zone="support-entry"\]\{[^}]*left:var\(--gr-ui-edge\)!important[^}]*bottom:calc\(var\(--gr-ui-edge\) \+ 46px\)!important/);
-  assert.match(styleText, /\[data-gr-current-ui-zone="partner"\]\{[^}]*bottom:calc\(var\(--gr-ui-edge\) \+ 92px\)!important[^}]*opacity:\.22[^}]*pointer-events:none!important/);
+  assert.match(styleText, /\[data-gr-current-ui-zone="partner"\]\{[^}]*bottom:calc\(var\(--gr-ui-edge\) \+ 92px\)!important[^}]*opacity:\.94[^}]*pointer-events:auto!important/);
+  assert.match(styleText, /\[data-gr-current-ui-zone="partner"\]\{[^}]*z-index:38!important/);
+  assert.match(styleText, /max-width:520px[\s\S]*?\[data-gr-current-ui-zone="partner"\]\{top:calc\(158px \+ 44px \+ var\(--gr-ui-gap\)\)!important;bottom:auto!important\}/);
   assert.match(styleText, /data-gr-advice-active="true"[\s\S]*?\[data-gr-current-ui-zone="partner"\]\{opacity:1;pointer-events:auto!important\}/);
   assert.match(styleText, /data-gr-waiting-for-others="true"[\s\S]*?#publicTurnHud\{opacity:1;filter:brightness\(1\.08\)\}/);
   assert.match(styleText, /data-gr-waiting-for-others="true"[\s\S]*?\[data-gr-current-ui-zone="current-action"\]\{[^}]*border-color:/);

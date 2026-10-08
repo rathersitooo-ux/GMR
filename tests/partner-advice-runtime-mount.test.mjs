@@ -5,6 +5,7 @@ import {
   createBattleContextualTutorialReplayControl,
   createBattleTutorialExperienceConversationControl,
   createPartnerAdviceReplayBridge,
+  ensureBattleChatStyle,
   createPartnerAdviceRuntimeControl,
   createPartnerAdviceQuickRouteControl,
   createPartnerBattleCharacterReactionControl,
@@ -700,3 +701,20 @@ test('quick3 UI keeps delegation separate and does not create a permanent fourth
   assert.doesNotMatch(source, /\['three-options',\s*'3つ出して'\]/);
 });
 
+
+
+test('Battle board has an explicit lower stacking layer than the clickable partner overlay', () => {
+  const inserted = [];
+  const doc = {
+    getElementById: (id) => inserted.find((element) => element.id === id) || null,
+    createElement: () => ({ id: '', textContent: '' }),
+    head: { append: (element) => inserted.push(element) },
+  };
+  ensureBattleChatStyle(doc);
+  ensureBattleChatStyle(doc);
+  assert.equal(inserted.length, 1, 'the presentation stylesheet is installed once');
+  const css = inserted[0].textContent;
+  assert.ok(css.includes('section[data-screen="battle"] > #battleMap{z-index:0}'), 'the complete board has an explicit lower layer');
+  assert.ok(css.includes('section[data-screen="battle"] #partnerAdviceChatPresentation[data-battle-advice-overlay="true"]{position:absolute;z-index:38;'), 'the partner interaction overlay remains above the board');
+  assert.ok(css.includes('pointer-events:auto'), 'the actual partner controls still receive pointer events');
+});

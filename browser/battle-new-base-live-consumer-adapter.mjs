@@ -219,6 +219,7 @@ export function createBattleNewBaseLiveConsumerAdapter({
 
     async stageCompoundAttack(jankenHandValue) {
       const jankenHand = requireJankenHand(jankenHandValue);
+      if (commitInFlight) throw new Error('COMMIT_IN_FLIGHT');
       const request = ++stageRequestSerial;
       // A new card selection cancels the previous draft, even while the
       // authoritative candidate for the new selection is still loading.

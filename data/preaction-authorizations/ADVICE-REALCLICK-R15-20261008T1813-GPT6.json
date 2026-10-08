@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ADVICE-REALCLICK-R15-20261008T1813-GPT6",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "BATTLE_PARTNER_DISCLOSURE_POINTER_REPAIR_R15",
+  "acquireKey": "ADVICE-REALCLICK-R15-20261008T1813-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "WinEdge-realDOM-20261008:partner zone pointer-events none opacity 0.22; disclosure collapsed; normal click 3 viewport BFI fails",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR2291/2292/2295 closed unmerged; prior actual BFI 37749485703 6 failures, repair needs fresh real-click proof",
+  "proceedToken": "PROCEED|ADVICE-REALCLICK-R15-20261008T1813-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|readback|repair",
+  "authorizationBaseSha": "4d53867d9b58a251fb19d274331a87d123d86cd4",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "BATTLE_PARTNER_DISCLOSURE_POINTER_REPAIR_R15",
+  "leaseAcquireKey": "ADVICE-REALCLICK-R15-20261008T1813-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-08 18:13 JST",
+  "leaseUntilJst": "2026-10-08 18:53 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:O5",
+  "leaseExactMutableResources": "GitHub work/partner-disclosure-pointer-r15-20261008: browser/battle-current-player-ui-runtime.mjs; tests/battle-current-player-ui-runtime.test.mjs; tests/browser-full-interaction.spec.mjs; transient data/preaction-authorizations/ADVICE-REALCLICK-R15-20261008T1813-GPT6.json; own PR; own row5 and R25 event",
+  "scope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs",
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs",
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

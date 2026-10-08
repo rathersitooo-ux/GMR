@@ -156,6 +156,8 @@ export function createBattleNewBaseLiveConsumerAdapter({
   let assignmentTurnId = null;
   let stagedCompoundAttack = null;
   let commitInFlight = false;
+  // A superseded asynchronous card read must never become the next attack.
+  let stageRequestSerial = 0;
 
   async function syncRoundStart() {
     const authority = requiredObject(await readRoundAuthority(), 'round authority');
@@ -201,9 +203,9 @@ export function createBattleNewBaseLiveConsumerAdapter({
     return roundSnapshot;
   }
 
-  async function readCandidateFor(jankenHand, cardId) {
+  async function readCandidateFor(jankenHand, cardId, roundId = roundSnapshot.roundId) {
     const candidate = await readCompoundAttackCandidate(Object.freeze({
-      roundId: roundSnapshot.roundId,
+      roundId,
       jankenHand,
       cardId,
     }));
@@ -217,14 +219,28 @@ export function createBattleNewBaseLiveConsumerAdapter({
 
     async stageCompoundAttack(jankenHandValue) {
       const jankenHand = requireJankenHand(jankenHandValue);
+      const request = ++stageRequestSerial;
+      // A new card selection cancels the previous draft, even while the
+      // authoritative candidate for the new selection is still loading.
+      stagedCompoundAttack = null;
       await syncRoundStart();
-      const slot = slotFor(roundSnapshot, jankenHand);
-      const candidate = await readCandidateFor(jankenHand, slot.cardId);
+      if (request !== stageRequestSerial || commitInFlight) {
+        throw new Error('SUPERSEDED_COMPOUND_STAGE');
+      }
+      const snapshot = roundSnapshot;
+      const slot = slotFor(snapshot, jankenHand);
+      const candidate = await readCandidateFor(jankenHand, slot.cardId, snapshot.roundId);
+      // Do not let an older fetch resurrect a cleared stage, switch the
+      // selected hand, or project a package from an earlier turn.
+      if (request !== stageRequestSerial || snapshot !== roundSnapshot || commitInFlight) {
+        throw new Error('SUPERSEDED_COMPOUND_STAGE');
+      }
       stagedCompoundAttack = stageBattleJankenCompoundAttack(candidate);
       return stagedCompoundAttack;
     },
 
     clearCompoundAttack() {
+      stageRequestSerial += 1;
       const cleared = clearBattleJankenCompoundAttackStage(stagedCompoundAttack);
       stagedCompoundAttack = null;
       return cleared;
@@ -248,6 +264,8 @@ export function createBattleNewBaseLiveConsumerAdapter({
         });
       }
 
+      // A late authority response must not reintroduce a card after clear.
+      stageRequestSerial += 1;
       const state = requiredObject(
         await readExistingPrecommitState(),
         'authority-supplied existing precommit state',
@@ -307,6 +325,7 @@ export function createBattleNewBaseLiveConsumerAdapter({
       }
 
       commitInFlight = true;
+      stageRequestSerial += 1;
       try {
         const staged = stagedCompoundAttack;
         await syncRoundStart();

@@ -1,3 +1,4 @@
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
@@ -338,3 +339,44 @@ assert.equal(BATTLE_NAKI_FE_LIVE_DOM_ADAPTER_CONTRACT.soundStartPolicy, 'USER_GE
 }
 
 console.log('battle-naki-fe-live-dom-adapter tests passed');
+
+
+// Real scene/controller with a deterministic clock; DOM only supplies renderer nodes.
+class Node {
+ constructor(){this.dataset={};this.style={setProperty(k,v){this[k]=v}};this.classList={contains:()=>false,add(){}};this.slots=new Map();this.isConnected=true;this.children=[];}
+ setAttribute(k,v){this[k]=v;}
+ querySelector(selector){if(!this.slots.has(selector))this.slots.set(selector,new Node());return this.slots.get(selector);}
+ appendChild(node){this.children.push(node);node.parentNode=this;}
+ remove(){this.isConnected=false;}
+}
+function fixture(){
+ const timers=new Map();let serial=0;
+ const resolution=new Node();resolution.dataset={stage:'focus',eventId:'held-contact'};resolution.classList.contains=c=>c==='battlePhaseLive';
+ const rows=[1,2,3,4].map(i=>{const n=new Node();n.dataset={participantId:'P'+i,playerName:'P'+i};n.classList.contains=c=>c==='active'&&i===1;return n});
+ const markers=[1,2,3,4].map(i=>{const n=new Node();n.dataset={participantId:'P'+i,characterId:i===1?'partner.naki':'partner.saasuna'};return n});
+ const screen=new Node();screen.classList.contains=c=>c==='active';
+ const target=new Node();target.value='P4';target.options=[];
+ const body=new Node();const doc={body,head:new Node(),createElement:()=>new Node(),getElementById(id){return id==='battleResolution'?resolution:id==='targetPlayer'?target:null},querySelector:()=>screen,querySelectorAll(s){return s==='#players .player'?rows:s==='[data-board-controlled-character]'?markers:[]},addEventListener(){},removeEventListener(){}};
+ const win={document:doc,setTimeout(fn,ms){const id=++serial;timers.set(id,{fn,ms});return id},clearTimeout(id){timers.delete(id)},addEventListener(){},removeEventListener(){}};
+ const controller=installBattleNakiFeLiveDomAdapter(win,{playSoundEffect(){},assets:{nakiIdle:'idle.png',nakiAttack:'attack.png'}});
+ const stage=value=>{resolution.dataset.stage=value;controller.refresh()};
+ const fire=ms=>{const entry=[...timers].find(([,t])=>t.ms===ms);assert.ok(entry,'timer '+ms+' exists');timers.delete(entry[0]);entry[1].fn()};
+ const root=body.children.at(-1);const sprite=root.querySelector('[data-slot="source-sprite"]');
+ return {controller,stage,fire,sprite};
+}
+test('release displays the next frame on its first tick', () => {
+ const f=fixture();f.stage('compare');
+ assert.equal(f.sprite.style.backgroundPosition,'100% 50%');
+ f.fire(72);
+ assert.equal(f.sprite.style.backgroundPosition,'0% 100%','first release tick advances rather than duplicating the initial frame');
+ f.controller.destroy();
+});
+test('hitstop does not consume unseen contact frames', () => {
+ const f=fixture();f.stage('compare');f.fire(148);
+ assert.equal(f.sprite.style.backgroundPosition,'50% 100%');
+ f.fire(26);f.fire(80);f.fire(80); // timers run while picture is held
+ assert.equal(f.sprite.style.backgroundPosition,'50% 100%','contact picture remains held');
+ f.fire(62);f.fire(80);
+ assert.equal(f.sprite.style.backgroundPosition,'100% 100%','paused ticks must not consume unseen frames');
+ f.controller.destroy();
+});

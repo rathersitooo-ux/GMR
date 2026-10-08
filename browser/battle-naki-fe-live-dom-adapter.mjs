@@ -462,11 +462,13 @@ function createBattleScene(doc, win, projection, assets) {
   function loopFrames(role, sequence, interval) {
     stopFrames();
     const token = frameToken;
-    let index = 0;
+    let index = 1;
     const tick = () => {
       if (token !== frameToken || !root.isConnected) return;
-      if (!hitstop) setNakiFrame(role, sequence[index % sequence.length]);
-      index += 1;
+      if (!hitstop) {
+        setNakiFrame(role, sequence[index % sequence.length]);
+        index += 1;
+      }
       frameTimer = timer?.(tick, interval) ?? null;
     };
     setNakiFrame(role, sequence[0]);

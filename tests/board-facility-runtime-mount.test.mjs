@@ -86,6 +86,26 @@ test('conversation product mount is a no-op outside a browser DOM', () => {
   assert.equal(mountSaasunaConversationProductSurface({ document: {} }), null);
 });
 
+test('fixed Saasuna conversation product metadata uses the entry picker requirement', () => {
+  const document = {
+    getElementById() { return {}; },
+    querySelector() { return null; },
+    createElement() { return {}; },
+  };
+  class FakeMutationObserver {
+    observe() {}
+    disconnect() {}
+  }
+  const global = { document, MutationObserver: FakeMutationObserver };
+  const runtime = mountSaasunaConversationProductSurface(global);
+  assert.ok(runtime);
+  assert.equal(runtime.status().pickerRequired, false);
+  assert.equal(runtime.status().switchPartnerAllowedHere, false);
+  assert.equal(runtime.pickerRequired, runtime.status().pickerRequired);
+  assert.equal(global.GAMEROAD_PARTNER_CONVERSATION_PRODUCT_MOUNT, runtime);
+  assert.equal(Object.isFrozen(runtime), true);
+});
+
 test('failed Partner conversation send restores the retry draft without keeping a duplicate user bubble', () => {
   const input = { value: '' };
   let removals = 0;

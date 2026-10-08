@@ -589,7 +589,7 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
   const runtime = Object.freeze({
     version: 'gameroad.partner-conversation-product-mount.v3',
     partnerId: 'partner.saasuna',
-    pickerRequired: true,
+    pickerRequired: entry.status().pickerRequired,
     providerReady: provider !== null,
     persistentTranscript: false,
     staticVisual: true,

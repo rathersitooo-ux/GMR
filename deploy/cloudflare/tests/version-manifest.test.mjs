@@ -83,19 +83,42 @@ function fakeCheck({ id = 10, headSha = SOURCE_COMMIT, conclusion = 'success', s
   return { id, name: REQUIRED_GATE_NAME, head_sha: headSha, status, conclusion, app: { slug: app } };
 }
 
-async function githubPublicJson(pathname) {
-  const response = await fetch(`https://api.github.com${pathname}`, {
-    headers: {
+function githubAdmissionHeaders(token) {
+  if (typeof token !== 'string' || !token.trim()) {
+    throw new Error('DEPLOY_ADMISSION_FAIL github_token_missing');
+  }
+  return {
       Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
       'User-Agent': 'GAMEROAD-public-deploy-admission-r40',
-    },
+      Authorization: `Bearer ${token.trim()}`,
+  };
+}
+
+async function githubPublicJson(pathname) {
+  const response = await fetch(`https://api.github.com${pathname}`, {
+    headers: githubAdmissionHeaders(process.env.GITHUB_TOKEN),
   });
   if (!response.ok) {
     throw new Error(`DEPLOY_ADMISSION_FAIL github_api_${response.status}`);
   }
   return response.json();
 }
+
+test('live admission requires an authenticated repository token for GitHub evidence reads', () => {
+  assert.throws(() => githubAdmissionHeaders(''), /github_token_missing/);
+  assert.throws(() => githubAdmissionHeaders(undefined), /github_token_missing/);
+  assert.equal(githubAdmissionHeaders('test-only-token').Authorization, 'Bearer test-only-token');
+});
+
+test('public admission workflow supplies its token with read-only PR and check permissions', async () => {
+  const workflow = await readFile(new URL('../../../.github/workflows/cloudflare-public-deploy.yml', import.meta.url), 'utf8');
+  const permissions = workflow.match(/^permissions:\n((?:[ \t]+[^\n]*\n)+)/m)?.[1] ?? '';
+  assert.match(permissions, /^  pull-requests: read$/m);
+  assert.match(permissions, /^  checks: read$/m);
+  const admissionStep = workflow.match(/- name: Run public-host finite checks\n([\s\S]*?)(?=\n      - name:)/)?.[1] ?? '';
+  assert.match(admissionStep, /GITHUB_TOKEN: \$\{\{ github\.token \}\}/);
+});
 
 function shouldRunLiveDeployAdmission() {
   return process.env.GITHUB_ACTIONS === 'true'

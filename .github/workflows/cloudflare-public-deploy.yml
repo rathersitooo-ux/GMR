@@ -14,6 +14,8 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
+  checks: read
   issues: write
 
 concurrency:
@@ -57,6 +59,8 @@ jobs:
 
       - name: Run public-host finite checks
         id: checks
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail

@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { SAASUNA_BUSTUP_ASSETS } from '../browser/partner-saasuna-bustup-visuals.mjs';
+import {
+  renderSaasunaBattleBustup,
+  SAASUNA_BUSTUP_ASSETS,
+} from '../browser/partner-saasuna-bustup-visuals.mjs';
 import {
   SAASUNA_MOTION_PROFILES,
   SAASUNA_MOTION_STATES,
@@ -15,7 +18,25 @@ class FakeNode {
   constructor(tagName = 'div') {
     this.tagName = tagName.toUpperCase();
     this.children = [];
-    this.dataset = {};
+    this.dataset = new Proxy({}, {
+      set: (target, property, value) => {
+        const nextValue = String(value);
+        if (target[property] === nextValue) return true;
+        target[property] = nextValue;
+        const attributeName = `data-${String(property).replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`;
+        this.ownerDocument?.dispatchAttributeChange(this, attributeName);
+        return true;
+      },
+      deleteProperty: (target, property) => {
+        const existed = Object.hasOwn(target, property);
+        delete target[property];
+        if (existed) {
+          const attributeName = `data-${String(property).replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`;
+          this.ownerDocument?.dispatchAttributeChange(this, attributeName);
+        }
+        return true;
+      },
+    });
     this.style = {};
     this.hidden = false;
     this.className = '';
@@ -68,13 +89,61 @@ class FakeNode {
 class FakeDocument {
   constructor(reducedMotion = false) {
     this.head = new FakeNode('head');
+    this.head.ownerDocument = this;
+    this.mutationObservers = new Set();
+    this.pendingTimers = new Map();
+    this.nextTimerId = 1;
+    this.timerNowMs = 0;
+    const document = this;
     this.defaultView = {
       matchMedia: () => ({ matches: reducedMotion }),
+      MutationObserver: class FakeMutationObserver {
+        constructor(callback) {
+          this.callback = callback;
+          this.targets = [];
+          document.mutationObservers.add(this);
+        }
+
+        observe(target, options = {}) {
+          this.targets.push({ target, attributeFilter: options.attributeFilter || null });
+        }
+
+        disconnect() {
+          this.targets = [];
+          document.mutationObservers.delete(this);
+        }
+      },
+      setTimeout: (callback, delayMs) => {
+        const id = this.nextTimerId++;
+        this.pendingTimers.set(id, { callback, dueAt: this.timerNowMs + delayMs });
+        return id;
+      },
+      clearTimeout: (id) => this.pendingTimers.delete(id),
     };
   }
 
   createElement(tagName) {
-    return new FakeNode(tagName);
+    const node = new FakeNode(tagName);
+    node.ownerDocument = this;
+    return node;
+  }
+
+  dispatchAttributeChange(target, attributeName) {
+    for (const observer of this.mutationObservers) {
+      const observesAttribute = observer.targets.some(({ target: observedTarget, attributeFilter }) => (
+        observedTarget === target && (!attributeFilter || attributeFilter.includes(attributeName))
+      ));
+      if (observesAttribute) observer.callback([{ target, attributeName }]);
+    }
+  }
+
+  advanceTimersBy(ms) {
+    this.timerNowMs += ms;
+    const dueTimers = [...this.pendingTimers.entries()].filter(([, timer]) => timer.dueAt <= this.timerNowMs);
+    for (const [id, timer] of dueTimers) {
+      this.pendingTimers.delete(id);
+      timer.callback();
+    }
   }
 
   getElementById(id) {
@@ -92,10 +161,10 @@ class FakeDocument {
 
 function fakeBustup() {
   const doc = new FakeDocument();
-  const figure = new FakeNode('figure');
-  const art = new FakeNode('div');
+  const figure = doc.createElement('figure');
+  const art = doc.createElement('div');
   art.className = 'partnerAdviceBustupArt';
-  const image = new FakeNode('img');
+  const image = doc.createElement('img');
   art.append(image);
   figure.append(art);
   return { doc, bustup: { figure, image } };
@@ -163,6 +232,38 @@ test('a new state still plays when the live renderer requests no restart for rep
   const imageAnimations = controller.snapshot().surface.image.animations;
   assert.equal(imageAnimations.at(-1).timing.duration, SAASUNA_MOTION_PROFILES.SURPRISED.durationMs);
   assert.equal(imageAnimations.at(-1).timing.iterations, 1);
+});
+
+test('motion controller follows the live touch-cry renderer through SAD_DOWNCAST afterglow', () => {
+  const { doc, bustup } = fakeBustup();
+  const root = doc.createElement('section');
+  const renderArgs = {
+    root,
+    bustup,
+    partnerId: 'partner.saasuna',
+    battleActive: true,
+    quickRouteId: 'idea',
+    nowMs: 0,
+  };
+  const initial = renderSaasunaBattleBustup(renderArgs);
+  const controller = createSaasunaMotionController({ doc, bustup, transitionMs: 0 });
+  controller.setState({ partnerId: 'partner.saasuna', visualState: initial.state }, { restart: false });
+
+  bustup.figure.dataset.touchCryVisible = 'true';
+  assert.equal(bustup.figure.dataset.state, 'TOUCH_CRY');
+  assert.equal(controller.snapshot().state, 'TOUCH_CRY');
+  assert.equal(controller.snapshot().surface.image.dataset.assetFile, SAASUNA_BUSTUP_ASSETS.TOUCH_CRY.fileName);
+  assert.equal(controller.snapshot().surface.effect.dataset.kind, 'tear');
+
+  delete bustup.figure.dataset.touchCryVisible;
+  assert.equal(bustup.figure.dataset.state, 'SAD_DOWNCAST');
+  assert.equal(controller.snapshot().state, 'SAD_DOWNCAST');
+  doc.advanceTimersBy(1199);
+  assert.equal(controller.snapshot().state, 'SAD_DOWNCAST');
+  doc.advanceTimersBy(1);
+
+  assert.equal(bustup.figure.dataset.state, 'GUIDE_PRESENT');
+  assert.equal(controller.snapshot().state, 'GUIDE_PRESENT');
 });
 
 test('reduced motion keeps the final pose and suppresses the transient effect', () => {

@@ -20,10 +20,108 @@ export const SAASUNA_BUSTUP_ASSETS = Object.freeze({
   SAD_DOWNCAST: asset('GAMEROAD_SAASUNA_NAV_09_SAD_DOWNCAST_TRANSPARENT_20260915.png'),
 });
 
+const touchCryLifecycleByFigure = new WeakMap();
+const touchCryObserverByFigure = new WeakMap();
+const TOUCH_CRY_AFTERGLOW_MS = 1200;
+
+function resolveTouchCryLifecycle(input) {
+  const figure = input.figure;
+  const touchCryVisible = input.touchCryVisible === true || figure?.dataset?.touchCryVisible === 'true';
+  const canTrack = figure && (typeof figure === 'object' || typeof figure === 'function');
+  if (touchCryVisible) {
+    if (canTrack) touchCryLifecycleByFigure.set(figure, { touching: true, sadUntil: 0 });
+    return 'TOUCH_CRY';
+  }
+  if (!canTrack) return null;
+
+  const lifecycle = touchCryLifecycleByFigure.get(figure);
+  const nowMs = Number.isFinite(input.nowMs) ? input.nowMs : Date.now();
+  if (lifecycle?.touching) {
+    const sadUntil = nowMs + TOUCH_CRY_AFTERGLOW_MS;
+    touchCryLifecycleByFigure.set(figure, { touching: false, sadUntil });
+    return 'SAD_DOWNCAST';
+  }
+  if (lifecycle?.sadUntil > nowMs) return 'SAD_DOWNCAST';
+  if (lifecycle) touchCryLifecycleByFigure.delete(figure);
+  return null;
+}
+
+function clearTouchCryAfterglow(controller) {
+  if (!controller || controller.afterglowTimer === null) return;
+  const clearTimer = controller.view?.clearTimeout;
+  if (typeof clearTimer === 'function') clearTimer.call(controller.view, controller.afterglowTimer);
+  else globalThis.clearTimeout?.(controller.afterglowTimer);
+  controller.afterglowTimer = null;
+  controller.afterglowUntil = 0;
+}
+
+function scheduleTouchCryAfterglow(figure, controller) {
+  if (!controller?.observer) return;
+  const lifecycle = touchCryLifecycleByFigure.get(figure);
+  if (!lifecycle || lifecycle.touching || !Number.isFinite(lifecycle.sadUntil)) return;
+  if (controller.afterglowTimer !== null && controller.afterglowUntil === lifecycle.sadUntil) return;
+  clearTouchCryAfterglow(controller);
+
+  const latest = controller.latestRenderArgs;
+  const nowMs = Number.isFinite(latest?.nowMs) ? latest.nowMs : Date.now();
+  const delay = Math.max(0, lifecycle.sadUntil - nowMs);
+  const runTimer = controller.view?.setTimeout;
+  const callback = () => {
+    controller.afterglowTimer = null;
+    controller.afterglowUntil = 0;
+    const currentLifecycle = touchCryLifecycleByFigure.get(figure);
+    const currentArgs = controller.latestRenderArgs;
+    if (!currentLifecycle || currentLifecycle.touching || !currentArgs) return;
+    const afterglowNowMs = Number.isFinite(currentArgs.nowMs)
+      ? Math.max(currentArgs.nowMs, currentLifecycle.sadUntil)
+      : Date.now();
+    renderSaasunaBattleBustup({ ...currentArgs, nowMs: afterglowNowMs });
+  };
+  controller.afterglowUntil = lifecycle.sadUntil;
+  controller.afterglowTimer = typeof runTimer === 'function'
+    ? runTimer.call(controller.view, callback, delay)
+    : globalThis.setTimeout(callback, delay);
+}
+
+function ensureTouchCryObserver(figure, controller) {
+  if (controller.observer) return;
+  const Observer = controller.view?.MutationObserver ?? globalThis.MutationObserver;
+  if (typeof Observer !== 'function') return;
+  const observer = new Observer((records) => {
+    if (!records.some((record) => record.attributeName === 'data-touch-cry-visible')) return;
+    const latest = controller.latestRenderArgs;
+    if (!latest) return;
+    if (figure.dataset?.touchCryVisible === 'true') clearTouchCryAfterglow(controller);
+    renderSaasunaBattleBustup(latest);
+  });
+  try {
+    observer.observe(figure, { attributes: true, attributeFilter: ['data-touch-cry-visible'] });
+    controller.observer = observer;
+  } catch {
+    observer.disconnect?.();
+  }
+}
+
+function stopTouchCryTracking(figure) {
+  const controller = touchCryObserverByFigure.get(figure);
+  controller?.observer?.disconnect();
+  clearTouchCryAfterglow(controller);
+  if (controller) controller.latestRenderArgs = null;
+  touchCryObserverByFigure.delete(figure);
+  touchCryLifecycleByFigure.delete(figure);
+}
+
 export function resolveSaasunaAdviceBustupState(input = {}) {
   if (input.partnerId !== SAASUNA_PARTNER_ID) return null;
+  const requestedState = input.visualState ?? input.figure?.dataset?.visualStateOverride;
+  if (typeof requestedState === 'string' && Object.hasOwn(SAASUNA_BUSTUP_ASSETS, requestedState)) {
+    return requestedState;
+  }
+  const touchCryState = resolveTouchCryLifecycle(input);
+  if (touchCryState) return touchCryState;
   if (input.reactionActive) return 'SURPRISED';
-  if (input.tutorialActive) return 'GUIDE_PRESENT';  if (input.quickRouteId === 'casual') return 'HAPPY_WAVE';
+  if (input.tutorialActive) return 'GUIDE_PRESENT';
+  if (input.quickRouteId === 'casual') return 'HAPPY_WAVE';
   if (input.quickRouteId === 'situation') return 'CURIOUS_CONFUSED';
   if (input.quickRouteId === 'idea') return 'GUIDE_PRESENT';
   if (input.adviceActive) return 'HAPPY_SMILE';
@@ -63,8 +161,44 @@ export function ensureSaasunaBattleBustup(doc, battleSurface) {
   return Object.freeze({ figure, image: figure.querySelector('img') });
 }
 
-export function renderSaasunaBattleBustup({ root, bustup, partnerId, battleActive = false, reactionActive = false, tutorialActive = false, quickRouteId = null, adviceActive = false } = {}) {
-  const state = resolveSaasunaAdviceBustupState({ partnerId, reactionActive, tutorialActive, quickRouteId, adviceActive });
+export function renderSaasunaBattleBustup({ root, bustup, partnerId, battleActive = false, reactionActive = false, tutorialActive = false, quickRouteId = null, adviceActive = false, visualState = null, nowMs } = {}) {
+  const figure = bustup?.figure;
+  let touchCryController = null;
+  if (figure && (!battleActive || partnerId !== SAASUNA_PARTNER_ID)) {
+    stopTouchCryTracking(figure);
+  } else if (figure && (typeof figure === 'object' || typeof figure === 'function')) {
+    touchCryController = touchCryObserverByFigure.get(figure);
+    if (!touchCryController) {
+      touchCryController = {
+        view: figure.ownerDocument?.defaultView ?? globalThis,
+        observer: null,
+        latestRenderArgs: null,
+        afterglowTimer: null,
+        afterglowUntil: 0,
+      };
+      touchCryObserverByFigure.set(figure, touchCryController);
+    }
+    touchCryController.latestRenderArgs = {
+      root, bustup, partnerId, battleActive, reactionActive, tutorialActive,
+      quickRouteId, adviceActive, visualState, nowMs,
+    };
+    ensureTouchCryObserver(figure, touchCryController);
+  }
+  const state = resolveSaasunaAdviceBustupState({
+    partnerId,
+    reactionActive,
+    tutorialActive,
+    quickRouteId,
+    adviceActive,
+    visualState: visualState ?? (battleActive ? figure?.dataset?.visualStateOverride : null),
+    touchCryVisible: battleActive && figure?.dataset?.touchCryVisible === 'true',
+    figure: battleActive ? figure : null,
+    nowMs,
+  });
+  if (touchCryController) {
+    if (state === 'TOUCH_CRY') clearTouchCryAfterglow(touchCryController);
+    else if (state === 'SAD_DOWNCAST') scheduleTouchCryAfterglow(figure, touchCryController);
+  }
   const entry = state ? SAASUNA_BUSTUP_ASSETS[state] : null;
   const visible = Boolean(root && bustup?.figure && bustup?.image && battleActive && entry);
   if (root) root.dataset.saasunaBustup = visible ? 'true' : 'false';
@@ -76,6 +210,10 @@ export function renderSaasunaBattleBustup({ root, bustup, partnerId, battleActiv
   }
   bustup.figure.dataset.state = state;
   bustup.figure.setAttribute('aria-label', 'アドバイスパートナー サースナー');
+  if (state === 'TOUCH_CRY') {
+    const touchOverlay = bustup.figure.querySelector?.('.partnerAdviceTouchCryOverlay');
+    if (touchOverlay?.style) touchOverlay.style.display = 'none';
+  }
   if (bustup.image.dataset.assetFile !== entry.fileName) {
     bustup.image.src = entry.src;
     bustup.image.dataset.assetFile = entry.fileName;

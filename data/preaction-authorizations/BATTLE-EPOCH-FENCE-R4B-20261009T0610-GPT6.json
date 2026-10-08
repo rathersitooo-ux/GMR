@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-EPOCH-FENCE-R4B-20261009T0610-GPT6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "FOUR_SEAT_STALE_TURN_LIVE_CONSUMER_CORE_FIX_R4B",
+  "acquireKey": "BATTLE-EPOCH-FENCE-R4B-20261009T0610-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R3 GitHub core read: commitCompoundAttack awaited readCandidateFor but did not re-read turnId immediately before send; delayed hand stage could overwrite canceled draft",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R3 local isolated epoch guard 17 regressions PASS; current source stage/commit call ordering independently reviewed; branch CI to test actual module",
+  "proceedToken": "PROCEED|BATTLE-EPOCH-FENCE-R4B-20261009T0610-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXACT_SOURCE_FIX",
+  "authorizationBaseSha": "c2a6e314cf52c9bff54e428f0cd03efefc59c828",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "FOUR_SEAT_STALE_TURN_LIVE_CONSUMER_CORE_FIX_R4B",
+  "leaseAcquireKey": "BATTLE-EPOCH-FENCE-R4B-20261009T0610-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-09 06:11 JST",
+  "leaseUntilJst": "2026-10-09 07:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR branch work/battle-live-turn-epoch-fence-r4-20261009; ONLY data/preaction-authorizations/BATTLE-EPOCH-FENCE-R4B-20261009T0610-GPT6.json temporary; browser/battle-new-base-live-consumer-adapter.mjs; tests/battle-new-base-live-consumer-adapter.test.mjs; own draft PR, own row5 and R25 event; others/main READ ONLY.",
+  "scope": [
+    "browser/battle-new-base-live-consumer-adapter.mjs",
+    "tests/battle-new-base-live-consumer-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-new-base-live-consumer-adapter.mjs",
+    "tests/battle-new-base-live-consumer-adapter.test.mjs"
+  ]
+}

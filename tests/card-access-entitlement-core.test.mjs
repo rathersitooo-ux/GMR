@@ -11,7 +11,7 @@ import {
 test('permanent ownership grants battle use without temporary grants', () => {
   const access = resolveCardAccess('CARD_A', {
     ownedCardIds: ['CARD_A'],
-    seasonPass: { active: false, cardIds: [] },
+    seasonPass: { active: false, allCards: false, cardIds: [] },
     freeTrial: { active: false, allCards: false, cardIds: [] },
   });
 
@@ -21,10 +21,23 @@ test('permanent ownership grants battle use without temporary grants', () => {
   assert.equal(access.temporaryAccess, false);
 });
 
-test('season pass grants only caller-supplied season card membership while active', () => {
+test('active all-card season pass grants non-owned cards without changing ownership', () => {
+  const access = resolveCardAccess('CARD_ANY', {
+    ownedCardIds: [],
+    seasonPass: { active: true, allCards: true, cardIds: [] },
+    freeTrial: { active: false, allCards: false, cardIds: [] },
+  });
+
+  assert.equal(access.status, CARD_ACCESS_STATUS.SEASON_PASS);
+  assert.equal(access.usableForBattle, true);
+  assert.equal(access.permanentOwnership, false);
+  assert.equal(access.temporaryAccess, true);
+});
+
+test('season pass can also be bounded by caller-supplied card membership', () => {
   const policy = {
     ownedCardIds: [],
-    seasonPass: { active: true, cardIds: ['CARD_SEASON'] },
+    seasonPass: { active: true, allCards: false, cardIds: ['CARD_SEASON'] },
     freeTrial: { active: false, allCards: false, cardIds: [] },
   };
 
@@ -33,7 +46,7 @@ test('season pass grants only caller-supplied season card membership while activ
 
   const inactive = {
     ...policy,
-    seasonPass: { active: false, cardIds: ['CARD_SEASON'] },
+    seasonPass: { active: false, allCards: false, cardIds: ['CARD_SEASON'] },
   };
   assert.equal(resolveCardAccess('CARD_SEASON', inactive).status, CARD_ACCESS_STATUS.LOCKED);
 });
@@ -41,7 +54,7 @@ test('season pass grants only caller-supplied season card membership while activ
 test('active all-card free trial grants non-owned cards without changing ownership', () => {
   const access = resolveCardAccess('CARD_ANY', {
     ownedCardIds: [],
-    seasonPass: { active: false, cardIds: [] },
+    seasonPass: { active: false, allCards: false, cardIds: [] },
     freeTrial: { active: true, allCards: true, cardIds: [] },
   });
 
@@ -54,7 +67,7 @@ test('active all-card free trial grants non-owned cards without changing ownersh
 test('permanent ownership has precedence over temporary access', () => {
   const access = resolveCardAccess('CARD_A', {
     ownedCardIds: ['CARD_A'],
-    seasonPass: { active: true, cardIds: ['CARD_A'] },
+    seasonPass: { active: true, allCards: true, cardIds: [] },
     freeTrial: { active: true, allCards: true, cardIds: [] },
   });
 
@@ -68,7 +81,7 @@ test('deck evaluation preserves every saved card position and reports locked car
   };
   const result = evaluateDeckCardAccess(deck, {
     ownedCardIds: ['OWNED'],
-    seasonPass: { active: true, cardIds: ['PASS'] },
+    seasonPass: { active: true, allCards: false, cardIds: ['PASS'] },
     freeTrial: { active: true, allCards: false, cardIds: ['TRIAL'] },
   });
 
@@ -100,7 +113,7 @@ test('all-card free trial makes an otherwise locked saved deck battle-usable', (
     ex: ['C'],
   }, {
     ownedCardIds: [],
-    seasonPass: { active: false, cardIds: [] },
+    seasonPass: { active: false, allCards: false, cardIds: [] },
     freeTrial: { active: true, allCards: true, cardIds: [] },
   });
 
@@ -115,14 +128,15 @@ test('entitlement core has no purchase, ownership, save, or clock authority', ()
   assert.equal(CARD_ACCESS_ENTITLEMENT_CONTRACT.saveMutationAllowed, false);
   assert.equal(CARD_ACCESS_ENTITLEMENT_CONTRACT.savedDeckMutationAllowed, false);
   assert.equal(CARD_ACCESS_ENTITLEMENT_CONTRACT.activeWindowAuthority, 'CALLER');
+  assert.equal(CARD_ACCESS_ENTITLEMENT_CONTRACT.seasonPassScopeAuthority, 'CALLER');
 });
 
 test('invalid grants fail closed instead of inferring access', () => {
   assert.throws(
     () => resolveCardAccess('CARD_A', {
-      seasonPass: { active: true, allCards: true, cardIds: [] },
+      seasonPass: { active: true, allCards: 'yes', cardIds: [] },
     }),
-    /SEASON_PASS_ALLCARDS_FORBIDDEN/,
+    /SEASON_PASS_ALLCARDS_BOOLEAN_REQUIRED/,
   );
   assert.throws(
     () => evaluateDeckCardAccess({ main: [''], ex: [] }, {}),

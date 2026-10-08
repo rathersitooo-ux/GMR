@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BROWSER-SETUP-AUTOQA-R2-20261008T1641-GPT6",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "SETUP_FIELD_PICKER_AND_AUTOMATED_BFI_PATH_REPAIR_R2",
+  "acquireKey": "BROWSER-SETUP-AUTOQA-R2-20261008T1641-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR2286-R1-real-3-viewport-evidence",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "GHA-run-37742017592-3-of-3-focused-chromium",
+  "proceedToken": "PROCEED|BROWSER-SETUP-AUTOQA-R2-20261008T1641-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "708ea86eb2975dc37efc76c037edf084c6109bd3",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "SETUP_FIELD_PICKER_AND_AUTOMATED_BFI_PATH_REPAIR_R2",
+  "leaseAcquireKey": "BROWSER-SETUP-AUTOQA-R2-20261008T1641-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-08 16:42 JST",
+  "leaseUntilJst": "2026-10-08 17:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
+  "leaseExactMutableResources": "browser/slidepad-slot-roll-core.mjs; .github/workflows/browser-full-interaction.yml; data/preaction-authorizations/BROWSER-SETUP-AUTOQA-R2-20261008T1641-GPT6.json; work/setup-field-autoqa-r2-20261008",
+  "scope": [
+    "browser/slidepad-slot-roll-core.mjs",
+    ".github/workflows/browser-full-interaction.yml"
+  ],
+  "leaseScope": [
+    "browser/slidepad-slot-roll-core.mjs",
+    ".github/workflows/browser-full-interaction.yml"
+  ]
+}

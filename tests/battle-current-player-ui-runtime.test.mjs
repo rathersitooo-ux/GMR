@@ -243,7 +243,7 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
   assert.match(styleText, /\[data-gr-current-ui-zone="support-entry"\]\{[^}]*left:var\(--gr-ui-edge\)!important[^}]*bottom:calc\(var\(--gr-ui-edge\) \+ 46px\)!important/);
   assert.match(styleText, /\[data-gr-current-ui-zone="partner"\]\{[^}]*bottom:calc\(var\(--gr-ui-edge\) \+ 92px\)!important[^}]*opacity:\.94[^}]*pointer-events:auto!important/);
   assert.match(styleText, /\[data-gr-current-ui-zone="partner"\]\{[^}]*z-index:38!important/);
-  assert.match(styleText, /max-width:520px[\s\S]*?\[data-gr-current-ui-zone="partner"\]\{top:calc\(158px \+ 44px \+ var\(--gr-ui-gap\)\)!important;bottom:auto!important\}/);
+  assert.match(styleText, /max-width:520px[\s\S]*?#partnerAdviceChatPresentation\[data-battle-advice-overlay="true"\]\[data-gr-current-ui-zone="partner"\]\{top:calc\(158px \+ 44px \+ var\(--gr-ui-gap\)\)!important;bottom:auto!important\}/);
   assert.match(styleText, /data-gr-advice-active="true"[\s\S]*?\[data-gr-current-ui-zone="partner"\]\{opacity:1;pointer-events:auto!important\}/);
   assert.match(styleText, /data-gr-waiting-for-others="true"[\s\S]*?#publicTurnHud\{opacity:1;filter:brightness\(1\.08\)\}/);
   assert.match(styleText, /data-gr-waiting-for-others="true"[\s\S]*?\[data-gr-current-ui-zone="current-action"\]\{[^}]*border-color:/);
@@ -266,7 +266,7 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
   assert.match(styleText, /@media\(max-height:430px\)[\s\S]*\[data-gr-current-ui-zone="partner-visual"\]\{width:112px!important;height:160px!important\}/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\.battleInfo\{[^}]*right:calc\(var\(--gr-thumb-w\) \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\)\)!important/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="support-entry"\]\{[^}]*bottom:calc\(28vh \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\) \+ 46px\)!important/);
-  assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="partner"\]\{top:calc\(158px \+ 44px \+ var\(--gr-ui-gap\)\)!important;bottom:auto!important\}/);
+  assert.match(styleText, /@media\(max-width:520px\)[\s\S]*#partnerAdviceChatPresentation\[data-battle-advice-overlay="true"\]\[data-gr-current-ui-zone="partner"\]\{top:calc\(158px \+ 44px \+ var\(--gr-ui-gap\)\)!important;bottom:auto!important\}/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\[data-gr-current-ui-zone="partner-visual"\]\{width:96px!important;height:154px!important\}/);
   assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\.battleRail\{[^}]*top:158px!important[^}]*max-width:none!important/);
   assert.equal(styleText.includes('.battleRail{top:144px!important;bottom:auto!important;max-width:168px!important;overflow:visible!important}'), true);

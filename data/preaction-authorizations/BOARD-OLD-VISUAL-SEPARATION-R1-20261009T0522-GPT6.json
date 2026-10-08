@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD-OLD-VISUAL-SEPARATION-R1-20261009T0522-GPT6",
+  "taskId": "BROWSER-BATTLE-SCREEN-VISUAL-REMAKE-001",
+  "workUnitKey": "BOARD_LEGACY_MOUNT_VISIBILITY_GATE_R1",
+  "acquireKey": "BOARD-OLD-VISUAL-SEPARATION-R1-20261009T0522-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "board READ_FIRST: display suppression must depend on new board successful mount not complete mapping of legacy center corner shield; old inputs unchanged.",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "Windows Node isolated 10/10 focused tests, exact local Git blobs adapter 0a3e73a3b9da1f4afcbf2946e0ff35df652d200e and test 128fac38d16a9fb3b513af7b4517a2b5c90214cd",
+  "proceedToken": "PROCEED|BOARD-OLD-VISUAL-SEPARATION-R1-20261009T0522-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|isolated-adapter-and-focused-tests|no-html",
+  "authorizationBaseSha": "c2a6e314cf52c9bff54e428f0cd03efefc59c828",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-SCREEN-VISUAL-REMAKE-001",
+  "leaseWorkUnitKey": "BOARD_LEGACY_MOUNT_VISIBILITY_GATE_R1",
+  "leaseAcquireKey": "BOARD-OLD-VISUAL-SEPARATION-R1-20261009T0522-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-09 05:22 JST",
+  "leaseUntilJst": "2026-10-09 06:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A19:L19",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR branch work/board-legacy-mount-gate-r1-20261009; browser/battle-board-legacy-world-interaction-adapter.mjs; tests/battle-board-legacy-world-interaction-adapter.test.mjs; temporary data/preaction-authorizations/BOARD-OLD-VISUAL-SEPARATION-R1-20261009T0522-GPT6.json; own PR and own CURRENT_ACTIVE_LEASES row19. browser/GAMEROAD.html READ ONLY.",
+  "scope": [
+    "browser/battle-board-legacy-world-interaction-adapter.mjs",
+    "tests/battle-board-legacy-world-interaction-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-board-legacy-world-interaction-adapter.mjs",
+    "tests/battle-board-legacy-world-interaction-adapter.test.mjs"
+  ]
+}

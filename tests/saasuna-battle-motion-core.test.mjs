@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   SAASUNA_BATTLE_KEYFRAME_SHEET,
+  SAASUNA_BATTLE_R2_SPRITES,
   SAASUNA_BATTLE_MOTION_PROFILES,
   SAASUNA_BATTLE_MOTION_RUNTIME,
   SAASUNA_BATTLE_MOTION_STATES,
@@ -47,6 +48,10 @@ assert.equal(SAASUNA_BATTLE_KEYFRAME_SHEET.rows, 3);
 assert.equal(SAASUNA_BATTLE_KEYFRAME_SHEET.provisional, true);
 assert.equal(SAASUNA_BATTLE_KEYFRAME_SHEET.formalArt, false);
 assert.equal(SAASUNA_BATTLE_MOTION_RUNTIME.keyframeCount, 9);
+assert.equal(SAASUNA_BATTLE_MOTION_RUNTIME.r2FramesPerAction, 8);
+assert.equal(SAASUNA_BATTLE_R2_SPRITES.magic.releaseFrame, 5);
+assert.equal(SAASUNA_BATTLE_R2_SPRITES.ice.durationsMs[3], 85);
+assert.equal(SAASUNA_BATTLE_R2_SPRITES.idle.frameCount, 8);
 assert.equal(SAASUNA_BATTLE_MOTION_RUNTIME.presentationOnly, true);
 assert.equal(SAASUNA_BATTLE_MOTION_RUNTIME.gameplayAuthority, false);
 assert.equal(SAASUNA_BATTLE_MOTION_STATES.length, 11);
@@ -82,12 +87,15 @@ const controller = createSaasunaBattleMotionController({
 });
 assert.ok(controller);
 assert.equal(figure.dataset.saasunaBattleMotionState, 'ICE_SLIDE_LOW');
-assert.equal(figure.dataset.saasunaBattleVisualSource, 'provisional-keyframe-sheet');
+assert.equal(figure.dataset.saasunaBattleVisualSource, 'provisional-r2-eight-frame');
+assert.equal(figure.dataset.saasunaBattleFrameIndex, '1');
+assert.equal(figure.dataset.saasunaBattleFrameSheet, 'SARSNER_STAFF_SPIN_ICE_SLIDE_8F_R2.png');
 assert.equal(figure.dataset.saasunaBattleFormalArt, 'false');
 assert.equal(characterHost.style.visibility, 'hidden');
 const surface = controller.snapshot().surface;
 assert.equal(surface.keyframe.dataset.keyframeId, 'ice-slide-low');
-assert.equal(surface.keyframe.style.backgroundPosition, '100% 0%');
+assert.equal(surface.keyframe.style.backgroundPosition, '0% 0%');
+assert.equal(surface.keyframe.style.backgroundSize, '800% 100%');
 assert.equal(surface.ice.hidden, false);
 assert.equal(surface.wind.hidden, false);
 assert.equal(surface.impact.hidden, true);
@@ -113,3 +121,85 @@ assert.equal(createSaasunaBattleMotionController({
   host: figure,
   characterId: 'partner.other',
 }), null);
+
+const scheduled = new Map();
+let timerId = 0;
+const controlledClock = {
+  setTimeout(callback, ms) {
+    const id = ++timerId;
+    scheduled.set(id, { callback, ms });
+    return id;
+  },
+  clearTimeout(id) { scheduled.delete(id); }
+};
+const actorDocument = new FakeDocument();
+const actorFigure = new FakeElement('div');
+const actor = createSaasunaBattleMotionController({
+  doc: actorDocument, host: actorFigure, characterId: 'partner.saasuna',
+  role: 'source', phase: 'attack', clock: controlledClock
+});
+assert.equal(actorFigure.dataset.saasunaBattleFrameSheet, 'SARSNER_MAGIC_ATTACK_8F_R2.png');
+assert.equal(actorFigure.dataset.saasunaBattleFrameIndex, '1');
+assert.equal([...scheduled.values()][0]?.ms, 100);
+actor.setState({ causalPhase: 'stance', actionPhase: 'attack', motionState: 'IDLE_GENTLE' });
+for (let i = 0; i < 4; i += 1) {
+  const [id, next] = scheduled.entries().next().value;
+  scheduled.delete(id);
+  next.callback();
+}
+assert.equal(actorFigure.dataset.saasunaBattleFrameIndex, '4', 'magic emission is held before causal release');
+assert.equal(scheduled.size, 0, 'frame playback waits for an exact release cue');
+actor.setState({ causalPhase: 'release', actionPhase: 'attack', motionState: 'MAGIC_RELEASE' });
+assert.equal(actorFigure.dataset.saasunaBattleFrameIndex, '5', 'authored emission starts on causal release, not earlier');
+assert.equal(scheduled.size, 1, 'release resumes the existing source playback exactly once');
+actor.setState({ causalPhase: 'impact', actionPhase: 'attack', motionState: 'WIND_CUT' });
+assert.equal(actorFigure.dataset.saasunaBattleFrameIndex, '5', 'impact cannot restart the source frames');
+actor.setState({ causalPhase: 'return', actionPhase: 'attack', motionState: 'IDLE_GENTLE' });
+assert.equal(actorFigure.dataset.saasunaBattleFrameSheet, 'SARSNER_APPEAL_IDLE_8F_R2.png');
+assert.equal(actorFigure.dataset.saasunaBattleFrameIndex, '1');
+actor.destroy();
+assert.equal(scheduled.size, 0);
+assert.equal(actorFigure.dataset.saasunaBattleFrameSheet, undefined);
+
+const iceDoc = new FakeDocument();
+const iceFigure = new FakeElement('div');
+const iceActor = createSaasunaBattleMotionController({
+  doc: iceDoc, host: iceFigure, characterId: 'partner.saasuna',
+  role: 'source', phase: 'ability', clock: controlledClock
+});
+iceActor.setState({ causalPhase: 'anticipation', actionPhase: 'ability', motionState: 'STAFF_FREEZE' });
+for (let i = 0; i < 4; i += 1) {
+  const [id, next] = scheduled.entries().next().value;
+  scheduled.delete(id);
+  next.callback();
+}
+assert.equal(iceFigure.dataset.saasunaBattleFrameIndex, '4', 'ice also holds before authoritative release');
+assert.equal(scheduled.size, 0);
+iceActor.setState({ causalPhase: 'release', actionPhase: 'ability', motionState: 'ICE_SLIDE_LOW' });
+assert.equal(iceFigure.dataset.saasunaBattleFrameIndex, '5');
+assert.equal(scheduled.size, 1);
+iceActor.destroy();
+assert.equal(scheduled.size, 0);
+
+const targetDocument = new FakeDocument();
+const targetFigure = new FakeElement('div');
+const target = createSaasunaBattleMotionController({
+  doc: targetDocument, host: targetFigure, characterId: 'partner.saasuna',
+  role: 'target', phase: 'idle', clock: controlledClock
+});
+target.setState({ causalPhase: 'impact', motionState: 'HIT_RECOIL' });
+assert.equal(targetFigure.dataset.saasunaBattleVisualSource, 'provisional-keyframe-sheet',
+  'dodge art cannot stand in for a target hit');
+assert.equal(target.snapshot().surface.impact.hidden, false);
+target.destroy();
+assert.equal(scheduled.size, 0);
+const stillDocument = new FakeDocument();
+stillDocument.defaultView = { matchMedia: () => ({ matches: true }) };
+const stillFigure = new FakeElement('div');
+const still = createSaasunaBattleMotionController({
+  doc: stillDocument, host: stillFigure, characterId: 'partner.saasuna',
+  role: 'source', phase: 'attack', clock: controlledClock
+});
+assert.equal(stillFigure.dataset.saasunaBattleFrameIndex, '5');
+assert.equal(scheduled.size, 0, 'reduced motion does not schedule frame playback');
+still.destroy();

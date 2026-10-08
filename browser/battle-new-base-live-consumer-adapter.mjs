@@ -156,6 +156,15 @@ export function createBattleNewBaseLiveConsumerAdapter({
   let assignmentTurnId = null;
   let stagedCompoundAttack = null;
   let commitInFlight = false;
+  // A canceled or superseded asynchronous stage must never reappear on completion.
+  let stageRequestSerial = 0;
+  let pendingStageCount = 0;
+
+  async function isAuthoritativeTurnCurrent(expectedRoundId, expectedTurnId) {
+    const authority = requiredObject(await readRoundAuthority(), 'round authority');
+    return requiredString(authority.roundId, 'roundAuthority.roundId') === expectedRoundId
+      && requiredString(authority.turnId, 'roundAuthority.turnId') === expectedTurnId;
+  }
 
   async function syncRoundStart() {
     const authority = requiredObject(await readRoundAuthority(), 'round authority');
@@ -201,9 +210,9 @@ export function createBattleNewBaseLiveConsumerAdapter({
     return roundSnapshot;
   }
 
-  async function readCandidateFor(jankenHand, cardId) {
+  async function readCandidateFor(jankenHand, cardId, expectedRoundId = roundSnapshot.roundId) {
     const candidate = await readCompoundAttackCandidate(Object.freeze({
-      roundId: roundSnapshot.roundId,
+      roundId: expectedRoundId,
       jankenHand,
       cardId,
     }));
@@ -217,14 +226,48 @@ export function createBattleNewBaseLiveConsumerAdapter({
 
     async stageCompoundAttack(jankenHandValue) {
       const jankenHand = requireJankenHand(jankenHandValue);
-      await syncRoundStart();
-      const slot = slotFor(roundSnapshot, jankenHand);
-      const candidate = await readCandidateFor(jankenHand, slot.cardId);
-      stagedCompoundAttack = stageBattleJankenCompoundAttack(candidate);
-      return stagedCompoundAttack;
+      if (commitInFlight) throw new Error('COMMIT_IN_FLIGHT');
+      const requestSerial = ++stageRequestSerial;
+      pendingStageCount += 1;
+      try {
+        await syncRoundStart();
+        if (requestSerial !== stageRequestSerial) {
+          throw new Error('STAGE_CANCELLED_OR_SUPERSEDED');
+        }
+        const expectedRoundId = roundSnapshot.roundId;
+        const expectedTurnId = assignmentTurnId;
+        const slot = slotFor(roundSnapshot, jankenHand);
+        const candidate = await readCandidateFor(jankenHand, slot.cardId, expectedRoundId);
+        // Legal-candidate lookup may await a server/board response. Same package
+        // values do not prove that the turn remained the same while awaiting it.
+        const stillCurrent = await isAuthoritativeTurnCurrent(expectedRoundId, expectedTurnId);
+        if (!stillCurrent) {
+          if (requestSerial === stageRequestSerial) {
+            stagedCompoundAttack = null;
+            stageRequestSerial += 1;
+          }
+          throw new Error('TURN_CHANGED_RESTAGE_REQUIRED');
+        }
+        if (requestSerial !== stageRequestSerial
+          || roundSnapshot.roundId !== expectedRoundId
+          || assignmentTurnId !== expectedTurnId) {
+          throw new Error('STAGE_CANCELLED_OR_SUPERSEDED');
+        }
+        stagedCompoundAttack = stageBattleJankenCompoundAttack(candidate);
+        return stagedCompoundAttack;
+      } finally {
+        pendingStageCount -= 1;
+      }
     },
 
     clearCompoundAttack() {
+      if (commitInFlight) {
+        return Object.freeze({
+          ...clearBattleJankenCompoundAttackStage(null),
+          reason: 'COMMIT_IN_FLIGHT',
+        });
+      }
+      stageRequestSerial += 1;
       const cleared = clearBattleJankenCompoundAttackStage(stagedCompoundAttack);
       stagedCompoundAttack = null;
       return cleared;
@@ -253,7 +296,6 @@ export function createBattleNewBaseLiveConsumerAdapter({
         'authority-supplied existing precommit state',
       );
       const projection = clearBattlePrecommitSelection(state);
-      const hasCompoundStage = Boolean(stagedCompoundAttack?.package);
 
       if (!projection.cleared && projection.reason !== 'NOTHING_TO_CLEAR') {
         return precommitClearResult({
@@ -279,9 +321,12 @@ export function createBattleNewBaseLiveConsumerAdapter({
       }
 
       let compoundCleared = false;
-      if (hasCompoundStage) {
-        const clearedCompound = clearBattleJankenCompoundAttackStage(stagedCompoundAttack);
-        compoundCleared = clearedCompound.cleared === true;
+      const hasCompoundStage = Boolean(stagedCompoundAttack?.package);
+      const hasPendingStage = pendingStageCount > 0;
+      if (hasCompoundStage || hasPendingStage) {
+        // Invalidate any candidate read still awaiting the original board.
+        stageRequestSerial += 1;
+        compoundCleared = hasCompoundStage || hasPendingStage;
         stagedCompoundAttack = null;
       }
 
@@ -309,15 +354,40 @@ export function createBattleNewBaseLiveConsumerAdapter({
       commitInFlight = true;
       try {
         const staged = stagedCompoundAttack;
+        const expectedRoundId = roundSnapshot.roundId;
+        const expectedTurnId = assignmentTurnId;
+        const requestSerial = stageRequestSerial;
         await syncRoundStart();
-        if (stagedCompoundAttack !== staged) {
+        if (stagedCompoundAttack !== staged
+          || stageRequestSerial !== requestSerial
+          || roundSnapshot.roundId !== expectedRoundId
+          || assignmentTurnId !== expectedTurnId) {
           return Object.freeze({
             ok: false,
             committed: false,
             reason: 'TURN_CHANGED_RESTAGE_REQUIRED',
           });
         }
-        const fresh = await readCandidateFor(staged.package.jankenHand, staged.package.cardId);
+        const fresh = await readCandidateFor(
+          staged.package.jankenHand, staged.package.cardId, expectedRoundId,
+        );
+        // Recheck AFTER the awaited legal read, just before invoking the existing
+        // transport. A final server-side atomic turn/permission check is still required.
+        const stillCurrent = await isAuthoritativeTurnCurrent(expectedRoundId, expectedTurnId);
+        if (!stillCurrent) {
+          if (stagedCompoundAttack === staged) stagedCompoundAttack = null;
+          return Object.freeze({
+            ok: false, committed: false, reason: 'TURN_CHANGED_RESTAGE_REQUIRED',
+          });
+        }
+        if (stagedCompoundAttack !== staged
+          || stageRequestSerial !== requestSerial
+          || roundSnapshot.roundId !== expectedRoundId
+          || assignmentTurnId !== expectedTurnId) {
+          return Object.freeze({
+            ok: false, committed: false, reason: 'STAGE_CANCELLED_OR_SUPERSEDED',
+          });
+        }
         const prepared = prepareBattleJankenCompoundAttackCommit(staged, fresh);
         const accepted = await sendExistingBattleAction(prepared.payload);
         if (accepted !== true) {

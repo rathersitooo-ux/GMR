@@ -51,8 +51,8 @@ test('invalid geometry fails closed without manufacturing a route', () => {
 });
 
 test('live release still starts the visual only after the existing successful card commit', async () => {
-  const source = (await readFile(sourceUrl, 'utf8')).replace(/\\r\\n/g, '\\n');
-  const successfulRelease = source.match(/if \(effectiveCommit && clicked\) \{([\\s\\S]*?)\\n    \}/);
+  const source = (await readFile(sourceUrl, 'utf8')).replace(/\r\n/g, '\n');
+  const successfulRelease = source.match(/if \(effectiveCommit && clicked\) \{([\s\S]*?)\n    \}/);
 
   assert.ok(successfulRelease, 'the existing success-only release gate remains');
   assert.match(successfulRelease[1], /animateHandAuraLaunch\(globalRef, documentRef, root, powerEnergy, ghost\);/);

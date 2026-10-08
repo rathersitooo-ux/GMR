@@ -145,3 +145,10 @@ test('rejects binary and rename patches', () => {
   assert.equal(validateModelPatch(packet(), binary).ok, false);
   assert.equal(validateModelPatch(packet(), renamed).ok, false);
 });
+
+test('free coder CLI must finish after one generation turn', () => {
+  const workflow = fs.readFileSync(new URL('../.github/workflows/gameroad-executor-bus.yml', import.meta.url), 'utf8');
+  const command = workflow.split('- name: Run local CPU inference with no paid fallback')[1]?.split('- name: Validate and apply model candidate diff')[0] ?? '';
+  assert.match(command, /--single-turn/);
+  assert.match(workflow, /FREE_AUTOPILOT_MODEL_OUTPUT_BYTES/);
+});

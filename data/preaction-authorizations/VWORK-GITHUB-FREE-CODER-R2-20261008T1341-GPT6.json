@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-GITHUB-FREE-CODER-R2-20261008T1341-GPT6",
+  "taskId": "OPS-USER-INPUT-WORK-ROUTING-001",
+  "workUnitKey": "GITHUB_FREE_CODER_MANIFEST_FIRST_RECOVERY_R2_20261008",
+  "acquireKey": "GITHUB-FREE-CODER-MANIFEST-R2-20261008T1341-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "Required Gate #37728383942 failed first_commit_not_manifest_only; a first-manifest commit is required",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "Executor Bus #37728384005 focused self-test success; failure gate 37728383942 negative-path verified; replacement CI pending",
+  "proceedToken": "PROCEED|VWORK-GITHUB-FREE-CODER-R2-20261008T1341-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "5b5bf517141175344df497fa1a33e584715c07d6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-USER-INPUT-WORK-ROUTING-001",
+  "leaseWorkUnitKey": "GITHUB_FREE_CODER_MANIFEST_FIRST_RECOVERY_R2_20261008",
+  "leaseAcquireKey": "GITHUB-FREE-CODER-MANIFEST-R2-20261008T1341-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-08 13:41 JST",
+  "leaseUntilJst": "2026-10-08 14:21 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR branch work/github-free-coder-single-turn-r2-20261008: .github/workflows/gameroad-executor-bus.yml; tests/free-autopilot-worker.test.mjs; data/preaction-authorizations/VWORK-GITHUB-FREE-CODER-R2-20261008T1341-GPT6.json (transient first+last); own draft PR; own CURRENT_ACTIVE_LEASES row5; own R25 events",
+  "scope": [
+    ".github/workflows/gameroad-executor-bus.yml",
+    "tests/free-autopilot-worker.test.mjs"
+  ],
+  "leaseScope": [
+    ".github/workflows/gameroad-executor-bus.yml",
+    "tests/free-autopilot-worker.test.mjs"
+  ],
+  "solutionSignature": "Complete a free local coder response without leaving the pinned CLI awaiting further chat input, and preserve safe fail diagnostics",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "Upstream llama.cpp --single-turn flag and existing GitHub Executor Bus selected instead of new runner",
+  "solutionSearchEvidence": [
+    "llama.cpp existing --single-turn CLI flag / upstream issue #27214",
+    "GAMEROAD Executor Bus run 37247034962 timed out inference 720s; current workflow lacks --single-turn"
+  ]
+}

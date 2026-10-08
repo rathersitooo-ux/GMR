@@ -3,8 +3,12 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
+  SAASUNA_ADVICE_SPRITE,
+  SAASUNA_ADVICE_SPRITE_FRAMES,
   SAASUNA_BUSTUP_ASSETS,
+  resolveSaasunaAdviceBustupFrame,
   resolveSaasunaAdviceBustupState,
+  renderSaasunaBattleBustup,
 } from '../browser/partner-saasuna-bustup-visuals.mjs';
 
 const EXPECTED_HASHES = Object.freeze({
@@ -39,6 +43,50 @@ test('Battle presentation selects only context-appropriate Saasuna bust-ups auto
   assert.equal(resolveSaasunaAdviceBustupState({ ...base, reactionActive: true }), 'SURPRISED');
   assert.equal(resolveSaasunaAdviceBustupState({ partnerId: 'partner.other' }), null);
   assert.ok(SAASUNA_BUSTUP_ASSETS.SHH && SAASUNA_BUSTUP_ASSETS.TOUCH_CRY && SAASUNA_BUSTUP_ASSETS.SAD_DOWNCAST);
+});
+
+test('Saasuna Advice sprite adds nine visibly distinct high-emotion bust-up frames without replacing accepted assets', () => {
+  assert.equal(SAASUNA_ADVICE_SPRITE.fileName, 'saasuna-advice-bustup-candidate-r1.png');
+  assert.deepEqual(Object.keys(SAASUNA_ADVICE_SPRITE_FRAMES), [
+    'GENTLE', 'IDOL_APPEAL', 'CURIOUS', 'WINK_PEACE', 'CHUUNIBYOU',
+    'SURPRISED', 'TEARY', 'LAUGH', 'DOWNCAST',
+  ]);
+  assert.equal(resolveSaasunaAdviceBustupFrame({ partnerId: 'partner.saasuna' }), 'GENTLE');
+  assert.equal(resolveSaasunaAdviceBustupFrame({ partnerId: 'partner.saasuna', quickRouteId: 'casual' }), 'IDOL_APPEAL');
+  assert.equal(resolveSaasunaAdviceBustupFrame({ partnerId: 'partner.saasuna', quickRouteId: 'situation' }), 'CURIOUS');
+  assert.equal(resolveSaasunaAdviceBustupFrame({ partnerId: 'partner.saasuna', tutorialActive: true }), 'WINK_PEACE');
+  assert.equal(resolveSaasunaAdviceBustupFrame({ partnerId: 'partner.saasuna', quickRouteId: 'idea' }), 'CHUUNIBYOU');
+  assert.equal(resolveSaasunaAdviceBustupFrame({ partnerId: 'partner.saasuna', reactionActive: true }), 'SURPRISED');
+  assert.equal(resolveSaasunaAdviceBustupFrame({ partnerId: 'partner.saasuna', adviceActive: true }), 'LAUGH');
+  assert.equal(resolveSaasunaAdviceBustupFrame({ partnerId: 'partner.other' }), null);
+  assert.equal(SAASUNA_BUSTUP_ASSETS.TOUCH_CRY.fileName, 'GAMEROAD_SAASUNA_NAV_07_TOUCH_CRY_TRANSPARENT_20260915.png');
+  const sheet = readFileSync(new URL('../browser/assets/partners/saasuna/saasuna-advice-bustup-candidate-r1.png', import.meta.url));
+  assert.equal(sheet.readUInt32BE(16), 1254);
+  assert.equal(sheet.readUInt32BE(20), 1254);
+  assert.equal(sheet[25], 6, 'candidate sheet must preserve transparent cut-outs');
+});
+
+test('Saasuna Advice renderer presents the selected sprite frame accessibly and hides off-context figures', () => {
+  const heading = { textContent: '' };
+  const figure = {
+    dataset: {}, hidden: false, attributes: new Map(),
+    querySelector: (selector) => selector === '.partnerAdviceBustupHeader strong' ? heading : null,
+    setAttribute(name, value) { this.attributes.set(name, value); },
+  };
+  const image = { dataset: {}, style: {}, setAttribute(name, value) { this[name] = value; } };
+  const root = { dataset: {} };
+  const bustup = { figure, image };
+  const visible = renderSaasunaBattleBustup({ root, bustup, partnerId: 'partner.saasuna', battleActive: true, reactionActive: true });
+  assert.equal(visible.visible, true);
+  assert.equal(visible.frame, 'SURPRISED');
+  assert.equal(figure.hidden, false);
+  assert.equal(heading.textContent, 'サースナー');
+  assert.equal(image.alt, 'サースナー（驚き）');
+  assert.equal(image.dataset.frameState, 'SURPRISED');
+  assert.equal(root.dataset.partnerBustup, 'true');
+  const hidden = renderSaasunaBattleBustup({ root, bustup, partnerId: 'partner.naki', battleActive: true });
+  assert.equal(hidden.visible, false);
+  assert.equal(figure.hidden, true);
 });
 
 

@@ -3,6 +3,11 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { SAASUNA_BUSTUP_ASSETS } from '../browser/partner-saasuna-bustup-visuals.mjs';
 import {
+  createAdviceBustupFrameMap,
+  syncAdviceBustupSpriteFrame,
+  transitionAdviceBustupSpriteFrame,
+} from '../browser/partner-advice-bustup-sprite-core.mjs';
+import {
   SAASUNA_MOTION_PROFILES,
   SAASUNA_MOTION_STATES,
   createSaasunaMotionController,
@@ -155,6 +160,39 @@ test('state changes retain a crossfade even when the caller has already swapped 
   assert.ok(surface.image.animations.length >= 2);
 });
 
+test('sprite mode keeps the 3×3 source sheet intact while expressions change and the art layer moves', () => {
+  const { doc, bustup } = fakeBustup();
+  const surface = ensureSaasunaMotionSurface(doc, bustup);
+  const controller = createSaasunaMotionController({ doc, bustup, transitionMs: 0, spriteMode: true });
+  controller.setState({ partnerId: 'partner.saasuna', visualState: 'GUIDE_PRESENT' }, { frameKey: 'CHUUNIBYOU' });
+  assert.equal(surface.image.dataset.assetFile, 'saasuna-advice-bustup-candidate-r1.png');
+  assert.equal(surface.image.dataset.frameState, 'CHUUNIBYOU');
+  assert.equal(surface.image.animations.length, 0);
+  assert.equal(surface.art.animations.length, 1);
+  controller.setState({ partnerId: 'partner.saasuna', visualState: 'GUIDE_PRESENT' }, { restart: false, frameKey: 'WINK_PEACE' });
+  assert.equal(surface.image.dataset.frameState, 'WINK_PEACE');
+  assert.equal(surface.art.animations.length, 2);
+});
+
+test('clearing Saasuna motion leaves a shared Naki expression crossfade alive', () => {
+  const { doc, bustup } = fakeBustup();
+  const surface = ensureSaasunaMotionSurface(doc, bustup);
+  const controller = createSaasunaMotionController({ doc, bustup, spriteMode: true });
+  const entry = { fileName: 'naki.png', src: 'file:///naki.png' };
+  const frames = createAdviceBustupFrameMap(['GREET', 'IDOL_APPEAL', 'SHY', 'WINK_PEACE', 'CHUUNIBYOU', 'SURPRISED', 'POUT', 'LAUGH', 'MOVED']);
+  syncAdviceBustupSpriteFrame({ image: surface.image, entry, frame: frames.WINK_PEACE });
+  assert.equal(transitionAdviceBustupSpriteFrame({
+    image: surface.image,
+    crossfadeImage: surface.crossfadeImage,
+    entry,
+    frame: frames.LAUGH,
+  }), true);
+
+  controller.clear();
+  assert.equal(surface.crossfadeImage.hidden, false);
+  assert.equal(surface.image.dataset.frameState, 'LAUGH');
+});
+
 test('a new state still plays when the live renderer requests no restart for repeated renders', () => {
   const { doc, bustup } = fakeBustup();
   const controller = createSaasunaMotionController({ doc, bustup, transitionMs: 0 });
@@ -188,5 +226,5 @@ test('the live Advice mount consumes the resolved bust-up state instead of inven
   assert.match(source, /createSaasunaMotionController/);
   assert.match(source, /bustupPresentation\.state/);
   assert.match(source, /saasunaMotion\.setState/);
-  assert.match(source, /saasunaMotion\.clear/);
+  assert.match(source, /saasunaMotion\?\.clear/);
 });

@@ -1,12 +1,25 @@
 import {
+  SAASUNA_ADVICE_SPRITE,
+  SAASUNA_ADVICE_SPRITE_FRAMES,
   SAASUNA_BUSTUP_ASSETS,
   resolveSaasunaAdviceBustupState,
 } from './partner-saasuna-bustup-visuals.mjs';
+import { syncAdviceBustupSpriteFrame } from './partner-advice-bustup-sprite-core.mjs';
 
 const MOTION_STYLE_ID = 'gameroad-partner-advice-saasuna-motion-r1';
 const MOTION_EFFECT_ROLE = 'saasuna-motion-effect';
 const MOTION_CROSSFADE_ROLE = 'saasuna-motion-crossfade';
 const SAASUNA_PARTNER_ID = 'partner.saasuna';
+const ADVICE_SPRITE_FRAME_BY_MOTION_STATE = Object.freeze({
+  IDLE_GENTLE: 'GENTLE',
+  GUIDE_PRESENT: 'WINK_PEACE',
+  HAPPY_WAVE: 'IDOL_APPEAL',
+  CURIOUS_CONFUSED: 'CURIOUS',
+  SURPRISED: 'SURPRISED',
+  TOUCH_CRY: 'TEARY',
+  HAPPY_SMILE: 'LAUGH',
+  SAD_DOWNCAST: 'DOWNCAST',
+});
 
 function freezeFrames(frames) {
   return Object.freeze(frames.map((frame) => Object.freeze({ ...frame })));
@@ -257,6 +270,8 @@ export function ensureSaasunaMotionSurface(doc, bustup) {
     crossfadeImage.loading = 'eager';
     crossfadeImage.draggable = false;
     crossfadeImage.hidden = true;
+    crossfadeImage.alt = '';
+    crossfadeImage.setAttribute?.('aria-hidden', 'true');
     art.append(crossfadeImage);
   }
   let effect = art.querySelector?.(`[data-role="${MOTION_EFFECT_ROLE}"]`);
@@ -297,11 +312,11 @@ function runEffect(surface, effect, profile, animationState, reducedMotion) {
   });
 }
 
-function runMotion(surface, profile, animationState, reducedMotion) {
+function runMotion(surface, profile, animationState, reducedMotion, target = surface.image) {
   animationState.motionAnimation?.cancel?.();
   if (reducedMotion) {
     const lastFrame = profile.keyframes[profile.keyframes.length - 1];
-    if (surface.image.style) surface.image.style.transform = lastFrame.transform;
+    if (target.style) target.style.transform = lastFrame.transform;
     animationState.motionAnimation = null;
     return;
   }
@@ -311,11 +326,11 @@ function runMotion(surface, profile, animationState, reducedMotion) {
     fill: 'both',
     iterations: profile.loop ? Infinity : 1,
   };
-  const animation = safeAnimate(surface.image, profile.keyframes, timing);
+  const animation = safeAnimate(target, profile.keyframes, timing);
   animationState.motionAnimation = animation;
-  if (!animation && surface.image.style) {
+  if (!animation && target.style) {
     const lastFrame = profile.keyframes[profile.keyframes.length - 1];
-    surface.image.style.transform = lastFrame.transform;
+    target.style.transform = lastFrame.transform;
   }
 }
 
@@ -361,14 +376,17 @@ function startAssetTransition(surface, plan, transitionMs, currentFile, isActive
   else setTimeout(finish, transitionMs);
 }
 
-export function createSaasunaMotionController({ doc, bustup, transitionMs = 180 } = {}) {
+export function createSaasunaMotionController({ doc, bustup, transitionMs = 180, spriteMode = false } = {}) {
   const surface = ensureSaasunaMotionSurface(doc, bustup);
   if (!surface) return null;
   ensureSaasunaMotionStyle(doc);
   const animationState = { motionAnimation: null, effectAnimation: null };
   const reducedMotion = Boolean(doc.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
   let currentState = null;
-  let currentAssetFile = surface.image.dataset.assetFile || null;
+  let currentAssetFile = spriteMode
+    ? surface.image.dataset.assetFile || SAASUNA_ADVICE_SPRITE.fileName
+    : surface.image.dataset.assetFile || null;
+  let currentFrameKey = spriteMode ? surface.image.dataset.frameState || null : null;
   let sequence = 0;
 
   const setState = (input = {}, options = {}) => {
@@ -376,20 +394,36 @@ export function createSaasunaMotionController({ doc, bustup, transitionMs = 180 
     if (!plan) return null;
     const restart = options.restart !== false;
     const stateChanged = currentState !== plan.state;
-    const shouldRestart = restart || stateChanged;
+    const requestedFrameKey = spriteMode ? options.frameKey || ADVICE_SPRITE_FRAME_BY_MOTION_STATE[plan.state] : null;
+    const frameChanged = spriteMode && requestedFrameKey !== currentFrameKey;
+    const shouldRestart = restart || stateChanged || frameChanged;
     if (!shouldRestart && currentState === plan.state) return plan;
     sequence += 1;
     const activeSequence = sequence;
     currentState = plan.state;
     const previousAssetFile = currentAssetFile;
-    currentAssetFile = plan.asset.fileName;
+    const frameKey = requestedFrameKey && Object.hasOwn(SAASUNA_ADVICE_SPRITE_FRAMES, requestedFrameKey) ? requestedFrameKey : null;
+    currentAssetFile = frameKey ? SAASUNA_ADVICE_SPRITE.fileName : plan.asset.fileName;
+    currentFrameKey = frameKey;
     surface.figure.dataset.motionState = plan.state;
     surface.figure.dataset.motionLoop = plan.loop ? 'true' : 'false';
     const requestedTransitionMs = options.transitionMs ?? transitionMs;
-    startAssetTransition(surface, plan, reducedMotion ? 0 : requestedTransitionMs, previousAssetFile, () => activeSequence === sequence, () => {
+    const run = () => {
       if (activeSequence !== sequence) return;
-      runMotion(surface, SAASUNA_MOTION_PROFILES[plan.state], animationState, reducedMotion);
-    });
+      runMotion(surface, SAASUNA_MOTION_PROFILES[plan.state], animationState, reducedMotion, spriteMode ? surface.art : surface.image);
+    };
+    if (frameKey) {
+      const frame = SAASUNA_ADVICE_SPRITE_FRAMES[frameKey];
+      syncAdviceBustupSpriteFrame({
+        image: surface.image,
+        entry: SAASUNA_ADVICE_SPRITE,
+        frame,
+        alt: `サースナー（${frameKey}）`,
+      });
+      run();
+    } else {
+      startAssetTransition(surface, plan, reducedMotion ? 0 : requestedTransitionMs, previousAssetFile, () => activeSequence === sequence, run);
+    }
     runEffect(surface, plan.effect, SAASUNA_MOTION_PROFILES[plan.state], animationState, reducedMotion);
     return plan;
   };
@@ -399,8 +433,13 @@ export function createSaasunaMotionController({ doc, bustup, transitionMs = 180 
     animationState.motionAnimation?.cancel?.();
     animationState.effectAnimation?.cancel?.();
     currentState = null;
+    currentFrameKey = null;
     surface.effect.hidden = true;
-    surface.crossfadeImage.hidden = true;
+    if (!spriteMode) {
+      surface.crossfadeImage.hidden = true;
+      surface.crossfadeImage.style.opacity = '';
+    }
+    if (spriteMode && surface.art.style) surface.art.style.transform = '';
     delete surface.figure.dataset.motionState;
     delete surface.figure.dataset.motionLoop;
   };

@@ -585,6 +585,19 @@ test('Battle Advice chat reuses the existing root as a compact peripheral overla
   assert.doesNotMatch(source, /createPartnerAdviceStore|new PartnerAdviceStore/);
 });
 
+test('Advice bust-up mount selects Saasuna or Naki by the current partner and keeps rendering presentation-only', () => {
+  const source = readFileSync(new URL('../browser/partner-advice-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /renderNakiAdviceBustup/);
+  assert.match(source, /current\?\.partnerId\s*===\s*'partner\.naki'/);
+  assert.match(source, /bustupPresentation\.visible/);
+  assert.match(source, /applyAdviceBustupMotion/);
+  assert.match(source, /ensureAdviceBustupLayoutStyle/);
+  assert.match(source, /saasunaMotion\.setState/);
+  assert.doesNotMatch(source, /partnerId\s*=\s*'partner\.naki'|state\.selectedPartnerId\s*=/);
+  const spriteCore = readFileSync(new URL('../browser/partner-advice-bustup-sprite-core.mjs', import.meta.url), 'utf8');
+  assert.match(spriteCore, /figure\.dataset\.presentationOnly\s*=\s*'true'/);
+});
+
 test('Battle Partner controls converge into one visible surface without replacing their existing authority nodes', () => {
   const source = readFileSync(new URL('../browser/partner-advice-runtime-mount.mjs', import.meta.url), 'utf8');
   assert.match(source, /export function unifyBattlePartnerPresentation/);
@@ -699,4 +712,3 @@ test('quick3 UI keeps delegation separate and does not create a permanent fourth
   assert.doesNotMatch(source, /data\.quickRoute\s*=\s*['\"]three/);
   assert.doesNotMatch(source, /\['three-options',\s*'3つ出して'\]/);
 });
-

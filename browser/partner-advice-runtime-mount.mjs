@@ -28,6 +28,12 @@ import {
   ensureSaasunaBattleBustupStyle,
   renderSaasunaBattleBustup,
 } from './partner-saasuna-bustup-visuals.mjs';
+import { renderNakiAdviceBustup } from './partner-naki-bustup-visuals.mjs';
+import {
+  applyAdviceBustupMotion,
+  cancelAdviceBustupMotion,
+  ensureAdviceBustupLayoutStyle,
+} from './partner-advice-bustup-sprite-core.mjs';
 import { createSaasunaMotionController } from './partner-saasuna-motion-core.mjs';
 
 const VERSION_KEYS = Object.freeze(['rulesVersion', 'cardVersion', 'stateVersion']);
@@ -1239,6 +1245,7 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
   if (!host) return null;
   ensureBattleChatStyle(doc);
   ensureSaasunaBattleBustupStyle(doc);
+  ensureAdviceBustupLayoutStyle(doc);
   ensureBattleQuick3Style(doc);
   ensureUnifiedPartnerSurfaceStyle(doc);
   let root = doc.getElementById(CHAT_ROOT_ID);
@@ -1286,7 +1293,7 @@ if (battleSurface) {
   delete root.dataset.battleAdviceOverlay;
 }
 const saasunaBustup = ensureSaasunaBattleBustup(doc, battleSurface);
-const saasunaMotion = createSaasunaMotionController({ doc, bustup: saasunaBustup });
+const saasunaMotion = createSaasunaMotionController({ doc, bustup: saasunaBustup, spriteMode: true });
 
   let lastReceipt = null;
   let lastCharacterReaction = null;
@@ -1345,16 +1352,37 @@ const saasunaMotion = createSaasunaMotionController({ doc, bustup: saasunaBustup
       reactionActive,
     });
     const quickRoutesAvailable = win.__GAMEROAD_TEST__?.state?.screen === 'battle' && Boolean(current?.partnerId);
-    const bustupPresentation = renderSaasunaBattleBustup({
-      root, bustup: saasunaBustup, partnerId: current?.partnerId,
-      battleActive: win.__GAMEROAD_TEST__?.state?.screen === 'battle', reactionActive,
+    const bustupInput = {
+      root,
+      bustup: saasunaBustup,
+      partnerId: current?.partnerId,
+      battleActive: win.__GAMEROAD_TEST__?.state?.screen === 'battle',
+      reactionActive,
       tutorialActive: tutorialStatus.active || tutorialExperienceStatus.active,
-      quickRouteId: quickRouteStatus.routeId, adviceActive: adviceSpeechActive,
-    });
-    if (bustupPresentation.visible && saasunaMotion) {
-      saasunaMotion.setState({ partnerId: current?.partnerId, visualState: bustupPresentation.state }, { restart: false });
-    } else if (saasunaMotion) {
-      saasunaMotion.clear();
+      quickRouteId: quickRouteStatus.routeId,
+      adviceActive: adviceSpeechActive,
+    };
+    const bustupPresentation = current?.partnerId === 'partner.naki'
+      ? renderNakiAdviceBustup({ ...bustupInput, partnerName: partnerDisplayName(current.partnerId) })
+      : renderSaasunaBattleBustup(bustupInput);
+    const bustupArt = saasunaBustup?.image?.parentElement;
+    if (current?.partnerId === 'partner.naki' && bustupPresentation.visible) {
+      root.dataset.saasunaBustup = 'false';
+      saasunaMotion?.clear();
+      if (bustupArt?.dataset.motionState !== bustupPresentation.state) {
+        applyAdviceBustupMotion(bustupArt, bustupPresentation.state, {
+          reducedMotion: Boolean(doc.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches),
+        });
+      }
+    } else if (bustupPresentation.visible && saasunaMotion) {
+      cancelAdviceBustupMotion(bustupArt);
+      saasunaMotion.setState({ partnerId: current?.partnerId, visualState: bustupPresentation.state }, {
+        restart: false,
+        frameKey: bustupPresentation.frame,
+      });
+    } else {
+      saasunaMotion?.clear();
+      cancelAdviceBustupMotion(bustupArt);
     }
     root.hidden = !projection.active && !tutorialStatus.available && !tutorialExperienceStatus.active && !reactionActive && !roleControlActive && !idleReadable.active && !quickRoutesAvailable;
     const roleControl = root.querySelector('.partnerAdviceRoleControl');

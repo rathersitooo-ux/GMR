@@ -228,6 +228,9 @@ export function createBattleNewBaseLiveConsumerAdapter({
       const jankenHand = requireJankenHand(jankenHandValue);
       if (commitInFlight) throw new Error('COMMIT_IN_FLIGHT');
       const requestSerial = ++stageRequestSerial;
+      // Replacing a card invalidates the previous preview immediately; an
+      // awaited new candidate must not leave the old card available to commit.
+      stagedCompoundAttack = null;
       pendingStageCount += 1;
       try {
         await syncRoundStart();
@@ -346,6 +349,9 @@ export function createBattleNewBaseLiveConsumerAdapter({
     async commitCompoundAttack() {
       if (commitInFlight) {
         return Object.freeze({ ok: false, committed: false, reason: 'COMMIT_IN_FLIGHT' });
+      }
+      if (pendingStageCount > 0) {
+        return Object.freeze({ ok: false, committed: false, reason: 'STAGE_READ_IN_FLIGHT' });
       }
       if (!stagedCompoundAttack?.package) {
         return Object.freeze({ ok: false, committed: false, reason: 'STAGE_REQUIRED' });

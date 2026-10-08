@@ -579,6 +579,7 @@ test('Battle Advice chat reuses the existing root as a compact peripheral overla
   assert.match(source, /root\.dataset\.battleAdviceOverlay = 'true'/);
   assert.match(source, /data-battle-advice-overlay/);
   assert.match(source, /max-height:126px/);
+  assert.match(source, /z-index:9999!important;isolation:isolate/);
   assert.match(source, /orientation:portrait/);
   assert.match(source, /max-height:min\(24vh,176px\)!important/);
   assert.match(source, /bottom:auto!important/);

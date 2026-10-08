@@ -147,17 +147,39 @@ for (let i = 0; i < 4; i += 1) {
   scheduled.delete(id);
   next.callback();
 }
-assert.equal(actorFigure.dataset.saasunaBattleFrameIndex, '5');
-const activeTimer = scheduled.keys().next().value;
+assert.equal(actorFigure.dataset.saasunaBattleFrameIndex, '4', 'magic emission is held before causal release');
+assert.equal(scheduled.size, 0, 'frame playback waits for an exact release cue');
 actor.setState({ causalPhase: 'release', actionPhase: 'attack', motionState: 'MAGIC_RELEASE' });
-assert.equal(actorFigure.dataset.saasunaBattleFrameIndex, '5', 'causal stage never restarts the source frames');
-assert.equal(scheduled.keys().next().value, activeTimer);
+assert.equal(actorFigure.dataset.saasunaBattleFrameIndex, '5', 'authored emission starts on causal release, not earlier');
+assert.equal(scheduled.size, 1, 'release resumes the existing source playback exactly once');
+actor.setState({ causalPhase: 'impact', actionPhase: 'attack', motionState: 'WIND_CUT' });
+assert.equal(actorFigure.dataset.saasunaBattleFrameIndex, '5', 'impact cannot restart the source frames');
 actor.setState({ causalPhase: 'return', actionPhase: 'attack', motionState: 'IDLE_GENTLE' });
 assert.equal(actorFigure.dataset.saasunaBattleFrameSheet, 'SARSNER_APPEAL_IDLE_8F_R2.png');
 assert.equal(actorFigure.dataset.saasunaBattleFrameIndex, '1');
 actor.destroy();
 assert.equal(scheduled.size, 0);
 assert.equal(actorFigure.dataset.saasunaBattleFrameSheet, undefined);
+
+const iceDoc = new FakeDocument();
+const iceFigure = new FakeElement('div');
+const iceActor = createSaasunaBattleMotionController({
+  doc: iceDoc, host: iceFigure, characterId: 'partner.saasuna',
+  role: 'source', phase: 'ability', clock: controlledClock
+});
+iceActor.setState({ causalPhase: 'anticipation', actionPhase: 'ability', motionState: 'STAFF_FREEZE' });
+for (let i = 0; i < 4; i += 1) {
+  const [id, next] = scheduled.entries().next().value;
+  scheduled.delete(id);
+  next.callback();
+}
+assert.equal(iceFigure.dataset.saasunaBattleFrameIndex, '4', 'ice also holds before authoritative release');
+assert.equal(scheduled.size, 0);
+iceActor.setState({ causalPhase: 'release', actionPhase: 'ability', motionState: 'ICE_SLIDE_LOW' });
+assert.equal(iceFigure.dataset.saasunaBattleFrameIndex, '5');
+assert.equal(scheduled.size, 1);
+iceActor.destroy();
+assert.equal(scheduled.size, 0);
 
 const targetDocument = new FakeDocument();
 const targetFigure = new FakeElement('div');

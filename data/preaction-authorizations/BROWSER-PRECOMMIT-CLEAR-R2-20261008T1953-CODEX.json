@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BROWSER-PRECOMMIT-CLEAR-R2-20261008T1953-CODEX",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "PRECOMMIT_CLEAR_SELECTOR_AND_ATOMIC_RESET_R2",
+  "acquireKey": "BROWSER-PRECOMMIT-CLEAR-R2-20261008T1953-CODEX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLIC_ROAD_SELECTION_CLEAR_DISABLED_REPRODUCED",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "REAL_DOM_CONTROLLER_EXTRACTION_REGRESSION",
+  "proceedToken": "PROCEED|BROWSER-PRECOMMIT-CLEAR-R2-20261008T1953-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|selector-state-sync|atomic-draft-reset|active-lease",
+  "authorizationBaseSha": "c2a6e314cf52c9bff54e428f0cd03efefc59c828",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "PRECOMMIT_CLEAR_SELECTOR_AND_ATOMIC_RESET_R2",
+  "leaseAcquireKey": "BROWSER-PRECOMMIT-CLEAR-R2-20261008T1953-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-10-08 19:53 JST",
+  "leaseUntilJst": "2026-10-08 20:43 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; tests/battle-precommit-clear-core.test.mjs; temporary data/preaction-authorizations/BROWSER-PRECOMMIT-CLEAR-R2-20261008T1953-CODEX.json; branch codex/precommit-clear-r2-20261008; own PR/check/merge/public verification; own CURRENT_ACTIVE_LEASES and R25 events; GAMEROAD 全作業一覧 N2. Other active owners paths read-only.",
+  "solutionSignature": "EXISTING_PRECOMMIT_DOM_SYNC_REPAIR",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_CORE_AND_BROWSER_FAILURE",
+  "solutionSearchEvidence": [
+    "Public road selection changes visible card but leaves clear disabled",
+    "Existing pure clear core retained; existing browser admission and action guards retained",
+    "Playwright official selectOption fires input/change; observe ordered side effects"
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-precommit-clear-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-precommit-clear-core.test.mjs"
+  ]
+}

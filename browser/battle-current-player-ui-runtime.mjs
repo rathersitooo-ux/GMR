@@ -125,7 +125,7 @@ const STYLE_TEXT = `
   .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud{top:48px!important;width:76vw!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{max-width:30vw!important;bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap))!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="support-entry"]{bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap) + 46px)!important}
-  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner"]{top:calc(158px + 44px + var(--gr-ui-gap))!important;bottom:auto!important}
+  .screen.battle[${ROOT_ATTR}="1"] #partnerAdviceChatPresentation[data-battle-advice-overlay="true"][${ZONE_ATTR}="partner"]{top:calc(158px + 44px + var(--gr-ui-gap))!important;bottom:auto!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner-visual"]{width:96px!important;height:154px!important}
   .screen.battle[${ROOT_ATTR}="1"] .battleInfo{left:1.5%!important;right:calc(var(--gr-thumb-w) + var(--gr-ui-edge) + var(--gr-ui-gap))!important;height:28vh!important;grid-template-columns:1fr!important;grid-template-rows:minmax(0,1fr) auto!important}
   .screen.battle[${ROOT_ATTR}="1"] .planBox{max-width:none!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}

@@ -1,0 +1,30 @@
+{
+  "schema": "gameroad.preaction-authorization.v1",
+  "acquireKey": "ADVICE-CLICK-BATTLE-R13-20261008T1710-GPT6",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "BATTLE_PARTNER_ADVICE_CLICK_REPAIR_R13",
+  "repo": "rathersitooo-ux/GMR",
+  "branch": "work/partner-advice-click-r13-20261008",
+  "baseBranch": "main",
+  "baseHead": "4d53867d9b58a251fb19d274331a87d123d86cd4",
+  "exactMutables": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "data/preaction-authorizations/ADVICE-CLICK-BATTLE-R13-20261008T1710-GPT6.json"
+  ],
+  "preWriteBlobs": {
+    "browser/partner-advice-runtime-mount.mjs": "6bfca27aafead7b6ef13194df6ed7a736de57384",
+    "tests/partner-advice-runtime-mount.test.mjs": "f26b5af860ac83bd66a3bc357f374998de7dc7bb"
+  },
+  "intent": "Ensure the Battle board remains below partner advice interactive overlay while the separate battle drawer stays above it. Do not alter rule/AI/secret/save semantics.",
+  "evidence": "Main BFI 37745255493 failed real pointer click on #partnerAdviceBtn; #battleMap and .battleRail intercepted. Current Battle markup puts #battleMap and #battleDrawer under battle screen; overlay was appended directly under battle screen with z-index 38; drawer is z-index 40.",
+  "change": "Assign Battle board explicit z-index 0 in same late-mounted partner CSS; preserve overlay z-index 38 and drawer z-index 40; unit-check mounted CSS. No forced click.",
+  "validation": [
+    "node --test tests/partner-advice-runtime-mount.test.mjs",
+    "current Required Gate and separate three-viewport real-click Browser BFI"
+  ],
+  "rollback": "Revert only this branch/PR change if click or other Battle regressions occur.",
+  "acceptance": "Real click received on three viewports without occlusion and drawer remains usable. PR/CI alone is not acceptance.",
+  "leaseUntilJST": "2026-10-08 17:58 JST",
+  "state": "PROPOSED_NOT_ACCEPTED"
+}

@@ -5,10 +5,10 @@ export const FORMAL_RESOURCE_PAYMENT_KIND = Object.freeze({
 
 export const FORMAL_RESOURCE_PAYMENT_STATUS = Object.freeze({
   RESOLVED: 'RESOLVED',
-  AUTHORITY_UNRESOLVED_INSUFFICIENT_TOTAL: 'AUTHORITY_UNRESOLVED_INSUFFICIENT_TOTAL',
+  INSUFFICIENT_TOTAL: 'INSUFFICIENT_TOTAL',
 });
 
-export const FORMAL_RESOURCE_PAYMENT_POLICY = 'MANA_ONLY_REQUIRED';
+export const FORMAL_RESOURCE_PAYMENT_POLICY = 'MANA_FIRST_HONEY_SHORTFALL_AUTOMATIC';
 export const FORMAL_MANA_MAX = 10;
 
 function requireNonNegativeInteger(value, name) {
@@ -39,17 +39,22 @@ export function projectFormalResourcePayment({ kind, cardNumber, mana, honey } =
   const honeyBefore = requireNonNegativeInteger(honey, 'honey');
   const cost = getFormalGenericManaCost({ kind, cardNumber });
 
-  if (manaBefore < cost) {
+  // The player never chooses whether Honey covers a Mana shortage.
+  const manaPaid = Math.min(manaBefore, cost);
+  const honeyPaid = cost - manaPaid;
+
+  if (honeyPaid > honeyBefore) {
     return Object.freeze({
-      status: FORMAL_RESOURCE_PAYMENT_STATUS.AUTHORITY_UNRESOLVED_INSUFFICIENT_TOTAL,
+      status: FORMAL_RESOURCE_PAYMENT_STATUS.INSUFFICIENT_TOTAL,
       resolved: false,
-      reason: 'INSUFFICIENT_MANA',
+      reason: 'INSUFFICIENT_COMBINED_RESOURCES',
       cost,
       manaBefore,
       honeyBefore,
       manaPaid: 0,
       honeyPaid: 0,
-      manaDeficit: cost - manaBefore,
+      manaDeficit: honeyPaid,
+      totalDeficit: honeyPaid - honeyBefore,
       paymentPolicy: FORMAL_RESOURCE_PAYMENT_POLICY,
       userChoiceRequired: false,
     });
@@ -61,10 +66,10 @@ export function projectFormalResourcePayment({ kind, cardNumber, mana, honey } =
     cost,
     manaBefore,
     honeyBefore,
-    manaPaid: cost,
-    honeyPaid: 0,
-    manaAfter: manaBefore - cost,
-    honeyAfter: honeyBefore,
+    manaPaid,
+    honeyPaid,
+    manaAfter: manaBefore - manaPaid,
+    honeyAfter: honeyBefore - honeyPaid,
     paymentPolicy: FORMAL_RESOURCE_PAYMENT_POLICY,
     userChoiceRequired: false,
   });

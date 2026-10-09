@@ -398,3 +398,20 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
 }
 
 console.log('battle-current-player-ui-runtime: live-consumer focused tests passed');
+
+{
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-current-player-ui-runtime.mjs', import.meta.url), 'utf8');
+  assert.match(
+    source,
+    /@media\(max-width:520px\) and \(orientation:portrait\)\{[\s\S]*?#hand\{[^}]*flex-wrap:wrap!important[^}]*align-content:flex-end!important[^}]*column-gap:2px!important[^}]*row-gap:0!important/
+  );
+  assert.match(
+    source,
+    /@media\(max-width:520px\) and \(orientation:portrait\)\{[\s\S]*?#hand \.handCard\{[^}]*width:54px!important[^}]*min-width:44px!important[^}]*max-width:54px!important[^}]*flex:0 1 54px!important/
+  );
+  assert.match(source, /#hand \.handCard:nth-child\(1\)\{transform:translateY\(2px\) rotate\(-4deg\)\}/);
+  assert.match(source, /#hand \.handCard:nth-child\(4\)\{transform:translateY\(2px\) rotate\(-3deg\)\}/);
+  assert.match(source, /#hand \.handCard:nth-child\(5\)\{transform:translateY\(2px\) rotate\(3deg\)\}/);
+}
+

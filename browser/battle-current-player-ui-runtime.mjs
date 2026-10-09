@@ -128,6 +128,14 @@ const STYLE_TEXT = `
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner"]{bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap) + 92px)!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner-visual"]{width:96px!important;height:154px!important}
   .screen.battle[${ROOT_ATTR}="1"] .battleInfo{left:1.5%!important;right:calc(var(--gr-thumb-w) + var(--gr-ui-edge) + var(--gr-ui-gap))!important;height:28vh!important;grid-template-columns:1fr!important;grid-template-rows:minmax(0,1fr) auto!important}
+  .screen.battle[${ROOT_ATTR}="1"] #hand{flex-wrap:wrap!important;align-content:flex-end!important;justify-content:center!important;column-gap:2px!important;row-gap:0!important;padding:0 2px!important;overflow:visible!important}
+  .screen.battle[${ROOT_ATTR}="1"] #hand .handCard{width:54px!important;min-width:44px!important;max-width:54px!important;flex:0 1 54px!important;box-sizing:border-box!important}
+  .screen.battle[${ROOT_ATTR}="1"] #hand .handCard:nth-child(1){transform:translateY(2px) rotate(-4deg)}
+  .screen.battle[${ROOT_ATTR}="1"] #hand .handCard:nth-child(2){transform:translateY(0) rotate(-1deg)}
+  .screen.battle[${ROOT_ATTR}="1"] #hand .handCard:nth-child(3){transform:translateY(2px) rotate(4deg)}
+  .screen.battle[${ROOT_ATTR}="1"] #hand .handCard:nth-child(4){transform:translateY(2px) rotate(-3deg)}
+  .screen.battle[${ROOT_ATTR}="1"] #hand .handCard:nth-child(5){transform:translateY(2px) rotate(3deg)}
+  .screen.battle[${ROOT_ATTR}="1"] #hand .handCard.select{transform:translateY(-8px) rotate(0deg) scale(1.02)!important}
   .screen.battle[${ROOT_ATTR}="1"] .planBox{max-width:none!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}
   .screen.battle[${ROOT_ATTR}="1"] [data-battle-janken-slidepad="1"]{width:var(--gr-thumb-w)!important;height:var(--gr-thumb-h)!important;right:var(--gr-ui-edge)!important;bottom:var(--gr-ui-edge)!important}
   .screen.battle[${ROOT_ATTR}="1"] [data-battle-playable-hand-row-roulette-live="1"]{max-width:min(164px,42vw)!important}

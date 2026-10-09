@@ -397,4 +397,31 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
   assert.equal(document.head.children.length, 0);
 }
 
+{
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-current-player-ui-runtime.mjs', import.meta.url), 'utf8');
+  assert.ok(source.includes('#hand{flex-wrap:wrap!important;align-content:flex-end!important;justify-content:center!important;column-gap:2px!important;row-gap:0!important'));
+  assert.ok(source.includes('#hand .handCard{width:54px!important;min-width:44px!important;max-width:54px!important;flex:0 1 54px!important'));
+  assert.ok(source.includes('#hand .handCard:nth-child(1){transform:translateY(2px) rotate(-4deg)}'));
+  assert.ok(source.includes('#hand .handCard:nth-child(4){transform:translateY(2px) rotate(-3deg)}'));
+  assert.ok(source.includes('#hand .handCard:nth-child(5){transform:translateY(2px) rotate(3deg)}'));
+  assert.ok(source.includes('#hand .handCard.select{transform:translateY(-8px) rotate(0deg) scale(1.02)!important}'));
+}
+
 console.log('battle-current-player-ui-runtime: live-consumer focused tests passed');
+
+{
+  // 390px portrait hand budget keeps five visible cards above the 44px touch floor.
+  const viewportWidth = 390;
+  const battleInfoLeft = viewportWidth * 0.015;
+  const thumbWidth = 176;
+  const edge = 6;
+  const gap = 4;
+  const battleInfoWidth = viewportWidth - battleInfoLeft - (thumbWidth + edge + gap);
+  const handInnerWidth = battleInfoWidth - 4; // 2px left + 2px right padding.
+  const rowGapWidth = 3 * 2; // four cards => three 2px column gaps.
+  const fourCardWidth = (handInnerWidth - rowGapWidth) / 4;
+  assert.ok(fourCardWidth >= 44, `portrait hand card width ${fourCardWidth}px must stay >=44px`);
+  assert.ok((4 * fourCardWidth) + rowGapWidth <= handInnerWidth + 0.001);
+  assert.ok(54 <= handInnerWidth, 'the wrapped fifth card must fit on the second row at its 54px basis');
+}

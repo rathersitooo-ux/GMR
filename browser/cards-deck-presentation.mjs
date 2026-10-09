@@ -12,6 +12,7 @@ import {
 } from './deck-storage-corner-runtime.mjs';
 
 const deckStorageLiveInstallations = new WeakMap();
+const base52CommonFaceInstallations = new WeakMap();
 const cardsDeckFindabilityInstallations = new WeakMap();
 const cardsInspectorDismissInstallations = new WeakMap();
 const cardsInspectorDeckContextInstallations = new WeakMap();
@@ -176,6 +177,233 @@ export function matchCardsDeckFindabilityCard(
 
 function cardsScreen(doc) {
   return doc?.querySelector?.('section[data-screen="cards"]') ?? null;
+}
+
+export const BASE52_COMMON_FACE_SOURCE = Object.freeze({
+  schema: 'gameroad.base52-common-face-source.v1',
+  repository: 'Webisso/playing-cards',
+  commit: '50a3f7be7d6b7248da5f5c56533e1c5414aefb40',
+  license: 'MIT',
+  runtimeFetch: true,
+  candidateStage: 'PROTOTYPE_DIRECT_USE_CANDIDATE',
+  formalAssetAccepted: false,
+  readabilityReferences: Object.freeze([
+    'saulspatz/SVGCards Accessible Horizontal jumbo-index public-domain deck',
+    'Microsoft XAG 102 contrast',
+    'Microsoft XAG 103 color-independent identity',
+    'Apple Games HIG legibility',
+  ]),
+});
+
+const BASE52_COMMON_FACE_SUITS = Object.freeze({
+  SP: Object.freeze({ name: 'spades', symbol: '♠', family: 'black' }),
+  HT: Object.freeze({ name: 'hearts', symbol: '♥', family: 'red' }),
+  DI: Object.freeze({ name: 'diamonds', symbol: '♦', family: 'red' }),
+  CL: Object.freeze({ name: 'clubs', symbol: '♣', family: 'black' }),
+});
+const BASE52_COMMON_FACE_RANKS = Object.freeze(['A','2','3','4','5','6','7','8','9','10','J','Q','K']);
+const BASE52_COMMON_FACE_RANK_FILE = Object.freeze({ A: 'ace', J: 'jack', Q: 'queen', K: 'king' });
+
+function freezeBase52CommonFace(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  Object.freeze(value);
+  for (const child of Object.values(value)) freezeBase52CommonFace(child);
+  return value;
+}
+
+export function parseBase52CommonFaceCardId(value) {
+  const id = String(value ?? '').trim();
+  const match = /^(SP|HT|DI|CL)_(A|[2-9]|10|J|Q|K)$/.exec(id);
+  if (!match) return null;
+  const suit = BASE52_COMMON_FACE_SUITS[match[1]];
+  return freezeBase52CommonFace({
+    canonicalCardId: id,
+    prefix: match[1],
+    suit: suit.name,
+    suitSymbol: suit.symbol,
+    colorFamily: suit.family,
+    rank: match[2],
+  });
+}
+
+export function resolveBase52CommonFaceAsset(canonicalCardId) {
+  const parsed = parseBase52CommonFaceCardId(canonicalCardId);
+  if (!parsed) return null;
+  const stem = BASE52_COMMON_FACE_RANK_FILE[parsed.rank] ?? parsed.rank;
+  const filename = `${stem}_of_${parsed.suit}.svg`;
+  return freezeBase52CommonFace({
+    ...parsed,
+    sourceFilename: filename,
+    sourceRepository: BASE52_COMMON_FACE_SOURCE.repository,
+    sourceCommit: BASE52_COMMON_FACE_SOURCE.commit,
+    sourceLicense: BASE52_COMMON_FACE_SOURCE.license,
+    assetUrl: `https://raw.githubusercontent.com/Webisso/playing-cards/${BASE52_COMMON_FACE_SOURCE.commit}/svg/${filename}`,
+    runtimeFetch: true,
+    candidateStage: BASE52_COMMON_FACE_SOURCE.candidateStage,
+    formalAssetAccepted: false,
+  });
+}
+
+export function buildBase52CommonFaceManifest(canonicalIds) {
+  if (!Array.isArray(canonicalIds) || canonicalIds.length !== 52) throw new TypeError('BASE52_EXACTLY_52_REQUIRED');
+  const ids = new Set();
+  const semantic = new Set();
+  const entries = [];
+  for (const id of canonicalIds) {
+    const asset = resolveBase52CommonFaceAsset(id);
+    if (!asset) throw new TypeError('BASE52_CANONICAL_ID_INVALID');
+    if (ids.has(asset.canonicalCardId)) throw new TypeError('BASE52_CANONICAL_ID_DUPLICATE');
+    const key = `${asset.suit}:${asset.rank}`;
+    if (semantic.has(key)) throw new TypeError('BASE52_RANK_SUIT_DUPLICATE');
+    ids.add(asset.canonicalCardId);
+    semantic.add(key);
+    entries.push(asset);
+  }
+  for (const suit of Object.values(BASE52_COMMON_FACE_SUITS)) {
+    for (const rank of BASE52_COMMON_FACE_RANKS) {
+      if (!semantic.has(`${suit.name}:${rank}`)) throw new TypeError('BASE52_RANK_SUIT_COVERAGE_INCOMPLETE');
+    }
+  }
+  return freezeBase52CommonFace({
+    schema: 'gameroad.base52-common-face-manifest.v1',
+    source: BASE52_COMMON_FACE_SOURCE,
+    count: entries.length,
+    entries,
+    candidateStage: BASE52_COMMON_FACE_SOURCE.candidateStage,
+    formalAssetAccepted: false,
+  });
+}
+
+export const BASE52_COMMON_FACE_RUNTIME_CONTRACT = Object.freeze({
+  schema: 'gameroad.base52-common-face-runtime.v1',
+  surface: 'cards',
+  selectors: Object.freeze(['#collectionGrid [data-id]', '#deckSlots [data-id]', '#exDeckSlots [data-id]']),
+  assetRole: 'base52-common-face-art',
+  identityRole: 'base52-common-face-index',
+  networkFailure: 'fail-soft-identity-remains',
+  localSkinPrecedence: 'local-skin-over-common-face',
+  ownsCardRules: false,
+  ownsCardValues: false,
+  ownsDeck: false,
+  formalAssetAcceptance: false,
+});
+
+function ensureBase52CommonFaceStyle(doc) {
+  if (!doc?.createElement || doc.getElementById?.('gameroad-base52-common-face-style')) return;
+  const style = doc.createElement('style');
+  style.id = 'gameroad-base52-common-face-style';
+  style.textContent = `
+[data-base52-common-face-host="1"]{position:relative!important;isolation:isolate;overflow:hidden}
+[data-base52-common-face-host="1"]>[data-role="base52-common-face-art"]{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:0;background:#fff}
+[data-base52-common-face-host="1"][data-base52-asset-load="failed"]>[data-role="base52-common-face-art"]{display:none}
+[data-base52-common-face-host="1"]>[data-role="base52-common-face-index"]{position:absolute;top:3px;left:3px;z-index:3;display:inline-flex;align-items:center;justify-content:center;min-width:24px;min-height:22px;box-sizing:border-box;padding:2px 4px;border:1px solid rgba(17,20,26,.72);border-radius:5px;background:rgba(255,255,255,.95);color:#101216;font:800 clamp(12px,1.08em,18px)/1 system-ui,sans-serif;letter-spacing:-.02em;box-shadow:0 1px 3px rgba(0,0,0,.26);pointer-events:none}
+[data-base52-common-face-host="1"]>[data-role="base52-common-face-index"][data-color-family="red"]{color:#a30f20}
+[data-base52-common-face-host="1"]>.cardCostBadge,[data-base52-common-face-host="1"]>.cardRank,[data-base52-common-face-host="1"]>.cardAbilityTag,[data-base52-common-face-host="1"]>.cardFaceName,[data-base52-common-face-host="1"]>.inDeckTag{z-index:4!important}
+[data-base52-common-face-host="1"]>[data-role="fanart-local-skin-overlay"]{z-index:5!important}
+@media(prefers-reduced-motion:reduce){[data-base52-common-face-host="1"]>[data-role="base52-common-face-art"],[data-base52-common-face-host="1"]>[data-role="base52-common-face-index"]{transition:none!important;animation:none!important}}
+`;
+  (doc.head || doc.documentElement)?.appendChild(style);
+}
+
+function removeBase52CommonFaceFromNode(node) {
+  node?.querySelector?.('[data-role="base52-common-face-art"]')?.remove?.();
+  node?.querySelector?.('[data-role="base52-common-face-index"]')?.remove?.();
+  node?.removeAttribute?.('data-base52-common-face-host');
+  node?.removeAttribute?.('data-base52-asset-load');
+  node?.removeAttribute?.('data-base52-canonical-id');
+}
+
+function mountBase52CommonFaceOnNode(node, doc) {
+  const cardId = String(node?.dataset?.id ?? '');
+  const asset = resolveBase52CommonFaceAsset(cardId);
+  if (!asset) {
+    removeBase52CommonFaceFromNode(node);
+    return false;
+  }
+
+  node.dataset.base52CommonFaceHost = '1';
+  node.dataset.base52CanonicalId = asset.canonicalCardId;
+
+  let art = node.querySelector?.('[data-role="base52-common-face-art"]');
+  if (!art) {
+    art = doc.createElement('img');
+    art.dataset.role = 'base52-common-face-art';
+    art.alt = '';
+    art.setAttribute?.('aria-hidden', 'true');
+    art.setAttribute?.('decoding', 'async');
+    art.setAttribute?.('loading', 'lazy');
+    art.addEventListener?.('load', () => {
+      node.dataset.base52AssetLoad = 'loaded';
+    });
+    art.addEventListener?.('error', () => {
+      node.dataset.base52AssetLoad = 'failed';
+    });
+    node.appendChild?.(art);
+  }
+  if (art.src !== asset.assetUrl) {
+    node.dataset.base52AssetLoad = 'pending';
+    art.src = asset.assetUrl;
+  }
+
+  let index = node.querySelector?.('[data-role="base52-common-face-index"]');
+  if (!index) {
+    index = doc.createElement('span');
+    index.dataset.role = 'base52-common-face-index';
+    index.setAttribute?.('aria-hidden', 'true');
+    node.appendChild?.(index);
+  }
+  index.dataset.colorFamily = asset.colorFamily;
+  index.textContent = `${asset.rank}${asset.suitSymbol}`;
+  return true;
+}
+
+export function installBase52CommonFaceCards({
+  document: doc = globalThis.document,
+  window: win = globalThis.window,
+} = {}) {
+  if (!doc?.querySelector || !doc?.querySelectorAll || !doc?.createElement) {
+    return Object.freeze({ refresh: () => 0, destroy() {} });
+  }
+  const prior = base52CommonFaceInstallations.get(doc);
+  if (prior) return prior;
+  const screen = cardsScreen(doc);
+  if (!screen) return Object.freeze({ refresh: () => 0, destroy() {} });
+
+  ensureBase52CommonFaceStyle(doc);
+  let destroyed = false;
+  const refresh = () => {
+    if (destroyed) return 0;
+    const nodes = [...(screen.querySelectorAll?.(
+      '#collectionGrid [data-id], #deckSlots [data-id], #exDeckSlots [data-id]'
+    ) ?? [])];
+    let mounted = 0;
+    for (const node of nodes) if (mountBase52CommonFaceOnNode(node, doc)) mounted += 1;
+    return mounted;
+  };
+
+  refresh();
+
+  const Observer = win?.MutationObserver ?? globalThis.MutationObserver;
+  const observer = typeof Observer === 'function'
+    ? new Observer(() => { refresh(); })
+    : null;
+  observer?.observe?.(screen, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-id'] });
+
+  const installation = Object.freeze({
+    contract: BASE52_COMMON_FACE_RUNTIME_CONTRACT,
+    refresh,
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      observer?.disconnect?.();
+      for (const node of screen.querySelectorAll?.('[data-base52-common-face-host="1"]') ?? []) {
+        removeBase52CommonFaceFromNode(node);
+      }
+      base52CommonFaceInstallations.delete(doc);
+    },
+  });
+  base52CommonFaceInstallations.set(doc, installation);
+  return installation;
 }
 
 function byCardId(doc, selector, cardId) {
@@ -2049,6 +2277,7 @@ export function installFanartPublicBattleCardProjection({
 
 function autoInstallFanart(doc, win) {
   const install = () => {
+    installBase52CommonFaceCards({ document: doc, window: win });
     installFanartLocalSkinCards({ document: doc, window: win, indexedDB: win?.indexedDB });
     installFanartPublicBattleCardProjection({ document: doc, window: win, global: globalThis, indexedDB: win?.indexedDB });
   };

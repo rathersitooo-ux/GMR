@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROOM-RULE-R3-20261009T2238-GPT6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROOM_RULE_CUSTOM_1_2_STANDARD_RESET_R3_20261009",
+  "acquireKey": "ROOM-RULE-R3-20261009T2238-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR2304-DRY-DONOR-PATCH-20261009-READBACK",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "ROOM-RULE-R2-FOCUSED-24OF24-20261009-WINDOWS-NODE",
+  "proceedToken": "PROCEED|ROOM-RULE-R3-20261009T2238-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-10-09T22:38:00+09:00",
+  "authorizationBaseSha": "85152a4b5d2b47875c0f32043c8ac29703446c7c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROOM_RULE_CUSTOM_1_2_STANDARD_RESET_R3_20261009",
+  "leaseAcquireKey": "ROOM-RULE-R3-20261009T2238-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-09 22:38 JST",
+  "leaseUntilJst": "2026-10-09 23:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR new branch work/room-rules-count12-standard-reset-r3-20261009; data/preaction-authorizations/ROOM-RULE-R3-20261009T2238-GPT6.json (first commit and cleanup); browser/room-rules-settings-meter.mjs; tests/room-rules-settings-meter.test.mjs; CURRENT_ACTIVE_LEASES!A6:O6; R25 own events",
+  "leaseScope": [
+    "browser/room-rules-settings-meter.mjs",
+    "tests/room-rules-settings-meter.test.mjs"
+  ],
+  "scope": [
+    "browser/room-rules-settings-meter.mjs",
+    "tests/room-rules-settings-meter.test.mjs"
+  ],
+  "reuseDisposition": "ADAPT",
+  "solutionSignature": "reuse existing PR2304 room rules draft with bounded custom target 1/2 and standard preset reset",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR2304-diff-and-current-core-read-20261009",
+  "solutionSearchEvidence": [
+    "PR2304 existing implementation READ_ONLY",
+    "new-base-legacy-seven-win-gate-core.mjs positive threshold compatibility"
+  ],
+  "prediction": "Only custom minimum threshold becomes 1; STANDARD remains 7 slot GOAL; UI switch resets capacity; keep room and match persistence unchanged; regression tests will prove it.",
+  "rehearsal": "Prior Windows 24/24 focused pass on donor; change review and new CI still required"
+}

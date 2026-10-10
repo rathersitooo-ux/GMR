@@ -23,6 +23,7 @@ on:
       - 'browser/*motion*.mjs'
       - 'browser/new-base-*.mjs'
       - 'browser/screen-navigation-core.mjs'
+      - 'browser/slidepad-slot-roll-core.mjs'
       - 'tests/browser-full-interaction.spec.mjs'
       - 'tests/browser-full-interaction-state-sequence.spec.mjs'
       - 'playwright.full-interaction.config.mjs'
@@ -39,6 +40,7 @@ on:
       - 'browser/*motion*.mjs'
       - 'browser/new-base-*.mjs'
       - 'browser/screen-navigation-core.mjs'
+      - 'browser/slidepad-slot-roll-core.mjs'
       - 'tests/browser-full-interaction.spec.mjs'
       - 'tests/browser-full-interaction-state-sequence.spec.mjs'
       - 'playwright.full-interaction.config.mjs'
@@ -78,7 +80,7 @@ jobs:
           path: |
             playwright-report-full-interaction/
             test-results/full-interaction/
-          key: ${{ runner.os }}-browser-full-interaction-v1-${{ hashFiles('browser/GAMEROAD.html', 'browser/*presentation*.mjs', 'browser/*runtime*.mjs', 'browser/*visual*.mjs', 'browser/assets/**', 'browser/*motion*.mjs', 'browser/new-base-*.mjs', 'browser/screen-navigation-core.mjs', 'tests/browser-full-interaction.spec.mjs', 'tests/browser-full-interaction-state-sequence.spec.mjs', 'playwright.full-interaction.config.mjs', '.github/workflows/browser-full-interaction.yml') }}
+          key: ${{ runner.os }}-browser-full-interaction-v1-${{ hashFiles('browser/GAMEROAD.html', 'browser/*presentation*.mjs', 'browser/*runtime*.mjs', 'browser/*visual*.mjs', 'browser/assets/**', 'browser/*motion*.mjs', 'browser/new-base-*.mjs', 'browser/screen-navigation-core.mjs', 'browser/slidepad-slot-roll-core.mjs', 'tests/browser-full-interaction.spec.mjs', 'tests/browser-full-interaction-state-sequence.spec.mjs', 'playwright.full-interaction.config.mjs', '.github/workflows/browser-full-interaction.yml') }}
 
       - name: Set up Node
         if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' }}
@@ -94,6 +96,85 @@ jobs:
         if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' }}
         run: npx playwright install --with-deps chromium
 
+      - name: Smoke real Setup field layout before full 109-test suite
+        if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4197 --bind 127.0.0.1 >/tmp/gameroad-setup-field-focused-http.log 2>&1 &
+          SERVER_PID="$!"
+          trap 'kill "$SERVER_PID" || true' EXIT
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          import { chromium } from '@playwright/test';
+          
+          const origin = 'http://127.0.0.1:4197';
+          const output = 'test-results/full-interaction/setup-field-focused';
+          fs.mkdirSync(output, { recursive: true });
+          for (let n = 0; n < 40; n += 1) {
+            try {
+              if ((await fetch(origin + '/browser/GAMEROAD.html', { method: 'HEAD' })).ok) break;
+            } catch {}
+            if (n === 39) throw new Error('focused-smoke-local-server-not-ready');
+            await new Promise((resolve) => setTimeout(resolve, 250));
+          }
+          const browser = await chromium.launch({ headless: true });
+          const results = [];
+          for (const view of [
+            { name: 'desktop', width: 1280, height: 720 },
+            { name: 'phone', width: 390, height: 844 },
+            { name: 'short-landscape', width: 667, height: 375 },
+          ]) {
+            const page = await browser.newPage({ viewport: { width: view.width, height: view.height } });
+            try {
+              const response = await page.goto(origin + '/browser/GAMEROAD.html', { waitUntil: 'commit', timeout: 60000 });
+              assert.ok(response?.ok(), view.name + ': game HTML must load');
+              await page.locator('section[data-screen="home"]').waitFor({ state: 'visible', timeout: 20000 });
+              await page.locator('section.screen.active [data-home-target="setup"]:visible, section.screen.active [data-go="setup"]:visible, section.screen.active [data-root-go="setup"]:visible').first().click({ timeout: 15000 });
+              const setup = page.locator('section[data-screen="setup"]');
+              await setup.waitFor({ state: 'visible' });
+              const picker = setup.locator('#gameroadBattleFieldSelection');
+              await picker.waitFor({ state: 'visible', timeout: 12000 });
+              const choices = picker.locator('button[data-field-id]');
+              assert.ok((await choices.count()) >= 2, view.name + ': missing selectable battle fields');
+              await choices.nth(1).scrollIntoViewIfNeeded();
+              await choices.nth(1).click();
+              assert.equal(await choices.nth(1).getAttribute('aria-pressed'), 'true', view.name + ': player selection did not work');
+              await choices.first().scrollIntoViewIfNeeded();
+              await choices.first().click();
+              assert.equal(await choices.first().getAttribute('aria-pressed'), 'true', view.name + ': default field could not be restored');
+              const state = await page.evaluate(() => {
+                const host = document.getElementById('gameroadBattleFieldSelection');
+                const field = host.getBoundingClientRect();
+                const first = host.querySelector('button[data-field-id]').getBoundingClientRect();
+                const element = document.elementFromPoint((first.left + first.right) / 2, (first.top + first.bottom) / 2);
+                const firstHit = host.querySelector('button[data-field-id]').contains(element);
+                const collides = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 && a.top < b.bottom - 1 && a.bottom > b.top + 1;
+                const collisions = ['.contentRow', '.modeRow', '#startMatch'].filter((selector) => {
+                  const node = document.querySelector('section[data-screen="setup"] ' + selector);
+                  return node && node.getClientRects().length && collides(field, node.getBoundingClientRect());
+                });
+                return { firstHit, collisions, field: { x: Math.round(field.x), y: Math.round(field.y), width: Math.round(field.width), height: Math.round(field.height) } };
+              });
+              await page.screenshot({ path: output + '/' + view.name + '-setup-field.png' });
+              assert.ok(state.firstHit, view.name + ': field is visually visible but hit target obstructed');
+              assert.deepEqual(state.collisions, [], view.name + ': field overlaps gameplay setup controls ' + JSON.stringify(state));
+              results.push({ view: view.name, ok: true, ...state });
+              console.log('SETUP_FIELD_SMOKE_PASS', view.name, JSON.stringify(state));
+            } catch (error) {
+              results.push({ view: view.name, ok: false, reason: String(error?.message || error) });
+              await page.screenshot({ path: output + '/' + view.name + '-FAIL.png' }).catch(() => {});
+              console.error('SETUP_FIELD_SMOKE_FAIL', view.name, error);
+            } finally {
+              await page.close();
+            }
+          }
+          await browser.close();
+          fs.writeFileSync(output + '/report.json', JSON.stringify({ sourceCommit: process.env.GITHUB_SHA, results }, null, 2) + '\n');
+          if (results.some((result) => !result.ok)) process.exitCode = 1;
+          NODE
+
       - name: Run GAMEROAD full interaction evidence R1
         id: interaction_run
         if: ${{ steps.interaction_evidence_cache.outputs.cache-hit != 'true' }}
@@ -104,7 +185,7 @@ jobs:
         if: ${{ !cancelled() }}
         shell: bash
         env:
-          EVIDENCE_INPUT_HASH: ${{ hashFiles('browser/GAMEROAD.html', 'browser/*presentation*.mjs', 'browser/*runtime*.mjs', 'browser/*visual*.mjs', 'browser/assets/**', 'browser/*motion*.mjs', 'browser/new-base-*.mjs', 'browser/screen-navigation-core.mjs', 'tests/browser-full-interaction.spec.mjs', 'tests/browser-full-interaction-state-sequence.spec.mjs', 'playwright.full-interaction.config.mjs', '.github/workflows/browser-full-interaction.yml') }}
+          EVIDENCE_INPUT_HASH: ${{ hashFiles('browser/GAMEROAD.html', 'browser/*presentation*.mjs', 'browser/*runtime*.mjs', 'browser/*visual*.mjs', 'browser/assets/**', 'browser/*motion*.mjs', 'browser/new-base-*.mjs', 'browser/screen-navigation-core.mjs', 'browser/slidepad-slot-roll-core.mjs', 'tests/browser-full-interaction.spec.mjs', 'tests/browser-full-interaction-state-sequence.spec.mjs', 'playwright.full-interaction.config.mjs', '.github/workflows/browser-full-interaction.yml') }}
           EVIDENCE_CACHE_HIT: ${{ steps.interaction_evidence_cache.outputs.cache-hit }}
         run: |
           set -euo pipefail
@@ -138,7 +219,7 @@ jobs:
           ACQUIRE_KEY: ${{ github.event.client_payload.acquire_key }}
           CACHE_HIT: ${{ steps.interaction_evidence_cache.outputs.cache-hit }}
           INTERACTION_OUTCOME: ${{ steps.interaction_run.outcome }}
-          EVIDENCE_INPUT_HASH: ${{ hashFiles('browser/GAMEROAD.html', 'browser/*presentation*.mjs', 'browser/*runtime*.mjs', 'browser/*visual*.mjs', 'browser/assets/**', 'browser/*motion*.mjs', 'browser/new-base-*.mjs', 'browser/screen-navigation-core.mjs', 'tests/browser-full-interaction.spec.mjs', 'tests/browser-full-interaction-state-sequence.spec.mjs', 'playwright.full-interaction.config.mjs', '.github/workflows/browser-full-interaction.yml') }}
+          EVIDENCE_INPUT_HASH: ${{ hashFiles('browser/GAMEROAD.html', 'browser/*presentation*.mjs', 'browser/*runtime*.mjs', 'browser/*visual*.mjs', 'browser/assets/**', 'browser/*motion*.mjs', 'browser/new-base-*.mjs', 'browser/screen-navigation-core.mjs', 'browser/slidepad-slot-roll-core.mjs', 'tests/browser-full-interaction.spec.mjs', 'tests/browser-full-interaction-state-sequence.spec.mjs', 'playwright.full-interaction.config.mjs', '.github/workflows/browser-full-interaction.yml') }}
         with:
           script: |
             const { execFileSync } = require('child_process');

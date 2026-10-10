@@ -10,6 +10,7 @@ import {
   HOME_BORDER_LIGHT_OVERLAY_CSS,
   SETUP_ACTION_STATE_SPRITE_ASSET,
   SETUP_ACTION_STATE_SPRITE_CSS,
+  SETUP_STAGING_PRESENTATION_CSS,
   parsePublishedReleaseCommunications,
   parsePublishedReleaseNotes,
   projectHomeShell,
@@ -122,7 +123,7 @@ test('Setup Quick Deck live consumer delegates to the canonical read-only previe
   assert.doesNotMatch(source, /state\.deckDraft\s*=/);
 });
 
-test('Setup Quick Deck keeps the Start CTA separate and preserves all explicit dismissal paths', () => {
+test('Setup Quick Deck preserves all explicit dismissal paths', () => {
   const source = fs.readFileSync(new URL('../browser/home-shell-presentation-core.mjs', import.meta.url), 'utf8');
   assert.match(source, /setupQuickDeckTrigger', 'デッキ確認'/);
   assert.match(source, /renderSection\('メイン', preview\.deck\.main\)/);
@@ -132,11 +133,21 @@ test('Setup Quick Deck keeps the Start CTA separate and preserves all explicit d
   assert.match(source, /startMatch\.insertAdjacentElement\('beforebegin', trigger\)/);
   assert.match(source, /if \(restoreFocus\) trigger\.focus\?\.\(\)/);
   assert.match(source, /dialog\.hidden = true/);
-  assert.match(source, /position:sticky;bottom:12px;z-index:20/);
-  assert.match(source, /scroll-padding-bottom:80px/);
-  assert.match(source, /position:fixed!important/);
-  assert.match(source, /scroll-margin-bottom:104px/);
-  assert.match(source, /position:sticky!important;bottom:7px!important/);
+});
+
+test('Setup keeps match type options unobscured by its Start CTA', () => {
+  const ctaRules = [...SETUP_STAGING_PRESENTATION_CSS.matchAll(/section\[data-screen="setup"\] #startMatch\{([^}]*)\}/g)]
+    .map((match) => match[1]);
+  assert.ok(ctaRules.length > 0, 'the setup CTA styles are part of the setup presentation');
+  assert.ok(
+    ctaRules.every((declarations) => !/(?:^|;)\s*position\s*:\s*(?:fixed|sticky|absolute)\b/i.test(declarations)),
+    'the setup CTA must remain in document flow so it cannot cover selectable match type options',
+  );
+  assert.doesNotMatch(
+    SETUP_STAGING_PRESENTATION_CSS,
+    /scroll-padding-bottom:(?:80|58)px|scroll-margin-bottom:104px|padding-bottom:96px!important/,
+    'the setup layout must not reserve viewport space for a floating CTA',
+  );
 });
 
 const landscapeProjection = Object.freeze({
@@ -324,8 +335,7 @@ test('Home setup action sprite maps light states without replacing the real butt
   assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /#startMatch:disabled::before\{[^}]*opacity:0/);
   assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /pointer-events:none/);
   assert.equal(SETUP_ACTION_STATE_SPRITE_CSS.includes('#startMatch{position:'), false);
-  const setupPresentationSource = fs.readFileSync(new URL('../browser/home-shell-presentation-core.mjs', import.meta.url), 'utf8');
-  assert.match(setupPresentationSource, /@media \(min-width:900px\) and \(min-height:520px\)\{section\[data-screen="setup"\] #startMatch\{position:sticky!important;bottom:12px!important;z-index:20!important\}/);
+
   assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /gameroadSetupActionLightBreath/);
   assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /prefers-reduced-motion/);
   assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /r10LowPerf/);

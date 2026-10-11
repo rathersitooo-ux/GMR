@@ -147,3 +147,70 @@ test('authoritative whole-board Gate state takes precedence over a local visual 
     /BATTLE_BOARD_SHARED_GATE_PROJECTION_INVALID/,
   );
 });
+
+test('one cell keeps its own role while independent gimmick and Honey item occupy it', () => {
+  const model = createBattleBoardWorldFieldRenderModel({
+    cellRoles: { 'lower:L2': 'OWNABLE_LAND' },
+    areas: { 'lower:L2': ['FOREST_FLOOR', 'CREEK_BANK'] },
+    gimmicks: [{ id: 'g:1', nodeId: 'lower:L2', kind: 'SEASONAL_MECHANISM', active: true }],
+    pickups: [{ id: 'h:1', nodeId: 'lower:L2', kind: 'HONEY', count: 3 }],
+  });
+  assert.equal(model.mechanicPresentations.cellRoles[0].roleId, 'OWNABLE_LAND');
+  assert.deepEqual(model.mechanicPresentations.areas[0].areaIds, ['FOREST_FLOOR','CREEK_BANK']);
+  assert.equal(model.mechanicPresentations.gimmicks[0].nodeId, 'lower:L2');
+  assert.equal(model.mechanicPresentations.pickups[0].count, 3);
+  assert.equal(model.mechanicPresentations.pickups[0].kind, 'HONEY');
+  assert.equal(model.roundCells.find((c) => c.id === 'lower:L2').semanticType, 'UNRESOLVED_NO_INFERENCE');
+  assert.equal(model.mechanicPresentations.pickups[0].gameplayAuthority, false);
+  assert.equal(Object.isFrozen(model.mechanicPresentations), true);
+  assert.equal(Object.isFrozen(model.mechanicPresentations.areas[0].areaIds), true);
+});
+
+test('no role or item is guessed from the visual board if no game-provided layers exist', () => {
+  const model = createBattleBoardWorldFieldRenderModel();
+  assert.equal(model.mechanicPresentations.cellRoles.length, 0);
+  assert.equal(model.mechanicPresentations.areas.length, 0);
+  assert.equal(model.mechanicPresentations.gimmicks.length, 0);
+  assert.equal(model.mechanicPresentations.pickups.length, 0);
+  assert.equal(model.roundCells.length, 42);
+  assert.equal(model.sharedGoal.id, 'goal:shared');
+  assert.equal(model.gates.length, 1);
+});
+
+test('reject unknown, unbuilt and duplicated visual item identifiers', () => {
+  assert.throws(
+    () => createBattleBoardWorldFieldRenderModel({ cellRoles: { 'legacy:C:0': 'LAND' } }),
+    /BATTLE_BOARD_MECHANIC_UNKNOWN_VISIBLE_NODE/,
+  );
+  assert.throws(
+    () => createBattleBoardWorldFieldRenderModel({ pickups: [{ id: 'h', nodeId: 'upper:P1:L:7', kind: 'HONEY', count: 1 }] }),
+    /BATTLE_BOARD_MECHANIC_UNKNOWN_VISIBLE_NODE/,
+  );
+  assert.throws(
+    () => createBattleBoardWorldFieldRenderModel({ pickups: [{ id: 'h', nodeId: 'lower:T0', kind: 'HONEY', count: 0 }] }),
+    /BATTLE_BOARD_INVALID_PICKUP_COUNT/,
+  );
+  assert.throws(
+    () => createBattleBoardWorldFieldRenderModel({
+      gimmicks: [
+        { id: 'g', nodeId: 'lower:T0', kind: 'TRAP' },
+        { id: 'g', nodeId: 'lower:T1', kind: 'TRAP' },
+      ],
+    }),
+    /BATTLE_BOARD_MECHANIC_INVALID_ITEM/,
+  );
+});
+
+test('mount forwards authored mechanical layers without applying any effects', () => {
+  const models = [];
+  const r = mountBattleBoardWorldField({
+    worldRenderer: { replaceBoard(model) { models.push(model); } },
+    cellRoles: { 'lower:B4': 'VISIT_EVENT' },
+    pickups: [{ id: 'h:2', nodeId: 'lower:B4', kind: 'HONEY', count: 2 }],
+  });
+  assert.equal(r.mounted, true);
+  assert.equal(models[0].mechanicPresentations.cellRoles[0].roleId, 'VISIT_EVENT');
+  assert.equal(models[0].mechanicPresentations.pickups[0].count, 2);
+  assert.equal(models[0].gameplayAuthority, false);
+  assert.equal(models[0].movementAuthority, false);
+});

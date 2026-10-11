@@ -36,7 +36,7 @@ const SETUP_ACTION_STATE_SPRITE_URL = new URL(
 ).href;
 export const SETUP_ACTION_STATE_SPRITE_CSS = `
 section[data-screen="setup"] #startMatch{isolation:isolate;overflow:hidden}
-section[data-screen="setup"] #startMatch::before{content:"";position:absolute;inset:3px;z-index:0;pointer-events:none;border-radius:inherit;background-image:url('${SETUP_ACTION_STATE_SPRITE_URL}');background-repeat:no-repeat;background-size:400% 100%;background-position:0% 50%;mix-blend-mode:screen;opacity:.18;filter:saturate(1.08) brightness(1.04);transition:opacity .12s ease,filter .12s ease,background-position .01s linear}
+section[data-screen="setup"] #startMatch::before{content:"" !important;position:absolute;inset:3px;z-index:0;pointer-events:none;border-radius:inherit;background-image:url('${SETUP_ACTION_STATE_SPRITE_URL}');background-repeat:no-repeat;background-size:400% 100%;background-position:0% 50%;mix-blend-mode:screen;opacity:.18;filter:saturate(1.08) brightness(1.04);transition:opacity .12s ease,filter .12s ease,background-position .01s linear}
 section[data-screen="setup"] #startMatch:not(:disabled)::before{animation:gameroadSetupActionLightBreath 4.8s steps(1,end) infinite}
 section[data-screen="setup"] #startMatch:not(:disabled):hover::before,section[data-screen="setup"] #startMatch:not(:disabled):focus-visible::before{background-position:33.333% 50%;opacity:.64;filter:saturate(1.24) brightness(1.18);animation:none}
 section[data-screen="setup"] #startMatch:not(:disabled):active::before{background-position:66.667% 50%;opacity:.9;filter:saturate(1.3) brightness(1.24);animation:none}

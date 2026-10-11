@@ -214,3 +214,111 @@ test('mount forwards authored mechanical layers without applying any effects', (
   assert.equal(models[0].gameplayAuthority, false);
   assert.equal(models[0].movementAuthority, false);
 });
+
+test('rider seat stays above the ride, with ground shadow on authoritative node', () => {
+  const r = createBattleBoardWorldFieldRenderModel({
+    controlledCharacters: [{
+      participantId: 'P1', characterId: 'hero.example', nodeId: 'lower:T0',
+      facing: 'right', ride: { assetId: 'ride.example', seatHeight: 0.63 },
+    }],
+  });
+  const row = r.controlledCharacterRides[0];
+  assert.equal(row.nodeId, 'lower:T0');
+  assert.equal(row.ride.assetId, 'ride.example');
+  assert.equal(row.ride.facing, 'right');
+  assert.equal(row.coLocatedCount, 1);
+  assert.deepEqual(row.groundWorld, row.nodeWorld);
+  assert.deepEqual(row.contactShadowWorld, row.groundWorld);
+  assert.deepEqual(row.ride.world, row.groundWorld);
+  assert.deepEqual(row.ride.seatWorld, row.characterWorld);
+  assert.ok(Math.abs(row.characterWorld.y - row.groundWorld.y - 0.63) < 1e-9);
+  assert.equal(r.gameplayAuthority, false);
+  assert.equal(r.movementAuthority, false);
+  assert.equal(Object.isFrozen(row.ride), true);
+});
+
+test('on-foot character uses the same node without a fabricated ride', () => {
+  const r = createBattleBoardWorldFieldRenderModel({
+    controlledCharacters: [{
+      participantId: 'P3', characterId: 'hero.onfoot',
+      nodeId: 'lower:B4', facing: 'left',
+    }],
+  });
+  const row = r.controlledCharacterRides[0];
+  assert.equal(row.ride, null);
+  assert.deepEqual(row.characterWorld, row.groundWorld);
+  assert.equal(row.nodeId, 'lower:B4');
+});
+
+test('four co-located riders are visible separately but never split the game position', () => {
+  const rows = ['P4','P2','P1','P3'].map((participantId) => ({
+    participantId, characterId: 'hero.' + participantId,
+    nodeId: 'lower:L2', facing: 'forward',
+    ride: { assetId: 'ride.' + participantId, seatHeight: 0.35 },
+  }));
+  const first = createBattleBoardWorldFieldRenderModel({ controlledCharacters: rows });
+  const second = createBattleBoardWorldFieldRenderModel({ controlledCharacters: [...rows].reverse() });
+  assert.equal(first.controlledCharacterRides.length, 4);
+  assert.equal(new Set(first.controlledCharacterRides.map((r) => r.nodeId)).size, 1);
+  assert.equal(new Set(first.controlledCharacterRides.map((r) => `${r.groundWorld.x}:${r.groundWorld.z}`)).size, 4);
+  const asOffsetMap = (model) => Object.fromEntries(model.controlledCharacterRides.map((r) => [
+    r.participantId, r.groundWorld,
+  ]));
+  assert.deepEqual(asOffsetMap(first), asOffsetMap(second));
+  assert.ok(first.controlledCharacterRides.every((r) => r.visibilityOffsetOnly === true));
+  assert.ok(first.controlledCharacterRides.every((r) => r.positionAuthority === 'CALLER_CONFIRMED_NEW_BOARD_NODE'));
+});
+
+test('ride rejects old map nodes, invisible future cards and invalid seats rather than guessing', () => {
+  const base = { participantId: 'P1', characterId: 'hero', nodeId: 'lower:T0', facing: 'forward' };
+  assert.throws(
+    () => createBattleBoardWorldFieldRenderModel({ controlledCharacters: [{ ...base, nodeId: 'CENTER:0' }] }),
+    /BATTLE_BOARD_CHARACTER_PROJECTION_INVALID/,
+  );
+  assert.throws(
+    () => createBattleBoardWorldFieldRenderModel({ controlledCharacters: [{ ...base, nodeId: 'upper:P1:L:7' }] }),
+    /BATTLE_BOARD_CHARACTER_PROJECTION_INVALID/,
+  );
+  assert.throws(
+    () => createBattleBoardWorldFieldRenderModel({ controlledCharacters: [{ ...base, ride: { assetId: 'ride.x' } }] }),
+    /BATTLE_BOARD_RIDE_ASSET_OR_SEAT_INVALID/,
+  );
+  assert.throws(
+    () => createBattleBoardWorldFieldRenderModel({ controlledCharacters: [{ ...base, ride: { assetId: 'ride.x', seatHeight: -0.1 } }] }),
+    /BATTLE_BOARD_RIDE_ASSET_OR_SEAT_INVALID/,
+  );
+  assert.throws(
+    () => createBattleBoardWorldFieldRenderModel({ controlledCharacters: [base, base] }),
+    /BATTLE_BOARD_CHARACTER_PROJECTION_INVALID/,
+  );
+});
+
+test('completed progression cell and shared goal both support a rider; gate is not a stoppable character node', () => {
+  const base = { participantId: 'P1', characterId: 'hero', nodeId: 'upper:P1:L:7', facing: 'forward' };
+  const upper = createBattleBoardWorldFieldRenderModel({
+    builtCountByLaneKey: { 'P1:L': 7 },
+    controlledCharacters: [base],
+  });
+  assert.equal(upper.controlledCharacterRides[0].nodeId, 'upper:P1:L:7');
+  assert.equal(upper.sharedGoal.id, 'goal:shared');
+  const arrived = createBattleBoardWorldFieldRenderModel({
+    controlledCharacters: [{ ...base, nodeId: 'goal:shared' }],
+  });
+  assert.equal(arrived.controlledCharacterRides[0].nodeId, 'goal:shared');
+  assert.throws(
+    () => createBattleBoardWorldFieldRenderModel({ controlledCharacters: [{ ...base, nodeId: 'gate:P1:L' }] }),
+    /BATTLE_BOARD_CHARACTER_PROJECTION_INVALID/,
+  );
+});
+
+test('world mount passes rider positions to renderer without changing rules', () => {
+  let drawn = null;
+  mountBattleBoardWorldField({
+    worldRenderer: { replaceBoard(model) { drawn = model; } },
+    controlledCharacters: [{ participantId: 'P1', characterId: 'hero', nodeId: 'lower:T1',
+      facing: 'up', ride: { assetId: 'ride.one', seatHeight: 0.5 } }],
+  });
+  assert.equal(drawn.controlledCharacterRides.length, 1);
+  assert.equal(drawn.controlledCharacterRides[0].ride.assetId, 'ride.one');
+  assert.equal(drawn.movementAuthority, false);
+});

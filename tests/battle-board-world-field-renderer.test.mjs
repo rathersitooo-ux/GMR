@@ -12,7 +12,11 @@ test('world-field render model keeps the lower shared field, Gate boundary and o
   assert.equal(model.counts.builtUpperCards, 0);
   assert.equal(model.counts.visibleFutureUpperSlots, 0);
   assert.equal(model.counts.roundCells, 42);
-  assert.equal(model.counts.gates, 12);
+  assert.equal(model.counts.gates, 1);
+  assert.equal(model.counts.gateAnchors, 12);
+  assert.equal(model.gates.length, 1);
+  assert.equal(model.sharedGate.id, 'gate:shared');
+  assert.equal(model.sharedGate.anchorIds.length, 12);
   assert.equal(model.counts.shields, 12);
   assert.equal(model.goalBranches.length, 12);
   assert.equal(model.roundCells.some((cell) => cell.id.startsWith('upper:')), false);
@@ -24,7 +28,7 @@ test('world-field render model keeps the lower shared field, Gate boundary and o
   assert.equal(model.counts.visibleFutureUpperSlots, 0);
   assert.deepEqual(model.roundCells.filter((cell) => cell.laneKey === 'P2:C').map((cell) => cell.stageIndex), [1, 2, 3]);
   assert.equal(model.roundCells.some((cell) => cell.id === 'upper:P2:C:4'), false);
-  assert.equal(model.gates.find((gate) => gate.laneKey === 'P2:C').state, 'CLOSED_HEAVY_BARRIER');
+  assert.equal(model.sharedGate.state, 'CLOSED_HEAVY_BARRIER');
   assert.equal(model.gameplayAuthority, false);
   assert.equal(model.movementAuthority, false);
 });
@@ -99,14 +103,18 @@ test('straight canonical lower edges gain deterministic terrain bows without cha
   assert.ok(Math.abs(cross) > 1e-6, 'derived route should visibly bow away from its canonical straight chord');
 });
 
-test('Gate and GOAL branch visual state opens only for the exact lane at seven actual cards', () => {
+test('one shared Gate opens globally while only the completed lane connects to GOAL', () => {
   const model = createBattleBoardWorldFieldRenderModel({ builtCountByLaneKey: { 'P1:L': 7, 'P1:C': 6 } });
   assert.equal(model.counts.builtUpperCards, 13);
   assert.equal(model.counts.visibleFutureUpperSlots, 0);
   assert.equal(model.roundCells.filter((cell) => cell.laneKey === 'P1:L').length, 7);
   assert.equal(model.roundCells.filter((cell) => cell.laneKey === 'P1:C').length, 6);
-  assert.equal(model.gates.find((gate) => gate.laneKey === 'P1:L').state, 'OPEN_PASSABLE_FRAME');
-  assert.equal(model.gates.find((gate) => gate.laneKey === 'P1:C').state, 'CLOSED_HEAVY_BARRIER');
+  assert.equal(model.gates.length, 1);
+  assert.equal(model.sharedGate.state, 'OPEN_PASSABLE_FRAME');
+  assert.equal(model.gateAnchors.length, 12);
+  assert.equal(new Set(model.gateAnchors.map((anchor) => anchor.sharedGateId)).size, 1);
+  assert.equal(model.sharedGate.anchorIds.length, 12);
+  assert.ok(model.gateAnchors.every((anchor) => anchor.countsAsGate === false));
   assert.equal(model.goalBranches.find((branch) => branch.id === 'goal-branch:P1:L').visualState, 'STRONG_OPEN');
   assert.equal(model.goalBranches.find((branch) => branch.id === 'goal-branch:P1:C').visualState, 'FAINT_READABLE');
 });
@@ -124,4 +132,18 @@ test('mount fails closed instead of falling back to screen-space UI', () => {
   const runtime = mountBattleBoardWorldField({});
   assert.equal(runtime.mounted, false);
   assert.equal(runtime.reason, 'WORLD_RENDERER_REQUIRED');
+});
+
+test('authoritative whole-board Gate state takes precedence over a local visual guess', () => {
+  const model = createBattleBoardWorldFieldRenderModel({
+    builtCountByLaneKey: { 'P1:L': 7 },
+    goalPathProjection: { ok: true, gateOpen: false },
+  });
+  assert.equal(model.sharedGate.state, 'CLOSED_HEAVY_BARRIER');
+  assert.equal(model.goalBranches.find((branch) => branch.id === 'goal-branch:P1:L').visualState, 'STRONG_OPEN');
+  assert.equal(model.sharedGate.gameplayAuthority, false);
+  assert.throws(
+    () => createBattleBoardWorldFieldRenderModel({ goalPathProjection: { ok: false, gateOpen: true } }),
+    /BATTLE_BOARD_SHARED_GATE_PROJECTION_INVALID/,
+  );
 });

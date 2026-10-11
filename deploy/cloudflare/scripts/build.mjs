@@ -112,6 +112,8 @@ const ARTIFACT_SPECS = Object.freeze([
   { source: 'browser/new-base-hidden-hand-runtime-core.mjs', output: 'new-base-hidden-hand-runtime-core.mjs', artifact: 'new_base_hidden_hand_runtime_core', label: 'New Base Hidden Hand runtime core' },
   { source: 'assets/visual/battle-power-energy.jpg', output: 'assets/visual/battle-power-energy.jpg', artifact: 'battle_power_energy_visual', label: 'Battle Power Energy visual' },
   { source: 'browser/battle-card-release-flight-motion-core.mjs', output: 'battle-card-release-flight-motion-core.mjs', artifact: 'battle_card_release_flight_motion_core', label: 'Battle card release flight motion core' },
+  { source: 'browser/assets/visual/battle-vfx/throw-thin.png', output: 'assets/visual/battle-vfx/throw-thin.png', artifact: 'battle_throw_thin_texture', label: 'Battle throw thin texture' },
+  { source: 'browser/assets/visual/battle-vfx/impact-cyan.png', output: 'assets/visual/battle-vfx/impact-cyan.png', artifact: 'battle_throw_impact_texture', label: 'Battle throw arrival impact texture' },
   { source: 'browser/battle-card-release-flight-runtime-effect.mjs', output: 'battle-card-release-flight-runtime-effect.mjs', artifact: 'battle_card_release_flight_runtime_effect', label: 'Battle card release flight runtime effect' },
   { source: 'browser/battle-janken-compound-attack-package-core.mjs', output: 'battle-janken-compound-attack-package-core.mjs', artifact: 'battle_janken_compound_attack_package_core', label: 'Battle janken compound attack package core' },
   { source: 'browser/new-base-hand3-uniform-assignment-policy.mjs', output: 'new-base-hand3-uniform-assignment-policy.mjs', artifact: 'new_base_hand3_uniform_assignment_policy', label: 'New Base Hand3 uniform assignment policy' },

@@ -73,7 +73,9 @@ export function projectLegacyWorldInteractionSnapshot({
   reachablePositionIds = [],
   pathPositionIds = [],
   nextPositionId = null,
+  newBoardMounted = false,
 } = {}) {
+  if (typeof newBoardMounted !== 'boolean') throw new TypeError('NEW_BOARD_MOUNT_STATUS_INVALID');
   const current = normalizeOptionalId(currentPositionId, 'LEGACY_WORLD_CURRENT_POSITION_INVALID');
   const next = normalizeOptionalId(nextPositionId, 'LEGACY_WORLD_NEXT_POSITION_INVALID');
   const reachable = normalizeIdList(reachablePositionIds, 'LEGACY_WORLD_REACHABLE_POSITIONS_INVALID');
@@ -97,7 +99,9 @@ export function projectLegacyWorldInteractionSnapshot({
     unresolved,
     invalid,
     complete,
-    safeToSuppressLegacyBoardVisuals: complete,
+    // Visual replacement depends on a confirmed new-board mount, not legacy ID compatibility.
+    // This is a visibility signal only: callers must preserve their interaction inputs.
+    safeToSuppressLegacyBoardVisuals: newBoardMounted,
     presentationOnly: true,
     semanticInference: false,
     computesMovementLegality: false,
@@ -116,7 +120,9 @@ export const BATTLE_BOARD_LEGACY_WORLD_INTERACTION_ADAPTER_CONTRACT = deepFreeze
   legacyShieldMapping: 'BLOCKED_STOPPABILITY_MISMATCH',
   legacyCenterCornerMapping: 'UNRESOLVED_NO_INFERENCE',
   outputTarget: 'BATTLE_BOARD_WORLD_INTERACTION_OVERLAY_INPUT',
-  safeLegacyVisualSuppressionRequiresCompleteMapping: true,
+  safeLegacyVisualSuppressionRequiresCompleteMapping: false,
+  safeLegacyVisualSuppressionRequiresSuccessfulNewBoardMount: true,
+  legacyInteractionInputsMustRemainAvailable: true,
   presentationOnly: true,
   semanticInference: false,
   computesMovementLegality: false,

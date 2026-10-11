@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BROWSER-SETUP-START-LABEL-20261011T2253-GPT6-D8",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "SETUP_START_PSEUDOLABEL_DUPLICATE_CSS_R1_20261011",
+  "acquireKey": "BROWSER-SETUP-START-LABEL-20261011T2253-GPT6-D8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "GH_MAIN_03C9F34_BLOB_A1C81327_TARGET_SINGLE_CSS_RULE_20261011",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "12_CSS_CASCADE_PLAYWRIGHT_CHROMIUM_CASES_3_VIEWPORTS_LOCAL_SIMULATION_20261011_NO_PRODUCTION_RUN",
+  "proceedToken": "PROCEED|BROWSER-SETUP-START-LABEL-20261011T2253-GPT6-D8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|setup-start-pseudolabel|isolated-branch|readback",
+  "authorizationBaseSha": "03c9f34b358e7b5bd480077b59e4b5947e3da23b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "SETUP_START_PSEUDOLABEL_DUPLICATE_CSS_R1_20261011",
+  "leaseAcquireKey": "BROWSER-SETUP-START-LABEL-20261011T2253-GPT6-D8",
+  "leaseSnapshotReadbackAtJst": "2026-10-11 22:53 JST",
+  "leaseUntilJst": "2026-10-11 23:38 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR isolated branch codex/setup-start-label-20261011: browser/home-shell-presentation-core.mjs #startMatch::before content only; tests/setup-start-label.test.mjs if needed; data/preaction-authorizations/BROWSER-SETUP-START-LABEL-20261011T2253-GPT6-D8.json. No main/merge/deploy/other Setup PR files.",
+  "scope": [
+    "browser/home-shell-presentation-core.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-shell-presentation-core.mjs"
+  ],
+  "rollbackPlan": "No main change; revert one CSS line or abandon isolated branch; original file blob a1c81327a4cff98ab5241291bdb0d42856cfccc2.",
+  "verificationBoundary": "Focused Playwright/CSS cascade simulation is not a public GAMEROAD use-site test. Required Gate and public version are separate."
+}

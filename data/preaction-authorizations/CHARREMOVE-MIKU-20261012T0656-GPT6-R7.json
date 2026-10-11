@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CHARREMOVE-MIKU-20261012T0656-GPT6-R7",
+  "taskId": "CHARACTER-REMOVE-REM-CELICA-PAIMON-SINON-001",
+  "workUnitKey": "REMOVE_MIKU_CURRENT_BROWSER_ROSTER_R1",
+  "acquireKey": "CHARREMOVE-MIKU-20261012T0656-GPT6-R7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "source-contract-PR100-merged-and-current-PROD_CHARS-scope",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "isolated-immutable-current-HTML-inmemory-replacement-1occurrence-zero-miku-preserve-threecharacters-20261012",
+  "proceedToken": "PROCEED|CHARREMOVE-MIKU-20261012T0656-GPT6-R7|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20261012T0701JST",
+  "authorizationBaseSha": "03c9f34b358e7b5bd480077b59e4b5947e3da23b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "CHARACTER-REMOVE-REM-CELICA-PAIMON-SINON-001",
+  "leaseWorkUnitKey": "REMOVE_MIKU_CURRENT_BROWSER_ROSTER_R1",
+  "leaseAcquireKey": "CHARREMOVE-MIKU-20261012T0656-GPT6-R7",
+  "leaseSnapshotReadbackAtJst": "2026-10-12 06:58 JST",
+  "leaseUntilJst": "2026-10-12 07:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:O5",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR isolated branch gmr/remove-miku-roster-20261012: browser/GAMEROAD.html PROD_CHARS Miku entry only; focused test if needed; build manifest only if required. No other characters, game rules, cards, savings.",
+  "scope": [
+    "browser/GAMEROAD.html"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html"
+  ],
+  "solutionSignature": "Remove only retired Hatsune Miku definition from existing Browser PROD_CHARS single source; preserve current save eligibility filtering and three remaining characters",
+  "reuseDisposition": "REUSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR100-merged-retired-character-one-line-roster-edit-and-current-main-raw-source-proof",
+  "solutionSearchEvidence": [
+    "current main HTML blob 07e952... contains Miku ID/name/asset exactly once within PROD_CHARS",
+    "existing renderCharacters/mountChar/playerCharInfo/savePack/applyParsedSave/normalizePartnerProfiles use PROD_CHARS as authoritative roster",
+    "source dry-run performed on fetched full 11,902,389-character HTML: 1 entry removed; three remaining IDs unchanged; save filtering unchanged"
+  ],
+  "authoredFor": "User explicitly authorized immediate full Hatsune Miku removal 2026-10-11. This file covers Browser roster only; Unity and other present consumers remain separate.",
+  "gameplayAuthority": false,
+  "formalArt": false
+}

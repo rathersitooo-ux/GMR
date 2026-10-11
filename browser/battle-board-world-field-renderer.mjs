@@ -90,6 +90,7 @@ export function createBattleBoardWorldFieldRenderModel({
   graph = createBattleBoardVisualGraph(),
   worldBounds = {},
   builtCountByLaneKey = {},
+  goalPathProjection,
 } = {}) {
   const projection = projectBattleBoardVisualGraphToWorld(graph, worldBounds);
   const nodes = projection.nodes;
@@ -106,15 +107,43 @@ export function createBattleBoardWorldFieldRenderModel({
     }));
   });
   const roundCells = [...lowerRoundCells, ...builtUpperCells];
-  const gates = graph.upperLanes.map((lane) => {
-    const builtCount = Number.isSafeInteger(builtCountByLaneKey[lane.laneKey]) ? builtCountByLaneKey[lane.laneKey] : 0;
-    const state = goalBranchVisualStateForBuiltCount(builtCount);
-    return {
-      id: lane.gate.id, kind: 'ROUTE_GATE', laneKey: lane.laneKey, world: point(nodes, lane.gate.id),
-      state: state === 'STRONG_OPEN' ? 'OPEN_PASSABLE_FRAME' : 'CLOSED_HEAVY_BARRIER',
-      gameplayAuthority: false,
-    };
-  });
+  // One shared physical gate. The 12 lane positions are entry anchors, not gates.
+  // A caller-provided goal path projection has priority over local display counts.
+  if (goalPathProjection !== undefined && (
+    goalPathProjection?.ok !== true || typeof goalPathProjection.gateOpen !== 'boolean'
+  )) throw new TypeError('BATTLE_BOARD_SHARED_GATE_PROJECTION_INVALID');
+  const anyCompletedLane = graph.upperLanes.some((lane) => (
+    goalBranchVisualStateForBuiltCount(
+      Number.isSafeInteger(builtCountByLaneKey[lane.laneKey])
+        ? builtCountByLaneKey[lane.laneKey]
+        : 0,
+    ) === 'STRONG_OPEN'
+  ));
+  const gateIsOpen = goalPathProjection === undefined
+    ? anyCompletedLane
+    : goalPathProjection.gateOpen;
+  const gateAnchors = graph.upperLanes.map((lane) => ({
+    id: lane.gate.id, kind: 'SHARED_GATE_ENTRY_ANCHOR',
+    laneKey: lane.laneKey, world: point(nodes, lane.gate.id),
+    sharedGateId: 'gate:shared', countsAsGate: false, stoppable: false,
+    gameplayAuthority: false,
+  }));
+  const firstGate = gateAnchors[0].world;
+  const lastGate = gateAnchors[gateAnchors.length - 1].world;
+  const sharedGate = {
+    id: 'gate:shared', kind: 'SHARED_GATE',
+    state: gateIsOpen ? 'OPEN_PASSABLE_FRAME' : 'CLOSED_HEAVY_BARRIER',
+    world: {
+      x: (firstGate.x + lastGate.x) / 2,
+      y: (firstGate.y + lastGate.y) / 2,
+      z: (firstGate.z + lastGate.z) / 2,
+    },
+    span: { from: firstGate, to: lastGate },
+    anchorIds: gateAnchors.map((anchor) => anchor.id),
+    countsAsCell: false, stoppable: false,
+    gameplayAuthority: false, movementAuthority: false,
+  };
+  const gates = [sharedGate];
   const shields = graph.upperLanes.map((lane) => ({
     id: lane.shield.id, kind: 'SHIELD_GATE_FACE', laneKey: lane.laneKey,
     world: point(nodes, lane.gate.id), countsAsCell: false, stoppable: false, gameplayAuthority: false,
@@ -142,7 +171,7 @@ export function createBattleBoardWorldFieldRenderModel({
     movementAuthority: false,
     legalityAuthority: false,
     sharedGoal: { id: graph.goal.id, kind: 'SHARED_GOAL', world: point(nodes, graph.goal.id) },
-    roundCells, gates, shields, goalBranches, edges,
+    roundCells, sharedGate, gates, gateAnchors, shields, goalBranches, edges,
     counts: {
       sharedGoal: 1,
       upperLanes: graph.upperLaneCount,
@@ -151,6 +180,7 @@ export function createBattleBoardWorldFieldRenderModel({
       visibleFutureUpperSlots: 0,
       roundCells: roundCells.length,
       gates: gates.length,
+      gateAnchors: gateAnchors.length,
       shields: shields.length,
       terrainBentLowerEdges: lowerEdges.filter((edge) => edge.routePresentation === 'DERIVED_TERRAIN_BOW').length,
       sourceWaypointLowerEdges: lowerEdges.filter((edge) => edge.routePresentation === 'SOURCE_REFERENCE_WAYPOINTS').length,
@@ -163,11 +193,12 @@ export function mountBattleBoardWorldField({
   graph,
   worldBounds,
   builtCountByLaneKey,
+  goalPathProjection,
 } = {}) {
   if (!worldRenderer || typeof worldRenderer.replaceBoard !== 'function') {
     return deepFreeze({ mounted: false, reason: 'WORLD_RENDERER_REQUIRED', schema: SCHEMA });
   }
-  const model = createBattleBoardWorldFieldRenderModel({ graph, worldBounds, builtCountByLaneKey });
+  const model = createBattleBoardWorldFieldRenderModel({ graph, worldBounds, builtCountByLaneKey, goalPathProjection });
   worldRenderer.replaceBoard(model);
   return deepFreeze({
     schema: SCHEMA, mounted: true, renderSpace: 'WORLD_FIELD', screenSpaceBoardTopology: false,
@@ -182,6 +213,8 @@ export const BATTLE_BOARD_WORLD_FIELD_RENDERER_CONTRACT = deepFreeze({
   renderSpace: 'WORLD_FIELD',
   screenSpaceBoardTopology: false,
   sharedGoalCount: 1,
+  sharedGateCount: 1,
+  gateEntryAnchors: 12,
   routeGateAndShieldPreserved: true,
   upperProgressionVisibility: 'ACTUAL_BUILT_CARDS_ONLY',
   visibleFutureUpperSlots: 0,

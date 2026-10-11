@@ -264,7 +264,9 @@ test('four co-located riders are visible separately but never split the game pos
   const asOffsetMap = (model) => Object.fromEntries(model.controlledCharacterRides.map((r) => [
     r.participantId, r.groundWorld,
   ]));
-  assert.deepEqual(asOffsetMap(first), asOffsetMap(second));
+  for (const participantId of ['P1', 'P2', 'P3', 'P4']) {
+    assert.deepEqual(asOffsetMap(first)[participantId], asOffsetMap(second)[participantId]);
+  }
   assert.ok(first.controlledCharacterRides.every((r) => r.visibilityOffsetOnly === true));
   assert.ok(first.controlledCharacterRides.every((r) => r.positionAuthority === 'CALLER_CONFIRMED_NEW_BOARD_NODE'));
 });

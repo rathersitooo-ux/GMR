@@ -142,6 +142,78 @@ function boardMechanicPresentations({ cellRoles, areas, gimmicks, pickups, round
   };
 }
 
+
+/**
+ * Character and ride positions follow the same caller-authoritative node.
+ * Ride seating is an art/rigging offset; it must not move the player in the game.
+ * Co-located players are separated only for presentation and retain nodeId.
+ */
+function projectControlledCharacterRides(characters, roundCells, nodes, goalId) {
+  if (!Array.isArray(characters)) throw new TypeError('BATTLE_BOARD_CHARACTERS_ARRAY_REQUIRED');
+  const allowed = new Set([...roundCells.map((c) => c.id), goalId]);
+  const ids = new Set();
+  const rows = characters.map((row) => {
+    if (!row || typeof row !== 'object'
+      || typeof row.participantId !== 'string' || !/^P[1-4]$/.test(row.participantId)
+      || ids.has(row.participantId)
+      || typeof row.characterId !== 'string' || !row.characterId.trim()
+      || typeof row.nodeId !== 'string' || !allowed.has(row.nodeId)
+      || typeof row.facing !== 'string' || !row.facing.trim()) {
+      throw new TypeError('BATTLE_BOARD_CHARACTER_PROJECTION_INVALID');
+    }
+    ids.add(row.participantId);
+    let ride = null;
+    if (row.ride !== undefined && row.ride !== null) {
+      if (typeof row.ride !== 'object' || Array.isArray(row.ride)
+        || typeof row.ride.assetId !== 'string' || !row.ride.assetId.trim()
+        || !Number.isFinite(row.ride.seatHeight) || row.ride.seatHeight < 0) {
+        throw new TypeError('BATTLE_BOARD_RIDE_ASSET_OR_SEAT_INVALID');
+      }
+      ride = { assetId: row.ride.assetId, seatHeight: row.ride.seatHeight };
+    }
+    return { participantId: row.participantId, characterId: row.characterId,
+      nodeId: row.nodeId, facing: row.facing, ride };
+  });
+  const grouped = new Map();
+  for (const row of rows) {
+    if (!grouped.has(row.nodeId)) grouped.set(row.nodeId, []);
+    grouped.get(row.nodeId).push(row);
+  }
+  // Stable participant ordering prevents flickering when caller snapshots reorder.
+  for (const group of grouped.values()) group.sort((a, b) => a.participantId.localeCompare(b.participantId));
+  const positions = Object.freeze([
+    Object.freeze([0, 0]), Object.freeze([-0.16, 0]), Object.freeze([0.16, 0]),
+    Object.freeze([-0.16, -0.16]), Object.freeze([0.16, -0.16]),
+  ]);
+  return rows.map((row) => {
+    const group = grouped.get(row.nodeId);
+    const index = group.findIndex((other) => other.participantId === row.participantId);
+    const offset = group.length === 1 ? positions[0]
+      : group.length === 2 ? positions[index + 1]
+      : group.length === 3 ? (index === 0 ? positions[1] : index === 1 ? positions[2] : positions[3])
+      : positions[index + 1];
+    const nodeWorld = point(nodes, row.nodeId);
+    const anchorWorld = {
+      x: nodeWorld.x + offset[0], y: nodeWorld.y, z: nodeWorld.z + offset[1],
+    };
+    const characterWorld = {
+      ...anchorWorld, y: anchorWorld.y + (row.ride?.seatHeight ?? 0),
+    };
+    return {
+      participantId: row.participantId, characterId: row.characterId,
+      nodeId: row.nodeId, facing: row.facing,
+      nodeWorld, groundWorld: anchorWorld, contactShadowWorld: anchorWorld,
+      characterWorld, ride: row.ride === null ? null : {
+        assetId: row.ride.assetId, world: anchorWorld, facing: row.facing,
+        seatWorld: characterWorld, seatHeight: row.ride.seatHeight,
+      },
+      coLocatedCount: group.length, visibilityOffsetOnly: true,
+      presentationOnly: true, gameplayAuthority: false, movementAuthority: false,
+      positionAuthority: 'CALLER_CONFIRMED_NEW_BOARD_NODE',
+    };
+  });
+}
+
 export function createBattleBoardWorldFieldRenderModel({
   graph = createBattleBoardVisualGraph(),
   worldBounds = {},
@@ -151,6 +223,7 @@ export function createBattleBoardWorldFieldRenderModel({
   areas = {},
   gimmicks = [],
   pickups = [],
+  controlledCharacters = [],
 } = {}) {
   const projection = projectBattleBoardVisualGraphToWorld(graph, worldBounds);
   const nodes = projection.nodes;
@@ -170,6 +243,9 @@ export function createBattleBoardWorldFieldRenderModel({
   const mechanicPresentations = boardMechanicPresentations({
     cellRoles, areas, gimmicks, pickups, roundCells, nodes,
   });
+  const controlledCharacterRides = projectControlledCharacterRides(
+    controlledCharacters, roundCells, nodes, graph.goal.id,
+  );
   // One shared physical gate. The 12 lane positions are entry anchors, not gates.
   // A caller-provided goal path projection has priority over local display counts.
   if (goalPathProjection !== undefined && (
@@ -234,7 +310,8 @@ export function createBattleBoardWorldFieldRenderModel({
     movementAuthority: false,
     legalityAuthority: false,
     sharedGoal: { id: graph.goal.id, kind: 'SHARED_GOAL', world: point(nodes, graph.goal.id) },
-    roundCells, mechanicPresentations, sharedGate, gates, gateAnchors, shields, goalBranches, edges,
+    roundCells, mechanicPresentations, controlledCharacterRides,
+    sharedGate, gates, gateAnchors, shields, goalBranches, edges,
     counts: {
       sharedGoal: 1,
       upperLanes: graph.upperLaneCount,
@@ -261,13 +338,14 @@ export function mountBattleBoardWorldField({
   areas = {},
   gimmicks = [],
   pickups = [],
+  controlledCharacters = [],
 } = {}) {
   if (!worldRenderer || typeof worldRenderer.replaceBoard !== 'function') {
     return deepFreeze({ mounted: false, reason: 'WORLD_RENDERER_REQUIRED', schema: SCHEMA });
   }
   const model = createBattleBoardWorldFieldRenderModel({
     graph, worldBounds, builtCountByLaneKey, goalPathProjection,
-    cellRoles, areas, gimmicks, pickups,
+    cellRoles, areas, gimmicks, pickups, controlledCharacters,
   });
   worldRenderer.replaceBoard(model);
   return deepFreeze({
@@ -287,6 +365,9 @@ export const BATTLE_BOARD_WORLD_FIELD_RENDERER_CONTRACT = deepFreeze({
   gateEntryAnchors: 12,
   mechanicLayersHaveGameplayAuthority: false,
   mechanicLayersReplaceCellIdentity: false,
+  controlledCharacterRidePositionAuthority: 'CALLER_CONFIRMED_NEW_BOARD_NODE',
+  controlledCharacterRidesMayChangeGameplay: false,
+  rideSeatHeightIsSuppliedByAssetRig: true,
   routeGateAndShieldPreserved: true,
   upperProgressionVisibility: 'ACTUAL_BUILT_CARDS_ONLY',
   visibleFutureUpperSlots: 0,

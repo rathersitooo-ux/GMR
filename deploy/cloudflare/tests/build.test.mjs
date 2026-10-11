@@ -128,6 +128,8 @@ const dependencyContract = [
 ];
 
 const presentationAssetContract = [
+  { file: 'assets/visual/battle-vfx/throw-thin.png', source: 'browser/assets/visual/battle-vfx/throw-thin.png', artifact: 'battle_throw_thin_texture' },
+  { file: 'assets/visual/battle-vfx/impact-cyan.png', source: 'browser/assets/visual/battle-vfx/impact-cyan.png', artifact: 'battle_throw_impact_texture' },
   { file: 'assets/visual/effects/screen-transition-edge-shimmer-sprite-v1.png', source: 'assets/visual/effects/screen-transition-edge-shimmer-sprite-v1.png', artifact: 'screen_transition_edge_shimmer_sprite' },
   { file: 'assets/visual/effects/records-selection-sweep-sprite-v1.png', source: 'assets/visual/effects/records-selection-sweep-sprite-v1.png', artifact: 'records_selection_sweep_sprite' },
   { file: 'assets/visual/rank-match/waiting-bg.webp', source: 'browser/assets/visual/rank-match/waiting-bg.webp', artifact: 'rank_match_waiting_bg' },

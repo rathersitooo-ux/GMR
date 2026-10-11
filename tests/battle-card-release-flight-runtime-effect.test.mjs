@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 
 import {
   BATTLE_CARD_RELEASE_DESTINATION_PULSE_DURATION_MS,
-  BATTLE_CARD_RELEASE_FLIGHT_TRAIL_DURATION_MS,
   captureBattleCardReleaseFlightEffect,
   playBattleCardReleaseFlightEffect,
 } from '../browser/battle-card-release-flight-runtime-effect.mjs';
@@ -102,7 +101,7 @@ test('capture snapshots geometry without mutating the authoritative source node'
   assert.deepEqual(source.dataset, { armed: 'true', untouched: 'source' });
 });
 
-test('full top flight consumes the merged core trajectory and adds independent trail/impact layers', () => {
+test('full top flight preserves trajectory and waits for arrival before playing the impact atlas', async () => {
   const { source, clone, host, cues, documentRef } = fixture();
   const flight = capture(source, { role: 'top' });
 
@@ -115,13 +114,25 @@ test('full top flight consumes the merged core trajectory and adds independent t
   assert.equal(options.duration, 560);
   assert.equal(clone.dataset.jankenFlight, '1');
   assert.equal(clone.style.pointerEvents, 'none');
-  assert.equal(cues.length, 2);
+  assert.equal(cues.length, 1);
   const trail = cues.find(node => node.dataset.jankenFlightTrail === '1');
-  const impact = cues.find(node => node.dataset.jankenFlightImpact === '1');
   assert.ok(trail);
+  assert.match(trail.style.backgroundImage, /throw-thin\.png/);
+  assert.equal(trail.animationCalls[0].options.duration, options.duration);
+  assert.equal(cues.some(node => node.dataset.jankenFlightImpact), false);
+  clone.finish.resolve();
+  await flushMicrotasks();
+  const impact = cues.find(node => node.dataset.jankenFlightImpact === '1');
   assert.ok(impact);
-  assert.equal(trail.animationCalls[0].options.duration, BATTLE_CARD_RELEASE_FLIGHT_TRAIL_DURATION_MS);
-  assert.equal(impact.animationCalls[0].options.duration, 180);
+  assert.match(impact.style.backgroundImage, /impact-cyan\.png/);
+  assert.equal(new Set(impact.animationCalls[0].frames.map(frame => frame.backgroundPosition)).size, 8);
+  assert.equal(impact.animationCalls[0].frames.at(-2).offset, 7 / 8);
+  assert.equal(impact.animationCalls[0].frames.at(-1).backgroundPosition, '100% 0%');
+  assert.equal(impact.style.left, '420px');
+  assert.equal(impact.style.top, '180px');
+  assert.equal(impact.animationCalls[0].options.duration, 240);
+  assert.equal(impact.animationCalls[0].options.easing, 'linear');
+  assert.ok(impact.animationCalls[0].frames.every(frame => frame.easing === 'steps(1, end)'));
 });
 
 test('full bottom flight mirrors the rotational direction', () => {
@@ -199,29 +210,34 @@ test('flight clone and reduced-motion cue are removed after completion', async (
   assert.equal(cues[0].removed, true);
 });
 
-test('full-motion trail and impact layers are removed when the main flight settles', async () => {
+test('arrival removes travel layers but lets impact finish independently', async () => {
   const { source, clone, host, cues, documentRef } = fixture();
   const flight = capture(source, { role: 'bottom' });
   assert.equal(playBattleCardReleaseFlightEffect({ host, flight, documentRef }), true);
   const trail = cues.find(node => node.dataset.jankenFlightTrail === '1');
-  const impact = cues.find(node => node.dataset.jankenFlightImpact === '1');
   assert.ok(trail);
-  assert.ok(impact);
   clone.finish.resolve();
   await flushMicrotasks();
+  const impact = cues.find(node => node.dataset.jankenFlightImpact === '1');
+  assert.ok(impact);
   assert.equal(clone.removed, true);
   assert.equal(trail.removed, true);
+  assert.equal(impact.removed, false);
+  impact.finish.resolve();
+  await flushMicrotasks();
   assert.equal(impact.removed, true);
 });
 
 test('flight clone is removed when Web Animations rejects', async () => {
-  const { source, clone, host, documentRef } = fixture();
+  const { source, clone, host, cues, documentRef } = fixture();
   const flight = capture(source);
 
   assert.equal(playBattleCardReleaseFlightEffect({ host, flight, documentRef }), true);
   clone.finish.reject(new Error('animation cancelled'));
   await flushMicrotasks();
   assert.equal(clone.removed, true);
+  assert.equal(cues.some(node => node.dataset.jankenFlightImpact === '1'), false);
+  assert.ok(cues.every(node => node.removed));
 });
 
 test('full-motion effect still fails closed when the cloned visual cannot animate', () => {

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-4P-VALID-AUTH-20261013T1608-GPT6",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "BATTLE_4P_ACCEPTED_TARGET_CAUSAL_REACTION_REPAIR_R3",
+  "acquireKey": "BATTLE-4P-VALID-AUTH-20261013T1608-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "GMR_4P_RUNTIME_CURRENT_ACTUAL_AND_PRIOR_PR2320_CODE_DIFF",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR2320_SOURCE_READBACK_4_FILES_AND_TEST_CODE_NOT_FORMAL_BROWSER",
+  "proceedToken": "PROCEED|BATTLE-4P-VALID-AUTH-20261013T1608-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|REVIEW_ONLY",
+  "authorizationBaseSha": "42887ed615ba5c8d7f11f7e183f108bf4a5c8d2c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_4P_ACCEPTED_TARGET_CAUSAL_REACTION_REPAIR_R3",
+  "leaseAcquireKey": "BATTLE-4P-VALID-AUTH-20261013T1608-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-13 16:08 JST",
+  "leaseUntilJst": "2026-10-13 17:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A14:L14",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR isolated gmr/battle-4p-valid-auth-20261013-gpt6: browser/battle-screen-runtime-mount.mjs; browser/battle-cinematic-accepted-targets.mjs; tests/battle-cinematic-accepted-targets.test.mjs; data/preaction-authorizations/BATTLE-4P-VALID-AUTH-20261013T1608-GPT6.json; own draft PR. No main merge/public, no other file change.",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "browser/battle-cinematic-accepted-targets.mjs",
+    "tests/battle-cinematic-accepted-targets.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "browser/battle-cinematic-accepted-targets.mjs",
+    "tests/battle-cinematic-accepted-targets.test.mjs"
+  ],
+  "solutionSignature": "4-person accepted event target-order cinematic and causal pose timing using existing browser timeline",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR2320_BATTLE_RUNTIME_EXISTING_HELPER_AND_TARGET_FOCUS",
+  "solutionSearchEvidence": [
+    "Reuse existing accepted public target projection focus.targetIds from battle-screen-presentation-core",
+    "Reuse existing browser/battle-cinematic-causal-timeline-core six-phase timing and Saasuna motion controller",
+    "Reuse exact source from prior PR2320 without claiming visual acceptance"
+  ]
+}

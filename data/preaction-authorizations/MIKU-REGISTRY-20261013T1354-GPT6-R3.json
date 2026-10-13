@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "MIKU-REGISTRY-20261013T1354-GPT6-R3",
+  "taskId": "CHARACTER-REMOVE-REM-CELICA-PAIMON-SINON-001",
+  "workUnitKey": "MIKU_BROWSER_DIALOGUE_SELECTION_RETIRE_R3",
+  "acquireKey": "MIKU-REGISTRY-20261013T1354-GPT6-R3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "actual-main-registered-miku-label-and-unfiltered-partnerProfiles",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "unique-match-rehearsal-4-of-4-20261013",
+  "proceedToken": "PROCEED|MIKU-REGISTRY-20261013T1354-GPT6-R3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20261013T1356JST",
+  "authorizationBaseSha": "67978c8a951cfc5347fe414adff635fd4b9c2000",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "CHARACTER-REMOVE-REM-CELICA-PAIMON-SINON-001",
+  "leaseWorkUnitKey": "MIKU_BROWSER_DIALOGUE_SELECTION_RETIRE_R3",
+  "leaseAcquireKey": "MIKU-REGISTRY-20261013T1354-GPT6-R3",
+  "leaseSnapshotReadbackAtJst": "2026-10-13 13:54 JST",
+  "leaseUntilJst": "2026-10-13 15:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:O10",
+  "leaseExactMutableResources": "GitHub branch gmr/remove-miku-dialogue-selection-20261013 browser/partner-dialogue-source-registry.mjs + tests/partner-dialogue-source-registry.test.mjs + own preaction record only",
+  "scope": [
+    "browser/partner-dialogue-source-registry.mjs",
+    "tests/partner-dialogue-source-registry.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-dialogue-source-registry.mjs",
+    "tests/partner-dialogue-source-registry.test.mjs"
+  ],
+  "solutionSignature": "Retire Miku from runtime-visible advice roster and display; refuse legacy saved selection and preserve three remaining partner identities",
+  "reuseDisposition": "REUSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "reuse-current-dialogue-registry-existing-runtime-roster-and-validation",
+  "solutionSearchEvidence": [
+    "main registry source blob 4551272a... contains one Miku display label and unfiltered roster extraction",
+    "registry currentAdvicePartnerId uses filtered roster for legacy safe fallback",
+    "4 exact source/text replacement anchors each appear exactly once"
+  ],
+  "authoredFor": "User directly authorized immediate comprehensive Miku removal on 2026-10-11; this first branch changes only one Browser partner choice/display slice, not gameplay roster or other media.",
+  "gameplayAuthority": false,
+  "formalArt": false
+}

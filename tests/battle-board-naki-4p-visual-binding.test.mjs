@@ -183,6 +183,12 @@ test('renders an explicit contact shadow at the authoritative marker foot instea
   assert.doesNotMatch(source, /drop-shadow\(0 6px 8px rgba\(0,0,0,\.42\)\)/);
 });
 
+test('visible avatar retains pointer input while its outer box passes reachable-node taps through', () => {
+  const source = readFileSync(new URL('../browser/battle-board-naki-4p-visual-binding.mjs', import.meta.url), 'utf8');
+  assert.ok(source.includes('#battleRuntime{pointer-events:none}'));
+  assert.ok(source.includes('#battleRuntime .grtc-image,#battleRuntime .grtc-source-blocked{pointer-events:auto}'));
+});
+
 test('keeps four-character identity surfaces inside the existing board-first footprint budget', () => {
   const footprint = CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING.visualFootprint;
   assert.deepEqual(footprint.desktop, { surfaceWidth: 44, surfaceHeight: 56, fallbackWidth: 34, fallbackHeight: 44 });

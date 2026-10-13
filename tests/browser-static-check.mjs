@@ -57,6 +57,20 @@ function collectHomeVisualShellErrors(html) {
 
 function collectStaticErrors(html) {
   const errors = [];
+  // Text after an unmatched closing script is ordinary visible HTML, so checking
+  // only executable script bodies cannot catch an orphaned copy of JavaScript.
+  const scriptTags = html.match(/<\/?script\b[^>]*>/gi) ?? [];
+  let scriptOpen = false;
+  for (const tag of scriptTags) {
+    if (/^<\/script/i.test(tag)) {
+      if (!scriptOpen) errors.push('unmatched closing script tag exposes source as HTML text');
+      scriptOpen = false;
+    } else {
+      if (scriptOpen) errors.push('nested script opening tag');
+      scriptOpen = true;
+    }
+  }
+  if (scriptOpen) errors.push('unclosed script tag');
   if (html.includes('PLAN_ACCEPTED')) errors.push('legacy post-card PLAN_ACCEPTED confirmation is present');
   if (!/<!doctype\s+html\b/i.test(html)) errors.push('missing HTML doctype');
 
@@ -320,6 +334,10 @@ async function validateHtml(html) {
 }
 
 async function runSelfTest() {
+  const orphanScript = '<!doctype html><script>const ok = true;</script>on=async function(){return ok};</script>';
+  if (!collectStaticErrors(orphanScript).includes('unmatched closing script tag exposes source as HTML text')) {
+    throw new Error('self-test failed: checker did not detect orphan source outside script');
+  }
   const brokenSyntax = `<!doctype html><section data-screen="home"></section>${CORE_SCREENS.slice(1)
     .map((x) => `<section data-screen="${x}"></section>`)
     .join('')}<button data-go="setup"></button><script>const navigateDetail=()=>{};const x={dataset:{go:'setup'}};navigateDetail(x.dataset.go);const broken = ;</script>`;

@@ -3836,10 +3836,6 @@ body.low-perf .battlePhaseBackdrop{background:none!important}.battle.dedicatedBa
  };
  syncShell();
 })();
-</script>on=async function(stage,base={},wait=BATTLE_PRESENTATION_STEP_MS){const cutinHold=stage==='focus'&&!battlePresentationRuntime.fast?Math.max(Number(wait)||0,(state.settings.reduceMotion||state.settings.lowPerf)?180:520):wait;return baseSetBattlePresentation(stage,base,cutinHold)};
- window.__GAMEROAD_BATTLE_PHASE_R2__={sync:syncShell,snapshot:()=>{const r=surface.getBoundingClientRect(),br=box.getBoundingClientRect();return{live:root.classList.contains('dedicatedBattlePhase'),stage:surface.dataset.stage||null,surfaceHidden:surface.hidden,boardVisibility:getComputedStyle(map).visibility,boardPointer:getComputedStyle(map).pointerEvents,resolutionParent:box.parentElement?.id||null,nakiCharacter:naki?.dataset?.characterId||null,nakiNodes:naki?.childElementCount||0,surfaceRect:[r.x,r.y,r.width,r.height],resolutionRect:[br.x,br.y,br.width,br.height],docOverflow:document.documentElement.scrollWidth-document.documentElement.clientWidth}}};
- syncShell();
-})();
 </script>
 
 

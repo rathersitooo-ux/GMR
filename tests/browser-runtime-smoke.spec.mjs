@@ -52,6 +52,8 @@ test('GAMEROAD boots and core navigation runs without JS errors', async ({ page 
   const firstVisibleControlWallMs = Date.now() - navigationWallStart;
 
   await page.waitForLoadState('load');
+  expect(await page.locator('body').innerText(), 'script source must not leak into player-visible HTML')
+    .not.toContain('baseSetBattlePresentation');
   const bootTiming = await page.evaluate(() => {
     const nav = performance.getEntriesByType('navigation')[0];
     if (!nav) return null;

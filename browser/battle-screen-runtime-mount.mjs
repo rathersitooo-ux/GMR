@@ -203,6 +203,8 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelTargets .grBattleCinematicDuelFigure{width:clamp(42px,9vw,130px);height:clamp(90px,27vh,225px)}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelTargets .grBattleCinematicDuelMeta{max-width:100%;padding:3px 5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelTargets .grBattleCinematicDuelMeta b{font-size:clamp(9px,1.05vw,14px)}
+@keyframes grBattleCinematicTargetBraceOnly{0%{transform:translateY(0) scale(1)}45%{transform:translateY(1%) scale(.99)}100%{transform:translateY(0) scale(1)}}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}][data-causal-phase="reaction"] .grBattleCinematicDuelSide[data-role="target"][data-explicit-recoil="false"] .grBattleCinematicDuelFigure{animation:grBattleCinematicTargetBraceOnly 180ms ease-out both}
 @media(max-width:540px){[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelTargets{gap:1px;width:48vw}[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelTargets .grBattleCinematicDuelFigure{width:clamp(30px,10vw,58px);height:clamp(76px,21vh,150px)}[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelTargets .grBattleCinematicDuelMeta{padding:2px}}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelSide[data-movement-intent="ENTER_STAGE"]{animation:grBattleCinematicDuelEnter 260ms cubic-bezier(.18,.78,.2,1) both}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] .grBattleCinematicDuelSide[data-movement-intent="ENTER_STAGE"]{animation:none!important}
@@ -684,7 +686,7 @@ function disposeCinematicDuelRuntime(global, scene) {
   }
   clearBattleCinematicCausalTimeline(active.timelineNodes ?? [scene]);
   for (const controller of active.motionControllers ?? []) {
-    try { controller.destroy?.(); } catch {}
+    try { controller.controller?.destroy?.(); } catch {}
   }
   const runtime = global?.GameRoadThreeCharRuntime;
   if (typeof runtime?.unmount === 'function') {
@@ -804,6 +806,22 @@ function createCinematicDuelFx(document) {
 function applyCinematicTimelinePhaseToCharacters(global, active, entry) {
   if (!active || !entry) return;
   active.timelinePhase = entry.phase;
+  // Phase-specific poses follow the existing action timeline. A visible
+  // attack target is not proof that its attack penetrated defenses.
+  for (const binding of active.motionControllers ?? []) {
+    const sourceAction = binding.role === 'source'
+      && ['release', 'impact', 'reaction', 'static'].includes(entry.phase);
+    const explicitRecoil = binding.role === 'target'
+      && entry.phase === 'reaction'
+      && binding.motionState === 'HIT_RECOIL';
+    const cue = sourceAction || explicitRecoil;
+    try {
+      binding.controller.setState({
+        phase: cue ? binding.actionPhase : 'idle',
+        motionState: cue ? (binding.motionState ?? null) : 'IDLE_GENTLE'
+      }, { restart: false });
+    } catch {}
+  }
   const runtime = global?.GameRoadThreeCharRuntime;
   if (typeof runtime?.setState !== 'function') return;
   for (const binding of active.characterBindings ?? []) {
@@ -867,12 +885,18 @@ function mountCinematicDuelCharacter(global, scene, view, characterId, role, mot
       characterId,
       role,
       motion,
-      phase: motionContext?.phase,
+      phase: motion === 'static_only' && role === 'source' ? motionContext?.phase : 'idle',
       transition: motionContext?.transition,
-      motionState: motionContext?.motionState
+      motionState: motion === 'static_only' && role === 'source'
+        ? motionContext?.motionState : 'IDLE_GENTLE'
     });
     if (motionController) {
-      active.motionControllers.push(motionController);
+      active.motionControllers.push({
+        controller: motionController,
+        role,
+        actionPhase: motionContext?.phase,
+        motionState: motionContext?.motionState
+      });
       view.figure.dataset.motionVisualKind = 'provisional-keyframe-sheet';
       view.figure.dataset.provisionalArt = 'true';
     }
@@ -965,6 +989,11 @@ function writeCinematicDuel(global, document, scene, model, context = {}) {
       retainedParticipants.includes(targetLanes[index].id) ? 'REMAIN_STAGE' : 'ENTER_STAGE');
   }
   const motionByParticipant = context?.cinematicMotionByParticipant ?? {};
+  for (let index = 0; index < targetViews.length; index += 1) {
+    const lane = targetLanes[index];
+    setData(targetViews[index].side, 'explicitRecoil',
+      motionByParticipant[lane.id] === 'HIT_RECOIL' ? 'true' : 'false');
+  }
   const sourceCharacterId = exactCinematicCharacterId(global, document, source.id, context);
   const targetCharacterIds = targetLanes.map(lane => exactCinematicCharacterId(global, document, lane.id, context));
 

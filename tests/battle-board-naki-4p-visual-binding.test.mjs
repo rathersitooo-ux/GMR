@@ -187,6 +187,7 @@ test('visible avatar retains pointer input while its outer box passes reachable-
   const source = readFileSync(new URL('../browser/battle-board-naki-4p-visual-binding.mjs', import.meta.url), 'utf8');
   // Four-player avatar z-index is 8 in current-player UI; board 9 wins node clicks and remains below projected actors (12).
   assert.ok(source.includes('#battleMap #board{z-index:9!important}'));
+  assert.ok(source.includes('#battleMap #boardPlayers{z-index:12!important}'));
   assert.ok(source.includes('#battleRuntime{pointer-events:none}'));
   assert.ok(source.includes('#battleRuntime .grtc-image,#battleRuntime .grtc-source-blocked{pointer-events:auto}'));
 });

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD-MODEL-CACHE-INTEGRATE-20261013T1946-CODEX",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "EXISTING_WORLD_FIELD_MODEL_CAMERA_REUSE_INTEGRATION",
+  "acquireKey": "BOARD-MODEL-CACHE-INTEGRATE-20261013T1946-CODEX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "saved source geometry equality and 36 local/26 Windows tests; reuse exact e6afa2e delta",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "reuse source verified; package gate requires exact composer pin update, to run before material push",
+  "proceedToken": "PROCEED|BOARD-MODEL-CACHE-INTEGRATE-20261013T1946-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|saved-delta-with-current-package-pin",
+  "authorizationBaseSha": "42887ed615ba5c8d7f11f7e183f108bf4a5c8d2c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "EXISTING_WORLD_FIELD_MODEL_CAMERA_REUSE_INTEGRATION",
+  "leaseAcquireKey": "BOARD-MODEL-CACHE-INTEGRATE-20261013T1946-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-10-13 19:46 JST",
+  "leaseUntilJst": "2026-10-13 20:46 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A13:L13",
+  "leaseExactMutableResources": "browser/battle-new-base-board-live-presentation-composer.mjs; tests/battle-new-base-board-live-presentation-composer.test.mjs; deploy/cloudflare/tests/build.test.mjs composer currentBlob entry only; own data/preaction-authorizations/BOARD-MODEL-CACHE-INTEGRATE-20261013T1946-CODEX.json; own branch codex/board-model-cache-integrate-20261013; own worktree GMR-board-cache; GAMEROAD 全作業一覧 N1322 result only; exact scoped PR/main/public integration after gates",
+  "scope": [
+    "browser/battle-new-base-board-live-presentation-composer.mjs",
+    "tests/battle-new-base-board-live-presentation-composer.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-new-base-board-live-presentation-composer.mjs",
+    "tests/battle-new-base-board-live-presentation-composer.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "reuseDisposition": "ADAPT",
+  "solutionSignature": "existing immutable world-field model in existing mounted composer; bounded one-entry camera redraw reuse",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "current native consumer and MDN source in N1322",
+  "solutionSearchEvidence": [
+    "browser/GAMEROAD.html renderField3D worldFieldRenderModel call",
+    "browser/battle-board-world-field-renderer.mjs frozen model",
+    "https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices"
+  ]
+}

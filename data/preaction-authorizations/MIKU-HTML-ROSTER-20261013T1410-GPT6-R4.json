@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "MIKU-HTML-ROSTER-20261013T1410-GPT6-R4",
+  "taskId": "CHARACTER-REMOVE-REM-CELICA-PAIMON-SINON-001",
+  "workUnitKey": "MIKU_BROWSER_LIVE_ROSTER_REMOVE_R4",
+  "acquireKey": "MIKU-HTML-ROSTER-20261013T1410-GPT6-R4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "main-HTML-source-single-Miku-PROD_CHARS-entry-and-validated-save-filter",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "exact-one-entry-target-and-three-characters-source-check-20261013",
+  "proceedToken": "PROCEED|MIKU-HTML-ROSTER-20261013T1410-GPT6-R4|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20261013T1413JST",
+  "authorizationBaseSha": "02962aa0c23228bc7e1e91f6729b848703da6e66",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "CHARACTER-REMOVE-REM-CELICA-PAIMON-SINON-001",
+  "leaseWorkUnitKey": "MIKU_BROWSER_LIVE_ROSTER_REMOVE_R4",
+  "leaseAcquireKey": "MIKU-HTML-ROSTER-20261013T1410-GPT6-R4",
+  "leaseSnapshotReadbackAtJst": "2026-10-13 14:10 JST",
+  "leaseUntilJst": "2026-10-13 15:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:L10",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR isolated gmr/remove-miku-html-roster-20261013-r4: browser/GAMEROAD.html PROD_CHARS one Miku entry only; own preaction file only.",
+  "scope": [
+    "browser/GAMEROAD.html"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html"
+  ],
+  "solutionSignature": "Remove one exact Miku entry from Browser PROD_CHARS, preserve Naki/Saasuna/Mato, rely on existing save validity checks and normalized partnerProfiles",
+  "reuseDisposition": "REUSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "prior-PR100-original-removals-and-current-roster-save-use-sites",
+  "solutionSearchEvidence": [
+    "Current HTML blob 0fd225... one literal Miku character entry in PROD_CHARS, partner creator Miku id once",
+    "Live use sites roster render, partner profiles, save selection and match display all use PROD_CHARS",
+    "Existing PR#2316 already removed Miku from advice partner selection in current main"
+  ],
+  "authoredFor": "Explicit 2026-10-11 user's immediate full removal of Hatsune Miku. This work unit is Browser authoritative roster only; complete removal across platforms remains open.",
+  "gameplayAuthority": false,
+  "formalArt": false
+}

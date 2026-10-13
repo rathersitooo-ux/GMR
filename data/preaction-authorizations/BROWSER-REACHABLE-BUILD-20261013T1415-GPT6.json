@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BROWSER-REACHABLE-BUILD-20261013T1415-GPT6",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_REACHABLE_NODE_BUILD_PIN_CORRECTION_R2",
+  "acquireKey": "BROWSER-REACHABLE-BUILD-20261013T1415-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PLAYER_PUBLIC_HONEY4P_R1_TILE_C:-1:0_INTERCEPTS_20261013_AND_CI_REQUIRED_GATE_RUN_38350307621_BUILD_PIN_FAIL",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PREVIOUS_PR2317_SAME_SOURCE_PATCH_OBSERVED_REQUIRED_GATE_FAILURE_PLUS_EXACT_BUILD_DEPENDENCY_BLOB_4dfa9989c41926766d010d52cdde2b5e059a416d",
+  "proceedToken": "PROCEED|BROWSER-REACHABLE-BUILD-20261013T1415-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ISOLATED_THREE_FILE_BUILD_PIN_REPAIR",
+  "authorizationBaseSha": "02962aa0c23228bc7e1e91f6729b848703da6e66",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_REACHABLE_NODE_BUILD_PIN_CORRECTION_R2",
+  "leaseAcquireKey": "BROWSER-REACHABLE-BUILD-20261013T1415-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-13 14:15 JST",
+  "leaseUntilJst": "2026-10-13 15:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR isolated gmr/reachable-tile-hit-build-20261013: browser/battle-board-naki-4p-visual-binding.mjs; tests/battle-board-naki-4p-visual-binding.test.mjs; deploy/cloudflare/tests/build.test.mjs (battle-board-naki-4p-visual-binding currentBlob entry only); own CURRENT_ACTIVE_LEASES A11:O11; optional GAMEROAD 全作業一覧 row2 N.",
+  "scope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

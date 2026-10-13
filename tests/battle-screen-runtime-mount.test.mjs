@@ -586,9 +586,9 @@ const saasunaMotionSurface = cinematicSides[1].children[0].children.find(
   node => node.dataset.role === 'saasuna-battle-motion-surface'
 );
 assert.ok(saasunaMotionSurface);
-assert.equal(saasunaMotionSurface.dataset.motionState, 'HIT_RECOIL');
-assert.equal(saasunaMotionSurface.children[0].dataset.keyframeId, 'wind-cut');
-assert.equal(saasunaMotionSurface.children[3].hidden, false);
+assert.equal(saasunaMotionSurface.dataset.motionState, 'IDLE_GENTLE');
+assert.equal(saasunaMotionSurface.children[0].dataset.keyframeId, 'idle');
+assert.equal(saasunaMotionSurface.children[3].hidden, true);
 assert.equal(cinematicSides[0].children[0].children[0].getAttribute('data-battle-cinematic-character'), '');
 assert.equal(cinematicSides[1].children[0].children[0].getAttribute('data-battle-cinematic-character'), '');
 assert.deepEqual(
@@ -1107,11 +1107,11 @@ assert.equal(BATTLE_SCREEN_RUNTIME.battlePhaseBoardSurfacePolicy, 'HIDE_EXISTING
 assert.deepEqual(BATTLE_SCREEN_RUNTIME.battlePhaseAllowedInputs, ['skip', 'public_info', 'accessibility']);
 assert.equal(BATTLE_SCREEN_RUNTIME.cinematicOrderAuthority, 'MODEL_CAUSAL_RETURN_PROCESSING_ORDER_ONLY_NO_SORT_OR_INFERENCE');
 assert.equal(BATTLE_SCREEN_RUNTIME.cinematicOrderVisibleCardIdText, false);
-assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelAuthority, 'MODEL_LANE_ROLE_EXACT_ONE_SOURCE_EXACT_ONE_TARGET_ONLY_NO_INFERENCE');
+assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelAuthority, 'MODEL_FOCUS_ACCEPTED_ORDER_ONE_SOURCE_ONE_TO_THREE_TARGETS_NO_INFERENCE');
 assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelArt, 'EXISTING_CHARACTER_RUNTIME_PLUS_PROVISIONAL_SAASUNA_9_KEYFRAME_SHEET_NO_FORMAL_ART');
 assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelReaction, 'EXISTING_CHARACTER_RUNTIME_PLUS_PROVISIONAL_SAASUNA_STATEFUL_REACTION_NO_GAMEPLAY_STATE');
 assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelVfx, 'PROVISIONAL_ICE_WIND_IMPACT_LAYERS_PLUS_EXISTING_NEUTRAL_SHOT_NO_FORMAL_ART');
-assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelHandoff, 'ACCEPTED_CONVEYOR_TRANSITION_PLUS_CONSECUTIVE_ACCEPTED_PAIR_CONTINUITY_NO_ORDER_INFERENCE');
+assert.equal(BATTLE_SCREEN_RUNTIME.cinematicDuelHandoff, 'ACCEPTED_CONVEYOR_TRANSITION_PLUS_CONSECUTIVE_ACCEPTED_PARTICIPANT_CONTINUITY_NO_ORDER_INFERENCE');
 assert.equal(BATTLE_SCREEN_RUNTIME.saasunaBattleMotion, 'PRESENTATION_ONLY_9_KEYFRAME_SHEET_PLUS_CSS_TIMELINE_NO_GAMEPLAY_AUTHORITY');
 assert.deepEqual(BATTLE_SCREEN_RUNTIME.saasunaBattleMotionStates.length, 11);
 assert.deepEqual(BATTLE_SCREEN_RUNTIME.saasunaBattleMotionEffects, ['ice', 'wind', 'impact']);
@@ -1161,3 +1161,43 @@ assert.match(portraitScreenSource, /grBattleLaneRole,.*grBattleLaneAfterstate\{d
 assert.match(portraitScreenSource, /#battleResolution\{left:8px!important;right:8px!important;bottom:12px!important/);
 assert.match(portraitScreenSource, /\[\$\{PROGRESS_GUIDE_ATTR\}\]\{display:none!important\}/);
 assert.doesNotMatch(portraitScreenSource, /battle-screen-runtime-mount-base\.mjs/);
+
+
+// Integration: the presentation runtime must expose all accepted targets in event order.
+const fourTargetDoc = new FakeDocument();
+const fourTargetMap = fourTargetDoc.createElement('section');
+fourTargetMap.id = 'battleMap';
+fourTargetDoc.body.appendChild(fourTargetMap);
+const fourTargetRoot = fourTargetDoc.createElement('main');
+fourTargetRoot.setAttribute('data-gr-battle-screen-root', '');
+fourTargetDoc.body.appendChild(fourTargetRoot);
+const fourTargetRuntime = mountBattleScreenExternalSurface({
+  ...cinematicCharacterGlobal,
+  document: fourTargetDoc
+}, {
+  root: fourTargetRoot,
+  viewerParticipantId: 'P1',
+  cinematicCharacterByParticipant: { P4: 'partner.saasuna' }
+});
+const fourTargetPlan = {
+  ...attackPlan,
+  eventId: 'attack-three-accepted',
+  groupTargets: ['P4', 'P2', 'P3'],
+  publicData: { sourceId: 'P1', targetIds: ['P4', 'P2', 'P3'] }
+};
+const fourTargetModel = createBattleScreenModel({ participants, plan: fourTargetPlan });
+fourTargetRuntime.render(fourTargetModel);
+await Promise.resolve();
+await Promise.resolve();
+const targetGroup = fourTargetRuntime.cinematicDuel.children.find(
+  node => node.className === 'grBattleCinematicDuelTargets'
+);
+assert.ok(targetGroup, 'accepted multi-target group rendered');
+assert.equal(targetGroup.dataset.targetCount, '3');
+assert.deepEqual(targetGroup.children.map(node => node.dataset.participantId), ['P4', 'P2', 'P3']);
+assert.deepEqual(fourTargetRuntime.cinematicDuel.dataset.targetIds, 'P4|P2|P3');
+assert.equal(fourTargetRuntime.cinematicDuel.dataset.targetId, undefined);
+assert.equal(fourTargetRuntime.cinematicDuel.dataset.sourceId, 'P1');
+assert.equal(fourTargetRuntime.cinematicDuel.dataset.incomingParticipants, 'P1|P4|P2|P3');
+assert.equal(targetGroup.children[0].dataset.explicitRecoil, 'false');
+fourTargetRuntime.destroy();

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PHASE-TEXT-PUBLISH-20261013T1004-CODEX",
+  "taskId": "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PHASE_ORPHAN_SCRIPT_TEXT_REPAIR_PUBLISH",
+  "acquireKey": "BATTLE-PHASE-TEXT-PUBLISH-20261013T1004-CODEX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "MAIN_03c9f34_53_OPEN_54_CLOSE_ORPHAN_DUPLICATE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXACT_ORPHAN_RANGE_AND_STATIC_SCRIPT_PASS_PROVES_BOUNDARY_GAP",
+  "proceedToken": "PROCEED|BATTLE-PHASE-TEXT-PUBLISH-20261013T1004-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|user-explicit-publish-permission",
+  "authorizationBaseSha": "03c9f34b358e7b5bd480077b59e4b5947e3da23b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PHASE_ORPHAN_SCRIPT_TEXT_REPAIR_PUBLISH",
+  "leaseAcquireKey": "BATTLE-PHASE-TEXT-PUBLISH-20261013T1004-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-10-13 10:04 JST",
+  "leaseUntilJst": "2026-10-13 11:04 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; tests/browser-static-check.mjs; tests/browser-runtime-smoke.spec.mjs; own transient data/preaction-authorizations/BATTLE-PHASE-TEXT-PUBLISH-20261013T1004-CODEX.json; own GitHub branch codex/battle-phase-text-publish-20261013 and PR",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    "tests/browser-runtime-smoke.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    "tests/browser-runtime-smoke.spec.mjs"
+  ]
+}

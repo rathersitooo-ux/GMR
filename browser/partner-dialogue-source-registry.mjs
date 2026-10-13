@@ -9,11 +9,12 @@ import {
 import { projectPartnerAdviceReplyPair } from './partner-advice-player-control-core.mjs';
 
 const SOURCE_STATE = 'approved_current';
+// Historical saved IDs may remain, but cannot become a selectable or displayable partner.
+const RETIRED_MIKU_ID = 'partner.creator.miku';
 const DISPLAY_NAMES = Object.freeze({
   'partner.naki': '緋累ナキ',
   'partner.saasuna': 'サースナー',
   'partner.mato': '泊愛まと',
-  'partner.creator.miku': '初音ミク',
 });
 const DELEGATION_PRESENTATION_LABELS = Object.freeze({
   'まかせた': 'まかせた！',
@@ -81,7 +82,7 @@ export function partnerRosterIdsFromRuntime(win = globalThis.window) {
       || win?.__GAMEROAD_TEST__?.state?.partnerProfiles
       || null;
     if (!profiles || typeof profiles !== 'object' || Array.isArray(profiles)) return Object.freeze([]);
-    return Object.freeze(Object.keys(profiles).filter((id) => Boolean(exactId(id))));
+    return Object.freeze(Object.keys(profiles).filter((id) => Boolean(exactId(id)) && id !== RETIRED_MIKU_ID));
   } catch {
     return Object.freeze([]);
   }

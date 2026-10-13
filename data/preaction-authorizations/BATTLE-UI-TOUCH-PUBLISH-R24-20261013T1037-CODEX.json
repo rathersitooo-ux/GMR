@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-UI-TOUCH-PUBLISH-R24-20261013T1037-CODEX",
+  "taskId": "BROWSER-BATTLE-SCREEN-VISUAL-REMAKE-001",
+  "workUnitKey": "BATTLE_SUPPORT_CONTROL_R23_PUBLISH_REVIEWED",
+  "acquireKey": "BATTLE-UI-TOUCH-PUBLISH-R24-20261013T1037-CODEX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BATTLE-UI-TOUCH-R23-20261013T1015-CODEX:EDGE_CONTROL_RED_GREEN",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "BATTLE-UI-TOUCH-R23-20261013T1015-CODEX:PUBLIC_PRESENTATION_OVERRIDE_3VIEW",
+  "proceedToken": "PROCEED|BATTLE-UI-TOUCH-PUBLISH-R24-20261013T1037-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-10-13 10:37 JST",
+  "authorizationBaseSha": "67978c8a951cfc5347fe414adff635fd4b9c2000",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-SCREEN-VISUAL-REMAKE-001",
+  "leaseWorkUnitKey": "BATTLE_SUPPORT_CONTROL_R23_PUBLISH_REVIEWED",
+  "leaseAcquireKey": "BATTLE-UI-TOUCH-PUBLISH-R24-20261013T1037-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-10-13 10:37 JST",
+  "leaseUntilJst": "2026-10-13 11:37 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/battle-current-player-ui-runtime.mjs; own transient data/preaction-authorizations/BATTLE-UI-TOUCH-PUBLISH-R24-20261013T1037-CODEX.json; own branch codex/battle-ui-touch-publish-r24-20261013 and PR/main integration of reviewed scope",
+  "scope": [
+    "browser/battle-current-player-ui-runtime.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-current-player-ui-runtime.mjs"
+  ],
+  "publicationAuthorization": "User reply 進めて at2026-10-13 10:35 JST to explicit question authorizing reviewed change, required authorization history, GitHub transmission, integration and publication to rathersitooo-ux/GMR."
+}

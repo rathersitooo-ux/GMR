@@ -134,6 +134,7 @@ ${BATTLE_FOCUS_CHROME_SELECTOR}{display:none!important}
 #battleRuntime .grtc-root,#battleRuntime .grtc-facing,#battleRuntime .grtc-primary-motion,#battleRuntime .grtc-secondary-motion,#battleRuntime .grtc-image{position:relative;z-index:1}
 /* Reachable board nodes must win hits over the avatar, without covering the four actor markers or visible sprite drag. */
 #battleMap #board{z-index:9!important}
+#battleMap #boardPlayers{z-index:12!important}
 #battleRuntime{pointer-events:none}
 #battleRuntime .grtc-image,#battleRuntime .grtc-source-blocked{pointer-events:auto}
 #boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}][data-motion-phase="moving"][data-motion-reduced="0"][data-motion-lowperf="0"] .grtc-image{animation:grccAcceptedMove var(--grcc-motion-duration) ease-out 1}

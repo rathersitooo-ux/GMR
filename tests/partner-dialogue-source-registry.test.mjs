@@ -53,13 +53,12 @@ function presentationButton(text, { forced = false } = {}) {
   };
 }
 
-test('uses the existing runtime partner profiles as the only selectable roster', () => {
+test('uses runtime partner profiles but never selects a retired character', () => {
   const { win } = runtime();
   assert.deepEqual(partnerRosterIdsFromRuntime(win), [
     'partner.naki',
     'partner.saasuna',
     'partner.mato',
-    'partner.creator.miku',
   ]);
   assert.equal(PARTNER_DIALOGUE_SOURCE_REGISTRY_CONTRACT.rosterAuthority, 'existing-runtime-partnerProfiles');
 });
@@ -75,6 +74,20 @@ test('advice partner is independently selected and saved through the existing ma
   assert.equal(cycleAdvicePartner(win), 'partner.mato');
   assert.equal(state.selectedPartnerId, 'partner.naki');
   assert.equal(currentAdvicePartnerId(win), 'partner.mato');
+});
+
+test('a legacy removed partner cannot be restored as advice partner after loading', () => {
+  const { win, state, saves } = runtime();
+  state.selectedPartnerId = 'partner.creator.miku';
+  state.settings.advicePartnerId = 'partner.creator.miku';
+  assert.deepEqual(partnerRosterIdsFromRuntime(win), ['partner.naki', 'partner.saasuna', 'partner.mato']);
+  assert.equal(currentAdvicePartnerId(win), 'partner.naki');
+  assert.equal(setAdvicePartnerId(win, 'partner.creator.miku'), false);
+  assert.equal(state.settings.advicePartnerId, 'partner.creator.miku');
+  assert.deepEqual(saves, []);
+  assert.equal(setAdvicePartnerId(win, 'partner.saasuna'), true);
+  assert.equal(state.settings.advicePartnerId, 'partner.saasuna');
+  assert.deepEqual(saves, ['partner.saasuna']);
 });
 
 test('unknown partner ids never become a second identity authority', () => {
@@ -105,7 +118,7 @@ test('current display labels remain Japanese while roster authority remains exte
   assert.equal(partnerDisplayName('partner.naki'), '緋累ナキ');
   assert.equal(partnerDisplayName('partner.saasuna'), 'サースナー');
   assert.equal(partnerDisplayName('partner.mato'), '泊愛まと');
-  assert.equal(partnerDisplayName('partner.creator.miku'), '初音ミク');
+  assert.equal(partnerDisplayName('partner.creator.miku'), 'パートナー');
   assert.equal(partnerDisplayName('partner.future'), 'パートナー');
 });
 

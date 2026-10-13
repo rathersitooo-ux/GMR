@@ -132,7 +132,8 @@ ${BATTLE_FOCUS_CHROME_SELECTOR}{display:none!important}
 #boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}] .grtc-image{position:relative;z-index:1;display:block;width:auto;height:100%;max-width:100%;object-fit:contain;opacity:1;visibility:visible;transform:scaleX(var(--grcc-facing-scale));transform-origin:50% 85%}
 #battleRuntime::before{content:"";position:absolute;left:50%;bottom:0;width:${CONTACT_SHADOW.widthPercent}%;height:${CONTACT_SHADOW.heightPercent}%;transform:translateX(-50%) scaleY(${CONTACT_SHADOW.planeScaleY});transform-origin:50% 50%;border-radius:50%;background:radial-gradient(ellipse at center,rgba(4,8,10,.46) 0%,rgba(4,8,10,.30) 48%,rgba(4,8,10,0) 78%);opacity:${CONTACT_SHADOW.opacity};pointer-events:none;z-index:0}
 #battleRuntime .grtc-root,#battleRuntime .grtc-facing,#battleRuntime .grtc-primary-motion,#battleRuntime .grtc-secondary-motion,#battleRuntime .grtc-image{position:relative;z-index:1}
-/* Only the visible character remains a pointer target; the avatar box cannot cover reachable board nodes. */
+/* Reachable board nodes must win hits over the avatar, without covering the four actor markers or visible sprite drag. */
+#battleMap #board{z-index:9!important}
 #battleRuntime{pointer-events:none}
 #battleRuntime .grtc-image,#battleRuntime .grtc-source-blocked{pointer-events:auto}
 #boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}][data-motion-phase="moving"][data-motion-reduced="0"][data-motion-lowperf="0"] .grtc-image{animation:grccAcceptedMove var(--grcc-motion-duration) ease-out 1}

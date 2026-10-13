@@ -1201,3 +1201,54 @@ assert.equal(fourTargetRuntime.cinematicDuel.dataset.sourceId, 'P1');
 assert.equal(fourTargetRuntime.cinematicDuel.dataset.incomingParticipants, 'P1|P4|P2|P3');
 assert.equal(targetGroup.children[0].dataset.explicitRecoil, 'false');
 fourTargetRuntime.destroy();
+
+
+// Causal state regression: target recoil is gated to reaction, not mere targeting.
+const clockDoc = new FakeDocument();
+const clockMap = clockDoc.createElement('section');
+clockMap.id = 'battleMap';
+clockDoc.body.appendChild(clockMap);
+const clockRoot = clockDoc.createElement('main');
+clockRoot.setAttribute('data-gr-battle-screen-root', '');
+clockDoc.body.appendChild(clockRoot);
+const phaseTimers = [];
+const clockGlobal = {
+  ...cinematicCharacterGlobal,
+  document: clockDoc,
+  setTimeout(callback, ms) {
+    phaseTimers.push({ callback, ms });
+    return phaseTimers.length;
+  },
+  clearTimeout() {}
+};
+const phaseRuntime = mountBattleScreenExternalSurface(clockGlobal, {
+  root: clockRoot,
+  viewerParticipantId: 'P1',
+  cinematicCharacterByParticipant: { P4: 'partner.saasuna' }
+});
+phaseRuntime.render(attack, null, {
+  cinematicMotionByParticipant: { P4: 'HIT_RECOIL' }
+});
+await Promise.resolve();
+await Promise.resolve();
+const phaseTargetSide = phaseRuntime.cinematicDuel.children.find(node => node.dataset.role === 'target');
+const phaseTargetFigure = phaseTargetSide.children[0];
+const phaseTargetSurface = phaseTargetFigure.children.find(
+  node => node.dataset.role === 'saasuna-battle-motion-surface'
+);
+assert.ok(phaseTargetSurface);
+assert.equal(phaseTargetSurface.dataset.motionState, 'IDLE_GENTLE');
+assert.equal(phaseRuntime.cinematicDuel.dataset.causalPhase, 'stance');
+assert.equal(phaseTargetSide.dataset.explicitRecoil, 'true');
+assert.equal(phaseTimers.length, 5);
+for (const phase of ['anticipation', 'release', 'impact', 'reaction', 'return']) {
+  const next = phaseTimers.shift();
+  next.callback();
+  assert.equal(phaseRuntime.cinematicDuel.dataset.causalPhase, phase);
+  assert.equal(
+    phaseTargetSurface.dataset.motionState,
+    phase === 'reaction' ? 'HIT_RECOIL' : 'IDLE_GENTLE',
+    'target recoil must follow exact accepted reaction phase'
+  );
+}
+phaseRuntime.destroy();

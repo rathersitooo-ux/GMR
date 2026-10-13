@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BROWSER-REACHABLE-TILE-HIT-20261013T1408-GPT6",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_REACHABLE_NODE_CHARACTER_POINTER_PASS_THROUGH_R1",
+  "acquireKey": "BROWSER-REACHABLE-TILE-HIT-20261013T1408-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PLAYER_REAL_BROWSER_20261013_ROUND1_C:-1:0_POINTER_INTERCEPT_BY_grtc-secondary-motion_AND_C:0:1_SUCCESS",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "SAME_ORIGIN_EXISTING_PUBLIC_FIRST_PLAYER_REPRO_20261013_THEN_TARGETED_NODE_TEST_PLAN",
+  "proceedToken": "PROCEED|BROWSER-REACHABLE-TILE-HIT-20261013T1408-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|GITHUB_ISOLATED_FIX",
+  "authorizationBaseSha": "02962aa0c23228bc7e1e91f6729b848703da6e66",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_REACHABLE_NODE_CHARACTER_POINTER_PASS_THROUGH_R1",
+  "leaseAcquireKey": "BROWSER-REACHABLE-TILE-HIT-20261013T1408-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-13 14:09 JST",
+  "leaseUntilJst": "2026-10-13 14:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR branch gmr/reachable-tile-hit-20261013: browser/battle-board-naki-4p-visual-binding.mjs CSS #battleRuntime pointer hit path; tests/battle-board-naki-4p-visual-binding.test.mjs same feature; own sheet A11:O11, optional Task row2 N.",
+  "scope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs"
+  ]
+}

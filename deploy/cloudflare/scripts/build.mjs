@@ -23,6 +23,7 @@ const FORMAL_PARTNER_CONVERSATION_BLOBS = Object.freeze({
 });
 
 const ARTIFACT_SPECS = Object.freeze([
+  { source: 'browser/assets/visual/battle-ui/wood-frame-r1.png', output: 'assets/visual/battle-ui/wood-frame-r1.png', artifact: 'battle_ui_wood_frame_r1', label: 'Battle information raster frame' },
   { option: 'coreSource', expected: 'expectedCoreBlob', source: 'browser/deck-save-recovery-core.mjs', output: 'deck-save-recovery-core.mjs', artifact: 'deck_save_recovery_core', label: 'Deck save recovery core', sourceFlag: '--core-source', expectedFlag: '--expected-core-blob' },
   { option: 'deckSaveAckCoreSource', expected: 'expectedDeckSaveAckCoreBlob', source: 'browser/deck-save-ack-core.mjs', output: 'deck-save-ack-core.mjs', artifact: 'deck_save_ack_core', label: 'Deck save ACK core', sourceFlag: '--deck-save-ack-core-source', expectedFlag: '--expected-deck-save-ack-core-blob' },
   { option: 'presenceCoreSource', expected: 'expectedPresenceCoreBlob', source: 'browser/hate-peer-presence-core.mjs', output: 'hate-peer-presence-core.mjs', artifact: 'hate_peer_presence_core', label: 'HATE peer presence core', sourceFlag: '--presence-core-source', expectedFlag: '--expected-presence-core-blob' },

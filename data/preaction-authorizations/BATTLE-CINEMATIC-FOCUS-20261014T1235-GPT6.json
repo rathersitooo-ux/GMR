@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CINEMATIC-FOCUS-20261014T1235-GPT6",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "EXISTING_BATTLE_FOUR_ACTOR_CAMERA_FOCUS_VISUAL_R1",
+  "acquireKey": "BATTLE-CINEMATIC-FOCUS-20261014T1235-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "EXISTING_PR2323_SCREEN_RUNTIME_CINEMATIC_CSS_AND_USER_ORIGINAL_VISUAL_CORRECTIONS",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_PR2323_ACCEPTED_TARGET_ROLE_AND_EXPLICIT_HIT_GATES_READ_ONLY_ORACLE",
+  "proceedToken": "PROCEED|BATTLE-CINEMATIC-FOCUS-20261014T1235-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|REVIEW_ONLY",
+  "authorizationBaseSha": "12b028a5d303602ffc3f2a703ec6c110b766d7d4",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "EXISTING_BATTLE_FOUR_ACTOR_CAMERA_FOCUS_VISUAL_R1",
+  "leaseAcquireKey": "BATTLE-CINEMATIC-FOCUS-20261014T1235-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-14 12:35 JST",
+  "leaseUntilJst": "2026-10-14 13:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A26:O26",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR isolated branch gmr/battle-cinematic-camera-focus-20261014 from existing four-person implementation branch head 12b028a5d303602ffc3f2a703ec6c110b766d7d4; browser/battle-screen-runtime-mount.mjs cinematic camera CSS only; own data/preaction-authorizations/BATTLE-CINEMATIC-FOCUS-20261014T1235-GPT6.json; own CURRENT_ACTIVE_LEASES tuple. No main/public/HTML/gameplay/network edits.",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs"
+  ],
+  "solutionSignature": "existing cinematic scene source close-up then reveal depth and retreat on causal phases without inferring target, hit, damage, or attack range",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR2323_CURRENT_CINEMATIC_DUEL_AND_CHARACTER_RUNTIME_ACCEPTED_TARGETS",
+  "solutionSearchEvidence": [
+    "Reuse existing accepted target+source identity and 6 causal phases on PR2323",
+    "Camera emphasis confined to existing browser battle-screen runtime presentation CSS, not gameplay",
+    "User original visual direction: attack actor hero close up then pullback, remove redundant center labels, keep normal short and special long; final visual acceptance is unverified and PR remains draft",
+    "Reuse existing primary Naki/Saasuna character assets; no copied third-party artwork"
+  ]
+}

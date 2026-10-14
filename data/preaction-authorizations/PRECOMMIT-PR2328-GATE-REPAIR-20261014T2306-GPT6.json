@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PRECOMMIT-PR2328-GATE-REPAIR-20261014T2306-GPT6",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_PRECOMMIT_CLEAR_COMMIT_RACE_R1_GATE_RECOVERY",
+  "acquireKey": "PRECOMMIT-PR2328-GATE-REPAIR-20261014T2306-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "GH_REQUIRED_GATE_38559509779_first_commit_not_manifest_only_and_PR2328_exact_known_source_test_blob_composition",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR2313_MANIFEST_FIRST_3_COMMIT_PRECEDENT_FAD73F3436B23CD2B3A6484BF8F60A8A527E3972_PLUS_CURRENT_VALIDATOR_EVALUATION_NOT_GAME_ACCEPTANCE",
+  "proceedToken": "PROCEED|PRECOMMIT-PR2328-GATE-REPAIR-20261014T2306-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-precommit-race-existing-pr|isolated-branch-history|readback",
+  "authorizationBaseSha": "b4c1cf5ff372b9e4aba711bce99a90ff6a520048",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_PRECOMMIT_CLEAR_COMMIT_RACE_R1_GATE_RECOVERY",
+  "leaseAcquireKey": "PRECOMMIT-PR2328-GATE-REPAIR-20261014T2306-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-14 23:08 JST",
+  "leaseUntilJst": "2026-10-14 23:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR existing PR#2328 head branch gmr/battle-precommit-race-20261014-gpt6 only: branch ref, browser/battle-new-base-live-consumer-adapter.mjs, tests/battle-new-base-live-consumer-adapter.test.mjs, new transient data/preaction-authorizations/PRECOMMIT-PR2328-GATE-REPAIR-20261014T2306-GPT6.json. No main/merge/public/other game files.",
+  "scope": [
+    "browser/battle-new-base-live-consumer-adapter.mjs",
+    "tests/battle-new-base-live-consumer-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-new-base-live-consumer-adapter.mjs",
+    "tests/battle-new-base-live-consumer-adapter.test.mjs"
+  ],
+  "rollbackPlan": "Existing PR branch head bbfa759ca8b6233b18a77feb8658f8fd622e8c0b retained immutable, never touch main; force-with-lease only after exact product tree identity match; roll back PR ref by expected head if needed.",
+  "verificationBoundary": "The previous PR code/test bytes are identical; this repairs CI authorization history only. Product behavior, full BFI, public and Human acceptance still unproven."
+}

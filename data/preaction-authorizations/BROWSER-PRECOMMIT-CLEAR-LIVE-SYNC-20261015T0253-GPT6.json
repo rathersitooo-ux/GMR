@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BROWSER-PRECOMMIT-CLEAR-LIVE-SYNC-20261015T0253-GPT6",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_PRECOMMIT_CLEAR_LIVE_SYNC_R1",
+  "acquireKey": "BROWSER-PRECOMMIT-CLEAR-LIVE-SYNC-20261015T0253-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "2026-10-14 current main b4c1cf5 109-case BFI run38527482254 failed precommit control activation 390/667 plus selected value 1280; code current updatePlanFromSelect onchange omits grSyncBattlePrecommitClear unlike renderBattle; existing focused BFI assertions already cover all three.",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "Exact-source bounded invariant: append existing synchronous grSyncBattlePrecommitClear() to roadSelect/battleSelect onchange after updatePlanFromSelect, thereby refreshing disabled/aria immediately on actual selection; BFI current browser execution and real user click remain required, do not claim PASS.",
+  "proceedToken": "PROCEED|BROWSER-PRECOMMIT-CLEAR-LIVE-SYNC-20261015T0253-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-10-15 02:53 JST",
+  "authorizationBaseSha": "b4c1cf5ff372b9e4aba711bce99a90ff6a520048",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_PRECOMMIT_CLEAR_LIVE_SYNC_R1",
+  "leaseAcquireKey": "BROWSER-PRECOMMIT-CLEAR-LIVE-SYNC-20261015T0253-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-15 02:53 JST",
+  "leaseUntilJst": "2026-10-15 03:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:O6",
+  "leaseExactMutableResources": "GitHub isolated branch gmr/battle-precommit-clear-live-sync-20261015: browser/GAMEROAD.html plan dropdown change-handler only, existing test tests/browser-full-interaction.spec.mjs if necessary, own preaction witness and central Task2 N2, R25 own lease.",
+  "scope": [
+    "browser/GAMEROAD.html"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html"
+  ],
+  "decision": "Player-visible one-step Clear must become available as soon as valid unsubmitted Road or Battle selection changes, rather than only following a later unrelated render. Existing grSyncBattlePrecommitClear already owns phase, busy, committed, and target gates. Do not alter policies.",
+  "nonRegression": [
+    "No rollback of submitted or committed actions, and no game rule/card/transport/save change",
+    "Keep original route undo and target clear behavior, 2P/4P Honey and Road rules",
+    "Existing browser full interaction three viewports must be assessed; CI green is not actual player acceptance",
+    "No main/public merge or other active owner modification under this lease"
+  ],
+  "source": "User GAMEROAD NORTH STAR max completion delta; existing browser task row2, 2026-10-14 current source BFI and previously recorded 2026-10-13 player operation gap."
+}

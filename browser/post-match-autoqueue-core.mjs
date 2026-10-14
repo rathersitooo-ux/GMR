@@ -196,6 +196,17 @@ export function createPostMatchAutoQueueController({
     if (!cycle?.ticketId || String(update.ticketId ?? '') !== cycle.ticketId) return snapshot();
     const status = String(update.status ?? '').toLowerCase();
 
+    // Provider notifications can arrive out of order. An earlier searching,
+    // cancellation, or failure event must not revoke a confirmed match.
+    if ((cycle.status === POST_MATCH_AUTOQUEUE_STATUS.MATCHED ||
+         cycle.status === POST_MATCH_AUTOQUEUE_STATUS.CONNECTING) &&
+        (status === 'waiting' || status === 'matching' || status === 'searching' ||
+         status === 'cancelled' || status === 'canceled' ||
+         status === 'failed' || status === 'expired' ||
+         (cycle.status === POST_MATCH_AUTOQUEUE_STATUS.CONNECTING && status === 'matched'))) {
+      return snapshot();
+    }
+
     if (status === 'waiting' || status === 'matching' || status === 'searching') {
       if (cycle.status !== POST_MATCH_AUTOQUEUE_STATUS.CANCEL_REQUESTED) {
         cycle.status = POST_MATCH_AUTOQUEUE_STATUS.SEARCHING;

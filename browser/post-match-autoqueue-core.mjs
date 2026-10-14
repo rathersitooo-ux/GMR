@@ -71,6 +71,7 @@ export function createPostMatchAutoQueueController({
       ticketId: null,
       matchId: null,
       cancelAfterStart: false,
+      restartAfterCancel: false,
       cancelTooLate: false,
       error: null,
     };
@@ -148,6 +149,7 @@ export function createPostMatchAutoQueueController({
     if (!cycle) return emit();
 
     if (!enabled) {
+      cycle.restartAfterCancel = false;
       if (cycle.status === POST_MATCH_AUTOQUEUE_STATUS.STARTING) {
         cycle.cancelAfterStart = true;
         cycle.status = POST_MATCH_AUTOQUEUE_STATUS.CANCEL_REQUESTED;
@@ -170,6 +172,11 @@ export function createPostMatchAutoQueueController({
       return emit();
     }
 
+    if (cycle.status === POST_MATCH_AUTOQUEUE_STATUS.CANCEL_REQUESTED) {
+      // A second ON must resume searching if the provider confirms cancellation.
+      cycle.restartAfterCancel = true;
+      return emit();
+    }
     if (cycle.status === POST_MATCH_AUTOQUEUE_STATUS.DISABLED ||
         cycle.status === POST_MATCH_AUTOQUEUE_STATUS.CANCELLED ||
         cycle.status === POST_MATCH_AUTOQUEUE_STATUS.FAILED) {
@@ -197,12 +204,25 @@ export function createPostMatchAutoQueueController({
       cycle.status = POST_MATCH_AUTOQUEUE_STATUS.CANCELLED;
       cycle.cancelTooLate = false;
       cycle.error = null;
+      if (cycle.restartAfterCancel && enabled && cycle.eligible) {
+        const replacement = makeCycle({
+          resultId: cycle.resultId,
+          eligible: cycle.eligible,
+          queueSignature: cycle.queueSignature,
+          attempt: cycle.attempt + 1,
+        });
+        // Defer: the existing consumer clears the old cancel poll just after
+        // this synchronous provider update. Start the new poll only afterward.
+        queueMicrotask(() => {
+          if (current === replacement && enabled) void startCycle(replacement);
+        });
+        return emit();
+      }
     } else if (status === 'matched') {
+      const cancellationWasPending = cycle.status === POST_MATCH_AUTOQUEUE_STATUS.CANCEL_REQUESTED;
       cycle.status = POST_MATCH_AUTOQUEUE_STATUS.MATCHED;
       cycle.matchId = update.matchId == null ? null : String(update.matchId);
-      cycle.cancelTooLate = !enabled || cycle.cancelAfterStart || cycle.status === POST_MATCH_AUTOQUEUE_STATUS.CANCEL_REQUESTED;
-      // Any explicit OFF before this authoritative update means cancellation lost the race.
-      if (!enabled || cycle.cancelAfterStart) cycle.cancelTooLate = true;
+      cycle.cancelTooLate = !enabled || cycle.cancelAfterStart || cancellationWasPending;
       cycle.error = null;
     } else if (status === 'connecting') {
       cycle.status = POST_MATCH_AUTOQUEUE_STATUS.CONNECTING;

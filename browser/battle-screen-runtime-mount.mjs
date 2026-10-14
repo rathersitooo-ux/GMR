@@ -1,3 +1,4 @@
+import { installBattleBoardWorldLazyMount } from './battle-board-world-live-mount.mjs';
 import { auditBattleScreenModel } from './battle-screen-presentation-core.mjs';
 import { mountBattleCriticalResourceHud } from './battle-critical-resource-hud-runtime.mjs';
 import { mountBattleCurrentPlayerUi } from './battle-current-player-ui-runtime.mjs';
@@ -1360,6 +1361,7 @@ function writeHud(document, hud, snapshot) {
 
 export function mountBattleScreenExternalSurface(global = globalThis, options = {}) {
   const document = requireDocument(global);
+  installBattleBoardWorldLazyMount(global);
   const providedPhase = options.phaseSurface ?? null;
   const providedResolution = options.resolutionSurface ?? null;
   let root = options.root ?? null;
@@ -1859,6 +1861,7 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   viewerRoleAuthority: 'CALLER_EXPLICIT_PARTICIPANT_ID_ONLY_NO_ORDER_INFERENCE',
   viewerRoleFallback: 'NEUTRAL_PUBLIC_SUMMARIES',
   viewerSelfPresentation: 'SAME_AUTHORITATIVE_PARTICIPANT_NO_DUPLICATE_PEER_ENTITY',
+  world3dComposition: 'SHARED_LAZY_PRESENTATION_RUNTIME_NO_GAMEPLAY_AUTHORITY',
   productionHtmlMutationOwnedHere: false,
   formalArtOwnedHere: false
 });

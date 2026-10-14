@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CAMERA-PRESERVE-ACTION-20261014T1250-GPT6",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "FIX_CAMERA_CSS_SUPPRESSING_ORIGINAL_ATTACKER_MOTION",
+  "acquireKey": "BATTLE-CAMERA-PRESERVE-ACTION-20261014T1250-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR2326_EXACT_CSS_ANIMATION_NONE_OVERRIDES_EXISTING_SOURCE_STRIKE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_MAIN_ATTACK_STRIKE_KEYFRAMES_AND_PR2323_HIT_GATED_AUTHORITATIVE_VIEW",
+  "proceedToken": "PROCEED|BATTLE-CAMERA-PRESERVE-ACTION-20261014T1250-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|REVIEW_ONLY",
+  "authorizationBaseSha": "b04837dea2888ecfd03811455c1e3526a6a27b72",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "FIX_CAMERA_CSS_SUPPRESSING_ORIGINAL_ATTACKER_MOTION",
+  "leaseAcquireKey": "BATTLE-CAMERA-PRESERVE-ACTION-20261014T1250-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-14 12:50 JST",
+  "leaseUntilJst": "2026-10-14 13:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A26:O26",
+  "leaseExactMutableResources": "Existing GitHub PR#2326 head branch gmr/battle-cinematic-camera-focus-20261014, browser/battle-screen-runtime-mount.mjs camera CSS animation:none source suppression only; own data/preaction-authorizations/BATTLE-CAMERA-PRESERVE-ACTION-20261014T1250-GPT6.json; PR readback; no main/other files/public",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs"
+  ],
+  "solutionSignature": "Preserve existing authored battle strike motion while retaining accepted-viewer camera pullback without gameplay modifications",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_PR2326_VS_EXISTING_CHARACTER_MOTION_RULE",
+  "solutionSearchEvidence": [
+    "Remove the camera CSS that replaces release/impact original source figure animation with none; keep existing authored attack keyframes.",
+    "Same source file, no new animation authority, no codepaths or gameplay rules."
+  ]
+}

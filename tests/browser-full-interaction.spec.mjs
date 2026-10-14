@@ -1442,6 +1442,10 @@ await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount
   await expect(battle.locator('#battleMap')).toHaveClass(/showRange/);
   await attachStateScreenshot(page, testInfo, 'battle-range-visible');
 
+  // The four formal strategies have no implicit default. Choose one through
+  // the same visible control before requesting a plan recommendation.
+  await battle.locator('#partnerRule').selectOption('left');
+  await expect(battle.locator('#partnerRule')).toHaveValue('left');
   await battle.locator('#partnerAdviceBtn').click();
   const advice = await page.evaluate(() => window.__GAMEROAD_HATE_PARTNER_TEST__?.adviceEnvelope?.() ?? null);
   expect(advice).not.toBeNull();
@@ -2181,7 +2185,9 @@ test('R2 visible precommit one-operation clear preserves route undo and fails cl
   expect(roadId).toBeTruthy();
   expect(battleId).toBeTruthy();
   await roadSelect.selectOption(roadId);
+  await expect(clearAll, 'one staged Road card enables one-operation clear').toBeEnabled();
   await battleSelect.selectOption(battleId);
+  await expect(battle.locator('#phaseTitle'), 'selection must remain an uncommitted plan').toContainText('行動を計画');
   await expect(clearAll).toBeEnabled();
   await clearAll.click();
   await expect(roadSelect).toHaveValue('');

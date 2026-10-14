@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RASTER-TOUCH-20261014T1017-CODEX",
+  "taskId": "BROWSER-BATTLE-SCREEN-VISUAL-REMAKE-001",
+  "workUnitKey": "ADOPTED_RASTER_NATIVE_DRAWER_TOUCH_REPAIR",
+  "acquireKey": "BATTLE-RASTER-TOUCH-20261014T1017-CODEX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "RECOVERED_ADOPTED_PACKAGE_EXACT_SHA_AND_NATIVE_CONSUMER",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "GENERATED_FRAME_DIRECT_IMAGE_INPUT_AND_EXISTING_UI_CONTROLLER",
+  "proceedToken": "PROCEED|BATTLE-RASTER-TOUCH-20261014T1017-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|raster-frame|presentation-assets-build|active-lease",
+  "authorizationBaseSha": "661dc440e72c2f7e05d84c05a3833c78e6166b86",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-SCREEN-VISUAL-REMAKE-001",
+  "leaseWorkUnitKey": "ADOPTED_RASTER_NATIVE_DRAWER_TOUCH_REPAIR",
+  "leaseAcquireKey": "BATTLE-RASTER-TOUCH-20261014T1017-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-10-14 10:17 JST",
+  "leaseUntilJst": "2026-10-14 11:17 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "browser/battle-current-player-ui-runtime.mjs existing drawer artwork and partner overlay layout CSS only; browser/assets/visual/battle-ui/wood-frame-r1.png adopted raster asset; tests/battle-current-player-ui-runtime.test.mjs; deploy/cloudflare/scripts/build.mjs asset registration only; deploy/cloudflare/tests/build.test.mjs only if required; own transient data/preaction-authorizations/BATTLE-RASTER-TOUCH-20261014T1017-CODEX.json; own branch codex/battle-raster-touch-20261014; own CURRENT_ACTIVE_LEASES row6; existing Task N1382 current result. No HTML/gameplay/target/Road/Partner dialogue or data/character/save/network edits. Exact scoped PR/main/public after required checks.",
+  "solutionSignature": "ADOPTED_RASTER_WINDOW_ORIGINAL_DOM_BINDING_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "LIBDB90_V3_SHA5DE3502A_ATLAS_PLUS_MAIN_COMPOSITOR",
+  "solutionSearchEvidence": [
+    "Recovered adopted Battle layout and exact original source ZIP 5de3502a910f87b8d084598add8f740986e878a32d3afb7b72d153dd7177a1a1.",
+    "Existing production compositor owns original Battle drawer and presentation CSS; preserving nodes and event handlers.",
+    "Frame extraction used original atlas, actual MasterDuel screenshot and current public screenshot as direct image inputs; output is one transparent raster with quiet opaque reading interior.",
+    "No new engine, target/legality mapping, fictional card/character identity or code-drawn substitute frame.",
+    "Actual portrait rect: range x6-50/y162-198 overlaps advice button x19-83/y154-199. Repair existing compositor overlay placement below existing rail; no target or dialogue engine changes."
+  ],
+  "scope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "browser/assets/visual/battle-ui/wood-frame-r1.png",
+    "tests/battle-current-player-ui-runtime.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "browser/assets/visual/battle-ui/wood-frame-r1.png",
+    "tests/battle-current-player-ui-runtime.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

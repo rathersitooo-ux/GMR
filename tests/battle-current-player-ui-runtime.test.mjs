@@ -406,6 +406,7 @@ console.log('battle-current-player-ui-runtime: live-consumer focused tests passe
   const css = document.head.children.map(node => node.textContent).join('\n');
   assert.match(css, /assets\/visual\/battle-ui\/wood-frame-r1\.png/);
   assert.match(css, /border-image:/);
+  assert.match(css, /#battleDrawer\{[^}]*background:#071d18!important/, 'drawer retains an opaque readable backdrop if the raster fails');
   assert.equal(runtime.surfaces.detailsDrawer, originalDrawer);
   assert.equal(originalDrawer.getAttribute('data-gr-current-ui-zone'), 'details-on-demand');
   runtime.destroy();

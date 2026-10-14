@@ -89,7 +89,7 @@ const STYLE_TEXT = `
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="details-on-demand"][hidden]{display:none!important}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner-visual"]{width:clamp(132px,15vw,190px)!important;height:min(34vh,245px)!important}
 .screen.battle[${ROOT_ATTR}="1"] #battleManaArtR8,.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="mana-art"]{display:none!important}
-.screen.battle[${ROOT_ATTR}="1"] #battleDrawer{z-index:60!important;background:transparent!important;border:20px solid transparent!important;border-image:url("${WOOD_FRAME_URL}") 220 240 fill / 20px 24px / 0 stretch!important;border-radius:0!important;padding:12px 16px!important;box-shadow:none!important}
+.screen.battle[${ROOT_ATTR}="1"] #battleDrawer{z-index:60!important;background:#071d18!important;border:20px solid transparent!important;border-image:url("${WOOD_FRAME_URL}") 220 240 fill / 20px 24px / 0 stretch!important;border-radius:0!important;padding:12px 16px!important;box-shadow:none!important}
 .screen.battle[${ROOT_ATTR}="1"] #battleDrawer .drawerClose{width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important}
 .screen.battle[${ROOT_ATTR}="1"][data-gr-stale="true"] #hand,
 .screen.battle[${ROOT_ATTR}="1"][data-gr-reconnecting="true"] #hand,

@@ -111,7 +111,7 @@ function makeBattleHarness() {
   assert.equal(facts.waitReason, '攻撃先を決定');
   const projected = projectBattleCurrentActionLiveDom(h.root);
   assert.equal(projected.ownerRelation, 'OTHER');
-  assert.equal(projected.text, '今：攻撃先を選択 / 待ち：P2 / 理由：攻撃先を決定');
+  assert.equal(projected.text, '現在：攻撃先を選択 / 入力待ち：P2 / 状態：攻撃先を決定');
   assert.deepEqual(
     projectBattlePrimaryActionPresentationState(h.root, projected),
     {
@@ -136,7 +136,7 @@ function makeBattleHarness() {
   assert.equal(selfPlan.viewerOwnsInput, true);
   assert.equal(selfPlan.waitingFor, null);
   assert.equal(selfPlan.waitReason, null);
-  assert.equal(selfPlan.text, '今：行動を計画');
+  assert.equal(selfPlan.text, '現在：行動を計画');
   assert.equal(projectBattlePrimaryActionPresentationState(h.root, selfPlan).focus, 'plan');
   assert.equal(projectBattlePrimaryActionPresentationState(h.root, selfPlan).decisionActive, true);
 
@@ -159,7 +159,7 @@ function makeBattleHarness() {
   assert.equal(resolving.ownerRelation, 'UNRESOLVED');
   assert.equal(resolving.inputOwner, null);
   assert.equal(resolving.waitReason, null);
-  assert.equal(resolving.text, '今：移動を解決');
+  assert.equal(resolving.text, '現在：移動を解決');
   h.jankenSlidePad.dataset.expanded = 'true';
   const jankenAttention = projectBattlePrimaryActionPresentationState(h.root, resolving);
   assert.equal(jankenAttention.jankenActive, true);
@@ -198,8 +198,12 @@ function makeBattleHarness() {
   assert.equal(mounts[0].root, h.root);
   assert.equal(mounts[0].currentActionAtMount, first.currentActionSurface, 'surface must exist before compositor resolves selectors');
   assert.deepEqual(first.inspect(), { rootDecorated: true, presentationOnly: true });
-  assert.equal(first.currentAction().text, '今：攻撃先を選択 / 待ち：P2 / 理由：攻撃先を決定');
+  assert.equal(first.currentAction().text, '現在：攻撃先を選択 / 入力待ち：P2 / 状態：攻撃先を決定');
   assert.equal(first.currentActionSurface.hidden, false);
+  const liveStyle = h.documentRef.head.children.find(node => node.id === 'gameroad-battle-current-action-live-r2-style');
+  assert.ok(liveStyle);
+  assert.match(liveStyle.textContent, /font-size:clamp\(11px,1vw,13px\)/);
+  assert.match(liveStyle.textContent, /padding:7px 10px/);
   assert.equal(first.currentActionSurface.textContent, first.currentAction().text);
   assert.equal(first.currentActionSurface.dataset.ownerRelation, 'OTHER');
   assert.equal(first.currentActionSurface.dataset.waitingForParticipantId, 'P2');
@@ -213,7 +217,7 @@ function makeBattleHarness() {
   });
 
   assert.deepEqual(first.sync({ reducedMotion: true }), { snapshot: { reducedMotion: true } });
-  assert.equal(first.currentAction().text, '今：攻撃先を選択 / 待ち：P2 / 理由：攻撃先を決定');
+  assert.equal(first.currentAction().text, '現在：攻撃先を選択 / 入力待ち：P2 / 状態：攻撃先を決定');
 
   const explicit = first.syncCurrentActionContext({
     authorityBoundary: 'caller_authoritative_public_state',
@@ -223,11 +227,11 @@ function makeBattleHarness() {
     currentAction: '防御結果を確認',
     waitReason: '公開結果を確認中',
   });
-  assert.equal(explicit.text, '今：防御結果を確認 / 待ち：相手4 / 理由：公開結果を確認中');
+  assert.equal(explicit.text, '現在：防御結果を確認 / 入力待ち：相手4 / 状態：公開結果を確認中');
   assert.equal(first.currentActionSurface.dataset.currentActionSource, 'explicit-caller');
 
   first.syncCurrentActionContext(null);
-  assert.equal(first.currentAction().text, '今：攻撃先を選択 / 待ち：P2 / 理由：攻撃先を決定');
+  assert.equal(first.currentAction().text, '現在：攻撃先を選択 / 入力待ち：P2 / 状態：攻撃先を決定');
   assert.equal(first.currentActionSurface.dataset.currentActionSource, 'existing-public-live-dom');
 
   const duplicate = mountBattleCurrentPlayerUiLiveAdapter(globalRef, { mountUi: () => { throw new Error('must not remount'); } });

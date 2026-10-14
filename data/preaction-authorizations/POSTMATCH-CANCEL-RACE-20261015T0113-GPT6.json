@@ -1,0 +1,30 @@
+{
+  "schema": "gameroad.preaction-authorization.v1",
+  "status": "PRE_ACTION_WITNESS",
+  "taskId": "NORMAL-MATCH-BONUS-REGULATION-001",
+  "workUnitKey": "POSTMATCH_CANCEL_REENABLE_RACE_CORE_FIX_R1",
+  "acquireKey": "POSTMATCH-CANCEL-RACE-20261015T0113-GPT6",
+  "owner": "ChatGPT GPT-6 / GAMEROAD product continuation",
+  "leaseUntilJST": "2026-10-15 01:55 JST",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES!A5:O5",
+  "r25Backing": "R25_ACQUIRE_PRESENT:POSTMATCH-CANCEL-RACE-20261015T0113-GPT6",
+  "targetRepository": "rathersitooo-ux/GMR",
+  "branch": "gmr/postmatch-cancel-race-20261015",
+  "baseMainCommit": "b4c1cf5ff372b9e4aba711bce99a90ff6a520048",
+  "expectedExistingBlobSha": {
+    "browser/post-match-autoqueue-core.mjs": "c527c034119c27808993a0aede1ca04a77c68d98",
+    "tests/post-match-autoqueue-core.test.mjs": "7edb35168b16b681f42ce2c3821a2caa22c46e73"
+  },
+  "mutablePaths": [
+    "browser/post-match-autoqueue-core.mjs",
+    "tests/post-match-autoqueue-core.test.mjs",
+    "data/preaction-authorizations/POSTMATCH-CANCEL-RACE-20261015T0113-GPT6.json"
+  ],
+  "source": "User 2026-10-15 resume normal GAMEROAD game development; adopted 2026-08-23 post-match default-on same-screen control; fresh main runtime imports post-match-autoqueue-core.mjs and presents async cancellation status",
+  "nonRegression": [
+    "Never change default-on queue preference, card rules, result/score/reward, match transport or credentials",
+    "Preserve authoritative provider MATCHED/CANCELLED transition",
+    "Correct only cancellation race status after a pending cancel request survives a re-enable",
+    "No main merge/public without independent CI, runtime/consumer verification and formal authority"
+  ]
+}

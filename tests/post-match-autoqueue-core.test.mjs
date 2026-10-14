@@ -149,3 +149,59 @@ test('duplicate authoritative Result stays single-ticket even after MATCHED', as
   assert.equal(c.snapshot().status, S.MATCHED);
   assert.equal(c.snapshot().matchId, 'M8');
 });
+
+test('ON during an unconfirmed cancellation resumes matchmaking after provider CANCELLED', async () => {
+  const requests = [];
+  const c = createPostMatchAutoQueueController({
+    createTicket: async payload => {
+      requests.push(payload);
+      return { ticketId: `T${requests.length}` };
+    },
+    cancelTicket: async () => {},
+  });
+  await c.onResult({ resultId: 'R9', queueSignature: { mode: '4p' } });
+  await c.setEnabled(false);
+  assert.equal(c.snapshot().status, S.CANCEL_REQUESTED);
+  await c.setEnabled(true);
+  assert.equal(c.snapshot().status, S.CANCEL_REQUESTED);
+  c.handleTicketUpdate({ ticketId: 'T1', status: 'cancelled' });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(requests.length, 2);
+  assert.equal(requests[1].attempt, 2);
+  assert.equal(c.snapshot().ticketId, 'T2');
+  assert.equal(c.snapshot().status, S.SEARCHING);
+  c.handleTicketUpdate({ ticketId: 'T1', status: 'matched', matchId: 'STALE' });
+  assert.equal(c.snapshot().ticketId, 'T2');
+  assert.equal(c.snapshot().status, S.SEARCHING);
+});
+
+test('OFF again before cancellation confirms prevents the pending automatic restart', async () => {
+  let requests = 0;
+  const c = createPostMatchAutoQueueController({
+    createTicket: async () => ({ ticketId: `T${++requests}` }),
+    cancelTicket: async () => {},
+  });
+  await c.onResult({ resultId: 'R10' });
+  await c.setEnabled(false);
+  await c.setEnabled(true);
+  await c.setEnabled(false);
+  c.handleTicketUpdate({ ticketId: 'T1', status: 'cancelled' });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(requests, 1);
+  assert.equal(c.snapshot().status, S.CANCELLED);
+  assert.equal(c.snapshot().enabled, false);
+});
+
+test('re-enabled cancellation can still lose to authoritative MATCHED', async () => {
+  const c = createPostMatchAutoQueueController({
+    createTicket: async () => ({ ticketId: 'T11' }),
+    cancelTicket: async () => {},
+  });
+  await c.onResult({ resultId: 'R11' });
+  await c.setEnabled(false);
+  await c.setEnabled(true);
+  c.handleTicketUpdate({ ticketId: 'T11', status: 'matched', matchId: 'M11' });
+  assert.equal(c.snapshot().status, S.MATCHED);
+  assert.equal(c.snapshot().matchId, 'M11');
+  assert.equal(c.snapshot().cancelTooLate, true);
+});

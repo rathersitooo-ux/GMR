@@ -3,6 +3,8 @@ const STYLE_ID = 'gameroad-battle-current-player-ui-r3-style';
 const ROOT_ATTR = 'data-gr-current-player-ui';
 const ZONE_ATTR = 'data-gr-current-ui-zone';
 const ROOT_RUNTIME_REGISTRY = new WeakMap();
+// Existing adopted forest atlas -> standalone raster frame. Original DOM owns text/input.
+const WOOD_FRAME_URL = new URL('./assets/visual/battle-ui/wood-frame-r1.png', import.meta.url).href;
 
 const SELECTOR_CANDIDATES = Object.freeze({
   battleMap: Object.freeze(['#battleMap']),
@@ -87,7 +89,8 @@ const STYLE_TEXT = `
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="details-on-demand"][hidden]{display:none!important}
 .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner-visual"]{width:clamp(132px,15vw,190px)!important;height:min(34vh,245px)!important}
 .screen.battle[${ROOT_ATTR}="1"] #battleManaArtR8,.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="mana-art"]{display:none!important}
-.screen.battle[${ROOT_ATTR}="1"] #battleDrawer{z-index:60!important}
+.screen.battle[${ROOT_ATTR}="1"] #battleDrawer{z-index:60!important;background:#071d18!important;border:20px solid transparent!important;border-image:url("${WOOD_FRAME_URL}") 220 240 fill / 20px 24px / 0 stretch!important;border-radius:0!important;padding:12px 16px!important;box-shadow:none!important}
+.screen.battle[${ROOT_ATTR}="1"] #battleDrawer .drawerClose{width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important}
 .screen.battle[${ROOT_ATTR}="1"][data-gr-stale="true"] #hand,
 .screen.battle[${ROOT_ATTR}="1"][data-gr-reconnecting="true"] #hand,
 .screen.battle[${ROOT_ATTR}="1"][data-gr-stale="true"] .planBox,
@@ -125,7 +128,7 @@ const STYLE_TEXT = `
   .screen.battle[${ROOT_ATTR}="1"] #publicTurnHud{top:48px!important;width:76vw!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{max-width:30vw!important;bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap))!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="support-entry"]{bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap) + 46px)!important}
-  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner"]{bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap) + 92px)!important}
+  .screen.battle[${ROOT_ATTR}="1"] #partnerAdviceChatPresentation[${ZONE_ATTR}="partner"]{top:204px!important;bottom:auto!important}
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="partner-visual"]{width:96px!important;height:154px!important}
   .screen.battle[${ROOT_ATTR}="1"] .battleInfo{left:1.5%!important;right:calc(var(--gr-thumb-w) + var(--gr-ui-edge) + var(--gr-ui-gap))!important;height:28vh!important;grid-template-columns:1fr!important;grid-template-rows:minmax(0,1fr) auto!important}
   .screen.battle[${ROOT_ATTR}="1"] .planBox{max-width:none!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}

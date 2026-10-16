@@ -749,3 +749,99 @@ test('switching cards while a new legal candidate loads cannot commit the previo
   assert.equal(sent.length, 1);
   assert.equal(sent[0].cardId, 'card-b');
 });
+
+test('cancel in flight rejects new card selection, commitment, and duplicate cancellation until settled', async () => {
+  let announceApply, releaseApply;
+  const applying = new Promise((resolve) => { announceApply = resolve; });
+  const applyGate = new Promise((resolve) => { releaseApply = resolve; });
+  const applied = [];
+  const { adapter, sent } = createHarness({
+    readExistingPrecommitState: async () => ({
+      phase: 'target',
+      position: 'P1',
+      plan: { roadId: 'road-2', battleId: 'battle-9', path: ['P1', 'road-2'] },
+      targetDraft: { defenderId: 'P3', lane: 'CENTER', shield: 'P3:CENTER' },
+      targetCommitted: false,
+      busy: false,
+    }),
+    applyExistingPrecommitDraft: async (next) => {
+      announceApply();
+      await applyGate;
+      applied.push(next);
+      return true;
+    },
+  });
+
+  await adapter.stageCompoundAttack('ROCK');
+  const pendingClear = adapter.clearPrecommitSelection();
+  await applying;
+
+  await assert.rejects(adapter.stageCompoundAttack('PAPER'), /PRECOMMIT_CLEAR_IN_FLIGHT/);
+  const blockedCommit = await adapter.commitCompoundAttack();
+  assert.equal(blockedCommit.committed, false);
+  assert.equal(blockedCommit.reason, 'PRECOMMIT_CLEAR_IN_FLIGHT');
+  const duplicateClear = await adapter.clearPrecommitSelection();
+  assert.equal(duplicateClear.cleared, false);
+  assert.equal(duplicateClear.reason, 'PRECOMMIT_CLEAR_IN_FLIGHT');
+  assert.notEqual(adapter.status().stagedCompoundAttack, null);
+  assert.equal(sent.length, 0);
+
+  releaseApply();
+  const result = await pendingClear;
+  assert.equal(result.cleared, true);
+  assert.equal(applied.length, 1);
+  assert.equal(applied[0].targetDraft, null);
+  assert.equal(adapter.status().stagedCompoundAttack, null);
+  assert.equal((await adapter.commitCompoundAttack()).reason, 'STAGE_REQUIRED');
+
+  // A new card may be staged only after cancellation completes.
+  await adapter.stageCompoundAttack('ROCK');
+  assert.notEqual(adapter.status().stagedCompoundAttack, null);
+});
+
+test('rejected cancellation preserves the staged card and unblocks commitment after resolution', async () => {
+  let announceApply, releaseApply;
+  const applying = new Promise((resolve) => { announceApply = resolve; });
+  const gate = new Promise((resolve) => { releaseApply = resolve; });
+  const { adapter, sent } = createHarness({
+    readExistingPrecommitState: async () => ({
+      phase: 'target',
+      position: 'P1',
+      plan: { roadId: 'road-2', battleId: 'battle-9', path: ['P1', 'road-2'] },
+      targetDraft: { defenderId: 'P3', lane: 'CENTER', shield: 'P3:CENTER' },
+      targetCommitted: false,
+      busy: false,
+    }),
+    applyExistingPrecommitDraft: async () => {
+      announceApply();
+      await gate;
+      return false;
+    },
+  });
+  await adapter.stageCompoundAttack('ROCK');
+  const cancelling = adapter.clearPrecommitSelection();
+  await applying;
+  assert.equal((await adapter.commitCompoundAttack()).reason, 'PRECOMMIT_CLEAR_IN_FLIGHT');
+  releaseApply();
+  const result = await cancelling;
+  assert.equal(result.cleared, false);
+  assert.equal(result.reason, 'EXISTING_PRECOMMIT_CLEAR_REJECTED');
+  assert.notEqual(adapter.status().stagedCompoundAttack, null);
+
+  const committed = await adapter.commitCompoundAttack();
+  assert.equal(committed.committed, true);
+  assert.equal(sent.length, 1);
+});
+
+test('failed cancellation reader releases the in-flight guard without clearing the staged card', async () => {
+  const { adapter, sent } = createHarness({
+    readExistingPrecommitState: async () => { throw new Error('temporary reader failure'); },
+    applyExistingPrecommitDraft: async () => true,
+  });
+  await adapter.stageCompoundAttack('ROCK');
+  await assert.rejects(adapter.clearPrecommitSelection(), /temporary reader failure/);
+  assert.notEqual(adapter.status().stagedCompoundAttack, null);
+  const result = await adapter.commitCompoundAttack();
+  assert.equal(result.committed, true);
+  assert.equal(sent.length, 1);
+});

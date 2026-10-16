@@ -156,6 +156,8 @@ export function createBattleNewBaseLiveConsumerAdapter({
   let assignmentTurnId = null;
   let stagedCompoundAttack = null;
   let commitInFlight = false;
+  // A pending user cancel must settle before another stage or commit can begin.
+  let precommitClearInFlight = false;
   // A canceled or superseded asynchronous stage must never reappear on completion.
   let stageRequestSerial = 0;
   let pendingStageCount = 0;
@@ -227,6 +229,7 @@ export function createBattleNewBaseLiveConsumerAdapter({
     async stageCompoundAttack(jankenHandValue) {
       const jankenHand = requireJankenHand(jankenHandValue);
       if (commitInFlight) throw new Error('COMMIT_IN_FLIGHT');
+      if (precommitClearInFlight) throw new Error('PRECOMMIT_CLEAR_IN_FLIGHT');
       const requestSerial = ++stageRequestSerial;
       // Replacing a card invalidates the previous preview immediately; an
       // awaited new candidate must not leave the old card available to commit.
@@ -277,6 +280,14 @@ export function createBattleNewBaseLiveConsumerAdapter({
     },
 
     async clearPrecommitSelection() {
+      if (precommitClearInFlight) {
+        return precommitClearResult({
+          ok: false,
+          cleared: false,
+          reason: 'PRECOMMIT_CLEAR_IN_FLIGHT',
+          existingDraftConnected: readExistingPrecommitState !== null,
+        });
+      }
       if (commitInFlight) {
         return precommitClearResult({
           ok: false,
@@ -294,6 +305,8 @@ export function createBattleNewBaseLiveConsumerAdapter({
         });
       }
 
+      precommitClearInFlight = true;
+      try {
       const state = requiredObject(
         await readExistingPrecommitState(),
         'authority-supplied existing precommit state',
@@ -344,9 +357,15 @@ export function createBattleNewBaseLiveConsumerAdapter({
         existingDraftConnected: true,
         projection,
       });
+      } finally {
+        precommitClearInFlight = false;
+      }
     },
 
     async commitCompoundAttack() {
+      if (precommitClearInFlight) {
+        return Object.freeze({ ok: false, committed: false, reason: 'PRECOMMIT_CLEAR_IN_FLIGHT' });
+      }
       if (commitInFlight) {
         return Object.freeze({ ok: false, committed: false, reason: 'COMMIT_IN_FLIGHT' });
       }

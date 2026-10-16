@@ -2375,7 +2375,7 @@ async function grClearBattlePrecommitSelection(){
     me.plan={...result.next.plan,path:[...result.next.plan.path]};
     const rs=$('#roadSelect'),bs=$('#battleSelect');if(rs)rs.value='';if(bs)bs.value='';
     $('#endpointText')&&($('#endpointText').textContent=me.position);renderBoard();syncDirectPlanRoleUi();void updateBattleAvatar();
-    rs?.dispatchEvent(new Event('change',{bubbles:true}));bs?.dispatchEvent(new Event('change',{bubbles:true}));grSyncBattlePrecommitClear();return true
+    renderBattle();grSyncBattlePrecommitClear();return true
   }
   const active=m.players?.find(p=>p.id===m.activeId);if(!active?.human)return false;
   const result=api.clearBattlePrecommitSelection({phase:'target',busy:m.busy,targetCommitted:Boolean(m.target),position:active.position,plan:active.plan,targetDraft:grBattleTargetDraft()});
@@ -2394,6 +2394,7 @@ for(const id of ['targetPlayer','targetLane','targetShield'])$('#'+id)?.addEvent
   const confirm=$('#confirmTarget'),d=grBattleTargetDraft();if(confirm?.dataset.precommitClearDisabled==='1'&&d.defenderId&&d.lane&&d.shield){confirm.disabled=false;delete confirm.dataset.precommitClearDisabled}
   grSyncBattlePrecommitClear()
 });
+for(const id of ['roadSelect','battleSelect'])$('#'+id)?.addEventListener('change',grSyncBattlePrecommitClear);
 grEnsureBattlePrecommitClearButton();grSyncBattlePrecommitClear();
 
 window.GAMEROAD_PARTNER_STATE=Object.freeze({partner:()=>{const c=partnerInfo();return{id:c.id,name:c.name}},player:()=>{const c=playerCharInfo();return{id:c.id,name:c.name}},snapshot:()=>({selectedPartnerId:state.selectedPartnerId,playerCharacterId:state.playerCharacterId,profiles:safeClone(state.partnerProfiles)})});

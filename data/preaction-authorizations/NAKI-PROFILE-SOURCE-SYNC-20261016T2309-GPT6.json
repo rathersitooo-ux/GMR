@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NAKI-PROFILE-SOURCE-SYNC-20261016T2309-GPT6",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "NAKI_HEART_FLIGHT_EMBEDDED_PROFILE_SYNC_R1",
+  "acquireKey": "NAKI-PROFILE-SOURCE-SYNC-20261016T2309-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "Existing PR#2331 required gate failed because embedded battle adapter in profile did not match updated source; main old source occurs exactly once in profile; exact replacement restores equality",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "Exact original source equality and unique replacement anchor established on current main; mandatory build gate and browser acceptance still required",
+  "proceedToken": "PROCEED|NAKI-PROFILE-SOURCE-SYNC-20261016T2309-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-10-16 23:09 JST",
+  "authorizationBaseSha": "2bf6e74f1a3e3300deeec6b2c725dc1b3377760a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "leaseWorkUnitKey": "NAKI_HEART_FLIGHT_EMBEDDED_PROFILE_SYNC_R1",
+  "leaseAcquireKey": "NAKI-PROFILE-SOURCE-SYNC-20261016T2309-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-16 23:09 JST",
+  "leaseUntilJst": "2026-10-16 23:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub PR#2331 branch gmr/naki-heart-flight-20261016; browser/battle-naki-fe-live-dom-adapter.mjs; browser/profile-presentation-runtime-mount.mjs; data/preaction-authorizations/NAKI-PROFILE-SOURCE-SYNC-20261016T2309-GPT6.json; Central Task1379 N, own R25/lease",
+  "scope": [
+    "browser/battle-naki-fe-live-dom-adapter.mjs",
+    "browser/profile-presentation-runtime-mount.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-naki-fe-live-dom-adapter.mjs",
+    "browser/profile-presentation-runtime-mount.mjs"
+  ],
+  "decision": "Synchronize the already implemented Naki heart flight source into exact current profile package without changing other game code",
+  "nonRegression": [
+    "Retain approved Naki sprite and visual identity",
+    "No gameplay, battle result, board return, network, or save changes",
+    "Never call review candidate a public release"
+  ],
+  "source": "2026-10-16 user directive: '無為な事やらずにちゃんと実成果を積み重ねてね' and existing Task1379 PR#2331."
+}

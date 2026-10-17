@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-SLIDEPAD-ROUTES-20261017T1213-GPT6",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_SLIDEPAD_DISABLED_ROUTES_PUBLIC_R1",
+  "acquireKey": "HOME-SLIDEPAD-ROUTES-20261017T1213-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLIC_HOME_HTML_20261017_ALL_FOUR_ROUTE_BUTTONS_DISABLED_AND_HOME_BASE_CURRENT_993bf0f82_DIRECT_BUTTON_CLICK_WITH_NO_REENABLE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_SCOPED_20261017_PATCH_PRESENT_IN_MNT_DATA_SOURCE_MATCH_EXPECTED_1092_RESTORE_ONCE",
+  "proceedToken": "PROCEED|HOME-SLIDEPAD-ROUTES-20261017T1213-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|home-slidepad-disabled-routes|isolated-branch|readback",
+  "authorizationBaseSha": "7d73db3f550aa31e77dcb61761f1b44f9c5655b7",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_SLIDEPAD_DISABLED_ROUTES_PUBLIC_R1",
+  "leaseAcquireKey": "HOME-SLIDEPAD-ROUTES-20261017T1213-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-17 12:13 JST",
+  "leaseUntilJst": "2026-10-17 12:51 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub gmr/home-slidepad-routes-20261017-1213 branch source browser/home-boot-runtime-base-r3.mjs only, Task2 existing, R25 and lease row5; main/Cloudflare public after exact required gate. No HTML or other owners.",
+  "scope": [
+    "browser/home-boot-runtime-base-r3.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-base-r3.mjs"
+  ],
+  "rollbackPlan": "Isolated branch only until exact-head approved merge; if required gate/merge/public deploy fails stop and preserve previous main; diff one-time route enable only.",
+  "verificationBoundary": "Player-facing Home route buttons become clickable after active boot and SlidePad slide's .click(), intended route clicks only; not device-verified, not entire game; no expensive browser tools."
+}

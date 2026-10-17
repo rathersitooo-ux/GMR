@@ -153,6 +153,9 @@ export function mountBattleNewBaseBoardLivePresentation({
   let currentGoalProjection = initialGoal.projection;
   let currentGoalPresentation = initialGoal.presentation;
   let currentProgressionPresentation = initialGoal.progression;
+  // The world geometry is immutable; camera-only re-renders reuse the last model.
+  let cachedWorldModel = null;
+  let cachedWorldBoundsKey = null;
 
   function snapshotState() {
     const connectedLaneKeys = currentGoalPresentation.lanePresentations
@@ -219,6 +222,9 @@ export function mountBattleNewBaseBoardLivePresentation({
     currentGoalProjection = nextGoal.projection;
     currentGoalPresentation = nextGoal.presentation;
     currentProgressionPresentation = nextGoal.progression;
+    // A new accepted progression changes the visible built card geometry.
+    cachedWorldModel = null;
+    cachedWorldBoundsKey = null;
     return deepFreeze({
       ...snapshotState(),
       ok: true,
@@ -255,10 +261,30 @@ export function mountBattleNewBaseBoardLivePresentation({
       return currentProgressionPresentation;
     },
     worldFieldRenderModel(worldBounds = {}) {
-      return createBattleBoardWorldFieldRenderModel({
+      // Key only the five bounds consumed by the canonical world projection.
+      // Do not cache malformed inputs: the existing renderer must still reject them.
+      const bounds = worldBounds && typeof worldBounds === 'object' ? {
+        centerX: worldBounds.centerX,
+        centerZ: worldBounds.centerZ,
+        width: worldBounds.width,
+        depth: worldBounds.depth,
+        y: worldBounds.y,
+      } : null;
+      const canReuse = bounds !== null && Object.values(bounds).every((value) =>
+        value === undefined || (typeof value === 'number' && Number.isFinite(value)));
+      const key = canReuse ? JSON.stringify(bounds) : null;
+      if (key !== null && cachedWorldModel && cachedWorldBoundsKey === key) {
+        return cachedWorldModel;
+      }
+      const model = createBattleBoardWorldFieldRenderModel({
         worldBounds,
         builtCountByLaneKey: builtCountByVisualLaneKey(currentProgressionPresentation),
       });
+      if (key !== null) {
+        cachedWorldModel = model;
+        cachedWorldBoundsKey = key;
+      }
+      return model;
     },
     snapshot() {
       return snapshotState();
@@ -266,6 +292,8 @@ export function mountBattleNewBaseBoardLivePresentation({
     destroy() {
       if (destroyed) return false;
       destroyed = true;
+      cachedWorldModel = null;
+      cachedWorldBoundsKey = null;
       gateCueRuntime.destroy?.();
       boardSurfaceRuntime.destroy?.();
       return true;

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BFI-AUTOCOMMIT-20261018T0107-GPT6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_BFI_AUTOCOMMIT_VS_PRECOMMIT_ACCEPTANCE_R3",
+  "acquireKey": "BATTLE-BFI-AUTOCOMMIT-20261018T0107-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR2337 Chromium BFI run39011501370 3 obsolete R2 precommit assertions. Current auto-commit contract PR1860 and runtime observed through local Edge. No production code changes.",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "Rehearsal read-only: updated test will exercise road-only draft reset; two-card accepted plan remains committed and target draft reset only, enforcing no rollback. Prior Edge observation in PR2337 review.",
+  "proceedToken": "PROCEED|BATTLE-BFI-AUTOCOMMIT-20261018T0107-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|replace-legacy-bfi-autocommit-assumptions",
+  "authorizationBaseSha": "a07e1eb442efcded6d467182a4a4c6d68e2870ef",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_BFI_AUTOCOMMIT_VS_PRECOMMIT_ACCEPTANCE_R3",
+  "leaseAcquireKey": "BATTLE-BFI-AUTOCOMMIT-20261018T0107-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-18 01:07 JST",
+  "leaseUntilJst": "2026-10-18 01:47 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR isolated branch gmr/bfi-autocommit-failclosed-20261018 only; tests/browser-full-interaction.spec.mjs R2 precommit test 2165-2242 only; temporary first-only PRE_ACTION manifest data/preaction-authorizations/BATTLE-BFI-AUTOCOMMIT-20261018T0107-GPT6.json and cleanup; new test-only PR and tests; own CURRENT_ACTIVE_LEASES row and R25 events. Excluded browser/GAMEROAD.html, all runtime code, gameplay, partner dialogue, short-landscape drag, PR#2337 and PR#2336 branches, main/merge/deploy.",
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

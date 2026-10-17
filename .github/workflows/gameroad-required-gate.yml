@@ -137,6 +137,7 @@ jobs:
                 browser_full_interaction=true
                 ;;
               browser/GAMEROAD.html|\
+              tests/battle-controlled-character-html-handoff.test.mjs|\
               browser/home-cards-2p5d-presentation.mjs|\
               tests/home-cards-2p5d-runtime.spec.mjs|\
               browser/home-shell-presentation-core.mjs|\

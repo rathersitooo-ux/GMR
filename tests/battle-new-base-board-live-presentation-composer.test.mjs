@@ -341,7 +341,9 @@ test('reuses the immutable world model for camera redraws and refreshes after ac
 
   const shifted = runtime.worldFieldRenderModel({ ...bounds, centerX: 2 });
   assert.notEqual(shifted, first);
-  assert.equal(runtime.worldFieldRenderModel({ ...bounds }), first, 'this one-entry cache only retains the latest bounds');
+  const refreshed = runtime.worldFieldRenderModel({ ...bounds });
+  assert.notEqual(refreshed, first, 'different camera bounds evict the prior one-entry model');
+  assert.equal(runtime.worldFieldRenderModel({ ...bounds }), refreshed);
 
   const current = runtime.worldFieldRenderModel(bounds);
   const invalid = runtime.syncAuthoritativeSnapshot({

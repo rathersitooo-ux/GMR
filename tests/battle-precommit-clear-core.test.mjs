@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   BATTLE_PRECOMMIT_CLEAR_CONTRACT,
@@ -145,4 +146,17 @@ test('contract explicitly denies gameplay authority and authoritative rollback',
   assert.equal(BATTLE_PRECOMMIT_CLEAR_CONTRACT.planSubmittedRollback, false);
   assert.equal(BATTLE_PRECOMMIT_CLEAR_CONTRACT.committedTargetRollback, false);
   assert.deepEqual(BATTLE_PRECOMMIT_CLEAR_CONTRACT.clearablePhases, ['plan', 'target']);
+});
+
+test('live plan clear dismisses old contextual help after an accepted reset', () => {
+  const html = readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
+  const begin = html.indexOf('async function grClearBattlePrecommitSelection()');
+  const end = html.indexOf('const active=m.players?.find', begin);
+  assert.ok(begin >= 0 && end > begin, 'live plan-clear consumer remains mounted');
+  const section = html.slice(begin, end);
+  const accepted = section.indexOf('if(!result.cleared)return false;');
+  const reset = section.indexOf('me.plan={...result.next.plan,path:[...result.next.plan.path]};');
+  const dismiss = section.indexOf('ctxClear();renderBattle();');
+  assert.ok(accepted >= 0 && accepted < reset && reset < dismiss,
+    'only accepted clears dismiss stale contextual errors before repaint');
 });

@@ -331,3 +331,35 @@ test('Reduced Motion keeps the same OPEN/progression meaning with static cue and
   assert.equal(BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT.writesGameState, false);
   assert.equal(BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT.secondBoardEngine, false);
 });
+
+test('reuses the immutable world model for camera redraws and refreshes after accepted progression or bounds changes', () => {
+  const { runtime } = mount();
+  const bounds = { centerX: 1, centerZ: 0, width: 20 };
+  const first = runtime.worldFieldRenderModel(bounds);
+  assert.equal(runtime.worldFieldRenderModel({ ...bounds }), first);
+  assert.equal(first.counts.builtUpperCards, 0);
+
+  const shifted = runtime.worldFieldRenderModel({ ...bounds, centerX: 2 });
+  assert.notEqual(shifted, first);
+  assert.equal(runtime.worldFieldRenderModel({ ...bounds }), first, 'this one-entry cache only retains the latest bounds');
+
+  const current = runtime.worldFieldRenderModel(bounds);
+  const invalid = runtime.syncAuthoritativeSnapshot({
+    straightCardIdsByColumn: Array.from({ length: 11 }, () => []),
+  });
+  assert.equal(invalid.ok, false);
+  assert.equal(runtime.worldFieldRenderModel(bounds), current, 'rejected progression cannot discard the valid model');
+
+  const accepted = runtime.syncAuthoritativeSnapshot({
+    straightCardIdsByColumn: withStraight(emptyStraights(), 0, 2),
+  });
+  assert.equal(accepted.ok, true);
+  const built = runtime.worldFieldRenderModel(bounds);
+  assert.notEqual(built, current);
+  assert.equal(built.counts.builtUpperCards, 2);
+  assert.equal(runtime.worldFieldRenderModel(bounds), built);
+
+  assert.throws(() => runtime.worldFieldRenderModel({ ...bounds, width: NaN }), /BATTLE_BOARD_WORLD_BOUNDS_INVALID/);
+  assert.equal(runtime.worldFieldRenderModel(bounds), built, 'invalid bounds must not overwrite the valid cache');
+  assert.equal(runtime.destroy(), true);
+});

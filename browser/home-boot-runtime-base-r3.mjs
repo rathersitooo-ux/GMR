@@ -1093,6 +1093,18 @@ export function refreshHomeBootPresentation() {
   const variant = classifyHomeViewport({ width: innerWidth, height: innerHeight });
   const profile = reducedMotion() ? 'reduced' : 'full';
   const active = isHomeActive(home);
+  if (active) {
+    // Restore the four real Home destinations once after their boot markup mounts.
+    // Buttons shipped disabled cannot receive the SlidePad's button.click() action.
+    // Leave later, game-owned disable transitions alone.
+    for (const button of buttons) {
+      if (!roleForRouteId(routeId(button))) continue;
+      if (button.dataset.homeSlidepadRouteReady === 'true') continue;
+      button.disabled = false;
+      button.removeAttribute('aria-disabled');
+      button.dataset.homeSlidepadRouteReady = 'true';
+    }
+  }
   const reopening = runtime.lastExpanded === false && state.expanded === true;
   markHome(home, {
     variant,

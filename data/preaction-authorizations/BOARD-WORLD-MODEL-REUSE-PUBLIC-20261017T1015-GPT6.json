@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD-WORLD-MODEL-REUSE-PUBLIC-20261017T1015-GPT6",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "BATTLE_WORLD_FIELD_MODEL_REUSE_PUBLIC_R2",
+  "acquireKey": "BOARD-WORLD-MODEL-REUSE-PUBLIC-20261017T1015-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_20261013_LOWEND_CAMERA_BOUNDS_PERF_DEMAND_PLUS_MAIN_COMPOSER_A02C547_WORLD_MODEL_RECREATED_EVERY_CALL_AND_E6AFA2EC_LOCAL_DONOR_VERIFIED",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "TASK1322_Codex_20261013_LOCAL_MODEL_REUSE_DIFF_500_REQUESTS_TO_1_GENERATION_WITH_LOCAL_36_OF_36_AND_WINDOWS_26_OF_26_CURRENT_IMPLEMENTATION_INDEPENDENT_REBUILD",
+  "proceedToken": "PROCEED|BOARD-WORLD-MODEL-REUSE-PUBLIC-20261017T1015-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|reuse-public-board-world-model|existing-runtime|readback",
+  "authorizationBaseSha": "7d73db3f550aa31e77dcb61761f1b44f9c5655b7",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "BATTLE_WORLD_FIELD_MODEL_REUSE_PUBLIC_R2",
+  "leaseAcquireKey": "BOARD-WORLD-MODEL-REUSE-PUBLIC-20261017T1015-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-17 10:15 JST",
+  "leaseUntilJst": "2026-10-17 11:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/battle-new-base-board-live-presentation-composer.mjs; tests/battle-new-base-board-live-presentation-composer.test.mjs; deploy/cloudflare/tests/build.test.mjs exact composer currentBlob only; isolated branch gmr/board-world-model-reuse-public-20261017 and scoped temporary manifest; Task1322 N, R25, own central row5; no other worker source.",
+  "scope": [
+    "browser/battle-new-base-board-live-presentation-composer.mjs",
+    "tests/battle-new-base-board-live-presentation-composer.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-new-base-board-live-presentation-composer.mjs",
+    "tests/battle-new-base-board-live-presentation-composer.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "rollbackPlan": "Isolated branch based exact GitHub main, no user-data changes. Preserve old composer blob and change only bounded model memoization. If gate/public fail do not squash/claim release; rollback via main parent and old blob.",
+  "verificationBoundary": "Reuses immutable visual geometry for same world bounds and accepted progression, without gameplay authority. Tests check identity and invalidation. Build dependency currentBlob must exactly match new source Git blob. Smartphone actual FPS/Unity/Steam are separate, not claimed."
+}

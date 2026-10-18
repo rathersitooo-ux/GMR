@@ -1333,6 +1333,111 @@ test('covers Setup Honey/4P/2v2 plus Friend Room create, ready, waiting, and lea
   runtime.assertClean(testInfo);
 });
 
+
+test('Friend Room guest ready sends a validated guest deck snapshot and retains the seat-binding contract', async ({ page, context }, testInfo) => {
+  const hostRuntime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+  const hostDeck = await installLegalBattleDeck(page);
+  expect(hostDeck.main).toHaveLength(40);
+  expect(hostDeck.committed).toBeTruthy();
+  expect(hostDeck.savedValidation.ok).toBeTruthy();
+
+  const setupGo = visibleOperationGo(page, 'setup');
+  await expect(setupGo).toBeVisible();
+  await setupGo.click();
+  const hostSetup = page.locator('section[data-screen="setup"]');
+  await expect(hostSetup).toBeVisible();
+  await hostSetup.locator('[data-content="road_shield"]').click();
+  await hostSetup.locator('[data-mode="2p"]').click();
+  await hostSetup.locator('#friendRoomEntry').click();
+  const hostFriend = page.locator('section[data-screen="friendroom"]');
+  await expect(hostFriend).toBeVisible();
+  await hostFriend.locator('#friendCreate2').click();
+  const code = await page.evaluate(() => window.GAMEROAD_FRIEND_ROOM_R2?.status?.().code ?? '');
+  expect(code).toMatch(/^[A-Z2-9]{7}$/);
+
+  const guest = await context.newPage();
+  const guestRuntime = observeRuntimeErrors(guest);
+  await bootCurrentBrowser(guest);
+  const guestDeck = await guest.evaluate(() => {
+    const t = window.__GAMEROAD_TEST__;
+    const publicMain = new Set(t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
+    const standard = window.__CARD_DATA__
+      .filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)))
+      .map((card) => card.id);
+    const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
+    const nonRoyal = standard.filter((id) => !t.isRoyalCard(id)).reverse();
+    const main = [...nonRoyal.slice(0, 37), ...royalIds];
+    const setValidation = t.deckSetDraft(main, []);
+    const draftValidation = t.deckValidate(t.state.deckDraft, { forBattle: true });
+    const committed = draftValidation.ok ? t.deckCommit() : false;
+    const savedValidation = t.deckValidate(t.state.savedDeck, { forBattle: true });
+    return { main, setValidation, draftValidation, committed, savedValidation };
+  });
+  expect(guestDeck.main).toHaveLength(40);
+  expect(new Set(guestDeck.main).size).toBe(40);
+  expect(guestDeck.committed).toBeTruthy();
+  expect(guestDeck.savedValidation.ok).toBeTruthy();
+  expect(guestDeck.main).not.toEqual(hostDeck.main);
+
+  const hostDeckStillBound = await page.evaluate(() => window.__GAMEROAD_TEST__?.deckSaved?.().main ?? []);
+  expect(hostDeckStillBound).toEqual(hostDeck.main);
+
+  const guestSetupGo = visibleOperationGo(guest, 'setup');
+  await expect(guestSetupGo).toBeVisible();
+  await guestSetupGo.click();
+  const guestSetup = guest.locator('section[data-screen="setup"]');
+  await expect(guestSetup).toBeVisible();
+  await guestSetup.locator('#friendRoomEntry').click();
+  const guestFriend = guest.locator('section[data-screen="friendroom"]');
+  await expect(guestFriend).toBeVisible();
+  await guestFriend.locator('#friendJoinCode').fill(code);
+  await guestFriend.locator('#friendJoinBtn').click();
+
+  await expect.poll(async () => guest.evaluate(() => window.GAMEROAD_FRIEND_ROOM_R2?.status?.().pid ?? null), {
+    message: 'guest receives P2 through the real BroadcastChannel join path',
+    timeout: 7000,
+  }).toBe('P2');
+
+  await expect.poll(async () => page.evaluate(() => window.GAMEROAD_FRIEND_ROOM_R2?.status?.().participants?.find((p) => p.pid === 'P2')?.ready ?? null), {
+    message: 'host initially sees P2 not ready',
+    timeout: 7000,
+  }).toBe(false);
+
+  const guestReady = guestFriend.locator('#friendReadyBtn');
+  await expect(guestReady).toBeVisible();
+  await expect(guestReady).toBeEnabled();
+  await guestReady.click();
+
+  await expect.poll(async () => page.evaluate(() => window.GAMEROAD_FRIEND_ROOM_R2?.status?.().participants?.find((p) => p.pid === 'P2')?.ready ?? null), {
+    message: 'host accepts ready only after validating and retaining the guest deck snapshot',
+    timeout: 7000,
+  }).toBe(true);
+
+  const source = await page.evaluate(async () => {
+    const response = await fetch('/browser/GAMEROAD.html', { cache: 'no-store' });
+    return response.text();
+  });
+  for (const contract of [
+    "send({type:'ready',value:true,deckSnapshot})",
+    "s.deckSnapshot=friendValidateRemoteDeckSnapshot(m.deckSnapshot);s.ready=true",
+    "guestDecks[pid]=[...snap.deck.main]",
+    "const m=startMatch(guestDecks);",
+    "Array.isArray(deckByPlayer?.[pid])",
+  ]) {
+    expect(source, 'Friend Room guest-deck binding contract contains ' + contract).toContain(contract);
+  }
+
+  testInfo.annotations.push({
+    type: 'local-transport-boundary',
+    description: 'This regression uses the real same-origin BroadcastChannel join/ready path to prove guest snapshot submission and host validation. Local static CI still does not claim public WSS or physical-device connection acceptance; seat-start binding is additionally checked against the served production source contract.',
+  });
+
+  hostRuntime.assertClean(testInfo);
+  guestRuntime.assertClean(testInfo);
+  await guest.close();
+});
+
 test('covers Settings reduced-motion/low-performance, volume and mute controls, then Gacha open/detail/back/cards', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);

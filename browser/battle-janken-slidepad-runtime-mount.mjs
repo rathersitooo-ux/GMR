@@ -475,7 +475,9 @@ function addStyle(documentRef) {
 [${HOST_ATTR}="1"][data-input-mode="card_pull"] .grJankenSlidePadHandle,[${HOST_ATTR}="1"][data-input-mode="plain"] .grJankenSlidePadHandle{filter:brightness(.78);opacity:.7}
 [${HOST_ATTR}="1"] .grJankenSlidePadHandle{position:absolute;right:0;bottom:0;width:68px;height:68px;border-radius:50%;border:2px solid rgba(255,255,255,.82);background:radial-gradient(circle at 34% 26%,rgba(247,247,247,.98) 0 9%,rgba(191,191,191,.88) 10% 27%,rgba(84,84,84,.92) 50%,rgba(27,27,27,.98) 78%,rgba(11,11,11,1) 100%);box-shadow:0 10px 28px rgba(6,6,6,.54),0 0 20px rgba(182,182,182,.2),inset 0 0 0 4px rgba(239,239,239,.12);color:#fafafa;font-weight:900;font-size:10px;letter-spacing:.08em;pointer-events:auto;touch-action:none;transition:transform 80ms cubic-bezier(.2,.8,.2,1),filter 100ms ease,box-shadow 100ms ease;will-change:transform,filter,box-shadow}
 [${HOST_ATTR}="1"] .grPowerEnergy{position:absolute;right:-68px;bottom:-60px;width:105px;height:105px;border-radius:50%;overflow:hidden;pointer-events:none;z-index:0;opacity:.78;filter:brightness(.84);transform:scale(.92);transform-origin:50% 50%;transition:opacity 120ms ease,filter 120ms ease,transform 120ms cubic-bezier(.2,.8,.2,1)}
-[${HOST_ATTR}="1"] .grPowerEnergy img{position:absolute;width:155%;height:155%;left:50%;top:50%;transform:translate(-50%,-50%);object-fit:cover;mix-blend-mode:screen;user-select:none;-webkit-user-drag:none;pointer-events:none}
+[${HOST_ATTR}="1"] .grPowerEnergy img{position:absolute;width:155%;height:155%;left:50%;top:50%;transform:translate(-50%,-50%);object-fit:cover;mix-blend-mode:screen;user-select:none;-webkit-user-drag:none;pointer-events:none;animation:grPowerEnergyFlame 1800ms ease-in-out infinite}
+@keyframes grPowerEnergyFlame{0%,100%{transform:translate(-50%,-50%) scale(1);filter:brightness(.96)}50%{transform:translate(-50%,-52%) scale(1.035);filter:brightness(1.17)}}
+@media (prefers-reduced-motion: reduce){[${HOST_ATTR}="1"] .grPowerEnergy img{animation:none!important}}
 [${HOST_ATTR}="1"] .grJankenSlidePadSlot{position:absolute;right:4px;bottom:4px;width:86px;height:86px;border-radius:42% 58% 56% 44%/48% 42% 58% 52%;border:2px solid rgba(228,228,228,.72);background:linear-gradient(160deg,rgba(242,242,242,.94) 0%,rgba(150,150,150,.9) 42%,rgba(65,65,65,.94) 72%,rgba(32,32,32,.98) 100%);box-shadow:0 11px 28px rgba(6,6,6,.46),inset 0 1px 0 rgba(255,255,255,.24);color:#fbfbfb;padding:6px;display:grid;grid-template-rows:1fr auto auto;align-items:center;text-align:center;opacity:0;transform-origin:calc(100% - 31px) calc(100% - 31px);transform:translate(0,0) rotate(18deg) scale(.58);transition:transform 190ms cubic-bezier(.2,.8,.2,1),opacity 150ms ease,filter 90ms ease,box-shadow 90ms ease;pointer-events:none;touch-action:none;z-index:1}
 [${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot{opacity:1;pointer-events:auto}
 [${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-150px,-2px) rotate(-15deg)}
@@ -844,6 +846,47 @@ function playReleasedJankenCardFlight(host, flight) {
   return playBattleCardReleaseFlightEffect({ host, flight });
 }
 
+export function projectBattlePowerOrbLaunchMotion(input = {}) {
+  const { start, aura, target, cardSize, reducedMotion = false, lowPerf = false } = input ?? {};
+  const validPoint = (point) => point && Number.isFinite(point.x) && Number.isFinite(point.y);
+  if (![start, aura, target].every(validPoint)
+    || !cardSize || !Number.isFinite(cardSize.width) || cardSize.width <= 0
+    || !Number.isFinite(cardSize.height) || cardSize.height <= 0) return null;
+  const sequence = Object.freeze(['wrap', 'draw', 'fire', 'trail', 'impact']);
+  const semanticOnly = reducedMotion === true || lowPerf === true;
+  const dx = aura.x - start.x;
+  const dy = aura.y - start.y;
+  const tx = target.x - start.x;
+  const ty = target.y - start.y;
+  const translation = (x, y, scale) =>
+    `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) scale(${scale})`;
+  const cardKeyframes = semanticOnly ? [] : [
+    { phase: 'wrap', offset: 0, opacity: 1, filter: 'brightness(1.2) drop-shadow(0 0 8px #ddd)', transform: translation(0, 0, 1) },
+    { phase: 'wrap', offset: .21, opacity: 1, filter: 'brightness(1.65) drop-shadow(0 0 18px #eee)', transform: translation(dx, dy, .8) },
+    { phase: 'draw', offset: .36, opacity: 1, filter: 'brightness(2.15) drop-shadow(0 0 28px #fff)', transform: translation(dx, dy, 1.08) },
+    { phase: 'fire', offset: .58, opacity: 1, filter: 'brightness(1.95) drop-shadow(0 0 24px #fff)', transform: translation(dx + (tx - dx) * .36, dy + (ty - dy) * .36, .73) },
+    { phase: 'trail', offset: .87, opacity: .85, filter: 'brightness(1.55) drop-shadow(0 0 14px #eee)', transform: translation(dx + (tx - dx) * .88, dy + (ty - dy) * .88, .42) },
+    { phase: 'impact', offset: 1, opacity: .15, filter: 'brightness(2) blur(1px) drop-shadow(0 0 28px #fff)', transform: translation(tx, ty, .22) },
+  ];
+  const trailKeyframes = semanticOnly ? [] : [
+    { offset: 0, opacity: 0, transform: translation(0, 0, .5) },
+    { offset: .36, opacity: 0, transform: translation(0, 0, .5) },
+    { offset: .52, opacity: .78, transform: translation((target.x - aura.x) * .16, (target.y - aura.y) * .16, 1.3) },
+    { offset: .8, opacity: .52, transform: translation((target.x - aura.x) * .62, (target.y - aura.y) * .62, .78) },
+    { offset: 1, opacity: 0, transform: translation((target.x - aura.x) * .96, (target.y - aura.y) * .96, .25) },
+  ];
+  return deepFreeze({
+    schema: 'gameroad.battle-power-orb-motion.v1',
+    presentationOnly: true,
+    gameplayAuthority: false,
+    gameStateWrite: false,
+    motionMode: semanticOnly ? 'semantic-only' : 'full',
+    sequence, cardKeyframes, trailKeyframes,
+    impact: { x: target.x, y: target.y },
+    durationMs: semanticOnly ? 0 : HAND_AURA_RELEASE_DURATION_MS,
+  });
+}
+
 function animateHandAuraLaunch(globalRef, documentRef, battleRoot, powerEnergy, ghost) {
   if (!ghost) return false;
   const ghostRect = ghost.getBoundingClientRect?.();
@@ -852,8 +895,13 @@ function animateHandAuraLaunch(globalRef, documentRef, battleRoot, powerEnergy, 
     : null;
   const aura = elementCenter(powerEnergy);
   const target = launchTargetCenter(battleRoot);
-  if (globalRef?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
-    || !start || !aura || !target || typeof ghost.animate !== 'function') {
+  const motion = projectBattlePowerOrbLaunchMotion({
+    start, aura, target,
+    cardSize: ghostRect ? { width: Number(ghostRect.width), height: Number(ghostRect.height) } : null,
+    reducedMotion: globalRef?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true,
+    lowPerf: battleRoot?.dataset?.lowPerf === 'true',
+  });
+  if (!motion || motion.motionMode === 'semantic-only' || typeof ghost.animate !== 'function') {
     ghost.remove?.();
     return false;
   }
@@ -861,22 +909,50 @@ function animateHandAuraLaunch(globalRef, documentRef, battleRoot, powerEnergy, 
   ghost.setAttribute?.('aria-hidden', 'true');
   ghost.style.visibility = 'visible';
   documentRef.body?.appendChild?.(ghost);
-  const auraDx = aura.x - start.x;
-  const auraDy = aura.y - start.y;
-  const targetDx = target.x - start.x;
-  const targetDy = target.y - start.y;
-  const frames = [
-    { offset: 0, opacity: 1, filter: 'brightness(1.25) drop-shadow(0 0 8px rgba(222,222,222,.8))', transform: 'translate3d(0,0,0) scale(1)' },
-    { offset: 0.2, opacity: 1, filter: 'brightness(1.75) drop-shadow(0 0 14px rgba(247,247,247,1)) drop-shadow(0 0 28px rgba(214,214,214,.95))', transform: `translate3d(${auraDx.toFixed(2)}px,${auraDy.toFixed(2)}px,0) scale(.82)` },
-    { offset: 0.34, opacity: 1, filter: 'brightness(2.05) drop-shadow(0 0 18px rgba(251,251,251,1)) drop-shadow(0 0 38px rgba(212,212,212,1))', transform: `translate3d(${auraDx.toFixed(2)}px,${auraDy.toFixed(2)}px,0) scale(1.03)` },
-    { offset: 1, opacity: 0.56, filter: 'brightness(1.05) blur(.65px) drop-shadow(0 0 9px rgba(219,219,219,.55))', transform: `translate3d(${targetDx.toFixed(2)}px,${targetDy.toFixed(2)}px,0) scale(.32)` },
-  ];
+  const frames = motion.cardKeyframes.map(({ phase, ...keyframe }) => keyframe);
   const animation = ghost.animate(frames, {
-    duration: HAND_AURA_RELEASE_DURATION_MS,
+    duration: motion.durationMs,
     easing: 'cubic-bezier(.17,.76,.18,1)',
     fill: 'forwards',
   });
-  animation.finished.then(() => ghost.remove(), () => ghost.remove());
+  let trail = null;
+  if (typeof documentRef.createElement === 'function') {
+    trail = documentRef.createElement('div');
+    trail.setAttribute?.('aria-hidden', 'true');
+    Object.assign(trail.style, {
+      position: 'fixed',
+      left: `${(aura.x - 7).toFixed(2)}px`, top: `${(aura.y - 7).toFixed(2)}px`,
+      width: '14px', height: '14px', borderRadius: '50%',
+      background: 'radial-gradient(circle,#fff 0%,#ddd 32%,rgba(235,235,235,0) 75%)',
+      boxShadow: '0 0 20px rgba(245,245,245,.68)',
+      zIndex: '10000', pointerEvents: 'none',
+    });
+    documentRef.body?.appendChild?.(trail);
+    trail.animate?.(motion.trailKeyframes, { duration: motion.durationMs, fill: 'forwards', easing: 'ease-out' });
+  }
+  const finish = () => {
+    ghost.remove?.();
+    trail?.remove?.();
+    if (typeof documentRef.createElement !== 'function') return;
+    const flash = documentRef.createElement('div');
+    flash.setAttribute?.('aria-hidden', 'true');
+    Object.assign(flash.style, {
+      position: 'fixed', left: `${(motion.impact.x - 34).toFixed(2)}px`,
+      top: `${(motion.impact.y - 34).toFixed(2)}px`,
+      width: '68px', height: '68px', borderRadius: '50%',
+      background: 'radial-gradient(circle,#fff 0%,rgba(243,243,243,.52) 26%,transparent 72%)',
+      pointerEvents: 'none', zIndex: '10000',
+    });
+    documentRef.body?.appendChild?.(flash);
+    const impact = flash.animate?.([
+      { opacity: 0, transform: 'scale(.3)' },
+      { opacity: 1, transform: 'scale(1.3)', offset: .33 },
+      { opacity: 0, transform: 'scale(1.8)' },
+    ], { duration: 250, easing: 'ease-out', fill: 'forwards' });
+    impact?.finished?.then(() => flash.remove?.(), () => flash.remove?.());
+    if (!impact) flash.remove?.();
+  };
+  animation.finished.then(finish, () => { ghost.remove?.(); trail?.remove?.(); });
   return true;
 }
 

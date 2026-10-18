@@ -11,6 +11,7 @@ test('world-field render model keeps the lower shared field, Gate boundary and o
   assert.equal(model.counts.lowerRoundCells, 42);
   assert.equal(model.counts.builtUpperCards, 0);
   assert.equal(model.counts.visibleFutureUpperSlots, 0);
+  assert.deepEqual(model.actualBuiltCards, []);
   assert.equal(model.counts.roundCells, 42);
   assert.equal(model.counts.gates, 12);
   assert.equal(model.counts.shields, 12);
@@ -22,6 +23,10 @@ test('world-field render model keeps the lower shared field, Gate boundary and o
   model = createBattleBoardWorldFieldRenderModel({ builtCountByLaneKey: { 'P2:C': 3 } });
   assert.equal(model.counts.builtUpperCards, 3);
   assert.equal(model.counts.visibleFutureUpperSlots, 0);
+  assert.equal(model.actualBuiltCards.length, 3);
+  assert.deepEqual(model.actualBuiltCards.map((card) => card.stageIndex), [1, 2, 3]);
+  assert.ok(model.actualBuiltCards.every((card) => card.kind === 'ACTUAL_BUILT_CARD'));
+  assert.deepEqual(model.actualBuiltCards.map((card) => card.id), model.roundCells.filter((cell) => cell.kind === 'ACTUAL_BUILT_CARD').map((cell) => cell.id));
   assert.deepEqual(model.roundCells.filter((cell) => cell.laneKey === 'P2:C').map((cell) => cell.stageIndex), [1, 2, 3]);
   assert.equal(model.roundCells.some((cell) => cell.id === 'upper:P2:C:4'), false);
   assert.equal(model.gates.find((gate) => gate.laneKey === 'P2:C').state, 'CLOSED_HEAVY_BARRIER');
@@ -102,6 +107,9 @@ test('straight canonical lower edges gain deterministic terrain bows without cha
 test('Gate and GOAL branch visual state opens only for the exact lane at seven actual cards', () => {
   const model = createBattleBoardWorldFieldRenderModel({ builtCountByLaneKey: { 'P1:L': 7, 'P1:C': 6 } });
   assert.equal(model.counts.builtUpperCards, 13);
+  assert.equal(model.actualBuiltCards.length, 13);
+  assert.equal(model.actualBuiltCards.filter((card) => card.laneKey === 'P1:L').length, 7);
+  assert.equal(model.actualBuiltCards.filter((card) => card.laneKey === 'P1:C').length, 6);
   assert.equal(model.counts.visibleFutureUpperSlots, 0);
   assert.equal(model.roundCells.filter((cell) => cell.laneKey === 'P1:L').length, 7);
   assert.equal(model.roundCells.filter((cell) => cell.laneKey === 'P1:C').length, 6);

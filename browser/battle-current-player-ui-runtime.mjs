@@ -137,6 +137,27 @@ const STYLE_TEXT = `
   .screen.battle[${ROOT_ATTR}="1"] .battleRail{left:var(--gr-ui-edge)!important;right:var(--gr-ui-edge)!important;top:158px!important;width:auto!important;max-width:none!important;justify-content:flex-start!important}
   .screen.battle[${ROOT_ATTR}="1"] #targetBox{width:96vw!important;right:2vw!important;bottom:30vh!important}
 }
+/* Keep support hit rectangles stable: feedback changes ink/light, never layout. */
+.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="support-entry"],
+.screen.battle[${ROOT_ATTR}="1"] .battleRail .railBtn,
+.screen.battle[${ROOT_ATTR}="1"] #detailsClose{min-width:44px!important;min-height:44px!important;height:44px!important;max-height:44px!important;padding:6px 9px!important;font-size:11px!important;box-sizing:border-box!important;touch-action:manipulation;transition:filter 90ms ease,box-shadow 90ms ease!important}
+.screen.battle[${ROOT_ATTR}="1"] .battleRail{max-height:44px!important}
+.screen.battle[${ROOT_ATTR}="1"] .battleRail .railBtn{position:relative!important}
+.screen.battle[${ROOT_ATTR}="1"] :is(#detailsBtn,#dangerBtn,#leaveMatch,#detailsClose):focus-visible{outline:2px solid #f3e8b5!important;outline-offset:2px!important}
+.screen.battle[${ROOT_ATTR}="1"] :is(#detailsBtn,#dangerBtn,#leaveMatch,#detailsClose):active:not(:disabled):not([aria-disabled="true"]){filter:brightness(.72)!important;box-shadow:inset 0 3px 6px rgba(0,0,0,.6)!important;transition:none!important}
+.screen.battle[${ROOT_ATTR}="1"] :is(#detailsBtn,#dangerBtn,#leaveMatch,#detailsClose):is(:disabled,[aria-disabled="true"]){opacity:.45!important;filter:saturate(.25)!important;animation:none!important}
+.screen.battle[${ROOT_ATTR}="1"]:has(#battleDrawer.on[aria-hidden="false"]) #detailsBtn,
+.screen.battle[${ROOT_ATTR}="1"] #battleMap.showRange #dangerBtn{border-color:#f3e8b5!important;box-shadow:inset 0 -3px 0 #f3e8b5!important;animation:grBattleSupportSettle 220ms ease-out}
+.screen.battle[${ROOT_ATTR}="1"]:has(#battleDrawer.on[aria-hidden="false"]) #detailsBtn::after,
+.screen.battle[${ROOT_ATTR}="1"] #battleMap.showRange #dangerBtn::after{content:"✓";position:absolute;right:2px;top:1px;font:900 11px/14px system-ui;color:#10251b;background:#f3e8b5;border-radius:3px;width:14px;text-align:center;pointer-events:none}
+@keyframes grBattleSupportSettle{0%{box-shadow:inset 0 -3px 0 #f3e8b5,0 0 0 0 rgba(243,232,181,.6)}35%{box-shadow:inset 0 -3px 0 #f3e8b5,0 0 0 4px rgba(243,232,181,.35)}100%{box-shadow:inset 0 -3px 0 #f3e8b5,0 0 0 6px rgba(243,232,181,0)}}
+@media(hover:hover) and (pointer:fine){
+  .screen.battle[${ROOT_ATTR}="1"] :is(#detailsBtn,#dangerBtn,#leaveMatch,#detailsClose):hover:not(:disabled):not([aria-disabled="true"]){border-color:#f3e8b5!important}
+}
+.screen.battle[${ROOT_ATTR}="1"]:is([data-gr-reduced-motion="true"],[data-gr-low-perf="true"]) :is(#detailsBtn,#dangerBtn,#leaveMatch,#detailsClose){transition:none!important;animation:none!important}
+@media(prefers-reduced-motion:reduce){
+  .screen.battle[${ROOT_ATTR}="1"] :is(#detailsBtn,#dangerBtn,#leaveMatch,#detailsClose){transition:none!important;animation:none!important}
+}
 `;
 
 function requireDocument(global) {

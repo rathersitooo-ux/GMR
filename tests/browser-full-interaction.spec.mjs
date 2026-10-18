@@ -2180,8 +2180,8 @@ test('R2 visible precommit one-operation clear preserves route undo and fails cl
   const battleId = battles.find(id => id !== roadId);
   expect(roadId).toBeTruthy();
   expect(battleId).toBeTruthy();
+  // Draft-only clear: the Road reservation is not yet submitted.
   await roadSelect.selectOption(roadId);
-  await battleSelect.selectOption(battleId);
   await expect(clearAll).toBeEnabled();
   await clearAll.click();
   await expect(roadSelect).toHaveValue('');
@@ -2196,15 +2196,25 @@ test('R2 visible precommit one-operation clear preserves route undo and fails cl
   expect(clearedPlan.path).toEqual([clearedPlan.position]);
   await expect(routeUndo, 'full clear does not replace the one-step route undo control').toBeVisible();
 
-  await page.evaluate(() => {
-    const t = window.__GAMEROAD_TEST__, m = t.state.match, me = m.players[0];
-    m.phase = 'target'; m.activeId = me.id; m.busy = false; m.target = null;
-    t.battlePresentationRender();
-  });
+  // Choosing both cards transitions into target selection and submits the plan.
+  // A target-stage clear must not roll back either submitted card or its route.
+  await roadSelect.selectOption(roadId);
+  await battleSelect.selectOption(battleId);
   await expect(battle.locator('#targetBox')).toHaveClass(/on/);
+  const submittedPlan = await page.evaluate(() => {
+    const me = window.__GAMEROAD_TEST__.state.match.players[0];
+    return { roadId: me.plan?.roadId ?? null, battleId: me.plan?.battleId ?? null, path: [...(me.plan?.path || [])] };
+  });
+  expect(submittedPlan.roadId).toBe(roadId);
+  expect(submittedPlan.battleId).toBe(battleId);
   await expect(clearAll).toBeVisible();
   await expect(clearAll).toBeEnabled();
   await clearAll.click();
+  const keptSubmittedPlan = await page.evaluate(() => {
+    const me = window.__GAMEROAD_TEST__.state.match.players[0];
+    return { roadId: me.plan?.roadId ?? null, battleId: me.plan?.battleId ?? null, path: [...(me.plan?.path || [])] };
+  });
+  expect(keptSubmittedPlan, 'target-draft clear cannot roll back submitted cards or movement').toEqual(submittedPlan);
   await expect(battle.locator('#targetPlayer')).toHaveValue('');
   await expect(battle.locator('#targetLane')).toHaveValue('');
   await expect(battle.locator('#targetShield')).toHaveValue('');

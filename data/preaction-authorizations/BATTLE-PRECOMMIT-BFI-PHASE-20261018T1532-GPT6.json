@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PRECOMMIT-BFI-PHASE-20261018T1532-GPT6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PRECOMMIT_BFI_PHASE_CONTRACT_R1",
+  "acquireKey": "BATTLE-PRECOMMIT-BFI-PHASE-20261018T1532-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "Official #2337 BFI run39011501370: three identical stale test assertions require uncommitted Road/Battle reset after selecting both cards, but auto-commit already advanced to target; formal GR-BTL-CLEAR-001 excludes committed rollback.",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "Exact tests/browser-full-interaction.spec.mjs source blob b73f4c0563b30d209a232ef18ae2060818e1c3db reviewed; sole R2 test block and current main e22a55ea confirmed; planned edit is test-only and preserves existing game code.",
+  "proceedToken": "PROCEED|BATTLE-PRECOMMIT-BFI-PHASE-20261018T1532-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|precommit-phase-test-contract|test-only",
+  "authorizationBaseSha": "e22a55ea514661bba05ea9f486f364f8ec592dd2",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PRECOMMIT_BFI_PHASE_CONTRACT_R1",
+  "leaseAcquireKey": "BATTLE-PRECOMMIT-BFI-PHASE-20261018T1532-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-18 15:33 JST",
+  "leaseUntilJst": "2026-10-18 16:22 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR new isolated branch gmr/precommit-bfi-phase-split-20261018: tests/browser-full-interaction.spec.mjs R2 precommit test ONLY; first-only data/preaction-authorizations/BATTLE-PRECOMMIT-BFI-PHASE-20261018T1532-GPT6.json and cleanup; own PR; own R25/lease row. Original PR#2337 untouched; no browser/GAMEROAD.html, PR#2336, main, merge, deploy.",
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "solutionSignature": "CORRECT_R2_BFI_PLAN_VS_TARGET_CLEAR_CONTRACT_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "Reuse existing Playwright R2 precommit test in place, same UI controls, current standalone pure policy and previous Edge evidence, without writing new gameplay machinery.",
+  "solutionSearchEvidence": [
+    "Original BFI assertion after selecting both Road and Battle incorrectly expects both select boxes empty; observed target phase retains submitted SP_9.",
+    "Correct plan-only clear preserves empty cards/path, target-draft clear protects committed plan, no gameplay-rule mutation.",
+    "Existing PR#2337 remains independent and untouched; this test-only branch has separate first-commit PRE_ACTION authorization."
+  ]
+}

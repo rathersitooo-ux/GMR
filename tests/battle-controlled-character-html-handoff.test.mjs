@@ -75,3 +75,29 @@ test('peer tokens reuse DOM nodes for compact position transitions without slowi
   assert.match(source, /if\(!old\)root.appendChild\(el\)/);
   assert.doesNotMatch(source, /root.innerHTML=''/);
 });
+
+test('peer position tween requires an actual position change, not a camera reprojection', () => {
+  const start = html.indexOf('function renderBoardPlayers(){');
+  const end = html.indexOf('/* BATTLE_CENTRAL_WORLD_LIVE_MOUNT_R8', start);
+  assert.ok(start >= 0 && end > start);
+  const source = html.slice(start, end);
+  assert.match(source, /moved=!!old&&el\.dataset\.positionKey!==String\(p\.position\)/);
+  assert.match(source, /el\.style\.transition=\(moved&&!refresh&&!p\.human/);
+  assert.match(source, /el\.dataset\.positionKey=String\(p\.position\)/);
+  assert.match(source, /if\(refreshVisuals\)globalThis\.__GAMEROAD_CONTROLLED_CHARACTER_4P_SYNC__\?\.\(\)/);
+});
+
+test('remote movement shows a brief moving pose without delaying gameplay or settling a stale match', () => {
+  const start = html.indexOf('const grPeerSettleTimers=new Map();');
+  const end = html.indexOf('\nlet battleSelfDeckPresentationRevision', start);
+  assert.ok(start >= 0 && end > start);
+  const source = html.slice(start, end);
+  assert.match(source, /if\(!human\)\{const to=path\.at\(-1\)/);
+  assert.match(source, /const timer=setTimeout\(\(\)=>/);
+  assert.match(source, /grPeerSettleTimers\.get\(p\.id\)!==timer/);
+  assert.match(source, /state\.match!==currentMatch/);
+  assert.match(source, /p\.position!==to/);
+  assert.match(source, /if\(state\.settings\.reduceMotion\|\|state\.settings\.lowPerf\)/);
+  assert.match(source, /grPeerSettleTimers\.set\(p\.id,timer\)\}return\}/);
+  assert.doesNotMatch(source, /await new Promise\(r=>setTimeout\(r,180\)\)/);
+});

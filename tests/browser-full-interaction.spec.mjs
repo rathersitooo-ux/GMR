@@ -2162,7 +2162,7 @@ test('update manifest is strictly validated, rollback-safe in wording, session-l
   runtime.assertClean(testInfo);
 });
 
-test('R2 visible precommit one-operation clear preserves route undo and fails closed against commit race', async ({ page }, testInfo) => {
+test('R2 visible precommit clear protects submitted plan and fails closed during commit-in-flight', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
   const battle = await beginVisibleTwoPlayerRoadShield(page, testInfo, 'r2-precommit-clear');
@@ -2200,6 +2200,8 @@ test('R2 visible precommit one-operation clear preserves route undo and fails cl
   // A target-stage clear must not roll back either submitted card or its route.
   await roadSelect.selectOption(roadId);
   await battleSelect.selectOption(battleId);
+  // Responsive landscape uses an explicit Ready button; desktop can auto-submit.
+  await submitVisiblePlan(battle);
   await expect(battle.locator('#targetBox')).toHaveClass(/on/);
   const submittedPlan = await page.evaluate(() => {
     const me = window.__GAMEROAD_TEST__.state.match.players[0];
@@ -2227,26 +2229,25 @@ test('R2 visible precommit one-operation clear preserves route undo and fails cl
   await battle.locator('#targetShield').selectOption('C');
   await expect(battle.locator('#confirmTarget'), 'reselecting a complete target restores commit affordance').toBeEnabled();
 
-  await page.evaluate(() => {
-    const t = window.__GAMEROAD_TEST__, m = t.state.match;
-    m.phase = 'plan'; m.activeId = null; m.busy = false; m.target = null;
-    t.battlePresentationRender();
-  });
-  await roadSelect.selectOption(roadId);
-  await battleSelect.selectOption(battleId);
-  await expect(battle.locator('#readyPlan')).toBeEnabled();
-  await expect(clearAll).toBeEnabled();
-  await page.evaluate(() => {
-    document.getElementById('clearPrecommitSelection').click();
-    document.getElementById('readyPlan').click();
-  });
-  await page.waitForTimeout(80);
+  // Do not force an already-submitted turn back into plan: those cards are not
+  // eligible for reselection. Exercise the real in-flight guard at target phase.
   const race = await page.evaluate(() => {
-    const m = window.__GAMEROAD_TEST__.state.match, me = m.players[0];
-    return { phase: m.phase, busy: Boolean(m.busy), roadId: me.plan?.roadId ?? null, battleId: me.plan?.battleId ?? null };
+    const t = window.__GAMEROAD_TEST__, m = t.state.match, me = m.players[0];
+    const before = { phase: m.phase, roadId: me.plan?.roadId ?? null,
+      battleId: me.plan?.battleId ?? null, path: [...(me.plan?.path || [])] };
+    m.busy = true;
+    t.battlePresentationRender();
+    document.getElementById('clearPrecommitSelection')?.click();
+    return { before, after: { phase: m.phase, busy: Boolean(m.busy),
+      roadId: me.plan?.roadId ?? null, battleId: me.plan?.battleId ?? null,
+      path: [...(me.plan?.path || [])] } };
   });
-  expect(race.roadId, 'Ready-started commit is never rolled back by the asynchronous clear').toBe(roadId);
-  expect(race.battleId, 'Ready-started commit preserves the staged Battle card').toBe(battleId);
+  expect(race.after.busy, 'commit-in-flight guard remains active').toBe(true);
+  expect(race.before.phase, 'the target phase was reached through visible submission').toBe('target');
+  expect(race.after.phase).toBe(race.before.phase);
+  expect(race.after.roadId, 'in-flight clear never rolls back submitted Road card').toBe(race.before.roadId);
+  expect(race.after.battleId, 'in-flight clear preserves submitted Battle card').toBe(race.before.battleId);
+  expect(race.after.path, 'in-flight clear preserves committed route').toEqual(race.before.path);
   await attachStateScreenshot(page, testInfo, 'r2-precommit-clear-race-fail-closed');
   runtime.assertClean(testInfo);
 });

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD-START-SEND-20261018T2020-CODEX",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "BOARD_FOUR_TEMPORARY_START_DROP_REVIEW_SEND_R1",
+  "acquireKey": "BOARD-START-SEND-20261018T2020-CODEX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "User explicitly authorized product review send12:05 and internal work IDs, target paths and test result publication19:13, continued20:20. Same saved implementation restored with exact HTML blob c571f59dc9bad98bf2ad60db9740786b47793fd0 on unchanged main ce248160. Focused39 PASS and static53 PASS fresh.",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "Saved actual browser Home/Setup/4P/hand/path/accepted drop/next round evidence, four consumed pads/pageerror0/phone no overflow. Focused39 PASS fresh. Full2674 had17 known base failures and1skip, not all green. Upper traversal, formal budget, durable match reload and physical-device acceptance unfinished.",
+  "proceedToken": "PROCEED|BOARD-START-SEND-20261018T2020-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|explicit-product-and-internal-record-review-send",
+  "authorizationBaseSha": "ce248160fab6089d17afb7ad550fd43205cf1cdc",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "BOARD_FOUR_TEMPORARY_START_DROP_REVIEW_SEND_R1",
+  "leaseAcquireKey": "BOARD-START-SEND-20261018T2020-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-10-18 20:23 JST",
+  "leaseUntilJst": "2026-10-18 21:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR isolated review branch codex/board-start-drop-20261018: browser/GAMEROAD.html; browser/new-base-start-platform-core.mjs; tests/new-base-start-platform-core.test.mjs; tests/battle-board-world-field-renderer.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; own manifest-only bootstrap data/preaction-authorizations/BOARD-START-SEND-20261018T2020-CODEX.json then cleanup; own CURRENT_ACTIVE_LEASES row7/R25/N1322. Same saved start/ring/vine implementation; consolidate live tests into existing governed core suite. User explicitly approved product and internal-record publication. No unrelated changes.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "browser/new-base-start-platform-core.mjs",
+    "tests/new-base-start-platform-core.test.mjs",
+    "tests/battle-board-world-field-renderer.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "browser/new-base-start-platform-core.mjs",
+    "tests/new-base-start-platform-core.test.mjs",
+    "tests/battle-board-world-field-renderer.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "Four unique randomized temporary start platforms, directed one-step drop, consumed state and finite ring burst, actual game consumer and friend projection binding.",
+  "reuseDiscoveryGateVersion": "R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "Existing canonical42/71 graph, ring/vine renderer, normal match consumer and friend projection.",
+  "solutionSearchEvidence": [
+    "browser/new-base-battle-board-visual-graph.mjs",
+    "browser/GAMEROAD.html",
+    "User four start destinations and three movement answers"
+  ],
+  "reviewNotice": "User approved internal record publication. Ordinary Git push lacks local credentials; connected GitHub transport uses same tested source blobs, tree identity, auth-first commit order and local preflight."
+}
+

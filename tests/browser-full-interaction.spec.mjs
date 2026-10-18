@@ -2200,9 +2200,16 @@ test('R2 visible precommit clear protects submitted plan and fails closed during
   // A target-stage clear must not roll back either submitted card or its route.
   await roadSelect.selectOption(roadId);
   await battleSelect.selectOption(battleId);
-  // Responsive landscape uses an explicit Ready button; desktop can auto-submit.
-  await submitVisiblePlan(battle);
-  await expect(battle.locator('#targetBox')).toHaveClass(/on/);
+  // Both choices may have already submitted the plan and disabled the selectors.
+  // Only the still-planning responsive layout needs an explicit Ready click.
+  const phaseAfterChoices = await page.evaluate(() => window.__GAMEROAD_TEST__.state.match.phase);
+  if (phaseAfterChoices === 'plan') {
+    const ready = battle.locator('#readyPlan');
+    await expect(ready, 'responsive plan requires explicit Ready').toBeVisible();
+    await expect(ready).toBeEnabled();
+    await ready.click();
+  }
+  await expect(battle.locator('#targetBox'), 'real submitted plan enters target selection').toHaveClass(/on/, { timeout: 15_000 });
   const submittedPlan = await page.evaluate(() => {
     const me = window.__GAMEROAD_TEST__.state.match.players[0];
     return { roadId: me.plan?.roadId ?? null, battleId: me.plan?.battleId ?? null, path: [...(me.plan?.path || [])] };

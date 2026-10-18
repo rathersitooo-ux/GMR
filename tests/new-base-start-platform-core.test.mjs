@@ -238,3 +238,23 @@ test('guest buffers only latest projection while start rules load',async()=>{
   c.applyProjection({viewer:'P1',revision:1});c.applyProjection({viewer:'P1',revision:2});
   c.applyProjection=pr=>applied.push(pr.revision);ready();await pending;await Promise.resolve();assert.deepEqual(applied,[2]);
 });
+
+import {createBattleBoardWorldFieldRenderModel} from '../browser/battle-board-world-field-renderer.mjs';
+function routeNode(id){const flags=new Set(['path','pathStep','pathEnd']);return{dataset:{pos:id,pathIndex:'99',decisionLabel:'終点'},classList:{toggle:(k,v)=>v?flags.add(k):flags.delete(k),contains:k=>flags.has(k)},setAttribute(k,v){this[k]=v},get flags(){return flags}}}
+test('route editing clears obsolete endpoint, index and label when shortening or cancelling',()=>{
+  const c=bridge(),nodes=['lower:B0','lower:B1','lower:B2'].map(routeNode),p={id:'P1',position:'lower:B0',plan:{path:['lower:B0','lower:B1']}};c.state.match={newBoardStart:{},phase:'plan',players:[p]};c.$$=()=>nodes;
+  c.syncBoardRouteState();assert.equal(nodes[1].flags.has('pathEnd'),true);assert.equal(nodes[2].flags.has('pathEnd'),false);assert.equal(nodes[2].dataset.pathIndex,undefined);assert.equal(nodes[2].dataset.decisionLabel,undefined);
+  p.plan.path=['lower:B0'];c.syncBoardRouteState();assert.equal(nodes[1].dataset.decisionLabel,undefined);assert.equal(nodes[1].flags.has('pathStep'),false);assert.equal(nodes[0].dataset.decisionLabel,'現在');
+});
+test('planned route uses actual world waypoints in either direction',()=>{
+  const c=bridge(),model=createBattleBoardWorldFieldRenderModel({worldBounds:{centerX:0,centerZ:0,width:20,depth:11.25,y:.035}}),edge=model.edges.find(e=>e.fromId==='lower:B0'&&e.toId==='lower:B1');
+  Object.assign(c,{battleCentralWorldRuntimeR8:{worldFieldRenderModel:()=>model},fieldProjection:new Map(),nodeWorld:id=>c.battleStartWorldPoint(id),project3:p=>({x:p.x,y:p.z})});
+  const forward=Array.from(c.battleRouteProjectedPoints(['lower:B0','lower:B1'],{}),p=>({x:p.x,y:p.y}));assert.equal(forward.length,edge.waypoints.length+2);assert.deepEqual(forward[1],{x:edge.waypoints[0].x,y:edge.waypoints[0].z});
+  const reverse=Array.from(c.battleRouteProjectedPoints(['lower:B1','lower:B0'],{}),p=>({x:p.x,y:p.y}));assert.deepEqual(reverse,[...forward].reverse());
+});
+test('accepted drop route stays drawable after its source pad is consumed and through action resolution',()=>{
+  const c=bridge(),m={id:'route-match',round:1,resolutionSeq:0,players:players()};c.initBattleStartPlatforms(m);c.state.match=m;const p=m.players[0],from=p.position,to=core.startPlatformNeighbors(m.newBoardStart,from)[0];p.plan={path:[from,to]};c.commitBattleStartPath(p,p.plan.path,1);p.position=to;m.phase='resolve';
+  Object.assign(c,{battleCentralWorldRuntimeR8:null,fieldProjection:new Map([[to,{x:5,y:8}]]),nodeWorld:id=>c.battleStartWorldPoint(id),project3:p=>({x:p.x,y:p.z})});
+  assert.equal(c.battleStartNodeIds(m).includes(from),false);const points=c.battleRouteProjectedPoints(p.plan.path,p);assert.equal(points.length,2);assert.equal(points[1].x,5);assert.deepEqual(Array.from(p.plan.path),[from,to]);
+  p.plan=null;assert.equal(c.battleRouteProjectedPoints(p.plan?.path||[p.position],p).length,1);
+});

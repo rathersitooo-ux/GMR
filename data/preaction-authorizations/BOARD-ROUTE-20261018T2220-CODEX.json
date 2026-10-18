@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD-ROUTE-20261018T2220-CODEX",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "BOARD_ACTION_ROUTE_READABILITY_R1",
+  "acquireKey": "BOARD-ROUTE-20261018T2220-CODEX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "User22:14 corrected path to action-lifetime preview, not move history. Actual HTML source keeps plan until nextRound; fix stale drag labels and consumed-start route projection, align existing world-edge waypoints, temporary decision colour contrast. Two-file diff; focused42 and static53 PASS.",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "Three regression tests observed missing-function RED then GREEN: stale path endpoint metadata, forward/reverse world waypoints, consumed start path stays drawable through resolution and clears when plan removed. Full2677:2659pass17knownfail1skip; no cell-effect/economy changes.",
+  "proceedToken": "PROCEED|BOARD-ROUTE-20261018T2220-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|user-completion-and-internal-record-publication-delegation",
+  "authorizationBaseSha": "f8690917c4d16f5bc65eba1129e9eb1d7bf6c128",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "BOARD_ACTION_ROUTE_READABILITY_R1",
+  "leaseAcquireKey": "BOARD-ROUTE-20261018T2220-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-10-18 22:25 JST",
+  "leaseUntilJst": "2026-10-18 23:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "Isolated local branch codex/board-route-readable-20261018 based on PR2342 f869091; ONLY browser/GAMEROAD.html and tests/new-base-start-platform-core.test.mjs; own auth record/bootstrap if review-send used; own row7/R25/N1322. Route preview maintained until action finish, stale drag endpoint cleanup, same-world-edge curves, clearer reachable/current/end markers. No move-history retention, no cell-effect assignment, no honey/mana economics or catalog changes. User22:14 correction authoritative.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/new-base-start-platform-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/new-base-start-platform-core.test.mjs"
+  ],
+  "solutionSignature": "Repair existing action route overlay using canonical world edges and existing draft plan; no history subsystem.",
+  "reuseDiscoveryGateVersion": "R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "Reuse renderRouteLine, syncRangeSurfacePath, worldFieldRenderModel edges and existing start core HTML VM tests.",
+  "solutionSearchEvidence": [
+    "browser/GAMEROAD.html:renderRouteLine/refreshDragVisual/renderBoard",
+    "browser/battle-board-world-field-renderer.mjs:edgePrimitive",
+    "tests/new-base-start-platform-core.test.mjs"
+  ]
+}

@@ -611,6 +611,7 @@ jobs:
           node --test tests/screen-navigation-core.test.mjs
           node --test tests/post-match-autoqueue-core.test.mjs
           node --test tests/slaykia-voice-preview.test.mjs
+          node --test tests/battle-controlled-character-html-handoff.test.mjs
           run_optional_package_test tests/home-boot-presentation.test.mjs \
             browser/home-shell-presentation-core.mjs \
             browser/boot-loading-presentation-core.mjs \

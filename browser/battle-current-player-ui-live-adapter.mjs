@@ -192,7 +192,7 @@ function ensureCurrentActionStyle(documentRef) {
   const style = documentRef.createElement('style');
   style.id = CURRENT_ACTION_STYLE_ID;
   style.textContent = `
-[${CURRENT_ACTION_ATTR}="1"].grBattleCurrentActionLive{display:block;box-sizing:border-box;padding:5px 8px;border:1px solid rgba(235,247,238,.42);border-radius:9px;background:rgba(4,28,24,.82);box-shadow:0 5px 14px rgba(0,0,0,.22);color:#f8fbeb;text-shadow:0 1px 6px rgba(0,0,0,.72);font-size:clamp(9px,.95vw,12px);font-weight:900;line-height:1.28;white-space:normal;pointer-events:none}
+[${CURRENT_ACTION_ATTR}="1"].grBattleCurrentActionLive{display:block;box-sizing:border-box;padding:7px 10px;border:1px solid rgba(235,247,238,.52);border-radius:10px;background:rgba(4,28,24,.88);box-shadow:0 6px 18px rgba(0,0,0,.26);color:#f8fbeb;text-shadow:0 1px 6px rgba(0,0,0,.72);font-size:clamp(11px,1vw,13px);font-weight:900;line-height:1.35;white-space:normal;pointer-events:none}
 [${CURRENT_ACTION_ATTR}="1"].grBattleCurrentActionLive[hidden]{display:none!important}
 @media (max-width:500px) and (orientation:portrait){
 [${CURRENT_ACTION_ATTR}="1"].grBattleCurrentActionLive{transform:translateY(6px)}

@@ -217,6 +217,78 @@ function storedFeedback(overrides = {}) {
   };
 }
 
+
+function storedQualityFeedback(overrides = {}) {
+  return {
+    idempotencyKey: 'conversation-quality-quality-event-1',
+    partnerId: 'partner.saasuna',
+    reportType: 'request',
+    sourceUseSite: 'partner-conversation',
+    sourceStateIdentity: 'quality-event-1',
+    versions: {
+      rules: 'gameroad.partner-conversation-quality-feedback.v1',
+      content: 'saasuna.dialogue.current.r1.20260810',
+      state: 'SOURCE-DIALOGUE-SAASUNA-20260810',
+    },
+    feedback: {
+      kind: 'conversation_quality',
+      turnId: 'turn-1',
+      rating: 'good',
+      responseOrigin: 'approved_fallback',
+      candidateOnly: true,
+      canonicalWrite: false,
+      rawTextStored: false,
+      automaticCanonMutation: false,
+      automaticRelationshipMutation: false,
+      automaticRewardMutation: false,
+      automaticLearning: false,
+      userMessage: 'must not be retained',
+      assistantUtterance: 'must not be retained',
+      sessionId: 'must-not-be-retained',
+    },
+    ...overrides,
+  };
+}
+
+test('report authority stores conversation quality as privacy-minimized candidate evidence', async () => {
+  const storage = new FakeStorage();
+  const saved = await submitStoredPartnerReport(storage, storedQualityFeedback(), { reportId: 'r-quality', nowMs: 200 });
+  assert.equal(saved.ok, true);
+  assert.equal(saved.report.feedback.kind, 'conversation_quality');
+  assert.equal(saved.report.feedback.rating, 'good');
+  assert.equal(saved.report.feedback.candidateOnly, true);
+  assert.equal(saved.report.feedback.canonicalWrite, false);
+  assert.equal(saved.report.feedback.rawTextStored, false);
+  assert.equal('sessionId' in saved.report.feedback, false);
+  assert.equal('userMessage' in saved.report.feedback, false);
+  assert.equal('assistantUtterance' in saved.report.feedback, false);
+  const reread = await readStoredPartnerReport(storage, { reportId: 'r-quality' });
+  assert.deepEqual(reread.report.feedback, saved.report.feedback);
+});
+
+test('conversation quality uses canonical identity and distinguishes rating changes', async () => {
+  const storage = new FakeStorage();
+  const first = await submitStoredPartnerReport(storage, storedQualityFeedback(), { reportId: 'r-quality-one' });
+  const changed = await submitStoredPartnerReport(storage, storedQualityFeedback({
+    idempotencyKey: 'conversation-quality-quality-event-2',
+    sourceStateIdentity: 'quality-event-2',
+    feedback: { ...storedQualityFeedback().feedback, rating: 'bad' },
+  }), { reportId: 'r-quality-two' });
+  const duplicate = await submitStoredPartnerReport(storage, storedQualityFeedback({
+    idempotencyKey: 'conversation-quality-quality-event-3',
+  }), { reportId: 'r-quality-three' });
+  assert.equal(first.report.disposition, 'accepted_unique');
+  assert.equal(changed.report.disposition, 'accepted_unique');
+  assert.equal(duplicate.report.disposition, 'duplicate');
+});
+
+test('conversation quality rejects canonical or automatic mutation claims', async () => {
+  const storage = new FakeStorage();
+  assert.deepEqual(await submitStoredPartnerReport(storage, storedQualityFeedback({
+    feedback: { ...storedQualityFeedback().feedback, automaticLearning: true },
+  }), { reportId: 'r-quality-bad' }), { ok: false, reason: 'report_request_invalid' });
+});
+
 test('report authority stores dialogue proposal text and tuning as candidate review evidence', async () => {
   const storage = new FakeStorage();
   const saved = await submitStoredPartnerReport(storage, storedFeedback(), { reportId: 'r-dialogue', nowMs: 100 });

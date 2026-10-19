@@ -119,6 +119,49 @@ test('list and detail render partner identity once instead of duplicating active
   }
 });
 
+
+test('portraitRef is rendered for hub, list and detail while missing portraits stay image-free', () => {
+  const visualRoster = [
+    { partnerId: 'partner.naki', displayName: '緋累ナキ', portraitRef: 'data:image/webp;base64,naki' },
+    { partnerId: 'partner.other', displayName: 'Other', portraitRef: null },
+  ];
+
+  for (const view of ['hub', 'list', 'detail']) {
+    const root = makeRoot();
+    const runtime = mountPartnerShellRuntime({
+      root,
+      getInput: () => ({
+        activePartnerId: 'partner.naki',
+        detailPartnerId: 'partner.naki',
+        roster: visualRoster,
+        view,
+      }),
+      canDispatch: () => true,
+    });
+    assert.equal(runtime.render().ok, true);
+    const images = allNodes(root).filter((node) => node.tagName === 'IMG');
+    assert.equal(images.length, 1);
+    assert.equal(images[0].className, 'partner-shell-portrait');
+    assert.equal(images[0].dataset.partnerId, 'partner.naki');
+    assert.equal(images[0].src, 'data:image/webp;base64,naki');
+    assert.equal(images[0].alt, '緋累ナキの画像');
+  }
+
+  const root = makeRoot();
+  const runtime = mountPartnerShellRuntime({
+    root,
+    getInput: () => ({
+      activePartnerId: 'partner.other',
+      detailPartnerId: 'partner.other',
+      roster: visualRoster,
+      view: 'detail',
+    }),
+    canDispatch: () => true,
+  });
+  assert.equal(runtime.render().ok, true);
+  assert.equal(allNodes(root).some((node) => node.tagName === 'IMG'), false);
+});
+
 test('mount renders connected actions and dispatches intent without local navigation', () => {
   const root = makeRoot();
   const events = [];

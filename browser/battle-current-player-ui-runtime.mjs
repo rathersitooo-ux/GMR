@@ -122,6 +122,17 @@ const STYLE_TEXT = `
   .screen.battle[${ROOT_ATTR}="1"] .battleRail .railBtn{min-height:32px!important;height:32px!important;max-height:32px!important;padding:3px 6px!important;font-size:8px!important}
   .screen.battle[${ROOT_ATTR}="1"] #targetBox{width:min(30vw,230px)!important}
 }
+/* Narrow landscape: keep the deck playable without letting the fixed
+   thumb launcher and planning controls consume the same bottom strip. */
+@media(max-width:720px) and (max-height:430px) and (orientation:landscape){
+  .screen.battle[${ROOT_ATTR}="1"]{--gr-thumb-w:clamp(164px,27vw,188px);--gr-thumb-h:clamp(138px,41vh,160px);--gr-bottom-h:clamp(88px,25vh,110px)}
+  .screen.battle[${ROOT_ATTR}="1"] .battleInfo{left:clamp(58px,11vw,82px)!important;right:calc(var(--gr-thumb-w) + var(--gr-ui-edge) + var(--gr-ui-gap))!important;bottom:var(--gr-ui-edge)!important;grid-template-columns:minmax(0,1fr)!important;display:block!important}
+  .screen.battle[${ROOT_ATTR}="1"] #hand{width:100%!important;min-width:0!important;justify-content:flex-start!important;gap:2px!important;padding-right:2px!important;box-sizing:border-box!important}
+  .screen.battle[${ROOT_ATTR}="1"] #hand .handCard{flex:1 1 0!important;min-width:44px!important;max-width:74px!important;box-sizing:border-box!important}
+  .screen.battle[${ROOT_ATTR}="1"] .planBox{position:absolute!important;left:0!important;right:auto!important;bottom:calc(var(--gr-bottom-h) + var(--gr-ui-gap))!important;width:min(210px,44vw)!important;max-width:none!important;pointer-events:auto!important;z-index:4!important}
+  .screen.battle[${ROOT_ATTR}="1"] [data-battle-janken-slidepad="1"]{width:var(--gr-thumb-w)!important;height:var(--gr-thumb-h)!important}
+  .screen.battle[${ROOT_ATTR}="1"] #targetBox{width:min(32vw,210px)!important}
+}
 @media(max-width:520px) and (orientation:portrait){
   .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="current-action"]{top:108px!important;left:8px!important;right:8px!important;width:auto!important;min-width:0!important;max-width:none!important;transform:translateY(6px)!important}
   .screen.battle[${ROOT_ATTR}="1"]{--gr-thumb-w:176px;--gr-thumb-h:172px;--gr-bottom-h:28vh}

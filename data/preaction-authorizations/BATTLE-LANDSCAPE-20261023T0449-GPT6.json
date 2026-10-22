@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-LANDSCAPE-20261023T0449-GPT6",
+  "taskId": "BROWSER-BATTLE-SCREEN-VISUAL-REMAKE-001",
+  "workUnitKey": "BATTLE_LANDSCAPE_HANDSPACE_667_R1",
+  "acquireKey": "BATTLE-LANDSCAPE-20261023T0449-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "LANDSCAPE_CSS_CURRENT_667_MIN_HAND_WIDTH",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_SOURCE_CSS_ANCHOR_EXACT_BASE",
+  "proceedToken": "PROCEED|BATTLE-LANDSCAPE-20261023T0449-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|sheet-readback",
+  "authorizationBaseSha": "50d3c2d54651fcac39197237fba3e500d5dfb5de",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-SCREEN-VISUAL-REMAKE-001",
+  "leaseWorkUnitKey": "BATTLE_LANDSCAPE_HANDSPACE_667_R1",
+  "leaseAcquireKey": "BATTLE-LANDSCAPE-20261023T0449-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-23 04:49 JST",
+  "leaseUntilJst": "2026-10-23 05:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
+  "leaseExactMutableResources": "GitHub GMR isolated branch battle-landscape-handspace-20261023 (base main 50d3c2d54651fcac39197237fba3e500d5dfb5de): ONLY browser/battle-current-player-ui-runtime.mjs and tests/battle-current-player-ui-runtime.test.mjs; own temporary data/preaction-authorizations/BATTLE-LANDSCAPE-20261023T0449-GPT6.json first manifest and deletion; draft PR, checks, conditional exact-head merge after green (no forced deploy). No browser/GAMEROAD.html, no janken/launcher local R24, no Honey, combat rules, assets, docs. Central CURRENT_ACTIVE_LEASES row11 own; R25 own. Rework small landscape viewport reserve actual hand-card strip instead of fixed 208px thumb device and two-column plan boxing.",
+  "scope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs"
+  ]
+}

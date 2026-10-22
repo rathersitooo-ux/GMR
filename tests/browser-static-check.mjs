@@ -233,7 +233,7 @@ if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stat
     [/manaCurrent:7,manaMax:10,honey:0,chip:/, 'numeric Mana 7/10 and player-owned Honey balance are not initialized'],
     [/function currentPlacementRanks\(m=state\.match\)/, 'current placement ranking was not made reusable for round income'],
     [/position:p\.position,manaCurrent:Number\(p\.manaCurrent\)\|\|0,manaMax:Number\(p\.manaMax\)\|\|10,honey:Number\(p\.honey\)\|\|0,chip:/, 'friend projection drops numeric Mana or player-owned Honey'],
-    [/function awakeManaFromHoney\(/, 'Honey Hunt node-Honey Mana wake authority was removed'],
+    [/function creditCollectedHoney\(p,count\)\{const before=p\.honey;p\.honey\+=count;/, 'Honey Hunt endpoint must credit the player-owned Honey balance'],
   ];
   for (const [pattern, message] of correctedBattleResourceContracts) {
     if (!pattern.test(html)) errors.push(message);

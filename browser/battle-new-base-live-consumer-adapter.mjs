@@ -154,6 +154,9 @@ export function createBattleNewBaseLiveConsumerAdapter({
 
   let roundSnapshot = null;
   let assignmentTurnId = null;
+  // Serialize authoritative turn snapshots. Concurrent awaits must not
+  // draw more than one R/S/P permutation for the same turn.
+  let roundSyncTail = Promise.resolve();
   let stagedCompoundAttack = null;
   let commitInFlight = false;
   // A pending user cancel must settle before another stage or commit can begin.
@@ -168,7 +171,7 @@ export function createBattleNewBaseLiveConsumerAdapter({
       && requiredString(authority.turnId, 'roundAuthority.turnId') === expectedTurnId;
   }
 
-  async function syncRoundStart() {
+  async function computeRoundStart() {
     const authority = requiredObject(await readRoundAuthority(), 'round authority');
     const roundId = requiredString(authority.roundId, 'roundAuthority.roundId');
     const turnId = requiredString(authority.turnId, 'roundAuthority.turnId');
@@ -210,6 +213,13 @@ export function createBattleNewBaseLiveConsumerAdapter({
     roundSnapshot = next;
     assignmentTurnId = turnId;
     return roundSnapshot;
+  }
+
+  function syncRoundStart() {
+    const operation = roundSyncTail.then(() => computeRoundStart());
+    // A rejected authority read must not permanently block later turns.
+    roundSyncTail = operation.then(() => undefined, () => undefined);
+    return operation;
   }
 
   async function readCandidateFor(jankenHand, cardId, expectedRoundId = roundSnapshot.roundId) {

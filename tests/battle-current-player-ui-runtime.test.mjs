@@ -412,3 +412,21 @@ console.log('battle-current-player-ui-runtime: live-consumer focused tests passe
   runtime.destroy();
   assert.equal(document.head.children.length, 0);
 }
+
+{
+  // The portrait arrangement must not be forced into short landscape screens.
+  const { document, root, nodes } = fixture();
+  const runtime = mountBattleCurrentPlayerUi({ document }, { root });
+  const css = document.head.children.map(node => node.textContent).join('\\n');
+  assert.match(css, /@media\(max-width:720px\) and \(max-height:430px\) and \(orientation:landscape\)/);
+  assert.match(css, /--gr-thumb-w:clamp\(164px,27vw,188px\)/);
+  assert.match(css, /\.battleInfo\{left:clamp\(58px,11vw,82px\)!important;right:calc\(var\(--gr-thumb-w\)/);
+  assert.match(css, /#hand\{width:100%!important;min-width:0!important;justify-content:flex-start!important/);
+  assert.match(css, /#hand \.handCard\{flex:1 1 0!important;min-width:44px!important;max-width:74px!important/);
+  assert.match(css, /\.planBox\{position:absolute!important;left:0!important;right:auto!important;bottom:calc\(var\(--gr-bottom-h\)/);
+  assert.ok(css.indexOf('@media(max-height:430px) and (orientation:landscape)') <
+    css.indexOf('@media(max-width:720px) and (max-height:430px) and (orientation:landscape)'),
+    'short-landscape sizing must override the older fixed 208px dock');
+  assert.equal(runtime.surfaces.hand, nodes.hand, 'ordinary hand keeps the existing playable node');
+  runtime.destroy();
+}

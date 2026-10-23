@@ -2375,7 +2375,7 @@ async function grClearBattlePrecommitSelection(){
     me.plan={...result.next.plan,path:[...result.next.plan.path]};
     const rs=$('#roadSelect'),bs=$('#battleSelect');if(rs)rs.value='';if(bs)bs.value='';
     $('#endpointText')&&($('#endpointText').textContent=me.position);renderBoard();syncDirectPlanRoleUi();void updateBattleAvatar();
-    renderBattle();grSyncBattlePrecommitClear();return true
+    ctxClear();renderBattle();grSyncBattlePrecommitClear();return true
   }
   const active=m.players?.find(p=>p.id===m.activeId);if(!active?.human)return false;
   const result=api.clearBattlePrecommitSelection({phase:'target',busy:m.busy,targetCommitted:Boolean(m.target),position:active.position,plan:active.plan,targetDraft:grBattleTargetDraft()});

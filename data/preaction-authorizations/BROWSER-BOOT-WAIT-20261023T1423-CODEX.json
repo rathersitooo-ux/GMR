@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BROWSER-BOOT-WAIT-20261023T1423-CODEX",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "PUBLIC_BROWSER_STREAMED_HTML_READY",
+  "acquireKey": "BROWSER-BOOT-WAIT-20261023T1423-CODEX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "SAVED_PUBLIC_TRACE39842823006_STREAMED_DOM_BEFORE_CARDS",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "ACTUAL_HELPER_RED_CARDS0_NEGATIVE_GUARDS_3PASS",
+  "proceedToken": "PROCEED|BROWSER-BOOT-WAIT-20261023T1423-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|boot-helper|existing-bfi-test|own-row8",
+  "authorizationBaseSha": "50d3c2d54651fcac39197237fba3e500d5dfb5de",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "PUBLIC_BROWSER_STREAMED_HTML_READY",
+  "leaseAcquireKey": "BROWSER-BOOT-WAIT-20261023T1423-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-10-23 14:21 JST",
+  "leaseUntilJst": "2026-10-23 15:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "ONLY new isolated GitHub branch codex/browser-boot-wait-20261023 from main50d3c2d54651fcac39197237fba3e500d5dfb5de; tests/browser-full-interaction.spec.mjs ONLY bootCurrentBrowser navigation wait condition commit→domcontentloaded, existing status/doctype/screen assertions retained. Own temporary data/preaction-authorizations/BROWSER-BOOT-WAIT-20261023T1423-CODEX.json manifest-first+cleanup. Own row8/N1374 current limited update/R25. No game/HTML/UI/rules/assets/other tests/CI changes, no PR/mainmerge/deploy or browser launch/capture on unchanged screens. Deterministic streamed HTML local fixture + existing prepush gate before publication. Preserved Library trace is runtime evidence; local fixture is not public/mobile acceptance.",
+  "solutionSignature": "EXISTING_BOOT_HELPER_PARSE_COMPLETE",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_BFI_BOOT_HELPER_AND_SAVED_PUBLIC_TRACE_READ",
+  "solutionSearchEvidence": [
+    "Existing Playwright page.goto waitUntil commit returns before complete HTML, saved trace has Home but Cards count0.",
+    "Reuse existing domcontentloaded navigation condition; retain all current HTTP/doctype/Home/section assertions.",
+    "Local actual-helper streaming reproduction fails same assertion; bad HTTP, missing Cards, invisible Home remain rejected.",
+    "No game/test infrastructure, fixed sleep, networkidle, screenshots, UI or new persistent test is added."
+  ],
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

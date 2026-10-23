@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GOAL-ARRIVAL-ACK-20261023T1939-GPT6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "GOAL_ARRIVAL_COMPLETION_IDENTITY_GUARD_R1",
+  "acquireKey": "GOAL-ARRIVAL-ACK-20261023T1939-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "MAIN_BLOB_SHA_AND_EXACT_LEASE_SCOPE_20261023T1939",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PRIOR_GOAL_HANDOFF_PATCH_BASELINE_FAIL_AFTER_PASS_BUNDLE_20261023",
+  "proceedToken": "PROCEED|GOAL-ARRIVAL-ACK-20261023T1939-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|lease-snapshot",
+  "authorizationBaseSha": "50d3c2d54651fcac39197237fba3e500d5dfb5de",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "GOAL_ARRIVAL_COMPLETION_IDENTITY_GUARD_R1",
+  "leaseAcquireKey": "GOAL-ARRIVAL-ACK-20261023T1939-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-23 19:39 JST",
+  "leaseUntilJst": "2026-10-23 20:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:O6",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR isolated branch goal-arrival-ack-guard-20261023 based only on main 50d3c2d54651fcac39197237fba3e500d5dfb5de: ONLY browser/battle-goal-arrival-live-adapter.mjs and tests/battle-goal-arrival-live-adapter.test.mjs; temporary first-only data/preaction-authorizations/GOAL-ARRIVAL-ACK-20261023T1939-GPT6.json and removal; draft PR, mandatory checks, conditional reviewed merge only if exact-head PASS. No game HTML, no GOAL winner authority core, no Honey/board/launcher, no public manual deployment. Own CURRENT_ACTIVE_LEASES row6 and R25 Acquire/Terminal/Release only.",
+  "scope": [
+    "browser/battle-goal-arrival-live-adapter.mjs",
+    "tests/battle-goal-arrival-live-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-goal-arrival-live-adapter.mjs",
+    "tests/battle-goal-arrival-live-adapter.test.mjs"
+  ]
+}

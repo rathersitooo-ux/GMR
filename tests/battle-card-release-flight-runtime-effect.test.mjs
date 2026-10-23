@@ -254,3 +254,27 @@ test('capture fails closed for invalid caller geometry instead of inventing a ta
   assert.equal(capture(source, { target: { x: Number.NaN, y: 180 } }), null);
   assert.equal(captureBattleCardReleaseFlightEffect({ sourceNode: source }), null);
 });
+
+test('launcher return is released on arrival, cancellation, and reduced static fallback', async () => {
+  for (const mode of ['arrive', 'cancel', 'static']) {
+    const {source,clone,host,documentRef}=fixture({animateClone:mode!=='static'});
+    let count=0;host.__gameroadLauncherFlightSettled=()=>{count+=1;};
+    assert.equal(playBattleCardReleaseFlightEffect({host,documentRef,flight:capture(source,{reducedMotion:mode==='static'})}),true);
+    if(mode==='arrive')clone.finish.resolve();
+    if(mode==='cancel')clone.finish.reject(new Error('cancelled'));
+    await flushMicrotasks();assert.equal(count,1,mode);
+  }
+});
+
+test('draft clear cancels the canonical flight and settles it once', async()=>{
+ const {cancelBattleCardReleaseFlightEffect}=await import('../browser/battle-card-release-flight-runtime-effect.mjs');
+ assert.equal(typeof cancelBattleCardReleaseFlightEffect,'function');
+ const {source,clone,host,documentRef}=fixture();let settled=0,cancelled=0;
+ clone.animate=()=>({finished:clone.finish.promise,cancel(){cancelled++;clone.finish.reject(new Error('cancelled'));}});
+ host.__gameroadLauncherFlightSettled=()=>settled++;
+ assert.equal(playBattleCardReleaseFlightEffect({host,documentRef,flight:capture(source)}),true);
+ assert.equal(cancelBattleCardReleaseFlightEffect(host),true);
+ assert.equal(clone.removed,true);
+ assert.equal(cancelBattleCardReleaseFlightEffect(host),false);
+ await flushMicrotasks();assert.equal(settled,1);assert.equal(cancelled,1);
+});

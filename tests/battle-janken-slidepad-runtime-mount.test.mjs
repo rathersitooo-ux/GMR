@@ -64,7 +64,7 @@ test('three input modes share one existing card-action commit path', () => {
   assert.match(source, /inputMode === BATTLE_JANKEN_INPUT_MODE\.LAUNCHER/);
   assert.match(source, /function commitSelectedHand\(selectedHand\)/);
   assert.match(source, /resolveBattleJankenSlotCardAction\(model, selectedHand, currentSourceHandIds\)/);
-  assert.match(source, /const clicked = !!cardId && clickExistingHandCard\(root, cardId\);[\s\S]*if \(clicked\) \{[\s\S]*playReleasedJankenCardFlight\(host, flight\);/);
+  assert.match(source, /const clicked = !!cardId && clickExistingHandCard\(root, cardId\);[\s\S]*if \(clicked && currentStagedCardIds\(\)\.has\(cardId\)\) \{[\s\S]*playReleasedJankenCardFlight\(host, flight\);/);
 });
 
 
@@ -390,7 +390,7 @@ test('live SlidePad blocks every janken input after one commit and reprojects on
   assert.match(source, /turnLifecycle\?\.usedThisTurn === true/);
   assert.match(source, /function hasUsedJankenThisRound\(\) \{[\s\S]*committedRoundId === model\.roundId/);
   assert.match(source, /function latchJankenTurnCommit\(roundId, cardId\)[\s\S]*turnLifecycle = projectBattleJankenTurnLifecycle\([\s\S]*syncHandZoneProjection\(root, model, turnLifecycle\.reservedCardIds\);[\s\S]*for \(const node of slotNodes\.values\(\)\) node\.disabled = true;/);
-  assert.match(source, /if \(clicked\) \{\s*latchJankenTurnCommit\(model\.roundId, cardId\);[\s\S]*schedule\(\);/);
+  assert.match(source, /if \(clicked && currentStagedCardIds\(\)\.has\(cardId\)\) \{\s*latchJankenTurnCommit\(model\.roundId, cardId\);[\s\S]*schedule\(\);/);
   assert.match(source, /onAccepted:[\s\S]*latchJankenTurnCommit\(model\.roundId, acceptedSlot\.cardId\);/);
   assert.equal(source.includes('[${HOST_ATTR}="1"][data-janken-turn-used="true"]::before'), false);
   assert.match(source, /committedCardId = id;/);
@@ -853,7 +853,7 @@ test('release-flight live adapter delegates to the canonical effect and keeps su
   const source = readFileSync(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
   assert.equal(source.includes("from './battle-card-release-flight-runtime-effect.mjs';"), true);
   assert.equal(source.includes('captureBattleCardReleaseFlightEffect({'), true);
-  assert.equal(source.includes('return playBattleCardReleaseFlightEffect({ host, flight });'), true);
+  assert.equal(source.includes('const played = playBattleCardReleaseFlightEffect({ host, flight });'), true);
   assert.equal(source.includes('RELEASE_FLIGHT_DURATION_MS'), false);
   assert.equal(source.includes('sampleOffsets = [0, 0.12, 0.28'), false);
   assert.equal(source.includes("reducedMotion: globalRef?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true"), true);
@@ -1027,3 +1027,18 @@ test('Power Energy uses the exact recovered web derivative and does not add a se
   assert.doesNotMatch(source, /createPowerEnergy(?:Controller|Engine|Store)/);
 });
 // BATTLE_POWER_ENERGY_VISUAL_TARGET_R1_END
+
+{
+const test=(await import('node:test')).default;
+const assert=(await import('node:assert/strict')).default;
+const runtime=await import('../browser/battle-janken-slidepad-runtime-mount.mjs');
+const orb={left:100,top:100,width:60,height:60};
+const board={left:0,top:0,width:400,height:800};
+function step(state,event){assert.equal(typeof runtime.reduceLauncherChargeGesture,'function','a slot release must require orb contact followed by a pull');return runtime.reduceLauncherChargeGesture(state,event,{orbRect:orb,battleRect:board});}
+function start(){return step(null,{type:'down',pointerId:1,x:40,y:80});}
+test('plain drag and release never commit a launcher card',()=>{let s=start();s=step(s,{type:'move',pointerId:1,x:50,y:300});assert.equal(step(s,{type:'up',pointerId:1,x:50,y:300}).launch,false);});
+test('orb contact charges the card; pull then release accepts exactly once',()=>{let s=start();s=step(s,{type:'move',pointerId:1,x:130,y:130});assert.equal(s.phase,'charged');s=step(s,{type:'move',pointerId:1,x:80,y:190});assert.equal(s.phase,'ready');s=step(s,{type:'up',pointerId:1,x:80,y:190});assert.equal(s.launch,true);assert.equal(step(s,{type:'up',pointerId:1,x:80,y:190}).launch,false);});
+test('releasing on the orb, outside the battle, or after cancel does not commit',()=>{for(const event of [{type:'up',pointerId:1,x:130,y:130},{type:'up',pointerId:1,x:450,y:180},{type:'cancel',pointerId:1,x:80,y:190}]){let s=start();s=step(s,{type:'move',pointerId:1,x:130,y:130});s=step(s,{type:'move',pointerId:1,x:80,y:190});assert.equal(step(s,event).launch,false);}});
+test('second pointer and OS interruption invalidate the original drag',()=>{for(const event of [{type:'down',pointerId:2,x:80,y:190},{type:'interrupt'}]){let s=start();s=step(s,{type:'move',pointerId:1,x:130,y:130});s=step(s,{type:'move',pointerId:1,x:80,y:190});s=step(s,event);assert.equal(step(s,{type:'up',pointerId:1,x:80,y:190}).launch,false);}});
+
+}

@@ -1,3 +1,4 @@
+import { mountLauncherHandPresentation } from './battle-launcher-hand-presentation.mjs';
 import {
   ensureRoundStartJankenSlotAssignment,
   NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE,
@@ -15,6 +16,7 @@ import {
 import {
   captureBattleCardReleaseFlightEffect,
   playBattleCardReleaseFlightEffect,
+  cancelBattleCardReleaseFlightEffect,
 } from './battle-card-release-flight-runtime-effect.mjs';
 import {
   BATTLE_HAND_INPUT_EFFECT,
@@ -84,6 +86,29 @@ const GESTURE_DEAD_ZONE_PX = 10;
 const GESTURE_MIN_DIRECTION_COSINE = 0.45;
 const GESTURE_STICK_TRAVEL_PX = 30;
 const HAND_DRAG_DEAD_ZONE_PX = 8;
+
+// Presentation/input tuning, not a new game rule. No ownership or plan writes.
+export function reduceLauncherChargeGesture(state, event, { orbRect, battleRect, pullPx = 28 } = {}) {
+  const inside = (rect, x, y) => rect && x >= rect.left && y >= rect.top
+    && x <= rect.left + rect.width && y <= rect.top + rect.height;
+  if (event.type === 'down' && !state) return { phase: 'loaded', pointerId: event.pointerId, launch: false };
+  if (!state) return { phase: 'cancelled', launch: false };
+  const next = { ...state, launch: false };
+  if (['released', 'cancelled'].includes(state.phase)) return next;
+  if (event.type === 'interrupt' || event.type === 'cancel'
+    || (event.type === 'down' && event.pointerId !== state.pointerId)) return { ...next, phase: 'cancelled' };
+  if (event.pointerId !== state.pointerId) return next;
+  if (event.type === 'move' || event.type === 'up') {
+    const touching = inside(orbRect, event.x, event.y);
+    if (touching) { next.contact = { x: event.x, y: event.y }; next.phase = 'charged'; }
+    else if (next.contact) next.phase = Math.hypot(event.x - next.contact.x, event.y - next.contact.y) >= pullPx ? 'ready' : 'charged';
+    if (event.type === 'up') {
+      next.launch = next.phase === 'ready' && inside(battleRect, event.x, event.y);
+      next.phase = 'released';
+    }
+  }
+  return next;
+}
 // Provisional runtime tuning only; physical-device/Human acceptance must tune this value.
 const HAND_DETAIL_HOLD_MS = 500;
 const HAND_AURA_ARM_PADDING_PX = 18;
@@ -805,9 +830,10 @@ function elementCenter(node) {
 }
 
 function launchTargetCenter(battleRoot) {
-  const target = battleRoot?.querySelector?.('#battlePhaseSurface') ?? battleRoot;
-  const rect = target?.getBoundingClientRect?.();
-  if (!rect) return null;
+  const surfaceRect = battleRoot?.querySelector?.('#battlePhaseSurface')?.getBoundingClientRect?.();
+  const hasArea = rect => rect && rect.width > 0 && rect.height > 0;
+  const rect = hasArea(surfaceRect) ? surfaceRect : battleRoot?.getBoundingClientRect?.();
+  if (!hasArea(rect)) return null;
   const x = Number(rect.left) + (Number(rect.width) * 0.5);
   const y = Number(rect.top) + (Number(rect.height) * 0.44);
   return Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null;
@@ -826,7 +852,7 @@ function spatialSlotRole(slotNodes, selectedHand) {
 }
 
 function captureReleasedJankenCardFlight(globalRef, battleRoot, slotNodes, selectedHand) {
-  const sourceNode = slotNodes.get(selectedHand);
+  const sourceNode = slotNodes.get(selectedHand)?.querySelector?.('.grJankenSlidePadPhysicalCard');
   const start = elementCenter(sourceNode);
   const target = launchTargetCenter(battleRoot);
   if (!sourceNode || !start || !target) return null;
@@ -841,7 +867,9 @@ function captureReleasedJankenCardFlight(globalRef, battleRoot, slotNodes, selec
 }
 
 function playReleasedJankenCardFlight(host, flight) {
-  return playBattleCardReleaseFlightEffect({ host, flight });
+  const played = playBattleCardReleaseFlightEffect({ host, flight });
+  if (!played) host.__gameroadLauncherFlightSettled?.();
+  return played;
 }
 
 function animateHandAuraLaunch(globalRef, documentRef, battleRoot, powerEnergy, ghost) {
@@ -1124,6 +1152,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     button.addEventListener('pointermove', updateSlotPull);
     button.addEventListener('pointerup', (event) => finishSlotPull(event));
     button.addEventListener('pointercancel', (event) => finishSlotPull(event, { cancelled: true }));
+    button.addEventListener('lostpointercapture', (event) => finishSlotPull(event, { cancelled: true }));
     host.appendChild(button);
     slotNodes.set(hand, button);
   }
@@ -1180,6 +1209,8 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   host.appendChild(handle);
   root.appendChild(host);
 
+  const launcherPresentation = mountLauncherHandPresentation({ root, host, slotNodes, handle, powerEnergy, globalRef });
+
   const rowRouletteHost = documentRef.createElement('aside');
   rowRouletteHost.setAttribute(BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR, '1');
   rowRouletteHost.setAttribute('aria-label', '残り手札ルーレット');
@@ -1204,6 +1235,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     : null;
 
   let assignment = null;
+  let openingSelectionEpoch = null;
   let model = null;
   let turnLifecycle = null;
   let committedRoundId = null;
@@ -1510,10 +1542,12 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     }
     const currentSourceHandIds = readHand(globalRef, root).map((card) => card.id);
     const cardId = resolveBattleJankenSlotCardAction(model, selectedHand, currentSourceHandIds);
+    const returnCards = launcherPresentation.captureReturns(cardId);
     const flight = cardId ? captureReleasedJankenCardFlight(globalRef, root, slotNodes, selectedHand) : null;
     const clicked = !!cardId && clickExistingHandCard(root, cardId);
-    if (clicked) {
+    if (clicked && currentStagedCardIds().has(cardId)) {
       latchJankenTurnCommit(model.roundId, cardId);
+      launcherPresentation.release(returnCards, selectedHand, () => schedule());
       playReleasedJankenCardFlight(host, flight);
       schedule();
     }
@@ -1577,7 +1611,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   }
 
   function beginSlotPull(event) {
-    if (hasUsedJankenThisRound() || inputMode !== BATTLE_JANKEN_INPUT_MODE.CARD_PULL || destroyed || slotDrag || activePointerId !== null) return;
+    if (hasUsedJankenThisRound() || (!launcherPresentation.enabled && inputMode !== BATTLE_JANKEN_INPUT_MODE.CARD_PULL) || destroyed || slotDrag || activePointerId !== null) return;
     const node = event?.currentTarget ?? event?.target?.closest?.(`[${SLOT_ATTR}]`);
     const selectedHand = node?.getAttribute?.(SLOT_ATTR);
     const pointerId = event?.pointerId;
@@ -1589,6 +1623,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       pointerId,
       origin,
       moved: false,
+      charge: launcherPresentation.enabled ? reduceLauncherChargeGesture(null, {type:'down',pointerId,x:event.clientX,y:event.clientY}, launcherPresentation.rects()) : null,
     };
     node.dataset.pullDragging = 'true';
     node.style.setProperty('--gr-janken-pull-x', '0px');
@@ -1608,6 +1643,12 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     const dy = y - state.origin.y;
     const distance = Math.hypot(dx, dy);
     if (distance >= GESTURE_DEAD_ZONE_PX) state.moved = true;
+    if (state.charge) {
+      state.charge = reduceLauncherChargeGesture(state.charge, {type:'move',pointerId:state.pointerId,x,y}, launcherPresentation.rects());
+      launcherPresentation.drag(state.node, state.charge.phase, dx, dy);
+      event.preventDefault?.(); event.stopPropagation?.();
+      return state.moved;
+    }
     const limit = 74;
     const scale = distance > limit ? limit / distance : 1;
     state.node.style.setProperty('--gr-janken-pull-x', `${(dx * scale).toFixed(2)}px`);
@@ -1621,11 +1662,12 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     const state = slotDrag;
     if (!state || event?.pointerId !== state.pointerId) return;
     if (!cancelled) updateSlotPull(event);
-    const selectedHand = !cancelled && state.moved ? state.hand : null;
+    const chargeEnd = state.charge ? reduceLauncherChargeGesture(state.charge, {type:cancelled?'cancel':'up',pointerId:state.pointerId,x:Number(event.clientX),y:Number(event.clientY)},launcherPresentation.rects()) : null;
+    const selectedHand = !cancelled && (chargeEnd ? chargeEnd.launch : state.moved) ? state.hand : null;
     const pointerId = state.pointerId;
     const moved = state.moved;
     slotDrag = null;
-    clearSlotPullVisual(state);
+    if (!selectedHand) { clearSlotPullVisual(state); launcherPresentation.resetDrag(state.node); }
     try {
       if (state.node.hasPointerCapture?.(pointerId)) state.node.releasePointerCapture?.(pointerId);
     } catch {}
@@ -1634,7 +1676,8 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       event.preventDefault?.();
       event.stopPropagation?.();
     }
-    if (selectedHand) commitSelectedHand(selectedHand);
+    if (selectedHand) { commitSelectedHand(selectedHand); clearSlotPullVisual(state); launcherPresentation.resetDrag(state.node); }
+    schedule();
   }
 
   function updateGesture(event) {
@@ -1939,6 +1982,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   }
 
   function handleGlobalHandSecondaryPointerDown(event) {
+    if (slotDrag && Number(event?.pointerId) !== slotDrag.pointerId) finishSlotPull({pointerId:slotDrag.pointerId}, {cancelled:true});
     const state = handDrag;
     const pointerId = Number(event?.pointerId);
     if (!state || !Number.isFinite(pointerId) || pointerId === state.pointerId) return;
@@ -1961,6 +2005,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
 
   function handleHandVisibilityChange() {
     if (documentRef.hidden !== true) return;
+    if (slotDrag) finishSlotPull({pointerId:slotDrag.pointerId}, {cancelled:true});
     closeHandDetailPanel({ restoreFocus: false });
     const state = handDrag;
     if (!state) return;
@@ -2092,6 +2137,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
 
   function render() {
     if (destroyed) return;
+    if (slotDrag) return;
     bindHandInput();
     const roundText = root.querySelector?.('#roundNo')?.textContent;
     const hand = readHand(globalRef, root);
@@ -2102,6 +2148,22 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       return;
     }
     const canonical = canonicalRoundId(roundText);
+    const callerAssignment = root.querySelector?.('#hand')?.__gameroadJankenAssignment;
+    const hasCurrentCallerAssignment = callerAssignment?.roundId === canonical
+      && callerAssignment.assignmentMode === NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY;
+    const selectionEpoch = hasCurrentCallerAssignment
+      ? (callerAssignment.openingSelection?.selectionEpochId ?? callerAssignment.assignmentEpochId ?? canonical)
+      : null;
+    const draftRevision = root.querySelector?.('#hand')?.dataset?.jankenDraftRevision ?? '0';
+    const callerEpoch = selectionEpoch ? `${selectionEpoch}:round:${canonical}:draft:${draftRevision}` : null;
+    if (callerEpoch && callerEpoch !== openingSelectionEpoch) {
+      openingSelectionEpoch = callerEpoch;
+      committedRoundId = null; committedCardId = null; turnLifecycle = null; lastRoundId = null;
+      launcherPresentation.reset();
+      cancelBattleCardReleaseFlightEffect(host);
+    }
+    if (hasCurrentCallerAssignment) assignment = callerAssignment;
+    launcherPresentation.enable(hasCurrentCallerAssignment);
     if (assignment?.roundId && assignment.roundId !== canonical) assignment = null;
     model = buildBattleJankenSlidePadModel({
       roundId: roundText,
@@ -2156,6 +2218,8 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       const node = slotNodes.get(slot.jankenHand);
       const cardText = node.querySelector('.grJankenSlidePadCard');
       node.disabled = hasUsedJankenThisRound() || !slot.selectable;
+      node.dataset.launcherState = hasUsedJankenThisRound() ? (host.dataset.launcherCycle === 'flight' ? 'using' : host.dataset.launcherCycle === 'retracted' ? 'retracted' : 'empty') : slot.selectable ? 'loaded' : 'empty';
+      node.dataset.occupied = String(slot.occupied);
       node.dataset.cardId = slot.cardId ?? '';
       node.setAttribute('aria-label', slot.occupied
         ? `${slot.symbol} ${slot.hand} ${slot.cardLabel}`
@@ -2164,6 +2228,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       syncJankenSlotPhysicalCardPresentation(root, node, slot);
       node.dataset.inputMode = inputMode;
       node.onclick = () => {
+        if (launcherPresentation.enabled) return;
         if (hasUsedJankenThisRound()) return;
         if (suppressSlotClickHand === slot.jankenHand) {
           suppressSlotClickHand = null;
@@ -2189,7 +2254,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   }
 
   handle.addEventListener('pointerdown', (event) => {
-    if (hasUsedJankenThisRound() || inputMode !== BATTLE_JANKEN_INPUT_MODE.LAUNCHER || activePointerId !== null || handDrag) return;
+    if (launcherPresentation.enabled || hasUsedJankenThisRound() || inputMode !== BATTLE_JANKEN_INPUT_MODE.LAUNCHER || activePointerId !== null || handDrag) return;
     const pointerId = event?.pointerId;
     if (!Number.isFinite(pointerId)) return;
     const center = elementCenter(handle);

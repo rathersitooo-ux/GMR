@@ -331,3 +331,14 @@ test('Reduced Motion keeps the same OPEN/progression meaning with static cue and
   assert.equal(BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT.writesGameState, false);
   assert.equal(BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT.secondBoardEngine, false);
 });
+test('world appearance receives existing low-performance setting without exposing future cards', () => {
+  const { runtime } = mount({ lowPerf: true, reducedMotion: true });
+  assert.equal(runtime.mounted, true);
+  const model = runtime.worldFieldRenderModel();
+  assert.equal(model.ringVineAppearance.lowPerf, true);
+  assert.equal(model.ringVineAppearance.reducedMotion, true);
+  assert.equal(model.ringVineAppearance.count.vines, 71);
+  assert.equal(model.ringVineAppearance.count.decorativeLeaves, 0);
+  assert.equal(model.counts.visibleFutureUpperSlots, 0);
+  assert.equal(model.ringVineAppearance.noMovementAuthority, true);
+});

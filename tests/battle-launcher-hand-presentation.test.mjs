@@ -4,6 +4,21 @@ import {mountLauncherHandPresentation} from '../browser/battle-launcher-hand-pre
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {ensurePostDrawJankenAssignment} from '../browser/new-base-hand3-uniform-assignment-policy.mjs';
+test('ordinary guest snapshots retain the same unsubmitted draft and clear revision',()=>{
+ const html=readFileSync(new URL('../browser/GAMEROAD.html',import.meta.url),'utf8');
+ const code=['preserveFriendLocalJankenDraft','projectionToMatch','applyProjection'].map(name=>html.split('\n').find(l=>l.startsWith(`function ${name}(`))||'').join('\n');
+ const hand=['a','b','c'],snapshot=ensurePostDrawJankenAssignment({selectionEpochId:'M1/P2/round/2',roundId:'battle-round:2',hand:hand.map(id=>({id,suit:'CL'})),readUint32:()=>0});
+ const pr={code:'r',matchInstanceId:'M1',mode:'4p',contentId:'honey_hunt',round:2,phase:'plan',players:[{id:'P2',hand,jankenAssignment:snapshot,jankenDraftRevision:0,plan:null,position:'C:0:0'}],viewer:'P2',playerCount:4,log:[],target:null,lastBattleResolution:null,battlePresentation:null,private:{planSubmitted:false}};
+ const c={clone:x=>JSON.parse(JSON.stringify(x)),FR:{role:'guest',assignedPid:'P2',snapshot:{private:{planSubmitted:false}}},state:{match:null},BUILD:'test',DECK_RULE:{id:'test',revision:1},document:{body:{classList:{add(){}}},getElementById(){return null;}},show(){},renderBattle(){},renderRemoteWait(){},syncFriendPartnerRule(){},globalThis:{GAMEROAD_POST_DRAW_JANKEN_ASSIGNMENT:ensurePostDrawJankenAssignment}};
+ vm.createContext(c);vm.runInContext(code,c);c.state.match=c.projectionToMatch(pr);
+ c.state.match.players[0].jankenDraftRevision=1;c.state.match.players[0].plan={roadId:'b',battleId:null,path:['C:0:0']};
+ c.applyProjection(JSON.parse(JSON.stringify(pr)));assert.equal(c.state.match.players[0].jankenDraftRevision,1);assert.equal(c.state.match.players[0].plan.roadId,'b');
+ c.applyProjection(JSON.parse(JSON.stringify(pr)));assert.equal(c.state.match.players[0].jankenDraftRevision,1);assert.equal(c.state.match.players[0].plan.roadId,'b');
+ const submitted=JSON.parse(JSON.stringify(pr));submitted.private.planSubmitted=true;c.applyProjection(submitted);assert.equal(c.state.match.players[0].plan,null);assert.equal(c.state.match.players[0].jankenDraftRevision,1,'submission acknowledgement must not rearm the same launcher');
+ const resolving=JSON.parse(JSON.stringify(submitted));resolving.phase='reveal';c.applyProjection(resolving);assert.equal(c.state.match.players[0].jankenDraftRevision,1);
+ c.state.match.players[0].plan={roadId:'b'};c.state.match.players[0].jankenDraftRevision=2;
+ const fresh=JSON.parse(JSON.stringify(pr));fresh.matchInstanceId='M2';c.applyProjection(fresh);assert.equal(c.state.match.players[0].jankenDraftRevision,0);assert.equal(c.state.match.players[0].plan,null);
+});
 
 test('the real round initializer retains five cards, reuses the trio and safely handles exhaustion',()=>{
  const html=readFileSync(new URL('../browser/GAMEROAD.html',import.meta.url),'utf8');

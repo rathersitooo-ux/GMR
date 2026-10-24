@@ -8,6 +8,15 @@ import {
 export const BATTLE_CARD_RELEASE_FLIGHT_EASING = 'cubic-bezier(.16,.74,.18,1)';
 export const BATTLE_CARD_RELEASE_DESTINATION_PULSE_DURATION_MS = 160;
 export const BATTLE_CARD_RELEASE_FLIGHT_TRAIL_DURATION_MS = 180;
+const ACTIVE_FLIGHTS = new WeakMap();
+
+export function cancelBattleCardReleaseFlightEffect(host) {
+  const cancel = ACTIVE_FLIGHTS.get(host);
+  if (!cancel) return false;
+  cancel();
+  return true;
+}
+
 const THROW_TEXTURE = new URL('./assets/visual/battle-vfx/throw-thin.png', import.meta.url).href;
 const IMPACT_TEXTURE = new URL('./assets/visual/battle-vfx/impact-cyan.png', import.meta.url).href;
 
@@ -289,6 +298,8 @@ export function playBattleCardReleaseFlightEffect({
   });
   if (!projection) return false;
 
+  cancelBattleCardReleaseFlightEffect(host);
+  const onLauncherSettled = host.__gameroadLauncherFlightSettled;
   const keyframes = toBattleCardReleaseFlightKeyframes(projection);
   const clone = flight.clone;
   if (!keyframes.length) {
@@ -302,7 +313,9 @@ export function playBattleCardReleaseFlightEffect({
       || projection.destinationCue?.kind !== 'DESTINATION_PULSE') {
       return false;
     }
-    return createDestinationPulse({ documentRef, host, target: projection.destinationCue }) !== null;
+    const cueCreated = createDestinationPulse({ documentRef, host, target: projection.destinationCue }) !== null;
+    onLauncherSettled?.();
+    return cueCreated;
   }
 
   if (!styleFlightClone(clone, flight.sourceRect)) {
@@ -327,13 +340,21 @@ export function playBattleCardReleaseFlightEffect({
       trail = createFlightTrail({ documentRef, host, flight, projection });
 
     }
+    let settled = false;
+    const cancel = () => { try { animation.cancel?.(); } finally { cleanup(); } };
     const cleanup = () => {
+      if (settled) return;
+      settled = true;
+      if (ACTIVE_FLIGHTS.get(host) === cancel) ACTIVE_FLIGHTS.delete(host);
       removeNode(clone);
       removeNode(cue);
       removeNode(trail?.node);
       removeNode(impact?.node);
+      onLauncherSettled?.();
     };
+    ACTIVE_FLIGHTS.set(host, cancel);
     const arrived = () => {
+      if (settled) return;
       cleanup();
       if (projection.mode === BATTLE_CARD_RELEASE_FLIGHT_MODE.FULL && projection.lowPerf !== true) {
         impact = createFlightImpactCue({ documentRef, host, target: flight.target });

@@ -146,3 +146,41 @@ test('contract explicitly denies gameplay authority and authoritative rollback',
   assert.equal(BATTLE_PRECOMMIT_CLEAR_CONTRACT.committedTargetRollback, false);
   assert.deepEqual(BATTLE_PRECOMMIT_CLEAR_CONTRACT.clearablePhases, ['plan', 'target']);
 });
+
+{
+const test=(await import('node:test')).default;
+const assert=(await import('node:assert/strict')).default;
+const {readFileSync}=await import('node:fs');
+const vm=(await import('node:vm')).default;
+const {clearBattlePrecommitSelection}=await import('../browser/battle-precommit-clear-core.mjs');
+
+// Execute the real HTML's existing clear operation, including its real policy.
+const html=readFileSync(new URL('../browser/GAMEROAD.html',import.meta.url),'utf8');
+const start=html.indexOf('async function grClearBattlePrecommitSelection(){');
+const end=html.indexOf('const __grBattlePrecommitBaseCommitPlans',start);
+const clearSource=html.slice(start,end);
+function scenario({busy=false,submitted=false,phase='plan',empty=false}={}){
+ const me={id:'P1',position:'C:0:0',hand:['a','b','c','d','e','f','g'],openingJankenAssignment:{selectedJankenCardIds:['a','b','c']},plan:{roadId:empty?null:'a',battleId:null,path:['C:0:0']}};
+ const match={players:[me],busy,phase};
+ const selects=new Map([['#roadSelect',{value:empty?'':'a'}],['#battleSelect',{value:''}],['#endpointText',{textContent:''}]]);
+ const context={state:{match},grBattlePrecommitClearCorePromise:Promise.resolve({clearBattlePrecommitSelection}),grBattleFriendPlanSubmitted:()=>submitted,grBattlePrecommitCommitInFlight:null,$:id=>selects.get(id),renderBoard(){},syncDirectPlanRoleUi(){},updateBattleAvatar(){},renderBattle(){},grSyncBattlePrecommitClear(){}};
+ vm.createContext(context);vm.runInContext(clearSource,context);
+ return{me,context,clear:context.grClearBattlePrecommitSelection};
+}
+test('accepted clear rearms the same assigned trio, without changing hand or rerolling',async()=>{
+ const x=scenario(),assignment=x.me.openingJankenAssignment,hand=[...x.me.hand];
+ assert.equal(await x.clear(),true);
+ assert.equal(x.me.jankenDraftRevision,1,'renderer needs an authority-owned accepted clear revision');
+ assert.strictEqual(x.me.openingJankenAssignment,assignment);
+ assert.deepEqual(x.me.hand,hand);
+ assert.equal(x.me.plan.roadId,null);
+ assert.equal(await x.clear(),false);
+ assert.equal(x.me.jankenDraftRevision,1,'nothing-to-clear must not unlock again');
+});
+test('submitted, busy and post-plan states do not rearm a spent launcher',async()=>{
+ for(const options of [{busy:true},{submitted:true},{phase:'resolve'}]){
+  const x=scenario(options);assert.equal(await x.clear(),false);assert.equal(x.me.jankenDraftRevision,undefined);
+ }
+});
+
+}

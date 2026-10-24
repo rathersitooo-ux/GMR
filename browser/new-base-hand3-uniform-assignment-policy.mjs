@@ -1,3 +1,5 @@
+import { createRoundStartJankenSlotAssignment } from './new-base-round-start-janken-slot-assignment-core.mjs';
+
 export const NEW_BASE_HAND3_UNIFORM_ASSIGNMENT_POLICY_SCHEMA =
   'gameroad.new-base-hand3-uniform-assignment-policy.v1';
 
@@ -124,5 +126,63 @@ export function createUniformHand3Assignment({
     assignmentEpochId,
     handCardIds,
     permutationIndex,
+  });
+}
+
+function drawUniformIndex(size, readUint32) {
+  const limit = UINT32_RANGE - (UINT32_RANGE % size);
+  for (let n=0;n<MAX_REJECTION_ATTEMPTS;n++) {
+    const value=readUint32();
+    if (!Number.isSafeInteger(value)||value<0||value>UINT32_MAX) throw new RangeError('readUint32 must return uint32');
+    if(value<limit)return value%size;
+  }
+  throw new RangeError('uniform sample unavailable');
+}
+
+/** Initial-seven compatibility entry; the post-draw receipt owns the result. */
+export function ensureOpeningJankenAssignment(options={}) {
+  const receipt=options.currentSnapshot?.openingSelection;
+  if(receipt?.selectionEpochId!==options.selectionEpochId && options.hand?.length!==7)throw new RangeError('opening hand must contain exactly 7 physical cards');
+  return ensureDrawAssignment({...options,receiptKind:'openingSelection'});
+}
+
+/** Called once by the existing match authority AFTER its draw/refill completes. */
+export function ensurePostDrawJankenAssignment(options={}) {
+  return ensureDrawAssignment({...options,receiptKind:'postDrawSelection'});
+}
+
+function ensureDrawAssignment({selectionEpochId,roundId,hand,currentSnapshot=null,readUint32,receiptKind}) {
+  const epoch=requireCanonicalString(selectionEpochId,'selectionEpochId');
+  requireCanonicalString(roundId,'roundId');
+  const receipt=currentSnapshot?.[receiptKind];
+  if(receipt?.selectionEpochId===epoch) {
+    if(currentSnapshot.roundId!==roundId)throw new RangeError('assignment round identity mismatch');
+    if(Object.isFrozen(currentSnapshot))return currentSnapshot;
+    return drawSnapshot(roundId,receipt.sourceCards,receipt.selectedCardIds,receipt.permutationIndex,epoch,receiptKind);
+  }
+  if(!Array.isArray(hand)||hand.length<3)throw new RangeError('post-draw hand must contain at least 3 physical cards');
+  const cards=hand.map((c,i)=>Object.freeze({id:requireCanonicalString(c?.id,`hand[${i}].id`),suit:requireCanonicalString(c?.suit,`hand[${i}].suit`)}));
+  if(new Set(cards.map(c=>c.id)).size!==cards.length)throw new RangeError('physical card ids must be distinct');
+  if(typeof readUint32!=='function')throw new TypeError('authoritative readUint32 required');
+  const pool=[...cards];
+  for(let i=0;i<3;i++) {
+    const j=i+drawUniformIndex(pool.length-i,readUint32);
+    [pool[i],pool[j]]=[pool[j],pool[i]];
+  }
+  return drawSnapshot(roundId,cards,pool.slice(0,3).map(c=>c.id),drawUniformHand3PermutationIndex(readUint32),epoch,receiptKind);
+}
+
+function drawSnapshot(roundId,sourceCards,selectedCardIds,permutationIndex,selectionEpochId,receiptKind) {
+  if(!Array.isArray(sourceCards)||sourceCards.length<3||new Set(sourceCards.map(c=>c.id)).size!==sourceCards.length)throw new RangeError('saved source must have at least 3 distinct cards');
+  if(receiptKind==='openingSelection'&&sourceCards.length!==7)throw new RangeError('saved opening source must have 7 distinct cards');
+  const selected=new Set(selectedCardIds);
+  if(selected.size!==3||selectedCardIds.length!==3||[...selected].some(id=>!sourceCards.some(c=>c.id===id)))throw new RangeError('saved selection must contain three source identities');
+  const mapping=resolveUniformHand3AssignmentFromPermutationIndex({assignmentEpochId:selectionEpochId,handCardIds:selectedCardIds,permutationIndex});
+  const base=createRoundStartJankenSlotAssignment({roundId,hand:sourceCards.filter(c=>selected.has(c.id)),assignmentMode:'CURRENT_HAND3_POLICY',assignedCardIdsByJankenHand:mapping.assignedCardIdsByJankenHand});
+  const source=Object.freeze(sourceCards.map(c=>Object.freeze({id:c.id,suit:c.suit})));
+  return Object.freeze({...base,assignmentEpochId:selectionEpochId,
+    sourceHandCardIds:Object.freeze(source.map(c=>c.id)),
+    ordinaryHandCardIds:Object.freeze(source.filter(c=>!selected.has(c.id)).map(c=>c.id)),
+    [receiptKind]:Object.freeze({selectionEpochId,sourceCards:source,selectedCardIds:Object.freeze([...selectedCardIds]),permutationIndex}),
   });
 }

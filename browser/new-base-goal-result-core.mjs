@@ -62,6 +62,18 @@ export function applyAuthoritativeNewBaseGoalArrival(state, event) {
 
   if (state.status === 'ENDED') {
     if (event.eventId.trim() === state.acceptedGoalEventId) {
+      // An identical ID may only replay the identical authoritative outcome.
+      const saved = state.finalizedResult;
+      const sameFact = event.type === 'GOAL_REACHED'
+        && event.authoritative === true
+        && nonEmptyString(event.matchId) && event.matchId.trim() === state.matchId
+        && nonEmptyString(event.resultId) && event.resultId.trim() === saved?.resultId
+        && nonEmptyString(event.actorId) && event.actorId.trim() === saved?.goalArrival?.actorId
+        && nonEmptyString(event.goalId) && event.goalId.trim() === saved?.goalArrival?.goalId
+        && uniqueNonEmptyStrings(event.winnerIds)
+        && event.winnerIds.length === saved?.winnerIds?.length
+        && event.winnerIds.every((id, index) => id.trim() === saved.winnerIds[index]);
+      if (!sameFact) return rejection(state, 'DUPLICATE_GOAL_FACT_MISMATCH');
       return deepFreeze({
         accepted: true,
         duplicate: true,

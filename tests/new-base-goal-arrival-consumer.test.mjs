@@ -80,3 +80,25 @@ test('non-authoritative and seven-card ROAD facts cannot enter the GOAL presenta
   assert.equal(roadOnly.arrivalPresentation, null);
   assert.equal(roadOnly.resultPresentation, null);
 });
+
+test('a changed GOAL replay cannot enter the arrival or Result presentation chain', () => {
+  const first = consumeAuthoritativeNewBaseGoalArrival(
+    createNewBaseGoalTerminalState({ matchId: 'match-consumer-1' }), goalEvent(), options()
+  );
+  assert.equal(first.accepted, true);
+  for (const changed of [
+    { matchId: 'other-match' }, { winnerIds: ['p4', 'p3'] },
+    { goalId: 'other-goal' }, { authoritative: false }
+  ]) {
+    const replay = consumeAuthoritativeNewBaseGoalArrival(
+      first.state, goalEvent(changed), options()
+    );
+    assert.equal(replay.accepted, false, JSON.stringify(changed));
+    assert.equal(replay.duplicate, false);
+    assert.equal(replay.reason, 'DUPLICATE_GOAL_FACT_MISMATCH');
+    assert.equal(replay.presentationReason, 'UNACCEPTED_PRESENTATION_SUPPRESSED');
+    assert.equal(replay.arrivalPresentation, null);
+    assert.equal(replay.resultPresentation, null);
+    assert.strictEqual(replay.state, first.state);
+  }
+});

@@ -205,3 +205,21 @@ test('invalid winner identities are rejected rather than inferred', () => {
   assert.equal(duplicated.accepted, false);
   assert.equal(duplicated.reason, 'WINNER_IDS_REQUIRED');
 });
+
+test('replayed GOAL event ID must preserve the accepted authoritative result', () => {
+  const first = applyAuthoritativeNewBaseGoalArrival(
+    createNewBaseGoalTerminalState({ matchId: 'match-1' }), goalEvent()
+  );
+  assert.equal(first.accepted, true);
+
+  for (const change of [
+    { matchId: 'other-match' }, { authoritative: false }, { type: 'ROAD_COMPLETED' },
+    { resultId: 'other-result' }, { actorId: 'p3' }, { goalId: 'goal-b' },
+    { winnerIds: ['p3'] }, { winnerIds: ['p2', 'p1'] }, { winnerIds: ['p1', 'p1'] }
+  ]) {
+    const replay = applyAuthoritativeNewBaseGoalArrival(first.state, goalEvent(change));
+    assert.equal(replay.accepted, false, JSON.stringify(change));
+    assert.equal(replay.reason, 'DUPLICATE_GOAL_FACT_MISMATCH');
+    assert.strictEqual(replay.state, first.state);
+  }
+});

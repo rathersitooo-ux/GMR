@@ -67,7 +67,7 @@ async function attachStateScreenshot(page, testInfo, stateName) {
 }
 
 async function bootCurrentBrowser(page) {
-  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'commit' });
+  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
   expect(response, 'main HTML response').not.toBeNull();
   expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
 
@@ -838,12 +838,7 @@ test('moves resolve off the board into the dedicated Battle Phase with Naki cut-
 
   const postNakiJankenPad = battle.locator('[data-battle-janken-slidepad="1"]').first();
   await expect(postNakiJankenPad, 'the real Janken SlidePad is available immediately after Naki return').toBeVisible();
-  if ((await postNakiJankenPad.getAttribute('data-expanded')) !== 'true') {
-    const postNakiJankenHandle = postNakiJankenPad.locator('.grJankenSlidePadHandle:visible');
-    await expect(postNakiJankenHandle, 'the real Janken handle remains clickable after Naki return').toBeVisible();
-    await postNakiJankenHandle.click();
-    await expect(postNakiJankenPad, 'the real Janken SlidePad opens after Naki return').toHaveAttribute('data-expanded', 'true');
-  }
+  await expect(battle, 'the current post-draw launcher is connected after Naki return').toHaveAttribute('data-launcher-r22', '1');
 
   const postNakiJankenCards = postNakiJankenPad.locator('[data-janken-slot]:visible:not(:disabled)');
   expect(await postNakiJankenCards.count(), 'real Janken cards are visible immediately after Naki return').toBeGreaterThan(0);
@@ -865,9 +860,14 @@ test('moves resolve off the board into the dedicated Battle Phase with Naki cut-
   const targetBox = await postNakiTarget.boundingBox();
   expect(handleBox, 'post-Naki launcher handle has a real pointer box').not.toBeNull();
   expect(targetBox, 'post-Naki Janken target has a real pointer box').not.toBeNull();
-  await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
-  await page.mouse.down();
+  const orbX = handleBox.x + handleBox.width / 2;
+  const orbY = handleBox.y + handleBox.height / 2;
   await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(orbX, orbY, { steps: 8 });
+  await expect(postNakiTarget, 'the real card touches and charges at the orb').toHaveAttribute('data-launcher-state', 'charged');
+  await page.mouse.move(orbX - 80, orbY, { steps: 5 });
+  await expect(postNakiTarget, 'pulling the charged card away arms its release').toHaveAttribute('data-launcher-state', 'ready');
   await page.mouse.up();
 
   await expect.poll(async () => battle.evaluate((_, candidateIds) => {

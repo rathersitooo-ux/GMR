@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-CONVO-QUALITY-FEEDBACK-PREACTION-R3-20260921T0405",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "PARTNER_CONVERSATION_QUALITY_FEEDBACK_REPORT_R1",
+  "acquireKey": "PARTNER-CONVO-QUALITY-FEEDBACK-R3-20260921T0405-SOL-Q8N4V86",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PARTNER-QUALITY-CURRENT-TARGET-BLOBS-UNCHANGED-FROM-DONOR-BASE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PARTNER-QUALITY-FOUR-FILE-DONOR-DIFF-AND-FOCUSED-REGRESSIONS",
+  "proceedToken": "PROCEED|PARTNER-CONVO-QUALITY-FEEDBACK-PREACTION-R3-20260921T0405|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-byte-fence|privacy-minimized-contract|lease-snapshot",
+  "authorizationBaseSha": "2f7af383d9bf3dd2b9007e5cce852fee10cf2611",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "PARTNER_CONVERSATION_QUALITY_FEEDBACK_REPORT_R1",
+  "leaseAcquireKey": "PARTNER-CONVO-QUALITY-FEEDBACK-R3-20260921T0405-SOL-Q8N4V86",
+  "leaseSnapshotReadbackAtJst": "2026-09-21 04:05 JST",
+  "leaseUntilJst": "2026-09-21 04:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:M5",
+  "leaseExactMutableResources": "browser/board-facility-runtime-mount.mjs; deploy/cloudflare/relay/src/partner-report-store.mjs; tests/board-facility-runtime-mount.test.mjs; tests/partner-dialogue-feedback-core.test.mjs; deploy/cloudflare/tests/build.test.mjs provenance-only; transient data/preaction-authorizations/PARTNER-CONVO-QUALITY-FEEDBACK-PREACTION-R3-20260921T0405.json create/delete only; own fresh branch/PR/check/merge/readback/public readback",
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "deploy/cloudflare/relay/src/partner-report-store.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "tests/partner-dialogue-feedback-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "deploy/cloudflare/relay/src/partner-report-store.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "tests/partner-dialogue-feedback-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

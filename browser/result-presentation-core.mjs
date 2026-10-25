@@ -59,6 +59,10 @@ export function projectResultRankPresentation(formalRank) {
   });
 }
 
+export function projectResultCharacterState(formalRank) {
+  return projectResultRankPresentation(formalRank).ok ? 'joy' : null;
+}
+
 function projectRankingPresentation(finalizedResult) {
   if (!Array.isArray(finalizedResult?.ranking)) return [];
   return finalizedResult.ranking.map((entry, index) => deepFreeze({

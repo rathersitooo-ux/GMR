@@ -12,6 +12,29 @@ function deepFreeze(value) {
   for (const child of Object.values(value)) deepFreeze(child);
   return value;
 }
+
+/**
+ * Human-chosen visual grammar: thin ring on lower footing and botanical vine
+ * for lower visual connections. This is presentation metadata only: the world
+ * renderer is free to ignore it until its drawing adapter is wired, and it
+ * must never be interpreted as movement legality or a terrain assignment.
+ *
+ * Artwork identity, exact scale, plant-to-cell count, colors and animation
+ * remain unresolved; in particular shields/gates are not stoppable cells.
+ */
+export const BATTLE_BOARD_SELECTED_FOOTING_VISUAL_GRAMMAR = deepFreeze({
+  schema: 'gameroad.battle-board-selected-footing-visual-grammar.v1',
+  marker: 'OUTLINE_RING_ONLY',
+  connection: 'BOTANICAL_VINE_LIKE',
+  scope: 'LOWER_SHARED_FIELD',
+  humanDecisionScope: 'BASIC_MARKER_AND_CONNECTION_DIRECTION_ONLY',
+  assignsPlantAssets: false,
+  assignsGameplayCellTypes: false,
+  movementAuthority: false,
+  legalityAuthority: false,
+  gameStateWrite: false,
+});
+
 function point(nodes, id) {
   const value = nodes[id];
   if (!value) throw new TypeError(`BATTLE_BOARD_WORLD_NODE_MISSING:${id}`);
@@ -96,6 +119,7 @@ export function createBattleBoardWorldFieldRenderModel({
   const lowerRoundCells = graph.lowerNodes.map((cell) => ({
     id: cell.id, kind: 'ROUND_CELL', region: cell.region, world: point(nodes, cell.id),
     semanticType: cell.semanticType, gameplayAuthority: false, movementAuthority: false,
+    visualMarker: BATTLE_BOARD_SELECTED_FOOTING_VISUAL_GRAMMAR.marker,
   }));
   const builtUpperCells = graph.upperLanes.flatMap((lane) => {
     const builtCount = Number.isSafeInteger(builtCountByLaneKey[lane.laneKey]) ? builtCountByLaneKey[lane.laneKey] : 0;
@@ -131,7 +155,10 @@ export function createBattleBoardWorldFieldRenderModel({
   const gateConnections = graph.gateConnections
     .filter((edge) => edge.id.endsWith(':lower') || visibleUpperIds.has(edge.fromId))
     .map((edge) => edgePrimitive(edge, nodes, projection));
-  const lowerEdges = graph.lowerEdges.map((edge) => edgePrimitive(edge, nodes, projection));
+  const lowerEdges = graph.lowerEdges.map((edge) => ({
+    ...edgePrimitive(edge, nodes, projection),
+    visualConnection: BATTLE_BOARD_SELECTED_FOOTING_VISUAL_GRAMMAR.connection,
+  }));
   const edges = [...upperLaneEdges, ...gateConnections, ...lowerEdges];
   return deepFreeze({
     schema: SCHEMA,
@@ -143,6 +170,7 @@ export function createBattleBoardWorldFieldRenderModel({
     legalityAuthority: false,
     sharedGoal: { id: graph.goal.id, kind: 'SHARED_GOAL', world: point(nodes, graph.goal.id) },
     roundCells, gates, shields, goalBranches, edges,
+    selectedLowerFootingVisualGrammar: BATTLE_BOARD_SELECTED_FOOTING_VISUAL_GRAMMAR,
     counts: {
       sharedGoal: 1,
       upperLanes: graph.upperLaneCount,

@@ -241,14 +241,22 @@ async function logout(context, baseUrl) {
   }
 
   const fetchImpl = typeof context.fetch === 'function' ? context.fetch : fetch;
-  await fetchImpl(`${baseUrl}/v2/session/logout`, {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${token}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({ token, refresh_token: refreshToken }),
-  });
+  let response;
+  try {
+    response = await fetchImpl(`${baseUrl}/v2/session/logout`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${token}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ token, refresh_token: refreshToken }),
+    });
+  } catch {
+    return json({ ok: false, loggedOut: false, reason: 'session_logout_unavailable' }, 503);
+  }
+  if (!response.ok) {
+    return json({ ok: false, loggedOut: false, reason: 'session_logout_rejected' }, response.status === 429 ? 429 : 502);
+  }
   return json({ ok: true, loggedOut: true }, 200, { 'set-cookie': clearRefreshCookie(context.env) });
 }
 

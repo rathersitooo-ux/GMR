@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HIDDENHAND-SINGLEFLIGHT-20261027T0240-GPT6",
+  "taskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "workUnitKey": "HIDDEN_HAND_ASYNC_SINGLE_FLIGHT_R1",
+  "acquireKey": "HIDDENHAND-SINGLEFLIGHT-20261027T0240-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "MAIN_6CC5A4_HIDDENHAND_BLOBS_0841E544_AND_1E9E3803_SOURCE_RACE_REPRO_VIEW_20261027",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_LIBRARY_PATCH_R1_SEVEN_EXACT_UNIQUE_HUNK_MATCHES_ON_MAIN_BOTH_FILES_20261027",
+  "proceedToken": "PROCEED|HIDDENHAND-SINGLEFLIGHT-20261027T0240-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|hidden-hand-singleflight|controller-and-focused-tests|active-lease",
+  "authorizationBaseSha": "6cc5a4f21525bf3050b7621798f2d424c56af9b6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "leaseWorkUnitKey": "HIDDEN_HAND_ASYNC_SINGLE_FLIGHT_R1",
+  "leaseAcquireKey": "HIDDENHAND-SINGLEFLIGHT-20261027T0240-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-27 02:41 JST",
+  "leaseUntilJst": "2026-10-27 03:34 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR isolated branch gmr/hiddenhand-singleflight-20261027-gpt6; browser/battle-hidden-hand-add-button-runtime.mjs; tests/battle-hidden-hand-add-button-runtime.test.mjs; own transient data/preaction-authorizations/HIDDENHAND-SINGLEFLIGHT-20261027T0240-GPT6.json; GAMEROAD 全作業一覧!N1375/T1375 append only; CURRENT_ACTIVE_LEASES!A5:O5 own tuple; R25 own ACQUIRE/TERMINAL/RELEASE only. No main/public/other branch changes.",
+  "scope": [
+    "browser/battle-hidden-hand-add-button-runtime.mjs",
+    "tests/battle-hidden-hand-add-button-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-hidden-hand-add-button-runtime.mjs",
+    "tests/battle-hidden-hand-add-button-runtime.test.mjs"
+  ]
+}

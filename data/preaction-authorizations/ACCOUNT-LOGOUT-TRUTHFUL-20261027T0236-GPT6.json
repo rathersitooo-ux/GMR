@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ACCOUNT-LOGOUT-TRUTHFUL-20261027T0236-GPT6",
+  "taskId": "OPS-PLAYER-ACCOUNT-DATA-LIFECYCLE-001",
+  "workUnitKey": "NAKAMA_LOGOUT_FALSE_SUCCESS_RETURN_R1",
+  "acquireKey": "ACCOUNT-LOGOUT-TRUTHFUL-20261027T0236-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "account.js@405216454c03f66382a706ae0f3f9cd1fb50635b returns loggedOut true without checking upstream response",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "direct existing onRequest path and existing Node fixture test review, no live Nakama request",
+  "proceedToken": "PROCEED|ACCOUNT-LOGOUT-TRUTHFUL-20261027T0236-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_SOURCE_AND_BOUNDARY_CHECK",
+  "authorizationBaseSha": "6cc5a4f21525bf3050b7621798f2d424c56af9b6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-PLAYER-ACCOUNT-DATA-LIFECYCLE-001",
+  "leaseWorkUnitKey": "NAKAMA_LOGOUT_FALSE_SUCCESS_RETURN_R1",
+  "leaseAcquireKey": "ACCOUNT-LOGOUT-TRUTHFUL-20261027T0236-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-27 02:36 JST",
+  "leaseUntilJst": "2026-10-27 03:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GAMEROAD 全作業一覧!N1387 note append only; GitHub isolated branch gmr/account-logout-truthful-20261027: deploy/cloudflare/functions/account.js; tests/nakama-live-service-foundation.test.mjs; own R25 events",
+  "scope": [
+    "deploy/cloudflare/functions/account.js",
+    "tests/nakama-live-service-foundation.test.mjs"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/functions/account.js",
+    "tests/nakama-live-service-foundation.test.mjs"
+  ]
+}

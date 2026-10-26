@@ -297,6 +297,57 @@ test('Cloudflare refresh consumes HttpOnly cookie server-side and rotates it wit
   assert.deepEqual(JSON.parse(refreshCall.init.body), { token: 'refresh-token-old-abcdefghijklmnop' });
 });
 
+test('account logout reports success and clears refresh cookie only after upstream revocation succeeds', async () => {
+  const calls = [];
+  const response = await onRequest(contextFor({
+    url: 'https://game.example/account?op=logout',
+    method: 'POST',
+    headers: {
+      authorization: 'Bearer access-token-abcdefghijklmnop',
+      cookie: 'gameroad_nakama_refresh=refresh-token-abcdefghijklmnop',
+    },
+    fetchImpl: fetchRouter([{ includes: '/v2/session/logout', status: 200, body: {} }], calls),
+  }));
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { ok: true, loggedOut: true });
+  assert.match(response.headers.get('set-cookie') || '', /Max-Age=0/);
+  assert.equal(calls.length, 1);
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    token: 'access-token-abcdefghijklmnop',
+    refresh_token: 'refresh-token-abcdefghijklmnop',
+  });
+});
+
+test('account logout does not claim revocation or discard retry cookie on upstream rejection', async () => {
+  const response = await onRequest(contextFor({
+    url: 'https://game.example/account?op=logout',
+    method: 'POST',
+    headers: {
+      authorization: 'Bearer access-token-abcdefghijklmnop',
+      cookie: 'gameroad_nakama_refresh=refresh-token-abcdefghijklmnop',
+    },
+    fetchImpl: fetchRouter([{ includes: '/v2/session/logout', status: 503, body: { message: 'unavailable' } }], []),
+  }));
+  assert.equal(response.status, 502);
+  assert.deepEqual(await response.json(), { ok: false, loggedOut: false, reason: 'session_logout_rejected' });
+  assert.equal(response.headers.has('set-cookie'), false);
+});
+
+test('account logout preserves retry possibility when upstream transport throws', async () => {
+  const response = await onRequest(contextFor({
+    url: 'https://game.example/account?op=logout',
+    method: 'POST',
+    headers: {
+      authorization: 'Bearer access-token-abcdefghijklmnop',
+      cookie: 'gameroad_nakama_refresh=refresh-token-abcdefghijklmnop',
+    },
+    fetchImpl: async () => { throw new Error('network unavailable'); },
+  }));
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { ok: false, loggedOut: false, reason: 'session_logout_unavailable' });
+  assert.equal(response.headers.has('set-cookie'), false);
+});
+
 test('account facade fails closed before upstream calls when service configuration or device identity is invalid', async () => {
   let calls = 0;
   const fetchImpl = async () => { calls += 1; throw new Error('must not call'); };

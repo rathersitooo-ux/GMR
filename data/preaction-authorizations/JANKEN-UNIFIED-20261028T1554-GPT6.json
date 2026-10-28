@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "JANKEN-UNIFIED-20261028T1554-GPT6",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "JANKEN_SIMULTANEOUS_INPUT",
+  "acquireKey": "JANKEN-SIMULTANEOUS-20261028T1554-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "SOURCE_ANCHORS_MAIN_3624F2A_20261028T1553_19_EXACT_REPLACEMENTS",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "IN_MEMORY_MAIN_AND_PR_SOURCE_DIFF_NO_RUNTIME_COMPLETION_CLAIM",
+  "proceedToken": "PROCEED|JANKEN-UNIFIED-20261028T1554-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXACT_SOURCE_TWO_FILES_NO_SHIP",
+  "authorizationBaseSha": "3624f2adf2eecf6caeb3bd9c3fcc600f79d8c928",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "JANKEN_SIMULTANEOUS_INPUT",
+  "leaseAcquireKey": "JANKEN-SIMULTANEOUS-20261028T1554-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-28 15:54 JST",
+  "leaseUntilJst": "2026-10-28 16:42 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR isolated branch gmr/janken-unified-input-20261028; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; data/preaction-authorizations/JANKEN-UNIFIED-20261028T1554-GPT6.json (temporary first commit only)",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "solutionSignature": "Unify legacy three-mode Janken UI into simultaneous card tap, card pull and launcher interaction through one existing canonical commit",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR2351_EXISTING_MOUNT_AND_HAND_INPUT_PRODUCER_COMPARED",
+  "solutionSearchEvidence": [
+    "GitHub existing main source SHA 020adae5331bf39ed50afc8dde80f62614a1e48f",
+    "Existing PR2351 source SHA 4e43211d6e49bca349a81193334df2b26c7888eb",
+    "Existing tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

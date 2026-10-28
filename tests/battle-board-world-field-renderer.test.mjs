@@ -9,6 +9,11 @@ test('world-field render model keeps the lower shared field, Gate boundary and o
   assert.equal(model.counts.sharedGoal, 1);
   assert.equal(model.counts.upperLanes, 12);
   assert.equal(model.counts.lowerRoundCells, 42);
+  assert.equal(model.ringVineAppearance.selection.cellMarker, 'A_RING_ONLY');
+  assert.equal(model.ringVineAppearance.selection.connectionLine, 'D_VINE_LIKE');
+  assert.equal(model.counts.ringOnlyMarkers, 42);
+  assert.equal(model.counts.vineConnections, 71);
+  assert.equal(model.ringVineAppearance.vines.every((v) => v.newGraphNode === false && v.walkableBridge === false), true);
   assert.equal(model.counts.builtUpperCards, 0);
   assert.equal(model.counts.visibleFutureUpperSlots, 0);
   assert.equal(model.counts.roundCells, 42);
@@ -21,6 +26,7 @@ test('world-field render model keeps the lower shared field, Gate boundary and o
 
   model = createBattleBoardWorldFieldRenderModel({ builtCountByLaneKey: { 'P2:C': 3 } });
   assert.equal(model.counts.builtUpperCards, 3);
+  assert.equal(model.ringVineAppearance.count.markers, 45);
   assert.equal(model.counts.visibleFutureUpperSlots, 0);
   assert.deepEqual(model.roundCells.filter((cell) => cell.laneKey === 'P2:C').map((cell) => cell.stageIndex), [1, 2, 3]);
   assert.equal(model.roundCells.some((cell) => cell.id === 'upper:P2:C:4'), false);
@@ -124,4 +130,14 @@ test('mount fails closed instead of falling back to screen-space UI', () => {
   const runtime = mountBattleBoardWorldField({});
   assert.equal(runtime.mounted, false);
   assert.equal(runtime.reason, 'WORLD_RENDERER_REQUIRED');
+});
+test('cosmetic vine leaflets are optional in low-performance mode while authoritative fields do not change', () => {
+ const regular = createBattleBoardWorldFieldRenderModel({builtCountByLaneKey:{'P2:C':2}});
+ const reduced = createBattleBoardWorldFieldRenderModel({builtCountByLaneKey:{'P2:C':2},lowPerf:true,reducedMotion:true});
+ assert.equal(reduced.ringVineAppearance.count.decorativeLeaves,0);
+ assert.equal(regular.ringVineAppearance.count.decorativeLeaves,142);
+ assert.equal(reduced.counts.roundCells,regular.counts.roundCells);
+ assert.deepEqual(reduced.edges,regular.edges);
+ assert.equal(reduced.ringVineAppearance.noMovementAuthority,true);
+ assert.equal(reduced.counts.visibleFutureUpperSlots,0);
 });

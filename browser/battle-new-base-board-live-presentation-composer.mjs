@@ -258,6 +258,8 @@ export function mountBattleNewBaseBoardLivePresentation({
       return createBattleBoardWorldFieldRenderModel({
         worldBounds,
         builtCountByLaneKey: builtCountByVisualLaneKey(currentProgressionPresentation),
+        lowPerf,
+        reducedMotion,
       });
     },
     snapshot() {

@@ -1,3 +1,4 @@
+import { projectRingVineWorldPresentation } from './battle-board-ring-vine-world-presentation.mjs';
 import {
   createBattleBoardVisualGraph,
   goalBranchVisualStateForBuiltCount,
@@ -90,6 +91,8 @@ export function createBattleBoardWorldFieldRenderModel({
   graph = createBattleBoardVisualGraph(),
   worldBounds = {},
   builtCountByLaneKey = {},
+  lowPerf = false,
+  reducedMotion = false,
 } = {}) {
   const projection = projectBattleBoardVisualGraphToWorld(graph, worldBounds);
   const nodes = projection.nodes;
@@ -133,6 +136,12 @@ export function createBattleBoardWorldFieldRenderModel({
     .map((edge) => edgePrimitive(edge, nodes, projection));
   const lowerEdges = graph.lowerEdges.map((edge) => edgePrimitive(edge, nodes, projection));
   const edges = [...upperLaneEdges, ...gateConnections, ...lowerEdges];
+  const ringVineAppearance = projectRingVineWorldPresentation({
+    roundCells, edges,
+    worldWidth: projection.width,
+    worldDepth: projection.depth,
+    lowPerf, reducedMotion,
+  });
   return deepFreeze({
     schema: SCHEMA,
     renderSpace: 'WORLD_FIELD',
@@ -143,6 +152,7 @@ export function createBattleBoardWorldFieldRenderModel({
     legalityAuthority: false,
     sharedGoal: { id: graph.goal.id, kind: 'SHARED_GOAL', world: point(nodes, graph.goal.id) },
     roundCells, gates, shields, goalBranches, edges,
+    ringVineAppearance,
     counts: {
       sharedGoal: 1,
       upperLanes: graph.upperLaneCount,
@@ -150,6 +160,8 @@ export function createBattleBoardWorldFieldRenderModel({
       builtUpperCards: builtUpperCells.length,
       visibleFutureUpperSlots: 0,
       roundCells: roundCells.length,
+      ringOnlyMarkers: ringVineAppearance.count.markers,
+      vineConnections: ringVineAppearance.count.vines,
       gates: gates.length,
       shields: shields.length,
       terrainBentLowerEdges: lowerEdges.filter((edge) => edge.routePresentation === 'DERIVED_TERRAIN_BOW').length,
@@ -163,11 +175,13 @@ export function mountBattleBoardWorldField({
   graph,
   worldBounds,
   builtCountByLaneKey,
+  lowPerf = false,
+  reducedMotion = false,
 } = {}) {
   if (!worldRenderer || typeof worldRenderer.replaceBoard !== 'function') {
     return deepFreeze({ mounted: false, reason: 'WORLD_RENDERER_REQUIRED', schema: SCHEMA });
   }
-  const model = createBattleBoardWorldFieldRenderModel({ graph, worldBounds, builtCountByLaneKey });
+  const model = createBattleBoardWorldFieldRenderModel({ graph, worldBounds, builtCountByLaneKey, lowPerf, reducedMotion });
   worldRenderer.replaceBoard(model);
   return deepFreeze({
     schema: SCHEMA, mounted: true, renderSpace: 'WORLD_FIELD', screenSpaceBoardTopology: false,
@@ -189,6 +203,10 @@ export const BATTLE_BOARD_WORLD_FIELD_RENDERER_CONTRACT = deepFreeze({
   canonicalAdjacencyUnchanged: true,
   renderWaypointsAreMovementNodes: false,
   secondBoardEngine: false,
+  selectedMarkerAppearance: 'A_RING_ONLY',
+  selectedConnectionAppearance: 'D_VINE_LIKE',
+  stylePlacementAndScaleAccepted: false,
+  appearanceIsMovementAuthority: false,
   gameplayAuthority: false,
   movementAuthority: false,
   legalityAuthority: false,

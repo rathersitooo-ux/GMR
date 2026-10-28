@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 await import('../browser/deck-save-recovery-core.mjs');
 const {
   inspectRawSave,
@@ -563,4 +565,134 @@ test('atomic snapshot is blocked before mutation when baseline storage cannot be
   const result = captureDeckSaveAtomicitySnapshot({ storage, sessionStorage: f.sessionStorage, api: f.api, state: f.state });
   assert.equal(result.status, 'blocked');
   assert.equal(result.reason, 'ATOMIC_BASELINE_READ_FAILED');
+});
+
+function bootDeckLibrary(raw, { failLibraryRead = false, sessionDraft = 'draft-to-preserve', rootDeck = { main: ['valid'], ex: [] } } = {}) {
+  const html = readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
+  const lines = html.split('\n');
+  const names = ['cloneDeckRecord', 'emptyDeckRecord', 'deckStorageCheck', 'normalizeDeckSlots', 'readDeckLibrary', 'writeDeckLibrary', 'readSelectedDeckIndex', 'writeSelectedDeckIndex', 'selectedDeckNumber', 'setSelectedDeckWorkingCopy', 'selectDeckIndex', 'initDeckLibrary', 'addDeckCard', 'removeDeckCard', 'restoreDeck', 'commitDeck', 'renderSetupDeckStatus', 'startMatch', 'deckSnapshotSignature', 'deckDraftSessionSafe', 'recoverDeckDraftSession', 'load'];
+  const functions = names.map(name => {
+    const line = lines.find(line => line.startsWith(`function ${name}(`));
+    assert.ok(line, `missing actual game function ${name}`);
+    return line;
+  }).join('\n');
+  const storage = memoryStorage(raw === null ? {} : { 'save.deckSlots.v1': raw, 'gameroad:selectedDeckIndex': '1' });
+  const localStorage = failLibraryRead ? {
+    ...storage,
+    getItem(key) { if (key === 'save.deckSlots.v1') throw new Error('storage blocked'); return storage.getItem(key); },
+  } : storage;
+  let clearCalls = 0;
+  const elements = Object.fromEntries(['#setupDeckNote', '#fixDeckFromSetup', '#startMatch'].map(id => [id, {}]));
+  const sessionStorage = memoryStorage({ 'save.deckDraft.session.v1': sessionDraft });
+  const context = {
+    SAVE_KEY: 'save', DECK_RULE: { id: 'rule', revision: 1, maxMain: 40, maxEx: 7 },
+    DEFAULT_DECK: ['valid'], CARDS: { valid: { rank: 'A' }, extra: { rank: '2' } }, ROYAL_RANK_SET: new Set(['J', 'Q', 'K']), publicDeckCard: () => true,
+    deckSlot: () => 'main', canonicalDeckName: id => id, localStorage,
+    state: { savedDeck: rootDeck, deckDraft: { main: ['valid'], ex: [] } },
+    clearDeckDraftSession: () => { clearCalls++; sessionStorage.removeItem('save.deckDraft.session.v1'); }, saveDeckDraftSession: () => {},
+    sessionStorage, DECK_DRAFT_SESSION_KEY: 'save.deckDraft.session.v1',
+    toast: () => {}, renderCards: () => {}, show: () => {}, $: id => elements[id],
+    readStorage: () => ({ status: 'read', rawValue: '{}' }), inspectRawSave: () => ({ parsed: {} }),
+    classifySave: () => ({ status: 'current' }), applyParsedSave: () => {}, normalizeAudioSettings: () => {},
+    normalizePartnerProfiles: x => x, markStorageReadFailure: () => {},
+    saveRecoveryRuntime: { classification: {} }, deckDirty: () => false, deckEligibility: () => ({ usable: false }),
+  };
+  const constants = lines.find(line => line.startsWith('const DECK_SLOT_COUNT='));
+  const blocked = lines.find(line => line.startsWith('let deckLibraryReadBlocked=')) || '';
+  const api = runInNewContext(`${constants}\n${blocked}\n${functions}\n({initDeckLibrary, commitDeck, selectDeckIndex, addDeckCard, removeDeckCard, restoreDeck, renderSetupDeckStatus, startMatch, load})`, context);
+  return { ...api, storage, sessionStorage, elements, state: context.state, clearCalls: () => clearCalls };
+}
+
+test('boot preserves unreadable deck libraries and prevents subsequent overwrite', () => {
+  const slots = Array.from({ length: 12 }, (_, i) => ({ main: i === 1 ? ['valid'] : [], ex: [] }));
+  for (const raw of [
+    '{broken',
+    '',
+    JSON.stringify({ schema: 'future', slots }),
+    JSON.stringify({ schema: 'gameroad.deck-slots.v1', slots: slots.map((s, i) => i === 0 ? { main: ['unknown'], ex: [] } : s) }),
+    JSON.stringify({ schema: 'gameroad.deck-slots.v1', slots: slots.map((s, i) => i === 0 ? {} : s) }),
+  ]) {
+    const f = bootDeckLibrary(raw);
+    f.initDeckLibrary();
+    assert.equal(f.storage.getItem('save.deckSlots.v1'), raw, 'boot must preserve the exact original');
+    assert.equal(f.storage.getItem('gameroad:selectedDeckIndex'), '1');
+    assert.equal(f.clearCalls(), 0, 'boot must preserve the draft session');
+    assert.equal(f.commitDeck(), false);
+    assert.equal(f.storage.getItem('save.deckSlots.v1'), raw, 'save must not overwrite the original');
+    assert.equal(f.selectDeckIndex(0), false);
+  }
+});
+
+test('boot continues to load a valid saved deck library', () => {
+  const slots = Array.from({ length: 12 }, (_, i) => ({ main: i === 1 ? ['valid'] : [], ex: [] }));
+  const f = bootDeckLibrary(JSON.stringify({ schema: 'gameroad.deck-slots.v1', slots }));
+  f.initDeckLibrary();
+  assert.deepEqual(JSON.parse(JSON.stringify(f.state.savedDeck)), slots[1]);
+  assert.deepEqual(JSON.parse(f.storage.getItem('save.deckSlots.v1')).slots, slots);
+});
+
+test('initial load preserves a draft and warns before blocking a match when library cannot be read', () => {
+  const f = bootDeckLibrary('{broken');
+  f.load();
+  f.initDeckLibrary();
+  assert.equal(f.sessionStorage.getItem('save.deckDraft.session.v1'), 'draft-to-preserve');
+  f.renderSetupDeckStatus();
+  assert.match(f.elements['#setupDeckNote'].textContent, /読み込めません/);
+  assert.equal(f.elements['#startMatch'].disabled, true);
+  assert.equal(f.startMatch(), null);
+});
+
+test('first boot without a saved library can still initialize one', () => {
+  const f = bootDeckLibrary(null);
+  f.initDeckLibrary();
+  assert.deepEqual(JSON.parse(f.storage.getItem('save.deckSlots.v1')).slots[0], { main: ['valid'], ex: [] });
+});
+
+test('storage read failure never turns into an empty library and write', () => {
+  const raw = 'existing inaccessible data';
+  const f = bootDeckLibrary(raw, { failLibraryRead: true });
+  f.load();
+  f.initDeckLibrary();
+  assert.equal(f.storage.getItem('save.deckSlots.v1'), raw);
+  assert.equal(f.sessionStorage.getItem('save.deckDraft.session.v1'), 'draft-to-preserve');
+  assert.equal(f.commitDeck(), false);
+  assert.equal(f.storage.getItem('save.deckSlots.v1'), raw);
+});
+
+test('unreadable library does not let the player edit or restore a fallback deck', () => {
+  const f = bootDeckLibrary('{broken');
+  f.load();
+  f.initDeckLibrary();
+  const before = JSON.stringify(f.state.deckDraft);
+  assert.equal(f.addDeckCard('extra').ok, false);
+  assert.equal(f.removeDeckCard('main', 0), false);
+  assert.equal(f.restoreDeck(), false);
+  assert.equal(JSON.stringify(f.state.deckDraft), before);
+  assert.equal(f.sessionStorage.getItem('save.deckDraft.session.v1'), 'draft-to-preserve');
+});
+
+test('startup keeps a recoverable unsaved draft for the selected saved deck', () => {
+  const selected = { main: ['valid'], ex: [] };
+  const draft = { main: ['valid', 'extra'], ex: [] };
+  const slots = Array.from({ length: 12 }, (_, i) => i === 1 ? selected : { main: [], ex: [] });
+  const sessionDraft = JSON.stringify({ v: 1, ruleId: 'rule', ruleRevision: 1, savedDeckSignature: JSON.stringify(selected), deck: draft });
+  const f = bootDeckLibrary(JSON.stringify({ schema: 'gameroad.deck-slots.v1', slots }), { sessionDraft });
+  f.load();
+  f.initDeckLibrary();
+  assert.deepEqual(JSON.parse(JSON.stringify(f.state.savedDeck)), selected);
+  assert.deepEqual(JSON.parse(JSON.stringify(f.state.deckDraft)), draft);
+  assert.equal(f.sessionStorage.getItem('save.deckDraft.session.v1'), sessionDraft);
+});
+
+test('startup recovers the selected slot draft even when the root deck differs', () => {
+  const selected = { main: ['valid'], ex: [] };
+  const draft = { main: ['valid', 'extra'], ex: [] };
+  const slots = Array.from({ length: 12 }, (_, i) => i === 1 ? selected : { main: [], ex: [] });
+  const sessionDraft = JSON.stringify({ v: 1, ruleId: 'rule', ruleRevision: 1, savedDeckSignature: JSON.stringify(selected), deck: draft });
+  const f = bootDeckLibrary(JSON.stringify({ schema: 'gameroad.deck-slots.v1', slots }), { sessionDraft, rootDeck: { main: ['other'], ex: [] } });
+  f.load();
+  f.initDeckLibrary();
+  assert.deepEqual(JSON.parse(JSON.stringify(f.state.savedDeck)), selected);
+  assert.deepEqual(JSON.parse(JSON.stringify(f.state.deckDraft)), draft);
+  assert.equal(f.sessionStorage.getItem('save.deckDraft.session.v1'), sessionDraft);
 });

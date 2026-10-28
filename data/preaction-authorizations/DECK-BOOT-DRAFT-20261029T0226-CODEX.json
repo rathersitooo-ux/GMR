@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DECK-BOOT-DRAFT-20261029T0226-CODEX",
+  "taskId": "DECK-UNSAVED-SAVE-ACK-INTEGRATE-001",
+  "workUnitKey": "DECK_BOOT_AND_DRAFT_PRESERVATION",
+  "acquireKey": "DECK-BOOT-DRAFT-INTEGRATE-20261029T0226-CODEX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R26:DECK-BOOT-DRAFT-INTEGRATE-20261029T0226-CODEX:PRE_ACTION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R26:DECK-BOOT-DRAFT-INTEGRATE-20261029T0226-CODEX:PRE_ACTION",
+  "proceedToken": "PROCEED|DECK-BOOT-DRAFT-20261029T0226-CODEX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|R26",
+  "authorizationBaseSha": "3624f2adf2eecf6caeb3bd9c3fcc600f79d8c928",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DECK-UNSAVED-SAVE-ACK-INTEGRATE-001",
+  "leaseWorkUnitKey": "DECK_BOOT_AND_DRAFT_PRESERVATION",
+  "leaseAcquireKey": "DECK-BOOT-DRAFT-INTEGRATE-20261029T0226-CODEX",
+  "leaseSnapshotReadbackAtJst": "2026-10-29 02:29 JST",
+  "leaseUntilJst": "2026-10-29 03:16 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:L9",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR branch codex/deck-boot-draft-recovery-20261029; browser/GAMEROAD.html; tests/deck-save-recovery-core.test.mjs; data/preaction-authorizations/DECK-BOOT-DRAFT-20261029T0226-CODEX.json; isolated worktree and own event/lease; no direct main/public write.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/deck-save-recovery-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/deck-save-recovery-core.test.mjs"
+  ]
+}

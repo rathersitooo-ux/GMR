@@ -12,6 +12,7 @@ export const BATTLE_HIDDEN_HAND_ADD_BUTTON_REASON = Object.freeze({
   RESERVED_CARD_NOT_ROAD: 'RESERVED_CARD_NOT_ROAD',
   ROAD_ALREADY_PRESENT: 'ROAD_ALREADY_PRESENT',
   RESERVED_CARD_ALREADY_PRESENT: 'RESERVED_CARD_ALREADY_PRESENT',
+  ADD_IN_PROGRESS: 'ADD_IN_PROGRESS',
 });
 
 const VISUAL_INTENT = 'DEEP_LEMON_GUMMY_GOLD';
@@ -134,15 +135,19 @@ export function createBattleHiddenHandAddButtonController({
   requiredFunction(isRoadCardId, 'IS_ROAD_CARD_ID');
   const addCard = requiredFunction(addRoadJankenCardId, 'ADD_ROAD_JANKEN_CARD_ID');
   let destroyed = false;
+  let addInFlight = false;
 
   function readProjection() {
     if (destroyed) throw new Error('HIDDEN_HAND_ADD_BUTTON_CONTROLLER_DESTROYED');
-    return projectBattleHiddenHandAddButton({
+    const projection = projectBattleHiddenHandAddButton({
       hiddenHandRuntime: readRuntime(),
       viewerOwnsHiddenHand: readOwner(),
       roadJankenCardIds: readMembership(),
       isRoadCardId,
     });
+    return addInFlight && projection.visible
+      ? Object.freeze({ ...projection, enabled: false, reason: BATTLE_HIDDEN_HAND_ADD_BUTTON_REASON.ADD_IN_PROGRESS })
+      : projection;
   }
 
   return Object.freeze({
@@ -182,10 +187,15 @@ export function createBattleHiddenHandAddButtonController({
         });
       }
 
-      await addCard(Object.freeze({
-        source: 'HIDDEN_HAND',
-        cardId: before.reservedCardId,
-      }));
+      addInFlight = true;
+      try {
+        await addCard(Object.freeze({
+          source: 'HIDDEN_HAND',
+          cardId: before.reservedCardId,
+        }));
+      } finally {
+        addInFlight = false;
+      }
 
       const reflectedMembership = validateMembership(readMembership());
       const reflectedCount = countIdentity(reflectedMembership, before.reservedCardId);
@@ -302,8 +312,13 @@ export function mountBattleHiddenHandAddButton({
   async function onClick(event) {
     event?.preventDefault?.();
     if (button.disabled || button.hidden) return;
-    await controller.press();
+    const pending = controller.press();
     if (!destroyed) sync();
+    try {
+      await pending;
+    } finally {
+      if (!destroyed) sync();
+    }
   }
 
   button.addEventListener?.('click', onClick);
@@ -315,9 +330,13 @@ export function mountBattleHiddenHandAddButton({
     sync,
     async press() {
       if (destroyed) throw new Error('HIDDEN_HAND_ADD_BUTTON_MOUNT_DESTROYED');
-      const result = await controller.press();
+      const pending = controller.press();
       if (!destroyed) sync();
-      return result;
+      try {
+        return await pending;
+      } finally {
+        if (!destroyed) sync();
+      }
     },
     destroy() {
       if (destroyed) return false;

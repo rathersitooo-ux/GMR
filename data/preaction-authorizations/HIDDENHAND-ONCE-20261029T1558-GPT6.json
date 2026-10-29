@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HIDDENHAND-ONCE-20261029T1558-GPT6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "HIDDEN_HAND_BUTTON_CONCURRENT_PRESS",
+  "acquireKey": "HIDDENHAND-ONCE-20261029T1558-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_3624F2A_BOTH_SCOPED_BLOBS_EXACT_CURRENT_LEASE_R26",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXACT_ANCHOR_5_OF_5_CHECK_AND_THREE_ISOLATED_CONCURRENCY_REGRESSIONS_20261028",
+  "proceedToken": "PROCEED|HIDDENHAND-ONCE-20261029T1558-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|hiddenhand-concurrent-press|two-path|lease-backed",
+  "authorizationBaseSha": "3624f2adf2eecf6caeb3bd9c3fcc600f79d8c928",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "HIDDEN_HAND_BUTTON_CONCURRENT_PRESS",
+  "leaseAcquireKey": "HIDDENHAND-ONCE-20261029T1558-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-10-29 15:58 JST",
+  "leaseUntilJst": "2026-10-29 16:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR isolated new branch main 3624f2ad; existing browser/battle-hidden-hand-add-button-runtime.mjs; tests/battle-hidden-hand-add-button-runtime.test.mjs; NEW data/preaction-authorizations/HIDDENHAND-ONCE-20261029T1558-GPT6.json",
+  "scope": [
+    "browser/battle-hidden-hand-add-button-runtime.mjs",
+    "tests/battle-hidden-hand-add-button-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-hidden-hand-add-button-runtime.mjs",
+    "tests/battle-hidden-hand-add-button-runtime.test.mjs"
+  ]
+}

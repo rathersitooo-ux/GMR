@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "QUICKSET-MIX-20261029T1958-CODEX-R2",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "QUICK_SETTINGS_MASTER_MIX_RETENTION_R2",
+  "acquireKey": "QUICKSET-MIX-20261029T1958-CODEX-R2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R26-QUICKSET-MIX-20261029-BASELINE-REPRO",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R26-QUICKSET-MIX-20261029-FAILING-EXISTING-FUNCTION-TEST",
+  "proceedToken": "PROCEED|QUICKSET-MIX-20261029T1958-CODEX-R2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-volume-authority|scoped-lease",
+  "authorizationBaseSha": "3624f2adf2eecf6caeb3bd9c3fcc600f79d8c928",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "QUICK_SETTINGS_MASTER_MIX_RETENTION_R2",
+  "leaseAcquireKey": "QUICKSET-MIX-20261029T1958-CODEX-R2",
+  "leaseSnapshotReadbackAtJst": "2026-10-29 19:58 JST",
+  "leaseUntilJst": "2026-10-29 20:43 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:O5",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR new isolated branch codex/quick-settings-mix-r2-20261029 from main 3624f2adf2eecf6caeb3bd9c3fcc600f79d8c928; existing browser/home-boot-runtime-base-r3.mjs and tests/home-boot-presentation.test.mjs; NEW data/preaction-authorizations/QUICKSET-MIX-20261029T1958-CODEX-R2.json; own R26 event and exact current lease row only.",
+  "solutionSignature": "QUICK_SETTINGS_MASTER_KEEP_INDIVIDUAL_MIX",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R26-QUICKSET-MIX-20261029-BASELINE-REPRO",
+  "solutionSearchEvidence": [
+    "Existing quick settings mutates three existing audio controls; no separate audio authority is introduced.",
+    "The current implementation reproduces mix loss on zero and rounding; one scoped existing test fails.",
+    "Hearthstone and MTG Arena references distinguish whole-game volume and separate channel controls."
+  ],
+  "scope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ]
+}

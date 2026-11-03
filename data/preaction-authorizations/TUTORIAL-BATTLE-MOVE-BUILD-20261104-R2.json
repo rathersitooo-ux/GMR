@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "TUTORIAL-BATTLE-MOVE-BUILD-20261104-R2",
+  "taskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "workUnitKey": "BATTLE_CONTEXT_REPLAY_MOVEMENT_GUIDANCE_PACKAGE_FIX",
+  "acquireKey": "TUTORIAL-BATTLE-GUIDE-BUILD-GPT6-20261104-0402",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR2354_REQUIRED_GATE_RUN41698663575_EXACT_PACKAGE_PROVENANCE_HASH_MISMATCH",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR2354_VERIFIED_OLD_AND_NEW_SOURCE_BLOBS",
+  "proceedToken": "PROCEED|TUTORIAL-BATTLE-MOVE-BUILD-20261104-R2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXACT_OLD_SHA_TO_NEW_SHA",
+  "authorizationBaseSha": "3624f2adf2eecf6caeb3bd9c3fcc600f79d8c928",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "BATTLE_CONTEXT_REPLAY_MOVEMENT_GUIDANCE_PACKAGE_FIX",
+  "leaseAcquireKey": "TUTORIAL-BATTLE-GUIDE-BUILD-GPT6-20261104-0402",
+  "leaseSnapshotReadbackAtJst": "2026-11-04 04:01 JST",
+  "leaseUntilJst": "2026-11-04 05:01 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "rathersitooo-ux/GMR branch codex/tutorial-battle-move-guide-20261104 only: browser/partner-advice-runtime-mount.mjs; tests/partner-advice-runtime-mount.test.mjs; deploy/cloudflare/tests/build.test.mjs; data/preaction-authorizations/TUTORIAL-BATTLE-MOVE-BUILD-20261104-R2.json; CURRENT_ACTIVE_LEASES own AcquireKey row only",
+  "scope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

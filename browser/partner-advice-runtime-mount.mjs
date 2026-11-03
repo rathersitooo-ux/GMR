@@ -446,14 +446,14 @@ export function projectBattleContextualTutorialReplay(snapshot = {}) {
 
   if (phase === 'plan' && !busy) {
     if (!exactPresentationToken(snapshot.roadId)) {
-      message = '手札からロードカードを1枚選ぶ';
+      message = 'ロードカードを選ぶか、移動したいマスから選んで進める範囲を確認する';
       focusRole = 'road';
     } else if (!exactPresentationToken(snapshot.battleId)) {
-      message = '次に、別のバトルカードを1枚選ぶ';
+      message = 'バトルに使う札を選ぶ。追加する札は必要なマナとハニーを確認する';
       focusRole = 'battle';
     } else {
-      message = '予約内容を確認して準備完了';
-      focusRole = 'ready';
+      message = '追加のバトル札を使う場合は費用を確認し、移動して行動を確定する';
+      focusRole = 'move';
     }
   } else if (phase === 'reveal' || phase === 'move') {
     message = 'ロード受理済み。公開と次段階を確認中';
@@ -1137,7 +1137,7 @@ function setBattleContextualTutorialFocus(doc, role) {
     node.removeAttribute('data-contextual-tutorial-focus');
     node.classList.remove('contextualTutorialFocus');
   });
-  const selector = role === 'road' ? '#roadSelect' : role === 'battle' ? '#battleSelect' : role === 'ready' ? '#readyPlan' : null;
+  const selector = role === 'road' ? '#roadSelect' : role === 'battle' ? '#battleSelect' : role === 'move' ? '#battleMap' : null;
   if (!selector) return true;
   const target = doc.querySelector(selector);
   if (!target) return false;

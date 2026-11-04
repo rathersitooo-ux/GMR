@@ -74,6 +74,33 @@ export const SAASUNA_BATTLE_MOTION_PROFILES = freeze({
   }),
 });
 
+
+const R2_SPRITE_DIR = './assets/partners/saasuna/';
+function defineR2Sprite(name, timing, loop, releaseFrame = null) {
+  return freeze({
+    fileName: name,
+    src: new URL(R2_SPRITE_DIR + name, import.meta.url).href,
+    frameCount: 8, cellSize: [192, 192], anchor: [96, 178],
+    durationsMs: timing, loop, releaseFrame, provisional: true, formalArt: false
+  });
+}
+export const SAASUNA_BATTLE_R2_SPRITES = freeze({
+  idle: defineR2Sprite('SARSNER_APPEAL_IDLE_8F_R2.png', [150,120,110,130,130,120,130,160], true),
+  magic: defineR2Sprite('SARSNER_MAGIC_ATTACK_8F_R2.png', [100,75,80,65,105,85,100,130], false, 5),
+  ice: defineR2Sprite('SARSNER_STAFF_SPIN_ICE_SLIDE_8F_R2.png', [100,70,70,85,95,75,80,90], false, 5),
+  dodge: defineR2Sprite('SARSNER_JUMP_DODGE_AFTERIMAGE_8F_R2.png', [95,55,50,55,65,80,90,120], false)
+});
+function r2StripFor(plan, input, role, initialPhase) {
+  const causal = input.causalPhase;
+  const action = input.actionPhase ?? initialPhase;
+  if (role === 'source' && ['stance','anticipation','release','impact','reaction'].includes(causal)
+    && (action === 'attack' || action === 'ability')) return action === 'ability' ? 'ice' : 'magic';
+  if (plan.state === 'IDLE_GENTLE') return 'idle';
+  if (plan.state === 'STAFF_FREEZE' || plan.state === 'ICE_SLIDE_LOW') return 'ice';
+  if (plan.state === 'MAGIC_RELEASE') return 'magic';
+  return null;
+}
+
 export const SAASUNA_BATTLE_MOTION_STATES = Object.freeze(Object.keys(SAASUNA_BATTLE_MOTION_PROFILES));
 export const SAASUNA_BATTLE_KEYFRAME_SHEET = freeze({
   fileName: KEYFRAME_SHEET_FILE,
@@ -233,6 +260,7 @@ export function createSaasunaBattleMotionController({
   phase = 'idle',
   transition = 'CONTINUE',
   motionState = null,
+  clock = null,
 } = {}) {
   if (!doc || !host || characterId !== SAASUNA_PARTNER_ID) return null;
   ensureSaasunaBattleMotionStyle(doc);
@@ -241,8 +269,76 @@ export function createSaasunaBattleMotionController({
   const previousVisibility = characterHost?.style?.visibility ?? '';
   if (characterHost?.style) characterHost.style.visibility = 'hidden';
 
+
   let currentState = null;
   let sequence = 0;
+  let destroyed = false;
+  const timerHost = typeof clock?.setTimeout === 'function' ? clock : globalThis;
+  let frameTimer = null;
+  let frameKind = null;
+  let frameGeneration = 0;
+  let causalPhase = null;
+  let heldAdvance = null;
+  function cancelFramePlayback() {
+    frameGeneration += 1;
+    heldAdvance = null;
+    if (frameTimer != null) {
+      (timerHost.clearTimeout ?? globalThis.clearTimeout).call(timerHost, frameTimer);
+      frameTimer = null;
+    }
+    frameKind = null;
+  }
+  function paintR2(sprite, index) {
+    surface.keyframe.style.backgroundImage = `url("${sprite.src}")`;
+    surface.keyframe.style.backgroundPosition = `${index * 100 / 7}% 0%`;
+    surface.keyframe.style.backgroundSize = '800% 100%';
+    surface.keyframe.style.imageRendering = 'pixelated';
+    surface.keyframe.style.backgroundColor = 'transparent';
+    surface.keyframe.style.backgroundBlendMode = 'normal';
+    setData(surface.keyframe, 'frameIndex', index + 1);
+    setData(host, 'saasunaBattleFrameIndex', index + 1);
+    setData(host, 'saasunaBattleFrameSheet', sprite.fileName);
+  }
+  function playR2(kind) {
+    if (frameKind === kind) return;
+    cancelFramePlayback();
+    frameKind = kind;
+    const sprite = SAASUNA_BATTLE_R2_SPRITES[kind];
+    const generation = frameGeneration;
+    const still = reducedMotion || motion === 'static_only';
+    let index = still && sprite.releaseFrame ? sprite.releaseFrame - 1 : 0;
+    paintR2(sprite, index);
+    if (still) return;
+    const advance = () => {
+      if (destroyed || frameGeneration !== generation) return;
+      const next = index + 1;
+      // The authored emission frame must not precede the game-owned release cue.
+      // Hold frame four; an exact release cue resumes the existing playback once.
+      if (sprite.releaseFrame && next === sprite.releaseFrame - 1
+        && (causalPhase === 'stance' || causalPhase === 'anticipation')) {
+        frameTimer = null;
+        heldAdvance = advance;
+        return;
+      }
+      if (next >= sprite.frameCount && !sprite.loop) { frameTimer = null; return; }
+      index = next % sprite.frameCount;
+      paintR2(sprite, index);
+      frameTimer = timerHost.setTimeout(advance, sprite.durationsMs[index]);
+    };
+    frameTimer = timerHost.setTimeout(advance, sprite.durationsMs[index]);
+  }
+  function showLegacy(plan) {
+    cancelFramePlayback();
+    surface.keyframe.style.backgroundImage = `url("${plan.keyframeSheet.src}")`;
+    surface.keyframe.style.backgroundPosition = plan.backgroundPosition;
+    surface.keyframe.style.backgroundSize = '300% 300%';
+    surface.keyframe.style.imageRendering = '';
+    surface.keyframe.style.backgroundColor = '';
+    surface.keyframe.style.backgroundBlendMode = '';
+    delete surface.keyframe.dataset.frameIndex;
+    delete host.dataset.saasunaBattleFrameIndex;
+    delete host.dataset.saasunaBattleFrameSheet;
+  }
 
   const setState = (input = {}, options = {}) => {
     const plan = resolveSaasunaBattleMotionPlan({
@@ -253,7 +349,8 @@ export function createSaasunaBattleMotionController({
       motionState,
       ...input,
     });
-    if (!plan) return null;
+    if (!plan || destroyed) return null;
+    if (role === 'source' && typeof input.causalPhase === 'string') causalPhase = input.causalPhase;
     const restart = options.restart !== false;
     if (!restart && currentState === plan.state) return plan;
     currentState = plan.state;
@@ -263,15 +360,20 @@ export function createSaasunaBattleMotionController({
     setData(host, 'saasunaBattleKeyframe', plan.keyframeId);
     setData(host, 'saasunaBattleEmotion', plan.emotionState);
     setData(host, 'saasunaBattleMotionSequence', sequence);
-    setData(host, 'saasunaBattleVisualSource', 'provisional-keyframe-sheet');
+    const strip = r2StripFor(plan, input, role, phase);
+    setData(host, 'saasunaBattleVisualSource', strip ? 'provisional-r2-eight-frame' : 'provisional-keyframe-sheet');
     setData(host, 'saasunaBattleFormalArt', 'false');
     surface.surface.dataset.motion = motion;
     surface.surface.dataset.motionState = plan.state;
     surface.surface.dataset.role = 'saasuna-battle-motion-surface';
     surface.keyframe.hidden = false;
-    surface.keyframe.style.backgroundImage = `url("${plan.keyframeSheet.src}")`;
-    surface.keyframe.style.backgroundPosition = plan.backgroundPosition;
-    surface.keyframe.style.backgroundSize = '300% 300%';
+    if (strip) playR2(strip);
+    else showLegacy(plan);
+    if (heldAdvance && causalPhase === 'release') {
+      const resume = heldAdvance;
+      heldAdvance = null;
+      resume();
+    }
     surface.keyframe.dataset.keyframeId = plan.keyframeId;
     surface.ice.hidden = !plan.effect.includes('ice') || reducedMotion;
     surface.wind.hidden = !plan.effect.includes('wind') || reducedMotion;
@@ -280,6 +382,8 @@ export function createSaasunaBattleMotionController({
   };
 
   const clear = () => {
+    destroyed = true;
+    cancelFramePlayback();
     currentState = null;
     delete host.dataset.saasunaBattleMotion;
     delete host.dataset.saasunaBattleMotionState;
@@ -288,6 +392,8 @@ export function createSaasunaBattleMotionController({
     delete host.dataset.saasunaBattleMotionSequence;
     delete host.dataset.saasunaBattleVisualSource;
     delete host.dataset.saasunaBattleFormalArt;
+    delete host.dataset.saasunaBattleFrameIndex;
+    delete host.dataset.saasunaBattleFrameSheet;
     surface.surface.parentNode?.removeChild?.(surface.surface);
     if (characterHost?.style) characterHost.style.visibility = previousVisibility;
   };
@@ -308,6 +414,9 @@ export const SAASUNA_BATTLE_MOTION_RUNTIME = freeze({
   boardAuthority: false,
   formalArt: false,
   keyframeCount: 9,
+  r2FrameSequenceCount: 4,
+  r2FramesPerAction: 8,
+  r2ReleaseFrame: 5,
   states: SAASUNA_BATTLE_MOTION_STATES,
   effects: Object.freeze(['ice', 'wind', 'impact']),
   reducedMotion: 'static_pose_no_timeline',

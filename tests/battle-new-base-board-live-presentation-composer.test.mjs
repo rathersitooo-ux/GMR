@@ -136,9 +136,10 @@ test('hands the current NEW_BOARD_ONLY world-field model to the live renderer se
   assert.equal(model.counts.builtUpperCards, 0);
   assert.equal(model.counts.visibleFutureUpperSlots, 0);
   assert.equal(model.counts.roundCells, 42);
-  assert.equal(model.counts.gates, 12);
+  assert.equal(model.counts.gates, 1);
+  assert.equal(model.counts.gateAnchors, 12);
   assert.equal(model.counts.shields, 12);
-  assert.equal(model.gates.find((gate) => gate.laneKey === 'P2:C').state, 'CLOSED_HEAVY_BARRIER');
+  assert.equal(model.sharedGate.state, 'CLOSED_HEAVY_BARRIER');
   assert.equal(model.edges.find((edge) => edge.id === 'lower-edge:T0-L0').waypoints.length, 1);
 
   const seven = withStraight(emptyStraights(), 4, 7, 'P2-C');
@@ -147,9 +148,9 @@ test('hands the current NEW_BOARD_ONLY world-field model to the live renderer se
   assert.equal(model.counts.builtUpperCards, 7);
   assert.equal(model.counts.visibleFutureUpperSlots, 0);
   assert.equal(model.roundCells.filter((cell) => cell.laneKey === 'P2:C').length, 7);
-  assert.equal(model.gates.find((gate) => gate.laneKey === 'P2:C').state, 'OPEN_PASSABLE_FRAME');
+  assert.equal(model.sharedGate.state, 'OPEN_PASSABLE_FRAME');
   assert.equal(model.goalBranches.find((branch) => branch.id === 'goal-branch:P2:C').visualState, 'STRONG_OPEN');
-  assert.equal(model.gates.find((gate) => gate.laneKey === 'P2:L').state, 'CLOSED_HEAVY_BARRIER');
+  assert.equal(model.goalBranches.find((branch) => branch.id === 'goal-branch:P2:L').visualState, 'FAINT_READABLE');
   assert.equal(model.gameplayAuthority, false);
   assert.equal(model.movementAuthority, false);
   assert.equal(BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT.worldFieldGeometryAuthority, 'EXISTING_BATTLE_BOARD_WORLD_FIELD_RENDERER');
@@ -330,4 +331,46 @@ test('Reduced Motion keeps the same OPEN/progression meaning with static cue and
   assert.equal(BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT.computesResult, false);
   assert.equal(BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT.writesGameState, false);
   assert.equal(BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT.secondBoardEngine, false);
+});
+
+test('live board world projection keeps seated rider, location, area and pickup separate', () => {
+  const { runtime } = mount();
+  const before = runtime.snapshot();
+  const model = runtime.worldFieldRenderModel({}, {
+    controlledCharacters: [
+      { participantId: 'P1', characterId: 'hero.alpha', nodeId: 'lower:T0',
+        facing: 'right', ride: { assetId: 'ride.source', seatHeight: 0.7 } },
+    ],
+    cellRoles: { 'lower:T0': 'ROAD' },
+    areas: { 'lower:T0': ['FOREST'] },
+    pickups: [{ id: 'honey.one', nodeId: 'lower:T0', kind: 'HONEY', count: 2 }],
+  });
+  assert.equal(model.controlledCharacterRides.length, 1);
+  assert.equal(model.controlledCharacterRides[0].ride.assetId, 'ride.source');
+  assert.equal(model.controlledCharacterRides[0].ride.seatHeight, 0.7);
+  assert.equal(model.mechanicPresentations.cellRoles[0].roleId, 'ROAD');
+  assert.equal(model.mechanicPresentations.pickups[0].count, 2);
+  assert.deepEqual(model.mechanicPresentations.areas[0].areaIds, ['FOREST']);
+  assert.equal(model.sharedGate.id, 'gate:shared');
+  assert.equal(runtime.snapshot().openGoalPathCount, before.openGoalPathCount);
+  assert.equal(model.gameplayAuthority, false);
+  assert.equal(model.movementAuthority, false);
+});
+
+test('live world model follows the actual progression snapshot and rejects unbuilt rider slots', () => {
+  const { runtime } = mount();
+  const rider = { participantId: 'P2', characterId: 'hero.beta',
+    nodeId: 'upper:P2:C:7', facing: 'forward' };
+  assert.throws(
+    () => runtime.worldFieldRenderModel({}, { controlledCharacters: [rider] }),
+    /BATTLE_BOARD_CHARACTER_PROJECTION_INVALID/,
+  );
+  assert.equal(runtime.syncAuthoritativeSnapshot({
+    straightCardIdsByColumn: withStraight(emptyStraights(), 4, 7, 'P2-C'),
+  }).ok, true);
+  const model = runtime.worldFieldRenderModel({}, { controlledCharacters: [rider] });
+  assert.equal(model.controlledCharacterRides.length, 1);
+  assert.equal(model.controlledCharacterRides[0].nodeId, 'upper:P2:C:7');
+  assert.equal(model.sharedGate.state, 'OPEN_PASSABLE_FRAME');
+  assert.equal(model.goalBranches.find((branch) => branch.id === 'goal-branch:P2:C').visualState, 'STRONG_OPEN');
 });

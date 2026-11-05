@@ -254,10 +254,18 @@ export function mountBattleNewBaseBoardLivePresentation({
     progressionPresentation() {
       return currentProgressionPresentation;
     },
-    worldFieldRenderModel(worldBounds = {}) {
+    worldFieldRenderModel(worldBounds = {}, {
+      controlledCharacters = [],
+      cellRoles = {},
+      areas = {},
+      gimmicks = [],
+      pickups = [],
+    } = {}) {
       return createBattleBoardWorldFieldRenderModel({
         worldBounds,
+        goalPathProjection: currentGoalProjection,
         builtCountByLaneKey: builtCountByVisualLaneKey(currentProgressionPresentation),
+        controlledCharacters, cellRoles, areas, gimmicks, pickups,
       });
     },
     snapshot() {

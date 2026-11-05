@@ -86,10 +86,144 @@ function edgePrimitive(edge, nodes, projection) {
   };
 }
 
+
+/**
+ * Spatial display data only. The game's authoritative resolver owns what each
+ * cell / actor / item does. No effects are inferred from visual positions.
+ */
+function boardMechanicPresentations({ cellRoles, areas, gimmicks, pickups, roundCells, nodes }) {
+  const visible = new Set(roundCells.map((cell) => cell.id));
+  const check = (nodeId) => {
+    if (!visible.has(nodeId)) throw new TypeError(`BATTLE_BOARD_MECHANIC_UNKNOWN_VISIBLE_NODE:${nodeId}`);
+    return point(nodes, nodeId);
+  };
+  const mapEntries = (values, label, parse) => {
+    if (!values || typeof values !== 'object' || Array.isArray(values)) {
+      throw new TypeError(`BATTLE_BOARD_MECHANIC_INVALID_INPUT:${label}`);
+    }
+    return Object.entries(values).map(([nodeId, value]) => ({
+      nodeId, ...parse(value), world: check(nodeId), presentationOnly: true,
+    }));
+  };
+  const mapItems = (values, label, validate) => {
+    if (!Array.isArray(values)) throw new TypeError(`BATTLE_BOARD_MECHANIC_INVALID_INPUT:${label}`);
+    const ids = new Set();
+    return values.map((item) => {
+      if (!item || typeof item !== 'object' || typeof item.id !== 'string' || !item.id
+        || ids.has(item.id) || typeof item.nodeId !== 'string' || !item.nodeId
+        || typeof item.kind !== 'string' || !item.kind) {
+        throw new TypeError(`BATTLE_BOARD_MECHANIC_INVALID_ITEM:${label}`);
+      }
+      ids.add(item.id);
+      validate(item);
+      return {
+        ...item, world: check(item.nodeId), presentationOnly: true,
+        gameplayAuthority: false, movementAuthority: false,
+      };
+    });
+  };
+  return {
+    cellRoles: mapEntries(cellRoles, 'cellRoles', (roleId) => {
+      if (typeof roleId !== 'string' || !roleId.trim()) throw new TypeError('BATTLE_BOARD_INVALID_ROLE');
+      return { roleId };
+    }),
+    areas: mapEntries(areas, 'areas', (areaIds) => {
+      if (!Array.isArray(areaIds) || areaIds.some((id) => typeof id !== 'string' || !id.trim())) {
+        throw new TypeError('BATTLE_BOARD_INVALID_AREAS');
+      }
+      return { areaIds: [...areaIds] };
+    }),
+    gimmicks: mapItems(gimmicks, 'gimmicks', () => {}),
+    pickups: mapItems(pickups, 'pickups', (item) => {
+      if (!Number.isSafeInteger(item.count) || item.count <= 0) {
+        throw new TypeError('BATTLE_BOARD_INVALID_PICKUP_COUNT');
+      }
+    }),
+  };
+}
+
+
+/**
+ * Character and ride positions follow the same caller-authoritative node.
+ * Ride seating is an art/rigging offset; it must not move the player in the game.
+ * Co-located players are separated only for presentation and retain nodeId.
+ */
+function projectControlledCharacterRides(characters, roundCells, nodes, goalId) {
+  if (!Array.isArray(characters)) throw new TypeError('BATTLE_BOARD_CHARACTERS_ARRAY_REQUIRED');
+  const allowed = new Set([...roundCells.map((c) => c.id), goalId]);
+  const ids = new Set();
+  const rows = characters.map((row) => {
+    if (!row || typeof row !== 'object'
+      || typeof row.participantId !== 'string' || !/^P[1-4]$/.test(row.participantId)
+      || ids.has(row.participantId)
+      || typeof row.characterId !== 'string' || !row.characterId.trim()
+      || typeof row.nodeId !== 'string' || !allowed.has(row.nodeId)
+      || typeof row.facing !== 'string' || !row.facing.trim()) {
+      throw new TypeError('BATTLE_BOARD_CHARACTER_PROJECTION_INVALID');
+    }
+    ids.add(row.participantId);
+    let ride = null;
+    if (row.ride !== undefined && row.ride !== null) {
+      if (typeof row.ride !== 'object' || Array.isArray(row.ride)
+        || typeof row.ride.assetId !== 'string' || !row.ride.assetId.trim()
+        || !Number.isFinite(row.ride.seatHeight) || row.ride.seatHeight < 0) {
+        throw new TypeError('BATTLE_BOARD_RIDE_ASSET_OR_SEAT_INVALID');
+      }
+      ride = { assetId: row.ride.assetId, seatHeight: row.ride.seatHeight };
+    }
+    return { participantId: row.participantId, characterId: row.characterId,
+      nodeId: row.nodeId, facing: row.facing, ride };
+  });
+  const grouped = new Map();
+  for (const row of rows) {
+    if (!grouped.has(row.nodeId)) grouped.set(row.nodeId, []);
+    grouped.get(row.nodeId).push(row);
+  }
+  // Stable participant ordering prevents flickering when caller snapshots reorder.
+  for (const group of grouped.values()) group.sort((a, b) => a.participantId.localeCompare(b.participantId));
+  const positions = Object.freeze([
+    Object.freeze([0, 0]), Object.freeze([-0.16, 0]), Object.freeze([0.16, 0]),
+    Object.freeze([-0.16, -0.16]), Object.freeze([0.16, -0.16]),
+  ]);
+  return rows.map((row) => {
+    const group = grouped.get(row.nodeId);
+    const index = group.findIndex((other) => other.participantId === row.participantId);
+    const offset = group.length === 1 ? positions[0]
+      : group.length === 2 ? positions[index + 1]
+      : group.length === 3 ? (index === 0 ? positions[1] : index === 1 ? positions[2] : positions[3])
+      : positions[index + 1];
+    const nodeWorld = point(nodes, row.nodeId);
+    const anchorWorld = {
+      x: nodeWorld.x + offset[0], y: nodeWorld.y, z: nodeWorld.z + offset[1],
+    };
+    const characterWorld = {
+      ...anchorWorld, y: anchorWorld.y + (row.ride?.seatHeight ?? 0),
+    };
+    return {
+      participantId: row.participantId, characterId: row.characterId,
+      nodeId: row.nodeId, facing: row.facing,
+      nodeWorld, groundWorld: anchorWorld, contactShadowWorld: anchorWorld,
+      characterWorld, ride: row.ride === null ? null : {
+        assetId: row.ride.assetId, world: anchorWorld, facing: row.facing,
+        seatWorld: characterWorld, seatHeight: row.ride.seatHeight,
+      },
+      coLocatedCount: group.length, visibilityOffsetOnly: true,
+      presentationOnly: true, gameplayAuthority: false, movementAuthority: false,
+      positionAuthority: 'CALLER_CONFIRMED_NEW_BOARD_NODE',
+    };
+  });
+}
+
 export function createBattleBoardWorldFieldRenderModel({
   graph = createBattleBoardVisualGraph(),
   worldBounds = {},
   builtCountByLaneKey = {},
+  goalPathProjection,
+  cellRoles = {},
+  areas = {},
+  gimmicks = [],
+  pickups = [],
+  controlledCharacters = [],
 } = {}) {
   const projection = projectBattleBoardVisualGraphToWorld(graph, worldBounds);
   const nodes = projection.nodes;
@@ -106,15 +240,49 @@ export function createBattleBoardWorldFieldRenderModel({
     }));
   });
   const roundCells = [...lowerRoundCells, ...builtUpperCells];
-  const gates = graph.upperLanes.map((lane) => {
-    const builtCount = Number.isSafeInteger(builtCountByLaneKey[lane.laneKey]) ? builtCountByLaneKey[lane.laneKey] : 0;
-    const state = goalBranchVisualStateForBuiltCount(builtCount);
-    return {
-      id: lane.gate.id, kind: 'ROUTE_GATE', laneKey: lane.laneKey, world: point(nodes, lane.gate.id),
-      state: state === 'STRONG_OPEN' ? 'OPEN_PASSABLE_FRAME' : 'CLOSED_HEAVY_BARRIER',
-      gameplayAuthority: false,
-    };
+  const mechanicPresentations = boardMechanicPresentations({
+    cellRoles, areas, gimmicks, pickups, roundCells, nodes,
   });
+  const controlledCharacterRides = projectControlledCharacterRides(
+    controlledCharacters, roundCells, nodes, graph.goal.id,
+  );
+  // One shared physical gate. The 12 lane positions are entry anchors, not gates.
+  // A caller-provided goal path projection has priority over local display counts.
+  if (goalPathProjection !== undefined && (
+    goalPathProjection?.ok !== true || typeof goalPathProjection.gateOpen !== 'boolean'
+  )) throw new TypeError('BATTLE_BOARD_SHARED_GATE_PROJECTION_INVALID');
+  const anyCompletedLane = graph.upperLanes.some((lane) => (
+    goalBranchVisualStateForBuiltCount(
+      Number.isSafeInteger(builtCountByLaneKey[lane.laneKey])
+        ? builtCountByLaneKey[lane.laneKey]
+        : 0,
+    ) === 'STRONG_OPEN'
+  ));
+  const gateIsOpen = goalPathProjection === undefined
+    ? anyCompletedLane
+    : goalPathProjection.gateOpen;
+  const gateAnchors = graph.upperLanes.map((lane) => ({
+    id: lane.gate.id, kind: 'SHARED_GATE_ENTRY_ANCHOR',
+    laneKey: lane.laneKey, world: point(nodes, lane.gate.id),
+    sharedGateId: 'gate:shared', countsAsGate: false, stoppable: false,
+    gameplayAuthority: false,
+  }));
+  const firstGate = gateAnchors[0].world;
+  const lastGate = gateAnchors[gateAnchors.length - 1].world;
+  const sharedGate = {
+    id: 'gate:shared', kind: 'SHARED_GATE',
+    state: gateIsOpen ? 'OPEN_PASSABLE_FRAME' : 'CLOSED_HEAVY_BARRIER',
+    world: {
+      x: (firstGate.x + lastGate.x) / 2,
+      y: (firstGate.y + lastGate.y) / 2,
+      z: (firstGate.z + lastGate.z) / 2,
+    },
+    span: { from: firstGate, to: lastGate },
+    anchorIds: gateAnchors.map((anchor) => anchor.id),
+    countsAsCell: false, stoppable: false,
+    gameplayAuthority: false, movementAuthority: false,
+  };
+  const gates = [sharedGate];
   const shields = graph.upperLanes.map((lane) => ({
     id: lane.shield.id, kind: 'SHIELD_GATE_FACE', laneKey: lane.laneKey,
     world: point(nodes, lane.gate.id), countsAsCell: false, stoppable: false, gameplayAuthority: false,
@@ -142,7 +310,8 @@ export function createBattleBoardWorldFieldRenderModel({
     movementAuthority: false,
     legalityAuthority: false,
     sharedGoal: { id: graph.goal.id, kind: 'SHARED_GOAL', world: point(nodes, graph.goal.id) },
-    roundCells, gates, shields, goalBranches, edges,
+    roundCells, mechanicPresentations, controlledCharacterRides,
+    sharedGate, gates, gateAnchors, shields, goalBranches, edges,
     counts: {
       sharedGoal: 1,
       upperLanes: graph.upperLaneCount,
@@ -151,6 +320,7 @@ export function createBattleBoardWorldFieldRenderModel({
       visibleFutureUpperSlots: 0,
       roundCells: roundCells.length,
       gates: gates.length,
+      gateAnchors: gateAnchors.length,
       shields: shields.length,
       terrainBentLowerEdges: lowerEdges.filter((edge) => edge.routePresentation === 'DERIVED_TERRAIN_BOW').length,
       sourceWaypointLowerEdges: lowerEdges.filter((edge) => edge.routePresentation === 'SOURCE_REFERENCE_WAYPOINTS').length,
@@ -163,11 +333,20 @@ export function mountBattleBoardWorldField({
   graph,
   worldBounds,
   builtCountByLaneKey,
+  goalPathProjection,
+  cellRoles = {},
+  areas = {},
+  gimmicks = [],
+  pickups = [],
+  controlledCharacters = [],
 } = {}) {
   if (!worldRenderer || typeof worldRenderer.replaceBoard !== 'function') {
     return deepFreeze({ mounted: false, reason: 'WORLD_RENDERER_REQUIRED', schema: SCHEMA });
   }
-  const model = createBattleBoardWorldFieldRenderModel({ graph, worldBounds, builtCountByLaneKey });
+  const model = createBattleBoardWorldFieldRenderModel({
+    graph, worldBounds, builtCountByLaneKey, goalPathProjection,
+    cellRoles, areas, gimmicks, pickups, controlledCharacters,
+  });
   worldRenderer.replaceBoard(model);
   return deepFreeze({
     schema: SCHEMA, mounted: true, renderSpace: 'WORLD_FIELD', screenSpaceBoardTopology: false,
@@ -182,6 +361,13 @@ export const BATTLE_BOARD_WORLD_FIELD_RENDERER_CONTRACT = deepFreeze({
   renderSpace: 'WORLD_FIELD',
   screenSpaceBoardTopology: false,
   sharedGoalCount: 1,
+  sharedGateCount: 1,
+  gateEntryAnchors: 12,
+  mechanicLayersHaveGameplayAuthority: false,
+  mechanicLayersReplaceCellIdentity: false,
+  controlledCharacterRidePositionAuthority: 'CALLER_CONFIRMED_NEW_BOARD_NODE',
+  controlledCharacterRidesMayChangeGameplay: false,
+  rideSeatHeightIsSuppliedByAssetRig: true,
   routeGateAndShieldPreserved: true,
   upperProgressionVisibility: 'ACTUAL_BUILT_CARDS_ONLY',
   visibleFutureUpperSlots: 0,

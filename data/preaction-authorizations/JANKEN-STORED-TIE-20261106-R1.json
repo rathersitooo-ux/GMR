@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "JANKEN-STORED-TIE-20261106-R1",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "JANKEN_EQUAL_NUMBER_STORED_RANDOM_ORDER_R1",
+  "acquireKey": "JANKEN-STORED-TIE-20261106T2237-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "20261106_BASE3624F2_LEASE_R26_AND_EXACT_TWO_FILE_READBACK",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "20261106_LOCAL_NODE22_TIE_GROUP_12_ASSERTIONS_PASS_ISOLATED_ONLY",
+  "proceedToken": "PROCEED|JANKEN-STORED-TIE-20261106-R1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|janken-stored-equal-number-order|exact-two-file-branch|R26-backed-active-lease",
+  "authorizationBaseSha": "3624f2adf2eecf6caeb3bd9c3fcc600f79d8c928",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "JANKEN_EQUAL_NUMBER_STORED_RANDOM_ORDER_R1",
+  "leaseAcquireKey": "JANKEN-STORED-TIE-20261106T2237-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-11-06 22:38 JST",
+  "leaseUntilJst": "2026-11-06 23:17 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "GMR new branch gmr/janken-stored-tie-order-20261106: EXISTING browser/battle-janken-processing-order-authority-adapter.mjs; EXISTING tests/battle-janken-processing-order-authority-adapter.test.mjs; NEW data/preaction-authorizations/JANKEN-STORED-TIE-20261106-R1.json (temporary preaction); central Task row1374 N checkpoint. NO GAMEROAD.html, PR#2351 or GOAL/Deck/Setup/Tutorial writes.",
+  "solutionSignature": "BATTLE_JANKEN_PERSISTED_EQUAL_NUMBER_RANDOM_TIE_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_USER_20261101_TIE_RANDOM_AND_SOURCE_SHA6c4007573bc15d847f33375a59d9398b8ee811e0",
+  "solutionSearchEvidence": [
+    "Current source battle-janken-processing-order-authority-adapter.mjs explicitly leaves same-print-number ties UNRESOLVED; formal 2026-11-01 user decision is random once only for same printed-number group.",
+    "No parallel owner in current lease for this module/test; active Tutorial and Setup files are disjoint; PR2351 movement HTML not touched.",
+    "Use existing triad-resolver-core.mjs for comparison, avoid second RNG or comparison engine; caller must create and persist random tied-player order in authoritative match state.",
+    "12 isolated Node v22 tie-order assertions passed (ordering, exact membership, cross-rank failure, repeat consistency); NOT actual producer/live runtime/CI or reconnect acceptance."
+  ],
+  "scope": [
+    "browser/battle-janken-processing-order-authority-adapter.mjs",
+    "tests/battle-janken-processing-order-authority-adapter.test.mjs",
+    "data/preaction-authorizations/JANKEN-STORED-TIE-20261106-R1.json"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-processing-order-authority-adapter.mjs",
+    "tests/battle-janken-processing-order-authority-adapter.test.mjs",
+    "data/preaction-authorizations/JANKEN-STORED-TIE-20261106-R1.json"
+  ]
+}

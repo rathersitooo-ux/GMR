@@ -826,6 +826,12 @@ export function presentDeckAddSwipe({ doc, presentation, result, sourceElement, 
   }
 }
 
+export function isDeckSwipePointerOwner(gesture, event) {
+  return Number.isFinite(gesture?.pointerId)
+    && Number.isFinite(event?.pointerId)
+    && gesture.pointerId === event.pointerId;
+}
+
 export function installDeckStorageLiveMount({
   document: doc = globalThis.document,
   window: win = globalThis.window,
@@ -995,6 +1001,9 @@ export function installDeckStorageLiveMount({
   };
 
   const onPointerDown = (event) => {
+    // A second finger must not steal an active Deck swipe from the first one.
+    if (gesture || event?.isPrimary === false) return;
+    if (![event?.pointerId, event?.clientX, event?.clientY].every(Number.isFinite)) return;
     if (event?.pointerType === 'mouse' && event?.button !== 0) return;
     const card = closestSwipeCard(event?.target);
     if (!card || !screen.contains?.(card)) return;
@@ -1020,8 +1029,10 @@ export function installDeckStorageLiveMount({
 
   const onPointerUp = (event) => {
     const current = gesture;
+    // Foreign pointerup is unrelated: leave the active finger and preview intact.
+    if (!isDeckSwipePointerOwner(current, event)) return;
     gesture = null;
-    if (!current || current.pointerId !== event?.pointerId || !current.cardId) {
+    if (!current.cardId) {
       clearPrecommitFeedback(current);
       return;
     }
@@ -1060,7 +1071,9 @@ export function installDeckStorageLiveMount({
     mounted?.render?.();
   };
 
-  const onPointerCancel = () => {
+  const onPointerCancel = (event) => {
+    // pointercancel for a second contact must not abort the owner's swipe.
+    if (!isDeckSwipePointerOwner(gesture, event)) return;
     const current = gesture;
     gesture = null;
     clearPrecommitFeedback(current);

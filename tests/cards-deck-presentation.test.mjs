@@ -12,6 +12,7 @@ import {
   createDeckSwipeSfxPlayer,
   DECK_SWIPE_PRECOMMIT_FEEDBACK,
   createDeckSwipePrecommitVisual,
+  isDeckSwipePointerOwner,
   CARDS_SELECTION_FEEDBACK,
   createCardsSelectionFeedbackProfile,
   installCardsSelectionPressReleaseFeedback,
@@ -265,6 +266,28 @@ test('live swipe consumer coalesces pointermove feedback and always removes it o
   const moveStart = live.indexOf('const onPointerMove');
   const moveEnd = live.indexOf('const onPointerUp', moveStart);
   assert.equal(live.slice(moveStart, moveEnd).includes('preventDefault'), false);
+});
+
+test('Deck swipe retains one pointer owner across unrelated multi-touch events', async () => {
+  const owner = { pointerId: 11, cardId: 'SP_1' };
+  assert.equal(isDeckSwipePointerOwner(owner, { pointerId: 11 }), true);
+  assert.equal(isDeckSwipePointerOwner(owner, { pointerId: 22 }), false);
+  assert.equal(isDeckSwipePointerOwner(owner, { pointerId: null }), false);
+  assert.equal(isDeckSwipePointerOwner(owner, {}), false);
+  assert.equal(isDeckSwipePointerOwner(null, { pointerId: 11 }), false);
+  assert.equal(isDeckSwipePointerOwner({ pointerId: Number.NaN }, { pointerId: Number.NaN }), false);
+
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const begin = source.indexOf('export function installDeckStorageLiveMount');
+  const end = source.indexOf('function compactCardsInspectorContextText', begin);
+  assert.ok(begin >= 0 && end > begin);
+  const consumer = source.slice(begin, end);
+  assert.match(consumer, /if \(gesture \|\| event\?\.isPrimary === false\) return;/);
+  assert.match(consumer, /if \(!isDeckSwipePointerOwner\(current, event\)\) return;\s*gesture = null;/);
+  assert.match(consumer, /if \(!isDeckSwipePointerOwner\(gesture, event\)\) return;\s*const current = gesture;\s*gesture = null;/);
+  assert.match(consumer, /if \(!\[event\?\.pointerId, event\?\.clientX, event\?\.clientY\]\.every\(Number\.isFinite\)\) return;/);
+  assert.match(consumer, /const onPointerMove = \(event\) => \{\s*schedulePrecommitFeedback\(event\);/);
 });
 
 test('Cards tap selection feedback keeps Reduced Motion semantic and low-perf variants bounded', () => {

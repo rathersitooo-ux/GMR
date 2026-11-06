@@ -9,6 +9,7 @@ import {
   normalizeBattleJankenFocusIntegration,
   normalizeBattleJankenInputMode,
   projectBattleJankenInputModeOptions,
+  shouldActivateJankenSlotFromClick,
   BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS,
   advanceBattleJankenSlotRollState,
   buildBattleJankenSlidePadModel,
@@ -51,6 +52,27 @@ test('prototype exposes exactly the three user-selectable janken input modes', (
   assert.equal(normalizeBattleJankenInputMode('unknown', BATTLE_JANKEN_INPUT_MODE.CARD_PULL), BATTLE_JANKEN_INPUT_MODE.CARD_PULL);
 });
 
+test('physical launcher keeps pointer charge while native Enter/Space activates focused R/S/P slot', () => {
+  for (const mode of Object.values(BATTLE_JANKEN_INPUT_MODE)) {
+    assert.equal(shouldActivateJankenSlotFromClick({event:{detail:0},launcherEnabled:true,inputMode:mode}),true);
+    assert.equal(shouldActivateJankenSlotFromClick({event:{detail:1},launcherEnabled:true,inputMode:mode}),false);
+  }
+  assert.equal(shouldActivateJankenSlotFromClick({event:{detail:1},inputMode:BATTLE_JANKEN_INPUT_MODE.LAUNCHER}),false);
+  assert.equal(shouldActivateJankenSlotFromClick({event:{detail:1},inputMode:BATTLE_JANKEN_INPUT_MODE.PLAIN}),true);
+  assert.equal(shouldActivateJankenSlotFromClick({event:{detail:1},inputMode:BATTLE_JANKEN_INPUT_MODE.CARD_PULL,slotPullActive:true}),false);
+  assert.equal(shouldActivateJankenSlotFromClick({event:{detail:0,isTrusted:true},launcherEnabled:true,inputMode:BATTLE_JANKEN_INPUT_MODE.LAUNCHER,slotPullActive:true}),false);
+  assert.equal(shouldActivateJankenSlotFromClick({event:{detail:0,isTrusted:false},launcherEnabled:true,inputMode:BATTLE_JANKEN_INPUT_MODE.LAUNCHER}),false);
+  assert.equal(shouldActivateJankenSlotFromClick({event:null,launcherEnabled:true,inputMode:BATTLE_JANKEN_INPUT_MODE.LAUNCHER}),false);
+  const source = readFileSync(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),'utf8');
+  assert.match(source,/node\.onclick = \(event\) => \{[\s\S]*?shouldActivateJankenSlotFromClick\(/);
+  assert.match(source,/if \(hasUsedJankenThisRound\(\)\) return;/);
+  assert.match(source,/commitSelectedHand\(slot\.jankenHand\);/);
+  // The card-image clone is nested within the real slot button.
+  // Its visual role must not create a second keyboard tab stop.
+  assert.match(source,/clone\.setAttribute\?\.\('aria-hidden', 'true'\);[\s\S]*clone\.tabIndex = -1;[\s\S]*clone\.inert = true;/);
+  assert.match(source,/nested\.tabIndex = -1;/);
+});
+
 test('three input modes share one existing card-action commit path', () => {
   const source = readFileSync(
     new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
@@ -60,7 +82,7 @@ test('three input modes share one existing card-action commit path', () => {
   assert.match(source, /カードを引く/);
   assert.match(source, /発射板/);
   assert.match(source, /そのまま/);
-  assert.match(source, /inputMode === BATTLE_JANKEN_INPUT_MODE\.CARD_PULL/);
+  assert.match(source, /inputMode !== BATTLE_JANKEN_INPUT_MODE\.CARD_PULL/);
   assert.match(source, /inputMode === BATTLE_JANKEN_INPUT_MODE\.LAUNCHER/);
   assert.match(source, /function commitSelectedHand\(selectedHand\)/);
   assert.match(source, /resolveBattleJankenSlotCardAction\(model, selectedHand, currentSourceHandIds\)/);

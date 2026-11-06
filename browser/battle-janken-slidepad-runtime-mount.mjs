@@ -756,6 +756,19 @@ function clearJankenSlotPhysicalCardPresentation(slotNode) {
   }
 }
 
+function clearClonedPartnerAdvicePresentation(clone) {
+  if (!clone?.dataset) return;
+  if (clone.dataset.partnerAdviceBaseAriaCaptured) {
+    const baseAria = clone.dataset.partnerAdviceBaseAria || '';
+    if (baseAria) clone.setAttribute?.('aria-label', baseAria);
+    else clone.removeAttribute?.('aria-label');
+  }
+  for (const key of ['partnerAdviceRole', 'partnerAdviceKind', 'partnerAdviceCandidate',
+    'partnerAdviceGlyph', 'partnerAdviceBaseAria', 'partnerAdviceBaseAriaCaptured']) {
+    delete clone.dataset[key];
+  }
+}
+
 function syncJankenSlotPhysicalCardPresentation(battleRoot, slotNode, slot) {
   clearJankenSlotPhysicalCardPresentation(slotNode);
   const cardId = typeof slot?.cardId === 'string' ? slot.cardId.trim() : '';
@@ -764,6 +777,7 @@ function syncJankenSlotPhysicalCardPresentation(battleRoot, slotNode, slot) {
   if (!source || typeof source.cloneNode !== 'function') return false;
 
   const clone = source.cloneNode(true);
+  clearClonedPartnerAdvicePresentation(clone);
   clone.classList?.add?.('grJankenSlidePadPhysicalCard');
   clone.removeAttribute?.('id');
   clone.removeAttribute?.('aria-hidden');
@@ -2042,6 +2056,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     const y = Number(event.clientY);
     if (!rect || ![x, y, Number(rect.left), Number(rect.top), Number(rect.width), Number(rect.height)].every(Number.isFinite)) return;
     const ghost = source.cloneNode(true);
+    clearClonedPartnerAdvicePresentation(ghost);
     ghost.removeAttribute?.('id');
     ghost.classList?.add?.('grHandAuraDragGhost');
     ghost.removeAttribute?.('data-hand-aura-dragging');

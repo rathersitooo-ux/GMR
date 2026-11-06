@@ -99,7 +99,8 @@ export function createBattleBoardWorldFieldRenderModel({
   }));
   const builtUpperCells = graph.upperLanes.flatMap((lane) => {
     const builtCount = Number.isSafeInteger(builtCountByLaneKey[lane.laneKey]) ? builtCountByLaneKey[lane.laneKey] : 0;
-    return lane.cells.slice(0, builtCount).map((cell) => ({
+    // User-confirmed: the first card touches the shared field, then grows toward GOAL.
+    return lane.cells.slice(Math.max(0, lane.cells.length - builtCount)).map((cell) => ({
       id: cell.id, kind: 'ACTUAL_BUILT_CARD', region: cell.region, laneKey: lane.laneKey,
       stageIndex: cell.stageIndex, world: point(nodes, cell.id),
       semanticType: cell.semanticType, gameplayAuthority: false, movementAuthority: false,

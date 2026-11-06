@@ -1,6 +1,44 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
+
+test('display-only launcher clones do not inherit live Partner recommendation markers', () => {
+  const sourceText = readFileSync(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const start = sourceText.indexOf('function clearJankenSlotPhysicalCardPresentation(');
+  const end = sourceText.indexOf('function entropyIndex(', start);
+  const doc = { createElement: () => node() };
+  function node(dataset = {}, attributes = {}) {
+    return {
+      ownerDocument: doc, dataset: { ...dataset }, attributes: { ...attributes }, children: [],
+      classList: { add() {} },
+      querySelector() { return null; },
+      getAttribute(key) { return this.attributes[key] ?? null; },
+      setAttribute(key, value) { this.attributes[key] = value; },
+      removeAttribute(key) { delete this.attributes[key]; },
+      appendChild(child) { this.children.push(child); },
+      cloneNode() { return node(this.dataset, this.attributes); },
+    };
+  }
+  const source = node({
+    cardId: 'SP_A', partnerAdviceRole: 'partner-recommendation', partnerAdviceKind: 'road',
+    partnerAdviceCandidate: 'SP_A', partnerAdviceGlyph: '★ 相棒推奨・ロード',
+    partnerAdviceBaseAriaCaptured: '1', partnerAdviceBaseAria: 'スペード A',
+  }, { 'aria-label': 'スペード A / ★ 相棒推奨・ロード' });
+  const context = { handCardNodes: () => [source] };
+  runInNewContext(sourceText.slice(start, end), context);
+  const slot = node();
+  assert.equal(context.syncJankenSlotPhysicalCardPresentation({ownerDocument: doc}, slot, {
+    occupied: true, cardId: 'SP_A', jankenHand: 'rock', symbol: '✊', hand: 'グー',
+  }), true);
+  const clone = slot.children[0].children[0];
+  assert.equal(clone.dataset.physicalCardId, 'SP_A');
+  assert.equal(clone.attributes['aria-hidden'], 'true');
+  assert.equal(clone.attributes['aria-label'], 'スペード A');
+  assert.deepEqual(Object.keys(clone.dataset).filter(key => key.startsWith('partnerAdvice')), []);
+  assert.equal(source.dataset.partnerAdviceRole, 'partner-recommendation');
+  assert.equal(source.attributes['aria-label'], 'スペード A / ★ 相棒推奨・ロード');
+});
 import {
   BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA,
   BATTLE_JANKEN_FOCUS_LIVE_MOUNT_SCHEMA,

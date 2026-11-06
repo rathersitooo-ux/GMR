@@ -67,7 +67,7 @@ async function attachStateScreenshot(page, testInfo, stateName) {
 }
 
 async function bootCurrentBrowser(page) {
-  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'commit' });
+  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
   expect(response, 'main HTML response').not.toBeNull();
   expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
 
@@ -838,12 +838,7 @@ test('moves resolve off the board into the dedicated Battle Phase with Naki cut-
 
   const postNakiJankenPad = battle.locator('[data-battle-janken-slidepad="1"]').first();
   await expect(postNakiJankenPad, 'the real Janken SlidePad is available immediately after Naki return').toBeVisible();
-  if ((await postNakiJankenPad.getAttribute('data-expanded')) !== 'true') {
-    const postNakiJankenHandle = postNakiJankenPad.locator('.grJankenSlidePadHandle:visible');
-    await expect(postNakiJankenHandle, 'the real Janken handle remains clickable after Naki return').toBeVisible();
-    await postNakiJankenHandle.click();
-    await expect(postNakiJankenPad, 'the real Janken SlidePad opens after Naki return').toHaveAttribute('data-expanded', 'true');
-  }
+  await expect(battle, 'the current post-draw launcher is connected after Naki return').toHaveAttribute('data-launcher-r22', '1');
 
   const postNakiJankenCards = postNakiJankenPad.locator('[data-janken-slot]:visible:not(:disabled)');
   expect(await postNakiJankenCards.count(), 'real Janken cards are visible immediately after Naki return').toBeGreaterThan(0);
@@ -865,9 +860,14 @@ test('moves resolve off the board into the dedicated Battle Phase with Naki cut-
   const targetBox = await postNakiTarget.boundingBox();
   expect(handleBox, 'post-Naki launcher handle has a real pointer box').not.toBeNull();
   expect(targetBox, 'post-Naki Janken target has a real pointer box').not.toBeNull();
-  await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
-  await page.mouse.down();
+  const orbX = handleBox.x + handleBox.width / 2;
+  const orbY = handleBox.y + handleBox.height / 2;
   await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(orbX, orbY, { steps: 8 });
+  await expect(postNakiTarget, 'the real card touches and charges at the orb').toHaveAttribute('data-launcher-state', 'charged');
+  await page.mouse.move(orbX - 80, orbY, { steps: 5 });
+  await expect(postNakiTarget, 'pulling the charged card away arms its release').toHaveAttribute('data-launcher-state', 'ready');
   await page.mouse.up();
 
   await expect.poll(async () => battle.evaluate((_, candidateIds) => {
@@ -1442,6 +1442,13 @@ await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount
   await expect(battle.locator('#battleMap')).toHaveClass(/showRange/);
   await attachStateScreenshot(page, testInfo, 'battle-range-visible');
 
+  await battle.locator('#partnerAdviceBtn').click();
+  const unconfiguredAdvice = await page.evaluate(() => window.__GAMEROAD_HATE_PARTNER_TEST__?.adviceEnvelope?.() ?? null);
+  expect(unconfiguredAdvice?.kind).toBe('rule');
+  expect(unconfiguredAdvice?.error).toBe('PARTNER_RULE_NOT_SELECTED');
+  const partnerRule = battle.locator('#partnerRule');
+  await expect(partnerRule, 'strategy selection lives in the current Partner surface').toBeVisible();
+  await partnerRule.selectOption('left');
   await battle.locator('#partnerAdviceBtn').click();
   const advice = await page.evaluate(() => window.__GAMEROAD_HATE_PARTNER_TEST__?.adviceEnvelope?.() ?? null);
   expect(advice).not.toBeNull();
@@ -2181,8 +2188,10 @@ test('R2 visible precommit one-operation clear preserves route undo and fails cl
   expect(roadId).toBeTruthy();
   expect(battleId).toBeTruthy();
   await roadSelect.selectOption(roadId);
-  await battleSelect.selectOption(battleId);
+  // Selecting the final required card currently starts commit in a microtask.
+  // Exercise the actual precommit window, rather than clearing a later phase.
   await expect(clearAll).toBeEnabled();
+  expect(await page.evaluate(() => window.__GAMEROAD_TEST__.state.match.phase)).toBe('plan');
   await clearAll.click();
   await expect(roadSelect).toHaveValue('');
   await expect(battleSelect).toHaveValue('');
@@ -2223,20 +2232,26 @@ test('R2 visible precommit one-operation clear preserves route undo and fails cl
     t.battlePresentationRender();
   });
   await roadSelect.selectOption(roadId);
-  await battleSelect.selectOption(battleId);
-  await expect(battle.locator('#readyPlan')).toBeEnabled();
   await expect(clearAll).toBeEnabled();
-  await page.evaluate(() => {
-    document.getElementById('clearPrecommitSelection').click();
-    document.getElementById('readyPlan').click();
-  });
-  await page.waitForTimeout(80);
-  const race = await page.evaluate(() => {
+  const race = await page.evaluate(async ({battleId}) => {
+    // Invoke the existing canonical commit boundary in the same event turn as
+    // Clear. This diagnostic race does not require the obsolete second-card
+    // auto-finish behavior or a click on the retired Ready control.
     const m = window.__GAMEROAD_TEST__.state.match, me = m.players[0];
-    return { phase: m.phase, busy: Boolean(m.busy), roadId: me.plan?.roadId ?? null, battleId: me.plan?.battleId ?? null };
-  });
-  expect(race.roadId, 'Ready-started commit is never rolled back by the asynchronous clear').toBe(roadId);
-  expect(race.battleId, 'Ready-started commit preserves the staged Battle card').toBe(battleId);
+    const revision = me.jankenDraftRevision;
+    const battle = document.getElementById('battleSelect');
+    battle.value = battleId;
+    document.getElementById('clearPrecommitSelection').click();
+    void window.GAMEROAD_READY_PLAN_COMMIT().catch(console.error);
+    const commitStarted = m.busy || m.phase !== 'plan';
+    await Promise.resolve();
+    await Promise.resolve();
+    return { commitStarted, revisionUnchanged: me.jankenDraftRevision === revision, roadId: me.plan?.roadId ?? null, battleId: me.plan?.battleId ?? null };
+  }, {battleId});
+  expect(race.commitStarted, 'the canonical commit really started before Clear resumed').toBe(true);
+  expect(race.revisionUnchanged, 'a rejected clear does not rearm the launcher').toBe(true);
+  expect(race.roadId, 'started commit is never rolled back by the asynchronous clear').toBe(roadId);
+  expect(race.battleId, 'started commit preserves the staged Battle card').toBe(battleId);
   await attachStateScreenshot(page, testInfo, 'r2-precommit-clear-race-fail-closed');
   runtime.assertClean(testInfo);
 });

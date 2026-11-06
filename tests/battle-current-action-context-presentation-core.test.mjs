@@ -28,7 +28,7 @@ test('self input owner shows current action without fabricating a wait target', 
   assert.equal(result.ownerRelation, 'SELF');
   assert.equal(result.viewerOwnsInput, true);
   assert.equal(result.waitingFor, null);
-  assert.equal(result.text, '今：カードを選択');
+  assert.equal(result.text, '現在：カードを選択');
   assert.deepEqual(result.lines.map(line => line.kind), ['current_action']);
   assert.equal(result.controlAuthority, false);
   assert.equal(result.legalityAuthority, false);
@@ -51,7 +51,7 @@ test('other public input owner produces exact waiting participant and caller rea
   assert.deepEqual(result.waitingFor, { participantId: 'p3', label: 'プレイヤー3' });
   assert.equal(
     result.text,
-    '今：公開入力を待機 / 待ち：プレイヤー3 / 理由：プレイヤー3の公開済み入力が未確定'
+    '現在：公開入力を待機 / 入力待ち：プレイヤー3 / 状態：プレイヤー3の公開済み入力が未確定'
   );
   assert.deepEqual(result.lines.map(line => line.kind), [
     'current_action',
@@ -73,7 +73,7 @@ test('unresolved input owner stays unresolved instead of guessing from phase or 
   assert.equal(result.inputOwner, null);
   assert.equal(result.waitingFor, null);
   assert.equal(result.viewerOwnsInput, false);
-  assert.equal(result.text, '今：選択');
+  assert.equal(result.text, '現在：選択');
 });
 
 test('caller may provide a public reason without an owner and it is not reinterpreted', () => {
@@ -87,7 +87,7 @@ test('caller may provide a public reason without an owner and it is not reinterp
 
   assert.equal(result.ownerRelation, 'UNRESOLVED');
   assert.equal(result.waitingFor, null);
-  assert.equal(result.text, '理由：対戦状態を同期中');
+  assert.equal(result.text, '状態：対戦状態を同期中');
   assert.equal(result.visible, true);
 });
 
@@ -189,4 +189,7 @@ test('result and contract are deeply frozen and expose no gameplay authority', (
   assert.equal(BATTLE_CURRENT_ACTION_CONTEXT_PRESENTATION.computesLegality, false);
   assert.equal(BATTLE_CURRENT_ACTION_CONTEXT_PRESENTATION.computesWaitReason, false);
   assert.equal(BATTLE_CURRENT_ACTION_CONTEXT_PRESENTATION.writesGameState, false);
+  assert.deepEqual(BATTLE_CURRENT_ACTION_CONTEXT_PRESENTATION.displayLabels, {
+    currentAction: '現在', waitingFor: '入力待ち', reason: '状態'
+  });
 });

@@ -201,7 +201,10 @@ test('installs WU07 short-landscape hierarchy without taking gameplay authority'
   assert.match(style.textContent, /data-battle-current-action/);
   assert.match(style.textContent, /data-battle-screen-lane/);
   assert.match(style.textContent, /top:103px!important/);
-  assert.match(style.textContent, /opacity:\.66/);
+  assert.match(style.textContent, /opacity:\.84/);
+  assert.match(style.textContent, /transform:none/);
+  assert.match(style.textContent, /grBattleResourceCell small\{font-size:9px/);
+  assert.match(style.textContent, /grBattleResourceValue\{font-size:13px/);
   assert.deepEqual(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.visualHierarchyContract, [
     'board_world',
     'current_action',

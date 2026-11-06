@@ -253,6 +253,15 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
   assert.match(styleText, /\[data-gr-current-ui-zone="details-on-demand"\]\[hidden\]\{display:none!important\}/);
   assert.match(styleText, /\[data-gr-current-ui-zone="partner-visual"\]\{width:clamp\(132px,15vw,190px\)!important;height:min\(34vh,245px\)!important\}/);
   assert.match(styleText, /#battleManaArtR8[^}]*display:none!important/);
+  assert.match(styleText, /#publicTurnHud\{[^}]*opacity:\.82/);
+  assert.match(styleText, /#publicTurnHud \.publicPlayerCopy b\{font-size:10px!important\}/);
+  assert.match(styleText, /#publicTurnHud \.publicPlayerState\{font-size:9px!important\}/);
+  assert.match(styleText, /@media\(max-height:430px\)[\s\S]*#publicTurnHud \.publicPlayerStrip\{grid-template-columns:repeat\(3,minmax\(0,1fr\)\)!important/);
+  assert.match(styleText, /@media\(max-width:520px\)[\s\S]*#publicTurnHud\{[^}]*left:8px!important[^}]*right:8px!important[^}]*transform:none!important/);
+  assert.match(styleText, /@media\(max-width:520px\)[\s\S]*#publicTurnHud \.publicPlayerMeta\{display:none!important\}/);
+  assert.match(styleText, /data-gr-janken-active="true"\] #publicTurnHud\{opacity:\.66!important\}/);
+  assert.match(styleText, /data-gr-current-ui-zone="support-entry"\][^}]*font-size:11px!important/);
+  assert.match(styleText, /@media\(max-height:430px\)[\s\S]*\.planBox label[^}]*font-size:10px!important/);
   assert.doesNotMatch(styleText, /--r8-size/);
   assert.match(styleText, /#hand\{[^}]*justify-content:flex-end!important[^}]*transform-origin:right bottom!important/);
   assert.match(styleText, /#hand \.handCard:nth-child\(1\)\{transform:translateY\(7px\) rotate\(-7deg\)\}/);

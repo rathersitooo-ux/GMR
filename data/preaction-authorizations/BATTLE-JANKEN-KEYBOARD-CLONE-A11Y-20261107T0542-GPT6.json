@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-KEYBOARD-CLONE-A11Y-20261107T0542-GPT6",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "BATTLE-JANKEN-KEYBOARD-CLONE-A11Y",
+  "acquireKey": "BATTLE-JANKEN-KEYBOARD-CLONE-A11Y-20261107T0542-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_CEEA556_AND_NO_VALID_LEASE_AT_20261107_0542",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "WINDOWS_ISOLATED_NODE_62_62_AND_PLAYWRIGHT_ENTER_SPACE_TAB_20261107",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-KEYBOARD-CLONE-A11Y-20261107T0542-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|janken-keyboard-clone-a11y|two-bounded-files|active-lease",
+  "authorizationBaseSha": "ceea5563dddf1db43c5860f7192dd43406d8d1b4",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "BATTLE-JANKEN-KEYBOARD-CLONE-A11Y",
+  "leaseAcquireKey": "BATTLE-JANKEN-KEYBOARD-CLONE-A11Y-20261107T0542-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-11-07 05:42 JST",
+  "leaseUntilJst": "2026-11-07 06:22 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "github:rathersitooo-ux/GMR:browser/battle-janken-slidepad-runtime-mount.mjs;github:rathersitooo-ux/GMR:tests/battle-janken-slidepad-runtime-mount.test.mjs",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "solutionSignature": "NATIVE_JANKEN_SLOT_KEYBOARD_COMMIT_AND_DECORATIVE_CLONE_INERT_R3",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_EXISTING_SLOT_COMMIT_PATH_AND_PLAYWRIGHT_R3",
+  "solutionSearchEvidence": [
+    "Existing janken slot buttons already use the canonical commitSelectedHand path; no second gameplay controller is introduced.",
+    "Windows Node focused tests 62/62 PASS with physical launcher contact/pull release tests preserved.",
+    "Playwright actual 4-player round1 keyboard Enter and Space commits, duplicate blocked, and Tab skips inert nested image clone.",
+    "Draft PR #2351 edits the same module in separate function and does not touch this slot click or clone tab-focus behavior."
+  ]
+}

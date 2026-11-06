@@ -55,6 +55,19 @@ export function projectBattleJankenInputModeOptions(activeMode) {
   })));
 }
 
+export function shouldActivateJankenSlotFromClick({
+  event, launcherEnabled = false, inputMode, slotPullActive = false,
+} = {}) {
+  // Native focused buttons emit click.detail === 0 for Enter/Space.
+  // Pointer users must continue to charge/pull the physical launcher.
+  const keyboardActivation = event?.detail === 0 && event?.isTrusted !== false;
+  // A second input must not commit while the primary slot is being pulled.
+  if (slotPullActive) return false;
+  if (launcherEnabled && !keyboardActivation) return false;
+  if (inputMode === BATTLE_JANKEN_INPUT_MODE.LAUNCHER && !keyboardActivation) return false;
+  return true;
+}
+
 export function normalizeBattleJankenFocusIntegration(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   if (typeof value.mountSurface !== 'function' || typeof value.readContext !== 'function') return null;
@@ -768,6 +781,13 @@ function syncJankenSlotPhysicalCardPresentation(battleRoot, slotNode, slot) {
   clone.removeAttribute?.('id');
   clone.removeAttribute?.('aria-hidden');
   clone.setAttribute?.('aria-hidden', 'true');
+  // The card image is inside the actual janken slot button, not a second control.
+  // Keep its visual face but exclude it and descendants from keyboard focus.
+  clone.tabIndex = -1;
+  clone.inert = true;
+  for (const nested of clone.querySelectorAll?.('button,a,input,select,textarea,[tabindex]') ?? []) {
+    nested.tabIndex = -1;
+  }
   if (clone.dataset) {
     clone.dataset.cardId = cardId;
     clone.dataset.physicalCardId = cardId;
@@ -2227,8 +2247,13 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       cardText.textContent = slot.occupied ? slot.cardLabel : '空き';
       syncJankenSlotPhysicalCardPresentation(root, node, slot);
       node.dataset.inputMode = inputMode;
-      node.onclick = () => {
-        if (launcherPresentation.enabled) return;
+      node.onclick = (event) => {
+        if (!shouldActivateJankenSlotFromClick({
+          event,
+          launcherEnabled: launcherPresentation.enabled,
+          inputMode,
+          slotPullActive: !!slotDrag,
+        })) return;
         if (hasUsedJankenThisRound()) return;
         if (suppressSlotClickHand === slot.jankenHand) {
           suppressSlotClickHand = null;
@@ -2238,8 +2263,6 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
           void openDedicatedFocusSurface();
           return;
         }
-        if (inputMode === BATTLE_JANKEN_INPUT_MODE.LAUNCHER) return;
-        if (inputMode === BATTLE_JANKEN_INPUT_MODE.CARD_PULL && slotDrag) return;
         commitSelectedHand(slot.jankenHand);
       };
     }

@@ -995,6 +995,9 @@ export function installDeckStorageLiveMount({
   };
 
   const onPointerDown = (event) => {
+    // A second finger must not steal an active Deck swipe from the first one.
+    if (gesture || event?.isPrimary === false) return;
+    if (![event?.pointerId, event?.clientX, event?.clientY].every(Number.isFinite)) return;
     if (event?.pointerType === 'mouse' && event?.button !== 0) return;
     const card = closestSwipeCard(event?.target);
     if (!card || !screen.contains?.(card)) return;
@@ -1020,8 +1023,10 @@ export function installDeckStorageLiveMount({
 
   const onPointerUp = (event) => {
     const current = gesture;
+    // Foreign pointerup is unrelated: leave the active finger and preview intact.
+    if (!current || current.pointerId !== event?.pointerId) return;
     gesture = null;
-    if (!current || current.pointerId !== event?.pointerId || !current.cardId) {
+    if (!current.cardId) {
       clearPrecommitFeedback(current);
       return;
     }
@@ -1060,7 +1065,9 @@ export function installDeckStorageLiveMount({
     mounted?.render?.();
   };
 
-  const onPointerCancel = () => {
+  const onPointerCancel = (event) => {
+    // pointercancel for a second contact must not abort the owner's swipe.
+    if (!gesture || gesture.pointerId !== event?.pointerId) return;
     const current = gesture;
     gesture = null;
     clearPrecommitFeedback(current);

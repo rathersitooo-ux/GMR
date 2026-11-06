@@ -20,19 +20,21 @@ test('live Battle derives controlled-character identity only from participant ch
   assert.match(source, /m\.players\.length!==4\)return null/);
 });
 
-test('accepted authoritative movement renders every participant step while keeping P1 runtime path', () => {
+test('self movement retains step motion while synced peers receive a quick destination update', () => {
   const start = html.indexOf('async function animateResolvedPath(p){');
   const end = html.indexOf('\nfunction setupBattleDetails()', start);
   assert.ok(start >= 0 && end > start);
   const fn = html.slice(start, end);
   assert.match(fn, /p\.position=to/);
+  assert.match(fn, /if\(!human\)\{const to=path\.at\(-1\)/);
+  assert.match(fn, /grControlledCharacter4pEvent\(p,'SETTLE',\{positionKey:p\.position\}\);return\}let facing=/);
   assert.match(fn, /grControlledCharacter4pEvent\(p,'MOVE_ACCEPTED',\{toPositionKey:to,facing\}\);renderField3D\(\);renderBoard\(\);if\(human\)await updateBattleAvatar\(\);if\(dur\)/);
   assert.match(fn, /if\(human\)await setBattleRuntimeState\('idle',facing\)/);
   assert.ok(html.includes('id="battleRuntime"'));
 });
 
 test('live mount preserves existing Battle chrome and avoids duplicate P1 character surface', () => {
-  assert.ok(html.includes('html body:has(.battle.active) .top{display:flex!important}'));
+  assert.ok(html.includes('html body:has(.battle.active) .top{display:flex!important;pointer-events:none!important}'));
   assert.ok(html.includes('#boardPlayers .boardPlayerToken.human [data-board-controlled-character]{display:none!important}'));
   assert.ok(html.includes("from './battle-controlled-character-4p-motion-director.mjs'"));
   assert.ok(html.includes("import './battle-board-naki-4p-visual-binding.mjs'"));
@@ -58,4 +60,44 @@ test('existing four-participant director projects a CPU accepted movement withou
   assert.equal(p3.positionKey, 'C:0:1');
   assert.equal(p3.motion.phase, 'moving');
   assert.equal(p3.motion.gameplayAuthority, false);
+});
+
+
+test('peer tokens reuse DOM nodes for compact position transitions without slowing local player', () => {
+  const start = html.indexOf('function renderBoardPlayers(){');
+  const end = html.indexOf('/* BATTLE_CENTRAL_WORLD_LIVE_MOUNT_R8', start);
+  assert.ok(start >= 0 && end > start);
+  const source = html.slice(start, end);
+  assert.match(source, /existing=new Map/);
+  assert.match(source, /el.style.transition=\(!p.human/);
+  assert.match(source, /left 180ms ease-out, top 180ms ease-out/);
+  assert.match(source, /!state.settings.reduceMotion&&!state.settings.lowPerf/);
+  assert.match(source, /if\(!old\)root.appendChild\(el\)/);
+  assert.doesNotMatch(source, /root.innerHTML=''/);
+});
+
+test('peer position tween requires an actual position change, not a camera reprojection', () => {
+  const start = html.indexOf('function renderBoardPlayers(){');
+  const end = html.indexOf('/* BATTLE_CENTRAL_WORLD_LIVE_MOUNT_R8', start);
+  assert.ok(start >= 0 && end > start);
+  const source = html.slice(start, end);
+  assert.match(source, /moved=!!old&&el\.dataset\.positionKey!==String\(p\.position\)/);
+  assert.match(source, /el\.style\.transition=\(moved&&!refresh&&!p\.human/);
+  assert.match(source, /el\.dataset\.positionKey=String\(p\.position\)/);
+  assert.match(source, /if\(refreshVisuals\)globalThis\.__GAMEROAD_CONTROLLED_CHARACTER_4P_SYNC__\?\.\(\)/);
+});
+
+test('remote movement shows a brief moving pose without delaying gameplay or settling a stale match', () => {
+  const start = html.indexOf('const grPeerSettleTimers=new Map();');
+  const end = html.indexOf('\nlet battleSelfDeckPresentationRevision', start);
+  assert.ok(start >= 0 && end > start);
+  const source = html.slice(start, end);
+  assert.match(source, /if\(!human\)\{const to=path\.at\(-1\)/);
+  assert.match(source, /const timer=setTimeout\(\(\)=>/);
+  assert.match(source, /grPeerSettleTimers\.get\(p\.id\)!==timer/);
+  assert.match(source, /state\.match!==currentMatch/);
+  assert.match(source, /p\.position!==to/);
+  assert.match(source, /if\(state\.settings\.reduceMotion\|\|state\.settings\.lowPerf\)/);
+  assert.match(source, /grPeerSettleTimers\.set\(p\.id,timer\)\}return\}/);
+  assert.doesNotMatch(source, /await new Promise\(r=>setTimeout\(r,180\)\)/);
 });

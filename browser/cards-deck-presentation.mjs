@@ -826,6 +826,12 @@ export function presentDeckAddSwipe({ doc, presentation, result, sourceElement, 
   }
 }
 
+export function isDeckSwipePointerOwner(gesture, event) {
+  return Number.isFinite(gesture?.pointerId)
+    && Number.isFinite(event?.pointerId)
+    && gesture.pointerId === event.pointerId;
+}
+
 export function installDeckStorageLiveMount({
   document: doc = globalThis.document,
   window: win = globalThis.window,
@@ -1024,7 +1030,7 @@ export function installDeckStorageLiveMount({
   const onPointerUp = (event) => {
     const current = gesture;
     // Foreign pointerup is unrelated: leave the active finger and preview intact.
-    if (!current || current.pointerId !== event?.pointerId) return;
+    if (!isDeckSwipePointerOwner(current, event)) return;
     gesture = null;
     if (!current.cardId) {
       clearPrecommitFeedback(current);
@@ -1067,7 +1073,7 @@ export function installDeckStorageLiveMount({
 
   const onPointerCancel = (event) => {
     // pointercancel for a second contact must not abort the owner's swipe.
-    if (!gesture || gesture.pointerId !== event?.pointerId) return;
+    if (!isDeckSwipePointerOwner(gesture, event)) return;
     const current = gesture;
     gesture = null;
     clearPrecommitFeedback(current);

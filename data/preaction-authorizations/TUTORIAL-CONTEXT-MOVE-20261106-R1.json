@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "TUTORIAL-CONTEXT-MOVE-20261106-R1",
+  "taskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "workUnitKey": "EXISTING_BATTLE_TUTORIAL_EXPERIENCE_COPY_MOVE_R1",
+  "acquireKey": "TUTORIAL-CONTEXT-MOVE-20261106T2235-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "MAIN_3624F2_TUTORIAL_BLOB_BE5F8F_PROFILE_TEST_B4C286_CLOUDFLARE_BLOB_PIN_CURRENT_R26_LEASE_GUARD_PASS",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR2354_CANONICAL_MOVE_ROLE_DIFF_PLUS_FORMAL_OCT27_A_AND_OCT26_ADD_CARD_MOVE_DECISION; THREE_BOUNDED_SOURCE_TEST_PIN_DIFF_PLANNED",
+  "proceedToken": "PROCEED|TUTORIAL-CONTEXT-MOVE-20261106-R1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXACT_TUTORIAL_SOURCE_TEST_BUILD_BLOB|CURRENT_ACTIVE_LEASE",
+  "authorizationBaseSha": "3624f2adf2eecf6caeb3bd9c3fcc600f79d8c928",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "EXISTING_BATTLE_TUTORIAL_EXPERIENCE_COPY_MOVE_R1",
+  "leaseAcquireKey": "TUTORIAL-CONTEXT-MOVE-20261106T2235-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-11-06 22:35 JST",
+  "leaseUntilJst": "2026-11-06 23:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GMR branch gmr/tutorial-context-move-20261106 only: browser/tutorial-experience-profile-core.mjs; tests/tutorial-experience-profile-core.test.mjs; deploy/cloudflare/tests/build.test.mjs tutorial SHA pin; data/preaction-authorizations/TUTORIAL-CONTEXT-MOVE-20261106-R1.json temporary; central Task N1242.",
+  "scope": [
+    "browser/tutorial-experience-profile-core.mjs",
+    "tests/tutorial-experience-profile-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/tutorial-experience-profile-core.mjs",
+    "tests/tutorial-experience-profile-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

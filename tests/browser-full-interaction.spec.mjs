@@ -67,7 +67,7 @@ async function attachStateScreenshot(page, testInfo, stateName) {
 }
 
 async function bootCurrentBrowser(page) {
-  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'commit' });
+  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
   expect(response, 'main HTML response').not.toBeNull();
   expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
 

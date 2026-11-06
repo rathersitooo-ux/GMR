@@ -22,7 +22,7 @@ test('world-field render model keeps the lower shared field, Gate boundary and o
   model = createBattleBoardWorldFieldRenderModel({ builtCountByLaneKey: { 'P2:C': 3 } });
   assert.equal(model.counts.builtUpperCards, 3);
   assert.equal(model.counts.visibleFutureUpperSlots, 0);
-  assert.deepEqual(model.roundCells.filter((cell) => cell.laneKey === 'P2:C').map((cell) => cell.stageIndex), [1, 2, 3]);
+  assert.deepEqual(model.roundCells.filter((cell) => cell.laneKey === 'P2:C').map((cell) => cell.stageIndex), [5, 6, 7]);
   assert.equal(model.roundCells.some((cell) => cell.id === 'upper:P2:C:4'), false);
   assert.equal(model.gates.find((gate) => gate.laneKey === 'P2:C').state, 'CLOSED_HEAVY_BARRIER');
   assert.equal(model.gameplayAuthority, false);
@@ -124,4 +124,32 @@ test('mount fails closed instead of falling back to screen-space UI', () => {
   const runtime = mountBattleBoardWorldField({});
   assert.equal(runtime.mounted, false);
   assert.equal(runtime.reason, 'WORLD_RENDERER_REQUIRED');
+});
+
+
+test('each of the twelve upper lanes grows from its shared-field entrance toward GOAL with zero to seven real cards', () => {
+  const stages = [[], [7], [6, 7], [5, 6, 7], [4, 5, 6, 7], [3, 4, 5, 6, 7], [2, 3, 4, 5, 6, 7], [1, 2, 3, 4, 5, 6, 7]];
+  for (const player of ['P1', 'P2', 'P3', 'P4']) for (const lane of ['L', 'C', 'R']) {
+    const key = `${player}:${lane}`;
+    for (let count = 0; count <= 7; count++) {
+      const model = createBattleBoardWorldFieldRenderModel({ builtCountByLaneKey: { [key]: count } });
+      const cards = model.roundCells.filter(cell => cell.laneKey === key);
+      assert.deepEqual(cards.map(cell => cell.stageIndex), stages[count], `${key}: ${count} built cards`);
+      assert.equal(model.counts.builtUpperCards, count, 'other lanes remain empty');
+      assert.equal(model.counts.visibleFutureUpperSlots, 0, 'no unbuilt stopping surface appears');
+      assert.equal(model.counts.lowerRoundCells, 42);
+      assert.equal(model.edges.filter(edge => edge.region === 'LOWER_SHARED_FIELD').length, 71);
+      const gate = model.gates.find(gate => gate.laneKey === key);
+      assert.equal(gate.state, count === 7 ? 'OPEN_PASSABLE_FRAME' : 'CLOSED_HEAVY_BARRIER');
+      const entrance = model.edges.find(edge => edge.id === `gate-edge:${key}:upper`);
+      assert.equal(Boolean(entrance), count > 0, 'the first real card touches the entrance');
+      if (count > 0) {
+        assert.equal(entrance.fromId, `upper:${key}:7`);
+        assert.ok(cards.at(-1).world.z < gate.world.z);
+        for (let index = 1; index < cards.length; index++) assert.ok(cards[index - 1].world.z < cards[index].world.z);
+      }
+      assert.ok(model.edges.filter(edge => edge.region === 'UPPER_PROGRESSION').every(edge => cards.some(card => card.id === edge.fromId) && cards.some(card => card.id === edge.toId)));
+      assert.equal(model.movementAuthority, false, 'presentation never grants traversal permission');
+    }
+  }
 });

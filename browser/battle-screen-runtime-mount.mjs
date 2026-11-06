@@ -1,4 +1,5 @@
 import { auditBattleScreenModel } from './battle-screen-presentation-core.mjs';
+import { selectBattleCinematicAcceptedActors } from './battle-cinematic-accepted-targets.mjs';
 import { mountBattleCriticalResourceHud } from './battle-critical-resource-hud-runtime.mjs';
 import { mountBattleCurrentPlayerUi } from './battle-current-player-ui-runtime.mjs';
 import {
@@ -197,6 +198,14 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelSide{position:relative;display:grid;justify-items:center;align-content:end;gap:7px;min-width:0;height:78%;filter:drop-shadow(0 18px 22px rgba(0,0,0,.42))}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelSide[data-role="source"]{grid-column:1;justify-self:start;width:min(34vw,330px)}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelSide[data-role="target"]{grid-column:3;justify-self:end;width:min(34vw,330px)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelTargets{grid-column:3;align-self:end;justify-self:end;width:min(46vw,490px);max-width:100%;height:78%;display:flex;align-items:end;justify-content:flex-end;gap:clamp(2px,.65vw,9px);min-width:0}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelTargets>.grBattleCinematicDuelSide[data-role="target"]{grid-column:auto;justify-self:stretch;flex:1 1 0;width:auto;min-width:0;height:100%;align-content:end}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelTargets .grBattleCinematicDuelFigure{width:clamp(42px,9vw,130px);height:clamp(90px,27vh,225px)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelTargets .grBattleCinematicDuelMeta{max-width:100%;padding:3px 5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelTargets .grBattleCinematicDuelMeta b{font-size:clamp(9px,1.05vw,14px)}
+@keyframes grBattleCinematicTargetBraceOnly{0%{transform:translateY(0) scale(1)}45%{transform:translateY(1%) scale(.99)}100%{transform:translateY(0) scale(1)}}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}][data-causal-phase="reaction"] .grBattleCinematicDuelSide[data-role="target"][data-explicit-recoil="false"] .grBattleCinematicDuelFigure{animation:grBattleCinematicTargetBraceOnly 180ms ease-out both}
+@media(max-width:540px){[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelTargets{gap:1px;width:48vw}[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelTargets .grBattleCinematicDuelFigure{width:clamp(30px,10vw,58px);height:clamp(76px,21vh,150px)}[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelTargets .grBattleCinematicDuelMeta{padding:2px}}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelSide[data-movement-intent="ENTER_STAGE"]{animation:grBattleCinematicDuelEnter 260ms cubic-bezier(.18,.78,.2,1) both}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] .grBattleCinematicDuelSide[data-movement-intent="ENTER_STAGE"]{animation:none!important}
 [${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuelFigure{position:relative;width:clamp(84px,14vw,168px);height:clamp(150px,34vh,310px);transform-origin:50% 100%;opacity:.96}
@@ -262,6 +271,20 @@ function addStyle(document) {
 @keyframes grBattleCinematicWinner{0%{transform:translateY(16px) scale(.86)}52%{transform:translateY(-10px) scale(1.09)}100%{transform:translateY(0) scale(1)}}
 @keyframes grBattleCinematicSettle{0%{opacity:1;transform:translateZ(40px)}100%{opacity:.38;transform:translateY(-10px) translateZ(-120px) scale(.86)}}
 
+/* Accepted-action camera staging. Show the attacker first, then pull back to the real receivers. */
+@keyframes grBattleCameraFocusAttacker{0%{transform:translate3d(8vw,0,110px) scale(1.26);opacity:.92}100%{transform:translate3d(11vw,-1.5%,170px) scale(1.43);opacity:1}}
+@keyframes grBattleCameraShowReceivers{0%{opacity:.36;filter:blur(1.5px);transform:translate3d(0,1%,-52px) scale(.94)}100%{opacity:1;filter:none;transform:none}}
+@keyframes grBattleCameraPullBack{0%{transform:translate3d(11vw,-1.5%,170px) scale(1.43)}100%{transform:none}}
+@keyframes grBattleCameraRecoilDepth{0%{transform:translate3d(0,0,0) scale(1);filter:none}36%{transform:translate3d(-1.5vw,.3%,95px) scale(1.11);filter:brightness(1.18)}100%{transform:none;filter:none}}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] .grBattleCinematicDuel{perspective:900px;transform-style:preserve-3d}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}] .grBattleCinematicDuelMeta{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;border:0!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}][data-causal-phase="anticipation"] .grBattleCinematicDuelSide[data-role="source"]{animation:grBattleCameraFocusAttacker 240ms cubic-bezier(.16,.8,.2,1) both;z-index:7;transform-origin:50% 100%}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}][data-causal-phase="anticipation"] > .grBattleCinematicDuelSide[data-role="target"],[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}][data-causal-phase="anticipation"] .grBattleCinematicDuelTargets{opacity:.42;filter:brightness(.75)}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}][data-causal-phase="release"] .grBattleCinematicDuelSide[data-role="source"]{animation:grBattleCameraPullBack 190ms cubic-bezier(.17,.74,.25,1) both;transform-origin:50% 100%}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}][data-causal-phase="release"] > .grBattleCinematicDuelSide[data-role="target"],[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}][data-causal-phase="release"] .grBattleCinematicDuelTargets{animation:grBattleCameraShowReceivers 190ms ease-out both}
+/* Preserve the existing source strike animation; the camera pull-back acts on its parent. */
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"] [${CINEMATIC_DUEL_ATTR}][data-causal-phase="reaction"] .grBattleCinematicDuelSide[data-role="target"][data-explicit-recoil="true"]{animation:grBattleCameraRecoilDepth 180ms ease-out both}
+[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] [${CINEMATIC_DUEL_ATTR}] .grBattleCinematicDuelSide,[${SHELL_ATTR}="1"][data-presentation-mode="cinematic"][data-motion="static_only"] [${CINEMATIC_DUEL_ATTR}] .grBattleCinematicDuelTargets{animation:none!important;transform:none!important;filter:none!important;opacity:1!important}
 @media(max-width:540px) and (orientation:portrait){[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}]{left:2px;top:82px;bottom:auto;width:72px;height:90px;opacity:.13}}
 @media(max-height:420px) and (orientation:landscape){[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}]{left:4px;bottom:4px;width:120px;height:76px;opacity:.16}}
 [${SHELL_ATTR}="1"] [${GRID_ATTR}]{position:absolute;z-index:4;top:clamp(96px,16vh,122px);right:clamp(8px,1.5vw,18px);bottom:auto;left:40%;height:clamp(86px,15vh,116px);display:none;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr);gap:clamp(4px,.7vw,8px);align-items:stretch;overflow:visible;pointer-events:none}
@@ -677,7 +700,7 @@ function disposeCinematicDuelRuntime(global, scene) {
   }
   clearBattleCinematicCausalTimeline(active.timelineNodes ?? [scene]);
   for (const controller of active.motionControllers ?? []) {
-    try { controller.destroy?.(); } catch {}
+    try { controller.controller?.destroy?.(); } catch {}
   }
   const runtime = global?.GameRoadThreeCharRuntime;
   if (typeof runtime?.unmount === 'function') {
@@ -797,6 +820,28 @@ function createCinematicDuelFx(document) {
 function applyCinematicTimelinePhaseToCharacters(global, active, entry) {
   if (!active || !entry) return;
   active.timelinePhase = entry.phase;
+  // Phase-specific poses follow the existing action timeline. A visible
+  // attack target is not proof that its attack penetrated defenses.
+  for (const binding of active.motionControllers ?? []) {
+    const sourceAction = binding.role === 'source'
+      && ['release', 'impact', 'reaction', 'static'].includes(entry.phase);
+    const explicitRecoil = binding.role === 'target'
+      && entry.phase === 'reaction'
+      && binding.motionState === 'HIT_RECOIL';
+    const explicitAlternative = binding.role === 'target'
+      && typeof binding.motionState === 'string'
+      && binding.motionState.trim() !== ''
+      && binding.motionState !== 'HIT_RECOIL';
+    const cue = sourceAction || explicitRecoil;
+    try {
+      binding.controller.setState({
+        phase: cue ? binding.actionPhase : 'idle',
+        motionState: explicitAlternative
+          ? binding.motionState
+          : cue ? (binding.motionState ?? null) : 'IDLE_GENTLE'
+      }, { restart: false });
+    } catch {}
+  }
   const runtime = global?.GameRoadThreeCharRuntime;
   if (typeof runtime?.setState !== 'function') return;
   for (const binding of active.characterBindings ?? []) {
@@ -853,6 +898,10 @@ function mountCinematicDuelCharacter(global, scene, view, characterId, role, mot
     view.figure.dataset.characterId = characterId;
     view.characterHost.hidden = false;
 
+    const explicitAlternative = role === 'target'
+      && typeof motionContext?.motionState === 'string'
+      && motionContext.motionState.trim() !== ''
+      && motionContext.motionState !== 'HIT_RECOIL';
     const motionController = createSaasunaBattleMotionController({
       doc: global?.document,
       host: view.figure,
@@ -860,12 +909,20 @@ function mountCinematicDuelCharacter(global, scene, view, characterId, role, mot
       characterId,
       role,
       motion,
-      phase: motionContext?.phase,
+      phase: motion === 'static_only' && role === 'source' ? motionContext?.phase : 'idle',
       transition: motionContext?.transition,
-      motionState: motionContext?.motionState
+      motionState: explicitAlternative
+        ? motionContext.motionState
+        : motion === 'static_only' && role === 'source'
+          ? motionContext?.motionState : 'IDLE_GENTLE'
     });
     if (motionController) {
-      active.motionControllers.push(motionController);
+      active.motionControllers.push({
+        controller: motionController,
+        role,
+        actionPhase: motionContext?.phase,
+        motionState: motionContext?.motionState
+      });
       view.figure.dataset.motionVisualKind = 'provisional-keyframe-sheet';
       view.figure.dataset.provisionalArt = 'true';
     }
@@ -899,8 +956,10 @@ function writeCinematicDuel(global, document, scene, model, context = {}) {
   setData(scene, 'eventId', null);
   setData(scene, 'sourceId', null);
   setData(scene, 'targetId', null);
+  setData(scene, 'targetIds', null);
   setData(scene, 'sourceCharacterId', null);
   setData(scene, 'targetCharacterId', null);
+  setData(scene, 'targetCharacterIds', null);
   setData(scene, 'vfx', null);
   setData(scene, 'handoff', null);
   setData(scene, 'conveyorTransition', null);
@@ -916,12 +975,10 @@ function writeCinematicDuel(global, document, scene, model, context = {}) {
   setData(scene, 'causalTimelineMode', null);
   setData(scene, 'causalTimelineDurationMs', null);
   const phase = model?.phase;
-  const enabled = model?.battlePhasePresentationMode === 'FULLSCREEN_ANIMATION'
-    && (phase === 'attack' || phase === 'ability');
-  const modelLanes = Array.isArray(model?.lanes) ? model.lanes : [];
-  const sources = enabled ? modelLanes.filter(lane => lane?.role === 'source') : [];
-  const targets = enabled ? modelLanes.filter(lane => lane?.role === 'target') : [];
-  if (!enabled || sources.length !== 1 || targets.length !== 1) {
+  // The model already owns the accepted public event and target order.
+  // Visibility, seating and visual effects are never target authority.
+  const cinematicActors = selectBattleCinematicAcceptedActors(model);
+  if (!cinematicActors) {
     if (context?.preserveConveyorPair !== true
       && (!model || model.screenMode !== 'BATTLE_PHASE' || phase === 'settle')) {
       cinematicDuelPairState.delete(scene);
@@ -931,9 +988,10 @@ function writeCinematicDuel(global, document, scene, model, context = {}) {
     return scene;
   }
 
-  const source = sources[0];
-  const target = targets[0];
-  const currentPair = [source.id, target.id];
+  const source = cinematicActors.source;
+  const targetLanes = cinematicActors.targets;
+  const target = targetLanes[0];
+  const currentPair = [source.id, ...cinematicActors.orderedTargetIds];
   const previousSet = new Set(previousPair);
   const currentSet = new Set(currentPair);
   const retainedParticipants = currentPair.filter(id => previousSet.has(id));
@@ -950,26 +1008,43 @@ function writeCinematicDuel(global, document, scene, model, context = {}) {
   cinematicDuelRuntimeState.set(scene, active);
   cinematicDuelPairState.set(scene, currentPair);
   const sourceView = createCinematicDuelSide(document, 'source', source);
-  const targetView = createCinematicDuelSide(document, 'target', target);
+  const targetViews = targetLanes.map(lane => createCinematicDuelSide(document, 'target', lane));
   setData(sourceView.side, 'movementIntent', retainedParticipants.includes(source.id) ? 'REMAIN_STAGE' : 'ENTER_STAGE');
-  setData(targetView.side, 'movementIntent', retainedParticipants.includes(target.id) ? 'REMAIN_STAGE' : 'ENTER_STAGE');
+  for (let index = 0; index < targetViews.length; index += 1) {
+    setData(targetViews[index].side, 'movementIntent',
+      retainedParticipants.includes(targetLanes[index].id) ? 'REMAIN_STAGE' : 'ENTER_STAGE');
+  }
   const motionByParticipant = context?.cinematicMotionByParticipant ?? {};
+  for (let index = 0; index < targetViews.length; index += 1) {
+    const lane = targetLanes[index];
+    setData(targetViews[index].side, 'explicitRecoil',
+      motionByParticipant[lane.id] === 'HIT_RECOIL' ? 'true' : 'false');
+  }
   const sourceCharacterId = exactCinematicCharacterId(global, document, source.id, context);
-  const targetCharacterId = exactCinematicCharacterId(global, document, target.id, context);
+  const targetCharacterIds = targetLanes.map(lane => exactCinematicCharacterId(global, document, lane.id, context));
 
   scene.appendChild(sourceView.side);
   scene.appendChild(createCinematicDuelFx(document));
-  scene.appendChild(targetView.side);
+  if (cinematicActors.multiTarget) {
+    const group = createNode(document, 'div', 'grBattleCinematicDuelTargets');
+    group.dataset.targetCount = String(targetViews.length);
+    group.setAttribute?.('aria-label', '攻撃対象 ' + targetLanes.map(lane => lane.label).join('・'));
+    for (const view of targetViews) group.appendChild(view.side);
+    scene.appendChild(group);
+  } else {
+    scene.appendChild(targetViews[0].side);
+  }
   mountCinematicDuelCharacter(global, scene, sourceView, sourceCharacterId, 'source', model.motion, {
-    phase,
-    transition: model.transition,
+    phase, transition: model.transition,
     motionState: motionByParticipant[source.id] ?? null
   });
-  mountCinematicDuelCharacter(global, scene, targetView, targetCharacterId, 'target', model.motion, {
-    phase,
-    transition: model.transition,
-    motionState: motionByParticipant[target.id] ?? null
-  });
+  for (let index = 0; index < targetViews.length; index += 1) {
+    mountCinematicDuelCharacter(global, scene, targetViews[index],
+      targetCharacterIds[index], 'target', model.motion, {
+        phase, transition: model.transition,
+        motionState: motionByParticipant[targetLanes[index].id] ?? null
+      });
+  }
 
   const causalTimeline = createBattleCinematicCausalTimeline({
     actionPhase: phase,
@@ -1004,9 +1079,11 @@ function writeCinematicDuel(global, document, scene, model, context = {}) {
   setData(scene, 'motion', model.motion ?? null);
   setData(scene, 'saasunaMotionRuntime', SAASUNA_BATTLE_MOTION_RUNTIME.schema);
   setData(scene, 'sourceId', source.id);
-  setData(scene, 'targetId', target.id);
+  setData(scene, 'targetId', cinematicActors.multiTarget ? null : target.id);
+  setData(scene, 'targetIds', cinematicActors.orderedTargetIds.join('|'));
   setData(scene, 'sourceCharacterId', sourceCharacterId);
-  setData(scene, 'targetCharacterId', targetCharacterId);
+  setData(scene, 'targetCharacterId', cinematicActors.multiTarget ? null : targetCharacterIds[0]);
+  setData(scene, 'targetCharacterIds', targetCharacterIds.filter(Boolean).join('|') || null);
   setData(scene, 'vfx', 'provisional-neutral-compressed-shot');
   setData(scene, 'handoff', model.transition ?? 'CONTINUE');
   setData(scene, 'conveyorTransition', model.transition ?? 'CONTINUE');
@@ -1838,11 +1915,11 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   cinematicEnvironmentLayers: Object.freeze(['BACKGROUND_DISTANT', 'GROUND_TERRAIN', 'LIGHTING_FLASH']),
   cinematicEnvironmentNetwork: false,
   cinematicEnvironmentFormalArt: false,
-  cinematicDuelAuthority: 'MODEL_LANE_ROLE_EXACT_ONE_SOURCE_EXACT_ONE_TARGET_ONLY_NO_INFERENCE',
+  cinematicDuelAuthority: 'MODEL_FOCUS_ACCEPTED_ORDER_ONE_SOURCE_ONE_TO_THREE_TARGETS_NO_INFERENCE',
   cinematicDuelArt: 'EXISTING_CHARACTER_RUNTIME_PLUS_PROVISIONAL_SAASUNA_9_KEYFRAME_SHEET_NO_FORMAL_ART',
   cinematicDuelReaction: 'EXISTING_CHARACTER_RUNTIME_PLUS_PROVISIONAL_SAASUNA_STATEFUL_REACTION_NO_GAMEPLAY_STATE',
   cinematicDuelVfx: 'PROVISIONAL_ICE_WIND_IMPACT_LAYERS_PLUS_EXISTING_NEUTRAL_SHOT_NO_FORMAL_ART',
-  cinematicDuelHandoff: 'ACCEPTED_CONVEYOR_TRANSITION_PLUS_CONSECUTIVE_ACCEPTED_PAIR_CONTINUITY_NO_ORDER_INFERENCE',
+  cinematicDuelHandoff: 'ACCEPTED_CONVEYOR_TRANSITION_PLUS_CONSECUTIVE_ACCEPTED_PARTICIPANT_CONTINUITY_NO_ORDER_INFERENCE',
   cinematicDuelTimeline: BATTLE_CINEMATIC_CAUSAL_TIMELINE.schema,
   cinematicDuelTimelinePhases: BATTLE_CINEMATIC_CAUSAL_TIMELINE.phaseOrder,
   cinematicDuelImpactSyncPoint: BATTLE_CINEMATIC_CAUSAL_TIMELINE.impactSyncPoint,

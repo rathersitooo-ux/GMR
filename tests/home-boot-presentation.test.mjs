@@ -148,6 +148,21 @@ test('Setup keeps match type options unobscured by its Start CTA', () => {
     /scroll-padding-bottom:(?:80|58)px|scroll-margin-bottom:104px|padding-bottom:96px!important/,
     'the setup layout must not reserve viewport space for a floating CTA',
   );
+  assert.match(
+    SETUP_STAGING_PRESENTATION_CSS,
+    /section\[data-screen="setup"\] #startMatch\{position:relative;width:100%/,
+    'the in-flow button remains a positioned anchor for its absolute light sprite',
+  );
+  assert.match(
+    SETUP_STAGING_PRESENTATION_CSS,
+    /@media \(min-width:900px\) and \(min-height:520px\)\{section\[data-screen="setup"\] \.setupHero\{/,
+    'the desktop hero retains its responsive layout after sticky CTA removal',
+  );
+  assert.doesNotMatch(
+    SETUP_STAGING_PRESENTATION_CSS,
+    /section\[data-screen="setup"\] section\[data-screen="setup"\]/,
+    'do not nest the Setup screen selector inside itself',
+  );
 });
 
 const landscapeProjection = Object.freeze({

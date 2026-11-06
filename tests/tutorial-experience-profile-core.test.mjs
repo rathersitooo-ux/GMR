@@ -294,7 +294,7 @@ test('beginner Road help teaches bidirectional planning without changing Battle 
     focusRole: 'battle',
     experienceProfile: control.profile(),
   });
-  assert.match(battleHelp.message, /まずは光っている場所から1枚選べばOK/);
+  assert.match(battleHelp.message, /追加できる札があるときだけ、条件と費用を確認しよう/);
   assert.doesNotMatch(battleHelp.message, /移動から始めても|使えるロードカード/);
 });
 
@@ -302,10 +302,10 @@ test('each named supported card game adapts road, battle, and ready with differe
   const control = createTutorialExperienceProfileControl();
   control.chooseAudience('experienced');
   const stageSignals = {
-    'master-duel': [/展開の軸/, /実際にぶつける1枚/, /2枚が合っているか/],
-    'duel-masters-plays': [/ターンに何を軸/, /実際にぶつける札/, /組み合わせを見直す/],
-    'pokemon-pocket': [/このターンの方針/, /実際に勝負へ使う1枚/, /行動前に選択を見直す/],
-    shadowverse: [/このターンの動きの軸/, /勝負へ出す札/, /プレイ確定前に選択を見直す/],
+    'master-duel': [/展開の軸/, /最初のバトル札/, /移動を済ませて確定する/],
+    'duel-masters-plays': [/ターンに何を軸/, /最初のバトル札/, /組み合わせを見直す/],
+    'pokemon-pocket': [/このターンの方針/, /勝負へ使う最初のバトル札/, /行動前に選択を見直す/],
+    shadowverse: [/このターンの動きの軸/, /最初のバトル札/, /プレイ確定前に選択を見直す/],
   };
   const stages = [
     ['road', '手札からロードカードを1枚選ぶ'],
@@ -412,4 +412,39 @@ test('profile, shared context, conversation, prompt and help stay immutable pres
   assert.equal(prompt.persistenceOwned, false);
   assert.equal(help.presentationOnly, true);
   assert.equal(help.autoExecute, false);
+});
+
+
+test('move-to-confirm help uses the existing Tutorial profile without inventing a ready button or two-card cap', () => {
+  const guide = createTutorialExperienceProfileControl();
+  guide.chooseAudience('beginner');
+  const beginner = projectTutorialExperienceHelp({
+    canonicalMessage: '選んだ札と移動先を確認する',
+    focusRole: 'move',
+    experienceProfile: guide.profile(),
+  });
+  assert.equal(beginner.active, true);
+  assert.equal(beginner.focusRole, 'move');
+  assert.match(beginner.message, /追加できる札は条件と費用を確かめて選び/);
+  assert.match(beginner.message, /移動を済ませると行動が決まる/);
+  assert.doesNotMatch(beginner.message, /2枚だけ|準備完了|確定ボタン/);
+  assert.equal(beginner.autoExecute, false);
+  assert.equal(beginner.saveMutated, false);
+
+  guide.chooseAudience('experienced');
+  for (const entry of TUTORIAL_EXPERIENCE_SOURCE_GAMES.filter((item) => item.id !== 'other')) {
+    guide.chooseSourceGame(entry.id);
+    const help = projectTutorialExperienceHelp({
+      canonicalMessage: '使える追加札と移動先を確認する',
+      focusRole: 'move',
+      experienceProfile: guide.profile(),
+    });
+    assert.equal(help.active, true, entry.id);
+    assert.equal(help.focusRole, 'move', entry.id);
+    assert.match(help.message, /移動/, entry.id);
+    assert.doesNotMatch(help.message, /2枚だけ|準備完了|確定ボタン/, entry.id);
+    assert.equal(help.presentationOnly, true, entry.id);
+    assert.equal(help.autoExecute, false, entry.id);
+    assert.equal(help.gameplayAuthorityMutated, false, entry.id);
+  }
 });

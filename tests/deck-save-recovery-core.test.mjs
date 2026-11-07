@@ -343,7 +343,7 @@ test('verified write reports saved only after exact readback', () => {
   assert.equal(raw, prepared.serialized);
 });
 
-test('verified write mismatch rolls back exact previous durable raw', () => {
+test('verified write mismatch preserves unknown bytes without overwriting a possible concurrent writer', () => {
   const prepared = prepare(parsed());
   const previous = '{"opaque":"keep-exact"}';
   let raw = previous;
@@ -358,10 +358,11 @@ test('verified write mismatch rolls back exact previous durable raw', () => {
   };
   const result = writePreparedSaveVerified(storage, 'save', prepared);
   assert.equal(result.status, 'failed');
-  assert.equal(result.reason, 'STORAGE_READBACK_MISMATCH');
-  assert.equal(result.rolledBack, true);
-  assert.equal(result.originalPreserved, true);
-  assert.equal(raw, previous);
+  assert.equal(result.reason, 'STORAGE_FOREIGN_OR_UNKNOWN_RAW_PRESERVED');
+  assert.equal(result.rolledBack, false);
+  assert.equal(result.originalPreserved, false);
+  assert.equal(result.unknownCurrentRawPreserved, true);
+  assert.equal(raw, `${prepared.serialized}x`);
 });
 
 test('verified write readback failure rolls back exact previous durable raw', () => {
@@ -386,7 +387,7 @@ test('verified write readback failure rolls back exact previous durable raw', ()
   assert.equal(raw, previous);
 });
 
-test('verified write from missing storage removes failed materialization during rollback', () => {
+test('verified write from missing storage does not overwrite unrecognized bytes', () => {
   const inspection = inspectRawSave(null);
   const prepared = prepare(inspection, classify(inspection));
   let raw = null;
@@ -398,9 +399,9 @@ test('verified write from missing storage removes failed materialization during 
   };
   const result = writePreparedSaveVerified(storage, 'save', prepared);
   assert.equal(result.status, 'failed');
-  assert.equal(result.reason, 'STORAGE_READBACK_MISMATCH');
-  assert.equal(result.originalPreserved, true);
-  assert.equal(raw, null);
+  assert.equal(result.reason, 'STORAGE_FOREIGN_OR_UNKNOWN_RAW_PRESERVED');
+  assert.equal(result.originalPreserved, false);
+  assert.equal(raw, `${prepared.serialized}x`);
 });
 
 test('verified write rollback failure is never reported as saved or preserved', () => {
@@ -408,11 +409,16 @@ test('verified write rollback failure is never reported as saved or preserved', 
   const previous = '{"keep":1}';
   let raw = previous;
   let writes = 0;
+  let reads = 0;
   const storage = {
-    getItem() { return raw; },
+    getItem() {
+      reads += 1;
+      if (reads === 2) throw new Error('readback failed');
+      return raw;
+    },
     setItem(_key, value) {
       writes += 1;
-      if (writes === 1) raw = `${value}x`;
+      if (writes === 1) raw = value;
       else throw new Error('rollback write failure');
     },
     removeItem() { throw new Error('rollback remove failure'); },
@@ -422,6 +428,25 @@ test('verified write rollback failure is never reported as saved or preserved', 
   assert.equal(result.reason, 'STORAGE_ROLLBACK_FAILED');
   assert.equal(result.originalPreserved, false);
   assert.notEqual(raw, previous);
+});
+
+test('verified write does not roll back a concurrent tab update', () => {
+  const prepared = prepare(parsed());
+  const externalRaw = '{"external":"newer"}';
+  let raw = '{"old":"save"}';
+  let reads = 0;
+  const storage = {
+    getItem() {
+      reads += 1;
+      if (reads === 2) raw = externalRaw;
+      return raw;
+    },
+    setItem(_key, value) { raw = value; },
+  };
+  const result = writePreparedSaveVerified(storage, 'save', prepared);
+  assert.equal(result.status, 'failed');
+  assert.equal(result.unknownCurrentRawPreserved, true);
+  assert.equal(raw, externalRaw);
 });
 
 test('reset requires explicit confirmation and removes only requested unique keys', () => {
@@ -528,14 +553,16 @@ test('authoritative root failure rolls back library and in-memory saved baseline
   assert.equal(f.sessionStorage.getItem(f.draftSessionKey), f.draftSessionRaw);
 });
 
-test('library readback mismatch after root success rolls both durable keys back instead of reporting saved', () => {
+test('library readback mismatch leaves unverifiable durable bytes untouched', () => {
   const f = atomicFixture();
   const snapshot = captureDeckSaveAtomicitySnapshot({ storage: f.storage, sessionStorage: f.sessionStorage, api: f.api, state: f.state });
   f.state.deckSlots[0] = JSON.parse(JSON.stringify(f.nextDeck));
   f.state.savedDeck = JSON.parse(JSON.stringify(f.nextDeck));
   f.state.saveAuthorityDeck = JSON.parse(JSON.stringify(f.nextDeck));
-  f.storage.setItem(f.rootKey, JSON.stringify({ v: 3, deck: { ...f.nextDeck, ruleId: 'FIRST_REGULATION', ruleRevision: 3 } }));
-  f.storage.setItem(f.libraryKey, `${snapshot.expectedLibraryRaw}x`);
+  const attemptedRoot = JSON.stringify({ v: 3, deck: { ...f.nextDeck, ruleId: 'FIRST_REGULATION', ruleRevision: 3 } });
+  const foreignLibrary = `${snapshot.expectedLibraryRaw}x`;
+  f.storage.setItem(f.rootKey, attemptedRoot);
+  f.storage.setItem(f.libraryKey, foreignLibrary);
   const result = settleDeckSaveAtomicitySnapshot({
     snapshot,
     storage: f.storage,
@@ -545,12 +572,101 @@ test('library readback mismatch after root success rolls both durable keys back 
     saveReceipt: { status: 'saved' },
   });
   assert.equal(result.status, 'failed');
-  assert.equal(result.reason, 'DECK_LIBRARY_READBACK_MISMATCH');
-  assert.equal(result.originalPreserved, true);
-  assert.equal(f.storage.getItem(f.rootKey), f.rootRaw);
-  assert.equal(f.storage.getItem(f.libraryKey), f.libraryRaw);
+  assert.equal(result.reason, 'ATOMIC_UNVERIFIED_BYTES_PRESERVED');
+  assert.equal(result.failureReason, 'DECK_LIBRARY_READBACK_MISMATCH');
+  assert.equal(result.originalPreserved, false);
+  assert.equal(f.storage.getItem(f.rootKey), attemptedRoot);
+  assert.equal(f.storage.getItem(f.libraryKey), foreignLibrary);
   assert.deepEqual(f.state.savedDeck, f.oldDeck);
   assert.deepEqual(f.state.deckDraft, f.nextDeck);
+});
+
+test('atomic settle preserves an external root while restoring only our exact library bytes', () => {
+  const f = atomicFixture();
+  const snapshot = captureDeckSaveAtomicitySnapshot({ storage: f.storage, sessionStorage: f.sessionStorage, api: f.api, state: f.state });
+  const foreignRoot = '{"external":"second-tab"}';
+  f.storage.setItem(f.rootKey, foreignRoot);
+  f.storage.setItem(f.libraryKey, snapshot.expectedLibraryRaw);
+  const result = settleDeckSaveAtomicitySnapshot({
+    snapshot, storage: f.storage, sessionStorage: f.sessionStorage,
+    api: f.api, state: f.state, saveReceipt: { status: 'saved' },
+  });
+  assert.equal(result.status, 'failed');
+  assert.equal(result.reason, 'ATOMIC_UNVERIFIED_BYTES_PRESERVED');
+  assert.equal(f.storage.getItem(f.rootKey), foreignRoot);
+  assert.equal(f.storage.getItem(f.libraryKey), f.libraryRaw);
+});
+
+test('failed save leaves a newer draft session intact instead of restoring stale bytes', () => {
+  const f = atomicFixture();
+  const snapshot = captureDeckSaveAtomicitySnapshot({ storage: f.storage, sessionStorage: f.sessionStorage, api: f.api, state: f.state });
+  const newerDraft = JSON.stringify({ v: 1, deck: { main: ['newer-user-edit'], ex: [] } });
+  f.sessionStorage.setItem(f.draftSessionKey, newerDraft);
+  f.storage.setItem(f.libraryKey, snapshot.expectedLibraryRaw);
+  const result = settleDeckSaveAtomicitySnapshot({
+    snapshot, storage: f.storage, sessionStorage: f.sessionStorage,
+    api: f.api, state: f.state, saveReceipt: { status: 'failed' },
+  });
+  assert.equal(result.status, 'failed');
+  assert.equal(result.reason, 'ATOMIC_UNVERIFIED_BYTES_PRESERVED');
+  assert.equal(result.concurrentBytesPreserved, true);
+  assert.equal(f.sessionStorage.getItem(f.draftSessionKey), newerDraft);
+  assert.equal(f.storage.getItem(f.libraryKey), f.libraryRaw);
+});
+
+test('failed save does not overwrite a new draft when the captured session was absent', () => {
+  const f = atomicFixture();
+  f.sessionStorage.removeItem(f.draftSessionKey);
+  const snapshot = captureDeckSaveAtomicitySnapshot({ storage: f.storage, sessionStorage: f.sessionStorage, api: f.api, state: f.state });
+  assert.equal(snapshot.draftSessionRaw, null);
+  const newerDraft = '{"userNewDraft":"preserve"}';
+  f.sessionStorage.setItem(f.draftSessionKey, newerDraft);
+  const result = settleDeckSaveAtomicitySnapshot({
+    snapshot, storage: f.storage, sessionStorage: f.sessionStorage,
+    api: f.api, state: f.state, saveReceipt: { status: 'failed' },
+  });
+  assert.equal(result.status, 'failed');
+  assert.equal(result.concurrentBytesPreserved, true);
+  assert.equal(f.sessionStorage.getItem(f.draftSessionKey), newerDraft);
+  assert.equal(f.draftSessionSaveCalls(), 0);
+});
+
+test('failed save preserves a newer in-memory deck draft made after snapshot', () => {
+  const f = atomicFixture();
+  const snapshot = captureDeckSaveAtomicitySnapshot({ storage: f.storage, sessionStorage: f.sessionStorage, api: f.api, state: f.state });
+  const newerDraft = { main: ['newer-in-flight-edit'], ex: [] };
+  f.state.deckSlots[0] = JSON.parse(JSON.stringify(f.nextDeck));
+  f.state.savedDeck = JSON.parse(JSON.stringify(f.nextDeck));
+  f.state.saveAuthorityDeck = JSON.parse(JSON.stringify(f.nextDeck));
+  f.state.deckDraft = JSON.parse(JSON.stringify(newerDraft));
+  f.sessionStorage.setItem(f.draftSessionKey, JSON.stringify({ v: 1, deck: newerDraft }));
+  f.storage.setItem(f.libraryKey, snapshot.expectedLibraryRaw);
+  const result = settleDeckSaveAtomicitySnapshot({
+    snapshot, storage: f.storage, sessionStorage: f.sessionStorage,
+    api: f.api, state: f.state, saveReceipt: { status: 'failed', reason: 'STORAGE_WRITE_FAILED' },
+  });
+  assert.equal(result.status, 'failed');
+  assert.deepEqual(f.state.deckDraft, newerDraft);
+  assert.equal(f.sessionStorage.getItem(f.draftSessionKey), JSON.stringify({ v: 1, deck: newerDraft }));
+  assert.deepEqual(f.state.savedDeck, f.oldDeck);
+  assert.equal(f.state.storage, 'memory');
+});
+
+test('failed save does not erase a concurrent edit to another deck slot', () => {
+  const f = atomicFixture();
+  const snapshot = captureDeckSaveAtomicitySnapshot({ storage: f.storage, sessionStorage: f.sessionStorage, api: f.api, state: f.state });
+  const newerSecondSlot = { main: ['separate-slot-edit'], ex: [] };
+  f.state.deckSlots[0] = JSON.parse(JSON.stringify(f.nextDeck));
+  f.state.deckSlots[1] = JSON.parse(JSON.stringify(newerSecondSlot));
+  f.state.savedDeck = JSON.parse(JSON.stringify(f.nextDeck));
+  f.storage.setItem(f.libraryKey, snapshot.expectedLibraryRaw);
+  const result = settleDeckSaveAtomicitySnapshot({
+    snapshot, storage: f.storage, sessionStorage: f.sessionStorage,
+    api: f.api, state: f.state, saveReceipt: { status: 'failed' },
+  });
+  assert.equal(result.status, 'failed');
+  assert.deepEqual(f.state.deckSlots[0], f.oldDeck);
+  assert.deepEqual(f.state.deckSlots[1], newerSecondSlot);
 });
 
 test('atomic snapshot is blocked before mutation when baseline storage cannot be read', () => {

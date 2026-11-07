@@ -142,7 +142,7 @@ export function createBattleBoardWorldFieldRenderModel({
     movementAuthority: false,
     legalityAuthority: false,
     sharedGoal: { id: graph.goal.id, kind: 'SHARED_GOAL', world: point(nodes, graph.goal.id) },
-    roundCells, gates, shields, goalBranches, edges,
+    roundCells, actualBuiltCards: builtUpperCells, gates, shields, goalBranches, edges,
     counts: {
       sharedGoal: 1,
       upperLanes: graph.upperLaneCount,

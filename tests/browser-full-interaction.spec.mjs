@@ -989,8 +989,18 @@ test('deck recovery preserves blocked raw saves, repairs legacy only on explicit
     return { committed, raw: localStorage.getItem(key), recovery: window.__GAMEROAD_SAVE_RECOVERY__.snapshot() };
   }, STORAGE_KEY);
   expect(mismatch.committed).toBeFalsy();
-  expect(mismatch.raw).toBe(previousRaw);
-  expect(mismatch.recovery.write.reason).toBe('STORAGE_READBACK_MISMATCH');
+  // Unknown bytes may be from another writer. A failed readback must not
+  // overwrite them merely to restore this tab's earlier snapshot.
+  expect(mismatch.raw).not.toBe(previousRaw);
+  expect(mismatch.raw).toMatch(/x$/);
+  expect(mismatch.recovery.write.reason).toBe('STORAGE_FOREIGN_OR_UNKNOWN_RAW_PRESERVED');
+  expect(mismatch.recovery.write.writeFailureReason).toBe('STORAGE_READBACK_MISMATCH');
+  expect(mismatch.recovery.write.unknownCurrentRawPreserved).toBe(true);
+
+  // This is a new, independent fault injection. Restore only the test's own
+  // known-good fixture; the product must never overwrite unknown raw bytes.
+  await page.evaluate(({ key, raw }) => localStorage.setItem(key, raw), { key: STORAGE_KEY, raw: previousRaw });
+  expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBe(previousRaw);
 
   const readFailure = await page.evaluate(() => {
     const t = window.__GAMEROAD_TEST__, proto = Object.getPrototypeOf(localStorage), originalGetItem = proto.getItem;

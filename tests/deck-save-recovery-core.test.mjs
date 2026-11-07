@@ -1,3 +1,7 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+import { createContext, runInContext } from 'node:vm';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 await import('../browser/deck-save-recovery-core.mjs');
@@ -680,3 +684,198 @@ test('atomic snapshot is blocked before mutation when baseline storage cannot be
   assert.equal(result.status, 'blocked');
   assert.equal(result.reason, 'ATOMIC_BASELINE_READ_FAILED');
 });
+
+
+// Integration regressions: startup library loading and raw-byte preservation.
+{
+
+const root = dirname(dirname(fileURLToPath(import.meta.url)));
+const html = readFileSync(join(root, 'browser/GAMEROAD.html'), 'utf8');
+const start = html.indexOf('const DECK_SLOT_COUNT=12,DECK_LIBRARY_KEY=');
+const end = html.indexOf('function deckEligibility(', start);
+const commitStart = html.indexOf('function commitDeck(){', end);
+const commitEnd = html.indexOf('function restoreDeck(){', commitStart);
+assert.ok(start > 0 && end > start && commitStart > end && commitEnd > commitStart);
+const addStart = html.indexOf('function addDeckCard(', end);
+const restoreStart = html.indexOf('function restoreDeck(){', commitEnd);
+const restoreEnd = html.indexOf('function defaultDeckDraft(){', restoreStart);
+assert.ok(addStart > end && addStart < commitStart && restoreEnd > restoreStart);
+const code = html.slice(start, end) + '\n' + html.slice(addStart, commitStart) + '\n' + html.slice(commitStart, commitEnd) + '\n' + html.slice(restoreStart, restoreEnd);
+const KEY = 'gmr.deckSlots.v1';
+const slots = () => Array.from({length:12}, (_,i) => ({main: i === 0 ? ['A'] : i === 8 ? ['B'] : [],ex:[]}));
+const raw = (items=slots()) => JSON.stringify({schema:'gameroad.deck-slots.v1',slots:items});
+
+function harness(initial, opts={}) {
+  const map = new Map();
+  if (initial !== undefined) map.set(KEY, initial);
+  const messages = [];
+  let sessionClears = 0, written = 0;
+  const store = {
+    getItem(key) {
+      if (opts.readThrows && key === KEY) throw Error('denied');
+      if (opts.concurrentRaw && key === KEY && written > 0 && !opts.concurrentInjected) {
+        opts.concurrentInjected = true;
+        map.set(KEY, opts.concurrentRaw);
+      }
+      if (opts.readbackMismatch && key === KEY && written > 0 && !opts.mismatchedOnce) {
+        opts.mismatchedOnce = true; return 'MISMATCH';
+      }
+      return map.has(key) ? map.get(key) : null;
+    },
+    setItem(key,value) {
+      if (opts.writeThrows && key === KEY) throw Error('quota');
+      map.set(key,String(value));
+      if (key === KEY) written++;
+    },
+    removeItem(key) { map.delete(key); }
+  };
+  const state = {savedDeck:{main:['A'],ex:[]},savedDeckRule:null,deckDraft:{main:['A'],ex:[]},selectedDeckIndex:0,deckSlots:null};
+  const context = createContext({
+    SAVE_KEY:'gmr', DECK_RULE:{id:'RULE',revision:3,maxMain:40,maxEx:7}, DEFAULT_DECK:['A'],
+    CARDS:{A:{},B:{}}, localStorage:store, state,
+    publicDeckCard:()=>true, deckSlot:()=> 'main', canonicalDeckName: x=>x,
+    clearDeckDraftSession:()=>sessionClears++, toast: x=>messages.push(x),
+    renderCards:()=>{}, renderSetupDeckStatus:()=>{}, deckDirty:()=>false
+  });
+  runInContext(code,context);
+  const call = fn => runInContext(fn.endsWith(')') ? fn : fn + '()',context);
+  return {call, store, map, state, messages, get sessionClears(){return sessionClears;},get written(){return written;}};
+}
+
+test('absent library creates first deck once', () => {
+  const x=harness(undefined);
+  x.call('initDeckLibrary');
+  assert.equal(x.written,1);
+  assert.equal(JSON.parse(x.map.get(KEY)).slots.length,12);
+  assert.deepEqual(Array.from(x.state.deckSlots[0].main),['A']);
+});
+
+test('healthy existing 12-slot library is not rewritten on boot', () => {
+  const existing=JSON.stringify(JSON.parse(raw()),null,2);
+  const x=harness(existing);
+  x.call('initDeckLibrary');
+  assert.equal(x.map.get(KEY),existing);
+  assert.equal(x.written,0);
+  assert.deepEqual(Array.from(x.state.deckSlots[8].main),['B']);
+});
+
+test('invalid JSON survives startup and blocks later saves without erasing draft', () => {
+  const original='{malformed';
+  const x=harness(original);
+  x.call('initDeckLibrary');
+  assert.equal(x.map.get(KEY),original);
+  assert.equal(x.sessionClears,0);
+  x.state.deckDraft={main:['B'],ex:[]};
+  assert.equal(x.call('commitDeck'),false);
+  assert.equal(x.map.get(KEY),original);
+  assert.deepEqual(Array.from(x.state.deckDraft.main),['B']);
+  assert.ok(x.messages.some(m=>m.includes('保護')));
+});
+
+test('unsupported schema survives without auto-repair overwrite', () => {
+  const original=JSON.stringify({schema:'future.v2',slots});
+  const x=harness(original);
+  x.call('initDeckLibrary');
+  assert.equal(x.map.get(KEY),original);
+  assert.equal(x.written,0);
+  assert.equal(x.call('writeDeckLibrary'),false);
+});
+
+test('one unknown card protects original bytes while keeping other valid slots visible', () => {
+  const items=slots();
+  items[5]={main:['CARD_NO_LONGER_KNOWN'],ex:[]};
+  const original=raw(items);
+  const x=harness(original);
+  x.call('initDeckLibrary');
+  assert.equal(x.map.get(KEY),original);
+  assert.deepEqual(Array.from(x.state.deckSlots[8].main),['B']);
+  assert.deepEqual(Array.from(x.state.deckSlots[5].main),[]);
+  assert.equal(x.call('writeDeckLibrary'),false);
+});
+
+test('external second-tab change makes a subsequent save fail closed', () => {
+  const x=harness(raw());
+  x.call('initDeckLibrary');
+  x.map.set(KEY,'EXTERNAL_CHANGE');
+  x.state.deckDraft={main:['B'],ex:[]};
+  assert.equal(x.call('commitDeck'),false);
+  assert.equal(x.map.get(KEY),'EXTERNAL_CHANGE');
+  assert.deepEqual(Array.from(x.state.deckSlots[0].main),['A']);
+});
+
+test('storage read error never initializes over unseen data', () => {
+  const x=harness(raw(),{readThrows:true});
+  x.call('initDeckLibrary');
+  assert.equal(x.map.get(KEY),raw());
+  assert.equal(x.written,0);
+  assert.equal(x.call('writeDeckLibrary'),false);
+});
+
+test('storage write refusal leaves raw bytes unchanged', () => {
+  const original=raw();
+  const x=harness(original,{writeThrows:true});
+  x.call('initDeckLibrary');
+  assert.equal(x.call('writeDeckLibrary'),false);
+  assert.equal(x.map.get(KEY),original);
+});
+
+test('readback mismatch rolls back the exact previous raw value', () => {
+  const original=raw();
+  const x=harness(original,{readbackMismatch:true});
+  x.call('initDeckLibrary');
+  x.state.deckSlots[2]={main:['B'],ex:[]};
+  assert.equal(x.call('writeDeckLibrary'),false);
+  assert.equal(x.map.get(KEY),original);
+});
+
+test('valid explicit save writes and verifies exactly one current slot', () => {
+  const x=harness(raw());
+  x.call('initDeckLibrary');
+  x.state.deckSlots[3]={main:['B'],ex:[]};
+  assert.equal(x.call('writeDeckLibrary'),true);
+  assert.deepEqual(JSON.parse(x.map.get(KEY)).slots[3].main,['B']);
+  assert.deepEqual(JSON.parse(x.map.get(KEY)).slots[8].main,['B']);
+});
+
+
+test('protected switch keeps the previous draft session and original selected index', () => {
+  const items=slots();
+  items[5]={main:['UNKNOWN_CARD'],ex:[]};
+  const x=harness(raw(items));
+  x.map.set('gameroad:selectedDeckIndex','0');
+  x.call('initDeckLibrary');
+  const priorClears=x.sessionClears;
+  assert.equal(x.call('selectDeckIndex(8)'),true);
+  assert.equal(x.sessionClears,priorClears);
+  assert.equal(x.map.get('gameroad:selectedDeckIndex'),'0');
+  assert.equal(x.state.selectedDeckIndex,8);
+  assert.equal(x.call('writeDeckLibrary'),false);
+});
+
+test('readback mismatch does not roll back another tab current save', () => {
+  const other=slots();
+  other[1]={main:['B'],ex:[]};
+  const external=raw(other),x=harness(raw(),{concurrentRaw:external});
+  x.call('initDeckLibrary');
+  x.state.deckSlots[2]={main:['B'],ex:[]};
+  assert.equal(x.call('writeDeckLibrary'),false);
+  assert.equal(x.map.get(KEY),external);
+  assert.equal(x.call('writeDeckLibrary'),false);
+});
+
+
+test('protected library rejects card add, card remove and restore without mutating the draft', () => {
+  const items=slots();
+  items[5]={main:['UNKNOWN_CARD'],ex:[]};
+  const x=harness(raw(items));
+  x.call('initDeckLibrary');
+  const before=JSON.stringify(x.state.deckDraft);
+  assert.equal(x.call("addDeckCard('B')").ok,false);
+  assert.equal(x.call("removeDeckCard('main',0)"),false);
+  assert.equal(x.call('restoreDeck'),false);
+  assert.equal(JSON.stringify(x.state.deckDraft),before);
+  assert.equal(x.sessionClears,0);
+});
+
+
+}

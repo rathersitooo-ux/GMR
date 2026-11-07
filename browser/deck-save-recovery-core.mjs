@@ -261,6 +261,23 @@ function restorePreviousRaw(storage, key, previousRawValue) {
   }
 }
 
+function restorePreviousRawWhenOwned(storage, key, previousRawValue, expectedWrittenRaw) {
+  let currentRaw;
+  try { currentRaw = storage.getItem(key); }
+  catch { return decision('failed', 'STORAGE_ROLLBACK_READ_FAILED', { originalPreserved: false }); }
+  if (currentRaw === previousRawValue) {
+    return decision('restored', 'STORAGE_ROLLBACK_NOT_NEEDED', { originalPreserved: true, rolledBack: false });
+  }
+  const matchesOurWrite = (typeof expectedWrittenRaw === 'string' && currentRaw === expectedWrittenRaw)
+    || (expectedWrittenRaw === null && currentRaw === null);
+  if (!matchesOurWrite) {
+    return decision('failed', 'STORAGE_FOREIGN_OR_UNKNOWN_RAW_PRESERVED', {
+      originalPreserved: false, rolledBack: false, unknownCurrentRawPreserved: true,
+    });
+  }
+  return restorePreviousRaw(storage, key, previousRawValue);
+}
+
 function writePreparedSaveVerified(storage, key, preparedCommit, options = {}) {
   if (!preparedCommit || preparedCommit.schema !== SCHEMA || preparedCommit.status !== 'prepared') {
     return decision('failed', 'PREPARED_COMMIT_REQUIRED');
@@ -322,17 +339,18 @@ function writePreparedSaveVerified(storage, key, preparedCommit, options = {}) {
     : readbackFailed
       ? 'STORAGE_READBACK_FAILED'
       : 'STORAGE_READBACK_MISMATCH';
-  const rollback = restorePreviousRaw(storage, key, previousRawValue);
+  const rollback = restorePreviousRawWhenOwned(storage, key, previousRawValue, preparedCommit.serialized);
   if (rollback.status !== 'restored') {
     return decision('failed', rollback.reason, {
       originalPreserved: false,
       rolledBack: false,
       writeFailureReason: failureReason,
+      unknownCurrentRawPreserved: rollback.unknownCurrentRawPreserved === true,
     });
   }
   return decision('failed', failureReason, {
     originalPreserved: true,
-    rolledBack: true,
+    rolledBack: rollback.rolledBack !== false,
   });
 }
 
@@ -439,15 +457,24 @@ function rootRawMatchesAtomicExpectation(rawValue, snapshot) {
   }
 }
 
-function restoreAtomicState(state, baseline) {
-  if (!state || !baseline) return false;
-  state.deckSlots = cloneJson(baseline.deckSlots);
-  state.selectedDeckIndex = baseline.selectedDeckIndex;
-  state.savedDeck = cloneJson(baseline.savedDeck);
-  state.savedDeckRule = cloneJson(baseline.savedDeckRule);
-  state.deckDraft = cloneJson(baseline.deckDraft);
-  state.saveAuthorityDeck = cloneJson(baseline.saveAuthorityDeck);
-  state.saveAuthorityDeckRule = cloneJson(baseline.saveAuthorityDeckRule);
+function restoreAtomicState(state, baseline, expectedDeck) {
+  if (!state || !baseline || !Array.isArray(state.deckSlots) || !Array.isArray(baseline.deckSlots)) return false;
+  const index = baseline.selectedDeckIndex;
+  if (!Number.isInteger(index) || index < 0 || index >= state.deckSlots.length || index >= baseline.deckSlots.length) return false;
+
+  // A failed save owns only the slot it attempted to write. Other slots,
+  // newer draft edits and a selection change must survive the rollback.
+  if (sameAtomicDeck(state.deckSlots[index], expectedDeck)) {
+    state.deckSlots[index] = cloneJson(baseline.deckSlots[index]);
+  }
+  if (sameAtomicDeck(state.savedDeck, expectedDeck)) {
+    state.savedDeck = cloneJson(baseline.savedDeck);
+    state.savedDeckRule = cloneJson(baseline.savedDeckRule);
+  }
+  if (sameAtomicDeck(state.saveAuthorityDeck, expectedDeck)) {
+    state.saveAuthorityDeck = cloneJson(baseline.saveAuthorityDeck);
+    state.saveAuthorityDeckRule = cloneJson(baseline.saveAuthorityDeckRule);
+  }
   state.storage = 'memory';
   return true;
 }
@@ -483,13 +510,17 @@ function settleDeckSaveAtomicitySnapshot({
     });
   }
 
-  const rootRollback = restorePreviousRaw(storage, snapshot.keys.rootKey, snapshot.rootRaw);
-  const libraryRollback = restorePreviousRaw(storage, snapshot.keys.libraryKey, snapshot.libraryRaw);
-  const stateRestored = restoreAtomicState(state, snapshot.stateBaseline);
+  // The exact root bytes written by this attempt are not available here.
+  // Never overwrite a changed root whose owner cannot be established.
+  const rootRollback = restorePreviousRawWhenOwned(storage, snapshot.keys.rootKey, snapshot.rootRaw);
+  const libraryRollback = restorePreviousRawWhenOwned(
+    storage, snapshot.keys.libraryKey, snapshot.libraryRaw, snapshot.expectedLibraryRaw,
+  );
+  const stateRestored = restoreAtomicState(state, snapshot.stateBaseline, snapshot.expectedDeck);
   const sessionRollback = sessionStorage?.getItem && sessionStorage?.setItem && sessionStorage?.removeItem
-    ? restorePreviousRaw(sessionStorage, snapshot.keys.draftSessionKey, snapshot.draftSessionRaw)
+    ? restorePreviousRawWhenOwned(sessionStorage, snapshot.keys.draftSessionKey, snapshot.draftSessionRaw, null)
     : decision('failed', 'DRAFT_SESSION_ROLLBACK_UNAVAILABLE', { originalPreserved: false });
-  if (snapshot.draftSessionRaw === null && stateRestored) {
+  if (snapshot.draftSessionRaw === null && stateRestored && sessionRollback.status === 'restored') {
     try { api?.deckDraftSessionSave?.(); } catch {}
   }
   const originalPreserved = rootRollback.status === 'restored'
@@ -503,8 +534,14 @@ function settleDeckSaveAtomicitySnapshot({
       : !rootExact
         ? 'AUTHORITATIVE_ROOT_DECK_MISMATCH'
         : 'DECK_LIBRARY_READBACK_MISMATCH';
-  return atomicityDecision('failed', originalPreserved ? reason : 'ATOMIC_ROLLBACK_FAILED', {
+  const concurrentBytesPreserved = rootRollback.unknownCurrentRawPreserved === true
+    || libraryRollback.unknownCurrentRawPreserved === true
+    || sessionRollback.unknownCurrentRawPreserved === true;
+  return atomicityDecision('failed', originalPreserved
+    ? reason
+    : concurrentBytesPreserved ? 'ATOMIC_UNVERIFIED_BYTES_PRESERVED' : 'ATOMIC_ROLLBACK_FAILED', {
     failureReason: reason,
+    concurrentBytesPreserved,
     rootExact,
     libraryExact,
     originalPreserved,

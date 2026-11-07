@@ -133,3 +133,17 @@ test('mount fails closed instead of falling back to screen-space UI', () => {
   assert.equal(runtime.mounted, false);
   assert.equal(runtime.reason, 'WORLD_RENDERER_REQUIRED');
 });
+
+
+test('live Battle renderBoard renders only after synchronizing authoritative card state', async () => {
+  const { readFileSync } = await import('node:fs');
+  const source = readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
+  const begin = source.indexOf('function renderBoard(){');
+  const finish = source.indexOf('function selectEndpoint(', begin);
+  assert.ok(begin >= 0 && finish > begin);
+  const body = source.slice(begin, finish);
+  const syncAt = body.indexOf('syncBattleCentralWorldPresentation(m)');
+  const paintAt = body.indexOf('renderField3D()');
+  assert.ok(syncAt >= 0 && paintAt > syncAt, 'authoritative world state must reach 3D model before the canvas paint');
+  assert.equal((body.match(/syncBattleCentralWorldPresentation\(m\)/g) || []).length, 1, 'one sync per render, not duplicate side effects');
+});

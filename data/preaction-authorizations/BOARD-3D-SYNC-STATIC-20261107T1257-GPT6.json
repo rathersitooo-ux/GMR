@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD-3D-SYNC-STATIC-20261107T1257-GPT6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BOARD_3D_SYNC_AND_STATIC_REGRESSION_CORRECTION_R1",
+  "acquireKey": "BOARD-3D-SYNC-STATIC-20261107T1257-GPT6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR2362 Required Gate job128293166764 failed only two strict source regexes in tests/browser-static-check.mjs expecting old renderBoard order; original live match guard retained, new sync before paint fixes stale world snapshot",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "Windows source rehearsal strict unique source transforms PASS; tests/battle-board-world-field-renderer.test.mjs focused 7/7 PASS; tests/build8/8 PASS under old 2-file candidate; tests/browser-static-check.mjs two regex targeted correction must re-run before push",
+  "proceedToken": "PROCEED|BOARD-3D-SYNC-STATIC-20261107T1257-GPT6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXACT_THREE_FILE_STATIC_CHECK_REPAIR",
+  "authorizationBaseSha": "e628a054f8e2dedf93fc1328181d0515cc790bcf",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BOARD_3D_SYNC_AND_STATIC_REGRESSION_CORRECTION_R1",
+  "leaseAcquireKey": "BOARD-3D-SYNC-STATIC-20261107T1257-GPT6",
+  "leaseSnapshotReadbackAtJst": "2026-11-07 12:57 JST",
+  "leaseUntilJst": "2026-11-07 13:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:L10",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-board-world-field-renderer.test.mjs",
+    "tests/browser-static-check.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-board-world-field-renderer.test.mjs",
+    "tests/browser-static-check.mjs"
+  ],
+  "leaseExactMutableResources": "Own PR2362 branch work/board-3d-sync-order-20261107-gpt6, Windows worktree C:\\Users\\user\\GMR-worktrees\\board-3d-sync-order-20261107; browser/GAMEROAD.html renderBoard; tests/battle-board-world-field-renderer.test.mjs; tests/browser-static-check.mjs exact two stale regexes; own preaction rewrite and own exact force-with-lease; R26/own row10; Task G1374 only, no Deck PR2361/main."
+}

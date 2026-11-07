@@ -1,6 +1,7 @@
 export const FORMAL_RESOURCE_PAYMENT_KIND = Object.freeze({
   ROAD: 'ROAD',
   BATTLE: 'BATTLE',
+  ABILITY: 'ABILITY',
 });
 
 export const FORMAL_RESOURCE_PAYMENT_STATUS = Object.freeze({
@@ -28,8 +29,8 @@ function requireMana(value) {
 
 export function getFormalGenericManaCost({ kind, cardNumber } = {}) {
   if (kind === FORMAL_RESOURCE_PAYMENT_KIND.ROAD) return 0;
-  if (kind !== FORMAL_RESOURCE_PAYMENT_KIND.BATTLE) {
-    throw new TypeError('kind must be ROAD or BATTLE');
+  if (kind !== FORMAL_RESOURCE_PAYMENT_KIND.BATTLE && kind !== FORMAL_RESOURCE_PAYMENT_KIND.ABILITY) {
+    throw new TypeError('kind must be ROAD, BATTLE, or ABILITY');
   }
   return requireNonNegativeInteger(cardNumber, 'cardNumber');
 }

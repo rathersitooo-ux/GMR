@@ -164,3 +164,15 @@ test('formal resource payments conserve Mana and Honey over a range of states', 
     }
   }
 });
+
+test('ability payment uses the shared mana-first mandatory-Honey policy', () => {
+  const amount = getFormalGenericManaCost({ kind: FORMAL_RESOURCE_PAYMENT_KIND.ABILITY, cardNumber: 5 });
+  assert.equal(amount, 5);
+  const r = projectFormalResourcePayment({ kind: FORMAL_RESOURCE_PAYMENT_KIND.ABILITY, cardNumber: 5, mana: 2, honey: 3 });
+  assert.equal(r.resolved, true);
+  assert.equal(r.manaPaid, 2);
+  assert.equal(r.honeyPaid, 3);
+  assert.equal(r.manaAfter, 0);
+  assert.equal(r.honeyAfter, 0);
+  assert.equal(r.userChoiceRequired, false);
+});

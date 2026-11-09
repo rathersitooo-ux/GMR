@@ -62,7 +62,7 @@ export function writeDeckSwipeDiscoveryState({ storage, value, key = DECK_SWIPE_
 export function createDeckSwipeDiscoveryController({ storage, key = DECK_SWIPE_DISCOVERY_STORAGE_KEY } = {}) {
   let state = readDeckSwipeDiscoveryState({ storage, key });
   const hints = () => Object.freeze({
-    add: Object.freeze({ visible: !state.add, text: '→ 右フリックで札組へ' }),
+    add: Object.freeze({ visible: !state.add, text: '→ 右フリックでデッキへ' }),
     remove: Object.freeze({ visible: !state.remove, text: '← 左フリックで外す' }),
   });
   const recordSuccessfulSwipe = ({ surface, result } = {}) => {
@@ -283,7 +283,7 @@ export function installCardsDeckFindability({ document: doc = globalThis.documen
   }
   const inDeckButton = doc.createElement('button');
   inDeckButton.type = 'button';
-  inDeckButton.textContent = '札組中';
+  inDeckButton.textContent = 'デッキ中';
   inDeckButton.dataset.filter = 'in-deck';
   inDeckButton.setAttribute?.('aria-pressed', 'false');
   const outDeckButton = doc.createElement('button');
@@ -293,7 +293,7 @@ export function installCardsDeckFindability({ document: doc = globalThis.documen
   outDeckButton.setAttribute?.('aria-pressed', 'false');
   const favoriteFilterButton = doc.createElement('button');
   favoriteFilterButton.type = 'button';
-  favoriteFilterButton.textContent = '★お気に入り';
+  favoriteFilterButton.textContent = '★ お気に入り';
   favoriteFilterButton.dataset.filter = 'favorite';
   favoriteFilterButton.setAttribute?.('aria-pressed', 'false');
   const resetButton = doc.createElement('button');
@@ -518,7 +518,7 @@ function createExistingDeckAuthorityBridge(doc) {
 function cardLabel(doc, id) {
   const node = byCardId(doc, '#collectionGrid [data-id]', id);
   const aria = node?.getAttribute?.('aria-label');
-  return aria ? aria.replace(/\s+(?:札組登録済み|詳細を開く)$/u, '') : String(id);
+  return aria ? aria.replace(/\s+(?:デッキ登録済み|詳細を開く)$/u, '') : String(id);
 }
 
 function isRoyalThroughCurrentProjection(win, id) {
@@ -1164,8 +1164,8 @@ export function installCardsInspectorDeckContext({
   if (!host) {
     host = doc.createElement('div');
     host.dataset.role = 'cards-inspector-deck-context';
-    host.setAttribute?.('aria-label', '編集中の札組');
-    host.innerHTML = '<span class="cardsInspectorDeckContextLabel">編集中の札組</span><b data-role="cards-inspector-deck-title"></b><span data-role="cards-inspector-deck-count"></span><span data-role="cards-inspector-deck-save"></span>';
+    host.setAttribute?.('aria-label', '編集中のデッキ');
+    host.innerHTML = '<span class="cardsInspectorDeckContextLabel">編集中のデッキ</span><b data-role="cards-inspector-deck-title"></b><span data-role="cards-inspector-deck-count"></span><span data-role="cards-inspector-deck-save"></span>';
     addState.before?.(host);
     if (!host.parentNode && typeof copy.insertBefore === 'function') copy.insertBefore(host, addState);
   }
@@ -1358,7 +1358,7 @@ export function installCardsVoteUiRepair({
     const count = countCardsLocalVoteHistory(snapshot, cardId);
     if (countNode) {
       countNode.hidden = !cardId;
-      countNode.textContent = cardId ? `この端末のこのカード投票履歴 ${count}票` : '';
+      countNode.textContent = cardId ? `この端末でのこのカードの投票数：${count}票` : '';
     }
     return count;
   };
@@ -1481,7 +1481,7 @@ export function installSetupQuickDeckPreview({
   edit.type = 'button';
   edit.className = 'btn';
   edit.dataset.role = 'setup-quick-deck-edit';
-  edit.textContent = '編集へ';
+  edit.textContent = '編集する';
   const closeButton = doc.createElement('button');
   closeButton.type = 'button';
   closeButton.className = 'btn primary';
@@ -1871,7 +1871,7 @@ export function installFanartLocalSkinCards({ document: doc = globalThis.documen
   const urls = new Map();
   const button = doc.createElement('button');
   button.type = 'button'; button.dataset.role = 'fanart-local-skin-button'; button.textContent = '画像を設定'; button.disabled = true;
-  button.setAttribute('aria-label', 'カードを選択すると端末内画像を設定できます');
+  button.setAttribute('aria-label', 'カードを選ぶと、この端末の画像を設定できます');
   const removeButton = doc.createElement('button');
   removeButton.type = 'button'; removeButton.dataset.role = 'fanart-local-skin-remove-button'; removeButton.textContent = '画像を削除'; removeButton.hidden = true; removeButton.disabled = true;
   removeButton.setAttribute('aria-label', '選択したカードの端末内画像を削除');
@@ -1912,7 +1912,7 @@ export function installFanartLocalSkinCards({ document: doc = globalThis.documen
     button.disabled = !selected;
     const nextButtonText = selectedRecord ? '画像を変更' : '画像を設定';
     if (button.textContent !== nextButtonText) button.textContent = nextButtonText;
-    button.setAttribute('aria-label', selected ? (selectedRecord ? '選択したカードの端末内画像を変更' : '選択したカードへ端末内画像を設定') : 'カードを選択すると端末内画像を設定できます');
+    button.setAttribute('aria-label', selected ? (selectedRecord ? '選択したカードのこの端末の画像を変更' : '選択したカードにこの端末の画像を設定') : 'カードを選ぶと、この端末の画像を設定できます');
     removeButton.hidden = !selectedRecord;
     removeButton.disabled = !selectedRecord;
   };

@@ -529,7 +529,7 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
         if (node) node.textContent = SAASUNA_TUNING_LEVEL_LABELS[level];
       }
       if (learningMeta) {
-        learningMeta.textContent = `人物版: ${personaSource?.dialogueVersion ?? '未取得'} / 調整版: ${snapshot.revision}。この調整は現在の会話セッションだけに適用し、正式人物設定や正式台詞へ自動反映しません。評価・文章編集の正式候補化は既存フィードバック経路で扱います。`;
+        learningMeta.textContent = `人物版: ${personaSource?.dialogueVersion ?? '未取得'} / 調整版: ${snapshot.revision}。この調整は今の会話だけに使います。正式な設定やセリフには自動で反映しません。評価や文章の直しは、これまでのフィードバックの仕組みで扱います。`;
       }
     };
     renderTuningState();

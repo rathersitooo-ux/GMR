@@ -48,7 +48,7 @@ export function mountSlaykiaVoicePreview({
 
   if (!supported) {
     button.disabled = true;
-    setStatus(status, 'この端末ではブラウザ音声合成を利用できません。', 'unsupported');
+    setStatus(status, 'この端末では音声を使えません。', 'unsupported');
     return Object.freeze({ supported: false, dispose() {} });
   }
 

@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { readFileSync } from 'node:fs';
+
 import {
+  DECK_SCREEN_LAYOUT_CONTRACT,
   DEFAULT_DECK_SWIPE_PRESENTATION,
   DECK_SWIPE_PRESENTATION_EVENTS,
   DECK_SWIPE_EFFECT_ASSETS,
@@ -258,4 +261,37 @@ test('Setup Quick Deck projection fails closed on malformed deck shape or opaque
     }),
     /SAVED_DECK_RULE_ID_INVALID/,
   );
+});
+
+test('Deck screen layout contract keeps selected-card detail on the left and main + EX together', () => {
+  assert.equal(DECK_SCREEN_LAYOUT_CONTRACT.detail.placement, 'left');
+  assert.equal(DECK_SCREEN_LAYOUT_CONTRACT.detail.alwaysVisible, true);
+  assert.equal(DECK_SCREEN_LAYOUT_CONTRACT.detail.closeButtonVisible, false);
+  assert.equal(DECK_SCREEN_LAYOUT_CONTRACT.deck.mainAndExtraSimultaneous, true);
+  assert.equal(DECK_SCREEN_LAYOUT_CONTRACT.deck.mainAndExtraScrollsSeparately, false);
+  assert.equal(DECK_SCREEN_LAYOUT_CONTRACT.deck.slotColumns, 4);
+  assert.equal(DECK_SCREEN_LAYOUT_CONTRACT.deck.mainCapacity, 40);
+  assert.equal(DECK_SCREEN_LAYOUT_CONTRACT.deck.extraCapacity, 7);
+  assert.equal(DECK_SCREEN_LAYOUT_CONTRACT.collection.placement, 'right');
+  assert.equal(DECK_SCREEN_LAYOUT_CONTRACT.mutatesDeck, false);
+  assert.equal(DECK_SCREEN_LAYOUT_CONTRACT.mutatesSelection, false);
+});
+
+test('GAMEROAD deck screen implements the layout contract in its own style block', () => {
+  const html = readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
+  const start = html.indexOf(`<style id="${DECK_SCREEN_LAYOUT_CONTRACT.styleId}">`);
+  assert.ok(start >= 0, 'deck screen layout style block exists');
+  const end = html.indexOf('</style>', start);
+  const block = html.slice(start, end);
+  assert.ok(block.includes(DECK_SCREEN_LAYOUT_CONTRACT.media.replace('(min-width:901px) and (min-height:471px)', '@media(min-width:901px) and (min-height:471px)')) || block.includes('@media(min-width:901px) and (min-height:471px)'));
+  // Detail is a real left grid column and is displayed even when the inspector state is closed.
+  assert.ok(block.includes('grid-template-areas:"preview deck collection"'));
+  assert.ok(block.includes('.screen.cards .cardPreview{grid-area:preview;display:grid!important;position:relative!important'));
+  assert.ok(block.includes('.screen.cards .cardPreview #r4PreviewClose{display:none!important}'));
+  assert.ok(block.includes('grid-template-columns:296px minmax(0,1.25fr) minmax(0,1fr)'));
+  // Main and EX share one non-scrolling area with a 4-column slot grid.
+  assert.ok(block.includes('.screen.cards .deckEditScroll{overflow:visible'));
+  assert.ok(block.includes('.screen.cards .deckSlots{grid-template-columns:repeat(4,minmax(0,1fr))'));
+  assert.ok(block.includes('.screen.cards .deckBoard{grid-area:deck}'));
+  assert.ok(block.includes('.screen.cards .collection{grid-area:collection}'));
 });

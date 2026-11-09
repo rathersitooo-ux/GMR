@@ -146,29 +146,28 @@ test('unregistered adjudicated report is not consumed as a Daily status', () => 
   assert.equal(result.sourceReason, null);
 });
 
-test('existing Daily core receives adjudicated Partner report status as optional stop with no skip debt', () => {
+test('Daily Tour keeps adjudicated Partner report status out of its route while the status stays available for the partner conversation', () => {
   const registeredStopIds = ['brain_training', DAILY_PARTNER_REPORT_STOP_ID];
   const composed = composeDailyStopsWithPartnerReport({
-    stops: [{ id: 'brain_training', kind: 'interactive', registered: true, eligible: true }],
+    stops: [{ id: 'brain_training', kind: 'free', authoritative: true, registered: true, eligible: true }],
     registeredStopIds,
     adjudicatedReportRead: adjudicatedReport(),
   });
 
   assert.equal(composed.partnerReport.reportStatus.status, 'accepted');
+  assert.equal(composed.partnerReport.available, true);
+  assert.deepEqual(composed.stops.map((stop) => stop.id), ['brain_training', DAILY_PARTNER_REPORT_STOP_ID]);
   const plan = createDailyTourPlan({
     dayKey: '2026-08-30',
     stops: composed.stops,
-    registeredStopIds: composed.registeredStopIds,
-    includeBattleFinale: false,
   });
-  assert.deepEqual(plan.route.map((stop) => stop.id), ['brain_training', DAILY_PARTNER_REPORT_STOP_ID]);
+  assert.deepEqual(plan.route.map((stop) => stop.id), ['brain_training']);
 
   const afterBrain = advanceDailyTour(plan, { type: 'complete_stop', stopId: 'brain_training' });
-  const afterSkip = advanceDailyTour(afterBrain, { type: 'skip_stop', stopId: DAILY_PARTNER_REPORT_STOP_ID });
-  const summary = summarizeDailyTour(afterSkip);
+  const summary = summarizeDailyTour(afterBrain);
   assert.equal(summary.tourSettled, true);
   assert.equal(summary.hasDebt, false);
-  assert.equal(summary.skippedStopCount, 1);
+  assert.equal(summary.skippedStopCount, 0);
 });
 
 test('composition never grants relationship, reward, save or raw-chat collection authority', () => {

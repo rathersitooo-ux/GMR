@@ -141,7 +141,7 @@ export function ensureShopLiveCatalogRuntime(documentSource = globalThis.documen
 }
 
 export const GACHA_PREVIEW_NOTICE_ID = 'gachaPreviewAuthorityNotice';
-export const GACHA_PREVIEW_NOTICE_TEXT = '※ 現在は演出プレビューです。表示されたカードは所持・保存には反映されません。';
+export const GACHA_PREVIEW_NOTICE_TEXT = '※ 今は見た目の確認だけです。表示されたカードは手に入らず、保存もされません。';
 
 export const GACHA_NATIVE_REVEAL_STYLE_ID = 'gameroad-gacha-native-reveal-r4';
 export const GACHA_NATIVE_REVEAL_SKIP_TEXT = 'すぐ結果を見る';

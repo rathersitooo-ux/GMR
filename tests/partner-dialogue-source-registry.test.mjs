@@ -158,7 +158,7 @@ test('approved Saasuna Advice emits exactly two reversible player replies', () =
   assert.equal(projection.visible, true);
   assert.equal(projection.options.length, 2);
   assert.deepEqual(projection.options.map((option) => option.label), ['ヒントだけ教えて', '答えまで教えて']);
-  assert.equal(projection.options.some((option) => option.label === 'まかせた！' || option.label === 'まかせろ！'), false);
+  assert.equal(projection.options.some((option) => option.label === 'パートナーにまかせる！' || option.label === '自分で操作する！'), false);
   assert.equal(projection.presentationOnly, true);
   assert.equal(projection.autoExecute, false);
   assert.equal(projection.emits2v2Ping, false);
@@ -213,16 +213,16 @@ test('reply selection remains presentation-only and resets for the next conversa
 });
 
 test('real delegation control gets the approved manual and delegated display labels only', () => {
-  const manual = presentationButton('まかせた');
+  const manual = presentationButton('パートナーにまかせる');
   assert.equal(normalizePartnerDelegationControlPresentation(manual), true);
-  assert.equal(manual.textContent, 'まかせた！');
+  assert.equal(manual.textContent, 'パートナーにまかせる！');
   assert.equal(manual.dataset.partnerDelegationLabelPresentationOnly, 'true');
 
-  const delegated = presentationButton('まかせろ');
+  const delegated = presentationButton('自分で操作する');
   assert.equal(normalizePartnerDelegationControlPresentation(delegated), true);
-  assert.equal(delegated.textContent, 'まかせろ！');
+  assert.equal(delegated.textContent, '自分で操作する！');
   assert.equal(normalizePartnerDelegationControlPresentation(delegated), true);
-  assert.equal(delegated.textContent, 'まかせろ！');
+  assert.equal(delegated.textContent, '自分で操作する！');
 
   assert.equal(PARTNER_DIALOGUE_SOURCE_REGISTRY_CONTRACT.delegationLabelPresentation, 'existing-real-button-text-only');
   assert.equal(PARTNER_DIALOGUE_SOURCE_REGISTRY_CONTRACT.delegationGameplayAuthority, 'existing-gameplay-runtime');
@@ -259,7 +259,7 @@ test('live presentation observes the existing button without installing gameplay
     }
   }
 
-  const button = presentationButton('まかせた');
+  const button = presentationButton('パートナーにまかせる');
   const documentElement = {};
   const doc = {
     documentElement,
@@ -269,15 +269,15 @@ test('live presentation observes the existing button without installing gameplay
   assert.ok(control);
   assert.equal(control.presentationOnly, true);
   assert.equal(control.gameplayAuthorityMutated, false);
-  assert.equal(button.textContent, 'まかせた！');
+  assert.equal(button.textContent, 'パートナーにまかせる！');
   assert.equal(observers.length, 1);
   assert.equal(observers[0].observations.length, 1);
   assert.equal(observers[0].observations[0].target, button);
   assert.deepEqual(observers[0].observations[0].options.attributeFilter, ['class']);
 
-  button.textContent = 'まかせろ';
+  button.textContent = '自分で操作する';
   observers[0].callback();
-  assert.equal(button.textContent, 'まかせろ！');
+  assert.equal(button.textContent, '自分で操作する！');
 
   control.disconnect();
   assert.equal(observers[0].disconnected, true);

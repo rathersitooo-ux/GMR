@@ -1075,10 +1075,10 @@ export function bindBattleAutoHandSelector({ target } = {}) {
     const mode = BATTLE_AUTO_VISIBLE_MODES[modeIndex];
     button.dataset.autoMode = mode;
     button.textContent = `AUTO ${BATTLE_AUTO_MODE_LABELS[mode]}`;
-    button.setAttribute('aria-label', `オート札選択 ${BATTLE_AUTO_MODE_LABELS[mode]}`);
+    button.setAttribute('aria-label', `カードの自動選択：${BATTLE_AUTO_MODE_LABELS[mode]}`);
     button.title = mode === 'manual'
-      ? 'AUTO: 手動。押すと左端→右端→最大→最小を切替'
-      : `AUTO: ${BATTLE_AUTO_MODE_LABELS[mode]}。札が揃うと自動確定。経路は最後の札より先、対象は後で手動`;
+      ? 'AUTO：手動。押すと左端→右端→最大→最小に切り替わります'
+      : `AUTO：${BATTLE_AUTO_MODE_LABELS[mode]}。カードがそろうと自動で決まります。経路は最後のカードより先、対象はあとで自分で選んでください`;
   };
 
   const run = async () => {
@@ -1188,7 +1188,7 @@ export function bindBattlePlanAutoCommit({
     const roadId = String(road.value || '');
     const battleId = String(battle.value || '');
     if (roadId && !battleId) cue.textContent = '必要なら先に人物をドラッグして経路を予約。最後にバトルカードを選ぶ';
-    else if (roadId && battleId && roadId !== battleId) cue.textContent = '必要札が揃ったため自動確定中';
+    else if (roadId && battleId && roadId !== battleId) cue.textContent = '必要カードが揃ったため自動確定中';
     return true;
   };
 

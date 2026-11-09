@@ -446,7 +446,7 @@ export function projectBattleContextualTutorialReplay(snapshot = {}) {
 
   if (phase === 'plan' && !busy) {
     if (!exactPresentationToken(snapshot.roadId)) {
-      message = '手札からロードカードを1枚選ぶ';
+      message = '手カードからロードカードを1枚選ぶ';
       focusRole = 'road';
     } else if (!exactPresentationToken(snapshot.battleId)) {
       message = '次に、別のバトルカードを1枚選ぶ';
@@ -739,14 +739,14 @@ function resolveDefaultQuickRoutePart({ routeId, partId, snapshot, fingerprint }
     const prefix = Number.isInteger(snapshot?.round) && snapshot.round >= 0 ? `第${snapshot.round}ラウンド。` : '';
     const current = `${prefix}左列${lanes.L}、中央列${lanes.C}、右列${lanes.R}です。`;
     const recent = quickRouteLogRows(snapshot?.logRows).slice(-2);
-    return recent.length ? `${current} 直近の公開ログは、${recent.join('／')}。` : current;
+    return recent.length ? `${current} 直近の記録は、${recent.join('／')}。` : current;
   }
   if (routeId === 'situation' && partId === 'calculate_public' && lanes) {
     const rows = [['左列', lanes.L], ['中央列', lanes.C], ['右列', lanes.R]];
     const total = lanes.L + lanes.C + lanes.R;
     const max = Math.max(lanes.L, lanes.C, lanes.R);
     const leaders = rows.filter(([, value]) => value === max).map(([name]) => name).join('・');
-    return `3列の公開値合計は${total}。最も進んでいるのは${leaders}で${max}です。`;
+    return `3列の合計は${total}。いちばん進んでいるのは${leaders}で${max}です。`;
   }
   return null;
 }
@@ -1246,7 +1246,7 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
     root = doc.createElement('section');
     root.id = CHAT_ROOT_ID;
     root.setAttribute('aria-label', 'パートナーとの対戦チャット');
-    root.innerHTML = '<div class="partnerAdviceRoleControl"><span>アドバイスパートナー</span><strong data-role="advice-partner-name">パートナー</strong><button type="button" class="partnerAdvicePartnerSwitch" aria-label="アドバイスパートナーを変更">↻</button></div><div class="partnerAdviceLaneProgress" aria-label="3列の現在進行値"><div class="partnerAdviceLane" data-lane="L"><span>左列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="C"><span>中央列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="R"><span>右列</span><b>—</b></div></div><div class="partnerAdviceSpeech partner characterReaction" data-role="character-reaction" aria-live="polite"></div><div class="partnerAdviceSpeech partner" aria-live="polite"></div><div class="partnerAdviceSpeech player" aria-live="polite"></div><section class="partnerAdviceTutorialConversation" data-role="tutorial-experience-conversation" aria-live="polite" hidden><div class="partnerAdviceTutorialQuestion" data-role="tutorial-experience-question"></div><div class="partnerAdviceTutorialChoices" data-role="tutorial-experience-choices"></div><button type="button" class="partnerAdviceTutorialSkip" data-role="tutorial-experience-skip" hidden>このまま進む</button></section><button type="button" class="partnerAdviceTutorialReplay" aria-pressed="false">操作を再確認</button>';
+    root.innerHTML = '<div class="partnerAdviceRoleControl"><span>アドバイスパートナー</span><strong data-role="advice-partner-name">パートナー</strong><button type="button" class="partnerAdvicePartnerSwitch" aria-label="アドバイスパートナーを変更">↻</button></div><div class="partnerAdviceLaneProgress" aria-label="3列の現在進行値"><div class="partnerAdviceLane" data-lane="L"><span>左列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="C"><span>中央列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="R"><span>右列</span><b>—</b></div></div><div class="partnerAdviceSpeech partner characterReaction" data-role="character-reaction" aria-live="polite"></div><div class="partnerAdviceSpeech partner" aria-live="polite"></div><div class="partnerAdviceSpeech player" aria-live="polite"></div><section class="partnerAdviceTutorialConversation" data-role="tutorial-experience-conversation" aria-live="polite" hidden><div class="partnerAdviceTutorialQuestion" data-role="tutorial-experience-question"></div><div class="partnerAdviceTutorialChoices" data-role="tutorial-experience-choices"></div><button type="button" class="partnerAdviceTutorialSkip" data-role="tutorial-experience-skip" hidden>このまま進む</button></section><button type="button" class="partnerAdviceTutorialReplay" aria-pressed="false">操作の説明をもう一度見る</button>';
     const statusNode = host.querySelector('.partnerDecisionStatus');
     host.insertBefore(root, statusNode || host.firstChild);
   }
@@ -1256,7 +1256,7 @@ if (!quickRoutesNode) {
   quickRoutesNode = doc.createElement('div');
   quickRoutesNode.className = 'partnerAdviceQuickRoutes';
   quickRoutesNode.setAttribute('aria-label', 'パートナー会話の3つの入口');
-  for (const [routeId, label] of [['idea', 'アイディア ON'], ['casual', '雑談'], ['situation', '戦況報告']]) {
+  for (const [routeId, label] of [['idea', 'アイデア：オン'], ['casual', '雑談'], ['situation', '戦況報告']]) {
     const routeButton = doc.createElement('button');
     routeButton.type = 'button';
     routeButton.className = 'partnerAdviceQuickRoute';
@@ -1416,7 +1416,7 @@ const saasunaMotion = createSaasunaMotionController({ doc, bustup: saasunaBustup
   if (quickRoutesElement) quickRoutesElement.hidden = !quickRoutesAvailable;
   const ideaButton = root.querySelector('[data-quick-route="idea"]');
   if (ideaButton) {
-    ideaButton.textContent = quickRouteStatus.ideaEnabled ? 'アイディア ON' : 'アイディア OFF';
+    ideaButton.textContent = quickRouteStatus.ideaEnabled ? 'アイデア：オン' : 'アイデア：オフ';
     ideaButton.setAttribute('aria-pressed', quickRouteStatus.ideaEnabled ? 'true' : 'false');
     ideaButton.disabled = !quickRoutesAvailable;
   }
@@ -1440,7 +1440,7 @@ const saasunaMotion = createSaasunaMotionController({ doc, bustup: saasunaBustup
       tutorialButton.hidden = !tutorialStatus.available;
       tutorialButton.disabled = !tutorialStatus.available;
       tutorialButton.setAttribute('aria-pressed', tutorialStatus.active ? 'true' : 'false');
-      tutorialButton.textContent = tutorialStatus.active ? '説明を閉じる' : '操作を再確認';
+      tutorialButton.textContent = tutorialStatus.active ? '説明を閉じる' : '操作の説明をもう一度見る';
     }
     return Object.freeze({ projection, tutorial: tutorialStatus, idleReadable, characterReaction: lastCharacterReaction, bustup: bustupPresentation, advicePartnerId: current?.partnerId || null, roster });
   };

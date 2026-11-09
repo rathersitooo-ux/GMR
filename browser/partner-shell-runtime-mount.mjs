@@ -212,11 +212,11 @@ function renderDialogueFeedback(doc, section, model, services) {
       try {
         result = services.previewVoice({ text: textarea.value, tuning: readTuning() });
       } catch {
-        status.textContent = '音声試聴に失敗しました';
+        status.textContent = '音声が聞けませんでした';
         return;
       }
       if (!result?.ok) {
-        status.textContent = 'この端末では音声試聴を使えません';
+        status.textContent = 'この端末では音声を使えません。';
         return;
       }
       status.textContent = '試聴中';
@@ -226,17 +226,17 @@ function renderDialogueFeedback(doc, section, model, services) {
         services.settleVoicePreview(result);
         if (outcome?.status === 'completed') status.textContent = '試聴完了';
         else if (outcome?.status === 'cancelled') status.textContent = '試聴を中断しました';
-        else status.textContent = '音声試聴に失敗しました';
+        else status.textContent = '音声が聞けませんでした';
       }, () => {
         if (!services.isVoicePreviewActive(result)) return;
         services.settleVoicePreview(result);
-        status.textContent = '音声試聴に失敗しました';
+        status.textContent = '音声が聞けませんでした';
       });
     });
     panel.append(preview);
   }
 
-  const submit = element(doc, 'button', 'partner-dialogue-submit', 'この変更を改善要望として送る');
+  const submit = element(doc, 'button', 'partner-dialogue-submit', 'この変更を改善の要望として送る');
   submit.type = 'button';
   submit.dataset.partnerDialogueAction = 'submit';
   submit.addEventListener('click', async () => {

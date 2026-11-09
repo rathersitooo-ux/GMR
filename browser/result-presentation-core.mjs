@@ -54,7 +54,7 @@ export function projectResultRankPresentation(formalRank) {
     ok: true,
     reason: 'OK',
     formalRank,
-    visibleLabel: formalRank === 1 ? '1位' : '勝利',
+    visibleLabel: `${formalRank}位`,
     rankColorRole: RANK_COLOR_ROLES[formalRank] ?? null
   });
 }

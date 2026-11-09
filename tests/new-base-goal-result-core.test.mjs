@@ -13,6 +13,7 @@ import {
 } from '../browser/new-base-goal-path-core.mjs';
 import { shouldForwardLegacySevenRoadWin } from '../browser/new-base-legacy-seven-win-gate-core.mjs';
 import { compatible } from '../browser/road-move-compatibility-core.mjs';
+import { composeTurnMovementBudget } from '../browser/new-base-movement-budget-core.mjs';
 import { projectResultPresentation } from '../browser/result-presentation-core.mjs';
 
 function goalEvent(overrides = {}) {
@@ -82,8 +83,12 @@ test('ROAD completion, including a seven-card claim, cannot terminate this core'
 
 test('the numeral seven stays domain-local across Road movement, straight progression, and terminal GOAL', () => {
   const movementState = {
-    roadValueOf(card) {
-      return card?.kind === 'road' ? card.value : null;
+    movementBudgetOf(card) {
+      if (card?.kind !== 'road') return null;
+      return composeTurnMovementBudget({
+        baseMovementBudget: card.movementDelta,
+        diceMovementDelta: 0,
+      })?.totalMovementBudget ?? null;
     },
     pathStepCountOf(path) {
       return path?.steps;
@@ -96,8 +101,8 @@ test('the numeral seven stays domain-local across Road movement, straight progre
     }
   };
 
-  assert.equal(compatible({ id: 'road-6', kind: 'road', value: 6 }, { steps: 6 }, movementState), true);
-  assert.equal(compatible({ id: 'road-7', kind: 'road', value: 7 }, { steps: 1 }, movementState), false);
+  assert.equal(compatible({ id: 'road-6', kind: 'road', printedNumber: 6, movementDelta: 6 }, { steps: 6 }, movementState), true);
+  assert.equal(compatible({ id: 'road-7', kind: 'road', printedNumber: 7, movementDelta: 0 }, { steps: 1 }, movementState), false);
 
   const participantIds = ['p1', 'p2', 'p3', 'p4'];
   const layout = createNewBaseGoalPathLayout({

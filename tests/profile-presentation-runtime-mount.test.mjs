@@ -117,15 +117,15 @@ test('Historical record deck text uses the frozen match-start snapshot with exac
   };
   const fakeWindow = {
     __CARD_DATA__: {
-      A: { name: '森の札' },
-      B: { name: '音の札' },
-      EX1: { name: 'EX札' },
+      A: { name: '森のカード' },
+      B: { name: '音のカード' },
+      EX1: { name: 'EXカード' },
     },
   };
 
   assert.equal(
     projectHistoricalDeckText(historyEntry, fakeWindow),
-    '使用デッキ「森のデッキ」\nメイン 3枚：森の札（A） ×2 / 音の札（B）\nEX 1枚：EX札（EX1）',
+    '使用デッキ「森のデッキ」\nメイン 3枚：森のカード（A） ×2 / 音のカード（B）\nEX 1枚：EXカード（EX1）',
   );
 });
 
@@ -141,14 +141,14 @@ test('Historical record deck text resolves the live Array card-data shape and ke
   };
   const fakeWindow = {
     __CARD_DATA__: [
-      { id: 'A', name: '森の札' },
-      { id: 'EX1', name: 'EX札' },
+      { id: 'A', name: '森のカード' },
+      { id: 'EX1', name: 'EXカード' },
     ],
   };
 
   assert.equal(
     projectHistoricalDeckText(historyEntry, fakeWindow),
-    '使用デッキ（deck-live）\nメイン 2枚：森の札（A） / UNKNOWN\nEX 1枚：EX札（EX1）',
+    '使用デッキ（deck-live）\nメイン 2枚：森のカード（A） / UNKNOWN\nEX 1枚：EXカード（EX1）',
   );
 });
 

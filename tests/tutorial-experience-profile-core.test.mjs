@@ -261,11 +261,11 @@ test('malformed prompt state fails closed instead of inventing a profile', () =>
 
 test('without a ready profile canonical GAMEROAD help is preserved exactly', () => {
   const help = projectTutorialExperienceHelp({
-    canonicalMessage: '手札からロードカードを1枚選ぶ',
+    canonicalMessage: '手カードからロードカードを1枚選ぶ',
     focusRole: 'road',
   });
-  assert.equal(help.message, '手札からロードカードを1枚選ぶ');
-  assert.equal(help.canonicalMessage, '手札からロードカードを1枚選ぶ');
+  assert.equal(help.message, '手カードからロードカードを1枚選ぶ');
+  assert.equal(help.canonicalMessage, '手カードからロードカードを1枚選ぶ');
   assert.equal(help.adapted, false);
   assert.equal(help.autoExecute, false);
   assert.equal(help.saveMutated, false);
@@ -276,11 +276,11 @@ test('beginner Road help teaches bidirectional planning without changing Battle 
   const control = createTutorialExperienceProfileControl();
   control.chooseAudience('beginner');
   const help = projectTutorialExperienceHelp({
-    canonicalMessage: '手札からロードカードを1枚選ぶ',
+    canonicalMessage: '手カードからロードカードを1枚選ぶ',
     focusRole: 'road',
     experienceProfile: control.profile(),
   });
-  assert.equal(help.canonicalMessage, '手札からロードカードを1枚選ぶ');
+  assert.equal(help.canonicalMessage, '手カードからロードカードを1枚選ぶ');
   assert.match(help.message, /順番は固定じゃない/);
   assert.match(help.message, /ロードカードを先に触っても、移動から始めてもOK/);
   assert.match(help.message, /使えるロードカードが光って浮く/);
@@ -303,12 +303,12 @@ test('each named supported card game adapts road, battle, and ready with differe
   control.chooseAudience('experienced');
   const stageSignals = {
     'master-duel': [/展開の軸/, /実際にぶつける1枚/, /2枚が合っているか/],
-    'duel-masters-plays': [/ターンに何を軸/, /実際にぶつける札/, /組み合わせを見直す/],
+    'duel-masters-plays': [/ターンに何を軸/, /実際にぶつけるカード/, /組み合わせを見直す/],
     'pokemon-pocket': [/このターンの方針/, /実際に勝負へ使う1枚/, /行動前に選択を見直す/],
-    shadowverse: [/このターンの動きの軸/, /勝負へ出す札/, /プレイ確定前に選択を見直す/],
+    shadowverse: [/このターンの動きの軸/, /勝負へ出すカード/, /プレイ確定前に選択を見直す/],
   };
   const stages = [
-    ['road', '手札からロードカードを1枚選ぶ'],
+    ['road', '手カードからロードカードを1枚選ぶ'],
     ['battle', '次に、別のバトルカードを1枚選ぶ'],
     ['ready', '予約内容を確認して準備完了'],
   ];

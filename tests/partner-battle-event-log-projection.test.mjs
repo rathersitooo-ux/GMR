@@ -4,7 +4,11 @@ import assert from 'node:assert/strict';
 import {
   PARTNER_BATTLE_EVENT_PROJECTION,
   createPartnerBattleEventLogConsumerAdapter,
-  projectPartnerBattleEventLog
+  emptyBattleR75SelfHudState,
+  mountBattleR75SelfHudRuntime,
+  projectBattleR75SelfResolution,
+  projectPartnerBattleEventLog,
+  reduceBattleR75SelfHudState
 } from '../browser/partner-battle-event-log-projection.mjs';
 import {
   BATTLE_REPLAY_LIVE_ADAPTER,
@@ -220,7 +224,7 @@ function liveResolution(serial = 1) {
         winner: true,
         cards: [{
           cardId: 'C1',
-          label: '公開札1',
+          label: '公開カード1',
           value: 6,
           origin: 'active_submission',
           hiddenDeckOrder: ['SECRET_ORDER']
@@ -233,7 +237,7 @@ function liveResolution(serial = 1) {
         team: 'B',
         score: 9,
         winner: false,
-        cards: [{ cardId: 'C2', label: '公開札2', value: 4, origin: 'active_submission' }]
+        cards: [{ cardId: 'C2', label: '公開カード2', value: 4, origin: 'active_submission' }]
       }
     ],
     laneGains: [{ id: 'P1', lane: 'C', before: 2, after: 4, added: 2 }],
@@ -376,7 +380,7 @@ test('Battle recent public history explains only canonical public causal detail 
   );
 
   const text = fake.children[0].textContent;
-  assert.match(text, /公開カード C1\(6\) \/ C2\(4\) → 対象 C列 → Shield使用 → 進行 C列 2→4（\+2）/);
+  assert.match(text, /公開カード C1\(6\) \/ C2\(4\) → 対象 C列 → シールド使用 → 進行 C列 2→4（\+2）/);
   assert.match(text, /A 21 \/ B 18/);
   assert.match(text, /勝者2人/);
   for (const secret of ['P1', 'P3', 'You', 'CPU', 'SECRET_ORDER', 'SECRET_HAND', 'SECRET_FUTURE']) {
@@ -448,4 +452,56 @@ test('live adapter declares Partner log as presentation-only use of the existing
     privateDataPolicy: 'NEVER_PROJECT_PRIVATE_DATA',
     authority: 'presentation_only_no_game_state_write'
   });
+});
+
+test('R75 self HUD hides the SCORE box until a battle score exists', () => {
+  const styles = [];
+  const fakeElement = () => ({
+    setAttribute() {},
+    appendChild() {},
+    remove() {},
+    querySelector: () => null,
+    querySelectorAll: () => [],
+    classList: { contains: () => false, add() {} },
+    dataset: {},
+    style: { setProperty() {} },
+    hidden: false,
+    textContent: ''
+  });
+  const fakeDocument = {
+    head: { appendChild(el) { styles.push(el); } },
+    body: { classList: { contains: () => false } },
+    readyState: 'complete',
+    createElement: () => fakeElement(),
+    getElementById: () => null,
+    querySelector: () => null,
+    querySelectorAll: () => [],
+    addEventListener() {}
+  };
+  const runtime = mountBattleR75SelfHudRuntime({ document: fakeDocument });
+  assert.ok(runtime);
+  const css = styles.map((el) => el.textContent || '').join('\n');
+  assert.match(css, /\.grR75Metric\[hidden\]\{display:none!important\}/);
+  assert.match(css, /\[data-battle-r75-self-hud="1"\]\[hidden\]\{display:none!important\}/);
+  assert.equal(runtime.destroy(), true);
+});
+
+test('R75 self HUD shows the local battle score only after a settle-stage resolution', () => {
+  const resolution = projectBattleR75SelfResolution({
+    round: 1,
+    localPlayerId: 'P2',
+    playerIds: ['P2', 'P3', 'P4', 'P1'],
+    resolutionRows: [
+      { score: '12', cards: [] },
+      { score: '5', cards: [] },
+      { score: '5', cards: [] },
+      { score: '5', cards: [] }
+    ],
+    stage: 'result'
+  });
+  assert.equal(resolution?.score, 12);
+  const withScore = reduceBattleR75SelfHudState(emptyBattleR75SelfHudState(), { turn: 1, resolution });
+  assert.equal(withScore.score, 12);
+  const withoutScore = reduceBattleR75SelfHudState(emptyBattleR75SelfHudState(), { turn: 1, resolution: null });
+  assert.equal(withoutScore.score, null);
 });

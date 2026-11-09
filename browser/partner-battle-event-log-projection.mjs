@@ -335,6 +335,7 @@ function ensureBattleR75Style(documentRef) {
   style.textContent = `
 [${R75_HUD_ATTR}="1"]{position:absolute;z-index:44;left:50%;top:4px;transform:translateX(-50%);min-height:38px;max-width:min(52vw,420px);display:flex;align-items:flex-start;justify-content:center;gap:6px;pointer-events:none;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f7fff9}
 [${R75_HUD_ATTR}="1"][hidden]{display:none!important}
+[${R75_HUD_ATTR}="1"] .grR75Metric[hidden]{display:none!important}
 [${R75_HUD_ATTR}="1"] .grR75Metric{min-width:42px;height:36px;padding:3px 6px;display:grid;place-items:center;border:1px solid rgba(231,249,241,.38);border-radius:11px;background:rgba(3,24,19,.88);box-shadow:0 7px 18px rgba(0,0,0,.28);font-variant-numeric:tabular-nums}
 [${R75_HUD_ATTR}="1"] .grR75Metric span{font-size:6px;line-height:1;font-weight:950;letter-spacing:.12em;color:#a8c8bd}
 [${R75_HUD_ATTR}="1"] .grR75Metric b{font-size:16px;line-height:1;font-weight:1000}
@@ -358,8 +359,8 @@ function ensureBattleR75Host(documentRef) {
   if (host) return host;
   host = documentRef.createElement('section');
   host.setAttribute(R75_HUD_ATTR, '1');
-  host.setAttribute('aria-label', '自分のTurn・Battle SCORE・使用済みBattle Card');
-  host.innerHTML = '<div class="grR75Metric grR75Turn"><span>TURN</span><b></b></div><div class="grR75Metric grR75Score" hidden><span>SCORE</span><b></b></div><div class="grR75Chain" aria-label="使用済みBattle Card"></div>';
+  host.setAttribute('aria-label', '自分のターン・バトルスコア・使ったバトルカード');
+  host.innerHTML = '<div class="grR75Metric grR75Turn"><span>TURN</span><b></b></div><div class="grR75Metric grR75Score" hidden><span>SCORE</span><b></b></div><div class="grR75Chain" aria-label="使ったバトルカード"></div>';
   battleMap.appendChild(host);
   return host;
 }
@@ -400,8 +401,8 @@ function renderBattleR75Host(documentRef, host, state) {
     chain.appendChild(node);
   });
   chain.setAttribute?.('aria-label', cards.length
-    ? `使用済みBattle Card ${cards.map(card => `${card.label} ${card.value}`).join(' ▷ ')}`
-    : '使用済みBattle Card なし');
+    ? `使ったバトルカード ${cards.map(card => `${card.label} ${card.value}`).join(' ▷ ')}`
+    : '使ったバトルカードはありません');
 }
 
 export function mountBattleR75SelfHudRuntime(globalRef = globalThis) {

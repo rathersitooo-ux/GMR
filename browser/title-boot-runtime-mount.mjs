@@ -153,7 +153,7 @@ function renderBootState(state, { source = globalThis, document: doc = globalThi
   surface.dataset.titleBootMode = 'boot';
   surface.dataset.bootPhase = projection.phase;
   const status = surface.querySelector('.grTitleBootStatus');
-  if (status) status.textContent = projection.statusCode || (projection.phase === BOOT_LOADING_PHASES.RECOVERY ? '対戦に復帰しています…' : '起動中…');
+  if (status) status.textContent = projection.statusCode || (projection.phase === BOOT_LOADING_PHASES.RECOVERY ? '対戦に戻っています…' : '起動中…');
   const progress = surface.querySelector('.grTitleBootProgress');
   if (progress) {
     progress.hidden = projection.progress == null;
@@ -207,7 +207,7 @@ async function recoverMatch(route, { source = globalThis, document: doc = global
   const matchRecovery = recoveryRuntime(source);
   if (!matchRecovery) {
     runtime.lastError = 'MATCH_RECOVERY_RUNTIME_UNAVAILABLE';
-    renderTitle({ source, document: doc, statusText: '対戦への復帰を開始できませんでした' });
+    renderTitle({ source, document: doc, statusText: '対戦に戻れませんでした' });
     return Object.freeze({ status: 'rejected', reason: 'match_recovery_runtime_unavailable' });
   }
 
@@ -226,7 +226,7 @@ async function recoverMatch(route, { source = globalThis, document: doc = global
   renderBootState(createBootLoadingState({
     phase: BOOT_LOADING_PHASES.RECOVERY,
     canCancel: true,
-    statusCode: '対戦に復帰しています…',
+    statusCode: '対戦に戻っています…',
   }), { source, document: doc, onCancel });
 
   let result;
@@ -236,7 +236,7 @@ async function recoverMatch(route, { source = globalThis, document: doc = global
     if (recovery.cancelled || abortController.signal.aborted) return Object.freeze({ status: 'cancelled' });
     runtime.lastError = String(error?.message || error || 'MATCH_RECOVERY_FAILED');
     runtime.recovery = null;
-    renderTitle({ source, document: doc, statusText: '対戦への復帰に失敗しました' });
+    renderTitle({ source, document: doc, statusText: '対戦に戻れませんでした' });
     return Object.freeze({ status: 'failed', error: runtime.lastError });
   }
 
@@ -244,7 +244,7 @@ async function recoverMatch(route, { source = globalThis, document: doc = global
   if (result?.committed !== true) {
     runtime.lastError = 'MATCH_RECOVERY_NOT_COMMITTED';
     runtime.recovery = null;
-    renderTitle({ source, document: doc, statusText: '対戦への復帰に失敗しました' });
+    renderTitle({ source, document: doc, statusText: '対戦に戻れませんでした' });
     return Object.freeze({ status: 'failed', error: runtime.lastError });
   }
 

@@ -382,7 +382,7 @@ test('voice preview settles completion and ignores cancelled stale runs', async 
   preview.click();
   previews[2].finish('error');
   await new Promise((resolve) => setImmediate(resolve));
-  assert.equal(status.textContent, '音声試聴に失敗しました');
+  assert.equal(status.textContent, '音声が聞けませんでした');
 
   preview.click();
   assert.equal(runtime.destroy(), true);

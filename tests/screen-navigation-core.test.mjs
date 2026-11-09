@@ -864,7 +864,7 @@ test('successful Gacha navigation adds one truthful preview-only notice and neve
     assert.equal(currentScreen, 'gacha');
     const note = byId.get('gachaPreviewAuthorityNotice');
     assert.ok(note);
-    assert.equal(note.textContent, '※ 現在は演出プレビューです。表示されたカードは所持・保存には反映されません。');
+    assert.equal(note.textContent, '※ 今は見た目の確認だけです。表示されたカードは手に入らず、保存もされません。');
     assert.equal(note.attributes.role, 'note');
     assert.equal(note.attributes['data-gacha-authority'], 'preview-only');
     assert.deepEqual(controls.children, [note, openButton]);

@@ -55,7 +55,7 @@ export function mountPartnerCostumeScreen({
     return el;
   }
 
-  const revertButton = button('元へ戻す', () => { sessionRuntime.revert(); detailItemId = null; render(); });
+  const revertButton = button('元に戻す', () => { sessionRuntime.revert(); detailItemId = null; render(); });
   const recommendedButton = button('おすすめ一式', () => {
     const set = getRecommendedSet(sessionRuntime.getView().partnerId);
     if (set) sessionRuntime.equipRecommendedSet(set);

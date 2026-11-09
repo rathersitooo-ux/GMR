@@ -118,6 +118,6 @@ test('revert, recommended set and save use existing session authority only', asy
   assert.deepEqual(session.getView().savedSelection, session.getView().draftSelection);
   find(root, (el) => el.dataset?.costumeCategory === 'shoes').click();
   find(root, (el) => el.dataset?.costumeItemId === 'shoe_a').click();
-  find(root, (el) => el.textContent === '元へ戻す').click();
+  find(root, (el) => el.textContent === '元に戻す').click();
   assert.deepEqual(session.getView().draftSelection, session.getView().savedSelection);
 });

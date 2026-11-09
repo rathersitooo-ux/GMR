@@ -590,7 +590,7 @@ test('retired decision cue tells player to move before choosing the last card',(
   assert.equal(cue.textContent,'必要なら先に人物をドラッグして経路を予約。最後にバトルカードを選ぶ');
   h.battle.value='BATTLE_B';
   h.battle.emit('change');
-  assert.equal(cue.textContent,'必要札が揃ったため自動確定中');
+  assert.equal(cue.textContent,'必要カードが揃ったため自動確定中');
   assert.equal(h.calls.length,1);
 });
 

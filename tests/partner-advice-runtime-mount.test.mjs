@@ -388,7 +388,7 @@ test('contextual help keeps canonical text before a profile is ready and uses th
     clearHelp: () => true,
   });
   assert.equal(control.open(), true);
-  assert.equal(shown.at(-1).message, '手札からロードカードを1枚選ぶ');
+  assert.equal(shown.at(-1).message, '手カードからロードカードを1枚選ぶ');
   const experience = createBattleTutorialExperienceConversationControl({ isEligible: () => true });
   experience.chooseAudience('experienced');
   experience.chooseSourceGame('shadowverse');
@@ -480,7 +480,7 @@ test('aborting Tutorial does not consume it and the next run starts Saasuna auto
 
 test('contextual Battle replay reuses the current FIRST10 wording without owning gameplay state', () => {
   const road = projectBattleContextualTutorialReplay({ screen: 'battle', phase: 'plan', busy: false, roadId: null, battleId: null });
-  assert.equal(road.message, '手札からロードカードを1枚選ぶ');
+  assert.equal(road.message, '手カードからロードカードを1枚選ぶ');
   assert.equal(road.focusRole, 'road');
   assert.equal(road.presentationOnly, true);
   assert.equal(road.autoExecute, false);
@@ -511,13 +511,13 @@ test('contextual Battle replay opens and closes through presentation callbacks o
   });
 
   assert.equal(control.open(), true);
-  assert.deepEqual(shown, [{ code: 'BATTLE_CONTEXTUAL_REPLAY', message: '手札からロードカードを1枚選ぶ', kind: 'ok', ttl: 0 }]);
+  assert.deepEqual(shown, [{ code: 'BATTLE_CONTEXTUAL_REPLAY', message: '手カードからロードカードを1枚選ぶ', kind: 'ok', ttl: 0 }]);
   assert.deepEqual(focused, ['road']);
   assert.deepEqual(control.status(), {
     schema: 'gameroad.tutorial-contextual-replay-control.v1',
     available: true,
     active: true,
-    message: '手札からロードカードを1枚選ぶ',
+    message: '手カードからロードカードを1枚選ぶ',
     focusRole: 'road',
     returnContext: 'same-battle',
     presentationOnly: true,
@@ -672,7 +672,7 @@ test('default Situation route summarizes existing viewer-safe log rows and publi
   assert.equal(control.register('situation', ['situation_summary', 'calculate_public']), true);
   assert.equal(control.start('situation', current), true);
   assert.equal(control.next(current), true);
-  assert.match(control.status().text, /公開値合計は7/);
+  assert.match(control.status().text, /3列の合計は7/);
 });
 
 test('Idea OFF suppresses only Idea while Casual and Situation remain independent and no gameplay authority is owned', () => {
@@ -691,7 +691,7 @@ test('Idea OFF suppresses only Idea while Casual and Situation remain independen
 test('quick3 UI keeps delegation separate and does not create a permanent fourth 3-options route', () => {
   const source = readFileSync(new URL('../browser/partner-advice-runtime-mount.mjs', import.meta.url), 'utf8');
   assert.match(source, /QUICK_ROUTE_IDS = Object\.freeze\(\['idea', 'casual', 'situation'\]\)/);
-  assert.match(source, /\['idea', 'アイディア ON'\]/);
+  assert.match(source, /\['idea', 'アイデア：オン'\]/);
   assert.match(source, /\['casual', '雑談'\]/);
   assert.match(source, /\['situation', '戦況報告'\]/);
   assert.match(source, /getElementById\('partnerDelegateBtn'\)/);

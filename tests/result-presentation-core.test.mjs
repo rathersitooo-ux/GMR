@@ -60,21 +60,21 @@ test('corrected Result rank projection uses exact visible labels and semantic co
     ok: true,
     reason: 'OK',
     formalRank: 2,
-    visibleLabel: '勝利',
+    visibleLabel: '2位',
     rankColorRole: 'platinum'
   });
   assert.deepEqual(projectResultRankPresentation(3), {
     ok: true,
     reason: 'OK',
     formalRank: 3,
-    visibleLabel: '勝利',
+    visibleLabel: '3位',
     rankColorRole: 'gold'
   });
   assert.deepEqual(projectResultRankPresentation(4), {
     ok: true,
     reason: 'OK',
     formalRank: 4,
-    visibleLabel: '勝利',
+    visibleLabel: '4位',
     rankColorRole: 'silver'
   });
 });
@@ -94,9 +94,9 @@ test('ties reuse the same higher formal rank presentation without inventing a se
   }));
   assert.deepEqual(projected.rankingPresentation, [
     { sourceIndex: 0, playerId: 'P1', ok: true, reason: 'OK', formalRank: 1, visibleLabel: '1位', rankColorRole: null },
-    { sourceIndex: 1, playerId: 'P2', ok: true, reason: 'OK', formalRank: 2, visibleLabel: '勝利', rankColorRole: 'platinum' },
-    { sourceIndex: 2, playerId: 'P3', ok: true, reason: 'OK', formalRank: 2, visibleLabel: '勝利', rankColorRole: 'platinum' },
-    { sourceIndex: 3, playerId: 'P4', ok: true, reason: 'OK', formalRank: 4, visibleLabel: '勝利', rankColorRole: 'silver' }
+    { sourceIndex: 1, playerId: 'P2', ok: true, reason: 'OK', formalRank: 2, visibleLabel: '2位', rankColorRole: 'platinum' },
+    { sourceIndex: 2, playerId: 'P3', ok: true, reason: 'OK', formalRank: 2, visibleLabel: '2位', rankColorRole: 'platinum' },
+    { sourceIndex: 3, playerId: 'P4', ok: true, reason: 'OK', formalRank: 4, visibleLabel: '4位', rankColorRole: 'silver' }
   ]);
   assert.deepEqual(projected.finalizedResult, tiedResult);
 });

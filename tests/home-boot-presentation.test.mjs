@@ -128,7 +128,7 @@ test('Setup Quick Deck keeps the Start CTA separate and preserves all explicit d
   assert.match(source, /renderSection\('メイン', preview\.deck\.main\)/);
   assert.match(source, /renderSection\('EX', preview\.deck\.ex\)/);
   assert.match(source, /setupQuickDeckClose', '閉じる'/);
-  assert.match(source, /setupQuickDeckEdit', '編集へ'/);
+  assert.match(source, /setupQuickDeckEdit', '編集する'/);
   assert.match(source, /startMatch\.insertAdjacentElement\('beforebegin', trigger\)/);
   assert.match(source, /if \(restoreFocus\) trigger\.focus\?\.\(\)/);
   assert.match(source, /dialog\.hidden = true/);
@@ -254,7 +254,7 @@ test('Home blank double-click dismissal only accepts blank Home space while Slid
 test('Home contextual replay reuses exact current routes and remains presentation-only', () => {
   const routeIds = ['setup', 'shop', 'partner', 'cards'];
   const view = projectHomeContextualTutorialReplay({ routeIds, active: true });
-  assert.equal(HOME_CONTEXTUAL_REPLAY_LABEL, '操作を再確認');
+  assert.equal(HOME_CONTEXTUAL_REPLAY_LABEL, '操作の説明をもう一度見る');
   assert.equal(view.available, true);
   assert.equal(view.active, true);
   assert.deepEqual(view.routeIds, routeIds);

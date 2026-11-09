@@ -764,7 +764,7 @@ test('favorite filter composes with search and Deck membership instead of replac
 test('Cards findability application changes only Collection visibility and combines favorite state', async () => {
   const mod = await import('../browser/cards-deck-presentation.mjs');
   const cards = [
-    { dataset: { id: 'SP_A' }, textContent: 'Spade A', hidden: false, classList: { contains: () => true }, getAttribute: () => 'Spade A 札組登録済み' },
+    { dataset: { id: 'SP_A' }, textContent: 'Spade A', hidden: false, classList: { contains: () => true }, getAttribute: () => 'Spade A デッキ登録済み' },
     { dataset: { id: 'HT_A' }, textContent: 'ハートA', hidden: false, classList: { contains: () => false }, getAttribute: () => 'ハートA 詳細を開く' },
   ];
   const doc = { querySelectorAll: (selector) => selector === '#collectionGrid [data-id]' ? cards : [] };
@@ -1035,7 +1035,7 @@ test('Cards inspector context mount is presentation-only and keeps mobile Deck i
   const slice = source.slice(start, end);
   assert.ok(start >= 0 && end > start);
   assert.ok(slice.includes("host.dataset.role = 'cards-inspector-deck-context'"));
-  assert.ok(slice.includes("host.setAttribute?.('aria-label', '編集中の札組')"));
+  assert.ok(slice.includes("host.setAttribute?.('aria-label', '編集中のデッキ')"));
   assert.ok(slice.includes("doc.querySelector('#deckBoardTitle')"));
   assert.ok(slice.includes("doc.querySelector('#r4TrayCount')"));
   assert.ok(slice.includes("doc.querySelector('#deckSaveState')"));
@@ -1312,14 +1312,14 @@ test('per-card local vote history counts only the selected card', () => {
 test('vote UI repair projects selected-card local history and refreshes from the existing vote event', () => {
   const h = makeVoteUiHarness();
   const controller = installCardsVoteUiRepair({ document: h.doc, window: h.win });
-  assert.equal(h.countNode()?.textContent, 'この端末のこのカード投票履歴 2票');
+  assert.equal(h.countNode()?.textContent, 'この端末でのこのカードの投票数：2票');
 
   h.setSnapshot({
     cardId: 'A',
     history: [{ cardId: 'A' }, { cardId: 'B' }, { cardId: 'A' }, { cardId: 'A' }],
   });
   h.dispatchWin('gameroad:card-vote-local');
-  assert.equal(h.countNode()?.textContent, 'この端末のこのカード投票履歴 3票');
+  assert.equal(h.countNode()?.textContent, 'この端末でのこのカードの投票数：3票');
   controller.destroy();
 });
 

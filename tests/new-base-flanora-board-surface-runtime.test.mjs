@@ -62,10 +62,25 @@ function cards(count, prefix) {
 }
 
 function goalPathPresentationFor(runtime, countsByLaneKey = {}) {
+  const lanePresentations = runtime.model.lanes.map((lane) => {
+    const count = countsByLaneKey[lane.key] ?? 0;
+    return {
+      key: lane.key,
+      participantId: lane.participantId,
+      laneIndex: lane.laneIndex,
+      straightCardCount: count,
+      straightCardIds: cards(count, `${lane.key}-card`),
+      routeGateId: lane.routeGateId,
+      sharedGoalId: 'goal:shared',
+      connectedToGoal: count === 7,
+    };
+  });
   return {
     schema: 'GAMEROAD_NEW_BASE_GOAL_PATH_PRESENTATION_V1',
     ok: true,
     terminalWin: false,
+    gateOpen: lanePresentations.some((lane) => lane.connectedToGoal),
+    gateOpenScope: 'ALL_ROUTE_GATE_ANCHORS',
     presentationOnly: true,
     gameplayAuthority: false,
     gameStateWrite: false,
@@ -73,19 +88,7 @@ function goalPathPresentationFor(runtime, countsByLaneKey = {}) {
     legalityAuthority: false,
     resultAuthority: false,
     sharedGoalId: 'goal:shared',
-    lanePresentations: runtime.model.lanes.map((lane) => {
-      const count = countsByLaneKey[lane.key] ?? 0;
-      return {
-        key: lane.key,
-        participantId: lane.participantId,
-        laneIndex: lane.laneIndex,
-        straightCardCount: count,
-        straightCardIds: cards(count, `${lane.key}-card`),
-        routeGateId: lane.routeGateId,
-        sharedGoalId: 'goal:shared',
-        connectedToGoal: count === 7,
-      };
-    }),
+    lanePresentations,
   };
 }
 

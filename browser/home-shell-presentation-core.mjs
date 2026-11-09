@@ -307,7 +307,7 @@ function ensureSetupQuickDeckConsumer() {
   const head = setupQuickDeckElement(document, 'div', 'setupQuickDeckHead');
   const title = setupQuickDeckElement(document, 'h2', 'setupQuickDeckTitle', 'デッキ確認');
   const actions = setupQuickDeckElement(document, 'div', 'setupQuickDeckActions');
-  const edit = setupQuickDeckElement(document, 'button', 'setupQuickDeckEdit', '編集へ');
+  const edit = setupQuickDeckElement(document, 'button', 'setupQuickDeckEdit', '編集する');
   edit.type = 'button';
   const close = setupQuickDeckElement(document, 'button', 'setupQuickDeckClose', '閉じる');
   close.type = 'button';

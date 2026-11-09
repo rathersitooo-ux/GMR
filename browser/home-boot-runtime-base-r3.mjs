@@ -23,7 +23,7 @@ const SECONDARY_UTILITY_SELECTOR = '.codexHomeUtilities';
 const SECONDARY_UTILITY_BUTTON_SELECTOR = '.homeUtilityBtn';
 const HOME_RANK_MATCH_ENTRY_SELECTOR = '[data-home-rank-match-entry="true"]';
 export const HOME_RANK_MATCH_ENTRY_LABEL = 'ランクマッチ';
-export const HOME_CONTEXTUAL_REPLAY_LABEL = '操作を再確認';
+export const HOME_CONTEXTUAL_REPLAY_LABEL = '操作の説明をもう一度見る';
 const HOME_CONTEXTUAL_REPLAY_SCHEMA = 'gameroad.tutorial-contextual-replay-home.v1';
 const SLIDEPAD_CENTER_SELECTOR = '#homePadCenter';
 const SLIDEPAD_DEAD_ZONE_PX = 18;
@@ -1757,6 +1757,10 @@ const rankMatchRuntime = {
   waitingPartnerId: 'partner.saasuna',
   picker: null,
   lastFocus: null,
+  startBypass: false,
+  foundTimer: null,
+  foundMatch: null,
+  foundListenerInstalled: false,
 };
 
 function rankMatchDocument() {
@@ -1855,14 +1859,14 @@ function setRankMatchSetupMode(section, mode) {
   const note = section?.querySelector?.('.rankMatchModeNote');
   if (note) {
     const nextNote = next === 'rank'
-      ? 'バトル後のランクマッチ待機画面へ進みます。'
+      ? 'バトルが終わったあと、ランクマッチの待機画面へ進みます。'
       : '通常のローカル対戦設定をそのまま使用します。';
     if (note.textContent !== nextNote) note.textContent = nextNote;
   }
   const start = rankMatchSetupStart(section);
   if (start) {
-    if (!start.dataset.rankDefaultLabel) start.dataset.rankDefaultLabel = start.textContent || '盤面へ';
-    const nextLabel = next === 'rank' ? 'ランクマッチ待機へ' : start.dataset.rankDefaultLabel;
+    if (!start.dataset.rankDefaultLabel) start.dataset.rankDefaultLabel = start.textContent || '対戦開始';
+    const nextLabel = next === 'rank' ? 'ランクマッチを開始' : start.dataset.rankDefaultLabel;
     if (start.textContent !== nextLabel) start.textContent = nextLabel;
     start.dataset.rankMatchMode = next;
   }
@@ -1897,7 +1901,7 @@ function ensureRankMatchSetupControls(doc) {
     ranked.dataset.rankMode = 'rank';
     ranked.textContent = 'ランクマッチ';
     const rankedHint = doc.createElement('small');
-    rankedHint.textContent = 'バトル後に待機';
+    rankedHint.textContent = 'バトルが終わったあとも待機します';
     ranked.append(rankedHint);
     row.append(normal, ranked);
     const note = doc.createElement('div');
@@ -1975,7 +1979,7 @@ function rankMatchCreatePicker(doc) {
   overlay.setAttribute('aria-modal', 'true');
   overlay.setAttribute('aria-labelledby', 'rankPartnerPickerTitle');
   overlay.dataset.schema = RANK_MATCH_PICKER_SCHEMA;
-  overlay.innerHTML = '<div class="rankPartnerPickerShell"><div class="rankPartnerPickerHeader"><div><strong id="rankPartnerPickerTitle">アドバイスパートナー</strong><small>待機画面に表示するバストアップを選択</small></div><button type="button" class="rankPartnerPickerClose" data-rank-picker-close aria-label="キャラ選択を閉じる">×</button></div><div class="rankPartnerChoiceGrid" data-rank-partner-choice-grid></div><p class="rankPartnerPickerHint">操作キャラの設定は変更せず、待機画面のアドバイス役だけを切り替えます。</p></div>';
+  overlay.innerHTML = '<div class="rankPartnerPickerShell"><div class="rankPartnerPickerHeader"><div><strong id="rankPartnerPickerTitle">アドバイスパートナー</strong><small>待機画面に表示する立ち絵を選択</small></div><button type="button" class="rankPartnerPickerClose" data-rank-picker-close aria-label="キャラ選択を閉じる">×</button></div><div class="rankPartnerChoiceGrid" data-rank-partner-choice-grid></div><p class="rankPartnerPickerHint">操作キャラの設定は変更せず、待機画面のアドバイス役だけを切り替えます。</p></div>';
   doc.body.append(overlay);
   overlay.addEventListener('click', (event) => {
     if (event.target === overlay || event.target?.closest?.('[data-rank-picker-close]')) {
@@ -2055,7 +2059,7 @@ function rankMatchBuildWaitingSurface(doc) {
   surface.hidden = true;
   surface.dataset.schema = RANK_MATCH_WAITING_SCHEMA;
   surface.setAttribute('aria-label', 'ランクマッチ待機画面');
-  surface.innerHTML = '<div class="rankWaitingBackdrop" aria-hidden="true"></div><div class="rankWaitingVfx" aria-hidden="true"></div><div class="rankWaitingPanel"><header class="rankWaitingHeader"><button type="button" class="rankWaitingBack" data-rank-waiting-back>‹ バトル設定</button><div class="rankWaitingTitle"><small>RANKED MATCH / WAITING ROOM</small><strong>ランクマッチ</strong></div><button type="button" class="rankWaitingCancel" data-rank-waiting-cancel>キャンセル</button></header><div class="rankWaitingContent"><div class="rankWaitingPartnerRail"><div class="rankWaitingPartnerLabel">アドバイスパートナー</div><button type="button" class="rankWaitingPartner" data-rank-waiting-partner aria-label="アドバイスパートナーを変更"><img data-role="rank-waiting-partner-image" alt="" draggable="false"><span class="rankWaitingPartnerIcon" data-role="rank-waiting-partner-icon" aria-hidden="true"></span></button><strong class="rankWaitingPartnerName" data-role="rank-waiting-partner-name">サースナー</strong><span class="rankWaitingPartnerHint">タップして変更</span></div><div class="rankWaitingCopy"><div class="rankWaitingEyebrow">MATCHMAKING READY</div><h1>ランクマッチ</h1><p>バトル設定を引き継いだまま、ランクマッチの待機画面へ移動しました。</p><div class="rankWaitingStatus" data-role="rank-provider-status" aria-live="polite">接続先を待機中</div><div class="rankWaitingMeta">操作キャラ：設定済み　／　アドバイス役：選択可能</div></div><div class="rankWaitingActions"><button type="button" class="rankWaitingAction" data-rank-waiting-primary>接続先を確認</button><button type="button" class="rankWaitingAction secondary" data-rank-waiting-cancel>待機をやめる</button></div></div><footer class="rankWaitingFoot">ランクマッチの接続先が登録されると、この待機面から正式な検索状態へ接続します。</footer></div>';
+  surface.innerHTML = '<div class="rankWaitingBackdrop" aria-hidden="true"></div><div class="rankWaitingVfx" aria-hidden="true"></div><div class="rankWaitingPanel"><header class="rankWaitingHeader"><button type="button" class="rankWaitingBack" data-rank-waiting-back>‹ バトル設定</button><div class="rankWaitingTitle"><small>RANKED MATCH / WAITING ROOM</small><strong>ランクマッチ</strong></div><button type="button" class="rankWaitingCancel" data-rank-waiting-cancel>待機をやめる</button></header><div class="rankWaitingContent"><div class="rankWaitingPartnerRail"><div class="rankWaitingPartnerLabel">アドバイスパートナー</div><button type="button" class="rankWaitingPartner" data-rank-waiting-partner aria-label="アドバイスパートナーを変更"><img data-role="rank-waiting-partner-image" alt="" draggable="false"><span class="rankWaitingPartnerIcon" data-role="rank-waiting-partner-icon" aria-hidden="true"></span></button><strong class="rankWaitingPartnerName" data-role="rank-waiting-partner-name">サースナー</strong><span class="rankWaitingPartnerHint">タップして変更</span></div><div class="rankWaitingCopy"><div class="rankWaitingEyebrow">MATCHMAKING READY</div><h1>ランクマッチ</h1><p>バトル設定はそのまま、ランクマッチの待機画面です。</p><div class="rankWaitingStatus" data-role="rank-provider-status" aria-live="polite">接続先の登録を待っています</div><div class="rankWaitingMeta">操作キャラ：設定済み　／　アドバイス役：選択可能</div></div><div class="rankWaitingActions"><button type="button" class="rankWaitingAction" data-rank-waiting-primary>対戦相手を探す</button><button type="button" class="rankWaitingAction secondary" data-rank-waiting-cancel>待機をやめる</button></div></div><footer class="rankWaitingFoot">ランクマッチの準備ができたら、ここから対戦相手を探し始めます。</footer></div>';
   doc.body.append(surface);
   surface.addEventListener('click', (event) => {
     if (event.target?.closest?.('[data-rank-waiting-partner]')) {
@@ -2118,9 +2122,30 @@ function rankMatchSetPresentationScreen(doc, target) {
   return showBattle;
 }
 
+const RANK_MATCH_FOUND_EVENT = 'gameroad:rank-match-found';
+const RANK_MATCH_SEARCH_CANCEL_EVENT = 'gameroad:rank-match-search-cancel';
+const RANK_MATCH_SEARCH_CANCEL_SCHEMA = 'gameroad.rank-match-search-cancel.v1';
+
+function rankMatchDispatchWindowEvent(name, detail) {
+  const win = rankMatchWindow();
+  if (!win || typeof win.dispatchEvent !== 'function') return;
+  try {
+    if (typeof win.CustomEvent === 'function') win.dispatchEvent(new win.CustomEvent(name, { detail }));
+    else win.dispatchEvent({ type: name, detail });
+  } catch {}
+}
+
 function exitRankMatchWaiting(doc) {
   closeRankMatchPartnerPicker(doc);
+  if (rankMatchRuntime.foundTimer !== null) {
+    clearTimeout(rankMatchRuntime.foundTimer);
+    rankMatchRuntime.foundTimer = null;
+  }
   rankMatchRuntime.waiting = false;
+  // 待機を終わるときは、探している途中なら相手探し側へ取り消しの合図を出す。
+  // 見つかったあとの対戦開始のつなぎでもここを通るが、そのとき探しは
+  // もう終わっているので、合図は新しい探しを始める前の掃除として働く。
+  rankMatchDispatchWindowEvent(RANK_MATCH_SEARCH_CANCEL_EVENT, { schema: RANK_MATCH_SEARCH_CANCEL_SCHEMA });
   const battle = doc.querySelector('section[data-screen="battle"]');
   const surface = doc.getElementById(RANK_MATCH_WAITING_ID);
   if (surface && !surface.hidden) surface.hidden = true;
@@ -2142,13 +2167,60 @@ function exitRankMatchWaiting(doc) {
 function enterRankMatchWaiting(doc) {
   if (!doc) return;
   rankMatchRuntime.waiting = true;
+  rankMatchRuntime.foundMatch = null;
   rankMatchRuntime.waitingPartnerId = rankMatchRuntime.waitingPartnerId || 'partner.saasuna';
-  // Ranked matchmaking has no local match state yet. Keep the existing Battle section as
-  // the visual child surface, but do not invoke the generic Battle transition/runtime,
-  // which requires state.match.players. The registered ranked provider remains the only
-  // authority for a real queue.
+  // Keep the existing Battle section as the visual child surface, but do not invoke
+  // the generic Battle transition/runtime, which requires state.match.players.
+  // The registered ranked provider (GAMEROAD_RANK_MATCH_SEARCH) is the only
+  // authority for the queue: it gathers 4 players, fills empty seats with AI,
+  // and announces the found match. Only then does beginRankMatchBattle hand
+  // over to the game's own start path.
   rankMatchSetPresentationScreen(doc, 'battle');
   rankMatchSyncBattleVisibility(doc);
+  const surface = doc.getElementById(RANK_MATCH_WAITING_ID);
+  const status = surface?.querySelector?.('[data-role="rank-provider-status"]');
+  if (status) {
+    const provider = rankMatchWindow().GAMEROAD_RANK_MATCH_SEARCH;
+    const nextStatus = typeof provider === 'function'
+      ? '対戦相手を探す準備ができています'
+      : '接続先の登録を待っています';
+    if (status.textContent !== nextStatus) status.textContent = nextStatus;
+  }
+}
+
+function beginRankMatchBattle(doc) {
+  if (!doc) return;
+  exitRankMatchWaiting(doc);
+  const setup = doc.querySelector('section[data-screen="setup"]');
+  if (setup) {
+    // ランクはサーバーの固定プリセットで4人対戦。開始前に形式を4人へそろえる。
+    const fourPlayer = setup.querySelector('[data-mode="4p"]');
+    if (fourPlayer && fourPlayer.getAttribute('aria-pressed') !== 'true' && !fourPlayer.classList.contains('on')) {
+      fourPlayer.click();
+    }
+  }
+  const start = (setup && rankMatchSetupStart(setup)) || doc.querySelector('#startMatch');
+  if (!start) return;
+  // 対戦開始の横取り（このファイルの rankMatchHandleClick）を1回だけ通す。
+  // 開始そのものはゲーム本体の #startMatch の道をそのまま使う。
+  rankMatchRuntime.startBypass = true;
+  start.click();
+}
+
+function rankMatchHandleFound(event) {
+  if (!rankMatchRuntime.waiting) return;
+  const doc = rankMatchDocument();
+  if (!doc) return;
+  rankMatchRuntime.foundMatch = event?.detail || null;
+  const surface = doc.getElementById(RANK_MATCH_WAITING_ID);
+  const status = surface?.querySelector?.('[data-role="rank-provider-status"]');
+  if (status) status.textContent = '対戦相手が見つかりました。まもなく対戦が始まります';
+  if (rankMatchRuntime.foundTimer !== null) return;
+  rankMatchRuntime.foundTimer = setTimeout(() => {
+    rankMatchRuntime.foundTimer = null;
+    if (!rankMatchRuntime.waiting) return;
+    beginRankMatchBattle(rankMatchDocument());
+  }, 650);
 }
 
 function rankMatchHandleClick(event) {
@@ -2156,7 +2228,13 @@ function rankMatchHandleClick(event) {
   const rankButton = target?.closest?.('[data-rank-mode]');
   if (rankButton) return;
   const start = target?.closest?.('#startMatch');
-  if (!start || rankMatchRuntime.selectedMode !== 'rank') return;
+  if (!start) return;
+  if (rankMatchRuntime.startBypass) {
+    // 相手が見つかったあとの本物の対戦開始は、横取りせずに本体の道へ通す。
+    rankMatchRuntime.startBypass = false;
+    return;
+  }
+  if (rankMatchRuntime.selectedMode !== 'rank') return;
   event.preventDefault?.();
   event.stopPropagation?.();
   event.stopImmediatePropagation?.();
@@ -2226,6 +2304,11 @@ function installRankMatchPresentation() {
   ensureRankMatchStyle(doc);
   doc.addEventListener('click', rankMatchHandleClick, true);
   doc.addEventListener('keydown', rankMatchHandleKeydown, true);
+  const win = rankMatchWindow();
+  if (!rankMatchRuntime.foundListenerInstalled && win && typeof win.addEventListener === 'function') {
+    win.addEventListener(RANK_MATCH_FOUND_EVENT, rankMatchHandleFound);
+    rankMatchRuntime.foundListenerInstalled = true;
+  }
   rankMatchBindObserver(doc);
   rankMatchRuntime.installed = true;
   scheduleRankMatchRefresh();

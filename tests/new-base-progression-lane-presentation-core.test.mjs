@@ -13,7 +13,7 @@ function cards(count,prefix='card'){ return Array.from({length:count},(_,index)=
 function sourceLane({participantId='P1',laneIndex=0,columnIndex=laneIndex,straightCardCount=0,straightCardIds=cards(straightCardCount,`${participantId}-${laneIndex}`),connectedToGoal=false}={}){
   return {participantId,laneIndex,columnIndex,goalRowColumnIndex:columnIndex,straightCardCount,straightCardIds,connectedToGoal,routeGateId:`goal-gate:${participantId}:${laneIndex}`,sharedGoalId:'goal:shared'};
 }
-function goalPathPresentation(lanes){ return projectNewBaseGoalPathPresentation({ok:true,reason:'TEST_GOAL_PATH_PROJECTION',terminalWin:false,horizontalCellCount:12,sharedGoalId:'goal:shared',laneStates:lanes}); }
+function goalPathPresentation(lanes){ return projectNewBaseGoalPathPresentation({ok:true,reason:'TEST_GOAL_PATH_PROJECTION',terminalWin:false,gateOpen:lanes.some((lane)=>lane.connectedToGoal),horizontalCellCount:12,sharedGoalId:'goal:shared',laneStates:lanes}); }
 function projectOne(input={}){ const goalPath=goalPathPresentation([sourceLane(input)]); assert.equal(goalPath.ok,true); return projectNewBaseProgressionLanePresentation(goalPath); }
 
 test('0 cards keeps all seven future positions latent without discrete card identity',()=>{
@@ -71,7 +71,7 @@ test('stage positions keep Flanora step identity while card identity stays calle
 test('mismatched physical card list fails closed rather than inventing identity',()=>{
   const goalPath=goalPathPresentation([sourceLane({straightCardCount:3,straightCardIds:['ONLY-ONE']})]);
   assert.equal(goalPath.ok,false);
-  const synthetic=projectNewBaseProgressionLanePresentation({schema:'GAMEROAD_NEW_BASE_GOAL_PATH_PRESENTATION_V1',ok:true,terminalWin:false,presentationOnly:true,gameplayAuthority:false,gameStateWrite:false,movementAuthority:false,legalityAuthority:false,resultAuthority:false,lanePresentations:[{participantId:'P1',laneIndex:0,straightCardCount:3,straightCardIds:['ONLY-ONE'],connectedToGoal:false}]});
+  const synthetic=projectNewBaseProgressionLanePresentation({schema:'GAMEROAD_NEW_BASE_GOAL_PATH_PRESENTATION_V1',ok:true,terminalWin:false,gateOpen:false,gateOpenScope:'ALL_ROUTE_GATE_ANCHORS',presentationOnly:true,gameplayAuthority:false,gameStateWrite:false,movementAuthority:false,legalityAuthority:false,resultAuthority:false,lanePresentations:[{participantId:'P1',laneIndex:0,straightCardCount:3,straightCardIds:['ONLY-ONE'],connectedToGoal:false}]});
   assert.equal(synthetic.ok,false); assert.equal(synthetic.reason,'LANE_PRESENTATION_INVALID');
 });
 

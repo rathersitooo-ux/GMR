@@ -227,7 +227,7 @@ function formatAria(model) {
   if (model.kind === 'value') return `${label} ${model.valueText}${model.deltaText ? ` ${model.deltaText}` : ''}`;
   if (model.kind === 'segments' || model.kind === 'bar' || model.kind === 'ring') return `${label} ${model.rangeText}`;
   if (model.kind === 'loading') return model.indeterminate ? `${label} 処理中` : `${label} ${model.rangeText}`;
-  return `${label} ${model.resolved ? '段階表示' : '未確定'}`;
+  return `${label} ${model.resolved ? '段階で表示' : 'まだ決まっていません'}`;
 }
 
 function applyAccessibility(root, model) {

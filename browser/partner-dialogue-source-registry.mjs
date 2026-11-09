@@ -17,10 +17,10 @@ const DISPLAY_NAMES = Object.freeze({
   'partner.mato': '泊愛まと',
 });
 const DELEGATION_PRESENTATION_LABELS = Object.freeze({
-  'まかせた': 'まかせた！',
-  'まかせた！': 'まかせた！',
-  'まかせろ': 'まかせろ！',
-  'まかせろ！': 'まかせろ！',
+  'パートナーにまかせる': 'パートナーにまかせる！',
+  'パートナーにまかせる！': 'パートナーにまかせる！',
+  '自分で操作する': '自分で操作する！',
+  '自分で操作する！': '自分で操作する！',
 });
 const ADVICE_REPLY_PAIR_STYLE_ID = 'gameroad-partner-advice-reply-pair-r2-style';
 const ADVICE_REPLY_PAIR_ROLE = 'partner-advice-reply-pair';

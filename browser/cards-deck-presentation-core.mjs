@@ -6,6 +6,29 @@ const EVENT_NAMES = Object.freeze({
 
 export const DECK_SWIPE_PRESENTATION_EVENTS = EVENT_NAMES;
 
+export const DECK_SCREEN_LAYOUT_CONTRACT = Object.freeze({
+  schema: 'gameroad.deck-screen-layout.v1',
+  source: 'master-duel-deck-editor-comparison-20261108',
+  styleId: 'gameroad-deck-screen-layout-style',
+  media: '(min-width:901px) and (min-height:471px)',
+  detail: Object.freeze({
+    placement: 'left',
+    alwaysVisible: true,
+    role: 'selected-card-detail',
+    closeButtonVisible: false,
+  }),
+  deck: Object.freeze({
+    mainAndExtraSimultaneous: true,
+    mainAndExtraScrollsSeparately: false,
+    slotColumns: 4,
+    mainCapacity: 40,
+    extraCapacity: 7,
+  }),
+  collection: Object.freeze({ placement: 'right', scrolls: true }),
+  mutatesDeck: false,
+  mutatesSelection: false,
+});
+
 export const SETUP_QUICK_DECK_PREVIEW_CONTRACT = Object.freeze({
   schema: 'gameroad.setup-quick-deck-preview.v1',
   source: 'caller-selected-saved-deck',

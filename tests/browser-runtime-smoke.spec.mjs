@@ -292,11 +292,11 @@ test('partner delegation preserves the player-selected match envelope and reject
 
   expect(evidence.voluntaryMutationCheck).toEqual({ ok: false, reason: 'mode_changed' });
   expect(evidence.voluntaryAttempt).toBe(false);
-  expect(evidence.voluntaryBlocker).toContain('試合開始時の札組・モード保持に失敗(mode_changed)');
+  expect(evidence.voluntaryBlocker).toContain('試合開始時のデッキ・モード保持に失敗(mode_changed)');
 
   expect(evidence.deckMutationCheck).toEqual({ ok: false, reason: 'deck_snapshot_changed' });
   expect(evidence.forcedAttempt).toBe(false);
-  expect(evidence.forcedBlocker).toContain('試合開始時の札組・モード保持に失敗(mode_changed)');
+  expect(evidence.forcedBlocker).toContain('試合開始時のデッキ・モード保持に失敗(mode_changed)');
   expect(evidence.repairedCheck).toEqual({ ok: true, reason: 'ok' });
 
   expect(evidence.staleRestore, 'an old match session must not restore into a new match instance').toBe(false);

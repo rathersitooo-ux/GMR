@@ -110,7 +110,7 @@ async function assertVisibleResultRankPresentation(result) {
     visibleLabel: node.querySelector('.resultOutcome')?.textContent?.trim() ?? '',
   })));
   expect(rows.length, 'Result exposes at least one projected formal-rank row').toBeGreaterThan(0);
-  const expected = new Map([[1, ['1位', null]], [2, ['勝利', 'platinum']], [3, ['勝利', 'gold']], [4, ['勝利', 'silver']]]);
+  const expected = new Map([[1, ['1位', null]], [2, ['2位', 'platinum']], [3, ['3位', 'gold']], [4, ['4位', 'silver']]]);
   for (const row of rows) {
     expect(expected.has(row.formalRank), `formal Result rank ${row.formalRank}`).toBeTruthy();
     expect(row.visibleLabel, `visible label for rank ${row.formalRank}`).toBe(expected.get(row.formalRank)[0]);
@@ -340,7 +340,7 @@ async function enterRankMatchWaitingEvidence(page) {
   await expect(rank).toHaveAttribute('aria-pressed', 'true');
 
   const startMatch = setup.locator('#startMatch');
-  await expect(startMatch).toHaveText('ランクマッチ待機へ');
+  await expect(startMatch).toHaveText('ランクマッチを開始');
   await startMatch.click();
 
   const battle = page.locator('section[data-screen="battle"]');
@@ -812,7 +812,7 @@ test('moves resolve off the board into the dedicated Battle Phase with Naki cut-
   const compareStage = await page.evaluate(() => window.__GAMEROAD_BATTLE_PHASE_R2__.snapshot().stage);
   expect(['reveal', 'read', 'compare', 'winner', 'settle']).toContain(compareStage);
   await expect(page.locator('#battlePhaseSurface #battleResolution .resolutionPlayer')).toHaveCount(4);
-  await expect(page.locator('#battlePhaseTarget')).toContainText('4人全員比較');
+  await expect(page.locator('#battlePhaseTarget')).toContainText('4人で比較');
   await attachStateScreenshot(page, testInfo, 'battle-phase-four-player-compare');
 
   await page.evaluate(async () => {
@@ -2110,7 +2110,7 @@ test('update manifest is strictly validated, rollback-safe in wording, session-l
   await page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());
   await expect(banner).toBeVisible();
   await expect(banner).toHaveAttribute('aria-hidden','false');
-  await expect(title).toHaveText('利用できる版が変わりました');
+  await expect(title).toHaveText('アップデートがあります');
   await expect(title).not.toContainText('新版');
   await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending?.buildId||null)).toBe(ROLLBACK);
 
@@ -2147,7 +2147,7 @@ test('update manifest is strictly validated, rollback-safe in wording, session-l
   await back.click();
   await expect(page.locator('section[data-screen="home"]')).toBeVisible();
   await expect(banner).toBeVisible();
-  await expect(title).toHaveText('利用できる版が変わりました');
+  await expect(title).toHaveText('アップデートがあります');
 
   const fresh=await browser.newContext({viewport:testInfo.project.use.viewport});
   const q=await fresh.newPage();

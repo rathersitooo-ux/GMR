@@ -1868,6 +1868,8 @@ export function installFanartLocalSkinCards({ document: doc = globalThis.documen
   const screen = cardsScreen(doc);
   if (!screen) return Object.freeze({ destroy() {} });
   let selected = null; let destroyed = false; let ticket = 0;
+  let pickerCardId = null;
+  const saveTicketByCard = new Map();
   const urls = new Map();
   const button = doc.createElement('button');
   button.type = 'button'; button.dataset.role = 'fanart-local-skin-button'; button.textContent = '画像を設定'; button.disabled = true;
@@ -1922,20 +1924,29 @@ export function installFanartLocalSkinCards({ document: doc = globalThis.documen
   };
   const choose = async () => {
     if (!selected) return;
+    pickerCardId = selected;
     input.click();
   };
   const remove = async () => {
-    if (!selected) return;
-    let current = null; try { current = await fanartReadSkin(idb, selected); } catch {}
-    if (!current) return;
-    await fanartDeleteSkin(idb, selected);
-    await refresh();
+    const cardId = selected;
+    if (!cardId) return;
+    saveTicketByCard.set(cardId, (saveTicketByCard.get(cardId) ?? 0) + 1);
+    let current = null; try { current = await fanartReadSkin(idb, cardId); } catch {}
+    if (!current || destroyed) return;
+    await fanartDeleteSkin(idb, cardId);
+    if (!destroyed) await refresh();
   };
   const save = async () => {
-    const file = input.files?.[0]; input.value = ''; if (!file || !selected) return;
+    const cardId = pickerCardId;
+    pickerCardId = null;
+    const file = input.files?.[0]; input.value = '';
+    if (!file || !cardId || destroyed) return;
+    const saveTicket = (saveTicketByCard.get(cardId) ?? 0) + 1;
+    saveTicketByCard.set(cardId, saveTicket);
     const asset = await fanartProcessImage(file, doc, win);
-    await fanartWriteSkin(idb, { baseCardId: selected, assetHash: asset.hash, label: '自分用skin', localOnly: true, updatedAt: Date.now() }, asset);
-    await refresh();
+    if (destroyed || saveTicketByCard.get(cardId) !== saveTicket) return;
+    await fanartWriteSkin(idb, { baseCardId: cardId, assetHash: asset.hash, label: '自分用skin', localOnly: true, updatedAt: Date.now() }, asset);
+    if (!destroyed) await refresh();
   };
   screen.addEventListener('pointerdown', select, true);
   button.addEventListener('click', () => choose().catch(() => { button.textContent = '画像を選択できません'; }));

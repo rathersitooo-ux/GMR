@@ -117,8 +117,8 @@ export function projectBattleAdvanceReservationSummary({
   return Object.freeze({
     schema: ADVANCE_RESERVATION_SURFACE_SCHEMA,
     rows: Object.freeze([
-      Object.freeze({ role: 'road', label: '道札', value: roadReserved ? displayText(roadLabel, roadValue.trim()) : '未選択', state: roadReserved ? 'reserved' : 'unset' }),
-      Object.freeze({ role: 'battle', label: 'じゃんけん札', value: battleReserved ? displayText(battleLabel, battleValue.trim()) : '未選択', state: battleReserved ? 'reserved' : 'unset' }),
+      Object.freeze({ role: 'road', label: '道カード', value: roadReserved ? displayText(roadLabel, roadValue.trim()) : '未選択', state: roadReserved ? 'reserved' : 'unset' }),
+      Object.freeze({ role: 'battle', label: 'じゃんけんカード', value: battleReserved ? displayText(battleLabel, battleValue.trim()) : '未選択', state: battleReserved ? 'reserved' : 'unset' }),
       Object.freeze({
         role: 'ready', label: '準備完了', value: displayText(readyLabel, '準備完了'),
         state: !readyAvailable ? 'unavailable' : readyDisabled ? 'blocked' : roadReserved && battleReserved ? 'available' : 'waiting',
@@ -168,7 +168,7 @@ export function mountBattleAdvanceReservationSurface(globalRef = globalThis) {
   const host = documentRef.createElement('section');
   host.id = ADVANCE_RESERVATION_SURFACE_ID;
   host.setAttribute('aria-label', '先行予約');
-  host.innerHTML = '<div class="arTitle">先行予約</div><button type="button" class="arRow" data-role="road"><span>道札</span><span class="arValue"></span></button><button type="button" class="arRow" data-role="battle"><span>じゃんけん札</span><span class="arValue"></span></button><div class="arRow" data-role="ready"><span>準備完了</span><span class="arValue"></span></div>';
+  host.innerHTML = '<div class="arTitle">先行予約</div><button type="button" class="arRow" data-role="road"><span>道カード</span><span class="arValue"></span></button><button type="button" class="arRow" data-role="battle"><span>じゃんけんカード</span><span class="arValue"></span></button><div class="arRow" data-role="ready"><span>準備完了</span><span class="arValue"></span></div>';
   rail.appendChild(host);
 
   const roadRow = host.querySelector('[data-role="road"]');

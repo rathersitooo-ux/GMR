@@ -1030,7 +1030,7 @@ test('Power Energy is distinct from SlidePad and owns ordinary-hand drag arming 
   assert.match(source, /const POWER_ENERGY_ASSET_URL = '\.\.\/assets\/visual\/battle-power-energy\.jpg';/);
   assert.match(source, /powerEnergy\.className = 'grPowerEnergy';/);
   assert.match(source, /powerEnergy\.setAttribute\(POWER_ENERGY_ATTR, '1'\);/);
-  assert.match(source, /handle\.setAttribute\('aria-label', 'じゃんけん SlidePad'\);/);
+  assert.match(source, /handle\.setAttribute\('aria-label', 'じゃんけんスライドパッド'\);/);
   assert.match(source, /const auraRect = powerEnergy\.getBoundingClientRect\?\.\(\);/);
   assert.doesNotMatch(source, /const auraRect = handle\.getBoundingClientRect/);
   assert.match(source, /function animateHandAuraLaunch\(globalRef, documentRef, battleRoot, powerEnergy, ghost\)/);

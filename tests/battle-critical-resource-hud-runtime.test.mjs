@@ -117,14 +117,14 @@ test('shows only a complete current Mana-first then Honey payment receipt', () =
       honeyPaid: 2,
       manaAfter: 0,
       honeyAfter: 5,
-      source: '戦闘札6',
+      source: '戦闘カード6',
     },
   });
   assert.equal(result.payment.resolved, true);
   assert.equal(result.payment.cost, 6);
   assert.equal(result.payment.manaPaid, 4);
   assert.equal(result.payment.honeyPaid, 2);
-  assert.equal(result.payment.text, '戦闘札6・支払6・マナ4＋ハニー2');
+  assert.equal(result.payment.text, '戦闘カード6・支払い6・マナ4＋ハニー2');
   assert.match(result.payment.ariaText, /残りマナ0、残りハニー5/);
 });
 
@@ -132,9 +132,9 @@ test('hides partial, inconsistent, non-Mana-first, or stale payment receipts', (
   const base = { manaCurrent: 0, manaMax: 10, honey: 5, chipCount: 0 };
   for (const paymentReceipt of [
     { cost: 6, manaPaid: 4, honeyPaid: 2, manaAfter: 0, honeyAfter: 5 },
-    { cost: 7, manaPaid: 4, honeyPaid: 2, manaAfter: 0, honeyAfter: 5, source: '戦闘札6' },
-    { cost: 6, manaPaid: 4, honeyPaid: 2, manaAfter: 1, honeyAfter: 5, source: '戦闘札6' },
-    { cost: 6, manaPaid: 4, honeyPaid: 2, manaAfter: 0, honeyAfter: 4, source: '戦闘札6' },
+    { cost: 7, manaPaid: 4, honeyPaid: 2, manaAfter: 0, honeyAfter: 5, source: '戦闘カード6' },
+    { cost: 6, manaPaid: 4, honeyPaid: 2, manaAfter: 1, honeyAfter: 5, source: '戦闘カード6' },
+    { cost: 6, manaPaid: 4, honeyPaid: 2, manaAfter: 0, honeyAfter: 4, source: '戦闘カード6' },
   ]) {
     const result = projectBattleCriticalResourceSnapshot({ ...base, paymentReceipt });
     assert.equal(result.payment.resolved, false);
@@ -173,20 +173,20 @@ test('mounts a compact caller-owned HUD and updates without resource calculation
       honeyPaid: 2,
       manaAfter: 0,
       honeyAfter: 5,
-      source: '戦闘札6',
+      source: '戦闘カード6',
     },
   });
   assert.equal(next.mana.text, '0/10');
   assert.equal(next.honey.text, '5');
   assert.equal(next.chip.text, '0');
   assert.equal(runtime.honeyCell.children[2].hidden, true);
-  assert.equal(runtime.manaCell.children[2].textContent, '戦闘札6・支払6・マナ4＋ハニー2');
+  assert.equal(runtime.manaCell.children[2].textContent, '戦闘カード6・支払い6・マナ4＋ハニー2');
   assert.equal(runtime.manaCell.children[2].hidden, false);
   assert.equal(runtime.root.dataset.manaResolved, 'true');
   assert.equal(runtime.root.dataset.honeyResolved, 'true');
   assert.equal(runtime.root.dataset.chipResolved, 'true');
   assert.equal(runtime.root.dataset.paymentResolved, 'true');
-  assert.match(runtime.root.getAttribute('aria-label'), /支払い 戦闘札6、支払6、マナ4、ハニー2/);
+  assert.match(runtime.root.getAttribute('aria-label'), /支払い 戦闘カード6、支払い6、マナ4、ハニー2/);
   assert.equal(runtime.gameStateWrite, false);
 });
 

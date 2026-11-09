@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { projectNewBaseProgressionLanePresentation } from '../browser/new-base-progression-lane-presentation-core.mjs';
 import { mountFlanoraBoardSurface } from '../browser/new-base-flanora-board-surface-runtime.mjs';
 import {
   FLANORA_LEGACY_BOARD_BRIDGE_CONTRACT,
@@ -12,6 +13,7 @@ const INPUT = Object.freeze({
   shieldLinkedLaneColumnsByParticipant: {
     P1: [0, 1, 2], P2: [3, 4, 5], P3: [6, 7, 8], P4: [9, 10, 11],
   },
+  clearingCells: [{ id: 'clearing:top:1' }],
 });
 
 function makeFakeDom() {
@@ -40,10 +42,49 @@ function makeFakeDom() {
   return documentLike;
 }
 
+function cards(count, prefix) {
+  return Array.from({ length: count }, (_, index) => `${prefix}-${index + 1}`);
+}
+
+function goalPathPresentationFor(runtime, countsByLaneKey = {}) {
+  const lanePresentations = runtime.model.lanes.map((lane) => {
+    const count = countsByLaneKey[lane.key] ?? 0;
+    return {
+      key: lane.key,
+      participantId: lane.participantId,
+      laneIndex: lane.laneIndex,
+      straightCardCount: count,
+      straightCardIds: cards(count, `${lane.key}-card`),
+      routeGateId: lane.routeGateId,
+      sharedGoalId: 'goal:shared',
+      connectedToGoal: count === 7,
+    };
+  });
+  return {
+    schema: 'GAMEROAD_NEW_BASE_GOAL_PATH_PRESENTATION_V1',
+    ok: true,
+    terminalWin: false,
+    gateOpen: lanePresentations.some((lane) => lane.connectedToGoal),
+    gateOpenScope: 'ALL_ROUTE_GATE_ANCHORS',
+    presentationOnly: true,
+    gameplayAuthority: false,
+    gameStateWrite: false,
+    movementAuthority: false,
+    legalityAuthority: false,
+    resultAuthority: false,
+    sharedGoalId: 'goal:shared',
+    lanePresentations,
+  };
+}
+
 function makeRuntime() {
   const documentLike = makeFakeDom();
   const host = documentLike.createElement('div');
-  return mountFlanoraBoardSurface({ host, documentLike, layoutInput: INPUT });
+  const runtime = mountFlanoraBoardSurface({ host, documentLike, layoutInput: INPUT });
+  // road step (P1, 1, 3) exists only after a progression sync builds it.
+  const presentation = projectNewBaseProgressionLanePresentation(goalPathPresentationFor(runtime, { 'P1:1': 3 }));
+  runtime.syncProgressionPresentation(presentation);
+  return runtime;
 }
 
 const BINDINGS = Object.freeze([

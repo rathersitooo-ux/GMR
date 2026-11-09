@@ -72,7 +72,7 @@ test('renders owner-only remaining composition through the existing Battle log s
     viewer: ownerViewer,
     revision: 12,
     document,
-    cardLabel: cardId => ({ 'CARD-A': '森の札', 'CARD-B': '音の札' }[cardId] || cardId)
+    cardLabel: cardId => ({ 'CARD-A': '森のカード', 'CARD-B': '音のカード' }[cardId] || cardId)
   });
 
   assert.deepEqual(result, {
@@ -99,7 +99,7 @@ test('renders owner-only remaining composition through the existing Battle log s
   assert.equal(root.attributes.get('data-battle-remaining-deck-revision'), '12');
   assert.deepEqual(rootTexts(document), [
     '残りデッキ 3枚',
-    '判明: 森の札×2 / 音の札×1',
+    '判明: 森のカード×2 / 音のカード×1',
     '不明: 0枚'
   ]);
 });

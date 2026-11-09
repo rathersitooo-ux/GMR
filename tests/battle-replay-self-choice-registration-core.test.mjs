@@ -41,7 +41,7 @@ function resolutionEvent(sequence = 1, overrides = {}) {
         team: 'B',
         score: 9,
         winner: false,
-        cards: [{ cardId: 'OPPONENT-CARD', label: '相手公開札', value: 4, origin: 'battle' }],
+        cards: [{ cardId: 'OPPONENT-CARD', label: '相手公開カード', value: 4, origin: 'battle' }],
       },
     ],
     laneGains: [],

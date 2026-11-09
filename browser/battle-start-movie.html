@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BATTLE START ムービー</title>
+<link rel="stylesheet" href="./battle-start-movie.css">
+<style>
+  html, body { margin: 0; height: 100%; background: #080914; }
+  #host { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+</style>
+</head>
+<body>
+<div id="host"></div>
+<script type="module">
+  import { createBattleStartPresentationMount } from './battle-start-presentation-runtime.mjs';
+
+  // 対戦開始の真ん中は「誰が戦うか」だけ（2026-11-09 02:55 JST、ライカの決め）。
+  // 顔の正式な絵はまだないため、ゲームと同じく名前の最初の1文字を丸に入れる。
+  // グー・チョキ・パーの割り当てはここでは出さない（バトルフェーズ側の公開の
+  // 画面が出す）。describeCard は取り付けの決まりとして残す。
+  const players = [0, 1, 2, 3].map((index) => ({
+    id: `P${index + 1}`,
+    name: index === 0 ? 'あなた' : `PLAYER ${index + 1}`,
+  }));
+
+  // ムービーは題0.6秒＋入り0.8秒＝1.4秒。録画用に、消えるタイミング
+  // だけ2秒あとへずらして、終わりの画面を静止で残す。
+  const HOLD_MS = 2000;
+  const mount = createBattleStartPresentationMount({
+    getMatch: () => ({ id: 'demo-battle-start', round: 1, players }),
+    getHost: () => document.getElementById('host'),
+    getSettings: () => ({ movie: 'always' }),
+    describeCard: (cardId) => ({ label: cardId, rank: '?', suitGlyph: '◆' }),
+    timers: {
+      setTimeout: (fn, ms) => globalThis.setTimeout(fn, ms >= 1400 ? ms + HOLD_MS : ms),
+      clearTimeout: (id) => globalThis.clearTimeout(id),
+    },
+  });
+  const result = mount.present();
+  window.__battleStartResult = result;
+</script>
+</body>
+</html>

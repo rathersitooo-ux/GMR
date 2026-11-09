@@ -36,8 +36,8 @@ test('advance reservation summary exposes only the existing road, first janken c
 
   assert.equal(summary.schema, 'gameroad.battle.advance-reservation-summary.v1');
   assert.deepEqual(summary.rows, [
-    { role: 'road', label: '道札', value: '森の道 4', state: 'reserved' },
-    { role: 'battle', label: 'じゃんけん札', value: 'ハルニア 7', state: 'reserved' },
+    { role: 'road', label: '道カード', value: '森の道 4', state: 'reserved' },
+    { role: 'battle', label: 'じゃんけんカード', value: 'ハルニア 7', state: 'reserved' },
     { role: 'ready', label: '準備完了', value: '準備完了', state: 'available' },
   ]);
   assert.equal(summary.rows.some((row) => row.role === 'additionalBattle'), false);
@@ -53,7 +53,7 @@ test('advance reservation summary stays visible while incomplete and never inven
 
   const roadOnly = projectBattleAdvanceReservationSummary({
     roadValue: 'road-2',
-    roadLabel: '道札 2',
+    roadLabel: '道カード 2',
     readyLabel: 'READY',
     readyAvailable: true,
   });

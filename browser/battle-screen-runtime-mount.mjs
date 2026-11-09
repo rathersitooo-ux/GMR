@@ -45,7 +45,7 @@ const CURRENT_ACTION_PHASE_LABELS = Object.freeze({
   reveal: '公開',
   attack: '攻撃',
   ability: '能力',
-  compare4: '4人比較',
+  compare4: '4人で比較',
   finisher: '決着',
   settle: '盤面反映'
 });
@@ -345,13 +345,13 @@ function ensureAnchor(document, root, explicit, id, tag = 'section') {
 function createShieldRail(document) {
   const rail = createNode(document, 'div', 'grBattleShieldRail');
   rail.setAttribute?.(SHIELD_RAIL_ATTR, '1');
-  rail.setAttribute?.('aria-label', '3つのShieldと対応ROAD');
+  rail.setAttribute?.('aria-label', '3つのシールドと対応するロード');
   rail.dataset.presentationOnly = 'true';
   rail.dataset.authority = 'existing-shield-linked-lane-structure-only';
   for (const slot of SHIELD_SLOTS) {
     const link = createNode(document, 'span', 'grBattleShieldLink');
     link.setAttribute?.(SHIELD_SLOT_ATTR, slot);
-    link.setAttribute?.('aria-label', `Shield ${slot} → ROAD ${slot}`);
+    link.setAttribute?.('aria-label', `シールド${slot} → ロード${slot}`);
     link.dataset.roadLane = slot;
     const token = createNode(document, 'span', 'grBattleShieldToken', 'S');
     token.setAttribute?.('aria-hidden', 'true');
@@ -527,7 +527,7 @@ function causalStageLabel(stage, model) {
     return order.length ? `比較 ${order.join(' → ')}` : '比較';
   }
   if (stage.kind === 'accepted_resolution') return '結果確定';
-  if (stage.kind === 'return_path') return '盤面へ帰着';
+  if (stage.kind === 'return_path') return '盤面に戻る';
   if (stage.kind === 'destination') {
     const participant = participantLabelById(model, stage.opponentId) || stage.opponentId || '';
     const shield = stage.shieldLane ? `Shield ${stage.shieldLane}` : '';
@@ -1240,7 +1240,7 @@ function createHud(document, shell) {
 
   const center = createNode(document, 'div', 'grBattleHudCenter');
   const chain = createNode(document, 'div', 'grBattleHudChain');
-  chain.setAttribute?.('aria-label', '使用済みBattleカード');
+  chain.setAttribute?.('aria-label', '使ったバトルカード');
   const load = createNode(document, 'div', 'grBattleHudLoad');
   load.style.position = 'relative';
   const loadLabel = createNode(document, 'small', '', 'LOAD');
@@ -1463,7 +1463,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
 
   const grid = createNode(document, 'div', 'grBattleCausalGrid');
   grid.setAttribute?.(GRID_ATTR, '');
-  grid.setAttribute?.('aria-label', '4人バトル比較');
+  grid.setAttribute?.('aria-label', '4人で比較');
   visualHost.appendChild(grid);
   const lanes = Array.from({ length: 4 }, (_, index) => createLane(document, index));
   for (const lane of lanes) grid.appendChild(lane.lane);
@@ -1644,7 +1644,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
         setData(link, 'boardReturnTarget', null);
         setData(link, 'boardReturnEventId', null);
         setData(link, 'boardReturnDestination', null);
-        link.setAttribute?.('aria-label', `Shield ${slot} → ROAD ${slot}`);
+        link.setAttribute?.('aria-label', `シールド${slot} → ロード${slot}`);
       }
     }
     const audit = auditBattleScreenModel(model);
@@ -1731,7 +1731,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
         setData(link, 'boardReturnTarget', activeReturn ? 'true' : null);
         setData(link, 'boardReturnEventId', activeReturn ? boardReturn.eventId : null);
         setData(link, 'boardReturnDestination', activeReturn ? boardReturn.destinationKey : null);
-        link.setAttribute?.('aria-label', `Shield ${slot} → ROAD ${slot}${activeReturn ? '、解決結果の帰着先' : ''}`);
+        link.setAttribute?.('aria-label', `シールド${slot} → ロード${slot}${activeReturn ? '、解決結果の戻り先' : ''}`);
       }
       view.name.textContent = lane.label;
       view.team.textContent = lane.team ? `TEAM ${lane.team}` : '';

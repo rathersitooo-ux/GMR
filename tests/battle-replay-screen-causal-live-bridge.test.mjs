@@ -37,9 +37,9 @@ function resolution(serial = 1) {
     teamTotals: { A: 10, B: 8 },
     players: [
       { id: 'P1', name: 'You', team: 'A', score: 10, winner: true,
-        cards: [{ cardId: 'C1', label: '公開札', value: 6, origin: 'active_submission' }] },
+        cards: [{ cardId: 'C1', label: '公開カード', value: 6, origin: 'active_submission' }] },
       { id: 'P3', name: 'CPU', team: 'B', score: 8, winner: false,
-        cards: [{ cardId: 'C3', label: '公開札', value: 4, origin: 'active_submission' }] }
+        cards: [{ cardId: 'C3', label: '公開カード', value: 4, origin: 'active_submission' }] }
     ],
     laneGains: [{ id: 'P1', lane: 'R', before: 1, after: 2, added: 1 }],
     maxLaneProgress: [{ id: 'P1', before: 1, after: 2 }],

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>あと何枚の見せ場 | GAMEROAD</title>
+<style>
+  body{margin:0;background:#0b1f19;color:#eef7ea;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
+  main{max-width:980px;margin:0 auto;padding:18px 14px 40px}
+  h1{font-size:20px;margin:6px 0 4px}
+  p.lead{font-size:13px;line-height:1.7;opacity:.88;margin:0 0 14px}
+  #stage{position:relative;min-height:300px;border-radius:18px;background:radial-gradient(120% 120% at 50% 0%,#1d4636 0%,#0d2a20 55%,#071a13 100%);border:1px solid rgba(238,247,234,.18);overflow:hidden}
+  #stage .boardNote{position:absolute;left:50%;top:190px;transform:translateX(-50%);font-size:12px;opacity:.55;white-space:nowrap}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .controls button{font:inherit;font-size:13px;font-weight:900;padding:9px 14px;border-radius:999px;border:1px solid rgba(238,247,234,.35);background:#173c2f;color:#eef7ea;cursor:pointer}
+  .controls button:hover{background:#1f4d3b}
+  .controls button.gold{background:#ffd94d;color:#3a2a00;border-color:#ffe98a}
+  .note{margin-top:14px;font-size:12px;line-height:1.8;opacity:.85}
+  code{background:rgba(238,247,234,.12);padding:1px 6px;border-radius:6px}
+</style>
+</head>
+<body>
+<main>
+  <h1>「あと何枚」の見せ場</h1>
+  <p class="lead">
+    GAMEROADに体力はない。ライフに相当するのは「7枚そろえるまでの残りの枚数」。
+    MTGアリーナの「顔の絵のすぐ下の大きな数字」と同じ形で、4人全員の顔のすぐ下に
+    大きな「あと○枚」の印を出す。残りが減ると印が1回膨らみ、あと1枚は金色、
+    7枚そろうと「門が開いた！」（勝ちではない。ゴールで勝ち）。
+  </p>
+
+  <div id="stage">
+    <div class="boardNote">（ここが対戦の盤面。上の帯が今回の表示）</div>
+  </div>
+
+  <div class="controls" id="controls"></div>
+  <button id="autoPlay" class="gold" style="margin-top:10px;font:inherit;font-size:13px;font-weight:900;padding:9px 14px;border-radius:999px;border:1px solid #ffe98a;background:#ffd94d;color:#3a2a00;cursor:pointer">自動で進める</button>
+
+  <p class="note">
+    数え方：各人の道（左・まん中・右）のうち一番進んだ道の枚数を使い、残り＝7−その枚数。
+    対戦本体の門の判定（grEvaluateMatchCompletion）と同じ数え方。
+    数字は公開情報だけから作るので、プレイヤーにも見ている人にも同じ表示になる。
+    下のボタンは見せ場専用の仮の進み方で、対戦の状態そのものは変えない。
+  </p>
+</main>
+
+<script type="module">
+import { createBattleRemainingToSevenMount } from './battle-remaining-to-seven-runtime.mjs';
+
+const stage = document.getElementById('stage');
+const names = ['あなた', 'サースナー', 'ナキ', 'パム'];
+const lanesCycle = ['C', 'L', 'R', 'C'];
+const match = {
+  id: 'DEMO-REMAINING',
+  players: names.map((name, index) => ({
+    id: `P${index + 1}`,
+    name,
+    human: index === 0,
+    lanes: { L: [], C: [], R: [] },
+  })),
+};
+
+const mount = createBattleRemainingToSevenMount({
+  getMatch: () => match,
+  getHost: () => stage,
+  getSettings: () => ({
+    reducedMotion: typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches,
+  }),
+});
+mount.sync();
+
+const controls = document.getElementById('controls');
+match.players.forEach((player, index) => {
+  const button = document.createElement('button');
+  button.textContent = `${player.name}の道に1枚置く`;
+  button.addEventListener('click', () => {
+    const lane = lanesCycle[index];
+    if (player.lanes[lane].length < 7) player.lanes[lane].push(`demo-${index}-${player.lanes[lane].length}`);
+    mount.sync();
+  });
+  controls.appendChild(button);
+});
+const reset = document.createElement('button');
+reset.textContent = '最初に戻す';
+reset.addEventListener('click', () => {
+  for (const player of match.players) player.lanes = { L: [], C: [], R: [] };
+  mount.sync();
+});
+controls.appendChild(reset);
+
+let timer = null;
+document.getElementById('autoPlay').addEventListener('click', (event) => {
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+    event.currentTarget.textContent = '自動で進める';
+    return;
+  }
+  event.currentTarget.textContent = '止める';
+  timer = setInterval(() => {
+    const candidates = match.players.filter((player) => Math.max(player.lanes.L.length, player.lanes.C.length, player.lanes.R.length) < 7);
+    if (!candidates.length) {
+      clearInterval(timer);
+      timer = null;
+      event.currentTarget.textContent = '自動で進める';
+      return;
+    }
+    const player = candidates[Math.floor(Math.random() * candidates.length)];
+    const lane = lanesCycle[match.players.indexOf(player)];
+    player.lanes[lane].push(`demo-auto-${Date.now()}`);
+    mount.sync();
+  }, 700);
+});
+</script>
+</body>
+</html>

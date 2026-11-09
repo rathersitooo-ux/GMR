@@ -1103,7 +1103,7 @@ export function presentBattleJankenOrderMotionToSlidePad(orderHost, motion, meta
   orderHost.dataset.presentationOnly = 'true';
   orderHost.dataset.gameStateWrite = 'false';
   orderHost.setAttribute?.('aria-hidden', 'false');
-  orderHost.setAttribute?.('aria-label', 'じゃんけん処理順');
+  orderHost.setAttribute?.('aria-label', 'じゃんけんの順番');
   orderHost.__gameroadOrderPresentation = projection;
   return true;
 }
@@ -1136,7 +1136,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   host.dataset.inputMode = initialInputMode;
   host.dataset.handAuraActive = 'false';
   host.dataset.handAuraArmed = 'false';
-  host.setAttribute('aria-label', 'じゃんけん入力方式 / SlidePad / Power Energy');
+  host.setAttribute('aria-label', 'じゃんけんの出し方');
   const modePicker = documentRef.createElement('div');
   modePicker.className = 'grJankenInputModePicker';
   modePicker.setAttribute('role', 'group');
@@ -1188,7 +1188,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   const orderPresenterHost = documentRef.createElement('div');
   orderPresenterHost.className = 'grJankenOrderPresenter';
   orderPresenterHost.setAttribute(ORDER_PRESENTER_ATTR, '1');
-  orderPresenterHost.setAttribute('aria-label', 'じゃんけん処理順');
+  orderPresenterHost.setAttribute('aria-label', 'じゃんけんの順番');
   orderPresenterHost.setAttribute('aria-hidden', 'true');
   orderPresenterHost.hidden = true;
   host.appendChild(orderPresenterHost);
@@ -1225,7 +1225,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   handle.className = 'grJankenSlidePadHandle';
   handle.textContent = 'SlidePad';
   handle.setAttribute('aria-expanded', 'false');
-  handle.setAttribute('aria-label', 'じゃんけん SlidePad');
+  handle.setAttribute('aria-label', 'じゃんけんスライドパッド');
   host.appendChild(handle);
   root.appendChild(host);
 
@@ -1233,7 +1233,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
 
   const rowRouletteHost = documentRef.createElement('aside');
   rowRouletteHost.setAttribute(BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR, '1');
-  rowRouletteHost.setAttribute('aria-label', '残り手札ルーレット');
+  rowRouletteHost.setAttribute('aria-label', '残り手カードルーレット');
   rowRouletteHost.hidden = true;
   root.appendChild(rowRouletteHost);
   const rowRouletteController = createBattlePlayableHandRowRouletteController({
@@ -1514,7 +1514,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     }
     const currentOption = BATTLE_JANKEN_INPUT_MODE_OPTIONS.find((option) => option.id === inputMode);
     handle.textContent = currentOption?.shortLabel ?? '発射板';
-    handle.setAttribute('aria-label', `じゃんけん ${currentOption?.label ?? '発射板'}入力`);
+    handle.setAttribute('aria-label', `じゃんけんの出し方：${currentOption?.label ?? '発射板'}`);
     if (inputMode !== BATTLE_JANKEN_INPUT_MODE.LAUNCHER) {
       clearBattleSlotRoll();
       setArmed(null);

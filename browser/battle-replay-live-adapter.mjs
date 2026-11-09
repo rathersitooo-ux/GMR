@@ -831,7 +831,7 @@ function formatPartnerBattleEventLogRow(event, environment = {}) {
         : [])
       : [];
     const cards = publicCards.length ? `公開カード ${publicCards.join(' / ')}` : '';
-    const shield = data.shieldUsed === true ? 'Shield使用' : '';
+    const shield = data.shieldUsed === true ? 'シールド使用' : '';
     const laneChanges = Array.isArray(data.laneGains)
       ? data.laneGains.flatMap(row => nonEmptyString(row?.lane) &&
           Number.isSafeInteger(row?.before) &&
@@ -1356,7 +1356,7 @@ export function renderLiveBattleRemainingDeckPresentation(presentation, {
       hostId
     });
   }
-  registerLiveBattleSupportSurface({ key: 'deck', label: '山札', target: root, document, hostId });
+  registerLiveBattleSupportSurface({ key: 'deck', label: 'デッキ', target: root, document, hostId });
   return true;
 }
 

@@ -768,7 +768,7 @@ assert.deepEqual(p3ShieldSlots.map(node => node.getAttribute('data-battle-shield
 assert.deepEqual(p3ShieldSlots.map(node => node.dataset.boardReturnTarget), [undefined, undefined, 'true']);
 assert.equal(p3ShieldSlots[2].dataset.boardReturnEventId, 'settle-1');
 assert.equal(p3ShieldSlots[2].dataset.boardReturnDestination, 'P3:R');
-assert.equal(p3ShieldSlots[2].getAttribute('aria-label'), 'Shield R → ROAD R、解決結果の帰着先');
+assert.equal(p3ShieldSlots[2].getAttribute('aria-label'), 'シールドR → ロードR、解決結果の戻り先');
 assert.equal(runtime.shieldRails[3].children[2].dataset.boardReturnTarget, undefined);
 assert.equal(runtime.causalTrace.hidden, true);
 assert.equal(runtime.causalTrace.children.length, 0);
@@ -890,7 +890,7 @@ assert.equal(runtime.causalTrace.dataset.traceKey, undefined);
 assert.equal(runtime.shell.dataset.boardReturnDestination, undefined);
 assert.equal(runtime.shieldRails[2].dataset.boardReturnParticipant, undefined);
 assert.equal(runtime.shieldRails.flatMap(rail => rail.children).some(node => node.dataset.boardReturnTarget === 'true'), false);
-assert.equal(p3ShieldSlots[2].getAttribute('aria-label'), 'Shield R → ROAD R');
+assert.equal(p3ShieldSlots[2].getAttribute('aria-label'), 'シールドR → ロードR');
 
 runtime.render(attack);
 assert.equal(runtime.cinematicOrderRail.hidden, true);
@@ -908,7 +908,7 @@ assert.equal(runtime.causalTrace.hidden, true);
 assert.equal(runtime.causalTrace.children.length, 0);
 assert.equal(runtime.shieldRails[2].dataset.boardReturnParticipant, undefined);
 assert.equal(runtime.shieldRails.flatMap(rail => rail.children).some(node => node.dataset.boardReturnTarget === 'true'), false);
-assert.equal(p3ShieldSlots[2].getAttribute('aria-label'), 'Shield R → ROAD R');
+assert.equal(p3ShieldSlots[2].getAttribute('aria-label'), 'シールドR → ロードR');
 
 runtime.renderHud({ score: '', hate: null, turn: undefined, loadJanken: 'heart', honey: -1, chipCount: '2' });
 assert.equal(runtime.hud.scoreValue.textContent, 'X');

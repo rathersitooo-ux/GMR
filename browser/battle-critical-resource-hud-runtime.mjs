@@ -93,10 +93,10 @@ export function projectBattleCriticalResourceSnapshot(snapshot = {}) {
       honeyAfter: paymentReceipt?.honeyAfter ?? null,
       source: paymentReceipt?.source ?? null,
       text: paymentReceipt
-        ? `${paymentReceipt.source}・支払${paymentReceipt.cost}・マナ${paymentReceipt.manaPaid}＋ハニー${paymentReceipt.honeyPaid}`
+        ? `${paymentReceipt.source}・支払い${paymentReceipt.cost}・マナ${paymentReceipt.manaPaid}＋ハニー${paymentReceipt.honeyPaid}`
         : '',
       ariaText: paymentReceipt
-        ? `${paymentReceipt.source}、支払${paymentReceipt.cost}、マナ${paymentReceipt.manaPaid}、ハニー${paymentReceipt.honeyPaid}、残りマナ${paymentReceipt.manaAfter}、残りハニー${paymentReceipt.honeyAfter}`
+        ? `${paymentReceipt.source}、支払い${paymentReceipt.cost}、マナ${paymentReceipt.manaPaid}、ハニー${paymentReceipt.honeyPaid}、残りマナ${paymentReceipt.manaAfter}、残りハニー${paymentReceipt.honeyAfter}`
         : ''
     }
   });

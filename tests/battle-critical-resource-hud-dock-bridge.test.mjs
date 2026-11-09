@@ -82,13 +82,13 @@ test('shows only an already-authoritative atomic payment receipt that matches po
       honeyPaid: 3,
       manaAfter: 0,
       honeyAfter: 8,
-      source: '戦闘札 5',
+      source: '戦闘カード 5',
     },
   });
 
   assert.equal(model.payment.resolved, true);
   assert.equal(runtime.paymentNode.hidden, false);
-  assert.equal(runtime.paymentNode.textContent, '戦闘札 5・支払5・マナ2＋ハニー3');
+  assert.equal(runtime.paymentNode.textContent, '戦闘カード 5・支払い5・マナ2＋ハニー3');
   assert.match(runtime.root.getAttribute('aria-label'), /^対戦資源 ハニー 8、支払い /);
   assert.equal(runtime.root.getAttribute('aria-label').includes('チップ'), false);
 });
@@ -106,7 +106,7 @@ test('fails closed for stale or partial receipt instead of calculating a replace
       honeyPaid: 3,
       manaAfter: 0,
       honeyAfter: 9,
-      source: '戦闘札 5',
+      source: '戦闘カード 5',
     },
   });
   assert.equal(stale.payment.resolved, false);

@@ -9,7 +9,7 @@ test('ordinary guest snapshots retain the same unsubmitted draft and clear revis
  const code=['preserveFriendLocalJankenDraft','projectionToMatch','applyProjection'].map(name=>html.split('\n').find(l=>l.startsWith(`function ${name}(`))||'').join('\n');
  const hand=['a','b','c'],snapshot=ensurePostDrawJankenAssignment({selectionEpochId:'M1/P2/round/2',roundId:'battle-round:2',hand:hand.map(id=>({id,suit:'CL'})),readUint32:()=>0});
  const pr={code:'r',matchInstanceId:'M1',mode:'4p',contentId:'honey_hunt',round:2,phase:'plan',players:[{id:'P2',hand,jankenAssignment:snapshot,jankenDraftRevision:0,plan:null,position:'C:0:0'}],viewer:'P2',playerCount:4,log:[],target:null,lastBattleResolution:null,battlePresentation:null,private:{planSubmitted:false}};
- const c={clone:x=>JSON.parse(JSON.stringify(x)),FR:{role:'guest',assignedPid:'P2',snapshot:{private:{planSubmitted:false}}},state:{match:null},BUILD:'test',DECK_RULE:{id:'test',revision:1},document:{body:{classList:{add(){}}},getElementById(){return null;}},show(){},renderBattle(){},renderRemoteWait(){},syncFriendPartnerRule(){},globalThis:{GAMEROAD_POST_DRAW_JANKEN_ASSIGNMENT:ensurePostDrawJankenAssignment}};
+ const c={clone:x=>JSON.parse(JSON.stringify(x)),FR:{role:'guest',assignedPid:'P2',snapshot:{private:{planSubmitted:false}}},state:{match:null},BUILD:'test',DECK_RULE:{id:'test',revision:1},document:{body:{classList:{add(){}}},getElementById(){return null;}},show(){},renderBattle(){},renderRemoteWait(){},syncFriendPartnerRule(){},showBattleStartPresentationForFriendMatch(){},globalThis:{GAMEROAD_POST_DRAW_JANKEN_ASSIGNMENT:ensurePostDrawJankenAssignment}};
  vm.createContext(c);vm.runInContext(code,c);c.state.match=c.projectionToMatch(pr);
  c.state.match.players[0].jankenDraftRevision=1;c.state.match.players[0].plan={roadId:'b',battleId:null,path:['C:0:0']};
  c.applyProjection(JSON.parse(JSON.stringify(pr)));assert.equal(c.state.match.players[0].jankenDraftRevision,1);assert.equal(c.state.match.players[0].plan.roadId,'b');
@@ -18,6 +18,24 @@ test('ordinary guest snapshots retain the same unsubmitted draft and clear revis
  const resolving=JSON.parse(JSON.stringify(submitted));resolving.phase='reveal';c.applyProjection(resolving);assert.equal(c.state.match.players[0].jankenDraftRevision,1);
  c.state.match.players[0].plan={roadId:'b'};c.state.match.players[0].jankenDraftRevision=2;
  const fresh=JSON.parse(JSON.stringify(pr));fresh.matchInstanceId='M2';c.applyProjection(fresh);assert.equal(c.state.match.players[0].jankenDraftRevision,0);assert.equal(c.state.match.players[0].plan,null);
+});
+
+test('guest and spectator snapshots show the battle start presentation once per match',()=>{
+ const html=readFileSync(new URL('../browser/GAMEROAD.html',import.meta.url),'utf8');
+ const code=['preserveFriendLocalJankenDraft','projectionToMatch','applyProjection','spectatorProjectionToMatch','applySpectatorProjection','showBattleStartPresentationForFriendMatch'].map(name=>html.split('\n').find(l=>l.startsWith(`function ${name}(`))||'').join('\n');
+ const hand=['a','b','c'];
+ const snap=(epoch,round)=>ensurePostDrawJankenAssignment({selectionEpochId:epoch,roundId:'battle-round:'+round,hand:hand.map(id=>({id,suit:'CL'})),readUint32:()=>0});
+ const makePr=(matchInstanceId,round,roomState)=>({code:'r',matchInstanceId,mode:'4p',contentId:'honey_hunt',round,phase:'plan',roomState,players:[{id:'P2',hand,jankenAssignment:snap(matchInstanceId+'/P2/round/'+round,round),jankenDraftRevision:0,plan:null,position:'C:0:0'}],viewer:'P2',playerCount:4,log:[],target:null,lastBattleResolution:null,battlePresentation:null,private:{planSubmitted:false}});
+ let shown=0;const shownIds=[];
+ const c={clone:x=>JSON.parse(JSON.stringify(x)),FR:{role:'guest',assignedPid:'P2',snapshot:{private:{planSubmitted:false}}},state:{match:null},BUILD:'test',DECK_RULE:{id:'test',revision:1},document:{body:{classList:{add(){}}},getElementById(){return null;}},show(){},renderBattle(){},renderResult(){},renderRemoteWait(){},syncFriendPartnerRule(){},grBattleStartShownFriendMatchId:null,showBattleStartPresentation(){shown++;shownIds.push(c.state.match?.id);},globalThis:{GAMEROAD_POST_DRAW_JANKEN_ASSIGNMENT:ensurePostDrawJankenAssignment}};
+ vm.createContext(c);vm.runInContext(code,c);
+ c.applyProjection(JSON.parse(JSON.stringify(makePr('M1',1,'playing'))));assert.equal(shown,1);assert.deepEqual(shownIds,['FRIEND-r:M1']);assert.equal(c.grBattleStartShownFriendMatchId,'FRIEND-r:M1');
+ c.applyProjection(JSON.parse(JSON.stringify(makePr('M1',1,'playing'))));assert.equal(shown,1,'repeated snapshots of the same match must not show it again');
+ c.applyProjection(JSON.parse(JSON.stringify(makePr('M1',2,'playing'))));assert.equal(shown,1,'later rounds must not show it again');
+ c.applyProjection(JSON.parse(JSON.stringify(makePr('M2',1,'playing'))));assert.equal(shown,2,'a new match shows it once more');
+ const spectator=makePr('M3',1,'playing');spectator.viewerRole='spectator';c.FR.role='spectator';c.applySpectatorProjection(JSON.parse(JSON.stringify(spectator)));assert.equal(shown,3,'a spectator gets the title too');
+ c.applySpectatorProjection(JSON.parse(JSON.stringify(spectator)));assert.equal(shown,3,'repeated spectator snapshots must not show it again');
+ const result=makePr('M4',1,'result');c.FR.role='guest';c.applyProjection(JSON.parse(JSON.stringify(result)));assert.equal(shown,3,'the result screen must not trigger it');
 });
 
 test('the real round initializer retains five cards, reuses the trio and safely handles exhaustion',()=>{

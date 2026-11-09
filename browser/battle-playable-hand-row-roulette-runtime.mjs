@@ -519,7 +519,7 @@ export function renderBattlePlayableHandRowRoulette(host, model, {
   host.setAttribute('data-reduced-motion', model.reducedMotion ? 'true' : 'false');
   host.setAttribute('data-low-perf', model.lowPerf ? 'true' : 'false');
   host.setAttribute('role', 'listbox');
-  host.setAttribute('aria-label', '残り手札ルーレット');
+  host.setAttribute('aria-label', '残り手カードルーレット');
   host.replaceChildren();
 
   const rail = documentSource.createElement('div');
@@ -549,7 +549,7 @@ export function renderBattlePlayableHandRowRoulette(host, model, {
       image.alt = '';
       thumb.appendChild(image);
     } else {
-      thumb.textContent = row.suit || '札';
+      thumb.textContent = row.suit || 'カード';
     }
 
     const label = documentSource.createElement('span');

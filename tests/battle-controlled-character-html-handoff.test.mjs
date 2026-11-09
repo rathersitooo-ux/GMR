@@ -32,7 +32,7 @@ test('accepted authoritative movement renders every participant step while keepi
 });
 
 test('live mount preserves existing Battle chrome and avoids duplicate P1 character surface', () => {
-  assert.ok(html.includes('html body:has(.battle.active) .top{display:flex!important}'));
+  assert.ok(html.includes('html body:has(.battle.active) .top{display:flex!important;pointer-events:none!important}'));
   assert.ok(html.includes('#boardPlayers .boardPlayerToken.human [data-board-controlled-character]{display:none!important}'));
   assert.ok(html.includes("from './battle-controlled-character-4p-motion-director.mjs'"));
   assert.ok(html.includes("import './battle-board-naki-4p-visual-binding.mjs'"));

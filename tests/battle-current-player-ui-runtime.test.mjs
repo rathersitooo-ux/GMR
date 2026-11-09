@@ -251,7 +251,7 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_RUNTIME.manaArtPolicy, 'HIDDEN_BY_CURRENT_
   assert.match(styleText, /data-gr-janken-active="true"[\s\S]*?\[data-battle-janken-slidepad="1"\]\{[^}]*brightness\(1\.08\)[^}]*box-shadow:/);
   assert.match(styleText, /data-gr-decision-active="true"[\s\S]*?\.battleRail,[\s\S]*?opacity:\.22!important/);
   assert.match(styleText, /\[data-gr-current-ui-zone="details-on-demand"\]\[hidden\]\{display:none!important\}/);
-  assert.match(styleText, /\[data-gr-current-ui-zone="partner-visual"\]\{width:clamp\(132px,15vw,190px\)!important;height:min\(34vh,245px\)!important\}/);
+  assert.match(styleText, /\[data-gr-current-ui-zone="partner-visual"\]\{display:none!important\}/);
   assert.match(styleText, /#battleManaArtR8[^}]*display:none!important/);
   assert.doesNotMatch(styleText, /--r8-size/);
   assert.match(styleText, /#hand\{[^}]*justify-content:flex-end!important[^}]*transform-origin:right bottom!important/);

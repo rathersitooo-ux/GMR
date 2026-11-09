@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>サイキックリンクの試作</title>
+<style>
+  html, body { margin: 0; min-height: 100%; background: #080914; }
+  #host { min-height: 100vh; }
+</style>
+</head>
+<body>
+<div id="host"></div>
+<script type="module">
+  import { createPsychicLinkMount } from './psychic-link-runtime.mjs';
+
+  const mount = createPsychicLinkMount({
+    getHost: () => document.getElementById('host'),
+  });
+  const result = mount.present();
+  window.__psychicLink = result;
+</script>
+</body>
+</html>

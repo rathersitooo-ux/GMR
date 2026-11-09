@@ -160,7 +160,7 @@ assert.equal(settle.causalReturn.destination.destinationKey, 'P3:R');
 assert.equal(settle.causalReturn.destination.shieldLane, 'R');
 assert.deepEqual(
   settle.lanes.find(row => row.id === 'P3').afterstate.map(row => [row.id, row.text]),
-  [['causal-return:s1', '使用札（グー） → 解決 → Shield R']]
+  [['causal-return:s1', '使用カード（グー） → 解決 → シールドR']]
 );
 assert.deepEqual(settle.persistentAfterstate, [
   { id: 'lane-p4', participantId: 'P4', text: '列進行 7' },
@@ -174,7 +174,7 @@ assert.equal(reduced.models.find(model => model.eventId === 's1').boardReturn.de
 assert.equal(reduced.models.find(model => model.eventId === 's1').causalReturn.motion.mode, 'static_causal_trace');
 assert.deepEqual(
   reduced.models.find(model => model.eventId === 's1').lanes.find(row => row.id === 'P3').afterstate.map(row => row.text),
-  ['使用札（グー） → 解決 → Shield R']
+  ['使用カード（グー） → 解決 → シールドR']
 );
 const lowPerf = projectAcceptedBattleEventsToScreen({ participants, events, lowPerf: true });
 assert.equal(lowPerf.models.every(model => model.motion === 'static_only'), true);
@@ -182,7 +182,7 @@ assert.equal(lowPerf.models.find(model => model.eventId === 's1').boardReturn.de
 assert.equal(lowPerf.models.find(model => model.eventId === 's1').causalReturn.motion.mode, 'static_causal_trace');
 assert.deepEqual(
   lowPerf.models.find(model => model.eventId === 's1').lanes.find(row => row.id === 'P3').afterstate.map(row => row.text),
-  ['使用札（グー） → 解決 → Shield R']
+  ['使用カード（グー） → 解決 → シールドR']
 );
 assert.ok(reduced.timelineEnd < timeline.timelineEnd);
 
@@ -223,8 +223,8 @@ assert.deepEqual(orderedSettle.causalReturn.processing.processedOrder, ['P2', 'P
 assert.deepEqual(
   orderedSettle.lanes.find(row => row.id === 'P3').afterstate.map(row => [row.id, row.text]),
   [
-    ['causal-cause:s1', '使用札（グー） → 処理開始'],
-    ['causal-order:s1', '処理順 PLAYER 2 → PLAYER 1 → PLAYER 4 → PLAYER 3 → 解決 → Shield R']
+    ['causal-cause:s1', '使用カード（グー） → 処理開始'],
+    ['causal-order:s1', '処理順 PLAYER 2 → PLAYER 1 → PLAYER 4 → PLAYER 3 → 解決 → シールドR']
   ]
 );
 assert.equal(orderedSettle.causalReturn.destination.destinationKey, 'P3:R');

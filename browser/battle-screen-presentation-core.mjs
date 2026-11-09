@@ -272,21 +272,21 @@ function causalAfterstateRows(causalReturn, participants) {
     rows.push({
       id: `causal-cause:${causalReturn.eventId}`,
       participantId: destinationParticipantId,
-      text: `使用札（${hand}） → 処理開始`
+      text: `使用カード（${hand}） → 処理開始`
     });
     const labelById = new Map(participants.map(row => [row.id, row.label]));
     const order = causalReturn.processing.processingOrder.map(id => labelById.get(id) ?? id);
     rows.push({
       id: `causal-order:${causalReturn.eventId}`,
       participantId: destinationParticipantId,
-      text: `処理順 ${order.join(' → ')} → 解決 → Shield ${causalReturn.destination.shieldLane}`
+      text: `処理順 ${order.join(' → ')} → 解決 → シールド${causalReturn.destination.shieldLane}`
     });
     return rows;
   }
   rows.push({
     id: `causal-return:${causalReturn.eventId}`,
     participantId: destinationParticipantId,
-    text: `使用札（${hand}） → 解決 → Shield ${causalReturn.destination.shieldLane}`
+    text: `使用カード（${hand}） → 解決 → シールド${causalReturn.destination.shieldLane}`
   });
   return rows;
 }

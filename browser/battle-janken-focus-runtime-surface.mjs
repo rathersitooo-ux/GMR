@@ -118,7 +118,7 @@ function physicalCardMarkup(cardId, cardIndex, { jankenHand = null, cardArt = nu
     : '';
   const art = artSrc
     ? `<img class="grJankenCardArt" data-card-art-source="${escapeHtml(artSource)}" src="${escapeHtml(artSrc)}" alt="" aria-hidden="true">`
-    : '<span class="grJankenCardArtMissing" data-card-art-source="missing">イラスト未接続</span>';
+    : '<span class="grJankenCardArtMissing" data-card-art-source="missing">イラストがありません</span>';
   return `
     <div class="grJankenPhysicalCard${artSrc ? ' has-card-art' : ' is-card-art-missing'}"
       data-physical-card-id="${escapeHtml(card.id)}"

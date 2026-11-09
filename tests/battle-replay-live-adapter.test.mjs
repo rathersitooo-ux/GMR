@@ -41,12 +41,12 @@ function resolution(serial = 1) {
     players: [
       {
         id: 'P1', name: 'You', team: 'A', score: 11, winner: true,
-        cards: [{ cardId: 'C1', label: '公開札1', value: 6, origin: 'active_submission', hiddenDeckOrder: ['NO'] }],
+        cards: [{ cardId: 'C1', label: '公開カード1', value: 6, origin: 'active_submission', hiddenDeckOrder: ['NO'] }],
         hand: ['SECRET_HAND']
       },
       {
         id: 'P3', name: 'CPU', team: 'B', score: 9, winner: false,
-        cards: [{ cardId: 'C2', label: '公開札2', value: 4, origin: 'active_submission' }]
+        cards: [{ cardId: 'C2', label: '公開カード2', value: 4, origin: 'active_submission' }]
       }
     ],
     laneGains: [{ id: 'P1', lane: 'C', before: 2, after: 4, added: 2 }],
@@ -647,7 +647,9 @@ test('production Browser mounts replay at the canonical accepted Battle seam wit
   assert.equal(count('id="resultHeadline"'), 1);
   assert.ok(html.indexOf('m.lastBattleResolution={serial:++m.resolutionSeq') < html.indexOf('grBattleReplayAcceptResolution(m,m.lastBattleResolution)'));
   assert.ok(html.indexOf('grBattleReplayAcceptResolution(m,m.lastBattleResolution)') < html.indexOf('const slaykiaAttackEnd=grSlaykiaAttackEndHook(m)'));
-  assert.ok(html.indexOf('grBattleReplayEnd(m,winners);return endMatch(winners)') < html.indexOf('return endMatch(winners)}nextRound()'));
+  assert.ok(html.indexOf('grBattleReplayEnd(m,winners);return endMatch(winners)') < html.indexOf('if(completion.gateOpened&&!m.gateOpen)'));
+  assert.ok(html.indexOf('if(completion.gateOpened&&!m.gateOpen)') < html.indexOf('}nextRound()}catch(e)'));
+  assert.equal(count('if(completion.gateOpened&&!m.gateOpen)'), 1);
   assert.match(html, /createBattleReplayVersionAuthority\(\{deckRule:DECK_RULE,cardData:window\.__CARD_DATA__\}\)/);
   assert.match(html, /appendAcceptedBattleResolution\(session,resolution\)/);
   assert.match(html, /appendAcceptedMatchEnd\(session,\{winnerIds:\[\.\.\.winners\],round:m\.round,mode:m\.mode\}\)/);
@@ -669,7 +671,7 @@ test('Battle recent public history stays compact, expands inline, deduplicates, 
   assert.deepEqual(host.children.map(row => row.hidden), [true, false, false]);
   assert.equal(host.dataset.partnerBattleEventLogRecentRows, '2');
   assert.equal(toggle.getAttribute('aria-expanded'), 'false');
-  assert.match(host.children[0].textContent, /対象 C列 → Shield使用 → 進行 C列 2→4（\+2）/);
+  assert.match(host.children[0].textContent, /対象 C列 → シールド使用 → 進行 C列 2→4（\+2）/);
   assert.match(host.children[0].textContent, /公開カード C1\(6\) \/ C2\(4\)/);
   toggle.click();
   assert.deepEqual(host.children.map(row => row.hidden), [false, false, false]);

@@ -79,6 +79,7 @@ test('retained Setup copy branch describes Honey inventory and no Mana recovery 
   new Function('setText', 'state', source)((selector, value) => notes.push(value), { setupContent: 'honey_hunt' });
   assert.match(notes[0], /所持ハニー/);
   assert.match(notes[0], /マナは回復しません/);
+  assert.match(notes[0], /一列にカードを7枚ためると門が全部開き、そのあとゴール到達で勝利です/);
 });
 
 test('existing live Honey meter distinguishes carried stock from board stock', () => {
@@ -171,7 +172,7 @@ test('forwards only a complete current Mana-first then Honey payment receipt', (
     honeyPaid: 2,
     manaAfter: 0,
     honeyAfter: 5,
-    source: '  戦闘札6  ',
+    source: '  戦闘カード6  ',
     hiddenCardId: 'DO-NOT-PROJECT',
   };
   const snapshot = projectBattleCriticalResourceHudInput({ player, paymentReceipt });
@@ -186,7 +187,7 @@ test('forwards only a complete current Mana-first then Honey payment receipt', (
       honeyPaid: 2,
       manaAfter: 0,
       honeyAfter: 5,
-      source: '戦闘札6',
+      source: '戦闘カード6',
     },
   });
   assert.equal(JSON.stringify(snapshot).includes('DO-NOT-PROJECT'), false);
@@ -197,9 +198,9 @@ test('drops partial, inconsistent, non-Mana-first, or stale payment receipts', (
   const player = { manaCurrent: 0, manaMax: 10, honey: 5, chip: [] };
   for (const paymentReceipt of [
     { cost: 6, manaPaid: 4, honeyPaid: 2, manaAfter: 0, honeyAfter: 5 },
-    { cost: 7, manaPaid: 4, honeyPaid: 2, manaAfter: 0, honeyAfter: 5, source: '戦闘札6' },
-    { cost: 6, manaPaid: 4, honeyPaid: 2, manaAfter: 1, honeyAfter: 5, source: '戦闘札6' },
-    { cost: 6, manaPaid: 4, honeyPaid: 2, manaAfter: 0, honeyAfter: 4, source: '戦闘札6' },
+    { cost: 7, manaPaid: 4, honeyPaid: 2, manaAfter: 0, honeyAfter: 5, source: '戦闘カード6' },
+    { cost: 6, manaPaid: 4, honeyPaid: 2, manaAfter: 1, honeyAfter: 5, source: '戦闘カード6' },
+    { cost: 6, manaPaid: 4, honeyPaid: 2, manaAfter: 0, honeyAfter: 4, source: '戦闘カード6' },
   ]) {
     assert.deepEqual(
       projectBattleCriticalResourceHudInput({ player, paymentReceipt }),
@@ -235,7 +236,7 @@ test('dedicated sync helper calls only caller resourceHud.sync exactly once', ()
       honeyPaid: 2,
       manaAfter: 0,
       honeyAfter: 5,
-      source: '戦闘札6',
+      source: '戦闘カード6',
     },
   });
 
@@ -254,7 +255,7 @@ test('dedicated sync helper calls only caller resourceHud.sync exactly once', ()
       honeyPaid: 2,
       manaAfter: 0,
       honeyAfter: 5,
-      source: '戦闘札6',
+      source: '戦闘カード6',
     },
   });
   assert.equal(Object.isFrozen(calls[0]), true);

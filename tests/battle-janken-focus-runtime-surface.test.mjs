@@ -71,9 +71,9 @@ function authoritativePackages(generation = 'g1') {
 
 function authoritativeCardCatalog(generation = 'g1') {
   return [
-    { id: `rock-card-${generation}`, display_name: `岩札 ${generation}`, suit: 'SP', rank: '7', power: 7, authority: AUTHORITATIVE_SELECTION_FIXTURE_NOTE },
-    { id: `scissors-card-${generation}`, display_name: `刃札 ${generation}`, suit: 'HT', rank: 'Q', power: 12, authority: AUTHORITATIVE_SELECTION_FIXTURE_NOTE },
-    { id: `paper-card-${generation}`, display_name: `紙札 ${generation}`, suit: 'DI', rank: '3', power: 3, authority: AUTHORITATIVE_SELECTION_FIXTURE_NOTE },
+    { id: `rock-card-${generation}`, display_name: `岩カード ${generation}`, suit: 'SP', rank: '7', power: 7, authority: AUTHORITATIVE_SELECTION_FIXTURE_NOTE },
+    { id: `scissors-card-${generation}`, display_name: `刃カード ${generation}`, suit: 'HT', rank: 'Q', power: 12, authority: AUTHORITATIVE_SELECTION_FIXTURE_NOTE },
+    { id: `paper-card-${generation}`, display_name: `紙カード ${generation}`, suit: 'DI', rank: '3', power: 3, authority: AUTHORITATIVE_SELECTION_FIXTURE_NOTE },
   ];
 }
 
@@ -164,10 +164,10 @@ test('JANKEN_FOCUS keeps exact physical card art primary and RPS only as a secon
   assert.match(html, /data-printed-rank="7"/);
   assert.match(html, /data-card-art-status="BOUND"/);
   assert.match(html, /class="grJankenCardArt" data-card-art-source="viewer_local_exact_card_id" src="https:\/\/assets\.example\/g1\/rock\.webp"/);
-  assert.match(html, /岩札 g1/);
+  assert.match(html, /岩カード g1/);
   assert.match(html, /♠/);
   assert.match(html, /SPADE · ID rock-card-g1/);
-  assert.doesNotMatch(html, /イラスト未接続/);
+  assert.doesNotMatch(html, /イラストがありません/);
   assert.match(html, /data-janken-role="ROCK">✊ グー/);
 });
 
@@ -192,7 +192,7 @@ test('missing catalog metadata preserves exact package cardId and never borrows 
   assert.match(html, /data-card-identity-source="PACKAGE_CARD_ID_ONLY"/);
   assert.match(html, /data-card-art-status="MISSING"/);
   assert.match(html, /カード情報未接続/);
-  assert.match(html, /イラスト未接続/);
+  assert.match(html, /イラストがありません/);
   assert.doesNotMatch(html, /別カード/);
   assert.doesNotMatch(html, /foreign\.webp/);
 });

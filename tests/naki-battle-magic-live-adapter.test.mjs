@@ -217,6 +217,11 @@ test('causal timeline phases map to Naki-specific source and target motion state
   assert.equal(resolveNakiBattleMagicCausalState({ causalPhase: 'impact', role: 'source', actionPhase: 'attack' }), 'IMPACT_HEART');
   assert.equal(resolveNakiBattleMagicCausalState({ causalPhase: 'reaction', role: 'target', actionPhase: 'attack' }), 'HIT_RECOIL');
   assert.equal(resolveNakiBattleMagicCausalState({ causalPhase: 'return', role: 'target', actionPhase: 'attack' }), 'IDLE_HEART_MOON');
+  // 32番：6相の外の entry / result / settle も、候補の8状態へつながること。
+  assert.equal(resolveNakiBattleMagicCausalState({ causalPhase: 'entry', role: 'source', actionPhase: 'attack' }), 'ENTRY_MIC');
+  assert.equal(resolveNakiBattleMagicCausalState({ causalPhase: 'entry', role: 'target', actionPhase: 'attack' }), 'ENTRY_MIC');
+  assert.equal(resolveNakiBattleMagicCausalState({ causalPhase: 'result', role: 'source', actionPhase: 'attack' }), 'RESULT_HEART');
+  assert.equal(resolveNakiBattleMagicCausalState({ causalPhase: 'settle', role: 'source', actionPhase: 'attack' }), 'RESULT_HEART');
 });
 
 test('adapter exposes causal-phase application without re-running gameplay logic', () => {
@@ -250,7 +255,18 @@ test('adapter exposes causal-phase application without re-running gameplay logic
     phase: 'attack',
     motionState: 'IMPACT_HEART',
   });
-  assert.equal(calls.length, 3);
+  // 32番：entry / result も同じ applyCausalPhase でつながること。
+  assert.deepEqual(adapter.applyCausalPhase({ causalPhase: 'entry' }), {
+    role: 'source',
+    phase: 'attack',
+    motionState: 'ENTRY_MIC',
+  });
+  assert.deepEqual(adapter.applyCausalPhase({ causalPhase: 'result' }), {
+    role: 'source',
+    phase: 'attack',
+    motionState: 'RESULT_HEART',
+  });
+  assert.equal(calls.length, 5);
 });
 
 test('runtime contract keeps adapter presentation-only and independent of Saasuna', () => {

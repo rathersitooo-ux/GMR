@@ -1241,7 +1241,27 @@ function makeVoteUiHarness() {
         hidden: false,
         textContent: '',
         parentNode: null,
+        children: [],
+        style: {},
         setAttribute() {},
+        appendChild(node) {
+          node.parentNode = this;
+          this.children.push(node);
+          return node;
+        },
+        querySelector(selector) {
+          const role = /\[data-role="([^"]+)"\]/.exec(selector)?.[1];
+          if (!role) return null;
+          const walk = (node) => {
+            for (const child of node.children ?? []) {
+              if (child.dataset?.role === role) return child;
+              const hit = walk(child);
+              if (hit) return hit;
+            }
+            return null;
+          };
+          return walk(this);
+        },
       };
     },
     addEventListener(type, fn, capture) {
@@ -1296,7 +1316,10 @@ function makeVoteUiHarness() {
   return {
     doc, win, popover, opener, inside,
     countNode: () => countNode,
+    meterLabel: () => countNode?.querySelector('[data-role="cards-vote-meter-label"]') ?? null,
+    meterFill: () => countNode?.querySelector('[data-role="cards-vote-meter-fill"]') ?? null,
     setSnapshot(value) { snapshot = value; },
+    setUnlock(value) { win.GAMEROAD_CARD_VOTE_UNLOCK = value; },
     dispatchDoc, dispatchWin,
   };
 }
@@ -1309,18 +1332,41 @@ test('per-card local vote history counts only the selected card', () => {
   assert.equal(countCardsLocalVoteHistory({ cardId: '', history: [{ cardId: 'A' }] }), 0);
 });
 
-test('vote UI repair projects selected-card local history and refreshes from the existing vote event', () => {
+test('vote UI repair shows the unlock meter and never a vote-count number', () => {
   const h = makeVoteUiHarness();
   const controller = installCardsVoteUiRepair({ document: h.doc, window: h.win });
-  assert.equal(h.countNode()?.textContent, 'この端末でのこのカードの投票数：2票');
+  const node = h.countNode();
+  assert.equal(node.hidden, false);
+  assert.equal(node.dataset.meterState, 'filling');
+  assert.equal(node.textContent, '');
+  assert.equal(h.meterLabel()?.textContent, '解禁メーター');
+  assert.equal(h.meterFill()?.style.width, '0%');
 
   h.setSnapshot({
     cardId: 'A',
     history: [{ cardId: 'A' }, { cardId: 'B' }, { cardId: 'A' }, { cardId: 'A' }],
   });
   h.dispatchWin('gameroad:card-vote-local');
-  assert.equal(h.countNode()?.textContent, 'この端末でのこのカードの投票数：3票');
+  assert.equal(h.countNode()?.dataset.meterState, 'filling');
+  assert.equal(h.countNode()?.textContent, '');
+  assert.equal(h.meterLabel()?.textContent, '解禁メーター');
   controller.destroy();
+});
+
+test('vote meter changes its display when full, and stays hidden when the line is undecided', () => {
+  const h = makeVoteUiHarness();
+  h.setUnlock({ meterFor: () => ({ cardId: 'A', kind: 'full', fillRatio: 1, unlocked: true }) });
+  const controller = installCardsVoteUiRepair({ document: h.doc, window: h.win });
+  assert.equal(h.meterLabel()?.textContent, '解禁されました');
+  assert.equal(h.meterFill()?.style.width, '100%');
+  assert.ok(h.countNode()?.className.includes('is-full'));
+  controller.destroy();
+
+  const h2 = makeVoteUiHarness();
+  h2.setSnapshot({ cardId: 'GED', history: [{ cardId: 'GED', stance: 'for' }] });
+  const c2 = installCardsVoteUiRepair({ document: h2.doc, window: h2.win });
+  assert.equal(h2.countNode()?.hidden, true);
+  c2.destroy();
 });
 
 test('outside click closes only the open vote popover, consumes input and restores vote-opener focus', () => {

@@ -1142,7 +1142,7 @@ function selectRecordRow(row, list, panel) {
 
   const summary = recordSummaryText(row);
   const summaryNode = panel.querySelector('.recordsMatchDetailSummary');
-  if (summaryNode) summaryNode.textContent = summary || '対戦内容を確認できませんでした。';
+  if (summaryNode) summaryNode.textContent = summary || '';
   const deckNode = panel.querySelector('.recordsMatchDetailDeck');
   if (deckNode) deckNode.textContent = projectHistoricalDeckText(row.__gameroadHistoryEntry);
   panel.hidden = false;
@@ -1230,28 +1230,15 @@ export function mountProfilePresentation(doc = globalThis.document, win = global
     legacy.setAttribute('aria-hidden', 'true');
   }
 
-  let overview = stats.querySelector('.profileOverviewHead');
-  if (!overview) {
-    overview = doc.createElement('div');
-    overview.className = 'profileOverviewHead';
-    const kicker = doc.createElement('span');
-    kicker.textContent = '本人情報';
-    const title = doc.createElement('b');
-    title.textContent = '現在のプロフィール';
-    const sub = doc.createElement('small');
-    sub.textContent = '操作人物とパートナー';
-    overview.append(kicker, title, sub);
-    stats.prepend(overview);
-  }
+  const staleOverview = stats.querySelector('.profileOverviewHead');
+  if (staleOverview) staleOverview.remove();
 
   let summary = stats.querySelector('.profileIdentitySummary');
   if (!summary) {
     summary = doc.createElement('section');
     summary.className = 'profileIdentitySummary';
     summary.setAttribute('aria-label', 'プロフィールの人物');
-    overview.insertAdjacentElement('afterend', summary);
-  } else if (summary.previousElementSibling !== overview) {
-    overview.insertAdjacentElement('afterend', summary);
+    stats.prepend(summary);
   }
   summary.replaceChildren();
   const player = identityCard(doc, 'player', '操作人物', projection.identities.player);
@@ -1260,14 +1247,8 @@ export function mountProfilePresentation(doc = globalThis.document, win = global
   if (partner) summary.appendChild(partner);
   summary.hidden = summary.childElementCount === 0;
 
-  let note = stats.querySelector('.profileRecordsNote');
-  if (!note) {
-    note = doc.createElement('div');
-    note.className = 'profileRecordsNote';
-    const actions = stats.querySelector('.profileActions');
-    if (actions) stats.insertBefore(note, actions); else stats.appendChild(note);
-  }
-  note.textContent = '対戦の詳しい履歴は「対戦記録」で確認できます。';
+  const staleNote = stats.querySelector('.profileRecordsNote');
+  if (staleNote) staleNote.remove();
 
   const actions = stats.querySelector('.profileActions');
   const recordsButton = stats.querySelector('[data-go="records"]');

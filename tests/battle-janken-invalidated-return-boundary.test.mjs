@@ -23,8 +23,8 @@ test('returns only resolver-invalidated reservations to the same player hand', (
   });
 
   assert.deepEqual(result.returns, [
-    { playerId: 'P2', physicalCardId: 'p2-card-2', fromZone: 'JANKEN_RESERVED', toZone: 'HAND', reason: 'INVALIDATED_COMPARISON_RESOLVED' },
-    { playerId: 'P4', physicalCardId: 'p4-card-9', fromZone: 'JANKEN_RESERVED', toZone: 'HAND', reason: 'INVALIDATED_COMPARISON_RESOLVED' },
+    { playerId: 'P2', physicalCardId: 'p2-card-2', fromZone: 'JANKEN_RESERVED', toZone: 'HAND', reason: 'INVALIDATED_COMPARISON_RESOLVED', visibility: 'public', staysPublicInHand: true },
+    { playerId: 'P4', physicalCardId: 'p4-card-9', fromZone: 'JANKEN_RESERVED', toZone: 'HAND', reason: 'INVALIDATED_COMPARISON_RESOLVED', visibility: 'public', staysPublicInHand: true },
   ]);
   assert.deepEqual(result.nextHands, [
     { playerId: 'P1', physicalCardIds: ['p1-a'] },
@@ -78,6 +78,8 @@ test('rejects duplicate physical-card reservation ownership', () => {
 test('contract keeps comparison state transient and never owns movement rollback', () => {
   assert.equal(BATTLE_JANKEN_INVALIDATED_RETURN_CONTRACT.invalidatedState, 'TRANSIENT_COMPARISON_RESULT_ONLY');
   assert.equal(BATTLE_JANKEN_INVALIDATED_RETURN_CONTRACT.defaultDisposition, 'RETURN_SAME_PHYSICAL_CARD_TO_HAND_AFTER_COMPARISON');
+  // 2026-11-10の原則：比べで見せたカードは、手札へ戻っても公開のまま保つ。
+  assert.equal(BATTLE_JANKEN_INVALIDATED_RETURN_CONTRACT.returnedCardsStayPublic, true);
   assert.equal(BATTLE_JANKEN_INVALIDATED_RETURN_CONTRACT.movementRollback, false);
   assert.equal(BATTLE_JANKEN_INVALIDATED_RETURN_CONTRACT.gameStateWrite, false);
 });

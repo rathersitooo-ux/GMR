@@ -98,6 +98,10 @@ export function projectInvalidatedJankenReturnToHand({
       fromZone: 'JANKEN_RESERVED',
       toZone: 'HAND',
       reason: 'INVALIDATED_COMPARISON_RESOLVED',
+      // 比べで見せたカードは公開済み。手札へ戻っても表向きのまま保つ
+      // （2026-11-10の原則：公開領域から非公開領域へ行くことはあってはならない）。
+      visibility: 'public',
+      staysPublicInHand: true,
     }));
   }
 
@@ -121,6 +125,7 @@ export const BATTLE_JANKEN_INVALIDATED_RETURN_CONTRACT = Object.freeze({
   schema: SCHEMA,
   invalidatedState: 'TRANSIENT_COMPARISON_RESULT_ONLY',
   defaultDisposition: 'RETURN_SAME_PHYSICAL_CARD_TO_HAND_AFTER_COMPARISON',
+  returnedCardsStayPublic: true,
   physicalCardLineageAuthority: 'CALLER',
   resolverAuthority: 'EXISTING_TRIAD_RESOLVER',
   movementRollback: false,

@@ -1752,7 +1752,7 @@ const rankMatchRuntime = {
   observerSignature: '',
   observerTargets: [],
   refreshScheduled: false,
-  selectedMode: 'normal',
+  selectedMode: 'rank',
   waiting: false,
   waitingPartnerId: 'partner.saasuna',
   picker: null,
@@ -1856,13 +1856,6 @@ function setRankMatchSetupMode(section, mode) {
     const pressed = button.dataset.rankMode === next ? 'true' : 'false';
     if (button.getAttribute('aria-pressed') !== pressed) button.setAttribute('aria-pressed', pressed);
   }
-  const note = section?.querySelector?.('.rankMatchModeNote');
-  if (note) {
-    const nextNote = next === 'rank'
-      ? 'バトルが終わったあと、ランクマッチの待機画面へ進みます。'
-      : '通常のローカル対戦設定をそのまま使用します。';
-    if (note.textContent !== nextNote) note.textContent = nextNote;
-  }
   const start = rankMatchSetupStart(section);
   if (start) {
     if (!start.dataset.rankDefaultLabel) start.dataset.rankDefaultLabel = start.textContent || '対戦開始';
@@ -1892,21 +1885,13 @@ function ensureRankMatchSetupControls(doc) {
     normal.className = 'gameroadRankMatchMode';
     normal.dataset.rankMode = 'normal';
     normal.textContent = '通常マッチ';
-    const normalHint = doc.createElement('small');
-    normalHint.textContent = '現在の設定で開始';
-    normal.append(normalHint);
     const ranked = doc.createElement('button');
     ranked.type = 'button';
     ranked.className = 'gameroadRankMatchMode';
     ranked.dataset.rankMode = 'rank';
     ranked.textContent = 'ランクマッチ';
-    const rankedHint = doc.createElement('small');
-    rankedHint.textContent = 'バトルが終わったあとも待機します';
-    ranked.append(rankedHint);
-    row.append(normal, ranked);
-    const note = doc.createElement('div');
-    note.className = 'rankMatchModeNote';
-    section.append(title, row, note);
+    row.append(ranked, normal);
+    section.append(title, row);
     const start = rankMatchSetupStart(setup);
     if (start) box.insertBefore(section, start);
     else box.append(section);
@@ -1979,7 +1964,7 @@ function rankMatchCreatePicker(doc) {
   overlay.setAttribute('aria-modal', 'true');
   overlay.setAttribute('aria-labelledby', 'rankPartnerPickerTitle');
   overlay.dataset.schema = RANK_MATCH_PICKER_SCHEMA;
-  overlay.innerHTML = '<div class="rankPartnerPickerShell"><div class="rankPartnerPickerHeader"><div><strong id="rankPartnerPickerTitle">アドバイスパートナー</strong><small>待機画面に表示する立ち絵を選択</small></div><button type="button" class="rankPartnerPickerClose" data-rank-picker-close aria-label="キャラ選択を閉じる">×</button></div><div class="rankPartnerChoiceGrid" data-rank-partner-choice-grid></div><p class="rankPartnerPickerHint">操作キャラの設定は変更せず、待機画面のアドバイス役だけを切り替えます。</p></div>';
+  overlay.innerHTML = '<div class="rankPartnerPickerShell"><div class="rankPartnerPickerHeader"><div><strong id="rankPartnerPickerTitle">アドバイスパートナー</strong></div><button type="button" class="rankPartnerPickerClose" data-rank-picker-close aria-label="キャラ選択を閉じる">×</button></div><div class="rankPartnerChoiceGrid" data-rank-partner-choice-grid></div></div>';
   doc.body.append(overlay);
   overlay.addEventListener('click', (event) => {
     if (event.target === overlay || event.target?.closest?.('[data-rank-picker-close]')) {
@@ -2026,9 +2011,7 @@ function rankMatchRenderPicker(doc) {
     text.className = 'rankPartnerChoiceText';
     const name = doc.createElement('strong');
     name.textContent = rankMatchPartnerName(id);
-    const hint = doc.createElement('small');
-    hint.textContent = id === 'partner.saasuna' ? '正規バストアップ' : 'アドバイス役';
-    text.append(name, hint);
+    text.append(name);
     choice.append(icon, text);
     grid.append(choice);
   }
@@ -2059,7 +2042,7 @@ function rankMatchBuildWaitingSurface(doc) {
   surface.hidden = true;
   surface.dataset.schema = RANK_MATCH_WAITING_SCHEMA;
   surface.setAttribute('aria-label', 'ランクマッチ待機画面');
-  surface.innerHTML = '<div class="rankWaitingBackdrop" aria-hidden="true"></div><div class="rankWaitingVfx" aria-hidden="true"></div><div class="rankWaitingPanel"><header class="rankWaitingHeader"><button type="button" class="rankWaitingBack" data-rank-waiting-back>‹ バトル設定</button><div class="rankWaitingTitle"><small>RANKED MATCH / WAITING ROOM</small><strong>ランクマッチ</strong></div><button type="button" class="rankWaitingCancel" data-rank-waiting-cancel>待機をやめる</button></header><div class="rankWaitingContent"><div class="rankWaitingPartnerRail"><div class="rankWaitingPartnerLabel">アドバイスパートナー</div><button type="button" class="rankWaitingPartner" data-rank-waiting-partner aria-label="アドバイスパートナーを変更"><img data-role="rank-waiting-partner-image" alt="" draggable="false"><span class="rankWaitingPartnerIcon" data-role="rank-waiting-partner-icon" aria-hidden="true"></span></button><strong class="rankWaitingPartnerName" data-role="rank-waiting-partner-name">サースナー</strong><span class="rankWaitingPartnerHint">タップして変更</span></div><div class="rankWaitingCopy"><div class="rankWaitingEyebrow">MATCHMAKING READY</div><h1>ランクマッチ</h1><p>バトル設定はそのまま、ランクマッチの待機画面です。</p><div class="rankWaitingStatus" data-role="rank-provider-status" aria-live="polite">接続先の登録を待っています</div><div class="rankWaitingMeta">操作キャラ：設定済み　／　アドバイス役：選択可能</div></div><div class="rankWaitingActions"><button type="button" class="rankWaitingAction" data-rank-waiting-primary>対戦相手を探す</button><button type="button" class="rankWaitingAction secondary" data-rank-waiting-cancel>待機をやめる</button></div></div><footer class="rankWaitingFoot">ランクマッチの準備ができたら、ここから対戦相手を探し始めます。</footer></div>';
+  surface.innerHTML = '<div class="rankWaitingBackdrop" aria-hidden="true"></div><div class="rankWaitingVfx" aria-hidden="true"></div><div class="rankWaitingPanel"><header class="rankWaitingHeader"><button type="button" class="rankWaitingBack" data-rank-waiting-back>‹ バトル設定</button><div class="rankWaitingTitle"><small>RANKED MATCH / WAITING ROOM</small><strong>ランクマッチ</strong></div><button type="button" class="rankWaitingCancel" data-rank-waiting-cancel>待機をやめる</button></header><div class="rankWaitingContent"><div class="rankWaitingPartnerRail"><div class="rankWaitingPartnerLabel">アドバイスパートナー</div><button type="button" class="rankWaitingPartner" data-rank-waiting-partner aria-label="アドバイスパートナーを変更"><img data-role="rank-waiting-partner-image" alt="" draggable="false"><span class="rankWaitingPartnerIcon" data-role="rank-waiting-partner-icon" aria-hidden="true"></span></button><strong class="rankWaitingPartnerName" data-role="rank-waiting-partner-name">サースナー</strong></div><div class="rankWaitingCopy"><div class="rankWaitingEyebrow">MATCHMAKING READY</div><h1>ランクマッチ</h1><div class="rankWaitingStatus" data-role="rank-provider-status" aria-live="polite">接続先の登録を待っています</div></div><div class="rankWaitingActions"><button type="button" class="rankWaitingAction" data-rank-waiting-primary>対戦相手を探す</button><button type="button" class="rankWaitingAction secondary" data-rank-waiting-cancel>待機をやめる</button></div></div></div>';
   doc.body.append(surface);
   surface.addEventListener('click', (event) => {
     if (event.target?.closest?.('[data-rank-waiting-partner]')) {
@@ -2203,7 +2186,11 @@ function beginRankMatchBattle(doc) {
   if (!start) return;
   // 対戦開始の横取り（このファイルの rankMatchHandleClick）を1回だけ通す。
   // 開始そのものはゲーム本体の #startMatch の道をそのまま使う。
+  // ランクマッチでは BATTLE START の題・ムービーを出さない（比べた7ゲームの
+  // どれも出していなかった）。本体の startMatch がこの1回だけの印を読んで
+  // 題・ムービーを飛ばす。印は startMatch の入口で必ず消える。
   rankMatchRuntime.startBypass = true;
+  rankMatchWindow().GAMEROAD_RANK_MATCH_SKIP_BATTLE_START = true;
   start.click();
 }
 

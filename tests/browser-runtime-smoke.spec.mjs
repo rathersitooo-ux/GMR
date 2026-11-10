@@ -188,11 +188,11 @@ test('Highlander rejects distinct card IDs that resolve to the same canonical na
   expect(evidence.aliasId).not.toBe(evidence.targetId);
   expect(evidence.targetCanonicalName).toBeTruthy();
   expect(evidence.before.ok, `pre-alias validation: ${JSON.stringify(evidence.before)}`).toBeTruthy();
-  expect(JSON.stringify(evidence.before)).not.toContain('同名1枚まで');
+  expect(JSON.stringify(evidence.before)).not.toContain('同じ名前のカードは1枚までです');
   expect(evidence.aliased?.ok, `aliased validation: ${JSON.stringify(evidence.aliased)}`).toBeFalsy();
-  expect(JSON.stringify(evidence.aliased)).toContain('同名1枚まで');
+  expect(JSON.stringify(evidence.aliased)).toContain('同じ名前のカードは1枚までです');
   expect(evidence.restored.ok, `restored validation: ${JSON.stringify(evidence.restored)}`).toBeTruthy();
-  expect(JSON.stringify(evidence.restored)).not.toContain('同名1枚まで');
+  expect(JSON.stringify(evidence.restored)).not.toContain('同じ名前のカードは1枚までです');
   if (evidence.hadCanonicalName) {
     expect(evidence.aliasCanonicalNameAfterRestore).toBe(evidence.originalCanonicalName);
   } else {
@@ -253,7 +253,7 @@ test('partner delegation preserves the player-selected match envelope and reject
     first.mode = originalMode;
 
     const repairedCheck = partner.selectionCheck();
-    await new Promise((resolve) => setTimeout(resolve, 3));
+    await new Promise((resolve) => setTimeout(resolve, 1200)); // wait out the 1000ms match-start guard window (match-start-guard-core) so the second start is a genuinely new match
     const second = core.start('4p', 'road_shield');
     if (!second) throw new Error('second match failed to start');
     const staleRestore = partner.restoreSelection();

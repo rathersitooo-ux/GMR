@@ -49,7 +49,7 @@ export function projectGoalResultLead(finalizedResult, players = []) {
   const list = Array.isArray(players) ? players : [];
   const actor = list.find((player) => player && player.id === actorId);
   if (!actor || !nonEmptyString(actor.name)) return null;
-  const actorName = actor.human === true ? 'あなた' : actor.name;
+  const actorName = actor.name || (actor.human === true ? 'プレイヤー' : '');
   return deepFreeze({
     schema: SCHEMA,
     actorId,

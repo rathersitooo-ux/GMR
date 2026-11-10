@@ -206,7 +206,7 @@ function installStyle(documentRef) {
 .grJankenCardName{max-width:100%;margin-top:3px;font-size:12px;line-height:1.12;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .grJankenCardIdentity{margin-top:3px;padding-right:2px;font-size:9px;line-height:1.1;font-weight:800;opacity:.72;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .grJankenCardArtMissing{position:relative;z-index:2;margin-top:3px;font-size:8px;line-height:1.1;font-weight:800;opacity:.46}
-.grJankenRoleBadge{position:absolute;right:6px;top:6px;z-index:3;display:inline-flex;align-items:center;gap:3px;border:1px solid rgba(16,19,25,.28);border-radius:999px;background:rgba(255,255,255,.92);padding:3px 6px;font-size:10px;line-height:1;font-weight:900;color:#101319;text-shadow:none;white-space:nowrap}
+.grJankenRoleBadge{display:none!important}
 .grJankenFocusLockRow{display:grid;grid-template-columns:52px minmax(0,1fr);gap:6px;align-items:start;font-size:11px;line-height:1.25;margin-top:3px}
 .grJankenFocusLockRow span{opacity:.58;font-weight:800}
 .grJankenFocusLockRow strong{font-weight:800;overflow-wrap:anywhere}

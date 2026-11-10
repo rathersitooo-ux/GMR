@@ -193,7 +193,9 @@ export function mountBattleAdvanceReservationSurface(globalRef = globalThis) {
       const row = item.role === 'road' ? roadRow : item.role === 'battle' ? battleRow : readyRow;
       if (!row) continue;
       const value = row.querySelector?.('.arValue');
-      if (value) value.textContent = item.value;
+      // 「未選択」のような状態の説明文は出さない（2026-11-10 ライカの指摘）。
+      // 選んだ札の名前だけを出し、未選択と準備完了の重複表示は空にする。
+      if (value) value.textContent = item.state === 'unset' || item.role === 'ready' ? '' : item.value;
       row.dataset.state = item.state;
     }
     if (roadRow) roadRow.disabled = road.disabled === true;

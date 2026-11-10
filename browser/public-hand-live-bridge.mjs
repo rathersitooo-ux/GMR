@@ -79,6 +79,28 @@ export function createPublicHandBridge(hooks) {
     return wrap;
   }
 
+  // 入口のボタンに付ける小さな札の面。文字の名札（表○・裏○）は付けない
+  // （2026-11-10 ライカの指摘：名札と説明文だらけで幼稚）。
+  // 公開分は実物の面を並べ、非公開分は裏面の絵の上に枚数を重ねる。
+  function miniFace(id, i) {
+    const face = cardFace ? cardFace(id) : null;
+    const el = document.createElement('span');
+    el.className = 'publicHandMiniFace';
+    const mark = face ? (SUIT_MARKS[face.suit] || '') : '';
+    el.textContent = face ? `${mark}${face.rank || ''}` : (cardLabel ? cardLabel(id) : id);
+    el.style.cssText = `display:inline-grid;place-items:center;width:20px;height:27px;border-radius:3px;background:linear-gradient(145deg,#f7f8ff,#ccd4ee);border:1px solid #8fa0cc;font:800 9px/1 system-ui;color:${face && SUIT_RED[face.suit] ? '#c62f45' : '#232a45'}${i ? ';margin-left:-7px' : ''}`;
+    return el;
+  }
+
+  function miniBack(count) {
+    const el = document.createElement('span');
+    el.className = 'publicHandMiniBack';
+    el.textContent = String(count);
+    el.style.cssText = 'display:inline-grid;place-items:center;min-width:20px;height:27px;padding:0 3px;border-radius:3px;background:repeating-linear-gradient(45deg,#2c3a6e 0 4px,#1d2749 4px 8px);border:1px solid #5a6da3;font:800 10px/1 system-ui;color:#e6ecff;text-shadow:0 1px 2px #000';
+    el.setAttribute('aria-label', `裏向きのカード ${count}枚`);
+    return el;
+  }
+
   function state() {
     const m = getMatch();
     if (!m) return null;
@@ -167,18 +189,20 @@ export function createPublicHandBridge(hooks) {
       const nm = document.createElement('span');
       nm.textContent = row.name;
       btn.appendChild(nm);
-      const faceBadge = document.createElement('span');
-      faceBadge.className = 'publicHandFaceCount';
-      faceBadge.textContent = `表${row.publicCards.length}`;
-      faceBadge.style.cssText = 'background:#e8ecf9;color:#1b2440;border-radius:999px;padding:0 6px;font:800 11px/1.6 system-ui';
-      btn.appendChild(faceBadge);
-      if (row.hiddenCount > 0) {
-        const backBadge = document.createElement('span');
-        backBadge.className = 'publicHandBackBadge';
-        backBadge.textContent = `裏${row.hiddenCount}`;
-        backBadge.style.cssText = 'background:#131a30;color:#cdd7f5;border:1px solid #5a6da3;border-radius:999px;padding:0 6px;font:800 11px/1.6 system-ui';
-        btn.appendChild(backBadge);
+      if (row.publicCards.length) {
+        const faces = document.createElement('span');
+        faces.className = 'publicHandMiniFaces';
+        faces.style.cssText = 'display:flex;align-items:center';
+        row.publicCards.slice(0, 3).forEach((id, i) => faces.appendChild(miniFace(id, i)));
+        if (row.publicCards.length > 3) {
+          const more = document.createElement('span');
+          more.textContent = `+${row.publicCards.length - 3}`;
+          more.style.cssText = 'font:800 10px/1 system-ui;color:#cdd7f5;margin-left:3px';
+          faces.appendChild(more);
+        }
+        btn.appendChild(faces);
       }
+      if (row.hiddenCount > 0) btn.appendChild(miniBack(row.hiddenCount));
       btn.addEventListener('click', () => openPanel(row.playerId));
       bar.appendChild(btn);
     }

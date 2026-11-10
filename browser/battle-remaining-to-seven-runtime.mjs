@@ -98,8 +98,12 @@ export function createBattleRemainingToSevenMount({
     chip.appendChild(avatar);
     const name = createNode(document, 'span', 'grRemainName', row.name);
     chip.appendChild(name);
-    const seat = createNode(document, 'span', 'grRemainSeat', row.team ? `${row.seat}・${row.team}組` : row.seat);
-    chip.appendChild(seat);
+    // 席の内部ID（P4等）は名前と重なるので出さない（2026-11-10 ライカの指摘）。
+    // 2対2の時だけ、組の区別に必要な組名を出す。
+    if (row.team) {
+      const seat = createNode(document, 'span', 'grRemainSeat', `${row.team}組`);
+      chip.appendChild(seat);
+    }
     const badge = createNode(document, 'div', 'grRemainBadge');
     badge.setAttribute('data-role', 'badge');
     chip.appendChild(badge);

@@ -16,7 +16,23 @@ import {
   JOKER_CARD_ID,
   drawFallbackCard,
   jokerRoadValue,
+  trumpFallbackPool,
 } from './deck-fallback-core.mjs';
+
+// 最終手段の1枚は、手札に既にある実物のカードと重ならない物にする。
+// 物理のカードは1枚ずつしか無い、という対戦の前提（巡の開始の
+// じゃんけん割り当てが「手札の実物のカードは全部違うこと」を要求する）
+// を守るため。乱数が同じ物ばかり出す時は、山の先頭から空きを探す。
+function drawFallbackAvoiding(rng, used) {
+  for (let i = 0; i < 64; i++) {
+    const id = drawFallbackCard(rng);
+    if (!used.has(id)) return id;
+  }
+  for (const id of trumpFallbackPool()) {
+    if (!used.has(id)) return id;
+  }
+  return drawFallbackCard(rng);
+}
 
 export const DECK_FALLBACK_LIVE_BRIDGE_SCHEMA = 'gameroad.deck-fallback-live-bridge.v1';
 
@@ -61,17 +77,20 @@ export function projectHandRefillWithFallback({
   const nextHand = [...hand];
   const drawn = [];
   const logLines = [];
+  const used = new Set(nextHand);
   let jokerDrawn = false;
 
   while (nextHand.length < target) {
     if (nextDeck.length > 0) {
       const id = nextDeck.shift();
       nextHand.push(id);
+      used.add(id);
       drawn.push(Object.freeze({ id, source: 'deck' }));
       logLines.push(`山札から ${id} を引いた。`);
     } else {
-      const id = drawFallbackCard(rng);
+      const id = drawFallbackAvoiding(rng, used);
       nextHand.push(id);
+      used.add(id);
       drawn.push(Object.freeze({ id, source: 'fallback' }));
       if (id === JOKER_CARD_ID) {
         jokerDrawn = true;

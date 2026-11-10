@@ -102,11 +102,23 @@ test('ジョーカーが出た時は仮の数字つきで返す', () => {
 test('乱数 0 は山の先頭（SP_A）を出す', () => {
   const out = projectHandRefillWithFallback({
     deck: [],
-    hand: ['SP_A', 'SP_2'],
+    hand: ['HT_2', 'HT_3'],
     rng: () => 0,
   });
   assert.equal(out.drawn[0].id, 'SP_A');
   assert.equal(out.jokerDrawn, false);
+});
+
+test('最終手段は手札に既にある実物のカードと重ならない', () => {
+  // 乱数が山の先頭ばかり出しても、手札の SP_A・SP_2 と重ならない物になる。
+  // 物理のカードは1枚ずつしか無い、という対戦の前提（巡の開始で落ちる実例あり）。
+  const out = projectHandRefillWithFallback({
+    deck: [],
+    hand: ['SP_A', 'SP_2'],
+    rng: () => 0,
+  });
+  assert.equal(out.drawn[0].id, 'SP_3');
+  assert.equal(new Set(out.hand).size, out.hand.length);
 });
 
 test('凍らせた入力でも動く（入力を変えない）', () => {

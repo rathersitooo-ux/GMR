@@ -1074,7 +1074,9 @@ export function bindBattleAutoHandSelector({ target } = {}) {
   const renderMode = () => {
     const mode = BATTLE_AUTO_VISIBLE_MODES[modeIndex];
     button.dataset.autoMode = mode;
-    button.textContent = `AUTO ${BATTLE_AUTO_MODE_LABELS[mode]}`;
+    // 表示は「AUTO」だけにする（2026-11-10 ライカの指摘：AUTO手動と二語並べない）。
+    // いまの規則（手動／左端／右端／最大／最小）は作戦規則の選択肢と読み上げで分かる。
+    button.textContent = 'AUTO';
     button.setAttribute('aria-label', `カードの自動選択：${BATTLE_AUTO_MODE_LABELS[mode]}`);
     button.title = mode === 'manual'
       ? 'AUTO：手動。押すと左端→右端→最大→最小に切り替わります'

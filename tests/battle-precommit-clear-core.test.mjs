@@ -163,7 +163,7 @@ function scenario({busy=false,submitted=false,phase='plan',empty=false}={}){
  const me={id:'P1',position:'C:0:0',hand:['a','b','c','d','e','f','g'],openingJankenAssignment:{selectedJankenCardIds:['a','b','c']},plan:{roadId:empty?null:'a',battleId:null,path:['C:0:0']}};
  const match={players:[me],busy,phase};
  const selects=new Map([['#roadSelect',{value:empty?'':'a'}],['#battleSelect',{value:''}],['#endpointText',{textContent:''}]]);
- const context={state:{match},grBattlePrecommitClearCorePromise:Promise.resolve({clearBattlePrecommitSelection}),grBattleFriendPlanSubmitted:()=>submitted,grBattlePrecommitCommitInFlight:null,$:id=>selects.get(id),renderBoard(){},syncDirectPlanRoleUi(){},updateBattleAvatar(){},renderBattle(){},grSyncBattlePrecommitClear(){}};
+ const context={state:{match},grBattlePrecommitClearCorePromise:Promise.resolve({clearBattlePrecommitSelection}),grBattleFriendPlanSubmitted:()=>submitted,grBattlePrecommitCommitInFlight:null,grEndpointLabel:(id)=>id,$:id=>selects.get(id),renderBoard(){},syncDirectPlanRoleUi(){},updateBattleAvatar(){},renderBattle(){},grSyncBattlePrecommitClear(){}};
  vm.createContext(context);vm.runInContext(clearSource,context);
  return{me,context,clear:context.grClearBattlePrecommitSelection};
 }

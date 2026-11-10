@@ -230,7 +230,8 @@ if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stat
   if (/visualGraphWorld\s*\(/.test(html)) errors.push('HTML uses the retired duplicate visual-graph projection instead of worldFieldRenderModel');
   const correctedBattleResourceContracts = [
     [/const hand=deck\.splice\(0,7\);/, 'fresh Battle ordinary hand is not initialized to seven'],
-    [/function refill\(p\)\{while\(p\.hand\.length<3&&p\.deck\.length\)p\.hand\.push\(p\.deck\.shift\(\)\)\}/, 'post-use refill target is no longer three'],
+    [/function refill\(p\)\{const sup=window\.GAMEROAD_ROUND_SUPPORT;if\(sup&&typeof sup\.refillWithFallback==='function'\)/, 'post-use refill is not wired to the deck-fallback projection (target three, trump fallback when the deck runs out)'],
+    [/while\(p\.hand\.length<3&&p\.deck\.length\)p\.hand\.push\(p\.deck\.shift\(\)\)/, 'post-use refill target is no longer three'],
     [/manaCurrent:7,manaMax:10,honey:0,chip:/, 'numeric Mana 7/10 and player-owned Honey balance are not initialized'],
     [/function currentPlacementRanks\(m=state\.match\)/, 'current placement ranking was not made reusable for round income'],
     [/position:p\.position,manaCurrent:Number\(p\.manaCurrent\)\|\|0,manaMax:Number\(p\.manaMax\)\|\|10,honey:Number\(p\.honey\)\|\|0,chip:/, 'friend projection drops numeric Mana or player-owned Honey'],

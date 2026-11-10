@@ -43,17 +43,27 @@ export function drawFallbackCard(rng = Math.random) {
 
 // player: { deck: string[], hand: string[] }
 // 山札から先に引き、尽きた分だけ最終手段で補う。
+// 最終手段の1枚は、手札に既にある実物のカードと重ならない物にする
+// （物理のカードは1枚ずつしか無い、という対戦の前提を守るため）。
 // 返り値は引いたカードの一覧（id と出どころ 'deck' | 'fallback'）。
 export function refillHandWithFallback(player, target = 3, rng = Math.random) {
   const drawn = [];
+  const used = new Set(player.hand);
   while (player.hand.length < target) {
     if (player.deck.length) {
       const id = player.deck.shift();
       player.hand.push(id);
+      used.add(id);
       drawn.push({ id, source: 'deck' });
     } else {
-      const id = drawFallbackCard(rng);
+      let id = drawFallbackCard(rng);
+      let guard = 0;
+      while (used.has(id) && guard++ < 64) id = drawFallbackCard(rng);
+      if (used.has(id)) {
+        id = trumpFallbackPool().find((c) => !used.has(c)) ?? id;
+      }
       player.hand.push(id);
+      used.add(id);
       drawn.push({ id, source: 'fallback' });
     }
   }

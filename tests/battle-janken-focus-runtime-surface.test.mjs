@@ -238,7 +238,8 @@ test('JANKEN_FOCUS uses centered flower-bloom presentation with a reduced-motion
   assert.match(style.textContent, /nth-child\(3\).*animation-delay:70ms/);
   assert.match(style.textContent, /prefers-reduced-motion:reduce/);
   assert.match(style.textContent, /\.grJankenCardArt\{position:absolute;[^}]*object-fit:cover/);
-  assert.match(style.textContent, /\.grJankenRoleBadge\{position:absolute;[^}]*z-index:3/);
+  // 役割の名札（グー・チョキ・パーの文字札）は出さない（2026-11-10 ライカの決め）。
+  assert.match(style.textContent, /\.grJankenRoleBadge\{display:none!important\}/);
 });
 
 test('played janken card becomes a provisional large centered hero while commit is pending', async () => {

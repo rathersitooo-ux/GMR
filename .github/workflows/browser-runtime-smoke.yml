@@ -130,7 +130,7 @@ jobs:
 
             expect(evidence.aliasId).not.toBe(evidence.targetId);
             expect(evidence.invalidValidation?.ok, `aliased validation: ${JSON.stringify(evidence.invalidValidation)}`).toBeFalsy();
-            expect(JSON.stringify(evidence.invalidValidation)).toContain('同名1枚まで');
+            expect(JSON.stringify(evidence.invalidValidation)).toContain('同じ名前のカードは1枚までです');
             expect(evidence.matchBefore, 'test starts without an active match').toBeFalsy();
             expect(evidence.startReturned, 'invalid Highlander deck must not return a started match').toBeFalsy();
             expect(evidence.matchAfterAttempt, 'invalid Highlander deck must not install an active match').toBeFalsy();

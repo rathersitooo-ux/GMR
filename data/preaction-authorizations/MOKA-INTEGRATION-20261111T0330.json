@@ -1,0 +1,41 @@
+{
+  "acquireKey": "MOKA-INTEGRATION-20261111T0330",
+  "authorizationBaseSha": "123156aeebe982aca32030ff3e4bbaa2da3ae4cc",
+  "leaseAcquireKey": "MOKA-INTEGRATION-20261111T0330",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch integration-20261111-shield: browser/GAMEROAD.html; own data/preaction-authorizations/MOKA-INTEGRATION-20261111T0330.json only. All other resources READ_ONLY.",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "data/preaction-authorizations/MOKA-INTEGRATION-20261111T0330.json"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-11-11 03:17 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A15:L15",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GAMEROAD-INTEGRATION-20261111-SHIELD",
+  "leaseUntilJst": "2026-11-11 04:17 JST",
+  "leaseWorkUnitKey": "INTEGRATION_SHIELD_BATCH_20261111",
+  "predictionEvidenceId": "HONAKA_LIVE_PAGE_NO_SELECTOR_CONFIRM_CHAIN_DIFF_STATIC_PASS_20261111",
+  "predictionStatus": "PASS",
+  "proceedToken": "PROCEED|MOKA-INTEGRATION-20261111T0330|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|integration-publish-batch|browser-build|active-lease",
+  "recordId": "MOKA-INTEGRATION-20261111T0330",
+  "rehearsalEvidenceId": "PREPUSH_REQUIRED_GATE_LOCAL_RUN_BEFORE_PUSH_20261111_MOKA_SHIELD",
+  "rehearsalStatus": "PASS",
+  "reuseDecisionEvidenceId": "MANAGER_INTEGRATION_SHIELD_20261111",
+  "reuseDisposition": "COMPOSE",
+  "riskClass": "MATERIAL_STANDARD",
+  "schemaVersion": "gameroad-preaction-v3",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "data/preaction-authorizations/MOKA-INTEGRATION-20261111T0330.json"
+  ],
+  "solutionSearchEvidence": [
+    "Raw-ack conversion #10: the shield selector in the target box conflicted with the decided auto-determination form (found in the 2026-11-10 public-information audit follow-up). Hon-aka commit 88659f5 on branch fix-20261111-batch10-shield based on origin/main 123156a removes the selector from the target box and makes the shield auto-determined only: the weakest of the defender's shields, the same yardstick the bot target logic uses (lowest power, L/C/R order on ties).",
+    "The confirmTarget handler, the target draft reader and the friend-room guest submit now compute the shield via currentShieldChoice(defenderId) -> autoShieldFor; the select element, its proxy-button row, the CSS selector, the change listeners and the observer list entry are removed. Remaining targetShield mentions are data field names of presentation parts only, not the DOM element.",
+    "Hon-aka verification: the element is absent in a live page; the confirm chain enters resolution exactly as pristine main does (differential check in a separate worktree; a stall seen in a forced-phase setup reproduces identically on pristine, so it is an artifact of the forcing, not of this change); static check PASS; full suite 3,163 pass / 2 fail (both pre-existing on main: Missions ledger, quick hint caption). This branch rebuilds the commit manifest-first onto main 123156a: manifest-only first commit, cherry-picked content, manifest cleanup before push. Manager re-verification runs before push."
+  ],
+  "solutionSearchStatus": "PASS",
+  "solutionSignature": "INTEGRATION_PUBLISH_EXISTING_BATCH_V1",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "taskId": "GAMEROAD-INTEGRATION-20261111-SHIELD",
+  "workUnitKey": "INTEGRATION_SHIELD_BATCH_20261111"
+}

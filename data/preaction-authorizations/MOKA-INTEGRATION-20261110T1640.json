@@ -1,0 +1,51 @@
+{
+  "acquireKey": "MOKA-INTEGRATION-20261110T1640",
+  "authorizationBaseSha": "59a72c1ebe13534037346709e665bcf8db545623",
+  "leaseAcquireKey": "MOKA-INTEGRATION-20261110T1640",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch integration-20261110-gatefix; browser/GAMEROAD.html; tests/browser-static-check.mjs; browser/dragils-w-load-core.mjs; tests/dragils-w-load.test.mjs; browser/deck-fallback-live-bridge.mjs; tests/deck-fallback-live-bridge.test.mjs; own data/preaction-authorizations/MOKA-INTEGRATION-20261110T1640.json only.",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    "browser/dragils-w-load-core.mjs",
+    "tests/dragils-w-load.test.mjs",
+    "browser/deck-fallback-live-bridge.mjs",
+    "tests/deck-fallback-live-bridge.test.mjs",
+    "data/preaction-authorizations/MOKA-INTEGRATION-20261110T1640.json"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-11-10 16:22 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GAMEROAD-INTEGRATION-20261110-GATEFIX",
+  "leaseUntilJst": "2026-11-10 17:22 JST",
+  "leaseWorkUnitKey": "INTEGRATION_GATEFIX_BATCH_20261110",
+  "predictionEvidenceId": "LOCAL_FULL_SUITE_3132_TESTS_3127_PASS_3_KNOWN_PREEXISTING_FAILURES_OUTSIDE_SCOPE_STATIC_CHECK_PASS_20261110_MOKA",
+  "predictionStatus": "PASS",
+  "proceedToken": "PROCEED|MOKA-INTEGRATION-20261110T1640|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|integration-publish-batch|browser-build|active-lease",
+  "recordId": "MOKA-INTEGRATION-20261110T1640",
+  "rehearsalEvidenceId": "PREPUSH_REQUIRED_GATE_LOCAL_RUN_BEFORE_PUSH_20261110_MOKA_GATEFIX",
+  "rehearsalStatus": "PASS",
+  "reuseDecisionEvidenceId": "MANAGER_INTEGRATION_GATEFIX_20261110",
+  "reuseDisposition": "COMPOSE",
+  "riskClass": "MATERIAL_STANDARD",
+  "schemaVersion": "gameroad-preaction-v3",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    "browser/dragils-w-load-core.mjs",
+    "tests/dragils-w-load.test.mjs",
+    "browser/deck-fallback-live-bridge.mjs",
+    "tests/deck-fallback-live-bridge.test.mjs",
+    "data/preaction-authorizations/MOKA-INTEGRATION-20261110T1640.json"
+  ],
+  "solutionSearchEvidence": [
+    "This batch publishes the four Required Gate static-check fixes made by the hon-aka side in the local copy (battle-exit guards in commitPlans, result rank projection, Naki cut-in check aligned to the dynamic wiring), plus the Dragils W-load core and deck-fallback bridge whose unit tests pass and which GAMEROAD.html does not yet reference.",
+    "No new mechanism is introduced; the fixes restore the gate to PASS on top of main 59a72c1.",
+    "Full local suite on this branch before commit: 3132 tests, 3127 pass, 3 failures all pre-existing at base and outside this batch's scope; browser static check PASS."
+  ],
+  "solutionSearchStatus": "PASS",
+  "solutionSignature": "INTEGRATION_PUBLISH_EXISTING_BATCH_V1",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "taskId": "GAMEROAD-INTEGRATION-20261110-GATEFIX",
+  "workUnitKey": "INTEGRATION_GATEFIX_BATCH_20261110"
+}

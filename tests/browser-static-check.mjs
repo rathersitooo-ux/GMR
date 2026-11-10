@@ -130,7 +130,8 @@ function collectStaticErrors(html) {
     [/\.battle\.dedicatedBattlePhase\s+\.battlePhaseResolutionSlot\s+\.battleResolution\{[^}]*pointer-events:auto!important[^}]*\}/i, 'dedicated battle resolution controls are not interactive'],
     [/new\s+MutationObserver\(syncShell\)/, 'dedicated battle phase is not observing public battle-resolution DOM'],
     [/GameRoadThreeCharRuntime/, 'Naki cut-in is not using the public character runtime'],
-    [/characterId\s*:\s*["']partner\.naki["']/, 'Naki character is not wired to dedicated battle phase'],
+    [/runtime\.mount\(naki,\{characterId:character\.id,state:'dot_break_entry'/, 'Naki character is not wired to dedicated battle phase'],
+    [/\|\|'partner\.naki'/, 'dedicated battle phase cut-in does not default to Naki'],
     [/state\s*:\s*["']dot_break_entry["']/, 'Naki dot_break_entry state is not wired to dedicated battle phase'],
     [/__GAMEROAD_BATTLE_PHASE_R2__/, 'missing dedicated battle phase runtime probe'],
   ];

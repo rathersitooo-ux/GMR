@@ -16,8 +16,68 @@ const PANEL_ID = 'gameroadPublicHandPanel';
 const BAR_ID = 'gameroadPublicHandBar';
 
 export function createPublicHandBridge(hooks) {
-  const { getMatch, cardLabel, cardPower, log } = hooks;
+  const { getMatch, cardLabel, cardPower, cardFace, log } = hooks;
   let selectedPlayerId = null;
+
+  const SUIT_MARKS = { CL: '♣', DI: '♦', HT: '♥', HE: '♥', SP: '♠' };
+  const SUIT_RED = { DI: true, HT: true, HE: true };
+
+  // 公開カード1枚を「札の面」で作る。文章の札にはしない（2026-11-10の
+  // 画面の作り方の決め：文字と数字だけの表示は駄目）。面の材料が無い時は
+  // 名前だけの小さな面に落とす。
+  function faceElement(id) {
+    const face = cardFace ? cardFace(id) : null;
+    const el = document.createElement('div');
+    el.className = 'publicHandCardFace';
+    el.style.cssText = 'position:relative;width:52px;height:70px;border-radius:7px;background:linear-gradient(145deg,#f7f8ff,#ccd4ee);border:1px solid #8fa0cc;box-shadow:0 3px 8px rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:3px';
+    if (face && (face.suit || face.rank)) {
+      const top = document.createElement('div');
+      const mark = SUIT_MARKS[face.suit] || '';
+      top.textContent = `${mark}${face.rank || ''}`;
+      top.style.cssText = `font:800 16px/1.1 system-ui;color:${SUIT_RED[face.suit] ? '#c62f45' : '#232a45'}`;
+      const nm = document.createElement('div');
+      nm.textContent = face.name || (cardLabel ? cardLabel(id) : id);
+      nm.style.cssText = 'font:600 8px/1.2 system-ui;color:#4a5578;text-align:center';
+      el.append(top, nm);
+    } else {
+      const nm = document.createElement('div');
+      nm.textContent = cardLabel ? cardLabel(id) : id;
+      nm.style.cssText = 'font:700 10px/1.3 system-ui;color:#232a45;text-align:center';
+      el.appendChild(nm);
+    }
+    const power = cardPower ? cardPower(id) : null;
+    if (power != null) {
+      const pw = document.createElement('span');
+      pw.className = 'publicHandCardPower';
+      pw.textContent = String(power);
+      pw.style.cssText = 'position:absolute;right:3px;bottom:2px;font:800 9px/1 system-ui;color:#8a6d1f';
+      el.appendChild(pw);
+    }
+    return el;
+  }
+
+  // 裏向きの分は、裏面の札の重なりと枚数の印だけで出す。文章にはしない。
+  function backsElement(count) {
+    const wrap = document.createElement('div');
+    wrap.className = 'publicHandBacks';
+    wrap.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:8px';
+    wrap.setAttribute('aria-label', `裏向きのカード ${count}枚`);
+    const stack = document.createElement('div');
+    stack.style.cssText = 'display:flex';
+    const shown = Math.min(count, 7);
+    for (let i = 0; i < shown; i++) {
+      const back = document.createElement('div');
+      back.className = 'publicHandCardBack';
+      back.style.cssText = `width:30px;height:42px;border-radius:5px;background:repeating-linear-gradient(45deg,#2c3a6e 0 5px,#1d2749 5px 10px);border:1px solid #5a6da3;box-shadow:0 2px 5px rgba(0,0,0,.4)${i ? ';margin-left:-18px' : ''}`;
+      stack.appendChild(back);
+    }
+    const badge = document.createElement('span');
+    badge.className = 'publicHandBackCount';
+    badge.textContent = `×${count}`;
+    badge.style.cssText = 'font:800 12px/1 system-ui;color:#cdd7f5';
+    wrap.append(stack, badge);
+    return wrap;
+  }
 
   function state() {
     const m = getMatch();
@@ -68,7 +128,7 @@ export function createPublicHandBridge(hooks) {
       bar = document.createElement('div');
       bar.id = BAR_ID;
       bar.className = 'publicHandBar';
-      bar.style.cssText = 'position:absolute;left:10px;bottom:118px;z-index:60;display:flex;flex-wrap:wrap;gap:6px;align-items:center;max-width:60vw;font:12px/1.4 system-ui;color:#eef2ff';
+      bar.style.cssText = 'position:absolute;left:10px;top:176px;z-index:60;display:flex;flex-direction:column;gap:6px;align-items:flex-start;font:12px/1.4 system-ui;color:#eef2ff';
       bar.setAttribute('aria-label', '相手の公開手札を見る入口');
       battle.appendChild(bar);
     }
@@ -78,7 +138,7 @@ export function createPublicHandBridge(hooks) {
       panel.id = PANEL_ID;
       panel.className = 'publicHandPanel';
       // 詳細は左側（マスターデュエルと同じ側、2026-11-10の決め）。
-      panel.style.cssText = 'position:absolute;left:10px;top:86px;z-index:70;width:min(300px,80vw);max-height:62%;overflow:auto;background:#141a2e;color:#eef2ff;border:1px solid #3a4a7a;border-radius:12px;padding:12px;box-shadow:0 12px 40px rgba(0,0,0,.5);font:13px/1.5 system-ui';
+      panel.style.cssText = 'position:absolute;left:10px;top:176px;z-index:70;width:min(280px,80vw);max-height:52%;overflow:auto;background:#141a2e;color:#eef2ff;border:1px solid #3a4a7a;border-radius:12px;padding:12px;box-shadow:0 12px 40px rgba(0,0,0,.5);font:13px/1.5 system-ui';
       panel.setAttribute('aria-label', '公開手札');
       panel.hidden = true;
       battle.appendChild(panel);
@@ -91,6 +151,8 @@ export function createPublicHandBridge(hooks) {
     if (!dom) return;
     const view = currentView();
     const { bar, panel } = dom;
+    // 詳細を開いている間は入口の列を隠す（同じ左側の列で重ねない）。
+    bar.hidden = Boolean(selectedPlayerId);
     bar.replaceChildren();
     const title = document.createElement('span');
     title.className = 'publicHandBarTitle';
@@ -101,8 +163,22 @@ export function createPublicHandBridge(hooks) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'publicHandBtn';
-      btn.style.cssText = 'background:#232c4a;color:#eef2ff;border:1px solid #3a4a7a;border-radius:999px;padding:4px 10px;cursor:pointer;font:12px system-ui';
-      btn.textContent = `${row.name}（公開${row.publicCards.length}・裏${row.hiddenCount}）`;
+      btn.style.cssText = 'display:flex;align-items:center;gap:6px;background:#232c4a;color:#eef2ff;border:1px solid #3a4a7a;border-radius:999px;padding:4px 10px;cursor:pointer;font:12px system-ui';
+      const nm = document.createElement('span');
+      nm.textContent = row.name;
+      btn.appendChild(nm);
+      const faceBadge = document.createElement('span');
+      faceBadge.className = 'publicHandFaceCount';
+      faceBadge.textContent = `表${row.publicCards.length}`;
+      faceBadge.style.cssText = 'background:#e8ecf9;color:#1b2440;border-radius:999px;padding:0 6px;font:800 11px/1.6 system-ui';
+      btn.appendChild(faceBadge);
+      if (row.hiddenCount > 0) {
+        const backBadge = document.createElement('span');
+        backBadge.className = 'publicHandBackBadge';
+        backBadge.textContent = `裏${row.hiddenCount}`;
+        backBadge.style.cssText = 'background:#131a30;color:#cdd7f5;border:1px solid #5a6da3;border-radius:999px;padding:0 6px;font:800 11px/1.6 system-ui';
+        btn.appendChild(backBadge);
+      }
       btn.addEventListener('click', () => openPanel(row.playerId));
       bar.appendChild(btn);
     }
@@ -113,13 +189,19 @@ export function createPublicHandBridge(hooks) {
     selectedPlayerId = playerId;
     renderPanel();
     const dom = ensureDom();
-    if (dom) dom.panel.hidden = false;
+    if (dom) {
+      dom.panel.hidden = false;
+      dom.bar.hidden = true;
+    }
   }
 
   function closePanel() {
     selectedPlayerId = null;
     const dom = ensureDom();
-    if (dom) dom.panel.hidden = true;
+    if (dom) {
+      dom.panel.hidden = true;
+      dom.bar.hidden = false;
+    }
   }
 
   function renderPanel() {
@@ -140,30 +222,15 @@ export function createPublicHandBridge(hooks) {
     close.addEventListener('click', closePanel);
     head.append(name, close);
     panel.appendChild(head);
-    if (!row || !row.publicCards.length) {
-      const none = document.createElement('p');
-      none.className = 'publicHandNone';
-      none.textContent = '公開されている手札はまだありません。';
-      panel.appendChild(none);
-    } else {
+    if (row && row.publicCards.length) {
       const list = document.createElement('div');
       list.className = 'publicHandCards';
-      for (const id of row.publicCards) {
-        const chip = document.createElement('div');
-        chip.className = 'publicHandCard';
-        chip.style.cssText = 'background:#232c4a;border:1px solid #3a4a7a;border-radius:8px;padding:6px 8px;margin-bottom:6px';
-        const label = cardLabel ? cardLabel(id) : id;
-        const power = cardPower ? cardPower(id) : null;
-        chip.textContent = power != null ? `${label}（強さ${power}）` : label;
-        list.appendChild(chip);
-      }
+      list.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:8px';
+      for (const id of row.publicCards) list.appendChild(faceElement(id));
       panel.appendChild(list);
     }
     if (row && row.hiddenCount > 0) {
-      const backs = document.createElement('p');
-      backs.className = 'publicHandBacks';
-      backs.textContent = `裏向き（中身は見えない）：${row.hiddenCount}枚`;
-      panel.appendChild(backs);
+      panel.appendChild(backsElement(row.hiddenCount));
     }
   }
 
@@ -178,6 +245,7 @@ if (typeof window !== 'undefined') {
     getMatch: bodyHooks.getMatch || (() => null),
     cardLabel: bodyHooks.cardLabel || ((id) => id),
     cardPower: bodyHooks.cardPower || (() => null),
+    cardFace: bodyHooks.cardFace || null,
     log: bodyHooks.log || (() => {}),
   });
   window.GAMEROAD_PUBLIC_HAND = bridge;

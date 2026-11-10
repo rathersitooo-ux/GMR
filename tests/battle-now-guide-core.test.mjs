@@ -67,12 +67,13 @@ test('guide is presentation only and inactive outside battle or without a phase'
   assert.equal(Object.isFrozen(plan), true);
 });
 
-test('GAMEROAD.html wires the now guide into the battle play flow', () => {
+test('GAMEROAD.html does not show the now-guide text line on the battle screen', () => {
   const html = readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
-  // 題の下に1行の置き場所がある
-  assert.match(html, /id="battleNowGuide"/);
-  assert.match(html, /id="battleNowGuide"[^>]*>今やること：1 ロードを選ぶ/);
-  // 遊ぶ流れへ取り付ける module が読み込まれる
-  assert.match(html, /<script type="module" src="\.\/battle-now-guide-runtime\.mjs"><\/script>/);
-  assert.match(html, /id="gameroad-battle-now-guide-style"/);
+  // 画面の作り方の決め（説明文は消す）と、2026-11-10にライカが公開版の
+  // 実物を見た指摘で確定：対戦画面に「今やること」の文章の行は出さない。
+  // 案内は段の光り方（phaseBar）が担う。核の判定そのものは残す。
+  assert.doesNotMatch(html, /id="battleNowGuide"/);
+  assert.doesNotMatch(html, /今やること：1 ロードを選ぶ/);
+  assert.doesNotMatch(html, /<script type="module" src="\.\/battle-now-guide-runtime\.mjs"><\/script>/);
+  assert.doesNotMatch(html, /id="gameroad-battle-now-guide-style"/);
 });

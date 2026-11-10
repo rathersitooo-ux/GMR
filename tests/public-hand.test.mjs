@@ -112,8 +112,12 @@ test('入口：相手を選ぶと公開手札が開き、裏向きは枚数だ�
   const walk = (el) => { if (el.textContent) texts.push(el.textContent); (el.children || []).forEach(walk); };
   walk(panel);
   const joined = texts.join('|');
-  assert.match(joined, /カードD（強さ5）/);
-  assert.match(joined, /裏向き（中身は見えない）：1枚/);
+  // 公開カードは札の面として出る（面の材料が無いこのテストでは名前と強さ）
+  assert.match(joined, /カードD/);
+  assert.match(joined, /5/);
+  // 裏向きは文章ではなく、裏面の札と枚数の印（×1）だけ
+  assert.match(joined, /×1/);
+  assert.doesNotMatch(joined, /裏向き（中身は見えない）/);
   assert.doesNotMatch(joined, /カードE/); // 非公開の中身は出ない
   delete globalThis.document;
 });

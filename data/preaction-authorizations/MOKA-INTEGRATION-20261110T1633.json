@@ -1,0 +1,47 @@
+{
+  "acquireKey": "MOKA-INTEGRATION-20261110T1633",
+  "authorizationBaseSha": "93d6e2f2efec2d8e25b092e4ba04c6bedc431709",
+  "leaseAcquireKey": "MOKA-INTEGRATION-20261110T1633",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch integration-20261110-smokefix: tests/browser-runtime-smoke.spec.mjs; .github/workflows/browser-runtime-smoke.yml; browser/dragils-w-load-core.mjs; tests/dragils-w-load.test.mjs; own data/preaction-authorizations/MOKA-INTEGRATION-20261110T1633.json only.",
+  "leaseScope": [
+    "tests/browser-runtime-smoke.spec.mjs",
+    ".github/workflows/browser-runtime-smoke.yml",
+    "browser/dragils-w-load-core.mjs",
+    "tests/dragils-w-load.test.mjs",
+    "data/preaction-authorizations/MOKA-INTEGRATION-20261110T1633.json"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-11-10 16:43 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GAMEROAD-INTEGRATION-20261110-SMOKEFIX",
+  "leaseUntilJst": "2026-11-10 17:43 JST",
+  "leaseWorkUnitKey": "INTEGRATION_SMOKEFIX_BATCH_20261110",
+  "predictionEvidenceId": "HONAKA_LOCAL_PLAYWRIGHT_2_PASS_27F84E9_MANAGER_RERUN_2_PASS_ON_SMOKEFIX_BRANCH_20261110",
+  "predictionStatus": "PASS",
+  "proceedToken": "PROCEED|MOKA-INTEGRATION-20261110T1633|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|integration-publish-batch|browser-build|active-lease",
+  "recordId": "MOKA-INTEGRATION-20261110T1633",
+  "rehearsalEvidenceId": "PREPUSH_REQUIRED_GATE_LOCAL_RUN_BEFORE_PUSH_20261110_MOKA_SMOKEFIX",
+  "rehearsalStatus": "PASS",
+  "reuseDecisionEvidenceId": "MANAGER_INTEGRATION_SMOKEFIX_20261110",
+  "reuseDisposition": "COMPOSE",
+  "riskClass": "MATERIAL_STANDARD",
+  "schemaVersion": "gameroad-preaction-v3",
+  "scope": [
+    "tests/browser-runtime-smoke.spec.mjs",
+    ".github/workflows/browser-runtime-smoke.yml",
+    "browser/dragils-w-load-core.mjs",
+    "tests/dragils-w-load.test.mjs",
+    "data/preaction-authorizations/MOKA-INTEGRATION-20261110T1633.json"
+  ],
+  "solutionSearchEvidence": [
+    "This batch publishes the two runtime-smoke fixes made and verified by the hon-aka side (commit 27f84e9 on fix-20261110-smoke, base 93d6e2f): the same-name deck validation expectations aligned to the implementation sentence in the spec (3 places) and in the browser-runtime-smoke workflow (1 place), and the partner-delegation test now waits 1200ms so the second start passes the 1000ms match-start guard window. The guard itself is unchanged.",
+    "Manager re-ran the two fixed smoke tests on this branch: 2 passed (Playwright, 20.7s).",
+    "The Dragils W-load core and test are inside the lease scope but are not included in this batch: the Required Gate maps a module to a test by exact mirrored name (browser/dragils-w-load-core.mjs needs tests/dragils-w-load-core.test.mjs), and the existing test name tests/dragils-w-load.test.mjs would fail the gate as unmapped. Including them needs the test renamed, which is outside this lease's exact resources."
+  ],
+  "solutionSearchStatus": "PASS",
+  "solutionSignature": "INTEGRATION_PUBLISH_EXISTING_BATCH_V1",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "taskId": "GAMEROAD-INTEGRATION-20261110-SMOKEFIX",
+  "workUnitKey": "INTEGRATION_SMOKEFIX_BATCH_20261110"
+}

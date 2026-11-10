@@ -175,6 +175,10 @@ jobs:
               browser/public-hand-core.mjs|\
               browser/public-hand-live-bridge.mjs|\
               browser/round-evidence-live-mount.mjs|\
+              browser/minor-mode-coverage-ledger.json|\
+              tests/battle-action-order-live-wiring.test.mjs|\
+              tests/button-press-feedback-m46.test.mjs|\
+              tests/cards-viewing-state-e47.test.mjs|\
               browser/season-s1-review.html|\
               browser/user-character-pack-core.mjs|\
               server/relay.mjs|\

@@ -174,6 +174,7 @@ jobs:
               browser/player-rate-core.mjs|\
               browser/public-hand-core.mjs|\
               browser/public-hand-live-bridge.mjs|\
+              browser/round-evidence-live-mount.mjs|\
               browser/season-s1-review.html|\
               browser/user-character-pack-core.mjs|\
               server/relay.mjs|\

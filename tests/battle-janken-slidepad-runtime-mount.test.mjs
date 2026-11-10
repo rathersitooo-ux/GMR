@@ -186,7 +186,8 @@ test('janken role stays secondary to the same physical card face in the live slo
   assert.match(runtimeSource, /badge\.textContent = `\$\{slot\.symbol\} \$\{slot\.hand\}`;/);
   assert.match(runtimeSource, /slotNode\.dataset\.physicalCardVisible = 'true';/);
   assert.match(runtimeSource, /\.grJankenSlidePadSlot\[data-physical-card-visible="true"\]\{border-color:transparent;background:transparent;box-shadow:none;padding:0\}/);
-  assert.match(runtimeSource, /\.grJankenSlidePadRoleBadge\{position:absolute;right:1px;bottom:1px;/);
+  // 役割の名札（グー・チョキ・パーの文字札）は出さない（2026-11-10 ライカの決め）。
+  assert.match(runtimeSource, /\.grJankenSlidePadRoleBadge\{display:none!important\}/);
 });
 
 test('one accepted janken card ends the turn and returns only the other assigned cards to ordinary hand', () => {

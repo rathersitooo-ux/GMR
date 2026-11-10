@@ -1,0 +1,47 @@
+{
+  "acquireKey": "MOKA-INTEGRATION-20261110T1725",
+  "authorizationBaseSha": "f9eb3be12cdbb201d0e2e30f9a13caf5061678b8",
+  "leaseAcquireKey": "MOKA-INTEGRATION-20261110T1725",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch integration-20261110-battlescreen: browser/GAMEROAD.html; browser/public-hand-live-bridge.mjs; tests/battle-now-guide-core.test.mjs; tests/public-hand.test.mjs; own data/preaction-authorizations/MOKA-INTEGRATION-20261110T1725.json only.",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "browser/public-hand-live-bridge.mjs",
+    "tests/battle-now-guide-core.test.mjs",
+    "tests/public-hand.test.mjs",
+    "data/preaction-authorizations/MOKA-INTEGRATION-20261110T1725.json"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-11-10 17:26 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:L10",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GAMEROAD-INTEGRATION-20261110-BATTLESCREEN",
+  "leaseUntilJst": "2026-11-10 18:26 JST",
+  "leaseWorkUnitKey": "INTEGRATION_BATTLESCREEN_BATCH_20261110",
+  "predictionEvidenceId": "HONAKA_STATIC_PASS_TARGET14_PASS_FULL3127_PASS_3_PREEXISTING_SCREENSHOTS_CHECKED_EA6FA7A_MANAGER_GATE_RERUN_20261110",
+  "predictionStatus": "PASS",
+  "proceedToken": "PROCEED|MOKA-INTEGRATION-20261110T1725|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|integration-publish-batch|browser-build|active-lease",
+  "recordId": "MOKA-INTEGRATION-20261110T1725",
+  "rehearsalEvidenceId": "PREPUSH_REQUIRED_GATE_LOCAL_RUN_BEFORE_PUSH_20261110_MOKA_BATTLESCREEN",
+  "rehearsalStatus": "PASS",
+  "reuseDecisionEvidenceId": "MANAGER_INTEGRATION_BATTLESCREEN_20261110",
+  "reuseDisposition": "COMPOSE",
+  "riskClass": "MATERIAL_STANDARD",
+  "schemaVersion": "gameroad-preaction-v3",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "browser/public-hand-live-bridge.mjs",
+    "tests/battle-now-guide-core.test.mjs",
+    "tests/public-hand.test.mjs",
+    "data/preaction-authorizations/MOKA-INTEGRATION-20261110T1725.json"
+  ],
+  "solutionSearchEvidence": [
+    "This batch publishes the battle-screen fixes made and verified by the hon-aka side (commit ea6fa7a on fix-20261110-battle-screen, base f9eb3be) for the issues the user flagged on the public build on 2026-11-10 17:17: (1) the now-guide instruction text line is unmounted from the battle screen (element, mount script and style removed; the guide core and its unit tests stay); (2) the public-hand panel renders card faces and card backs instead of text sentences, with count badges on the entry buttons, placed in the left column so it no longer overlaps the board centre or the bottom buttons.",
+    "Plan-first rule followed: the canonical screen-fix plan gained a section for these on-site findings (actual state, collation against the screen-making decisions, fixes, completion criteria), and completion includes the same screenshots taken on the public side after deploy.",
+    "Hon-aka verification: static check PASS, target tests 14 pass, full suite 3127 pass with only the 3 known pre-existing failures, screenshots checked by eye (goals/gameroad/files/battle-screen-fix-20261110/)."
+  ],
+  "solutionSearchStatus": "PASS",
+  "solutionSignature": "INTEGRATION_PUBLISH_EXISTING_BATCH_V1",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "taskId": "GAMEROAD-INTEGRATION-20261110-BATTLESCREEN",
+  "workUnitKey": "INTEGRATION_BATTLESCREEN_BATCH_20261110"
+}

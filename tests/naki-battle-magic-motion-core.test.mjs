@@ -63,6 +63,36 @@ test('Naki motion keeps Heart primary and limits crescent to slash/post-hit acce
   assert.equal(NAKI_BATTLE_MAGIC_MOTION_PROFILES.HEART_RELEASE.crescentIntensity, 0);
 });
 
+test('E53 candidate: all eight Naki states are reachable in a sequence and short', () => {
+  // 32番：8つの動きの一覧そのものの文書は見つかっていないため、
+  // これは「候補」（ナキ核の8状態）としての数え。正式なE53の一覧だとは断定しない。
+  // 核の列（sequence）で8状態が1つずつ出ることを確かめる。
+  const sequences = [
+    resolveNakiBattleMagicMotionSequence({ transition: 'entry' }),
+    resolveNakiBattleMagicMotionSequence({ phase: 'attack', role: 'source' }),
+    resolveNakiBattleMagicMotionSequence({ phase: 'ability', role: 'source' }),
+    resolveNakiBattleMagicMotionSequence({ phase: 'finisher', role: 'source' }),
+    resolveNakiBattleMagicMotionSequence({ phase: 'attack', role: 'target' }),
+    resolveNakiBattleMagicMotionSequence({ phase: 'result' }),
+  ];
+  const reached = [...new Set(sequences.flat().map((item) => item.state))].sort();
+  assert.deepEqual(reached, [
+    'ENTRY_MIC',
+    'HEART_RELEASE',
+    'HIT_RECOIL',
+    'IDLE_HEART_MOON',
+    'IMPACT_HEART',
+    'MIC_SPELLCAST',
+    'RESULT_HEART',
+    'SLASH_TURN',
+  ]);
+  // E53の決まり（短い動きは2秒以内）：8状態とも2000ms以内で、くり返しは IDLE だけ。
+  for (const [state, profile] of Object.entries(NAKI_BATTLE_MAGIC_MOTION_PROFILES)) {
+    assert.ok(profile.durationMs <= 2000, `${state} must stay within 2000ms`);
+    assert.equal(profile.loop, state === 'IDLE_HEART_MOON');
+  }
+});
+
 test('attack source sequence is microphone spellcast then heart release then slash then hit accent', () => {
   const sequence = resolveNakiBattleMagicMotionSequence({ phase: 'attack', role: 'source' });
   assert.deepEqual(sequence.map((item) => item.state), [

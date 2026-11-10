@@ -149,6 +149,61 @@ test('Naki path is attempted first and keeps caller explicit identity unchanged'
   assert.equal(host.dataset.battleCinematicMotionAuthority, undefined);
 });
 
+test('Naki entry and result phases pass through to the adapter instead of failing closed', () => {
+  const host = createHost();
+  const calls = [];
+  const nakiController = {
+    applyCausalPhase(input) {
+      calls.push(input);
+      return { route: 'naki', input };
+    },
+    snapshot() {
+      return { state: 'ENTRY_MIC' };
+    },
+    destroy() {},
+  };
+
+  const router = createBattleCinematicCharacterMotionRouter({
+    doc: {},
+    host,
+    characterId: 'naki.current',
+    nakiCharacterId: 'naki.current',
+    role: 'source',
+    phase: 'attack',
+    createNakiAdapter() {
+      return nakiController;
+    },
+    createSaasunaController() {
+      return null;
+    },
+  });
+
+  assert.ok(router);
+  assert.equal(router.route, 'naki');
+  // 32番：6相の外の entry / result / settle は、ナキ側へ素通しすること。
+  assert.deepEqual(router.applyCausalPhase({ causalPhase: 'entry' }), {
+    route: 'naki',
+    input: { causalPhase: 'entry' },
+  });
+  assert.deepEqual(router.applyCausalPhase({ causalPhase: 'result' }), {
+    route: 'naki',
+    input: { causalPhase: 'result' },
+  });
+  assert.deepEqual(router.applyCausalPhase({ causalPhase: 'settle' }), {
+    route: 'naki',
+    input: { causalPhase: 'settle' },
+  });
+  assert.equal(calls.length, 3);
+  // 32番：知らない相もルーターは素通しする（従来の挙動）。adapter 側で
+  // IDLE_HEART_MOON へ落ちることは adapter の検査で確かめている。
+  assert.deepEqual(router.applyCausalPhase({ causalPhase: 'unknown' }), {
+    route: 'naki',
+    input: { causalPhase: 'unknown' },
+  });
+  assert.equal(calls.length, 4);
+  router.destroy();
+});
+
 test('router does not trim or normalize Naki identity before the existing adapter', () => {
   const seen = [];
   const router = createBattleCinematicCharacterMotionRouter({

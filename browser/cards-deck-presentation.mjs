@@ -5,6 +5,7 @@ import {
   createDeckSwipePresentationController,
   createSetupQuickDeckPreview,
 } from './cards-deck-presentation-core.mjs';
+import { cardVoteMeterModel } from './card-vote-unlock-core.mjs';
 import { resolveDeckEditorSwipe } from './deck-storage-corner-core.mjs';
 import {
   createDeckStorageCornerController,
@@ -872,32 +873,6 @@ export function installDeckStorageLiveMount({
   installDeckSwipePrecommitFeedbackStyles(doc);
 
   const discovery = createDeckSwipeDiscoveryController({ storage: cardsFavoriteStorage(win) });
-  const discoveryHost = doc.createElement('div');
-  discoveryHost.setAttribute?.('data-role', 'deck-swipe-discovery-hints');
-  discoveryHost.setAttribute?.('aria-label', 'カードのフリック操作ヒント');
-  const addDiscoveryHint = doc.createElement('span');
-  addDiscoveryHint.setAttribute?.('data-role', 'deck-swipe-discovery-add');
-  const removeDiscoveryHint = doc.createElement('span');
-  removeDiscoveryHint.setAttribute?.('data-role', 'deck-swipe-discovery-remove');
-  discoveryHost.appendChild?.(addDiscoveryHint);
-  discoveryHost.appendChild?.(removeDiscoveryHint);
-  host.after?.(discoveryHost);
-  if (!discoveryHost.parentNode) screen.appendChild?.(discoveryHost);
-  if (!doc.getElementById?.('gameroad-deck-swipe-discovery-style')) {
-    const style = doc.createElement('style');
-    style.id = 'gameroad-deck-swipe-discovery-style';
-    style.textContent = '[data-role="deck-swipe-discovery-hints"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0;font:700 12px/1.25 system-ui;opacity:.82}[data-role="deck-swipe-discovery-hints"][hidden],[data-role="deck-swipe-discovery-hints"]>span[hidden]{display:none}[data-role="deck-swipe-discovery-hints"]>span{padding:5px 8px;border-radius:999px;border:1px solid currentColor}';
-    (doc.head ?? doc.documentElement)?.appendChild?.(style);
-  }
-  const renderDiscoveryHints = () => {
-    const model = discovery.hints();
-    addDiscoveryHint.textContent = model.add.text;
-    addDiscoveryHint.hidden = !model.add.visible;
-    removeDiscoveryHint.textContent = model.remove.text;
-    removeDiscoveryHint.hidden = !model.remove.visible;
-    discoveryHost.hidden = !model.add.visible && !model.remove.visible;
-  };
-  renderDiscoveryHints();
 
   let gesture = null;
   let suppressClick = null;
@@ -1066,7 +1041,6 @@ export function installDeckStorageLiveMount({
     });
     if (!result?.ok) return;
     discovery.recordSuccessfulSwipe({ surface: current.surface, result });
-    renderDiscoveryHints();
     suppressClick = { cardId: current.cardId, until: now() + 450 };
     mounted?.render?.();
   };
@@ -1110,7 +1084,6 @@ export function installDeckStorageLiveMount({
       doc.removeEventListener('pointercancel', onPointerCancel, false);
       doc.removeEventListener('click', onClickCapture, true);
       presentation?.dispose?.();
-      discoveryHost.remove?.();
       mounted?.dispose?.();
       host.remove?.();
       deckStorageLiveInstallations.delete(doc);
@@ -1334,6 +1307,25 @@ export function installCardsVoteUiRepair({
   const existing = cardsVoteUiRepairInstallations.get(doc);
   if (existing) return existing;
 
+  // 解禁メーターの元：置き場（GAMEROAD_CARD_VOTE_UNLOCK）があればそちら、
+  // 無ければ毎日の投票の履歴から通常ラインで形だけ作る。
+  const meterModelFor = (snapshot, cardId) => {
+    const unlock = win?.GAMEROAD_CARD_VOTE_UNLOCK;
+    if (typeof unlock?.meterFor === 'function') {
+      try { return unlock.meterFor(cardId); } catch { /* 履歴からの形に落とす */ }
+    }
+    const history = Array.isArray(snapshot?.history) ? snapshot.history : [];
+    const card = { for: 0, against: 0, total: 0, unlocked: false, unlockedAt: '', unlockedLine: 0, unlockedSale: false };
+    for (const entry of history) {
+      if (String(entry?.cardId ?? '') !== cardId) continue;
+      if (entry?.stance === 'for') card.for += 1;
+      else if (entry?.stance === 'against') card.against += 1;
+      else continue;
+      card.total += 1;
+    }
+    return cardVoteMeterModel({ saleActive: false, importedKeys: [], cards: { [cardId]: card } }, cardId);
+  };
+
   let destroyed = false;
   const renderLocalCount = () => {
     if (destroyed) return 0;
@@ -1349,18 +1341,43 @@ export function installCardsVoteUiRepair({
     if (!countNode && doc.createElement) {
       countNode = doc.createElement('div');
       countNode.dataset.role = 'cards-vote-local-count';
-      countNode.className = 'cardVoteNote cardVoteLocalCount';
+      countNode.className = 'cardVoteNote cardVoteLocalCount cardVoteMeter';
       countNode.setAttribute?.('aria-live', 'polite');
       const choices = popover.querySelector?.('.cardVoteChoices');
       choices?.before?.(countNode);
       if (!countNode.parentNode) popover.appendChild?.(countNode);
     }
-    const count = countCardsLocalVoteHistory(snapshot, cardId);
-    if (countNode) {
-      countNode.hidden = !cardId;
-      countNode.textContent = cardId ? `この端末でのこのカードの投票数：${count}票` : '';
+    if (!countNode) return 0;
+    const model = cardId ? meterModelFor(snapshot, cardId) : null;
+    // 票数の数字は見せない（2026-11-10 ライカの決め）。出すのはメーターと、
+    // 満タンになった時の表示の変化だけ。ラインが未定のカード（G・E・D）には
+    // メーター自体を出さない。
+    const showMeter = !!model && model.kind !== 'no-line';
+    countNode.hidden = !showMeter;
+    if (!showMeter) return 0;
+    let label = countNode.querySelector?.('[data-role="cards-vote-meter-label"]') ?? null;
+    let bar = countNode.querySelector?.('[data-role="cards-vote-meter-bar"]') ?? null;
+    let fill = countNode.querySelector?.('[data-role="cards-vote-meter-fill"]') ?? null;
+    if ((!label || !bar || !fill) && doc.createElement) {
+      label = doc.createElement('span');
+      label.dataset.role = 'cards-vote-meter-label';
+      label.className = 'cardVoteMeterLabel';
+      bar = doc.createElement('div');
+      bar.dataset.role = 'cards-vote-meter-bar';
+      bar.className = 'cardVoteMeterBar';
+      fill = doc.createElement('div');
+      fill.dataset.role = 'cards-vote-meter-fill';
+      fill.className = 'cardVoteMeterFill';
+      bar.appendChild?.(fill);
+      countNode.appendChild?.(label);
+      countNode.appendChild?.(bar);
     }
-    return count;
+    const full = model.kind === 'full';
+    countNode.className = `cardVoteNote cardVoteLocalCount cardVoteMeter${full ? ' is-full' : ''}`;
+    if (countNode.dataset) countNode.dataset.meterState = model.kind;
+    if (label) label.textContent = full ? '解禁されました' : '解禁メーター';
+    if (fill?.style) fill.style.width = `${Math.round(model.fillRatio * 100)}%`;
+    return model.fillRatio;
   };
 
   const onKeyDown = (event) => {

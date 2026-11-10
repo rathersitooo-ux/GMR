@@ -40,6 +40,13 @@ export function resolveNakiBattleMagicCausalState({
   actionPhase = 'attack',
 } = {}) {
   const normalizedCausalPhase = typeof causalPhase === 'string' ? causalPhase : 'stance';
+  // 32番（E53・候補＝ナキ核の8状態）：ENTRY_MIC / RESULT_HEART は6相の
+  // 因果タイムライン（stance〜return）の外にあるため、ここで先に返す。
+  // 核の resolveNakiBattleMagicMotionState と同じ決まり
+  // （transition:'entry' → ENTRY_MIC、phase:'result'/'settle' → RESULT_HEART）。
+  // 候補のまま。E53の一覧だとは断定しない。
+  if (normalizedCausalPhase === 'entry') return 'ENTRY_MIC';
+  if (normalizedCausalPhase === 'result' || normalizedCausalPhase === 'settle') return 'RESULT_HEART';
   if (role === 'target') {
     return TARGET_CAUSAL_STATE[normalizedCausalPhase] ?? 'IDLE_HEART_MOON';
   }
@@ -172,6 +179,8 @@ export const NAKI_BATTLE_MAGIC_LIVE_ADAPTER_RUNTIME = Object.freeze({
   motionRuntime: NAKI_BATTLE_MAGIC_MOTION_RUNTIME.schema,
   causalTimelineCompatible: true,
   causalPhaseOrder: Object.freeze(['stance', 'anticipation', 'release', 'impact', 'reaction', 'return']),
+  // 32番：6相の外のつなぎ。'entry' → ENTRY_MIC、'result'/'settle' → RESULT_HEART。
+  nonTimelinePhases: Object.freeze(['entry', 'result', 'settle']),
   passthrough: Object.freeze([
     'role',
     'motion',

@@ -474,8 +474,10 @@ export function installDeckSwipeFirstSuccessHints({
     if (destroyed) return null;
     const screen = resolveCardsScreen(doc);
     if (!screen) return null;
-    removeHint(screen, 'collection-right');
-    removeHint(screen, 'deck-left');
+    if (state.collectionRightDone) removeHint(screen, 'collection-right');
+    else ensureHint(screen, 'collection-right', 'カードを → デッキへ');
+    if (state.deckLeftDone) removeHint(screen, 'deck-left');
+    else ensureHint(screen, 'deck-left', 'デッキから ← 外す');
     return Object.freeze({ ...state });
   };
   const retire = (key) => {

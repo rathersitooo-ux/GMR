@@ -222,6 +222,7 @@ const ARTIFACT_SPECS = Object.freeze([
   { source: 'browser/round-evidence-live-mount.mjs', output: 'round-evidence-live-mount.mjs', artifact: 'round_evidence_live_mount', label: 'Public package module round-evidence-live-mount' },
   { source: 'browser/deck-fallback-core.mjs', output: 'deck-fallback-core.mjs', artifact: 'deck_fallback_core', label: 'Public package module deck-fallback-core' },
   { source: 'browser/deck-fallback-live-bridge.mjs', output: 'deck-fallback-live-bridge.mjs', artifact: 'deck_fallback_live_bridge', label: 'Public package module deck-fallback-live-bridge' },
+  { source: 'browser/battle-action-order-live-bridge.mjs', output: 'battle-action-order-live-bridge.mjs', artifact: 'battle_action_order_live_bridge', label: 'Public package module battle-action-order-live-bridge' },
   { source: 'browser/doppel-trial-live-bridge.mjs', output: 'doppel-trial-live-bridge.mjs', artifact: 'doppel_trial_live_bridge', label: 'Public package module doppel-trial-live-bridge' },
   { source: 'browser/room-match-completion-profile-core.mjs', output: 'room-match-completion-profile-core.mjs', artifact: 'room_match_completion_profile_core', label: 'Public package module room-match-completion-profile-core' },
   { source: 'browser/room-match-spectator-projection-core.mjs', output: 'room-match-spectator-projection-core.mjs', artifact: 'room_match_spectator_projection_core', label: 'Public package module room-match-spectator-projection-core' },

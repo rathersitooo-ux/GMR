@@ -19,11 +19,18 @@ import { projectHandRefillWithFallback } from './deck-fallback-live-bridge.mjs';
 
 function snapshotFromMatch(m) {
   if (!m || !Array.isArray(m.players)) return null;
+  // 門を開けた人は「自分の列が目標枚数に達した人」として列の枚数から数える。
+  // m.gateOpenedBy は最初に開いた時点の顔ぶれで固定されるため、勝ちの流れの
+  // 照合には列の実数を使う（ゲーム側の到達判定 completion と同じ物差し）。
+  const reached = m.players
+    .filter((p) => Math.max(...Object.values(p?.lanes || {}).map((a) => (Array.isArray(a) ? a.length : 0))) >= 7)
+    .map((p) => p.id);
+  const openedBy = [...new Set([...(Array.isArray(m.gateOpenedBy) ? m.gateOpenedBy : []), ...reached])];
   return buildRoundSnapshot({
     round: m.round,
     players: m.players,
-    gateOpen: m.gateOpen,
-    gateOpenedBy: m.gateOpenedBy,
+    gateOpen: Boolean(m.gateOpen) || openedBy.length > 0,
+    gateOpenedBy: openedBy,
   });
 }
 

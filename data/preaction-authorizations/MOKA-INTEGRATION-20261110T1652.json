@@ -1,0 +1,43 @@
+{
+  "acquireKey": "MOKA-INTEGRATION-20261110T1652",
+  "authorizationBaseSha": "99451116b80983fdd164732fa6b803c815cb3806",
+  "leaseAcquireKey": "MOKA-INTEGRATION-20261110T1652",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch integration-20261110-dragils: browser/dragils-w-load-core.mjs; tests/dragils-w-load-core.test.mjs; own data/preaction-authorizations/MOKA-INTEGRATION-20261110T1652.json only.",
+  "leaseScope": [
+    "browser/dragils-w-load-core.mjs",
+    "tests/dragils-w-load-core.test.mjs",
+    "data/preaction-authorizations/MOKA-INTEGRATION-20261110T1652.json"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-11-10 16:59 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GAMEROAD-INTEGRATION-20261110-DRAGILS",
+  "leaseUntilJst": "2026-11-10 17:59 JST",
+  "leaseWorkUnitKey": "INTEGRATION_DRAGILS_BATCH_20261110",
+  "predictionEvidenceId": "HONAKA_LOCAL_NODE_TEST_9_PASS_RENAMED_TEST_MANAGER_RERUN_9_PASS_ON_BRANCH_20261110",
+  "predictionStatus": "PASS",
+  "proceedToken": "PROCEED|MOKA-INTEGRATION-20261110T1652|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|integration-publish-batch|browser-build|active-lease",
+  "recordId": "MOKA-INTEGRATION-20261110T1652",
+  "rehearsalEvidenceId": "PREPUSH_REQUIRED_GATE_LOCAL_RUN_BEFORE_PUSH_20261110_MOKA_DRAGILS",
+  "rehearsalStatus": "PASS",
+  "reuseDecisionEvidenceId": "MANAGER_INTEGRATION_DRAGILS_20261110",
+  "reuseDisposition": "COMPOSE",
+  "riskClass": "MATERIAL_STANDARD",
+  "schemaVersion": "gameroad-preaction-v3",
+  "scope": [
+    "browser/dragils-w-load-core.mjs",
+    "tests/dragils-w-load-core.test.mjs",
+    "data/preaction-authorizations/MOKA-INTEGRATION-20261110T1652.json"
+  ],
+  "solutionSearchEvidence": [
+    "This batch publishes the Dragils W-load core (browser/dragils-w-load-core.mjs) and its test (tests/dragils-w-load-core.test.mjs), implemented by the hon-aka side. The test file was renamed by the hon-aka side from tests/dragils-w-load.test.mjs so the required gate's name-mirror pairing (module <-> test) holds; the previous name failed the gate as unmapped.",
+    "Manager re-ran the renamed test on this branch's base: 9 pass, 0 fail. GAMEROAD.html does not yet reference the core, so no public-screen behaviour changes.",
+    "Form premise (from the user, 2026-11-10 14:21): play Dragils, the janken UI/turn stays open, one more janken hand can be put out. Additional road card carries no cost; cost attaches only to the ability side. Formal name W・ロード, reading ダブルロード."
+  ],
+  "solutionSearchStatus": "PASS",
+  "solutionSignature": "INTEGRATION_PUBLISH_EXISTING_BATCH_V1",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "taskId": "GAMEROAD-INTEGRATION-20261110-DRAGILS",
+  "workUnitKey": "INTEGRATION_DRAGILS_BATCH_20261110"
+}

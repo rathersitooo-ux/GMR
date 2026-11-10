@@ -40,9 +40,9 @@ test('guest and spectator snapshots show the battle start presentation once per 
 
 test('the real round initializer retains five cards, reuses the trio and safely handles exhaustion',()=>{
  const html=readFileSync(new URL('../browser/GAMEROAD.html',import.meta.url),'utf8');
- const code=['prepareRoundJankenAssignments','initRoundRuntime'].map(name=>html.split('\n').find(l=>l.startsWith(`function ${name}(`))).join('\n');
+ const code=['diceRnd','diceProfile','rollOneDie','rollTurnDice','prepareRoundJankenAssignments','initRoundRuntime'].map(name=>html.split('\n').find(l=>l.startsWith(`function ${name}(`))).join('\n');
  const hand=['a','b','c','d','e'],p={id:'P1',hand:[...hand]},m={id:'M1',round:2,players:[p]};let draws=0;
- const c={CARDS:Object.fromEntries(hand.map(id=>[id,{suit:'CL'}])),globalThis:{GAMEROAD_POST_DRAW_JANKEN_ASSIGNMENT:ensurePostDrawJankenAssignment,crypto:{getRandomValues(a){draws++;a[0]=0;return a;}}},quickStartRound(){}};
+ const c={CARDS:Object.fromEntries(hand.map(id=>[id,{suit:'CL'}])),log(){},globalThis:{GAMEROAD_POST_DRAW_JANKEN_ASSIGNMENT:ensurePostDrawJankenAssignment,crypto:{getRandomValues(a){draws++;a[0]=0;return a;}}},quickStartRound(){}};
  vm.createContext(c);vm.runInContext(code,c);c.initRoundRuntime(m);
  assert.equal(p.jankenAssignment.selectedJankenCardIds.length,3);assert.deepEqual(p.hand,hand);assert.equal(p.jankenAssignment.ordinaryHandCardIds.length,2);assert.equal(draws,4);
  const fixed=p.jankenAssignment;c.initRoundRuntime(m);assert.strictEqual(p.jankenAssignment,fixed);assert.equal(draws,4);

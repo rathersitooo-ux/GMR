@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>スレイキア 音声プレビュー（開発用）</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #10131a; }
+    main { width: min(92vw, 30rem); padding: 1.5rem; border: 1px solid #5f6b7d; border-radius: 1rem; background: #181e28; }
+    .card { padding: 1.25rem; border: 1px solid #8893a3; border-radius: .75rem; }
+    h1 { margin: 0 0 .5rem; font-size: 1.8rem; }
+    .notice { margin: .5rem 0 1rem; line-height: 1.6; color: #d3d9e3; }
+    button { min-height: 44px; padding: .75rem 1rem; font: inherit; font-weight: 700; cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .6; }
+    #voiceStatus { min-height: 1.5em; margin-top: .75rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card" aria-labelledby="slaykiaName">
+      <h1 id="slaykiaName">スレイキア</h1>
+      <p class="notice">開発用・非canonical試聴です。端末のシステム音声で表示名だけを読み上げます。正式キャラクターボイス、正式台詞、未裁定のカオスコード仕様を表しません。</p>
+      <button id="playVoice" type="button">「スレイキア」を試聴</button>
+      <p id="voiceStatus" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+  <script type="module">
+    import { mountSlaykiaVoicePreview } from './slaykia-voice-preview.mjs';
+    mountSlaykiaVoicePreview({
+      button: document.querySelector('#playVoice'),
+      status: document.querySelector('#voiceStatus'),
+    });
+  </script>
+</body>
+</html>

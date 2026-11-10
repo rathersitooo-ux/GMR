@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>GAMEROAD DINO DIG mobile whitebox R2</title>
+<style>
+  :root { color-scheme: dark; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: #161616; color: #f2f2f2; }
+  main { width: min(100%, 760px); margin: 0 auto; padding: 16px; }
+  h1 { margin: 0 0 6px; font-size: 20px; }
+  p { margin: 4px 0 12px; color: #c7c7c7; line-height: 1.5; }
+  .modes, .toggles, .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  button, label { min-height: 44px; }
+  button { border: 1px solid #707070; border-radius: 9px; background: #272727; color: inherit; padding: 9px 12px; font: inherit; }
+  button[aria-pressed="true"] { outline: 2px solid #fff; outline-offset: 1px; }
+  label { display: inline-flex; align-items: center; gap: 7px; padding: 0 10px; border: 1px solid #555; border-radius: 9px; }
+  canvas { display: block; width: min(100%, 520px); aspect-ratio: 1; margin: 12px auto; border: 1px solid #777; border-radius: 10px; background: #111; touch-action: none; }
+  .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .stat { min-height: 58px; padding: 9px; border: 1px solid #4d4d4d; border-radius: 8px; background: #202020; }
+  .stat b { display: block; font-size: 18px; margin-top: 2px; }
+  #status { min-height: 48px; padding: 10px; border-left: 4px solid #888; background: #202020; }
+  .note { font-size: 13px; color: #aaa; }
+  @media (min-width: 620px) { .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+</style>
+</head>
+<body>
+<main>
+  <h1>発掘操作 whitebox R2</h1>
+  <p>同じ地層stateを、描画方式だけ切り替えて比較します。正式素材・正式方式・報酬・科学表現は含みません。</p>
+
+  <div class="modes" aria-label="描画方式">
+    <button type="button" data-mode="mask" aria-pressed="true">2D mask</button>
+    <button type="button" data-mode="hybrid" aria-pressed="false">hybrid depth</button>
+    <button type="button" data-mode="deform" aria-pressed="false">limited deformable</button>
+  </div>
+
+  <div class="toggles">
+    <label><input id="lowPerf" type="checkbox"> lowPerf</label>
+    <label><input id="reducedMotion" type="checkbox"> reducedMotion</label>
+  </div>
+
+  <canvas id="digCanvas" width="512" height="512" aria-label="発掘試験盤面"></canvas>
+
+  <div class="stats" aria-live="polite">
+    <div class="stat">入力回数<b id="inputCount">0</b></div>
+    <div class="stat">露出率<b id="exposure">0%</b></div>
+    <div class="stat">破損event<b id="damageEvents">0</b></div>
+    <div class="stat">描画時間<b id="frameMs">0.0 ms</b></div>
+  </div>
+
+  <div class="actions">
+    <button id="reset" type="button">同一fixtureへリセット</button>
+  </div>
+  <div id="status" role="status">地層をなぞって除去してください。</div>
+  <p class="note">whitebox判定: 盤面state・成功条件・入力座標は3方式共通。lowPerf/reducedMotionは描画だけを縮退します。</p>
+</main>
+<script>
+(() => {
+  'use strict';
+
+  const SIZE = 20;
+  const canvas = document.getElementById('digCanvas');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  const ui = {
+    inputCount: document.getElementById('inputCount'),
+    exposure: document.getElementById('exposure'),
+    damageEvents: document.getElementById('damageEvents'),
+    frameMs: document.getElementById('frameMs'),
+    status: document.getElementById('status'),
+    lowPerf: document.getElementById('lowPerf'),
+    reducedMotion: document.getElementById('reducedMotion'),
+    reset: document.getElementById('reset'),
+    modeButtons: [...document.querySelectorAll('[data-mode]')],
+  };
+
+  // Deterministic fixture. All three presentations read and mutate this same state.
+  const fossilMask = Array.from({ length: SIZE }, (_, y) =>
+    Array.from({ length: SIZE }, (_, x) => {
+      const nx = (x - 9.5) / 7.5;
+      const ny = (y - 10.2) / 4.0;
+      const body = nx * nx + ny * ny < 1;
+      const tail = x >= 2 && x <= 8 && Math.abs(y - (12 - (x - 2) * 0.45)) <= 1;
+      const head = x >= 15 && x <= 17 && y >= 8 && y <= 11;
+      return body || tail || head;
+    })
+  );
+
+  function initialDepth(x, y) {
+    // 2..5 deterministic layers, independent of presentation mode.
+    return 2 + ((x * 7 + y * 11 + (x ^ y)) % 4);
+  }
+
+  let mode = 'mask';
+  let pointerActive = false;
+  let lastCellKey = '';
+  let state;
+
+  function resetState() {
+    state = {
+      depth: Array.from({ length: SIZE }, (_, y) =>
+        Array.from({ length: SIZE }, (_, x) => initialDepth(x, y))
+      ),
+      inputCount: 0,
+      damageEvents: 0,
+      exposedFossil: 0,
+      fossilCells: fossilMask.flat().filter(Boolean).length,
+      completed: false,
+    };
+    lastCellKey = '';
+    render();
+    updateUi('地層をなぞって除去してください。');
+  }
+
+  function snapshot() {
+    let removed = 0;
+    let checksum = 2166136261 >>> 0;
+    for (let y = 0; y < SIZE; y++) {
+      for (let x = 0; x < SIZE; x++) {
+        const value = state.depth[y][x];
+        if (value === 0) removed++;
+        checksum ^= value + x * 17 + y * 31;
+        checksum = Math.imul(checksum, 16777619) >>> 0;
+      }
+    }
+    return {
+      mode,
+      inputCount: state.inputCount,
+      damageEvents: state.damageEvents,
+      exposedFossil: state.exposedFossil,
+      fossilCells: state.fossilCells,
+      completed: state.completed,
+      removed,
+      stateHash: checksum.toString(16).padStart(8, '0'),
+      lowPerf: ui.lowPerf.checked,
+      reducedMotion: ui.reducedMotion.checked,
+    };
+  }
+
+  function cellFromPointer(event) {
+    const rect = canvas.getBoundingClientRect();
+    const px = (event.clientX - rect.left) / rect.width;
+    const py = (event.clientY - rect.top) / rect.height;
+    return {
+      x: Math.max(0, Math.min(SIZE - 1, Math.floor(px * SIZE))),
+      y: Math.max(0, Math.min(SIZE - 1, Math.floor(py * SIZE))),
+    };
+  }
+
+  function adjacentOpenCount(x, y) {
+    let count = 0;
+    for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      const nx = x + dx, ny = y + dy;
+      if (nx >= 0 && nx < SIZE && ny >= 0 && ny < SIZE && state.depth[ny][nx] === 0) count++;
+    }
+    return count;
+  }
+
+  function digCell(x, y) {
+    const current = state.depth[y][x];
+    if (current <= 0 || state.completed) return false;
+
+    state.inputCount++;
+    const next = current - 1;
+    state.depth[y][x] = next;
+
+    if (next === 0 && fossilMask[y][x]) {
+      state.exposedFossil++;
+      // Same damage rule for every presentation: direct exposure without a nearby opened cell is risky.
+      if (adjacentOpenCount(x, y) === 0) state.damageEvents++;
+    }
+
+    const ratio = state.exposedFossil / state.fossilCells;
+    if (ratio >= 0.82) state.completed = true;
+    return true;
+  }
+
+  function handlePointer(event) {
+    if (!pointerActive) return;
+    event.preventDefault();
+    const { x, y } = cellFromPointer(event);
+    const key = `${x},${y}`;
+    if (key === lastCellKey) return;
+    lastCellKey = key;
+    if (digCell(x, y)) {
+      render();
+      updateUi(state.completed ? 'whitebox上の発掘完了条件に到達しました。' : '地層stateを更新しました。');
+    }
+  }
+
+  canvas.addEventListener('pointerdown', (event) => {
+    pointerActive = true;
+    lastCellKey = '';
+    canvas.setPointerCapture?.(event.pointerId);
+    handlePointer(event);
+  });
+  canvas.addEventListener('pointermove', handlePointer);
+  canvas.addEventListener('pointerup', () => { pointerActive = false; lastCellKey = ''; });
+  canvas.addEventListener('pointercancel', () => { pointerActive = false; lastCellKey = ''; });
+
+  function setMode(nextMode) {
+    if (!['mask', 'hybrid', 'deform'].includes(nextMode)) return;
+    mode = nextMode;
+    for (const button of ui.modeButtons) button.setAttribute('aria-pressed', String(button.dataset.mode === mode));
+    render();
+    updateUi(`描画方式を ${mode} へ切替。発掘stateは保持されています。`);
+  }
+
+  for (const button of ui.modeButtons) button.addEventListener('click', () => setMode(button.dataset.mode));
+  ui.lowPerf.addEventListener('change', () => { render(); updateUi('lowPerfは描画密度だけを変更しました。'); });
+  ui.reducedMotion.addEventListener('change', () => { render(); updateUi('reducedMotionは視覚効果だけを変更しました。'); });
+  ui.reset.addEventListener('click', resetState);
+
+  function updateUi(message) {
+    const ratio = state.fossilCells ? state.exposedFossil / state.fossilCells : 0;
+    ui.inputCount.textContent = String(state.inputCount);
+    ui.exposure.textContent = `${Math.round(ratio * 100)}%`;
+    ui.damageEvents.textContent = String(state.damageEvents);
+    ui.status.textContent = message;
+  }
+
+  function terrainColor(depth, maxDepth) {
+    const t = depth / Math.max(1, maxDepth);
+    const v = Math.round(62 + t * 88);
+    return `rgb(${v + 26}, ${v + 2}, ${Math.max(30, v - 35)})`;
+  }
+
+  function drawFossilCell(x, y, cell) {
+    const inset = ui.lowPerf.checked ? 1 : 2;
+    ctx.fillStyle = '#d7d0b6';
+    ctx.fillRect(x * cell + inset, y * cell + inset, cell - inset * 2, cell - inset * 2);
+    if (!ui.lowPerf.checked) {
+      ctx.strokeStyle = '#8d876f';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x * cell + 3, y * cell + 3, cell - 6, cell - 6);
+    }
+  }
+
+  function renderMask(cell) {
+    for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
+      const depth = state.depth[y][x];
+      if (depth === 0) {
+        if (fossilMask[y][x]) drawFossilCell(x, y, cell);
+        else { ctx.fillStyle = '#2b2924'; ctx.fillRect(x * cell, y * cell, cell, cell); }
+      } else {
+        ctx.fillStyle = terrainColor(depth, 5);
+        ctx.fillRect(x * cell, y * cell, cell + 0.5, cell + 0.5);
+      }
+    }
+  }
+
+  function renderHybrid(cell) {
+    for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
+      const depth = state.depth[y][x];
+      if (depth === 0) {
+        if (fossilMask[y][x]) drawFossilCell(x, y, cell);
+        else { ctx.fillStyle = '#24231f'; ctx.fillRect(x * cell, y * cell, cell, cell); }
+        continue;
+      }
+      const shade = 35 + depth * 24;
+      ctx.fillStyle = `rgb(${shade + 55}, ${shade + 27}, ${shade})`;
+      ctx.fillRect(x * cell, y * cell, cell, cell);
+      if (!ui.lowPerf.checked) {
+        ctx.fillStyle = 'rgba(255,255,255,0.10)';
+        ctx.fillRect(x * cell + 1, y * cell + 1, cell - 2, Math.max(1, cell * 0.18));
+        ctx.fillStyle = 'rgba(0,0,0,0.16)';
+        ctx.fillRect(x * cell + 1, y * cell + cell * 0.78, cell - 2, Math.max(1, cell * 0.18));
+      }
+    }
+  }
+
+  function renderDeform(cell) {
+    const stride = ui.lowPerf.checked ? 2 : 1;
+    for (let y = 0; y < SIZE; y += stride) for (let x = 0; x < SIZE; x += stride) {
+      let depth = state.depth[y][x];
+      if (stride === 2) {
+        depth = Math.max(depth, state.depth[y]?.[x + 1] ?? 0, state.depth[y + 1]?.[x] ?? 0, state.depth[y + 1]?.[x + 1] ?? 0);
+      }
+      const px = x * cell, py = y * cell, span = cell * stride;
+      if (depth === 0) {
+        ctx.fillStyle = '#292824';
+        ctx.fillRect(px, py, span, span);
+        // In lowPerf we deliberately avoid extra geometry but preserve state visibility.
+        if (!ui.lowPerf.checked && fossilMask[y][x]) drawFossilCell(x, y, cell);
+        continue;
+      }
+      const h = depth / 5;
+      ctx.fillStyle = terrainColor(depth, 5);
+      ctx.fillRect(px, py, span, span);
+      if (!ui.reducedMotion.checked && !ui.lowPerf.checked) {
+        ctx.fillStyle = `rgba(255,255,255,${0.04 + h * 0.12})`;
+        ctx.beginPath();
+        ctx.moveTo(px, py + span * 0.65);
+        ctx.lineTo(px + span * 0.35, py + span * (0.55 - h * 0.18));
+        ctx.lineTo(px + span, py + span * 0.62);
+        ctx.lineTo(px + span, py + span);
+        ctx.lineTo(px, py + span);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+    if (ui.lowPerf.checked) {
+      // Overlay exact exposed fossil cells so lowPerf never changes information/state.
+      for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
+        if (state.depth[y][x] === 0 && fossilMask[y][x]) drawFossilCell(x, y, cell);
+      }
+    }
+  }
+
+  function render() {
+    const started = performance.now();
+    const cell = canvas.width / SIZE;
+    ctx.fillStyle = '#171717';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (mode === 'mask') renderMask(cell);
+    else if (mode === 'hybrid') renderHybrid(cell);
+    else renderDeform(cell);
+
+    if (!ui.lowPerf.checked) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= SIZE; i++) {
+        const p = i * cell;
+        ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, canvas.height); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(canvas.width, p); ctx.stroke();
+      }
+    }
+    ui.frameMs.textContent = `${(performance.now() - started).toFixed(1)} ms`;
+    updateUi(ui.status.textContent || '発掘stateを表示しています。');
+  }
+
+  window.__DINO_DIG_WHITEBOX__ = Object.freeze({
+    snapshot,
+    reset: resetState,
+    setMode,
+    digCell: (x, y) => {
+      if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || x >= SIZE || y < 0 || y >= SIZE) return false;
+      const changed = digCell(x, y);
+      if (changed) { render(); updateUi('技術試験APIから地層stateを更新しました。'); }
+      return changed;
+    },
+    fixture: Object.freeze({ size: SIZE, fossilCells: fossilMask.flat().filter(Boolean).length }),
+  });
+
+  resetState();
+})();
+</script>
+</body>
+</html>

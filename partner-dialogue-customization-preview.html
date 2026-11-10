@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>セリフの編集とカスタマイズ 確認用</title>
+<style>
+  html, body { margin: 0; background: #10101c; color: #f2ecd9; font-family: sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 20px; }
+  h2 { font-size: 16px; margin-top: 28px; }
+  .line { background: #1d1d30; border: 1px solid #45456a; border-radius: 10px; padding: 12px; margin: 10px 0; }
+  .mode { font-size: 12px; color: #ffd97a; }
+  .original { color: #bdbdd4; font-size: 13px; }
+  .resolved { font-size: 16px; margin: 6px 0; }
+  textarea { width: 100%; box-sizing: border-box; min-height: 56px; background: #12121f; color: #fff; border: 1px solid #66668c; border-radius: 8px; padding: 8px; }
+  button { margin: 6px 6px 0 0; padding: 8px 14px; border-radius: 8px; border: 1px solid #ffd97a; background: #3a2f14; color: #ffeeb8; cursor: pointer; }
+  pre { background: #0a0a14; border: 1px solid #33334f; border-radius: 8px; padding: 10px; overflow: auto; font-size: 12px; white-space: pre-wrap; }
+  .note { color: #a9a9c4; font-size: 13px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<main>
+  <h1>セリフの編集とカスタマイズ（確認用）</h1>
+  <p class="note">
+    自分用に直したセリフは自分のゲームの中だけに出ます。正本のセリフは変わりません。
+    バトル用と日常用は分かれていて、片方を直してももう片方には出ません。
+    「書き換え提案」に入るのは、自分が選んだキャラ側のセリフと直した文だけです。
+    自分の会話文は入りません。
+  </p>
+  <div id="host"></div>
+  <h2>カスタマイズの姿（着せ替え＋セリフ）</h2>
+  <pre id="profileOut">まだ直していません</pre>
+  <h2>書き換え提案の中身</h2>
+  <pre id="proposalOut">まだ提案していません</pre>
+</main>
+<script type="module">
+  import {
+    createPartnerDialogueCustomizationSnapshot,
+    setPartnerCustomLine,
+    clearPartnerCustomLine,
+    resolvePartnerCustomLine,
+    buildPartnerDialogueRewriteProposal,
+    buildPartnerCustomizationProfile,
+  } from './partner-dialogue-customization-core.mjs';
+  import { createPartnerCostumeSnapshot } from './partner-costume-core.mjs';
+
+  // 正式なセリフは、本物の出どころ（partner-saasuna-conversation-source）にある文を使う。
+  const LINES = [
+    { mode: 'battle', sourceLineId: 'battle_start', label: 'バトル・対戦開始', text: 'ご主人様が心配する事はございません、全て片付けてしまいます' },
+    { mode: 'daily', sourceLineId: 'idle_readable', label: '日常・待機', text: '優秀なんですよ、私。' },
+  ];
+  const PARTNER_ID = 'partner.saasuna';
+
+  let dialogueSnapshot = createPartnerDialogueCustomizationSnapshot();
+  const costumeSnapshot = createPartnerCostumeSnapshot({
+    selectedPartnerId: PARTNER_ID,
+    partners: { [PARTNER_ID]: { ownedItemIds: ['coord-1'], savedSelection: { coord: 'coord-1' } } },
+  });
+
+  const host = document.getElementById('host');
+  const profileOut = document.getElementById('profileOut');
+  const proposalOut = document.getElementById('proposalOut');
+
+  function render() {
+    host.replaceChildren();
+    for (const line of LINES) {
+      const resolved = resolvePartnerCustomLine(dialogueSnapshot, {
+        partnerId: PARTNER_ID, mode: line.mode, sourceLineId: line.sourceLineId, approvedText: line.text,
+      });
+      const box = document.createElement('section');
+      box.className = 'line';
+      const mode = document.createElement('div');
+      mode.className = 'mode';
+      mode.textContent = line.label + (resolved.customized ? '（自分用に変更中）' : '');
+      const original = document.createElement('div');
+      original.className = 'original';
+      original.textContent = `元のセリフ：${line.text}`;
+      const current = document.createElement('div');
+      current.className = 'resolved';
+      current.textContent = `今出るセリフ：${resolved.text}`;
+      const editor = document.createElement('textarea');
+      editor.value = resolved.text;
+      editor.maxLength = 600;
+      editor.dataset.editorFor = line.sourceLineId;
+      const apply = document.createElement('button');
+      apply.type = 'button';
+      apply.textContent = '自分用に直す';
+      apply.addEventListener('click', () => {
+        dialogueSnapshot = setPartnerCustomLine(dialogueSnapshot, {
+          partnerId: PARTNER_ID, mode: line.mode, sourceLineId: line.sourceLineId,
+          originalText: line.text, customText: editor.value,
+        });
+        render();
+      });
+      const clear = document.createElement('button');
+      clear.type = 'button';
+      clear.textContent = '元に戻す';
+      clear.addEventListener('click', () => {
+        dialogueSnapshot = clearPartnerCustomLine(dialogueSnapshot, {
+          partnerId: PARTNER_ID, mode: line.mode, sourceLineId: line.sourceLineId,
+        });
+        render();
+      });
+      const propose = document.createElement('button');
+      propose.type = 'button';
+      propose.textContent = '書き換え提案として出す';
+      propose.addEventListener('click', () => {
+        const proposal = buildPartnerDialogueRewriteProposal({
+          partnerId: PARTNER_ID, mode: line.mode, sourceLineId: line.sourceLineId,
+          originalText: line.text, proposedText: editor.value, selected: true,
+        });
+        proposalOut.textContent = proposal
+          ? JSON.stringify(proposal, null, 2)
+          : '提案は作られませんでした（元の文と同じ、または未選択）';
+      });
+      box.append(mode, original, current, editor, apply, clear, propose);
+      host.append(box);
+    }
+    const profile = buildPartnerCustomizationProfile({
+      partnerId: PARTNER_ID, costumeSnapshot, dialogueSnapshot,
+    });
+    profileOut.textContent = JSON.stringify(profile, null, 2);
+    window.__dialogueCustomizationPreview = { dialogueSnapshot, profile };
+  }
+  render();
+</script>
+</body>
+</html>

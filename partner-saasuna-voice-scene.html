@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>サースナーの声 1つ目（試聴）</title>
+<style>
+  html, body { margin: 0; min-height: 100%; background: #071c1a; color: #eafff6; font-family: sans-serif; }
+  main { max-width: 880px; margin: 0 auto; padding: 16px; display: grid; gap: 14px; }
+  h1 { font-size: 20px; margin: 0; }
+  .note { font-size: 13px; color: #b9d9cf; line-height: 1.6; margin: 0; }
+  .stage { display: grid; grid-template-columns: 220px 1fr; gap: 14px; align-items: start; }
+  .art { background: radial-gradient(circle at 50% 72%, rgba(104,191,164,.18), transparent 65%), #0a2e29; border: 1px solid rgba(217,246,235,.3); border-radius: 14px; height: 300px; display: grid; place-items: end center; overflow: hidden; }
+  .art img { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; }
+  .bubble { background: #143e34; border: 1px solid rgba(173,235,214,.4); border-radius: 12px 12px 12px 3px; padding: 12px; font-size: 16px; font-weight: 700; line-height: 1.5; min-height: 48px; }
+  .meta { font-size: 12px; color: #9bc5b8; margin-top: 6px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  button { min-height: 40px; border-radius: 10px; border: 1px solid rgba(173,235,214,.4); background: #0f463a; color: #eafff6; font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px; }
+  button:hover { background: #155447; }
+  .controls { display: grid; gap: 8px; background: rgba(10,45,38,.6); border: 1px solid rgba(217,246,235,.2); border-radius: 12px; padding: 12px; }
+  .controls label { display: grid; grid-template-columns: 90px 1fr 44px; gap: 8px; align-items: center; font-size: 13px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .flags { font-size: 13px; line-height: 1.7; white-space: pre-wrap; background: rgba(0,0,0,.25); border-radius: 10px; padding: 10px; min-height: 40px; }
+  @media (max-width: 640px) { .stage { grid-template-columns: 1fr; } .art { height: 240px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>サースナーの声 1つ目（試聴ページ）</h1>
+  <p class="note">対戦の合図ごとに、文・声・動き・絵が1つになって出ます。声は端末の日本語音声に「声の土台1（仮）」の調整を重ねた仮の声です。正式な声ではありません。声を切っても、文と動きと絵は残ります。</p>
+  <div class="stage">
+    <div class="art"><img id="art" alt="サースナー"></div>
+    <div>
+      <div class="bubble" id="bubble">場面を選ぶと、ここに文が出て声が鳴ります。</div>
+      <div class="meta" id="meta"></div>
+    </div>
+  </div>
+  <div class="grid" id="triggers"></div>
+  <div class="controls">
+    <label>速さ <input type="range" id="rate" min="0.5" max="2" step="0.05"><output id="rateOut"></output></label>
+    <label>声の高さ <input type="range" id="pitch" min="0" max="2" step="0.05"><output id="pitchOut"></output></label>
+    <label>音量 <input type="range" id="volume" min="0" max="1" step="0.05"><output id="volumeOut"></output></label>
+    <label>文の間 <input type="range" id="pauseMs" min="0" max="1000" step="20"><output id="pauseOut"></output></label>
+    <div class="row">
+      <button type="button" id="voiceToggle">声: オン</button>
+      <button type="button" id="stop">止める</button>
+      <button type="button" id="presetReset">土台1に戻す</button>
+    </div>
+  </div>
+  <div>
+    <div style="font-size:13px;color:#9bc5b8">再生の旗（聞けた／飛ばした／聞けなかった／声なし）</div>
+    <div class="flags" id="flags">まだ何も再生していません。</div>
+  </div>
+  <p class="note" id="complete"></p>
+</main>
+<script type="module">
+  import {
+    SAASUNA_VOICE_PRESET,
+    SAASUNA_VOICE_SCENE_TRIGGERS,
+    buildSaasunaVoiceCompleteness,
+    buildSaasunaVoiceScenePlan,
+    createSaasunaVoiceScenePlayer,
+  } from './partner-saasuna-voice-scene-core.mjs';
+
+  const LABELS = {
+    battle_start: '対戦開始', initial_hand_intro: '初手の紹介', duplicate_numbers: '数字かぶり',
+    honey_gained: 'はちみつ', first_turn_start: '最初の手番', load_submit: 'ロードを出す',
+    battle_card_submit: 'バトルカードを出す', load_reveal: 'ロード公開', royal_reveal: 'ロイヤル公開',
+    effect_activation: '効果発動', delegate_normal: 'まかせた時', game_result_first: '結果（1位）',
+    attack_side_win: '攻撃側の勝ち', defense_side_win: '防御側の勝ち', idle: '待機のひとこと',
+  };
+  const art = document.getElementById('art');
+  const bubble = document.getElementById('bubble');
+  const meta = document.getElementById('meta');
+  const flagsBox = document.getElementById('flags');
+  let voiceOn = true;
+  let playSeq = 0;
+
+  const motionAdapter = {
+    setState(input) {
+      // 動きの計画は核から取る。ここでは絵の差し替えだけ担い、
+      // アニメーション自体は play 側で計画のキーフレームを当てる。
+      return input;
+    },
+  };
+  const player = createSaasunaVoiceScenePlayer({
+    motionController: motionAdapter,
+    onFlag(entry) {
+      const line = `${entry.kind === 'heard' ? '聞けた' : entry.kind === 'skipped' ? '飛ばした' : entry.kind === 'notHeard' ? '聞けなかった' : '声なし'}: ${entry.text}`;
+      flagsBox.textContent = flagsBox.textContent.includes('まだ何も')
+        ? line
+        : `${line}\n${flagsBox.textContent}`;
+    },
+  });
+
+  const sliders = {
+    rate: document.getElementById('rate'), pitch: document.getElementById('pitch'),
+    volume: document.getElementById('volume'), pauseMs: document.getElementById('pauseMs'),
+  };
+  const outs = {
+    rate: document.getElementById('rateOut'), pitch: document.getElementById('pitchOut'),
+    volume: document.getElementById('volumeOut'), pauseMs: document.getElementById('pauseOut'),
+  };
+  function applyPreset() {
+    for (const key of Object.keys(sliders)) {
+      sliders[key].value = String(SAASUNA_VOICE_PRESET.tuning[key]);
+      outs[key].textContent = String(SAASUNA_VOICE_PRESET.tuning[key]);
+    }
+  }
+  for (const key of Object.keys(sliders)) {
+    sliders[key].addEventListener('input', () => { outs[key].textContent = sliders[key].value; });
+  }
+  applyPreset();
+  document.getElementById('presetReset').addEventListener('click', applyPreset);
+  const toggle = document.getElementById('voiceToggle');
+  toggle.addEventListener('click', () => {
+    voiceOn = !voiceOn;
+    toggle.textContent = voiceOn ? '声: オン' : '声: オフ（文と動きだけ）';
+  });
+  document.getElementById('stop').addEventListener('click', () => player.stop());
+
+  const grid = document.getElementById('triggers');
+  for (const triggerId of SAASUNA_VOICE_SCENE_TRIGGERS) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = LABELS[triggerId] || triggerId;
+    button.addEventListener('click', () => {
+      playSeq += 1;
+      const plan = buildSaasunaVoiceScenePlan({
+        triggerId,
+        seed: `demo-${triggerId}-${playSeq}`,
+        fields: { cardName: '氷のカード' },
+        tuning: {
+          rate: Number(sliders.rate.value), pitch: Number(sliders.pitch.value),
+          volume: Number(sliders.volume.value), pauseMs: Number(sliders.pauseMs.value),
+        },
+        voiceEnabled: voiceOn,
+        reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+      });
+      if (!plan) { bubble.textContent = 'この場面は作れませんでした。'; return; }
+      bubble.textContent = plan.text;
+      art.src = plan.asset.src;
+      meta.textContent = `動き: ${plan.motion.state}（${plan.motion.durationMs}ms）／ 絵: ${plan.asset.fileName} ／ 声: ${plan.voice.shouldSpeak ? 'あり' : 'なし'}`;
+      if (!plan.motion.suppressed && typeof art.animate === 'function') {
+        art.animate(plan.motion.keyframes, {
+          duration: plan.motion.durationMs, easing: plan.motion.easing,
+          fill: 'both', iterations: plan.motion.loop ? Infinity : 1,
+        });
+      }
+      player.play(plan, { fingerprint: `demo-${triggerId}-${playSeq}` });
+    });
+    grid.append(button);
+  }
+
+  const done = buildSaasunaVoiceCompleteness();
+  document.getElementById('complete').textContent =
+    `中身: 対戦の文 ${done.battleLineCount}件（全部に動きつき）／ 待機の文 ${done.fallbackLineCount}件 ／ 動き ${done.motionStateCount}種 ／ 絵 ${done.bustupAssetCount}点 ／ 正式な声の受理はまだ（人が決める所）。`;
+  window.__saasunaVoiceScene = { player, buildSaasunaVoiceScenePlan, buildSaasunaVoiceCompleteness };
+</script>
+</body>
+</html>

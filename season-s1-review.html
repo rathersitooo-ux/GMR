@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GAMEROAD 第1シーズン「はじまりの石板」</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: sans-serif; background: #171208; color: #f3e9d2; margin: 0; padding: 16px; }
+  main { max-width: 960px; margin: 0 auto; }
+  .banner { background: linear-gradient(135deg, #3b2a12, #7a5c2e 55%, #a97f3d); border-radius: 16px; padding: 22px; box-shadow: 0 8px 24px rgba(0,0,0,.45); }
+  .banner .seasonNo { font-size: 13px; letter-spacing: .35em; opacity: .85; }
+  .banner h1 { font-size: 34px; margin: 4px 0 2px; }
+  .banner .theme { font-size: 19px; opacity: .92; }
+  .monthTrack { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 16px; }
+  .monthCell { background: rgba(0,0,0,.28); border-radius: 10px; padding: 10px; text-align: center; border: 2px solid transparent; }
+  .monthCell.now { border-color: #ffd97a; background: rgba(0,0,0,.45); }
+  .monthCell .m { font-size: 22px; font-weight: bold; }
+  .monthCell .t { font-size: 12px; opacity: .9; }
+  .card { background: #241a0e; border: 1px solid #57451f; border-radius: 14px; padding: 16px; margin: 14px 0; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  select, button { font-size: 15px; padding: 8px 12px; border-radius: 8px; }
+  button { background: #7a5c2e; color: #fff; border: 0; cursor: pointer; font-weight: bold; }
+  button:disabled { opacity: .45; cursor: default; }
+  .bigDate { font-size: 30px; font-weight: bold; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .chip { background: #37270f; border: 1px solid #8a6a33; border-radius: 999px; padding: 8px 14px; font-size: 15px; }
+  .chip .ic { font-size: 18px; margin-right: 6px; }
+  .gauge { height: 16px; background: #120d05; border-radius: 999px; overflow: hidden; margin-top: 8px; border: 1px solid #57451f; }
+  .gauge > div { height: 100%; background: linear-gradient(90deg, #c9a86a, #ffd97a); }
+  .gaugeLabel { display: flex; justify-content: space-between; font-size: 13px; opacity: .9; margin-top: 4px; }
+  .levelBig { font-size: 44px; font-weight: bold; line-height: 1; }
+  .mult { background: #b33a3a; color: #fff; border-radius: 8px; padding: 3px 10px; font-weight: bold; font-size: 15px; }
+  .road { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 12px; }
+  .step { width: 20px; height: 20px; line-height: 20px; text-align: center; font-size: 10px; border-radius: 5px; background: #3a2c14; color: #d8c9a3; }
+  .step.done { background: #c9a86a; color: #241a0e; font-weight: bold; }
+  .step.milestone { outline: 2px solid #ffd97a; }
+  .step.next { outline: 3px solid #ff8a5c; }
+  .steps3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .phaseCell { text-align: center; background: #120d05; border-radius: 10px; padding: 10px 6px; border: 2px solid transparent; opacity: .55; }
+  .phaseCell.now { border-color: #ffd97a; opacity: 1; background: #37270f; }
+  .phaseCell .ic { font-size: 26px; display: block; }
+  .choiceGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
+  .choiceCard { background: #37270f; border: 2px solid #8a6a33; border-radius: 12px; padding: 18px 10px; font-size: 18px; text-align: center; }
+  .choiceCard.picked { border-color: #ffd97a; background: #57451f; box-shadow: 0 0 0 3px rgba(255,217,122,.35); }
+  .stamp { display: inline-block; background: #b33a3a; color: #fff; font-weight: bold; border-radius: 6px; padding: 2px 10px; transform: rotate(-4deg); margin-left: 8px; }
+  .monthCards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+  .monthCard { background: #241a0e; border: 1px solid #57451f; border-radius: 12px; padding: 14px; }
+  .monthCard .m { font-size: 28px; font-weight: bold; }
+  .monthCard .line { margin-top: 8px; font-size: 14px; }
+  .monthCard .line .ic { font-size: 17px; margin-right: 6px; }
+  .small { font-size: 12px; opacity: .75; }
+</style>
+</head>
+<body>
+<main>
+  <div class="banner">
+    <div class="seasonNo">SEASON 1</div>
+    <h1>🪨 はじまりの石板</h1>
+    <div class="theme">1月〜3月 · ランクと お祭りと 100段階の道</div>
+    <div class="monthTrack" id="monthTrack"></div>
+  </div>
+
+  <section class="card">
+    <div class="row">
+      <span class="bigDate" id="bigDate"></span>
+      <select id="month"></select>
+      <select id="day"></select>
+      <select id="hour"></select>
+      <button id="todayBtn">📅 今日</button>
+    </div>
+    <div class="chips" id="eventChips"></div>
+    <div style="margin-top:14px">
+      <div class="gaugeLabel"><span>🏆 ランク前半</span><span id="rankState"></span><span>ランク後半 🏆</span></div>
+      <div class="gauge"><div id="rankGauge" style="width:0%"></div></div>
+      <div class="gaugeLabel"><span id="rankRange"></span><span id="rankPause"></span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="row">
+      <span class="levelBig" id="levelBig">0</span>
+      <span style="font-size:17px">段階 / 100</span>
+      <span class="mult" id="multBadge"></span>
+      <span id="pointsText"></span>
+    </div>
+    <div class="gauge"><div id="catalogGauge" style="width:0%"></div></div>
+    <div class="gaugeLabel"><span id="nextReward"></span><span id="nextPoints"></span></div>
+    <div class="road" id="road"></div>
+    <div class="row" style="margin-top:12px">
+      <button id="battleBtn">⚔️ 対戦 +10</button>
+      <button id="missionBtn">📜 お題 +15</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="row"><span style="font-size:24px">🎪 今月のお祭り</span><span id="voteStamp"></span></div>
+    <div style="font-size:22px;font-weight:bold;margin-top:8px" id="festivalQuestion"></div>
+    <div class="steps3" id="phaseSteps"></div>
+    <div class="choiceGrid" id="voteRow"></div>
+  </section>
+
+  <section class="card">
+    <div style="font-size:20px;font-weight:bold;margin-bottom:10px">🗓️ シーズンの3か月</div>
+    <div class="monthCards" id="monthCards"></div>
+  </section>
+
+</main>
+<script type="module">
+import { getSeasonForDate, getRankCycleForDate, getMonthlyEventsForDate, getFestivalPhaseForDate } from './season-calendar-core.mjs';
+import { SEASON_1_CONFIG, ANNUAL_FESTIVAL_QUESTIONS, festivalQuestionForMonth } from './season-s1-config.mjs';
+import { createCatalogState, addCatalogPoints, nextLevelInfo, summarizeCatalog } from './season-catalog-core.mjs';
+import { createFestivalState, voteFestival } from './season-festival-core.mjs';
+
+const $ = (id) => document.getElementById(id);
+const EVENT_ICONS = { drop: '💎', 'weekly-missions': '📜', 'festival-yobi': '🗳️', 'festival-main': '🎆', 'festival-results': '🏅', exchange: '🔄' };
+const REWARD_ICONS = { '': '🎁' };
+const monthSel = $('month'), daySel = $('day'), hourSel = $('hour');
+for (let m = 1; m <= 3; m += 1) monthSel.add(new Option(`${m}月`, m));
+for (let d = 1; d <= 31; d += 1) daySel.add(new Option(`${d}日`, d));
+for (const h of [9, 11, 12, 20]) hourSel.add(new Option(`${h}時`, h));
+monthSel.value = '1'; daySel.value = '1'; hourSel.value = '9';
+
+let catalog = createCatalogState({ seasonId: 'S1' });
+let festival = createFestivalState({ month: 1 });
+
+function readDate() {
+  return { month: Number(monthSel.value), day: Number(daySel.value), hour: Number(hourSel.value) };
+}
+
+function render() {
+  const date = readDate();
+  const season = getSeasonForDate(date);
+  const rank = getRankCycleForDate(date);
+  const monthly = getMonthlyEventsForDate(date);
+
+  const track = $('monthTrack');
+  track.textContent = '';
+  for (const entry of SEASON_1_CONFIG.months) {
+    const cell = document.createElement('div');
+    cell.className = 'monthCell' + (entry.month === date.month ? ' now' : '');
+    cell.innerHTML = `<div class="m">${entry.month}月</div><div class="t">${entry.theme}</div>`;
+    track.appendChild(cell);
+  }
+
+  $('bigDate').textContent = `${date.month}月${date.day}日`;
+  const chips = $('eventChips');
+  chips.textContent = '';
+  for (const e of monthly.events) {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.innerHTML = `<span class="ic">${EVENT_ICONS[e.kind] || '✦'}</span>${e.label}`;
+    chips.appendChild(chip);
+  }
+  const cycleLen = rank.endDay - rank.startDay + 1;
+  const cyclePos = Math.min(cycleLen, Math.max(0, date.day - rank.startDay + 1));
+  $('rankGauge').style.width = `${Math.round((rank.half === 'first' ? cyclePos / cycleLen / 2 : 0.5 + cyclePos / cycleLen / 2) * 100)}%`;
+  $('rankState').textContent = `${rank.phase}の段階`;
+  $('rankRange').textContent = `${rank.startDay}日〜${rank.endDay}日`;
+  $('rankPause').textContent = rank.pausedForFestival ? '🎆 本祭中はお休み' : '';
+
+  const summary = summarizeCatalog(catalog);
+  const next = nextLevelInfo(catalog);
+  $('levelBig').textContent = summary.level;
+  $('multBadge').textContent = season.catalogMultiplier !== 1 ? `🔥 ${season.catalogMultiplier}倍` : '通常';
+  $('pointsText').textContent = `${summary.points}点`;
+  $('catalogGauge').style.width = `${summary.level}%`;
+  $('nextReward').textContent = next.done ? '🎉 100段階 到達' : `次のごほうび：🎁 ${next.freeReward.kind}`;
+  $('nextPoints').textContent = next.done ? '' : `あと ${next.pointsToNext}点`;
+  const road = $('road');
+  road.textContent = '';
+  for (let level = 1; level <= 100; level += 1) {
+    const span = document.createElement('span');
+    span.className = 'step' + (level <= catalog.level ? ' done' : '') + ([1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].includes(level) ? ' milestone' : '') + (level === catalog.level + 1 ? ' next' : '');
+    span.textContent = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100].includes(level) ? String(level) : (level === 1 ? '1' : '');
+    span.title = `${level}段階`;
+    road.appendChild(span);
+  }
+
+  const q = festivalQuestionForMonth(date.month);
+  $('festivalQuestion').textContent = `「${q.question}」`;
+  const phase = getFestivalPhaseForDate(date);
+  const steps = [
+    { key: 'yobi', ic: '🗳️', label: '投票' },
+    { key: 'main', ic: '🎆', label: '本祭 19〜21日' },
+    { key: 'results', ic: '🏅', label: '結果 21日' },
+  ];
+  const phaseKey = String(phase.phase || '');
+  const nowIdx = phaseKey.includes('result') || phaseKey.includes('結果') ? 2 : phaseKey.includes('main') || phaseKey.includes('本祭') ? 1 : 0;
+  const stepsEl = $('phaseSteps');
+  stepsEl.textContent = '';
+  steps.forEach((s, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'phaseCell' + (i === nowIdx ? ' now' : '');
+    cell.innerHTML = `<span class="ic">${s.ic}</span>${s.label}`;
+    stepsEl.appendChild(cell);
+  });
+  $('voteStamp').innerHTML = festival.vote !== null ? '<span class="stamp">投票ずみ</span>' : '';
+  const voteRow = $('voteRow');
+  voteRow.textContent = '';
+  q.choices.forEach((choice, index) => {
+    const button = document.createElement('button');
+    button.className = 'choiceCard' + (festival.vote === index ? ' picked' : '');
+    button.textContent = choice;
+    button.disabled = festival.vote !== null;
+    button.addEventListener('click', () => {
+      const result = voteFestival(festival, index);
+      if (result.voted) festival = result.state;
+      render();
+    });
+    voteRow.appendChild(button);
+  });
+
+  const cards = $('monthCards');
+  cards.textContent = '';
+  for (const entry of SEASON_1_CONFIG.months) {
+    const fest = ANNUAL_FESTIVAL_QUESTIONS.find((f) => f.month === entry.month);
+    const card = document.createElement('div');
+    card.className = 'monthCard';
+    card.innerHTML = `<div class="m">${entry.month}月</div><div style="font-weight:bold">${entry.theme}</div>`
+      + `<div class="line"><span class="ic">💎</span>${entry.dropEvent}</div>`
+      + `<div class="line"><span class="ic">🎪</span>${fest.question}</div>`
+      + `<div class="line"><span class="ic">🔄</span>${entry.exchangeHighlight}</div>`;
+    cards.appendChild(card);
+  }
+}
+
+$('battleBtn').addEventListener('click', () => { catalog = addCatalogPoints(catalog, 10, getSeasonForDate(readDate()).catalogMultiplier); render(); });
+$('missionBtn').addEventListener('click', () => { catalog = addCatalogPoints(catalog, 15, getSeasonForDate(readDate()).catalogMultiplier); render(); });
+$('todayBtn').addEventListener('click', render);
+monthSel.addEventListener('change', () => { festival = createFestivalState({ month: Number(monthSel.value) }); render(); });
+daySel.addEventListener('change', render);
+hourSel.addEventListener('change', render);
+render();
+</script>
+</body>
+</html>

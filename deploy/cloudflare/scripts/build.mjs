@@ -238,6 +238,13 @@ const ARTIFACT_SPECS = Object.freeze([
   { source: 'browser/new-base-legacy-seven-win-gate-core.mjs', output: 'new-base-legacy-seven-win-gate-core.mjs', artifact: 'new_base_legacy_seven_win_gate_core', label: 'Public package module new-base-legacy-seven-win-gate-core' },
   { source: 'browser/season-claim-box-core.mjs', output: 'season-claim-box-core.mjs', artifact: 'season_claim_box_core', label: 'Public package module season-claim-box-core' },
   { source: 'browser/season-monthly-event-core.mjs', output: 'season-monthly-event-core.mjs', artifact: 'season_monthly_event_core', label: 'Public package module season-monthly-event-core' },
+  { source: 'browser/battle-candidate-sfx-provider.mjs', output: 'battle-candidate-sfx-provider.mjs', artifact: 'battle_candidate_sfx_provider', label: 'Public package module battle-candidate-sfx-provider' },
+  { source: 'browser/battle-remaining-to-seven-runtime.mjs', output: 'battle-remaining-to-seven-runtime.mjs', artifact: 'battle_remaining_to_seven_runtime', label: 'Public package module battle-remaining-to-seven-runtime' },
+  { source: 'browser/battle-night-arena-effects-mount.mjs', output: 'battle-night-arena-effects-mount.mjs', artifact: 'battle_night_arena_effects_mount', label: 'Public package module battle-night-arena-effects-mount' },
+  { source: 'browser/goal-result-render-core.mjs', output: 'goal-result-render-core.mjs', artifact: 'goal_result_render_core', label: 'Public package module goal-result-render-core' },
+  { source: 'browser/battle-start-unseen-flag-core.mjs', output: 'battle-start-unseen-flag-core.mjs', artifact: 'battle_start_unseen_flag_core', label: 'Public package module battle-start-unseen-flag-core' },
+  { source: 'browser/battle-remaining-to-seven-core.mjs', output: 'battle-remaining-to-seven-core.mjs', artifact: 'battle_remaining_to_seven_core', label: 'Public package module battle-remaining-to-seven-core' },
+  { source: 'browser/battle-night-arena-remaining-effects-core.mjs', output: 'battle-night-arena-remaining-effects-core.mjs', artifact: 'battle_night_arena_remaining_effects_core', label: 'Public package module battle-night-arena-remaining-effects-core' },
 ]);
 
 function gitBlobSha1(buffer) {

@@ -162,6 +162,30 @@ jobs:
               playwright.config.mjs|\
               .github/workflows/browser-node-ci.yml|\
               .github/workflows/browser-runtime-smoke.yml|\
+              browser/bug-report-core.mjs|\
+              browser/card-vote-unlock-runtime.mjs|\
+              browser/cooking-core.mjs|\
+              browser/doppel-trial-core.mjs|\
+              browser/doppel-trial-measure.mjs|\
+              browser/focus-fire-core.mjs|\
+              browser/gacha-cabinet-core.mjs|\
+              browser/over-seven-trial-core.mjs|\
+              browser/over-seven-trial-measure.mjs|\
+              browser/player-rate-core.mjs|\
+              browser/public-hand-core.mjs|\
+              browser/public-hand-live-bridge.mjs|\
+              browser/season-s1-review.html|\
+              browser/user-character-pack-core.mjs|\
+              server/relay.mjs|\
+              tests/doppel-trial.test.mjs|\
+              tests/focus-fire-and-gacha-cabinet.test.mjs|\
+              tests/over-seven-trial.test.mjs|\
+              tests/pc-surface-registration-state.test.mjs|\
+              tests/player-rate-and-bug-report.test.mjs|\
+              tests/public-hand.test.mjs|\
+              tests/rank-match-skip-battle-start.test.mjs|\
+              tests/user-character-pack-and-cooking.test.mjs|\
+              tools/pc-surface-registration-check.mjs|\
               .github/workflows/browser-full-interaction.yml)
                 browser=true
                 if [[ "${path}" == "browser/GAMEROAD.html" ]]; then

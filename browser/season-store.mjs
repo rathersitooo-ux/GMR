@@ -41,6 +41,13 @@ function cleanFestivalVotes(input) {
   return votes;
 }
 
+// 第4段の週上限：その週に入った点（weeklyPoints）。無い記録は空で読む。
+function cleanWeeklyPoints(input) {
+  const weekKey = typeof input?.weekKey === 'string' ? input.weekKey : '';
+  const points = Number.isInteger(input?.points) && input.points >= 0 ? input.points : 0;
+  return freeze({ weekKey, points });
+}
+
 function cleanMissions(input) {
   const base = createWeeklyMissions({ seasonId: 'S1', month: 1 });
   const weekKey = typeof input?.weekKey === 'string' && /^\d{2}$/.test(input.weekKey) ? input.weekKey : '01';
@@ -111,6 +118,7 @@ export function cleanSeasonState(input, { month = 1 } = {}) {
     ? [...new Set(input.claimedFree.filter((n) => Number.isInteger(n) && n >= 1 && n <= 100))].sort((a, b) => a - b)
     : [];
   const festivalVotes = cleanFestivalVotes(input?.festivalVotes);
+  const weeklyPoints = cleanWeeklyPoints(input?.weeklyPoints);
   const grantedResultKeys = cleanStringList(input?.grantedResultKeys);
   const countedResultKeys = cleanStringList(input?.countedResultKeys);
   const exchangeTokens = Number.isInteger(input?.exchangeTokens) && input.exchangeTokens >= 0 ? input.exchangeTokens : 0;
@@ -125,6 +133,7 @@ export function cleanSeasonState(input, { month = 1 } = {}) {
     catalogPoints: points,
     claimedFree: Object.freeze(claimedFree),
     festivalVotes: Object.freeze(festivalVotes),
+    weeklyPoints,
     grantedResultKeys: Object.freeze(grantedResultKeys),
     countedResultKeys: Object.freeze(countedResultKeys),
     exchangeTokens,

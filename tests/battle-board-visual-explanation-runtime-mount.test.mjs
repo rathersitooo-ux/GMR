@@ -278,7 +278,7 @@ test('Partner Advice starts compact, expands only on player request, and auto-ex
   assert.equal(h.rootAttributes.get('data-player-focus-collapsed'), 'true');
   assert.equal(h.button().textContent, '助言');
   assert.equal(h.button().getAttribute('aria-expanded'), 'false');
-  assert.equal(h.button().getAttribute('aria-label'), '相棒の助言を開く');
+  assert.equal(h.button().getAttribute('aria-label'), 'パートナーの助言を開く');
 
   h.button().click();
   assert.equal(runtime.snapshot().collapsed, false);

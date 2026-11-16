@@ -5,6 +5,7 @@ import {
   ANNUAL_FESTIVAL_QUESTIONS,
   CATALOG_MILESTONES,
   FESTIVAL_DEPARTMENT_POINTS,
+  PASS_POINT_SOURCES,
   SEASON_1_CONFIG,
   catalogRewardForLevel,
   festivalQuestionForMonth,
@@ -45,4 +46,9 @@ test('catalog rewards cover all 100 levels without gaps', () => {
   assert.equal(catalogRewardForLevel(100, 'free').kind, 'title');
   assert.throws(() => catalogRewardForLevel(0), /CATALOG_LEVEL_INVALID/);
   assert.throws(() => catalogRewardForLevel(101), /CATALOG_LEVEL_INVALID/);
+});
+
+// --- 移し替え（3b）：tests/season-weekly-cap.test.mjs から移した1件 ---
+test('weekly cap value is the Shadowverse WB number', () => {
+  assert.equal(PASS_POINT_SOURCES.weeklyCap, 10000);
 });

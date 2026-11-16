@@ -3,13 +3,25 @@ import test from 'node:test';
 
 import {
   SEASON_HOME_STORAGE_KEY,
+  buildSeasonPassCardAccessPolicy,
   claimSeasonFreeReward,
+  createDeckMatchStartSnapshotWithSeasonPassAccess,
   createSeasonHomeStore,
   mountSeasonHome,
   recordSeasonBattleResult,
   seasonHomeSnapshot,
   voteSeasonFestival,
 } from '../browser/season-home-runtime.mjs';
+import { evaluateDeckCardAccess } from '../browser/card-access-entitlement-core.mjs';
+import {
+  SEASON_STORE_KEY,
+  cleanSeasonState,
+  createSeasonStore,
+} from '../browser/season-store.mjs';
+import {
+  createAutoRankSeasonRegistrationState,
+  registerOpeningDeck,
+} from '../browser/auto-rank-season-registration-core.mjs';
 
 function memoryStorage() {
   const values = new Map();
@@ -194,3 +206,139 @@ test('mount builds the home strip and opens the catalog dialog', () => {
   assert.equal(mounted.scheduleDialog.hidden, false);
   mounted.unmount();
 });
+
+// --- 移し替え（3b）：tests/season-pass-card-access-policy.test.mjs から移した第22段の7件 ---
+// 方針を作る関数（buildSeasonPassCardAccessPolicy）の4つの受け入れ条件と、
+// 包んだスナップショット・自動ランク側の同じ錠の決め。
+
+function seasonStorage(passOwned) {
+  const storage = memoryStorage();
+  storage.setItem(SEASON_STORE_KEY, JSON.stringify({ seasonId: 'S8', catalogPoints: 0, claimedFree: [], passOwned }));
+  return storage;
+}
+
+function selection(cards, mode = '2p') {
+  return {
+    savedDeck: { main: [...cards.main], ex: [...(cards.ex ?? [])] },
+    savedDeckRule: { id: 'FIRST_REGULATION', revision: 3 },
+    setupMode: mode,
+    setupContent: 'road_shield',
+    playerCharacterId: 'partner.naki',
+    selectedPartnerId: 'partner.saasuna',
+  };
+}
+
+function acceptDeck(deck, options) {
+  return options?.forBattle === true && deck.main.length > 0 ? { ok: true } : { ok: false };
+}
+
+// ① 弾の数字が無いカードだけのデッキは、パス無しでも通る。
+test('policy: a deck of set-number-less cards passes without the pass', () => {
+  const policy = buildSeasonPassCardAccessPolicy(
+    selection({ main: ['CARD_A', 'CARD_B'], ex: ['EX_1'] }),
+    { storage: seasonStorage(false) },
+  );
+  const access = evaluateDeckCardAccess({ main: ['CARD_A', 'CARD_B'], ex: ['EX_1'] }, policy);
+  assert.equal(access.ok, true);
+  assert.deepEqual(access.entries.map((entry) => entry.status), ['OWNED', 'OWNED', 'OWNED']);
+});
+
+// ② 前弾のデッキはパス所有ありで通り、所有なしでは止まる。
+test('policy: a previous-set deck passes with the pass and stops without it', () => {
+  const setNumbers = { currentSetNumber: 2, cardSetNumbers: { OLD_CARD: 1 } };
+  const deck = { main: ['OLD_CARD'], ex: [] };
+  const ownedPolicy = buildSeasonPassCardAccessPolicy(selection(deck), {
+    storage: seasonStorage(true), setNumbers,
+  });
+  assert.equal(evaluateDeckCardAccess(deck, ownedPolicy).ok, true);
+  const lockedPolicy = buildSeasonPassCardAccessPolicy(selection(deck), {
+    storage: seasonStorage(false), setNumbers,
+  });
+  const locked = evaluateDeckCardAccess(deck, lockedPolicy);
+  assert.equal(locked.ok, false);
+  assert.deepEqual(locked.lockedCardIds, ['OLD_CARD']);
+});
+
+// ③ 今の弾のデッキはパス所有ありでも止まる。
+test('policy: a current-set deck stops even with the pass', () => {
+  const setNumbers = { currentSetNumber: 2, cardSetNumbers: { NEW_CARD: 2 } };
+  const deck = { main: ['NEW_CARD'], ex: [] };
+  const policy = buildSeasonPassCardAccessPolicy(selection(deck), {
+    storage: seasonStorage(true), setNumbers,
+  });
+  const access = evaluateDeckCardAccess(deck, policy);
+  assert.equal(access.ok, false);
+  assert.deepEqual(access.lockedCardIds, ['NEW_CARD']);
+});
+
+// ④ 錠のカードの番号が失敗の文に出る。錠があるとき validateDeck は呼ばれない。
+test('wrapper: a locked card throws MATCH_START_CARD_ACCESS_DENIED with its id', () => {
+  const setNumbers = { currentSetNumber: 2, cardSetNumbers: { OLD_CARD: 1 } };
+  let validateCalls = 0;
+  assert.throws(
+    () => createDeckMatchStartSnapshotWithSeasonPassAccess(
+      selection({ main: ['OLD_CARD'] }),
+      {
+        validateDeck() { validateCalls += 1; return { ok: true }; },
+        storage: seasonStorage(false),
+        setNumbers,
+      },
+    ),
+    /MATCH_START_CARD_ACCESS_DENIED:OLD_CARD/,
+  );
+  assert.equal(validateCalls, 0);
+});
+
+// 通るデッキは、従来のスナップショットがそのまま返る。
+test('wrapper: an unlocked deck returns the existing match-start snapshot unchanged', () => {
+  const snapshot = createDeckMatchStartSnapshotWithSeasonPassAccess(
+    selection({ main: ['CARD_A'], ex: ['EX_1'] }),
+    { validateDeck: acceptDeck, storage: seasonStorage(false) },
+  );
+  assert.equal(snapshot.schema, 'gameroad.browser.match-start-snapshot.v1');
+  assert.deepEqual(snapshot.deck.main, ['CARD_A']);
+  assert.deepEqual(snapshot.deck.ex, ['EX_1']);
+});
+
+// 自動ランク側も同じ錠の決めで動く：弾の数字が無いデッキはパス無しで登録できる。
+test('auto-rank: a set-number-less deck registers without the pass', () => {
+  const state = createAutoRankSeasonRegistrationState({
+    seasonId: 'season-test-01', competitionId: 'competition-test-01',
+    rulesVersion: 'rules-v1', cardVersion: 'cards-v1', aiVersion: 'ai-v1',
+  });
+  const registered = registerOpeningDeck(state, {
+    selection: selection({ main: ['CARD_A', 'CARD_B'], ex: ['EX_1'] }, '4p'),
+    registeredAt: '2026-11-13T09:00:00+09:00',
+    validateDeck: acceptDeck,
+    storage: seasonStorage(false),
+  });
+  assert.equal(registered.openingRegistration.snapshot.schema, 'gameroad.browser.match-start-snapshot.v1');
+});
+
+// 自動ランク側も同じ錠の決めで動く：前弾のデッキはパス所有ありで登録でき、所有なしでは止まる。
+test('auto-rank: a previous-set deck registers with the pass and stops without it', () => {
+  const setNumbers = { currentSetNumber: 2, cardSetNumbers: { OLD_CARD: 1 } };
+  const makeSeason = () => createAutoRankSeasonRegistrationState({
+    seasonId: 'season-test-01', competitionId: 'competition-test-01',
+    rulesVersion: 'rules-v1', cardVersion: 'cards-v1', aiVersion: 'ai-v1',
+  });
+  const owned = registerOpeningDeck(makeSeason(), {
+    selection: selection({ main: ['OLD_CARD', 'CARD_B'], ex: [] }, '4p'),
+    registeredAt: '2026-11-13T09:00:00+09:00',
+    validateDeck: acceptDeck,
+    storage: seasonStorage(true),
+    setNumbers,
+  });
+  assert.equal(owned.openingRegistration.snapshot.deck.main[0], 'OLD_CARD');
+  assert.throws(
+    () => registerOpeningDeck(makeSeason(), {
+      selection: selection({ main: ['OLD_CARD', 'CARD_B'], ex: [] }, '4p'),
+      registeredAt: '2026-11-13T09:00:00+09:00',
+      validateDeck: acceptDeck,
+      storage: seasonStorage(false),
+      setNumbers,
+    }),
+    /MATCH_START_CARD_ACCESS_DENIED:OLD_CARD/,
+  );
+});
+

@@ -73,3 +73,4 @@ test('every day of the year has at least one open event (no void days)', () => {
   assert.equal(getMonthlyEventsForDate({ month: 1, day: 25 }).events.some((e) => e.id === 'D'), true);
   assert.match(describeToday({ month: 1, day: 1 }), /第1シーズン/);
 });
+

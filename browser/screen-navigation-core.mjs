@@ -1,6 +1,12 @@
 import {createTransitionDirector} from './ui-state-feedback-core.mjs';
 import {SHOP_FORMAL_CATALOG} from './shop-formal-catalog.mjs';
 import {mountShopLiveCatalogRuntime} from './shop-live-catalog-runtime.mjs';
+import {ensureShopChargeRuntime} from './shop-charge-runtime.mjs';
+import {ensureShopExchangeRuntime} from './shop-exchange-runtime.mjs';
+import {ensureShopEntryBranchesRuntime} from './shop-entry-branches-runtime.mjs';
+import {ensureShopPackSetsRuntime} from './shop-pack-sets-runtime.mjs';
+import {ensureShopSupplyCategoriesRuntime} from './shop-supply-categories-runtime.mjs';
+import {ensureShopLookRuntime} from './shop-look-runtime.mjs';
 
 export const SCREEN_NAVIGATION_REASON = Object.freeze({
   EMPTY_TARGET: 'EMPTY_TARGET',
@@ -129,11 +135,13 @@ export function ensureShopLiveCatalogRuntime(documentSource = globalThis.documen
     else return null;
   }
   try {
-    return mountShopLiveCatalogRuntime({
+    const catalog = mountShopLiveCatalogRuntime({
       host,
       formalCatalogItems: SHOP_FORMAL_CATALOG.items,
       approvedFanArtWorks: SHOP_FORMAL_CATALOG.approvedFanArtWorks,
     });
+    ensureShopSupplyCategoriesRuntime(documentSource);
+    return catalog;
   } catch {
     host.replaceChildren?.();
     return null;
@@ -744,8 +752,15 @@ export function createScreenTransitionRuntimeAdapter({
         if (decision.to === 'gacha') {
           ensureGachaPreviewDisclosure(globalThis.document);
           ensureGachaNativeRevealRuntime(globalThis.document);
+          ensureShopPackSetsRuntime(globalThis.document);
         }
-        if (decision.to === 'shop') ensureShopLiveCatalogRuntime(globalThis.document);
+        if (decision.to === 'shop') {
+          ensureShopLiveCatalogRuntime(globalThis.document);
+          ensureShopChargeRuntime(globalThis.document);
+          ensureShopExchangeRuntime(globalThis.document);
+          ensureShopEntryBranchesRuntime(globalThis.document);
+          ensureShopLookRuntime(globalThis.document);
+        }
       }
     });
     presentationDriver.finishRevision?.(result.revision, result.status);

@@ -17,7 +17,9 @@ globalThis.GAMEROAD_FACILITIES_HOOKS = {
 };
 
 const {
+  FACILITY_ITEM_TO_LIVE_ITEM,
   createFacilityWorld, ensureWorld, onLanding, onRoundStart, AREA_BY_TILE,
+  translateFacilityItems,
 } = await import('../browser/board-facilities-live-bridge.mjs');
 
 function player(id, over = {}) {
@@ -157,4 +159,18 @@ test('世界は対戦の状態に作られ、形が保たれる', () => {
   const w = ensureWorld(m);
   assert.equal(w, m.facilityWorld);
   assert.deepEqual(createFacilityWorld().shopStock, []);
+});
+
+// --- 移し替え（3b）：tests/dice-items-and-dragils.test.mjs から移した施設の橋の1件 ---
+test('施設側のサイコロアイテムIDが本体のアイテムIDへ対応付く（ダブルは廃止のため対応付けに無い）', () => {
+  assert.deepEqual({ ...FACILITY_ITEM_TO_LIVE_ITEM }, {
+    ITEM_DICE_TRIPLE: 'dice_triple',
+    ITEM_DICE_456: 'dice_456',
+    ITEM_DICE_10: 'dice_d10',
+  });
+  const player = { items: ['ITEM_DICE_TRIPLE', 'RIDE_GRIFFON', 'ITEM_DICE_10'] };
+  assert.equal(translateFacilityItems(player), 2);
+  assert.deepEqual(player.items, ['dice_triple', 'RIDE_GRIFFON', 'dice_d10']);
+  assert.equal(translateFacilityItems({}), 0);
+  assert.equal(translateFacilityItems(null), 0);
 });

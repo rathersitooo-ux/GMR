@@ -1,4 +1,8 @@
 import { createDeckMatchStartSnapshot } from './deck-save-ack-core.mjs';
+import {
+  buildSeasonPassCardAccessPolicy,
+  createDeckMatchStartSnapshotWithCardAccess,
+} from './deck-match-start-card-access-adapter.mjs';
 
 const SCHEMA = 'gameroad.auto-rank-season-registration.v1';
 const MATCH_START_SCHEMA = 'gameroad.browser.match-start-snapshot.v1';
@@ -123,9 +127,16 @@ function requireFourPlayerSelection(selection) {
   return selection;
 }
 
-function createRegistrationSnapshot(selection, validateDeck) {
+function createRegistrationSnapshot(selection, validateDeck, { storage, setNumbers } = {}) {
   requireFourPlayerSelection(selection);
-  const snapshot = createDeckMatchStartSnapshot(selection, { validateDeck });
+  // 第22段：storage／setNumbers が渡された時だけ、シーズンパスの錠を通す。
+  // 渡されなかった時の従来の動きは変えない。
+  const snapshot = storage !== undefined || setNumbers !== undefined
+    ? createDeckMatchStartSnapshotWithCardAccess(selection, {
+      validateDeck,
+      accessPolicy: buildSeasonPassCardAccessPolicy(selection, { storage, setNumbers }),
+    })
+    : createDeckMatchStartSnapshot(selection, { validateDeck });
   return assertSnapshot(snapshot);
 }
 
@@ -163,13 +174,15 @@ export function registerOpeningDeck(state, {
   selection,
   registeredAt,
   validateDeck,
+  storage,
+  setNumbers,
 } = {}) {
   assertState(state);
   if (state.phase !== AUTO_RANK_SEASON_PHASE.REGISTRATION) {
     throw new Error('OPENING_REGISTRATION_CLOSED');
   }
   requireNonEmptyString(registeredAt, 'registeredAt');
-  const snapshot = createRegistrationSnapshot(selection, validateDeck);
+  const snapshot = createRegistrationSnapshot(selection, validateDeck, { storage, setNumbers });
   const revision = (state.openingRegistration?.revision ?? 0) + 1;
 
   return freezeState({

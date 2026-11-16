@@ -41,6 +41,24 @@ import {
   createSeasonStore,
   ensureCurrentSeasonMonth,
 } from './season-store.mjs';
+import {
+  buildSeasonPassCardAccessPolicy,
+  createDeckMatchStartSnapshotWithCardAccess,
+} from './deck-match-start-card-access-adapter.mjs';
+
+// 第22段：シーズンパスのカード利用の方針と、対戦開始の錠つき受け口。
+// 方針の作り方は deck-match-start-card-access-adapter 側にあり、ここは
+// ホーム側の名前で出すだけ（テストの受け口はこのファイル）。
+export { buildSeasonPassCardAccessPolicy };
+export function createDeckMatchStartSnapshotWithSeasonPassAccess(
+  selection,
+  { validateDeck, storage, setNumbers } = {},
+) {
+  return createDeckMatchStartSnapshotWithCardAccess(selection, {
+    validateDeck,
+    accessPolicy: buildSeasonPassCardAccessPolicy(selection, { storage, setNumbers }),
+  });
+}
 
 // 検査用の古い名前（season-store のものと同じ）。
 export { createSeasonStore as createSeasonHomeStore };

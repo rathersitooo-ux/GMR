@@ -31,9 +31,11 @@ export const TILE_TYPES = [
 ];
 
 // アイテムマスとライドマスで出る物の仮の池（仕様その2の例：ライドグリフォン、アイシクルランス等）
-// サイコロ4種はカードとして実装済みの物と対応付ける想定で、対応付けはつなぎの段でやる。
+// サイコロはアイテム（2026-11-15 ライカの決め：カード実装は没）。ただしダブルは廃止（2026-11-12
+// ライカの決め。2026-11-16に管理役の判断でアイテム側の残りも消した）。本体のアイテム定義への
+// 対応付けは橋（board-facilities-live-bridge の FACILITY_ITEM_TO_LIVE_ITEM）で実施済み。
 export const ITEM_POOL = [
-  'ITEM_DICE_DOUBLE', 'ITEM_DICE_TRIPLE', 'ITEM_DICE_456', 'ITEM_DICE_10',
+  'ITEM_DICE_TRIPLE', 'ITEM_DICE_456', 'ITEM_DICE_10',
   'RIDE_GRIFFON', 'WEAPON_ICICLE_LANCE', 'WEAPON_SWORD', 'FAMILIAR_BAT', 'ITEM_WARP',
 ];
 

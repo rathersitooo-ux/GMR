@@ -13,6 +13,29 @@ import {
   applyTurnStartReturns,
 } from './board-facilities-core.mjs';
 
+// 施設側のアイテムID（board-facilities-core の ITEM_POOL）と、本体（GAMEROAD.html）の
+// アイテム定義（ITEM_DEFS）の対応付け。核のコメントにあった「対応付けはつなぎの段でやる」の実施
+// （2026-11-15：サイコロはカードではなくアイテム、というライカの決めの出し直し。ただしダブルは
+// 廃止のため対応付けから外す。2026-11-12 ライカの決め、2026-11-16に管理役の判断で除去）。
+// これが無いと、アイテムマスで貰ったサイコロが本体の useItem で使えない文字列のまま残る。
+export const FACILITY_ITEM_TO_LIVE_ITEM = Object.freeze({
+  ITEM_DICE_TRIPLE: 'dice_triple',
+  ITEM_DICE_456: 'dice_456',
+  ITEM_DICE_10: 'dice_d10',
+});
+
+// プレイヤーの所持品の中の施設側IDを、本体のアイテムIDへ置き換える（その場で書き換え、件数を返す）。
+export function translateFacilityItems(player) {
+  if (!player || !Array.isArray(player.items)) return 0;
+  let changed = 0;
+  player.items = player.items.map((id) => {
+    const live = FACILITY_ITEM_TO_LIVE_ITEM[id];
+    if (live) changed += 1;
+    return live || id;
+  });
+  return changed;
+}
+
 // エリアの割り当て（仮置き）：中央3×3だけを使う。道とシールドは第1段ではエリアに入れない。
 // 大きさの前提（2026-11-10 ライカの見立て）：1エリア2〜3マスが基本線で、1マスでも可。
 // エリアが多い（小さい）方が4人戦で所有が分散して雪だるまになりにくく、ヘイトも分散する。
@@ -262,6 +285,7 @@ async function onLandingInner(match, player, world) {
       try {
         const r = resolveTileLanding(type, player, world, ctx);
         (r.events || []).forEach(hLog);
+        translateFacilityItems(player);
       } catch (e) {
         hLog(`マスの効果で止まった：${e?.message || e}`);
       } finally {

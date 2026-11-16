@@ -360,7 +360,7 @@ function ensureBattleR75Host(documentRef) {
   host = documentRef.createElement('section');
   host.setAttribute(R75_HUD_ATTR, '1');
   host.setAttribute('aria-label', '自分のターン・バトルスコア・使ったバトルカード');
-  host.innerHTML = '<div class="grR75Metric grR75Turn"><span>TURN</span><b></b></div><div class="grR75Metric grR75Score" hidden><span>SCORE</span><b></b></div><div class="grR75Chain" aria-label="使ったバトルカード"></div>';
+  host.innerHTML = '<div class="grR75Metric grR75Turn"><span>ラウンド</span><b></b></div><div class="grR75Metric grR75Score" hidden><span>SCORE</span><b></b></div><div class="grR75Chain" aria-label="使ったバトルカード"></div>';
   battleMap.appendChild(host);
   return host;
 }

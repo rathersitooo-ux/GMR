@@ -69,3 +69,14 @@ describe('season-store', () => {
     assert.notEqual(a, c);
   });
 });
+
+// --- 移し替え（3b）：tests/season-weekly-cap.test.mjs から移した1件 ---
+it('store keeps weekly points across save and load', () => {
+  const storage = memoryStorage();
+  const store = createSeasonStore(storage);
+  const saved = store.save({ ...store.load(), weeklyPoints: { weekKey: 'S1-W3', points: 2500 } }, 1);
+  assert.deepEqual(saved.weeklyPoints, { weekKey: 'S1-W3', points: 2500 });
+  assert.deepEqual(store.load().weeklyPoints, { weekKey: 'S1-W3', points: 2500 });
+  // Old records without weekly points load as empty.
+  assert.deepEqual(cleanSeasonState({ catalogPoints: 0 }, { month: 1 }).weeklyPoints, { weekKey: '', points: 0 });
+});

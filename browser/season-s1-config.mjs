@@ -65,6 +65,88 @@ export const CATALOG_POINT_SOURCES = freeze({
   leftoverPointsPerManny: 10,
 });
 
+// NOTE (3a 2026-11-16): PASS design (public 57bc3fa) and CATALOG design (main) both
+// live in this branch. Neither table is dropped here: PASS consumers
+// (shop-charge-runtime, season-pass-core) need the PASS names, CATALOG
+// consumers (season-home-runtime, season-catalog-core, season-closing-core)
+// need the CATALOG names. Which design the season uses is still open
+// (season lane / ライカ decides); this merge only makes both importable.
+// Pass: 1 level = 1000 points, 50 levels. Battle results grant points by
+// outcome (win 250 / lose 100). There is no point multiplier anywhere: the
+// old 1.5x/2x boost weeks were removed with the pass rebuild. Milestones
+// carry the fixed rewards; every other level rotates manny / pack material /
+// growth material.
+// Battle pass price is 500 yen (ライカの仕様）; the flagship reward is the
+// partner skin at level 40.
+export const BATTLE_PASS_PRICE_YEN = 500;
+export const BATTLE_PASS_FLAGSHIP_LEVEL = 40;
+export const PASS_MILESTONES = freeze({
+  1: { free: { kind: 'manny', amount: 100 }, pass: { kind: 'sleeve', id: 's1-season-sleeve' } },
+  5: { free: { kind: 'pack-ticket', amount: 1 }, pass: { kind: 'manny', amount: 300 } },
+  10: { free: { kind: 'icon', id: 's1-stone-tablet-icon' }, pass: { kind: 'icon-frame', id: 's1-gold-frame' } },
+  15: { free: { kind: 'pack-ticket', amount: 2 }, pass: { kind: 'partner-costume', id: 's1-partner-top' } },
+  20: { free: { kind: 'sleeve', id: 's1-spring-sleeve' }, pass: { kind: 'manny', amount: 500 } },
+  25: { free: { kind: 'pack-ticket', amount: 2 }, pass: { kind: 'title', id: 'season-traveller' } },
+  30: { free: { kind: 'card-look', id: 's1-stone-card-look' }, pass: { kind: 'partner-lines', id: 's1-partner-lines' } },
+  35: { free: { kind: 'pack-ticket', amount: 3 }, pass: { kind: 'manny', amount: 800 } },
+  40: { free: { kind: 'icon-frame', id: 's1-season-frame' }, pass: { kind: 'partner-skin', id: 's1-flagship-partner-skin' } },
+  45: { free: { kind: 'pack-ticket', amount: 3 }, pass: { kind: 'battle-start-look', id: 's1-light-start' } },
+  50: { free: { kind: 'title', id: 'stone-guardian' }, pass: { kind: 'sleeve', id: 's1-special-sleeve' } },
+});
+
+// Display names for fixed rewards (ids in the milestone table above).
+export const BATTLE_PASS_REWARD_NAMES = freeze({
+  's1-season-sleeve': 'はじまりのスリーブ',
+  's1-stone-tablet-icon': '石板のアイコン',
+  's1-gold-frame': '金の枠',
+  's1-partner-top': 'パートナーの衣装（上）',
+  's1-spring-sleeve': '春のスリーブ',
+  'season-traveller': '旅人の称号',
+  's1-stone-card-look': '石板のカード見た目',
+  's1-partner-lines': 'パートナーの台詞セット',
+  's1-season-frame': 'シーズンの枠',
+  's1-flagship-partner-skin': 'パートナースキン（目玉）',
+  's1-light-start': '光の開幕演出',
+  'stone-guardian': '石の守り手の称号',
+  's1-special-sleeve': '特別なスリーブ',
+});
+
+// One-line Japanese label for a reward, for the pass screen.
+export function battlePassRewardLabel(reward) {
+  if (!reward || typeof reward !== 'object') throw new TypeError('REWARD_REQUIRED');
+  switch (reward.kind) {
+    case 'manny': return `ルピ${reward.amount}`;
+    case 'pack-ticket': return `パックチケット${reward.amount}枚`;
+    case 'pack-material': return `パックの材料${reward.amount}個`;
+    case 'growth-material': return `育成の材料${reward.amount}個`;
+    default: return BATTLE_PASS_REWARD_NAMES[reward.id] ?? String(reward.id ?? reward.kind);
+  }
+}
+
+export const PASS_ROTATION = freeze([
+  { kind: 'manny', amount: 50 },
+  { kind: 'pack-material', amount: 1 },
+  { kind: 'growth-material', amount: 1 },
+  { kind: 'manny', amount: 100 },
+]);
+
+export const PASS_POINT_SOURCES = freeze({
+  battleWin: 250,
+  battleLose: 100,
+  // 任務・ドロップの点は新しい段（1レベル1000点）に合わせた10倍。
+  // 旧い比率はそのまま：任務150点はレベルの15%（旧15点／100点と同じ）。
+  mission: 150,
+  dailyAllDoneBonus: 200,
+  pointsPerLevel: 1000,
+  maxLevel: 50,
+  graceDays: 7,
+  // 週上限（シャドバWBの実数）：1週間にバトルパスへ入る点は10000点まで。
+  // 週はシーズン開始日からの7日ごとの区切り（getSeasonWeekForDate）。
+  weeklyCap: 10000,
+  // Leftover points convert at 100 points = 10 manny after the grace period.
+  leftoverPointsPerManny: 10,
+});
+
 export const RANK_TIERS = freeze([
   { id: 'bronze', label: 'ブロンズ', reward: { emblem: 'bronze-emblem', packTickets: 1, manny: 100 } },
   { id: 'silver', label: 'シルバー', reward: { emblem: 'silver-emblem', packTickets: 1, manny: 200 } },
@@ -139,4 +221,13 @@ export function catalogRewardForLevel(level, column = 'free') {
   const milestone = CATALOG_MILESTONES[level];
   if (milestone) return milestone[column];
   return CATALOG_ROTATION[(level - 1) % CATALOG_ROTATION.length];
+}
+
+export function passRewardForLevel(level, column = 'free') {
+  if (!Number.isInteger(level) || level < 1 || level > PASS_POINT_SOURCES.maxLevel) {
+    throw new TypeError('PASS_LEVEL_INVALID');
+  }
+  const milestone = PASS_MILESTONES[level];
+  if (milestone) return milestone[column];
+  return PASS_ROTATION[(level - 1) % PASS_ROTATION.length];
 }

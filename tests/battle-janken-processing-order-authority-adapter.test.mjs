@@ -55,7 +55,7 @@ test('accepts an authoritative printedNumber field and projects it as the public
   assert.deepEqual(result.processingOrder, ['p2', 'p4', 'p1', 'p3']);
 });
 
-test('equal printed numbers fail closed as unresolved and never invent a tie-break', () => {
+test('equal printed numbers fail closed without a persisted random tie-draw receipt', () => {
   const publicCards = acceptedPublicCards();
   publicCards[0].displayNumber = 10;
   const result = buildBattleJankenProcessingOrderAuthoritySnapshot({ publicCards });
@@ -67,6 +67,100 @@ test('equal printed numbers fail closed as unresolved and never invent a tie-bre
   assert.deepEqual(result.tiedPrintedNumbers, [10]);
   assert.equal(result.equalPrintedNumberTieBreak, false);
   assert.deepEqual(result.publicCards.map((card) => card.playerId), ['p1', 'p2', 'p3', 'p4']);
+});
+
+
+test('same-number tie resolves using the exact persisted random draw and replays unchanged', () => {
+  const publicCards = acceptedPublicCards();
+  publicCards[0].displayNumber = 10;
+  const persistedEqualNumberOrder = {
+    decisionId: 'battle-001-tie-draw',
+    orderedTiedPlayerIds: ['p2', 'p1'],
+  };
+  const before = structuredClone(persistedEqualNumberOrder);
+  const first = buildBattleJankenProcessingOrderAuthoritySnapshot({
+    publicCards, persistedEqualNumberOrder,
+  });
+  const second = buildBattleJankenProcessingOrderAuthoritySnapshot({
+    publicCards, persistedEqualNumberOrder,
+  });
+
+  assert.equal(first.status, 'RESOLVED');
+  assert.equal(first.reason, 'PRINTED_NUMBER_ORDER_WITH_PERSISTED_RANDOM_TIES_RESOLVED');
+  assert.deepEqual(first.tiedPrintedNumbers, [10]);
+  assert.deepEqual(first.processingOrder, ['p2', 'p1', 'p4', 'p3']);
+  assert.deepEqual(second.processingOrder, first.processingOrder);
+  assert.deepEqual(second.resolution, first.resolution);
+  assert.deepEqual(first.persistedEqualNumberOrder, before);
+  assert.deepEqual(persistedEqualNumberOrder, before);
+  assert.equal(Object.isFrozen(first.persistedEqualNumberOrder), true);
+  assert.equal(first.equalPrintedNumberTieBreak, true);
+  assert.equal(first.gameStateWrite, false);
+
+  const reversed = buildBattleJankenProcessingOrderAuthoritySnapshot({
+    publicCards,
+    persistedEqualNumberOrder: {
+      decisionId: 'battle-001-other-draw',
+      orderedTiedPlayerIds: ['p1', 'p2'],
+    },
+  });
+  assert.deepEqual(reversed.processingOrder, ['p1', 'p2', 'p4', 'p3']);
+  assert.notDeepEqual(first.resolution.resolvedWinners, reversed.resolution.resolvedWinners);
+});
+
+test('multiple equal-number groups permit separate permutations, never different-number swaps', () => {
+  const publicCards = acceptedPublicCards();
+  publicCards[0].displayNumber = 20;
+  publicCards[1].displayNumber = 10;
+  publicCards[2].displayNumber = 20;
+  publicCards[3].displayNumber = 10;
+  const result = buildBattleJankenProcessingOrderAuthoritySnapshot({
+    publicCards,
+    persistedEqualNumberOrder: {
+      decisionId: 'battle-002-tie-draw',
+      orderedTiedPlayerIds: ['p4', 'p2', 'p3', 'p1'],
+    },
+  });
+  assert.deepEqual(result.tiedPrintedNumbers, [10, 20]);
+  assert.deepEqual(result.processingOrder, ['p4', 'p2', 'p3', 'p1']);
+
+  for (const orderedTiedPlayerIds of [
+    ['p1', 'p2', 'p3', 'p4'], // distinct-rank priority broken
+    ['p2', 'p2', 'p3', 'p1'], // duplicate player
+    ['p4', 'p2', 'p3'], // incomplete
+    ['p4', 'p2', 'p3', 'intruder'], // unknown player
+  ]) {
+    assert.throws(() => buildBattleJankenProcessingOrderAuthoritySnapshot({
+      publicCards,
+      persistedEqualNumberOrder: {
+        decisionId: 'battle-002-tie-draw',
+        orderedTiedPlayerIds,
+      },
+    }), /persisted equal-number order/);
+  }
+});
+
+test('rejects malformed/stale tie receipts and leaves no ties on strict number priority', () => {
+  const tied = acceptedPublicCards();
+  tied[0].displayNumber = 10;
+  for (const receipt of [
+    {},
+    { decisionId: 'tie-1', orderedTiedPlayerIds: ['p1'] },
+    { decisionId: '', orderedTiedPlayerIds: ['p1', 'p2'] },
+    { decisionId: ' tie-1 ', orderedTiedPlayerIds: ['p1', 'p2'] },
+    { decisionId: 'tie-1', orderedTiedPlayerIds: ['p1', 'p3'] },
+  ]) {
+    assert.throws(() => buildBattleJankenProcessingOrderAuthoritySnapshot({
+      publicCards: tied, persistedEqualNumberOrder: receipt,
+    }));
+  }
+  assert.throws(() => buildBattleJankenProcessingOrderAuthoritySnapshot({
+    publicCards: acceptedPublicCards(),
+    persistedEqualNumberOrder: {
+      decisionId: 'stale-other-battle',
+      orderedTiedPlayerIds: ['p1', 'p2'],
+    },
+  }), /without tied cards/);
 });
 
 test('malformed public cards fail closed before any ordering or comparison', () => {
@@ -129,12 +223,15 @@ test('contract owns only documented number-order and existing triad resolution a
   );
   assert.equal(
     BATTLE_JANKEN_PROCESSING_ORDER_AUTHORITY_CONTRACT.equalPrintedNumberPolicy,
-    'UNRESOLVED_NO_TIE_BREAK',
+    'EXACT_CALLER_PERSISTED_RANDOM_TIE_ORDER',
   );
   assert.equal(
     BATTLE_JANKEN_PROCESSING_ORDER_AUTHORITY_CONTRACT.jankenResolutionAuthority,
     'EXISTING_TRIAD_FIRST_WIN_LOCK_RESOLVER',
   );
+  assert.equal(BATTLE_JANKEN_PROCESSING_ORDER_AUTHORITY_CONTRACT.persistedDrawRequiredForTies, true);
+  assert.equal(BATTLE_JANKEN_PROCESSING_ORDER_AUTHORITY_CONTRACT.randomDrawingOwnedHere, false);
+  assert.equal(BATTLE_JANKEN_PROCESSING_ORDER_AUTHORITY_CONTRACT.persistenceOwnedHere, false);
   assert.equal(BATTLE_JANKEN_PROCESSING_ORDER_AUTHORITY_CONTRACT.mutatesAcceptedPublicCardOrder, false);
   assert.equal(BATTLE_JANKEN_PROCESSING_ORDER_AUTHORITY_CONTRACT.targetAuthority, false);
   assert.equal(BATTLE_JANKEN_PROCESSING_ORDER_AUTHORITY_CONTRACT.shieldAuthority, false);

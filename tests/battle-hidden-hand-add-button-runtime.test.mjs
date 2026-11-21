@@ -205,6 +205,53 @@ test('delegated membership write must reflect exactly one reserved identity', as
   assert.equal(duplicateResult.membershipWriteDelegated, true);
 });
 
+test('concurrent presses delegate exactly one reserved card while the first write is pending', async () => {
+  let releaseAdd;
+  const pendingAdd = new Promise((resolve) => { releaseAdd = resolve; });
+  const fixture = controllerFixture({
+    membership: ['SP_A'],
+    addImpl: async ({ payload, membership, setMembership }) => {
+      await pendingAdd;
+      setMembership([...membership, payload.cardId]);
+    },
+  });
+  const first = fixture.controller.press();
+  const during = fixture.controller.sync();
+  assert.equal(during.visible, true);
+  assert.equal(during.enabled, false);
+  assert.equal(during.reason, BATTLE_HIDDEN_HAND_ADD_BUTTON_REASON.ADD_IN_PROGRESS);
+
+  const second = await fixture.controller.press();
+  assert.equal(second.ok, false);
+  assert.equal(second.reason, BATTLE_HIDDEN_HAND_ADD_BUTTON_REASON.ADD_IN_PROGRESS);
+  assert.equal(second.membershipWriteDelegated, false);
+  assert.equal(fixture.calls.length, 1);
+  releaseAdd();
+
+  const added = await first;
+  assert.equal(added.ok, true);
+  assert.deepEqual(fixture.membership(), ['SP_A', 'HT_2']);
+  assert.equal(fixture.runtime().hiddenPrivilegeAvailable, true);
+  assert.equal(fixture.controller.sync().reason, BATTLE_HIDDEN_HAND_ADD_BUTTON_REASON.RESERVED_CARD_ALREADY_PRESENT);
+});
+
+test('failed async insertion releases in-flight lock so reserved card may be retried', async () => {
+  let attempts = 0;
+  const fixture = controllerFixture({
+    addImpl: async ({ payload, membership, setMembership }) => {
+      attempts += 1;
+      if (attempts === 1) throw new Error('TEMPORARY_HIDDEN_HAND_WRITE_FAILURE');
+      setMembership([...membership, payload.cardId]);
+    },
+  });
+  await assert.rejects(fixture.controller.press(), /TEMPORARY_HIDDEN_HAND_WRITE_FAILURE/);
+  assert.equal(fixture.controller.sync().enabled, true);
+  const retry = await fixture.controller.press();
+  assert.equal(retry.ok, true);
+  assert.equal(attempts, 2);
+  assert.deepEqual(fixture.membership(), ['HT_2']);
+});
+
 test('button action may not consume or replace the existing Hidden Hand privilege', async () => {
   const initial = runtime();
   const consumed = consumeNewBaseHiddenHandPrivilege(initial, {
@@ -297,6 +344,33 @@ test('mounted successful press resyncs to duplicate-disabled without changing pr
   assert.equal(mount.button.disabled, true);
   assert.equal(mount.button.getAttribute('data-state'), 'disabled-road-present');
   assert.equal(mount.button.getAttribute('data-reason'), 'RESERVED_CARD_ALREADY_PRESENT');
+});
+
+test('mounted button becomes disabled while async insertion is pending and resyncs on completion', async () => {
+  let releaseAdd;
+  const pendingAdd = new Promise((resolve) => { releaseAdd = resolve; });
+  const fixture = controllerFixture({
+    addImpl: async ({ payload, setMembership }) => {
+      await pendingAdd;
+      setMembership([payload.cardId]);
+    },
+  });
+  const mount = mountBattleHiddenHandAddButton({
+    documentRef: fakeDocument(),
+    container: new FakeElement('div'),
+    controller: fixture.controller,
+  });
+  const first = mount.press();
+  assert.equal(mount.button.disabled, true);
+  assert.equal(mount.button.getAttribute('aria-disabled'), 'true');
+  assert.equal(mount.button.getAttribute('data-reason'), 'ADD_IN_PROGRESS');
+  const duplicate = await fixture.controller.press();
+  assert.equal(duplicate.reason, BATTLE_HIDDEN_HAND_ADD_BUTTON_REASON.ADD_IN_PROGRESS);
+  assert.equal(fixture.calls.length, 1);
+  releaseAdd();
+  assert.equal((await first).ok, true);
+  assert.equal(mount.button.getAttribute('data-reason'), 'RESERVED_CARD_ALREADY_PRESENT');
+  mount.destroy();
 });
 
 test('contract declares existing new-base runtime as the single Hidden Hand authority', () => {

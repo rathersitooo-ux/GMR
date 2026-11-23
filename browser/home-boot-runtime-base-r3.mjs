@@ -1033,7 +1033,7 @@ function bindSlidepad(home) {
       if (event.pointerId !== runtime.slidepad.pointerId) return;
       const { cancelArmed } = updateFromPointer(event);
       const commit = !cancelArmed && runtime.slotRoll.state ? resolveSlotRollCommit(runtime.slotRoll.state) : null;
-      const button = commit?.itemId
+      const button = commit?.totalSteps !== 0 && commit?.itemId
         ? routeButtons(home).find((candidate) => routeId(candidate) === commit.itemId) || null
         : null;
       resetGesture();

@@ -586,9 +586,13 @@ const saasunaMotionSurface = cinematicSides[1].children[0].children.find(
   node => node.dataset.role === 'saasuna-battle-motion-surface'
 );
 assert.ok(saasunaMotionSurface);
-assert.equal(saasunaMotionSurface.dataset.motionState, 'HIT_RECOIL');
-assert.equal(saasunaMotionSurface.children[0].dataset.keyframeId, 'wind-cut');
-assert.equal(saasunaMotionSurface.children[3].hidden, false);
+// This mock's immediate timer host reaches the final causal phase before async mount resolves.
+assert.equal(saasunaMotionSurface.dataset.motionState, 'IDLE_GENTLE');
+assert.equal(cinematicSides[1].children[0].dataset.saasunaBattleFrameSheet, 'SARSNER_APPEAL_IDLE_8F_R2.png');
+assert.equal(cinematicSides[1].children[0].dataset.saasunaBattleFrameIndex, '1');
+assert.equal(saasunaMotionSurface.children[0].dataset.keyframeId, 'idle');
+assert.equal(saasunaMotionSurface.children[3].hidden, true);
+assert.ok(Number(cinematicSides[1].children[0].dataset.saasunaBattleMotionSequence) >= 2);
 assert.equal(cinematicSides[0].children[0].children[0].getAttribute('data-battle-cinematic-character'), '');
 assert.equal(cinematicSides[1].children[0].children[0].getAttribute('data-battle-cinematic-character'), '');
 assert.deepEqual(
@@ -659,6 +663,30 @@ const explicitSaasunaSurface = runtime.cinematicDuel.children
   .find(node => node.dataset.role === 'target')
   .children[0].children.find(node => node.dataset.role === 'saasuna-battle-motion-surface');
 assert.equal(explicitSaasunaSurface.dataset.motionState, 'KNEE_PILLOW');
+
+// Use a controlled clock to prove actual stance -> impact -> return playback.
+const phaseTimers = [];
+const originalSetTimeout = cinematicCharacterGlobal.setTimeout;
+cinematicCharacterGlobal.setTimeout = (callback, delay) => {
+  phaseTimers.push({ callback, delay });
+  return phaseTimers.length + 100;
+};
+runtime.render(attack);
+await Promise.resolve();
+await Promise.resolve();
+const phaseSaasunaFigure = runtime.cinematicDuel.children.find(node => node.dataset.role === 'target').children[0];
+assert.equal(phaseSaasunaFigure.dataset.saasunaBattleMotionState, 'IDLE_GENTLE');
+const impactCallback = phaseTimers.find(timer => timer.delay === 550)?.callback;
+const returnCallback = phaseTimers.find(timer => timer.delay === 800)?.callback;
+assert.equal(typeof impactCallback, 'function');
+assert.equal(typeof returnCallback, 'function');
+impactCallback();
+assert.equal(phaseSaasunaFigure.dataset.saasunaBattleMotionState, 'HIT_RECOIL');
+assert.equal(phaseSaasunaFigure.dataset.saasunaBattleKeyframe, 'wind-cut');
+returnCallback();
+assert.equal(phaseSaasunaFigure.dataset.saasunaBattleMotionState, 'IDLE_GENTLE');
+assert.equal(phaseSaasunaFigure.dataset.saasunaBattleKeyframe, 'idle');
+cinematicCharacterGlobal.setTimeout = originalSetTimeout;
 
 assert.equal(runtime.resolutionSurface.textContent, 'EXISTING LIVE ADAPTER OWNS THIS CONTENT');
 assert.equal(runtime.resolutionSurface.dataset.battleScreenEventId, 'attack-1');

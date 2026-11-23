@@ -274,6 +274,10 @@ function ensureSceneStyle(doc) {
 .gmrBattleLive[data-causal-phase="release"] .gmrBattleLive__ground-run,.gmrBattleLive[data-causal-phase="impact"] .gmrBattleLive__ground-run{opacity:.95}
 .gmrBattleLive[data-causal-phase="release"] .gmrBattleLive__ground-run{animation:gmrBattleGroundRun .16s steps(3,end) both}
 .gmrBattleLive[data-causal-phase="impact"] .gmrBattleLive__ground-run{animation:none;background-position:100% var(--ground-row-position,0%)}
+.gmrBattleLive__heartFlight{position:absolute;z-index:4;left:27%;top:48%;opacity:0;pointer-events:none;color:#e9a0ff;font-family:Arial,sans-serif;font-size:clamp(32px,6vw,76px);-webkit-text-stroke:2px #342047;text-shadow:0 0 4px #ffe9ff,0 0 13px #8b44c7,0 0 29px rgba(146,48,196,.7);filter:drop-shadow(0 0 7px #9e50da)}
+.gmrBattleLive__heartFlight:after{content:"♡";position:absolute;left:40%;top:-24%;font-size:.42em;opacity:.68;color:#f4cffc;filter:drop-shadow(0 0 8px #bd72ef)}
+.gmrBattleLive[data-naki-heart-flight="true"][data-causal-phase="release"] .gmrBattleLive__heartFlight{animation:gmrBattleHeartFlight .148s linear both}
+.gmrBattleLive[data-naki-heart-flight="true"] .gmrBattleLive__impact{left:76%;top:45%}
 .gmrBattleLive__impact{position:absolute;z-index:5;left:50%;top:47%;width:20px;height:20px;opacity:0;transform:translate(-50%,-50%) scale(.2);pointer-events:none}
 .gmrBattleLive__impact:before{content:var(--impact-pattern,"♥  ✦  ♥");position:absolute;inset:0;color:#ff8ff0;text-shadow:0 0 14px #d947ff,0 0 4px white;font-size:clamp(18px,3.6vw,36px);white-space:nowrap;letter-spacing:.12em}
 .gmrBattleLive__crescent{position:absolute;left:50%;top:50%;opacity:0;color:#e6d8ff;font-size:clamp(28px,5vw,48px);text-shadow:0 0 12px #bca0ff;transform:translate(-50%,-50%) rotate(-25deg)}
@@ -296,6 +300,7 @@ function ensureSceneStyle(doc) {
 @keyframes gmrBattleEnter{0%{opacity:0;transform:scale(1.035);filter:brightness(1.8)}100%{opacity:1;transform:scale(1);filter:none}}
 @keyframes gmrBattleAnticipate{to{transform:translateY(5px) scaleX(.98)}}@keyframes gmrBattleRelease{to{transform:translate(20px,-6px) scale(1.04)}}@keyframes gmrBattleRecoil{25%{transform:translateX(7px) rotate(2deg)}60%{transform:translateX(-4px) rotate(-1deg)}}@keyframes gmrBattleCameraHit{25%{transform:translateX(4px)}60%{transform:translateX(-3px)}}
 @keyframes gmrBattleGroundRun{to{background-position:100% var(--ground-row-position,0%)}}
+@keyframes gmrBattleHeartFlight{0%{opacity:0;left:30%;top:51%;transform:translate(-50%,-50%) scale(.42) rotate(-16deg)}22%{opacity:1;transform:translate(-50%,-50%) scale(.75) rotate(-8deg)}68%{opacity:1;transform:translate(-50%,-50%) scale(.95) rotate(7deg)}100%{opacity:1;left:76%;top:45%;transform:translate(-50%,-50%) scale(.84) rotate(14deg)}}
 @keyframes gmrBattleHeartImpact{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.4)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.9)}}
 @keyframes gmrBattleCrescent{0%{opacity:0;transform:translate(-50%,-50%) rotate(-25deg) scale(.5)}35%{opacity:.24;transform:translate(-50%,-50%) rotate(12deg) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) rotate(34deg) scale(1.12)}}
 @keyframes gmrBattleReturn{to{opacity:0;transform:scale(.985)}}
@@ -456,7 +461,7 @@ function createBattleScene(doc, win, projection, assets) {
 <main class="gmrBattleLive__arena"><div class="gmrBattleLive__horizon" aria-hidden="true"></div><div class="gmrBattleLive__floor" aria-hidden="true"></div><div class="gmrBattleLive__ground-run" aria-hidden="true"></div>
 <div class="gmrBattleLive__fighter gmrBattleLive__fighter--source" data-slot="source-figure"><div class="gmrBattleLive__sprite" data-slot="source-sprite"></div></div>
 <div class="gmrBattleLive__fighter gmrBattleLive__fighter--target" data-slot="target-figure"><div class="gmrBattleLive__sprite" data-slot="target-sprite"></div></div>
-<div class="gmrBattleLive__impact" aria-hidden="true"></div><span class="gmrBattleLive__crescent" aria-hidden="true">☾</span>
+<div class="gmrBattleLive__heartFlight" aria-hidden="true">♥</div><div class="gmrBattleLive__impact" aria-hidden="true"></div><span class="gmrBattleLive__crescent" aria-hidden="true">☾</span>
 <div class="gmrBattleLive__caption" data-slot="caption"></div></main>
 <footer class="gmrBattleLive__bottom"><section class="gmrBattleLive__panel"><div class="gmrBattleLive__action" data-slot="source-action"></div><small class="gmrBattleLive__element" data-slot="source-panel-element"></small><div class="gmrBattleLive__beat" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></section><section class="gmrBattleLive__panel gmrBattleLive__panel--target"><div class="gmrBattleLive__action" data-slot="target-action">TARGET</div><small class="gmrBattleLive__element" data-slot="target-panel-element"></small></section></footer>`;
 
@@ -481,6 +486,7 @@ function createBattleScene(doc, win, projection, assets) {
   const targetSprite = slot('target-sprite');
   const sourceIsNaki = projection.sourceCharacter === 'partner.naki';
   const targetIsNaki = projection.targetCharacter === 'partner.naki';
+  root.dataset.nakiHeartFlight = sourceIsNaki ? 'true' : 'false';
   sourceFigure.style.setProperty('--element-color', ELEMENT_COLORS[sourceElement] ?? ELEMENT_COLORS.dark);
   targetFigure.style.setProperty('--element-color', ELEMENT_COLORS[targetElement] ?? ELEMENT_COLORS.arcane);
   if (!sourceIsNaki && !makeBorrowedVisual(doc, projection.sourceMarker, sourceSprite)) sourceSprite.classList.add('gmrBattleLive__silhouette');

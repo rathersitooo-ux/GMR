@@ -1,0 +1,51 @@
+{
+  "acquireKey": "MOKA-MISSINGPARTS-20261123T1957",
+  "authorizationBaseSha": "919ed93a2d679c98e8a2e45f91c9f7ffad893fb3",
+  "leaseAcquireKey": "MOKA-MISSINGPARTS-20261123T1957",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch integration-missing-parts-6e2-20261123: browser/GAMEROAD.html; browser/deck-save-recovery-core.mjs; browser/deck-code-core.mjs; browser/user-card-import-core.mjs; tests/deck-code-core.test.mjs; tests/user-card-import-core.test.mjs; own transient data/preaction-authorizations/MOKA-MISSINGPARTS-20261123T1957.json only. All other resources READ_ONLY.",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "browser/deck-save-recovery-core.mjs",
+    "browser/deck-code-core.mjs",
+    "browser/user-card-import-core.mjs",
+    "tests/deck-code-core.test.mjs",
+    "tests/user-card-import-core.test.mjs",
+    "data/preaction-authorizations/MOKA-MISSINGPARTS-20261123T1957.json"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-11-23 19:58 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A16:L16",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "MISSING-PARTS-USERCARD-FLOW-001",
+  "leaseUntilJst": "2026-11-23 20:57 JST",
+  "leaseWorkUnitKey": "UNIT6_INTEGRATION_PUBLISH_20261123",
+  "predictionEvidenceId": "UNIT6C_ANCHORS_15_OF_15_ZERO_MISS_20261123",
+  "predictionStatus": "PASS",
+  "proceedToken": "PROCEED|MOKA-MISSINGPARTS-20261123T1957|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|missing-parts-usercard-flow|browser-push|active-lease",
+  "recordId": "MOKA-MISSINGPARTS-20261123T1957",
+  "rehearsalEvidenceId": "UNIT6D_FULL_RUN_HOME_TO_HOME_PASS_20261123",
+  "rehearsalStatus": "PASS",
+  "reuseDecisionEvidenceId": "UNIT1_EDOPRO_COCKATRICE_FORGE_COMPARISON_20261122",
+  "reuseDisposition": "COMPOSE",
+  "riskClass": "MATERIAL_STANDARD",
+  "schemaVersion": "gameroad-preaction-v3",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "browser/deck-save-recovery-core.mjs",
+    "browser/deck-code-core.mjs",
+    "browser/user-card-import-core.mjs",
+    "tests/deck-code-core.test.mjs",
+    "tests/user-card-import-core.test.mjs",
+    "data/preaction-authorizations/MOKA-MISSINGPARTS-20261123T1957.json"
+  ],
+  "solutionSearchEvidence": [
+    "Chain unit1 compared the original EDOPro, Cockatrice and Forge pages and fixed the user-card import shape to the existing resolver effect vocabulary (Forge model), recorded in the chain ledger unit1 results.",
+    "Unit6c re-checked all 15 transplant anchors against public main 919ed93: 15 of 15 present exactly once, 0 unmatched blocks, absence checks 9 of 9.",
+    "Unit6d ran the integrated build inside the prep copy: user cards 0 to 3, deck validation passed, save guard returned saved, full match home to setup to result to home completed with 0 page errors."
+  ],
+  "solutionSearchStatus": "PASS",
+  "solutionSignature": "USERCARD_IMPORT_VIA_EXISTING_RESOLVER_VOCABULARY_V1",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "taskId": "MISSING-PARTS-USERCARD-FLOW-001",
+  "workUnitKey": "UNIT6_INTEGRATION_PUBLISH_20261123"
+}

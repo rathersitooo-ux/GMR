@@ -1,0 +1,31 @@
+{
+  "schema": "gameroad.preaction-authorization.v1",
+  "status": "PRE_ACTION_WITNESS",
+  "taskId": "BATTLE-NAKI-SAASUNA-SRPG-CINEMATIC-INTEGRATION-001",
+  "workUnitKey": "BATTLE_4P_ACCEPTED_TARGET_AND_CAUSAL_REACTION_INTEGRATION_R1",
+  "acquireKey": "BATTLE-4P-CAUSAL-RESPONSE-20261013T1513-GPT6",
+  "owner": "ChatGPT GPT-6 / current GAMEROAD 4P continuation",
+  "leaseUntilJST": "2026-10-13 16:13 JST",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES!A14:O14",
+  "r25Backing": "R25_ACQUIRE_PRESENT:BATTLE-4P-CAUSAL-RESPONSE-20261013T1513-GPT6",
+  "targetRepository": "rathersitooo-ux/GMR",
+  "branch": "gmr/battle-4p-causal-response-20261013-gpt6",
+  "baseMainCommit": "42887ed615ba5c8d7f11f7e183f108bf4a5c8d2c",
+  "expectedExistingBlobSha": {
+    "browser/battle-screen-runtime-mount.mjs": "c5445f75a4214127052cad3618efac42a9fcb067"
+  },
+  "mutablePaths": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "browser/battle-cinematic-accepted-targets.mjs",
+    "tests/battle-cinematic-accepted-targets.test.mjs",
+    "data/preaction-authorizations/BATTLE-4P-CAUSAL-RESPONSE-20261013T1513-GPT6.json"
+  ],
+  "nonRegression": [
+    "No battle rules, winner, target, effects, 109, save, secret, network mutation",
+    "No inferred hit/damage from target presence",
+    "Only already accepted public four-lane event focus target order",
+    "Preserve single-target and reduced-motion behavior",
+    "Do not merge to main or deploy until independent CI and visual acceptance"
+  ],
+  "source": "Existing GMR accepted event projection + current battle-screen-runtime-mount; reuse isolated v11 patch proposal. User continuation 2026-10-13."
+}

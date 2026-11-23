@@ -326,6 +326,15 @@ test('Home setup action sprite maps light states without replacing the real butt
   assert.equal(SETUP_ACTION_STATE_SPRITE_CSS.includes('#startMatch{position:'), false);
   const setupPresentationSource = fs.readFileSync(new URL('../browser/home-shell-presentation-core.mjs', import.meta.url), 'utf8');
   assert.match(setupPresentationSource, /@media \(min-width:900px\) and \(min-height:520px\)\{section\[data-screen="setup"\] #startMatch\{position:sticky!important;bottom:12px!important;z-index:20!important\}/);
+  assert.match(setupPresentationSource, /\.setupBox>\.k\{font-size:11px!important;line-height:1\.25!important/);
+  assert.match(setupPresentationSource, /\.setupBox \.settingRow\{min-height:40px;font-size:11px!important/);
+  assert.match(setupPresentationSource, /\.setupDeckNote\{font-size:11px!important;line-height:1\.4!important/);
+  assert.match(setupPresentationSource, /\.setupIdentityItem span\{font-size:9px!important/);
+  assert.match(setupPresentationSource, /\[data-mode\]::before\{[^}]*font-size:10px/);
+  assert.match(setupPresentationSource, /@media \(max-height:430px\) and \(orientation:landscape\)\{[\s\S]*\[data-content\],[\s\S]*\[data-mode\]\{min-height:44px !important;[^}]*font-size:11px!important/);
+  assert.match(setupPresentationSource, /@media \(max-height:430px\) and \(orientation:landscape\)\{[\s\S]*\.setupDeckNote\{font-size:10px!important;line-height:1\.35!important/);
+  assert.match(setupPresentationSource, /@media \(max-height:430px\) and \(orientation:landscape\)\{[\s\S]*#startMatch\{[^}]*min-height:50px !important/);
+  assert.equal(setupPresentationSource.includes('font-size:.66em'), false);
   assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /gameroadSetupActionLightBreath/);
   assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /prefers-reduced-motion/);
   assert.match(SETUP_ACTION_STATE_SPRITE_CSS, /r10LowPerf/);

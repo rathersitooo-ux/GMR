@@ -69,6 +69,24 @@ function copyStraightSnapshot(value) {
 
 const VISUAL_LANE_LABELS = Object.freeze(['L', 'C', 'R']);
 
+function createUpperLaneCompatibilityLayout(flanoraLayout) {
+  const participantIds = [...flanoraLayout.participantIds];
+  const shieldLinkedLaneColumnsByParticipant = Object.fromEntries(
+    participantIds.map((participantId) => [
+      participantId,
+      [...flanoraLayout.shieldLinkedLaneColumnsByParticipant[participantId]],
+    ]),
+  );
+  return deepFreeze({
+    participantIds,
+    shieldLinkedLaneColumnsByParticipant,
+    legacyLowerTopologyStripped: true,
+    screenSpaceBoardTopology: false,
+    lowerFieldTopologyResolvedHere: false,
+    lowerFieldTopologyAuthority: 'BATTLE_BOARD_VISUAL_GRAPH_VIA_WORLD_FIELD_RENDERER',
+  });
+}
+
 function builtCountByVisualLaneKey(progressionPresentation) {
   const counts = {};
   for (const lane of progressionPresentation?.lanePresentations ?? []) {
@@ -94,6 +112,7 @@ export function mountBattleNewBaseBoardLivePresentation({
   if (!documentLike || typeof documentLike.createElement !== 'function') return fail('DOM_DOCUMENT_REQUIRED');
 
   let flanoraLayout;
+  let upperLaneCompatibilityLayout;
   let goalPathLayout;
   try {
     // Normalize one caller-owned layout through the existing Flanora core first,
@@ -101,10 +120,11 @@ export function mountBattleNewBaseBoardLivePresentation({
     // This prevents the two existing presentation/rule projections from
     // interpreting a noncanonical caller column order differently.
     flanoraLayout = createFlanoraMapLayout(layoutInput);
+    upperLaneCompatibilityLayout = createUpperLaneCompatibilityLayout(flanoraLayout);
     goalPathLayout = createNewBaseGoalPathLayout({
-      participantIds: flanoraLayout.participantIds,
+      participantIds: upperLaneCompatibilityLayout.participantIds,
       horizontalCellCount: layoutInput?.horizontalCellCount,
-      shieldLinkedLaneColumnsByParticipant: flanoraLayout.shieldLinkedLaneColumnsByParticipant,
+      shieldLinkedLaneColumnsByParticipant: upperLaneCompatibilityLayout.shieldLinkedLaneColumnsByParticipant,
     });
   } catch (error) {
     return fail(error?.message || 'BOARD_LAYOUT_INVALID');
@@ -118,7 +138,7 @@ export function mountBattleNewBaseBoardLivePresentation({
     boardSurfaceRuntime = mountFlanoraBoardSurface({
       host,
       documentLike,
-      layout: flanoraLayout,
+      layout: upperLaneCompatibilityLayout,
       reducedMotion,
       lowPerf,
     });
@@ -235,7 +255,7 @@ export function mountBattleNewBaseBoardLivePresentation({
     movementAuthority: false,
     legalityAuthority: false,
     resultAuthority: false,
-    flanoraLayout,
+    flanoraLayout: upperLaneCompatibilityLayout,
     boardSurfaceRuntime,
     gateCueRuntime,
     syncAuthoritativeSnapshot,
@@ -286,6 +306,8 @@ export const BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT = deepFre
   boardSurfaceAuthority: 'EXISTING_FLANORA_PRESENTATION_RUNTIME',
   goalEntryCueAuthority: 'EXISTING_STATEFUL_GOAL_ENTRY_GATE_CUE_RUNTIME',
   worldFieldGeometryAuthority: 'EXISTING_BATTLE_BOARD_WORLD_FIELD_RENDERER',
+  lowerFieldTopologyHandoff: 'LEGACY_FLANORA_LOWER_TOPOLOGY_STRIPPED_AT_COMPOSER_BOUNDARY',
+  worldLowerFieldTopologyAuthority: 'BATTLE_BOARD_VISUAL_GRAPH_VIA_WORLD_FIELD_RENDERER',
   participantColorAuthority: 'CALLER',
   ownsSevenCardRule: false,
   ownsProgressionRule: false,

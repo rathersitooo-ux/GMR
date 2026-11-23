@@ -120,6 +120,19 @@ function actionButton(doc, spec, emit) {
   return button;
 }
 
+function partnerPortrait(doc, partner, className = 'partner-shell-portrait') {
+  if (!partner?.portraitRef) return null;
+  const image = element(doc, 'img', className);
+  image.src = partner.portraitRef;
+  image.alt = partner.displayName ? partner.displayName + 'の画像' : 'パートナー画像';
+  image.dataset.partnerId = partner.partnerId;
+  image.loading = 'lazy';
+  image.decoding = 'async';
+  image.width = 82;
+  image.height = 104;
+  return image;
+}
+
 function rangeControl(doc, labelText, key, value, min, max, step) {
   const wrap = element(doc, 'label', 'partner-dialogue-control');
   wrap.dataset.partnerVoiceControl = key;
@@ -274,6 +287,8 @@ function renderDialogueFeedback(doc, section, model, services) {
 
 function renderBody(doc, section, model, emit, services) {
   if (model.activePartner && model.view !== 'list' && model.view !== 'detail') {
+    const portrait = partnerPortrait(doc, model.activePartner);
+    if (portrait) section.append(portrait);
     const active = element(doc, 'p', 'partner-shell-active');
     active.dataset.partnerId = model.activePartner.partnerId;
     active.textContent = model.activePartner.displayName ?? model.activePartner.partnerId;
@@ -299,6 +314,8 @@ function renderBody(doc, section, model, emit, services) {
     for (const partner of model.roster) {
       const row = element(doc, 'div', 'partner-shell-roster-row');
       row.dataset.partnerId = partner.partnerId;
+      const portrait = partnerPortrait(doc, partner);
+      if (portrait) row.append(portrait);
       row.append(element(doc, 'span', 'partner-shell-roster-name', partner.displayName ?? partner.partnerId));
       if (partner.detailAction) row.append(actionButton(doc, partner.detailAction, emit));
       list.append(row);
@@ -307,6 +324,8 @@ function renderBody(doc, section, model, emit, services) {
   } else if (model.view === 'detail' && model.detailPartner) {
     const detail = element(doc, 'div', 'partner-shell-detail');
     detail.dataset.partnerId = model.detailPartner.partnerId;
+    const portrait = partnerPortrait(doc, model.detailPartner);
+    if (portrait) detail.append(portrait);
     detail.append(element(doc, 'strong', 'partner-shell-detail-name', model.detailPartner.displayName ?? model.detailPartner.partnerId));
     section.append(detail);
   } else if (model.view === 'formation') {

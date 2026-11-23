@@ -39,8 +39,9 @@ const SLIDEPAD_ROUTE_IDS = Object.freeze({
   partner: Object.freeze(['partner', 'characters']),
   cards: Object.freeze(['cards']),
 });
-// R62: the legacy visual layer and duplicate legacy controls are retired Home producers.
-// Keep the current hero/background/character and canonical SlidePad/routes; remove only these legacy nodes.
+// R63: residual noncanonical Home chrome is retired together with the old visual/CTA producers.
+// Keep the current hero/background/character and canonical SlidePad/routes; physically remove the empty
+// center/utility/rail containers too so they cannot keep layout chrome or reappear through stale styling.
 const LEGACY_HOME_SELECTORS = Object.freeze([
   '#codexHomeVisualLayer',
   '.codexHomeVisualLayer',
@@ -50,6 +51,10 @@ const LEGACY_HOME_SELECTORS = Object.freeze([
   '.codexBattleCta',
   '.codexBattleCrest',
   '.codexRankLabel',
+  '.codexHomeLeftRail',
+  '.codexHomeRightRail',
+  '.codexHomeCenterStage',
+  '.codexHomeUtilities',
 ]);
 
 const runtime = {

@@ -370,10 +370,18 @@ function resetExplicitSaveKeys(storage, keys, { confirmed = false } = {}) {
 }
 
 function normalizeAtomicDeckRecord(deck) {
-  return {
+  const record = {
     main: Array.isArray(deck?.main) ? deck.main.map(String) : [],
     ex: Array.isArray(deck?.ex) ? deck.ex.map(String) : [],
   };
+  // writeDeckLibrary persists the slot name (cloneDeckSlotRecord: trimmed,
+  // at most 80 chars) after main/ex, so the guard must expect the same
+  // bytes. Dropping the name here made every save of a named slot fail
+  // with DECK_LIBRARY_READBACK_MISMATCH (expected 1,436 vs actual 1,467
+  // chars for 'GAMEROAD: ICE TEST v1').
+  const name = typeof deck?.name === 'string' ? deck.name.trim() : '';
+  if (name) record.name = name.slice(0, 80);
+  return record;
 }
 
 function sameAtomicDeck(left, right) {

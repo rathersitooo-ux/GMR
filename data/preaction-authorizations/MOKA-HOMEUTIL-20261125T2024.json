@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "MOKA-HOMEUTIL-20261125T2024",
+  "taskId": "HOME-UTILITY-BUTTON-STATES-001",
+  "workUnitKey": "HOME_UTILITY_BUTTON_STATES_U4_7B",
+  "acquireKey": "MOKA-HOMEUTIL-20261125T2024",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "MAIN_HTML_11746474_BYTES_MD5_471C7A13_DIFF_3POINTS_IDENTIFIED",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "DIFF_APPLIED_ON_COPY_11746758_BYTES_MD5_D0481B03_LINES_236_239_VERIFIED",
+  "proceedToken": "PROCEED|MOKA-HOMEUTIL-20261125T2024|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|home-utility-button-states|css-states|active-lease",
+  "authorizationBaseSha": "b9e9a1a63ca79feabd750d86c7c9c57bfd568a53",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "HOME-UTILITY-BUTTON-STATES-001",
+  "leaseWorkUnitKey": "HOME_UTILITY_BUTTON_STATES_U4_7B",
+  "leaseAcquireKey": "MOKA-HOMEUTIL-20261125T2024",
+  "leaseSnapshotReadbackAtJst": "2026-11-25 20:23 JST",
+  "leaseUntilJst": "2026-11-25 21:22 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A16:L16",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch feat/home-missions-button-states; browser/GAMEROAD.html; own transient data/preaction-authorizations/MOKA-HOMEUTIL-20261125T2024.json only. All other resources READ_ONLY.",
+  "solutionSignature": "HOME_UTILITY_BUTTON_CSS_STATES_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_BUTTON_STATE_RULES_IN_GAMEROAD_HTML_CSS",
+  "solutionSearchEvidence": [
+    "browser/GAMEROAD.html already carries hover and layout rules for .util-btn; the change adapts the same rule block by adding transition, :active and :disabled states instead of building a new mechanism.",
+    "Bridge document U4 7b fixed the exact 3-point diff (+284 bytes) against main bytes 11746474 md5 471c7a1323923425b72956b728eb95a1, verified byte-identical before editing."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html"
+  ]
+}

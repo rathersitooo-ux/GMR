@@ -233,8 +233,10 @@
 .home[data-home-state="HOME_RECOVERING"] .homeSlidePad{animation:grHomeRecover 240ms ease-out both}
 @keyframes grHomeRecover{0%{transform:translateX(5%) scale(.98);opacity:.62}100%{transform:none;opacity:1}}
 .homeUtilities{position:absolute;right:2%;top:64px;z-index:13;display:flex;gap:5px;align-items:center;justify-content:flex-end;max-width:54%;flex-wrap:wrap}
-.homeUtilities .homeUtilityBtn{min-height:44px;border:1px solid rgba(190,240,224,.24);background:rgba(5,21,17,.74);padding:7px 10px;font-size:9px;font-weight:900;color:var(--muted)}
+.homeUtilities .homeUtilityBtn{min-height:44px;border:1px solid rgba(190,240,224,.24);background:rgba(5,21,17,.74);padding:7px 10px;font-size:9px;font-weight:900;color:var(--muted);transition:color .15s ease,border-color .15s ease,background-color .15s ease,transform .08s ease}
 .homeUtilities .homeUtilityBtn:hover,.homeUtilities .homeUtilityBtn:focus-visible{color:var(--ink);border-color:var(--a);outline:none}
+.homeUtilities .homeUtilityBtn:active{transform:translateY(1px);background:rgba(5,21,17,.9);border-color:var(--a)}
+.homeUtilities .homeUtilityBtn:disabled{opacity:.45;cursor:not-allowed}
 .homePadHint{position:absolute;right:3%;bottom:1.5%;z-index:13;font-size:8px;color:rgba(196,222,213,.7);pointer-events:none}
 .homeMotionMediaSlot{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:0}.homeMotionMediaSlot[data-ready="true"]{opacity:.34}.homeMotionMediaSlot video{width:100%;height:100%;object-fit:cover}
 html.r10LowPerf #screenMotionBridge::before,html.r10LowPerf #screenMotionBridge::after,html.r10Reduced #screenMotionBridge::before,html.r10Reduced #screenMotionBridge::after{animation:none!important}

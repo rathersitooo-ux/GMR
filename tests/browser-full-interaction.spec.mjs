@@ -125,8 +125,8 @@ async function assertVisibleResultRankPresentation(result) {
   for (const forbidden of ['敗北', '敗者', '負け', '最下位']) expect(visibleText).not.toContain(forbidden);
 }
 
-async function installLegalBattleDeck(page) {
-  return page.evaluate(() => {
+async function installLegalBattleDeck(page, offset = 0) {
+  return page.evaluate((rotation) => {
     const t = window.__GAMEROAD_TEST__;
     const publicMain = new Set(t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
     const standard = window.__CARD_DATA__
@@ -134,7 +134,9 @@ async function installLegalBattleDeck(page) {
       .map((card) => card.id);
     const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
     const nonRoyal = standard.filter((id) => !t.isRoyalCard(id));
-    const main = [...nonRoyal.slice(0, 37), ...royalIds];
+    const normalizedRotation = nonRoyal.length ? Math.abs(Number(rotation) || 0) % nonRoyal.length : 0;
+    const rotatedNonRoyal = [...nonRoyal.slice(normalizedRotation), ...nonRoyal.slice(0, normalizedRotation)];
+    const main = [...rotatedNonRoyal.slice(0, 37), ...royalIds];
     const setValidation = t.deckSetDraft(main, []);
     const draftValidation = t.deckValidate(t.state.deckDraft, { forBattle: true });
     const committed = draftValidation.ok ? t.deckCommit() : false;
@@ -147,7 +149,7 @@ async function installLegalBattleDeck(page) {
       committed,
       savedValidation,
     };
-  });
+  }, offset);
 }
 
 async function beginVisibleTwoPlayerRoadShield(page, testInfo, evidencePrefix) {
@@ -700,6 +702,91 @@ test('Setup Quick Deck previews selected decks 1-3 read-only and keeps the exist
 
   runtime.assertClean(testInfo);
 });
+
+for (const [deckNumber, mode, offset] of [[1, '2p', 0], [2, '4p', 1], [3, '2v2', 2]]) {
+  test(`selected deck ${deckNumber} survives reload and becomes the ${mode} match-start deck`, async ({ page }, testInfo) => {
+    const runtime = observeRuntimeErrors(page);
+    await bootCurrentBrowser(page);
+
+    const cards = await enterCardsFromHome(page);
+    if (deckNumber > 1) {
+      const mobileTrayToggle = cards.locator('#r4DeckTrayToggle:visible');
+      if ((await mobileTrayToggle.count()) > 0) {
+        await mobileTrayToggle.click();
+        await expect(cards).toHaveAttribute('data-deck-drawer', 'open');
+      }
+      const picker = cards.locator('#deckSlotPicker .modeBtn');
+      await expect(picker.nth(deckNumber - 1)).toBeVisible();
+      await picker.nth(deckNumber - 1).click();
+    }
+
+    const deckSetup = await installLegalBattleDeck(page, offset);
+    expect(deckSetup.main).toHaveLength(40);
+    expect(deckSetup.committed, `deck ${deckNumber} legal precondition committed`).toBeTruthy();
+    expect(deckSetup.savedValidation.ok, `deck ${deckNumber} saved validation`).toBeTruthy();
+
+    const beforeReload = await page.evaluate(() => ({
+      selectedDeckIndex: window.__GAMEROAD_TEST__.state.selectedDeckIndex,
+      savedDeck: window.__GAMEROAD_TEST__.deckSaved(),
+    }));
+    expect(beforeReload.selectedDeckIndex).toBe(deckNumber - 1);
+    expect(beforeReload.savedDeck.main).toEqual(deckSetup.main);
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    const home = page.locator('section[data-screen="home"]');
+    await expect(home).toBeVisible({ timeout: 15_000 });
+
+    const afterReload = await page.evaluate(() => ({
+      selectedDeckIndex: window.__GAMEROAD_TEST__.state.selectedDeckIndex,
+      savedDeck: window.__GAMEROAD_TEST__.deckSaved(),
+    }));
+    expect(afterReload.selectedDeckIndex, `deck ${deckNumber} selection survives reload`).toBe(deckNumber - 1);
+    expect(afterReload.savedDeck.main, `deck ${deckNumber} contents survive reload`).toEqual(deckSetup.main);
+
+    const setupControl = visibleHomeControl(page, 'setup');
+    await expect(setupControl).toBeVisible();
+    await setupControl.click();
+    const setup = page.locator('section[data-screen="setup"]');
+    await expect(setup).toBeVisible();
+    await setup.locator(`[data-mode="${mode}"]`).click();
+
+    const trigger = setup.locator('[data-role="setup-quick-deck-trigger"]');
+    const panel = setup.locator('[data-role="setup-quick-deck-preview"]');
+    await expect(trigger).toContainText(`デッキ${deckNumber}`);
+    await trigger.click();
+    await expect(panel).toBeVisible();
+    const previewIds = await panel
+      .locator('[data-role="setup-quick-deck-main"] [data-card-id]')
+      .evaluateAll((nodes) => nodes.map((node) => node.dataset.cardId));
+    expect(previewIds, `deck ${deckNumber} preview after reload`).toEqual(deckSetup.main);
+    await panel.locator('[data-role="setup-quick-deck-close"]').click();
+    await expect(panel).toBeHidden();
+
+    const startMatch = setup.locator('#startMatch');
+    await expect(startMatch).toBeEnabled();
+    await startMatch.click();
+    const battle = page.locator('section[data-screen="battle"]');
+    await expect(battle).toBeVisible();
+
+    const started = await page.evaluate(() => {
+      const state = window.__GAMEROAD_TEST__.state;
+      const human = state.match?.players?.find((player) => player.human) ?? null;
+      return {
+        selectedDeckIndex: state.selectedDeckIndex,
+        mode: state.match?.mode ?? null,
+        snapshotMain: [...(state.match?.deckStartSnapshot?.deck?.main ?? [])],
+        sourceDeckIds: [...(human?.sourceDeckIds ?? [])],
+      };
+    });
+    expect(started.selectedDeckIndex).toBe(deckNumber - 1);
+    expect(started.mode).toBe(mode);
+    expect(started.snapshotMain, `deck ${deckNumber} authoritative match-start snapshot`).toEqual(deckSetup.main);
+    expect([...started.sourceDeckIds].sort(), `deck ${deckNumber} human battle source deck`).toEqual([...deckSetup.main].sort());
+
+    await attachStateScreenshot(page, testInfo, `deck-${deckNumber}-reload-${mode}-battle-start`);
+    runtime.assertClean(testInfo);
+  });
+}
 
 test('starts through visible Setup and advances the first Battle decision through visible controls', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);

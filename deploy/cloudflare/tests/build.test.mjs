@@ -150,6 +150,20 @@ const presentationAssetContract = [
   { file: 'shop-live-catalog-runtime.mjs', source: 'browser/shop-live-catalog-runtime.mjs', artifact: 'shop_live_catalog_runtime' },
   { file: 'shop-transaction-presentation-adapter.mjs', source: 'browser/shop-transaction-presentation-adapter.mjs', artifact: 'shop_transaction_presentation_adapter' },
   { file: 'assets/shop/fanart/saasuna-sleeve-snow-blue-v1.jpg', source: 'assets/shop/fanart/saasuna-sleeve-snow-blue-v1.jpg', artifact: 'shop_fanart_saasuna_sleeve_snow_blue_v1' },
+  { file: 'assets/partners/estra/estra-board-stand.png', source: 'browser/assets/partners/estra/estra-board-stand.png', artifact: 'partner_estra_board_stand' },
+  { file: 'assets/partners/estra/estra-board-stand-alt.png', source: 'browser/assets/partners/estra/estra-board-stand-alt.png', artifact: 'partner_estra_board_stand_alt' },
+  { file: 'assets/partners/estra/estra-board-greet.png', source: 'browser/assets/partners/estra/estra-board-greet.png', artifact: 'partner_estra_board_greet' },
+  { file: 'assets/partners/estra/estra-board-greet-alt.png', source: 'browser/assets/partners/estra/estra-board-greet-alt.png', artifact: 'partner_estra_board_greet_alt' },
+  { file: 'assets/partners/estra/estra-board-laugh.png', source: 'browser/assets/partners/estra/estra-board-laugh.png', artifact: 'partner_estra_board_laugh' },
+  { file: 'assets/partners/estra/estra-board-laugh-alt.png', source: 'browser/assets/partners/estra/estra-board-laugh-alt.png', artifact: 'partner_estra_board_laugh_alt' },
+  { file: 'assets/partners/estra/estra-board-cheer.png', source: 'browser/assets/partners/estra/estra-board-cheer.png', artifact: 'partner_estra_board_cheer' },
+  { file: 'assets/partners/estra/estra-board-wave.png', source: 'browser/assets/partners/estra/estra-board-wave.png', artifact: 'partner_estra_board_wave' },
+  { file: 'assets/partners/naki-board/naki-board-stand.png', source: 'browser/assets/partners/naki-board/naki-board-stand.png', artifact: 'partner_naki_board_stand' },
+  { file: 'assets/partners/naki-board/naki-board-stand-alt.png', source: 'browser/assets/partners/naki-board/naki-board-stand-alt.png', artifact: 'partner_naki_board_stand_alt' },
+  { file: 'assets/partners/naki-board/naki-board-ready.png', source: 'browser/assets/partners/naki-board/naki-board-ready.png', artifact: 'partner_naki_board_ready' },
+  { file: 'assets/partners/naki-board/naki-board-lean.png', source: 'browser/assets/partners/naki-board/naki-board-lean.png', artifact: 'partner_naki_board_lean' },
+  { file: 'assets/partners/naki-board/naki-board-hit.png', source: 'browser/assets/partners/naki-board/naki-board-hit.png', artifact: 'partner_naki_board_hit' },
+  { file: 'assets/partners/naki-board/naki-board-heart-attack.png', source: 'browser/assets/partners/naki-board/naki-board-heart-attack.png', artifact: 'partner_naki_board_heart_attack' },
 ];
 
 function expectedVersionManifest() { return { schema: VERSION_MANIFEST_SCHEMA, channel: VERSION_MANIFEST_CHANNEL, build_id: SOURCE_COMMIT, published_at: PUBLISHED_AT, reload_policy: VERSION_MANIFEST_RELOAD_POLICY }; }

@@ -277,6 +277,25 @@ test('build packages the exact current production Browser dependency set with ve
     assert.equal((await readFile(path.join(dist, 'browser', dep.file))).equals(currentBytes.get(dep.file)), true);
   }
   assert.deepEqual(await assertBrowserRuntimeDependencyCompleteness(browserBytes, path.join(dist, 'browser')), await assertBrowserRuntimeDependencyCompleteness(browserBytes, dist));
+  assert.equal(manifest.artifacts.browser_gameroad_html.output, 'browser/GAMEROAD.html');
+  assert.equal(manifest.artifacts.browser_gameroad_html.sha256, manifest.artifacts.index_html.sha256);
+  assert.equal(manifest.artifacts.browser_gameroad_html.bytes, manifest.artifacts.index_html.bytes);
+  for (const dep of dependencyContract) {
+    assert.equal(manifest.artifacts[`browser_${dep.artifact}`].output, `browser/${dep.file}`);
+    assert.equal(manifest.artifacts[`browser_${dep.artifact}`].git_blob_sha1, dep.currentBlob);
+  }
+  for (const asset of presentationAssetContract) {
+    const expectedBytes = await readFile(path.join(repoRoot, asset.source));
+    assert.equal(manifest.artifacts[`browser_${asset.artifact}`].output, `browser/${asset.file}`);
+    assert.equal(manifest.artifacts[`browser_${asset.artifact}`].git_blob_sha1, gitBlobSha1(expectedBytes));
+  }
+  for (const key of Object.keys(manifest.artifacts)) {
+    if (key === 'index_html' || key === 'browser_gameroad_html' || key === 'browser_version_manifest' || key.startsWith('browser_')) continue;
+    assert.ok(manifest.artifacts[`browser_${key}`], `manifest must contain mirror entry for ${key}`);
+    assert.equal(manifest.artifacts[`browser_${key}`].output, `browser/${manifest.artifacts[key].output}`);
+    assert.equal(manifest.artifacts[`browser_${key}`].sha256, manifest.artifacts[key].sha256);
+    assert.equal(manifest.artifacts[`browser_${key}`].bytes, manifest.artifacts[key].bytes);
+  }
   assert.equal(manifest.artifacts.index_html.git_blob_sha1, options.expectedBlob);
   assert.deepEqual(JSON.parse(await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8')), expectedVersionManifest());
   for (const dep of dependencyContract) {
@@ -310,6 +329,8 @@ test('isolated rollback drill restores a validated package and rejects corruptio
   const restored = await restoreRollbackSnapshot({ snapshotDir: snapshot, targetDir: target, expectedSourceCommit: SOURCE_COMMIT, expectedManifestSha256, expectedHeadersSha256 });
   assert.equal(restored.source_commit, SOURCE_COMMIT);
   for (const artifact of Object.values(restored.artifacts)) assert.equal((await readFile(path.join(target, artifact.output))).equals(await readFile(path.join(snapshot, artifact.output))), true, `restored artifact must be byte-exact: ${artifact.output}`);
+  assert.equal((await readFile(path.join(target, 'browser', 'GAMEROAD.html'))).equals(browserBytes), true);
+  for (const dep of dependencyContract) assert.equal((await readFile(path.join(target, 'browser', dep.file))).equals(await readFile(path.join(snapshot, 'browser', dep.file))), true, `restored mirror artifact must be byte-exact: browser/${dep.file}`);
   assert.equal((await readFile(path.join(target, 'manifest.json'))).equals(trustedManifestBytes), true); assert.equal((await readFile(path.join(target, '_headers'))).equals(trustedHeadersBytes), true);
   await assert.rejects(() => readFile(path.join(target, 'stale-undeclared.txt')), /ENOENT/);
   await writeFile(path.join(target, 'prevalidation-sentinel.txt'), 'target must remain untouched\n', 'utf8'); const originalSnapshotIndex = await readFile(path.join(snapshot, 'index.html'));

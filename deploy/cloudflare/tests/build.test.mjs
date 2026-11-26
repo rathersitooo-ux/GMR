@@ -180,6 +180,15 @@ test('build copies Browser, runtime dependencies, and formal version manifest de
     assert.equal(first.artifacts[asset.artifact].git_blob_sha1, gitBlobSha1(expectedBytes));
     assert.equal(first.artifacts[asset.artifact].output, asset.file);
   }
+  assert.equal((await readFile(path.join(dist, 'browser', 'GAMEROAD.html'))).equals(browserBytes), true);
+  for (const dep of dependencyContract) {
+    assert.equal((await readFile(path.join(dist, 'browser', dep.file))).equals(expected.get(dep.file)), true);
+  }
+  for (const asset of presentationAssetContract) {
+    const expectedBytes = await readFile(path.join(repoRoot, asset.source));
+    assert.equal((await readFile(path.join(dist, 'browser', asset.file))).equals(expectedBytes), true);
+  }
+  assert.deepEqual(await assertBrowserRuntimeDependencyCompleteness(browserBytes, path.join(dist, 'browser')), await assertBrowserRuntimeDependencyCompleteness(browserBytes, dist));
   assert.deepEqual(JSON.parse(await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8')), expectedVersionManifest());
   assert.equal(await readFile(path.join(dist, '_headers'), 'utf8'), '/\n  Cache-Control: no-cache, no-store\n\n/index.html\n  Cache-Control: no-cache, no-store\n\n/gameroad-version.json\n  Cache-Control: no-store\n\n/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n');
   assert.equal(first.git_blob_sha1, options.expectedBlob); assert.equal(first.source_commit, SOURCE_COMMIT);
@@ -210,6 +219,16 @@ test('dependency verifier detects inline static module imports and fails closed 
   await assert.rejects(() => assertBrowserRuntimeDependencyCompleteness(browserBytes, dist), /Public package missing Browser runtime dependency: \.\/deck-save-ack-core\.mjs/);
   await writeFile(path.join(dist, 'deck-save-ack-core.mjs'), 'export function createDeckMatchStartSnapshot(){ return Object.freeze({}); }\n', 'utf8');
   assert.deepEqual(await assertBrowserRuntimeDependencyCompleteness(browserBytes, dist), ['deck-save-ack-core.mjs']);
+});
+
+test('browser mirror dependency verifier fails closed when a mirrored output is missing', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'gameroad-public-pack-browser-mirror-'));
+  const dist = path.join(dir, 'dist');
+  await mkdir(path.join(dist, 'browser'), { recursive: true });
+  const browserBytes = Buffer.from('<script type="module">import "./deck-save-ack-core.mjs";</script>\n', 'utf8');
+  await assert.rejects(() => assertBrowserRuntimeDependencyCompleteness(browserBytes, path.join(dist, 'browser')), /Public package missing Browser runtime dependency: \.\/deck-save-ack-core\.mjs/);
+  await writeFile(path.join(dist, 'browser', 'deck-save-ack-core.mjs'), 'export function createDeckMatchStartSnapshot(){ return Object.freeze({}); }\n', 'utf8');
+  assert.deepEqual(await assertBrowserRuntimeDependencyCompleteness(browserBytes, path.join(dist, 'browser')), ['deck-save-ack-core.mjs']);
 });
 
 test('the packaged profile embeds the exact tested Battle adapter, generated atlases, and CC0 SFX', async () => {
@@ -253,6 +272,11 @@ test('build packages the exact current production Browser dependency set with ve
   assert.equal((await readFile(path.join(dist, 'profile-presentation-runtime-mount.mjs'))).equals(profileBytes), true);
   assert.ok(manifest.artifacts.profile_presentation_runtime_mount);
   assert.equal((await readFile(path.join(dist, 'index.html'))).equals(browserBytes), true); assert.equal(manifest.source_commit, SOURCE_COMMIT);
+  assert.equal((await readFile(path.join(dist, 'browser', 'GAMEROAD.html'))).equals(browserBytes), true);
+  for (const dep of dependencyContract) {
+    assert.equal((await readFile(path.join(dist, 'browser', dep.file))).equals(currentBytes.get(dep.file)), true);
+  }
+  assert.deepEqual(await assertBrowserRuntimeDependencyCompleteness(browserBytes, path.join(dist, 'browser')), await assertBrowserRuntimeDependencyCompleteness(browserBytes, dist));
   assert.equal(manifest.artifacts.index_html.git_blob_sha1, options.expectedBlob);
   assert.deepEqual(JSON.parse(await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8')), expectedVersionManifest());
   for (const dep of dependencyContract) {

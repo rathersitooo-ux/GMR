@@ -376,6 +376,11 @@ async function writeArtifact(dist, item) {
   await writeFile(outputPath, item.input);
   const roundTrip = await readFile(outputPath);
   if (!item.input.equals(roundTrip)) throw new Error(`dist/${item.output} is not byte-identical to ${item.label} source`);
+  const mirrorPath = path.join(dist, 'browser', item.output);
+  await mkdir(path.dirname(mirrorPath), { recursive: true });
+  await writeFile(mirrorPath, item.input);
+  const mirrorRoundTrip = await readFile(mirrorPath);
+  if (!item.input.equals(mirrorRoundTrip)) throw new Error(`dist/browser/${item.output} is not byte-identical to ${item.label} source`);
 }
 
 export async function buildPackage(options = {}) {
@@ -401,9 +406,14 @@ export async function buildPackage(options = {}) {
   const indexPath = path.join(dist, 'index.html');
   await writeFile(indexPath, input);
   if (!input.equals(await readFile(indexPath))) throw new Error('dist/index.html is not byte-identical to Browser source');
+  const browserMirrorPath = path.join(dist, 'browser', 'GAMEROAD.html');
+  await mkdir(path.dirname(browserMirrorPath), { recursive: true });
+  await writeFile(browserMirrorPath, input);
+  if (!input.equals(await readFile(browserMirrorPath))) throw new Error('dist/browser/GAMEROAD.html is not byte-identical to Browser source');
 
   for (const item of artifacts) await writeArtifact(dist, item);
   await assertBrowserRuntimeDependencyCompleteness(input, dist);
+  await assertBrowserRuntimeDependencyCompleteness(input, path.join(dist, 'browser'));
 
   const versionManifestPath = path.join(dist, VERSION_MANIFEST_FILENAME);
   await writeFile(versionManifestPath, versionManifestBytes, 'utf8');

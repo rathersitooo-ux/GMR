@@ -440,8 +440,12 @@ export async function buildPackage(options = {}) {
 
   const artifactManifest = {
     index_html: provenance('browser/GAMEROAD.html', 'index.html', input, blob),
+    browser_gameroad_html: provenance('browser/GAMEROAD.html', 'browser/GAMEROAD.html', input, blob),
   };
-  for (const item of artifacts) artifactManifest[item.artifact] = provenance(item.source, item.output, item.input, item.blob);
+  for (const item of artifacts) {
+    artifactManifest[item.artifact] = provenance(item.source, item.output, item.input, item.blob);
+    artifactManifest[`browser_${item.artifact}`] = provenance(item.source, `browser/${item.output}`, item.input, item.blob);
+  }
   artifactManifest.browser_version_manifest = {
     source: 'build-package-release-identity',
     output: VERSION_MANIFEST_FILENAME,

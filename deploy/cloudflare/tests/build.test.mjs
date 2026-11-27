@@ -164,6 +164,10 @@ const presentationAssetContract = [
   { file: 'assets/partners/naki-board/naki-board-lean.png', source: 'browser/assets/partners/naki-board/naki-board-lean.png', artifact: 'partner_naki_board_lean' },
   { file: 'assets/partners/naki-board/naki-board-hit.png', source: 'browser/assets/partners/naki-board/naki-board-hit.png', artifact: 'partner_naki_board_hit' },
   { file: 'assets/partners/naki-board/naki-board-heart-attack.png', source: 'browser/assets/partners/naki-board/naki-board-heart-attack.png', artifact: 'partner_naki_board_heart_attack' },
+  { file: 'assets/audio/sfx/click_002.ogg', source: 'assets/audio/sfx/click_002.ogg', artifact: 'sfx_click_002_nested' },
+  { file: 'assets/audio/sfx/cardSlide6.ogg', source: 'assets/audio/sfx/cardSlide6.ogg', artifact: 'sfx_card_slide_6_nested' },
+  { file: 'assets/audio/sfx/cardPlace1.ogg', source: 'assets/audio/sfx/cardPlace1.ogg', artifact: 'sfx_card_place_1_nested' },
+  { file: 'assets/audio/sfx/candidate/battleStart.ogg', source: 'assets/audio/sfx/candidate/battleStart.ogg', artifact: 'sfx_battle_start' },
 ];
 
 function expectedVersionManifest() { return { schema: VERSION_MANIFEST_SCHEMA, channel: VERSION_MANIFEST_CHANNEL, build_id: SOURCE_COMMIT, published_at: PUBLISHED_AT, reload_policy: VERSION_MANIFEST_RELOAD_POLICY }; }
